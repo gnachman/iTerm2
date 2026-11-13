@@ -49,6 +49,26 @@ final class SetStatusProgressArgumentTests: XCTestCase {
         XCTAssertEqual(screenProgress(of: session), .stopped)
     }
 
+    // An update whose preconditions fail is dropped whole, ring included. The agent hook sends
+    // working with a running ring that requires an open turn; when the turn is closed the tab
+    // keeps its status, and a ring that started anyway would spin beside "done" with nothing to
+    // stop it.
+    func testADroppedUpdateLeavesTheRingAlone() throws {
+        let session = PTYSession(synthetic: false)!
+        let closed = try SetStatusBuiltInFunction.update(from: ["status": "done",
+                                                                "progress": "stopped",
+                                                                "turn_open": NSNumber(value: false)])
+        session.screenSetTabStatus(closed)
+        XCTAssertEqual(screenProgress(of: session), .stopped)
+
+        let guarded = try SetStatusBuiltInFunction.update(from: ["status": "working",
+                                                                 "progress": "running",
+                                                                 "if_turn_open": NSNumber(value: true)])
+        session.screenSetTabStatus(guarded)
+        XCTAssertEqual(session.tabStatus?.statusText, "done")
+        XCTAssertEqual(screenProgress(of: session), .stopped)
+    }
+
     private func screenProgress(of session: PTYSession) -> VT100ScreenProgress {
         var progress = VT100ScreenProgress.stopped
         // Joining the threads drains the mutation queue, so the update has landed by the time

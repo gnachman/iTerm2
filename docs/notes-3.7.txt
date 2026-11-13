@@ -115,6 +115,13 @@ Improvements:
   “Show status on tabs”. Turning it off hides
   the colored status dot on the tab too, not
   just the status text.
+- With the Claude Code Integration, or when the
+  Session Status tool follows Codex CLI, a
+  session whose turn is over while agents or
+  commands it started keep running in the
+  background now shows “background” in purple
+  instead of “working”, so you can tell at a
+  glance that it is ready for input. Issue 13080.
 - zsh, fish, and tcsh Shell Integration now mark
   the right-hand prompt, so Select Current Command
   and saved commands leave it out. In tcsh this

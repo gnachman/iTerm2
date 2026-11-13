@@ -1,0 +1,23 @@
+{
+  "background_tasks": [
+    {
+      "agent_type": "general-purpose",
+      "description": "Run sleep and echo commands",
+      "id": "a5f2f9af87519b83f",
+      "status": "running",
+      "type": "subagent"
+    }
+  ],
+  "cwd": "/Users/user/project",
+  "effort": {
+    "level": "medium"
+  },
+  "hook_event_name": "Stop",
+  "last_assistant_message": "I launched the background subagent to run `sleep 8; echo hi` and then `echo bye`. I'm not waiting on it; I'll reply with one word when it reports back.",
+  "permission_mode": "auto",
+  "prompt_id": "17464ee8-9389-49e4-a716-b40b3e0c4ec3",
+  "session_crons": [],
+  "session_id": "03a97ee1-fd93-490e-9368-d8dd372ddc0d",
+  "stop_hook_active": false,
+  "transcript_path": "/Users/user/.claude/projects/-Users-user-project/03a97ee1-fd93-490e-9368-d8dd372ddc0d.jsonl"
+}

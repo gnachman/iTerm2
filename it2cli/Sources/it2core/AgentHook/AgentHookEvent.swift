@@ -9,6 +9,8 @@ import Foundation
 enum AgentHookPalette {
     static let workingDot = "#ff9500"
     static let workingText = "#ff9500"
+    static let backgroundDot = "#af5fff"
+    static let backgroundText = "#af5fff"
     static let waitingDot = "#5f87ff"
     static let waitingText = "#5f87ff"
     static let idleDot = "#00d75f"
@@ -103,6 +105,12 @@ struct AgentStatusUpdate {
     // “working”, and an unconditional done would cover it until the next tool
     // call, or for the whole turn if it uses none.
     var onlyWhenFinished = false
+    // Send the update with a precondition on the turn flag alone, or nil for none. Used by a
+    // status decided from the flag as it was read a round trip earlier: background needs the
+    // turn still closed (a prompt submitted in between wrote “working”, which it must not
+    // cover), and working needs it still open (a Stop landing in between wrote background).
+    // Ignored when onlyWhenFinished is set, which already requires the turn closed.
+    var requiredTurnOpen: Bool? = nil
     // Set on the Codex path whenever the display about to be written says work
     // is still running. The count that justified it was read a moment earlier,
     // and a sub-agent finishing in between either saw the turn as still open and
@@ -129,6 +137,15 @@ struct AgentStatusUpdate {
         status = "working"
         dotColor = AgentHookPalette.workingDot
         textColor = AgentHookPalette.workingText
+        self.detail = detail
+    }
+
+    /// The session's own turn is over, so it will take input, but work it started is still
+    /// running in the background and its results are on the way.
+    mutating func showBackground(detail: String?) {
+        status = "background"
+        dotColor = AgentHookPalette.backgroundDot
+        textColor = AgentHookPalette.backgroundText
         self.detail = detail
     }
 
@@ -197,7 +214,8 @@ func readAgentHookEvent(_ payload: Data) -> (name: String, json: [String: Any])?
 }
 
 extension AgentHookRunner {
-    /// Decide what one hook event should change, or nil for an event with nothing to say.
+    /// Decide what one hook event should change, and return the update the caller still has to
+    /// send, or nil when there is nothing left to send.
     ///
     /// Detail lifecycle:
     ///   • SET on events that carry rich, at-a-glance info (PermissionRequest, Stop,
@@ -210,31 +228,159 @@ extension AgentHookRunner {
     ///     would overwrite PermissionRequest's richer detail; Notification(idle_prompt)
     ///     would overwrite Stop's last_assistant_message.
     ///
-    /// Reading the count iTerm2 holds costs an it2 round trip, so only Codex pays for it outside
-    /// the idle nudge; the increment and the turn flag ride on set-status calls the hook was
-    /// already making. Throws only when the backend does (a hook killed on its timeout, in tests).
+    /// Not a pure decision: some events need what iTerm2 holds, or must store something before the
+    /// display can be decided, so this runs those it2 calls itself and leaves the rest to the
+    /// caller. What each event costs, in it2 round trips:
+    ///   • One, for most events: the turn flag, the count and the display travel in one
+    ///     set-status.
+    ///   • Claude: the idle nudge, and a Stop or StopFailure without background_tasks, read first
+    ///     and then write. A sub-agent's tool call reads the status, and writes only when the
+    ///     display has to change, which during a long wait it usually does not. A SubagentStop
+    ///     that leaves work running stores the count (its answer stands in for the read), then
+    ///     writes the display.
+    ///   • Codex: a tool call sends its guarded working itself, and a second write follows when
+    ///     the turn flag is unknown or background has to be put back. A turn ending reads the
+    ///     count, then writes, with a follow-up done when the work finished during the write. A
+    ///     SubagentStop decrements, then writes the display only if it has to change, with the
+    ///     same follow-up.
+    /// Throws only when the backend does (a hook killed on its timeout, in tests).
     func decide(json: [String: Any]) throws -> AgentStatusUpdate? {
         var update = AgentStatusUpdate()
         let isCodex = agent == .codex
         let lastMessage = AgentHookDetail.lastMessageDetail(json)
 
-        /// The one rule for an event that ends a turn: stay working while background work
+        /// The one rule for an event that ends a turn: report background while background work
         /// remains, report how the turn ended otherwise. Stop, StopFailure, Interrupt and the idle
         /// nudge all answer it the same way, so they all come through here and cannot drift apart
-        /// as events are added. On the Codex path it also closes the turn and, with work still
-        /// counted, asks for the status as it stood once the write landed (see
+        /// as events are added. It also closes the turn, which is how a later sub-agent event
+        /// tells background from working. On the Codex path, with work still counted, it asks
+        /// for the status as it stood once the write landed (see
         /// AgentStatusUpdate.endingIfTasksFinished).
         func endTurn(running: Int, ending: AgentStatusUpdate.TurnEnding, detail: String) {
             if running > 0 {
-                update.showWorking(detail: AgentHookDetail.backgroundDetail(count: running))
+                update.showBackground(detail: AgentHookDetail.backgroundDetail(count: running))
             } else {
                 update.showEnded(ending, detail: detail)
             }
-            if isCodex {
-                update.turnOpen = false
-                if running > 0 {
-                    update.endingIfTasksFinished = (ending, detail)
+            update.turnOpen = false
+            if isCodex, running > 0 {
+                update.endingIfTasksFinished = (ending, detail)
+            }
+        }
+
+        /// Claude Code only. Something happened in a sub-agent while work is or may be running:
+        /// one of its tool calls, or one of several finishing. Sub-agents run the session's own
+        /// hooks, so without this a background agent's every tool call would say “working” for a
+        /// session whose turn is over. Which word fits depends on the turn flag, so it is read
+        /// first, and the write carries what it assumed as a precondition.
+        ///
+        /// - Parameters:
+        ///   - count: the count the payload reports, or nil when it reports none and the stored
+        ///     count has to stand in.
+        ///   - workingDetail: the detail for working, the one status this event would have set
+        ///     before background existed.
+        func showSubagentActivity(count: Int?, workingDetail: String) throws -> AgentStatusUpdate? {
+            // The count is stored in a write of its own, never in the guarded display write
+            // below: iTerm2 drops a guarded update whole, and a count lost with it would stay
+            // stale until the next Stop, misleading StopFailure and the idle nudge in the
+            // meantime. That write's answer is the status this decides from, so storing it
+            // costs no more than the read it replaces.
+            let current: CurrentAgentStatus?
+            if let count {
+                current = try storeBackgroundTaskCount(count)
+            } else {
+                current = try storedStatus()
+            }
+            var activity = AgentStatusUpdate()
+            if let count, current == nil {
+                // The store failed or its answer could not be read. The write below is
+                // unguarded in that case, so the count can travel with it.
+                activity.backgroundTasks = count
+            }
+            let running = count ?? current?.backgroundTasks ?? 0
+            if current?.turnOpen == false {
+                guard running > 0 else {
+                    guard current?.status == "waiting" else {
+                        // The turn is over and nothing is counted: a utility agent Claude Code
+                        // runs at an idle prompt. Flashing working for it would be a false
+                        // alarm.
+                        return nil
+                    }
+                    // A sub-agent's permission prompt was answered and its tool ran, so the
+                    // prompt is gone and an agent is at work, counted or not (a Claude Code
+                    // too old to send background_tasks counts none). Nothing else would take
+                    // waiting down.
+                    activity.showBackground(detail: "")
+                    activity.requiredTurnOpen = false
+                    return activity
                 }
+                if count == nil, current?.status == "background" {
+                    // A background agent's tool call while background already shows. This is
+                    // the common case during a long wait, so it costs only the read.
+                    return nil
+                }
+                activity.showBackground(detail: AgentHookDetail.backgroundDetail(count: running))
+                activity.requiredTurnOpen = false
+                return activity
+            }
+            // The turn is open, or the flag is unknown (hooks installed mid-session): working, as
+            // before. This can land mid-turn, and re-asserting the status disowns whatever the
+            // turn's last event asked to happen when the turn ends. Without re-arming, an Esc
+            // between here and the next tool event would go unnoticed and leave the tab reading
+            // “working.”
+            activity.showWorking(detail: workingDetail)
+            activity.expiresOnProgressEnd = true
+            if current?.turnOpen == true {
+                activity.requiredTurnOpen = true
+            }
+            return activity
+        }
+
+        /// Codex only. A tool call, which may be the session's own or a detached sub-agent's:
+        /// Codex payloads do not say which. Working is right only while the turn is open, so the
+        /// write requires it, which costs nothing extra for the session's own calls. A sub-agent
+        /// working after the parent stopped finds the turn closed, and its write is dropped
+        /// rather than flipping background to working until the next SubagentStop. The status
+        /// that comes back says what to do instead.
+        func showCodexToolActivity() throws -> AgentStatusUpdate? {
+            var working = AgentStatusUpdate()
+            working.showWorking(detail: "")
+            working.requiredTurnOpen = true
+            guard let after = try send(working) else {
+                // it2 failed, or its answer could not be read. Nothing better to try.
+                return nil
+            }
+            switch after.turnOpen {
+            case true:
+                return nil  // It landed.
+            case nil:
+                // No turn on record (hooks installed mid-session, or a resumed session): say
+                // working, as before, until a prompt or a Stop sets the flag.
+                var unguarded = AgentStatusUpdate()
+                unguarded.showWorking(detail: "")
+                return unguarded
+            case false:
+                // The parent's turn is over. With work counted, put background back if
+                // something else replaced it, such as a sub-agent's permission prompt that was
+                // granted: the tool ran, and the session is waiting on background work again.
+                guard after.backgroundTasks > 0, after.status != "background" else {
+                    return nil
+                }
+                var background = AgentStatusUpdate()
+                background.showBackground(detail: AgentHookDetail.backgroundDetail(count: after.backgroundTasks))
+                background.requiredTurnOpen = false
+                return background
+            }
+        }
+
+        if eventName == "PreToolUse" || eventName == "PostToolUse" {
+            if isCodex {
+                return try showCodexToolActivity()
+            }
+            // A sub-agent's tool call, not the session's own. Claude Code names the agent a hook
+            // fired in with agent_id and leaves it out for the session's own calls.
+            if json["agent_id"] is String {
+                return try showSubagentActivity(count: nil, workingDetail: "")
             }
         }
 
@@ -242,7 +388,13 @@ extension AgentHookRunner {
         case "UserPromptSubmit", "PreToolUse", "PostToolUse":
             update.showWorking(detail: "")  // new turn / tool activity, so previous detail is stale
             update.expiresOnProgressEnd = true
-            if eventName == "UserPromptSubmit", isCodex {
+            // A prompt opens the turn. On the Claude path the session's own tool calls
+            // say so too, since they only happen inside a turn (a sub-agent's never
+            // reach here), and that heals a flag something closed mid-turn by the next
+            // tool call. Codex tool calls never reach here (see showCodexToolActivity):
+            // nothing tells a sub-agent's from the session's, and one reopening the turn
+            // after the parent stopped would keep its SubagentStop from reporting done.
+            if eventName == "UserPromptSubmit" || !isCodex {
                 update.turnOpen = true
             }
         case "PermissionRequest":
@@ -258,7 +410,7 @@ extension AgentHookRunner {
                 // working-because-background session to idle, resurrecting the
                 // false-idle bug.
                 let current = try storedStatus()
-                let running = try AgentHookDetail.backgroundTaskCount(json) ?? current?.backgroundTasks ?? 0
+                let running = AgentHookDetail.backgroundTaskCount(json) ?? current?.backgroundTasks ?? 0
                 // The nudge repeats a turn ending that Stop already reported. When
                 // the tab still shows that ending, leave it: the nudge carries no
                 // message, and re-sending done would replace Stop's with nothing,
@@ -277,6 +429,14 @@ extension AgentHookRunner {
                 // survives the nudge (2.1.201 idle_prompt payloads lack the message);
                 // truthful-but-empty beats sticky-but-possibly-false.
                 endTurn(running: running, ending: .done, detail: lastMessage)
+                if current?.turnOpen == false {
+                    // Decided from a read a round trip old. A prompt submitted since has
+                    // reopened the turn and written working, and this would cover it and
+                    // close the turn under it, so it lands only if the turn is still
+                    // closed. A turn that reads open or unknown is one nothing closed (Esc
+                    // fires no hook), and closing it is what the nudge is for.
+                    update.requiredTurnOpen = false
+                }
             } else {
                 // Skip detail for permission_prompt (PermissionRequest carries it better).
                 // Other subtypes (auth_success, elicitation_dialog, ...) get the message.
@@ -356,6 +516,7 @@ extension AgentHookRunner {
             // "working" would create the inverse of the false-idle bug.
             let payloadCount = AgentHookDetail.backgroundTaskCount(json, excludingID: json["agent_id"] as? String)
             let remaining: Int
+            var afterDecrement: CurrentAgentStatus? = nil
             if let payloadCount {
                 remaining = payloadCount
                 update.backgroundTasks = payloadCount
@@ -373,6 +534,7 @@ extension AgentHookRunner {
                     return nil
                 }
                 remaining = after.backgroundTasks
+                afterDecrement = after
                 // The decrement already stored the new count, so nothing else goes
                 // to iTerm2 unless the display has to change. That takes an explicit
                 // closed turn: a flag iTerm2 has never been told (the hooks were
@@ -403,18 +565,31 @@ extension AgentHookRunner {
                 return nil  // No field: nothing to learn from this event.
             }
             if remaining > 0 {
-                update.showWorking(detail: AgentHookDetail.backgroundDetail(count: remaining))
-                if isCodex {
-                    // A sibling that reached zero in the meantime already wrote done,
-                    // and this "working" would cover it with nothing left to clear it.
-                    update.endingIfTasksFinished = (.done, lastMessage)
-                } else {
-                    // This can land mid-turn, and re-asserting the status disowns
-                    // whatever the turn's last event asked to happen when the turn
-                    // ends. Without re-arming, an Esc between here and the next tool
-                    // event would go unnoticed and leave the tab reading "working."
-                    update.expiresOnProgressEnd = true
+                if !isCodex {
+                    return try showSubagentActivity(
+                        count: remaining,
+                        workingDetail: AgentHookDetail.backgroundDetail(count: remaining))
                 }
+                // The decrement's answer says whether the parent's turn is over. Its
+                // reading is a round trip old by the time this lands, so background
+                // carries it as a precondition: a prompt submitted in between already
+                // wrote "working", and the count is stored either way.
+                if afterDecrement?.turnOpen == false {
+                    update.showBackground(detail: AgentHookDetail.backgroundDetail(count: remaining))
+                    update.requiredTurnOpen = false
+                } else {
+                    update.showWorking(detail: AgentHookDetail.backgroundDetail(count: remaining))
+                    if afterDecrement?.turnOpen == true {
+                        // Read as open a round trip ago. The parent's Stop may have closed
+                        // the turn and written background since, and a late working would
+                        // cover it with nothing left to put it back. An unknown flag stays
+                        // unguarded: working is what it always said.
+                        update.requiredTurnOpen = true
+                    }
+                }
+                // A sibling that reached zero in the meantime already wrote done,
+                // and this status would cover it with nothing left to clear it.
+                update.endingIfTasksFinished = (.done, lastMessage)
             }
             // remaining == 0: last one done. Store the zero but change nothing
             // visible; the main loop wakes to process the results and its own
@@ -439,12 +614,16 @@ extension AgentHookRunner {
                 running = try storedBackgroundTaskCount()
             }
             endTurn(running: running, ending: .error, detail: "")
+        case "SessionStart" where json["source"] as? String == "compact":
+            // Not a session boundary: Claude Code fires it after compacting the
+            // conversation, which can happen mid-turn, and background work survives it.
+            // Resetting here would show idle and zero the count under a running turn,
+            // and close the turn flag that tells background from working.
+            return nil
         case "SessionStart", "SessionEnd":
             update.showIdle(detail: "")  // session boundary, wipe stale detail
             update.backgroundTasks = 0  // and the stored count with it
-            if isCodex {
-                update.turnOpen = false
-            }
+            update.turnOpen = false
         default:
             return nil
         }

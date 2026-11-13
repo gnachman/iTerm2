@@ -428,7 +428,7 @@ final class WorkgroupAutoSendClippingsTests: XCTestCase {
     func test_reportedState_readsExplicitStatusText() {
         let cases: [(String, SessionState)] = [
             ("idle", .idle), ("working", .working), ("waiting", .waiting),
-            ("done", .idle), ("error", .idle)]
+            ("done", .idle), ("error", .idle), ("background", .working)]
         for (text, expected) in cases {
             let status = tabStatus(sessionID: "s", statusText: text)
             XCTAssertEqual(WorkgroupIntrospection.reportedState(forTabStatus: status),
@@ -436,6 +436,18 @@ final class WorkgroupAutoSendClippingsTests: XCTestCase {
             XCTAssertEqual(WorkgroupIntrospection.state(forTabStatus: status),
                            expected, "text=\(text)")
         }
+    }
+
+    // Background means the turn is over but work it started is still running.
+    // Its results are still on the way, so working -> background is not the
+    // "finished" edge the auto behaviors fire on.
+    @MainActor
+    func test_decision_workingToBackgroundIsNotAWorkingToIdleEdge() {
+        let status = tabStatus(sessionID: "s", statusText: "background")
+        let newState = WorkgroupIntrospection.reportedState(forTabStatus: status)
+        XCTAssertFalse(iTermWorkgroupPeerPort.shouldAutoRequestReview(
+            previousState: .working, newState: newState,
+            isMainSession: true, toggleOn: true, reviewCount: 1))
     }
 
     // Claude Code reports a finished turn as done rather than idle. The

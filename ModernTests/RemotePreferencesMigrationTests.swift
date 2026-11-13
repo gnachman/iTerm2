@@ -118,6 +118,7 @@ final class RemotePreferencesMigrationTests: XCTestCase {
                                                         to: ud)
         }
         XCTAssertTrue(ud.bool(forKey: "StatusPriorityAddedDoneAndError"))
+        XCTAssertTrue(ud.bool(forKey: "StatusPriorityAddedBackground"))
         XCTAssertTrue(differ(local(ud), remote),
                       "precondition: the migration changes synced keys relative to the folder")
         XCTAssertEqual(migrations.count, 1, "the migration must be reported")

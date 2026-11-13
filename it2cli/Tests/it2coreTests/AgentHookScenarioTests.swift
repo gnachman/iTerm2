@@ -28,6 +28,26 @@ final class FakeAgentStatusBackend: AgentStatusBackend {
     /// Stands in for a prompt submitted between a --json answer and the caller's next write: its
     /// hook reopened the turn and wrote "working", which that write must not cover.
     var promptAfterJSON = false
+    /// The same, for a prompt submitted between the first status answer (a read, or a --json
+    /// write) and the write decided from it. Fires once.
+    var promptAfterStatusRead = false
+    /// Stands in for the session's own Stop landing between the first status answer and the
+    /// write decided from it: the turn closed and background now shows. Fires once.
+    var stopAfterStatusRead = false
+
+    /// Applies whichever of the one-shot races above is armed, right after an answer was taken.
+    private func raceAfterStatusAnswer() {
+        if promptAfterStatusRead {
+            promptAfterStatusRead = false
+            status = "working"
+            turnOpen = true
+        }
+        if stopAfterStatusRead {
+            stopAfterStatusRead = false
+            status = "background"
+            turnOpen = false
+        }
+    }
     /// Stands in for the hook being killed on its timeout: once this many calls have been logged,
     /// the handler dies where it stands.
     var killAfter: Int? = nil
@@ -47,7 +67,9 @@ final class FakeAgentStatusBackend: AgentStatusBackend {
         case ("session", "get-background-tasks"):
             return AgentHookCommandResult(status: 0, stdout: "\(backgroundTasks)", stderr: "")
         case ("session", "get-status"):
-            return AgentHookCommandResult(status: 0, stdout: statusJSON(), stderr: "")
+            let answer = statusJSON()
+            raceAfterStatusAnswer()
+            return AgentHookCommandResult(status: 0, stdout: answer, stderr: "")
         default:
             return AgentHookCommandResult(status: 1, stdout: "", stderr: "fake it2: unexpected command: \(argv)")
         }
@@ -131,6 +153,7 @@ final class FakeAgentStatusBackend: AgentStatusBackend {
                 status = "working"
                 turnOpen = true
             }
+            raceAfterStatusAnswer()
             return AgentHookCommandResult(status: 0, stdout: answer, stderr: "")
         }
         return AgentHookCommandResult(status: 0, stdout: "Session status updated.", stderr: "")
@@ -153,12 +176,15 @@ final class AgentHookScenarioTests: XCTestCase {
     private static let IDLE = ["--status=idle", "--dot-color=#00d75f", "--text-color=#888888"]
     private static let DONE = ["--status=done", "--dot-color=#00d75f", "--text-color=#00d75f"]
     private static let ERROR = ["--status=error", "--dot-color=#ff3b30", "--text-color=#ff3b30"]
+    private static let BACKGROUND = ["--status=background", "--dot-color=#af5fff", "--text-color=#af5fff"]
     // Codex draws no ring of its own, so the hook asks iTerm2 for it in the same update.
     private static let cWORKING = WORKING + ["--progress=running"]
     private static let cWAITING = WAITING + ["--progress=stopped"]
     private static let cIDLE = IDLE + ["--progress=stopped"]
     private static let cDONE = DONE + ["--progress=stopped"]
     private static let cERROR = ERROR + ["--progress=stopped"]
+    // Work the session started is still running, so the ring keeps going.
+    private static let cBACKGROUND = BACKGROUND + ["--progress=running"]
     // What a Claude Code status scoped to the turn asks iTerm2 to do when the session's progress
     // protocol reports the turn ended. Never sent for Codex.
     private static let EXPIRES = ["--expires-on=progress-end", "--then-status=idle", "--then-dot-color=#00d75f",
@@ -188,6 +214,15 @@ final class AgentHookScenarioTests: XCTestCase {
         return ["session", "get-status"] + ADDRESS + QUIET
     }
 
+    // A write decided from a read that found the turn closed: dropped if a prompt reopened it.
+    private static let IF_TURN_CLOSED = ["--if-turn-open=false", "--json"]
+    // A Codex tool call's write: working only while the turn is open, and the status comes back.
+    private static let IF_TURN_OPEN = ["--if-turn-open=true", "--json"]
+
+    private static func storeBackgroundTasks(_ value: String) -> [String] {
+        return ["set-status"] + ADDRESS + ["--background-tasks=" + value, "--json"] + QUIET
+    }
+
     private static func backgroundTasksDelta(_ value: String) -> [String] {
         return ["set-status"] + ADDRESS + ["--background-tasks-delta=" + value, "--json"] + QUIET
     }
@@ -197,6 +232,8 @@ final class AgentHookScenarioTests: XCTestCase {
         static let finishOnStatusWrite = Flags(rawValue: 1)
         static let promptAfterJSON = Flags(rawValue: 2)
         static let killAfterOne = Flags(rawValue: 4)
+        static let promptAfterStatusRead = Flags(rawValue: 8)
+        static let stopAfterStatusRead = Flags(rawValue: 16)
     }
 
     private enum Step {
@@ -206,6 +243,8 @@ final class AgentHookScenarioTests: XCTestCase {
         /// it becomes idle.
         case userTyped
         case expectStatus(String?)
+        case expectBackgroundTasks(Int)
+        case expectTurnOpen(Bool?)
     }
 
     private func payload(_ fixture: String) throws -> Data {
@@ -229,10 +268,16 @@ final class AgentHookScenarioTests: XCTestCase {
                 }
             case .expectStatus(let expected):
                 XCTAssertEqual(backend.status, expected, "\(name): displayed status", file: file, line: line)
+            case .expectTurnOpen(let expected):
+                XCTAssertEqual(backend.turnOpen, expected, "\(name): turn flag", file: file, line: line)
+            case .expectBackgroundTasks(let expected):
+                XCTAssertEqual(backend.backgroundTasks, expected, "\(name): stored count", file: file, line: line)
             case .hook(let fixture, let expected, let flags):
                 backend.resetCalls()
                 backend.finishOnStatusWrite = flags.contains(.finishOnStatusWrite)
                 backend.promptAfterJSON = flags.contains(.promptAfterJSON)
+                backend.promptAfterStatusRead = flags.contains(.promptAfterStatusRead)
+                backend.stopAfterStatusRead = flags.contains(.stopAfterStatusRead)
                 backend.killAfter = flags.contains(.killAfterOne) ? 1 : nil
                 let agent: AgentKind = fixture.hasPrefix("codex/") ? .codex : .claude
                 var stderr: [String] = []
@@ -260,8 +305,8 @@ final class AgentHookScenarioTests: XCTestCase {
     func testCodexPlainTurn() throws {
         try run("codex: plain turn", [
             .hook("codex/UserPromptSubmit", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.TURN_OPEN)]),
-            .hook("codex/PreToolUse-Bash", [Self.setStatus(Self.cWORKING, Self.detail(""))]),
-            .hook("codex/PostToolUse-Bash", [Self.setStatus(Self.cWORKING, Self.detail(""))]),
+            .hook("codex/PreToolUse-Bash", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.IF_TURN_OPEN)]),
+            .hook("codex/PostToolUse-Bash", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.IF_TURN_OPEN)]),
             .hook("codex/Stop-hello", [Self.getBackgroundTasks(),
                                        Self.setStatus(Self.cDONE, Self.detail("HELLO"), Self.TURN_CLOSED)]),
         ])
@@ -270,12 +315,12 @@ final class AgentHookScenarioTests: XCTestCase {
     func testCodexDetachedSubagentOutlivesTheParentTurn() throws {
         try run("codex: detached sub-agent outlives the parent turn", [
             .hook("codex/UserPromptSubmit", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.TURN_OPEN)]),
-            .hook("codex/PreToolUse-spawn_agent", [Self.setStatus(Self.cWORKING, Self.detail(""))]),
+            .hook("codex/PreToolUse-spawn_agent", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.IF_TURN_OPEN)]),
             .hook("codex/SubagentStart", [Self.setStatus(["--background-tasks-delta=1"])]),
             // Parent goes idle while the child runs: stay working, and learn from the same write
             // whether the child finished during it.
             .hook("codex/Stop-spawned", [Self.getBackgroundTasks(),
-                                         Self.setStatus(Self.cWORKING, Self.detail("1 background task running"),
+                                         Self.setStatus(Self.cBACKGROUND, Self.detail("1 background task running"),
                                                         Self.TURN_CLOSED_COUNTING)]),
             // Child finishes; nothing else will fire, so SubagentStop reports idle.
             .hook("codex/SubagentStop", [Self.backgroundTasksDelta("-1"),
@@ -291,7 +336,7 @@ final class AgentHookScenarioTests: XCTestCase {
             // The child saw the turn still open and stayed quiet, so nothing else will ever clear
             // the "working"; the count that comes back with the write catches it.
             .hook("codex/Stop-spawned", [Self.getBackgroundTasks(),
-                                         Self.setStatus(Self.cWORKING, Self.detail("1 background task running"),
+                                         Self.setStatus(Self.cBACKGROUND, Self.detail("1 background task running"),
                                                         Self.TURN_CLOSED_COUNTING),
                                          Self.setStatus(Self.cDONE, Self.detail("SPAWNED"), Self.IF_FINISHED)],
                   [.finishOnStatusWrite]),
@@ -308,7 +353,7 @@ final class AgentHookScenarioTests: XCTestCase {
             // that reading and iTerm2 drops it: the dot keeps showing the running turn, and the
             // ring, which travels in the same update, is left alone too.
             .hook("codex/Stop-spawned", [Self.getBackgroundTasks(),
-                                         Self.setStatus(Self.cWORKING, Self.detail("1 background task running"),
+                                         Self.setStatus(Self.cBACKGROUND, Self.detail("1 background task running"),
                                                         Self.TURN_CLOSED_COUNTING),
                                          Self.setStatus(Self.cDONE, Self.detail("SPAWNED"), Self.IF_FINISHED)],
                   [.finishOnStatusWrite, .promptAfterJSON]),
@@ -321,7 +366,7 @@ final class AgentHookScenarioTests: XCTestCase {
             .hook("codex/UserPromptSubmit", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.TURN_OPEN)]),
             .hook("codex/SubagentStart", [Self.setStatus(["--background-tasks-delta=1"])]),
             .hook("codex/Stop-spawned", [Self.getBackgroundTasks(),
-                                         Self.setStatus(Self.cWORKING, Self.detail("1 background task running"),
+                                         Self.setStatus(Self.cBACKGROUND, Self.detail("1 background task running"),
                                                         Self.TURN_CLOSED_COUNTING)]),
             // The decrement's answer said the turn was closed and nothing was left, but a prompt
             // reopened it before the idle could land.
@@ -349,7 +394,7 @@ final class AgentHookScenarioTests: XCTestCase {
     func testCodexEscCancelsTheTurn() throws {
         try run("codex: Esc cancels the turn", [
             .hook("codex/UserPromptSubmit", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.TURN_OPEN)]),
-            .hook("codex/PreToolUse-Bash", [Self.setStatus(Self.cWORKING, Self.detail(""))]),
+            .hook("codex/PreToolUse-Bash", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.IF_TURN_OPEN)]),
             .hook("codex/Interrupt", [Self.getBackgroundTasks(),
                                       Self.setStatus(Self.cIDLE, Self.detail(""), Self.TURN_CLOSED)]),
         ])
@@ -360,7 +405,7 @@ final class AgentHookScenarioTests: XCTestCase {
             .hook("codex/UserPromptSubmit", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.TURN_OPEN)]),
             .hook("codex/SubagentStart", [Self.setStatus(["--background-tasks-delta=1"])]),
             .hook("codex/StopFailure", [Self.getBackgroundTasks(),
-                                        Self.setStatus(Self.cWORKING, Self.detail("1 background task running"),
+                                        Self.setStatus(Self.cBACKGROUND, Self.detail("1 background task running"),
                                                        Self.TURN_CLOSED_COUNTING),
                                         Self.setStatus(Self.cERROR, Self.detail(""), Self.IF_FINISHED)],
                   [.finishOnStatusWrite]),
@@ -372,7 +417,7 @@ final class AgentHookScenarioTests: XCTestCase {
             .hook("codex/UserPromptSubmit", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.TURN_OPEN)]),
             .hook("codex/SubagentStart", [Self.setStatus(["--background-tasks-delta=1"])]),
             .hook("codex/Interrupt", [Self.getBackgroundTasks(),
-                                      Self.setStatus(Self.cWORKING, Self.detail("1 background task running"),
+                                      Self.setStatus(Self.cBACKGROUND, Self.detail("1 background task running"),
                                                      Self.TURN_CLOSED_COUNTING),
                                       Self.setStatus(Self.cIDLE, Self.detail(""), Self.IF_FINISHED)],
                   [.finishOnStatusWrite]),
@@ -384,7 +429,7 @@ final class AgentHookScenarioTests: XCTestCase {
             .hook("codex/UserPromptSubmit", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.TURN_OPEN)]),
             .hook("codex/SubagentStart", [Self.setStatus(["--background-tasks-delta=1"])]),
             .hook("codex/Interrupt", [Self.getBackgroundTasks(),
-                                      Self.setStatus(Self.cWORKING, Self.detail("1 background task running"),
+                                      Self.setStatus(Self.cBACKGROUND, Self.detail("1 background task running"),
                                                      Self.TURN_CLOSED_COUNTING)]),
             .hook("codex/SubagentStop", [Self.backgroundTasksDelta("-1"),
                                          Self.setStatus(Self.cDONE, Self.detail("DONE"), Self.IF_FINISHED)]),
@@ -396,7 +441,7 @@ final class AgentHookScenarioTests: XCTestCase {
             .hook("codex/UserPromptSubmit", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.TURN_OPEN)]),
             .hook("codex/SubagentStart", [Self.setStatus(["--background-tasks-delta=1"])]),
             .hook("codex/Stop-spawned", [Self.getBackgroundTasks(),
-                                         Self.setStatus(Self.cWORKING, Self.detail("1 background task running"),
+                                         Self.setStatus(Self.cBACKGROUND, Self.detail("1 background task running"),
                                                         Self.TURN_CLOSED_COUNTING)]),
             // The child asks permission after the parent stopped; refusing it brings no
             // PostToolUse, so the "waiting" it left is the child's to clear when it stops.
@@ -472,13 +517,13 @@ final class AgentHookScenarioTests: XCTestCase {
             .hook("codex/SubagentStart", [Self.setStatus(["--background-tasks-delta=1"])]),
             .hook("codex/SubagentStart", [Self.setStatus(["--background-tasks-delta=1"])]),
             .hook("codex/Stop-spawned", [Self.getBackgroundTasks(),
-                                         Self.setStatus(Self.cWORKING, Self.detail("2 background tasks running"),
+                                         Self.setStatus(Self.cBACKGROUND, Self.detail("2 background tasks running"),
                                                         Self.TURN_CLOSED_COUNTING)]),
             // This hook counted down to 1, but its sibling reached 0 and wrote idle before this
             // "working" landed. Nothing else will fire, so the status that comes back with the
             // write is what catches it.
             .hook("codex/SubagentStop", [Self.backgroundTasksDelta("-1"),
-                                         Self.setStatus(Self.cWORKING, Self.detail("1 background task running"), ["--json"]),
+                                         Self.setStatus(Self.cBACKGROUND, Self.detail("1 background task running"), ["--if-turn-open=false", "--json"]),
                                          Self.setStatus(Self.cDONE, Self.detail("DONE"), Self.IF_FINISHED)],
                   [.finishOnStatusWrite]),
         ])
@@ -499,6 +544,117 @@ final class AgentHookScenarioTests: XCTestCase {
         ])
     }
 
+    func testCodexSubagentFinishesWhileTheTurnIsOpenAndAnotherRuns() throws {
+        try run("codex: sub-agent finishes while the turn is open and another runs", [
+            .hook("codex/UserPromptSubmit", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.TURN_OPEN)]),
+            .hook("codex/SubagentStart", [Self.setStatus(["--background-tasks-delta=1"])]),
+            .hook("codex/SubagentStart", [Self.setStatus(["--background-tasks-delta=1"])]),
+            // The parent is still in its turn, so it is working, not waiting on background work.
+            .hook("codex/SubagentStop", [Self.backgroundTasksDelta("-1"),
+                                         Self.setStatus(Self.cWORKING, Self.detail("1 background task running"),
+                                                        Self.IF_TURN_OPEN)]),
+            .expectStatus("working"),
+        ])
+    }
+
+    func testCodexTheTurnEndsBeforeASubagentsWorkingUpdate() throws {
+        try run("codex: the turn ends before a sub-agent's working update", [
+            .hook("codex/UserPromptSubmit", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.TURN_OPEN)]),
+            .hook("codex/SubagentStart", [Self.setStatus(["--background-tasks-delta=1"])]),
+            .hook("codex/SubagentStart", [Self.setStatus(["--background-tasks-delta=1"])]),
+            // The decrement read the turn as open, but the parent's Stop landed before the
+            // working write; its background is kept, and so is the decremented count.
+            .hook("codex/SubagentStop", [Self.backgroundTasksDelta("-1"),
+                                         Self.setStatus(Self.cWORKING, Self.detail("1 background task running"),
+                                                        Self.IF_TURN_OPEN)],
+                  [.stopAfterStatusRead]),
+            .expectStatus("background"),
+            .expectBackgroundTasks(1),
+        ])
+    }
+
+    func testCodexPromptLandsBeforeABackgroundUpdate() throws {
+        try run("codex: a prompt lands before a sub-agent's background update", [
+            .hook("codex/UserPromptSubmit", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.TURN_OPEN)]),
+            .hook("codex/SubagentStart", [Self.setStatus(["--background-tasks-delta=1"])]),
+            .hook("codex/SubagentStart", [Self.setStatus(["--background-tasks-delta=1"])]),
+            .hook("codex/Stop-spawned", [Self.getBackgroundTasks(),
+                                         Self.setStatus(Self.cBACKGROUND, Self.detail("2 background tasks running"),
+                                                        Self.TURN_CLOSED_COUNTING)]),
+            // The decrement said the turn was closed, but a prompt reopened it before the
+            // background could land, and background must not cover its working.
+            .hook("codex/SubagentStop", [Self.backgroundTasksDelta("-1"),
+                                         Self.setStatus(Self.cBACKGROUND, Self.detail("1 background task running"),
+                                                        ["--if-turn-open=false", "--json"])],
+                  [.promptAfterJSON]),
+            .expectStatus("working"),
+        ])
+    }
+
+    func testCodexCompactionMidTurnLeavesTheTurnOpen() throws {
+        try run("codex: compaction mid-turn leaves the turn open", [
+            .hook("codex/UserPromptSubmit", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.TURN_OPEN)]),
+            .hook("codex/SubagentStart", [Self.setStatus(["--background-tasks-delta=1"])]),
+            .hook("codex/SessionStart-compact", []),
+            // The turn is still open, so the sub-agent finishing leaves the display to the
+            // parent's Stop rather than reporting done.
+            .hook("codex/SubagentStop", [Self.backgroundTasksDelta("-1")]),
+            .expectStatus("working"),
+        ])
+    }
+
+    func testCodexADetachedSubagentsToolCallsDoNotReadAsWorking() throws {
+        try run("codex: a detached sub-agent's tool calls do not read as working", [
+            .hook("codex/UserPromptSubmit", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.TURN_OPEN)]),
+            .hook("codex/SubagentStart", [Self.setStatus(["--background-tasks-delta=1"])]),
+            .hook("codex/Stop-spawned", [Self.getBackgroundTasks(),
+                                         Self.setStatus(Self.cBACKGROUND, Self.detail("1 background task running"),
+                                                        Self.TURN_CLOSED_COUNTING)]),
+            // Codex cannot say whose tool call this is. The turn is closed, so working is
+            // dropped and background stays, at the cost of the one write it always made.
+            .hook("codex/PreToolUse-Bash", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.IF_TURN_OPEN)]),
+            .hook("codex/PostToolUse-Bash", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.IF_TURN_OPEN)]),
+            .expectStatus("background"),
+        ])
+    }
+
+    func testCodexADetachedSubagentsGrantedPermissionGoesBackToBackground() throws {
+        try run("codex: a detached sub-agent's granted permission goes back to background", [
+            .hook("codex/UserPromptSubmit", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.TURN_OPEN)]),
+            .hook("codex/SubagentStart", [Self.setStatus(["--background-tasks-delta=1"])]),
+            .hook("codex/Stop-spawned", [Self.getBackgroundTasks(),
+                                         Self.setStatus(Self.cBACKGROUND, Self.detail("1 background task running"),
+                                                        Self.TURN_CLOSED_COUNTING)]),
+            .hook("codex/PermissionRequest-apply_patch",
+                  [Self.setStatus(Self.cWAITING, Self.detail("Allow Edit: Sources/cc-status/main.swift, tests/run.py?"))]),
+            // Granted: the tool ran. Working is dropped, and the answer says to put background back.
+            .hook("codex/PostToolUse-Bash", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.IF_TURN_OPEN),
+                                             Self.setStatus(Self.cBACKGROUND, Self.detail("1 background task running"),
+                                                            ["--if-turn-open=false", "--json"])]),
+            .expectStatus("background"),
+        ])
+    }
+
+    func testCodexAToolCallWithNoTurnOnRecordReadsAsWorking() throws {
+        try run("codex: a tool call with no turn on record reads as working", [
+            // Hooks installed mid-session: the guarded write is dropped, so it says working
+            // unguarded, as it always did.
+            .hook("codex/PreToolUse-Bash", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.IF_TURN_OPEN),
+                                            Self.setStatus(Self.cWORKING, Self.detail(""))]),
+            .expectStatus("working"),
+        ])
+    }
+
+    func testCodexAUtilityToolCallAtAnIdlePromptChangesNothing() throws {
+        try run("codex: a utility tool call at an idle prompt changes nothing", [
+            .hook("codex/UserPromptSubmit", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.TURN_OPEN)]),
+            .hook("codex/Stop-hello", [Self.getBackgroundTasks(),
+                                       Self.setStatus(Self.cDONE, Self.detail("HELLO"), Self.TURN_CLOSED)]),
+            .hook("codex/PreToolUse-Bash", [Self.setStatus(Self.cWORKING, Self.detail(""), Self.IF_TURN_OPEN)]),
+            .expectStatus("done"),
+        ])
+    }
+
     func testCodexUnhandledSnakeCaseToolReadsAsWords() throws {
         try run("codex: an unhandled snake_case tool reads as words", [
             .hook("codex/PermissionRequest-read_file",
@@ -510,16 +666,16 @@ final class AgentHookScenarioTests: XCTestCase {
 
     func testClaudePlainTurnMakesNoExtraIt2Calls() throws {
         try run("claude: plain turn makes no extra it2 calls", [
-            .hook("claude/UserPromptSubmit", [Self.setStatus(Self.WORKING, Self.detail(""), Self.EXPIRES)]),
-            .hook("claude/PreToolUse-Bash", [Self.setStatus(Self.WORKING, Self.detail(""), Self.EXPIRES)]),
-            .hook("claude/PostToolUse-Bash", [Self.setStatus(Self.WORKING, Self.detail(""), Self.EXPIRES)]),
-            .hook("claude/Stop-nobg", [Self.setStatus(Self.DONE, Self.detail("HELLO"), ["--background-tasks=0"])]),
+            .hook("claude/UserPromptSubmit", [Self.setStatus(Self.WORKING, Self.detail(""), Self.TURN_OPEN, Self.EXPIRES)]),
+            .hook("claude/PreToolUse-Bash", [Self.setStatus(Self.WORKING, Self.detail(""), Self.TURN_OPEN, Self.EXPIRES)]),
+            .hook("claude/PostToolUse-Bash", [Self.setStatus(Self.WORKING, Self.detail(""), Self.TURN_OPEN, Self.EXPIRES)]),
+            .hook("claude/Stop-nobg", [Self.setStatus(Self.DONE, Self.detail("HELLO"), ["--background-tasks=0"], Self.TURN_CLOSED)]),
         ])
     }
 
     func testClaudeTheIdleNudgeLeavesAFinishedTurnAlone() throws {
         try run("claude: the idle nudge leaves a finished turn alone", [
-            .hook("claude/Stop-nobg", [Self.setStatus(Self.DONE, Self.detail("HELLO"), ["--background-tasks=0"])]),
+            .hook("claude/Stop-nobg", [Self.setStatus(Self.DONE, Self.detail("HELLO"), ["--background-tasks=0"], Self.TURN_CLOSED)]),
             // The nudge has no message; re-sending done would wipe Stop's.
             .hook("claude/Notification-idle", [Self.getStatus()]),
             .expectStatus("done"),
@@ -528,7 +684,7 @@ final class AgentHookScenarioTests: XCTestCase {
 
     func testClaudeTheIdleNudgeDoesNotUndoTheUserSeeingTheResult() throws {
         try run("claude: the idle nudge does not undo the user seeing the result", [
-            .hook("claude/Stop-nobg", [Self.setStatus(Self.DONE, Self.detail("HELLO"), ["--background-tasks=0"])]),
+            .hook("claude/Stop-nobg", [Self.setStatus(Self.DONE, Self.detail("HELLO"), ["--background-tasks=0"], Self.TURN_CLOSED)]),
             .userTyped,
             .hook("claude/Notification-idle", [Self.getStatus()]),
             .expectStatus("idle"),
@@ -537,8 +693,8 @@ final class AgentHookScenarioTests: XCTestCase {
 
     func testClaudeAFailedTurnReportsErrorAndTheNudgeKeepsIt() throws {
         try run("claude: a failed turn reports error and the nudge keeps it", [
-            .hook("claude/UserPromptSubmit", [Self.setStatus(Self.WORKING, Self.detail(""), Self.EXPIRES)]),
-            .hook("claude/StopFailure", [Self.getBackgroundTasks(), Self.setStatus(Self.ERROR, Self.detail(""))]),
+            .hook("claude/UserPromptSubmit", [Self.setStatus(Self.WORKING, Self.detail(""), Self.TURN_OPEN, Self.EXPIRES)]),
+            .hook("claude/StopFailure", [Self.getBackgroundTasks(), Self.setStatus(Self.ERROR, Self.detail(""), Self.TURN_CLOSED)]),
             .hook("claude/Notification-idle", [Self.getStatus()]),
             .expectStatus("error"),
         ])
@@ -546,21 +702,223 @@ final class AgentHookScenarioTests: XCTestCase {
 
     func testClaudeBackgroundWorkSurvivesTheIdleNudge() throws {
         try run("claude: background work survives the idle nudge", [
-            .hook("claude/Stop-bg1", [Self.setStatus(Self.WORKING, Self.detail("1 background task running"),
-                                                     ["--background-tasks=1"])]),
+            .hook("claude/Stop-bg1", [Self.setStatus(Self.BACKGROUND, Self.detail("1 background task running"),
+                                                     ["--background-tasks=1"], Self.TURN_CLOSED)]),
+            .expectStatus("background"),
             .hook("claude/Notification-idle", [Self.getStatus(),
-                                               Self.setStatus(Self.WORKING, Self.detail("1 background task running"))]),
+                                               Self.setStatus(Self.BACKGROUND, Self.detail("1 background task running"),
+                                                              Self.TURN_CLOSED, Self.IF_TURN_CLOSED)]),
             // The stopping agent is still listed as running; excluded by agent_id.
             .hook("claude/SubagentStop-last", [Self.setStatus(["--background-tasks=0"])]),
             // The last of the background work finished after Stop, so its result is what the user
             // has not seen yet.
-            .hook("claude/Notification-idle", [Self.getStatus(), Self.setStatus(Self.DONE, Self.detail(""))]),
+            .hook("claude/Notification-idle", [Self.getStatus(), Self.setStatus(Self.DONE, Self.detail(""), Self.TURN_CLOSED,
+                                                                                 Self.IF_TURN_CLOSED)]),
+        ])
+    }
+
+    func testClaudeABackgroundAgentsToolCallsDoNotReadAsWorking() throws {
+        try run("claude: a background agent's tool calls do not read as working", [
+            .hook("claude/UserPromptSubmit", [Self.setStatus(Self.WORKING, Self.detail(""), Self.TURN_OPEN, Self.EXPIRES)]),
+            .hook("claude/Stop-bg1", [Self.setStatus(Self.BACKGROUND, Self.detail("1 background task running"),
+                                                     ["--background-tasks=1"], Self.TURN_CLOSED)]),
+            // Sub-agents run the session's hooks. Background already shows, so the read is all.
+            .hook("claude/PreToolUse-subagent", [Self.getStatus()]),
+            .hook("claude/PostToolUse-subagent", [Self.getStatus()]),
+            .expectStatus("background"),
+        ])
+    }
+
+    func testClaudeABackgroundAgentsPermissionPromptIsClearedByItsNextToolEvent() throws {
+        try run("claude: a background agent's permission prompt is cleared by its next tool event", [
+            .hook("claude/Stop-bg1", [Self.setStatus(Self.BACKGROUND, Self.detail("1 background task running"),
+                                                     ["--background-tasks=1"], Self.TURN_CLOSED)]),
+            .hook("claude/PermissionRequest-Bash", [Self.setStatus(Self.WAITING, Self.detail("Allow Bash: rm -rf build?"), Self.EXPIRES)]),
+            .expectStatus("waiting"),
+            // Granted: the tool ran, and the session goes back to background, not to working.
+            .hook("claude/PostToolUse-subagent", [Self.getStatus(),
+                                                  Self.setStatus(Self.BACKGROUND, Self.detail("1 background task running"),
+                                                                 ["--if-turn-open=false", "--json"])]),
+            .expectStatus("background"),
+        ])
+    }
+
+    func testClaudeASubagentToolCallAtAnIdlePromptChangesNothing() throws {
+        try run("claude: a sub-agent tool call at an idle prompt changes nothing", [
+            .hook("claude/Stop-nobg", [Self.setStatus(Self.DONE, Self.detail("HELLO"), ["--background-tasks=0"], Self.TURN_CLOSED)]),
+            // A utility agent with nothing counted: the turn's result stays on display.
+            .hook("claude/PreToolUse-subagent", [Self.getStatus()]),
+            .expectStatus("done"),
+        ])
+    }
+
+    func testClaudeASubagentToolCallWithNoTurnOnRecordReadsAsWorking() throws {
+        try run("claude: a sub-agent tool call with no turn on record reads as working", [
+            // Hooks installed mid-session: the flag is unknown, so it says what it always said.
+            .hook("claude/PreToolUse-subagent", [Self.getStatus(),
+                                                 Self.setStatus(Self.WORKING, Self.detail(""), Self.EXPIRES)]),
+            .expectStatus("working"),
+        ])
+    }
+
+    func testClaudeASubagentToolCallMidTurnReadsAsWorking() throws {
+        try run("claude: a sub-agent tool call mid-turn reads as working", [
+            .hook("claude/UserPromptSubmit", [Self.setStatus(Self.WORKING, Self.detail(""), Self.TURN_OPEN, Self.EXPIRES)]),
+            .hook("claude/PreToolUse-subagent", [Self.getStatus(),
+                                                 Self.setStatus(Self.WORKING, Self.detail(""), ["--if-turn-open=true"],
+                                                                Self.EXPIRES, ["--json"])]),
+            .expectStatus("working"),
+        ])
+    }
+
+    func testClaudeOneOfTwoBackgroundAgentsFinishesAfterTheTurn() throws {
+        try run("claude: one of two background agents finishes after the turn", [
+            .hook("claude/Stop-bg2", [Self.setStatus(Self.BACKGROUND, Self.detail("2 background tasks running"),
+                                                     ["--background-tasks=2"], Self.TURN_CLOSED)]),
+            // The other is still running and the session is still free to take input.
+            .hook("claude/SubagentStop-first", [Self.storeBackgroundTasks("1"),
+                                                Self.setStatus(Self.BACKGROUND, Self.detail("1 background task running"),
+                                                               ["--if-turn-open=false", "--json"])]),
+            .expectStatus("background"),
+            .hook("claude/SubagentStop-last", [Self.setStatus(["--background-tasks=0"])]),
+            .expectStatus("background"),
+            .hook("claude/Notification-idle", [Self.getStatus(), Self.setStatus(Self.DONE, Self.detail(""), Self.TURN_CLOSED,
+                                                                                 Self.IF_TURN_CLOSED)]),
+        ])
+    }
+
+    func testClaudeOneOfTwoAgentsFinishesMidTurn() throws {
+        try run("claude: one of two agents finishes mid-turn", [
+            .hook("claude/UserPromptSubmit", [Self.setStatus(Self.WORKING, Self.detail(""), Self.TURN_OPEN, Self.EXPIRES)]),
+            .hook("claude/SubagentStop-first", [Self.storeBackgroundTasks("1"),
+                                                Self.setStatus(Self.WORKING, Self.detail("1 background task running"),
+                                                               ["--if-turn-open=true"],
+                                                               Self.EXPIRES, ["--json"])]),
+            .expectStatus("working"),
+        ])
+    }
+
+    func testClaudeAPromptLandsBeforeASubagentsBackgroundUpdate() throws {
+        try run("claude: a prompt lands before a sub-agent's background update", [
+            .hook("claude/Stop-bg2", [Self.setStatus(Self.BACKGROUND, Self.detail("2 background tasks running"),
+                                                     ["--background-tasks=2"], Self.TURN_CLOSED)]),
+            // Read as closed, but the prompt's working landed before the write; it is kept.
+            .hook("claude/SubagentStop-first", [Self.storeBackgroundTasks("1"),
+                                                Self.setStatus(Self.BACKGROUND, Self.detail("1 background task running"),
+                                                               ["--if-turn-open=false", "--json"])],
+                  [.promptAfterStatusRead]),
+            .expectStatus("working"),
+            // The display write was dropped, but the count was stored on its own.
+            .expectBackgroundTasks(1),
+        ])
+    }
+
+    func testClaudeTheTurnEndsBeforeASubagentsWorkingUpdate() throws {
+        try run("claude: the turn ends before a sub-agent's working update", [
+            .hook("claude/UserPromptSubmit", [Self.setStatus(Self.WORKING, Self.detail(""), Self.TURN_OPEN, Self.EXPIRES)]),
+            // Read as open, but the session's Stop landed before the write; its background is kept.
+            .hook("claude/SubagentStop-first", [Self.storeBackgroundTasks("1"),
+                                                Self.setStatus(Self.WORKING, Self.detail("1 background task running"),
+                                                               ["--if-turn-open=true"],
+                                                               Self.EXPIRES, ["--json"])],
+                  [.stopAfterStatusRead]),
+            .expectStatus("background"),
+            .expectBackgroundTasks(1),
+        ])
+    }
+
+    // Recorded from Claude Code 2.1.322: a turn launches one background agent and ends; the agent
+    // runs two Bash commands and hands back; Claude Code starts a turn of its own to reply.
+    func testClaudeRecordedBackgroundAgentRun() throws {
+        let subagentToolEvent = [Self.getStatus()]
+        try run("claude: recorded background agent run", [
+            .hook("claude/bgrun-01-UserPromptSubmit", [Self.setStatus(Self.WORKING, Self.detail(""), Self.TURN_OPEN, Self.EXPIRES)]),
+            .hook("claude/bgrun-02-PreToolUse-Agent", [Self.setStatus(Self.WORKING, Self.detail(""), Self.TURN_OPEN, Self.EXPIRES)]),
+            .hook("claude/bgrun-03-SubagentStart", []),
+            .hook("claude/bgrun-04-PostToolUse-Agent", [Self.setStatus(Self.WORKING, Self.detail(""), Self.TURN_OPEN, Self.EXPIRES)]),
+            .hook("claude/bgrun-05-Stop", [Self.setStatus(Self.BACKGROUND, Self.detail("1 background task running"),
+                                                          ["--background-tasks=1"], Self.TURN_CLOSED)]),
+            .expectStatus("background"),
+            // The agent's own tool calls, which carry its agent_id.
+            .hook("claude/bgrun-06-PreToolUse-Bash", subagentToolEvent),
+            .hook("claude/bgrun-07-PostToolUse-Bash", subagentToolEvent),
+            .hook("claude/bgrun-08-PreToolUse-Bash", subagentToolEvent),
+            .hook("claude/bgrun-09-PostToolUse-Bash", subagentToolEvent),
+            .hook("claude/bgrun-10-PreToolUse-SubagentHandback", subagentToolEvent),
+            .hook("claude/bgrun-11-PostToolUse-SubagentHandback", subagentToolEvent),
+            .expectStatus("background"),
+            // Claude Code wakes to read the result, and that turn starts with UserPromptSubmit,
+            // before the agent's SubagentStop.
+            .hook("claude/bgrun-12-UserPromptSubmit", [Self.setStatus(Self.WORKING, Self.detail(""), Self.TURN_OPEN, Self.EXPIRES)]),
+            .hook("claude/bgrun-13-SubagentStop", [Self.setStatus(["--background-tasks=0"])]),
+            .expectStatus("working"),
+            .hook("claude/bgrun-14-Stop", [Self.setStatus(Self.DONE, Self.detail("Done."), ["--background-tasks=0"], Self.TURN_CLOSED)]),
+            .expectStatus("done"),
+        ])
+    }
+
+    func testClaudeCompactionMidTurnLeavesTheTurnOpen() throws {
+        try run("claude: compaction mid-turn leaves the turn open", [
+            .hook("claude/UserPromptSubmit", [Self.setStatus(Self.WORKING, Self.detail(""), Self.TURN_OPEN, Self.EXPIRES)]),
+            .hook("claude/bgrun-02-PreToolUse-Agent", [Self.setStatus(Self.WORKING, Self.detail(""), Self.TURN_OPEN, Self.EXPIRES)]),
+            // Auto-compaction is not a session boundary: no idle, no reset, turn still open.
+            .hook("claude/SessionStart-compact", []),
+            .expectStatus("working"),
+            // A foreground agent finishes while the background one keeps running. The main
+            // loop is still in its turn, so this is working, not background.
+            .hook("claude/SubagentStop-first", [Self.storeBackgroundTasks("1"),
+                                                Self.setStatus(Self.WORKING, Self.detail("1 background task running"),
+                                                               ["--if-turn-open=true"],
+                                                               Self.EXPIRES, ["--json"])]),
+            .expectStatus("working"),
+        ])
+    }
+
+    func testClaudeASessionToolCallReopensAWronglyClosedTurn() throws {
+        try run("claude: the session's own tool call reopens a wrongly closed turn", [
+            .hook("claude/Stop-bg1", [Self.setStatus(Self.BACKGROUND, Self.detail("1 background task running"),
+                                                     ["--background-tasks=1"], Self.TURN_CLOSED)]),
+            // Whatever closed the flag, a tool call of the session's own means a turn is running.
+            .hook("claude/PreToolUse-Bash", [Self.setStatus(Self.WORKING, Self.detail(""), Self.TURN_OPEN, Self.EXPIRES)]),
+            .hook("claude/PreToolUse-subagent", [Self.getStatus(),
+                                                 Self.setStatus(Self.WORKING, Self.detail(""), ["--if-turn-open=true"],
+                                                                Self.EXPIRES, ["--json"])]),
+            .expectStatus("working"),
+        ])
+    }
+
+    func testClaudeAPromptLandsBeforeTheIdleNudgesWrite() throws {
+        try run("claude: a prompt lands before the idle nudge's write", [
+            .hook("claude/Stop-bg1", [Self.setStatus(Self.BACKGROUND, Self.detail("1 background task running"),
+                                                     ["--background-tasks=1"], Self.TURN_CLOSED)]),
+            // The nudge read a closed turn, but a prompt reopened it before its write landed.
+            // The prompt's working, and its open turn, are kept.
+            .hook("claude/Notification-idle", [Self.getStatus(),
+                                               Self.setStatus(Self.BACKGROUND, Self.detail("1 background task running"),
+                                                              Self.TURN_CLOSED, Self.IF_TURN_CLOSED)],
+                  [.promptAfterStatusRead]),
+            .expectStatus("working"),
+            .expectTurnOpen(true),
+        ])
+    }
+
+    func testClaudeAGrantedPermissionWithNothingCountedDoesNotLeaveWaitingUp() throws {
+        try run("claude: a granted permission with nothing counted does not leave waiting up", [
+            // A Claude Code that reports no background_tasks: the turn is closed and the count is 0.
+            .hook("claude/Stop-legacy", [Self.setStatus(Self.DONE, Self.detail("HELLO"), Self.TURN_CLOSED)]),
+            .hook("claude/PermissionRequest-Bash", [Self.setStatus(Self.WAITING, Self.detail("Allow Bash: rm -rf build?"), Self.EXPIRES)]),
+            // A background agent asked, the user granted it, and its tool ran. Nothing is
+            // counted, but an agent is plainly at work, and the prompt is no longer up.
+            .hook("claude/PostToolUse-subagent", [Self.getStatus(),
+                                                  Self.setStatus(Self.BACKGROUND, Self.detail(""),
+                                                                 ["--if-turn-open=false", "--json"])]),
+            .expectStatus("background"),
         ])
     }
 
     func testClaudePayloadsWithoutBackgroundTasks() throws {
         try run("claude: payloads without background_tasks (before 2.1.198)", [
-            .hook("claude/Stop-legacy", [Self.setStatus(Self.DONE, Self.detail("HELLO"))]),
+            .hook("claude/Stop-legacy", [Self.setStatus(Self.DONE, Self.detail("HELLO"), Self.TURN_CLOSED)]),
             .hook("claude/SubagentStop-legacy", []),
         ])
     }
@@ -568,7 +926,8 @@ final class AgentHookScenarioTests: XCTestCase {
     func testClaudePermissionAndSessionBoundary() throws {
         try run("claude: permission and session boundary", [
             .hook("claude/PermissionRequest-Bash", [Self.setStatus(Self.WAITING, Self.detail("Allow Bash: rm -rf build?"), Self.EXPIRES)]),
-            .hook("claude/SessionStart", [Self.setStatus(Self.IDLE, Self.detail(""), ["--background-tasks=0"], boundary: true)]),
+            .hook("claude/SessionStart", [Self.setStatus(Self.IDLE, Self.detail(""), ["--background-tasks=0"], Self.TURN_CLOSED,
+                                                          boundary: true)]),
         ])
     }
 
@@ -587,7 +946,7 @@ final class AgentHookScenarioTests: XCTestCase {
                                     backend: backend,
                                     report: { _ in })
         XCTAssertEqual(backend.calls, [["set-status", "--tmux=/private/tmp/tmux-501/default,52533,0", "--tmux-pane=%3"]
-                                       + Self.QUIET + Self.WORKING + Self.detail("") + Self.EXPIRES])
+                                       + Self.QUIET + Self.WORKING + Self.detail("") + Self.TURN_OPEN + Self.EXPIRES])
     }
 
     // Inside tmux with an address that does not parse, nothing is reported: falling back to
@@ -653,7 +1012,7 @@ final class AgentHookScenarioTests: XCTestCase {
                                     backend: backend,
                                     report: { _ in })
         XCTAssertEqual(backend.calls, [["set-status", "--session=ORIGIN-GUID"]
-                                       + Self.QUIET + Self.WORKING + Self.detail("") + Self.EXPIRES])
+                                       + Self.QUIET + Self.WORKING + Self.detail("") + Self.TURN_OPEN + Self.EXPIRES])
     }
 
     // In a remote tmux pane the pane address still wins: the origin is the session showing the
@@ -667,7 +1026,7 @@ final class AgentHookScenarioTests: XCTestCase {
                                     backend: backend,
                                     report: { _ in })
         XCTAssertEqual(backend.calls, [["set-status", "--tmux=/tmp/tmux-1000/default,77,2", "--tmux-pane=%4"]
-                                       + Self.QUIET + Self.WORKING + Self.detail("") + Self.EXPIRES])
+                                       + Self.QUIET + Self.WORKING + Self.detail("") + Self.TURN_OPEN + Self.EXPIRES])
     }
 
     // A remote hook in a tmux pane on a tmux integration connection: iTerm2 withholds the origin

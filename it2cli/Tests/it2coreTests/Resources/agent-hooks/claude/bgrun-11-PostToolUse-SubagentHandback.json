@@ -1,0 +1,23 @@
+{
+  "agent_id": "a5f2f9af87519b83f",
+  "agent_type": "general-purpose",
+  "cwd": "/Users/user/project",
+  "duration_ms": 21,
+  "effort": {
+    "level": "medium"
+  },
+  "hook_event_name": "PostToolUse",
+  "permission_mode": "auto",
+  "prompt_id": "17464ee8-9389-49e4-a716-b40b3e0c4ec3",
+  "session_id": "03a97ee1-fd93-490e-9368-d8dd372ddc0d",
+  "tool_input": {
+    "message": "Both commands ran in order. `sleep 8; echo hi` output: \"hi\". `echo bye` output: \"bye\"."
+  },
+  "tool_name": "SubagentHandback",
+  "tool_response": {
+    "message": "Report delivered to your caller.",
+    "success": true
+  },
+  "tool_use_id": "toolu_01SHSTJ2nartyLFwENC5P2VW",
+  "transcript_path": "/Users/user/.claude/projects/-Users-user-project/03a97ee1-fd93-490e-9368-d8dd372ddc0d.jsonl"
+}

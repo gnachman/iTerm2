@@ -1,0 +1,27 @@
+{
+  "agent_id": "a5f2f9af87519b83f",
+  "agent_type": "general-purpose",
+  "cwd": "/Users/user/project",
+  "duration_ms": 8268,
+  "effort": {
+    "level": "medium"
+  },
+  "hook_event_name": "PostToolUse",
+  "permission_mode": "auto",
+  "prompt_id": "17464ee8-9389-49e4-a716-b40b3e0c4ec3",
+  "session_id": "03a97ee1-fd93-490e-9368-d8dd372ddc0d",
+  "tool_input": {
+    "command": "sleep 8; echo hi",
+    "description": "Sleep 8 seconds then echo hi"
+  },
+  "tool_name": "Bash",
+  "tool_response": {
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false,
+    "stderr": "",
+    "stdout": "hi"
+  },
+  "tool_use_id": "toolu_01QUBfsAf7qMyFsMY5gXHPAE",
+  "transcript_path": "/Users/user/.claude/projects/-Users-user-project/03a97ee1-fd93-490e-9368-d8dd372ddc0d.jsonl"
+}

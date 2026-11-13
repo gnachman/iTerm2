@@ -578,11 +578,14 @@ enum WorkgroupIntrospection {
     // write. Done and error are both a turn that ended and left the session
     // ready for input, which is what .idle means here: the edge from working
     // drives the workgroup's auto behaviors and the orchestrator's watchers,
-    // and before done and error existed those turns reported idle.
+    // and before done and error existed those turns reported idle. Background
+    // is a turn that ended while work it started keeps running. Its results
+    // are still on the way, so it is not finished, and before it existed it
+    // reported working.
     private static func recognizedState(forStatusText text: String) -> SessionState? {
         switch text {
         case "idle", "done", "error": return .idle
-        case "working": return .working
+        case "working", "background": return .working
         case "waiting": return .waiting
         default: return nil
         }
@@ -590,7 +593,7 @@ enum WorkgroupIntrospection {
 
     // Whether the session exposes a machine-readable status source we
     // can build exact tab-status-transition watchers on. True only when
-    // a recognized status string (idle/done/error/working/waiting) is currently
+    // a recognized status string (idle/done/error/working/background/waiting) is currently
     // present — the cc-status hook and set_status triggers always keep
     // one set, even at idle. Sessions without that source (plain TUIs,
     // coding agents that don't emit OSC 21337, bare shells) return false,

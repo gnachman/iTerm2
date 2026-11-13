@@ -1,0 +1,9 @@
+{
+  "cwd": "/Users/user/project",
+  "hook_event_name": "UserPromptSubmit",
+  "permission_mode": "auto",
+  "prompt": "Use the Agent tool with run_in_background set to true to launch one general-purpose subagent whose job is: run the Bash command 'sleep 8; echo hi' and then run the Bash command 'echo bye', then report. After launching it, end your turn immediately without waiting. When it finishes, reply with one word.",
+  "prompt_id": "17464ee8-9389-49e4-a716-b40b3e0c4ec3",
+  "session_id": "03a97ee1-fd93-490e-9368-d8dd372ddc0d",
+  "transcript_path": "/Users/user/.claude/projects/-Users-user-project/03a97ee1-fd93-490e-9368-d8dd372ddc0d.jsonl"
+}

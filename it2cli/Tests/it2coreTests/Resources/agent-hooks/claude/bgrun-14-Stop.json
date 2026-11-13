@@ -1,0 +1,15 @@
+{
+  "background_tasks": [],
+  "cwd": "/Users/user/project",
+  "effort": {
+    "level": "medium"
+  },
+  "hook_event_name": "Stop",
+  "last_assistant_message": "Done.",
+  "permission_mode": "auto",
+  "prompt_id": "cb6df88b-f4de-4d52-9ced-384fab1efbcf",
+  "session_crons": [],
+  "session_id": "03a97ee1-fd93-490e-9368-d8dd372ddc0d",
+  "stop_hook_active": false,
+  "transcript_path": "/Users/user/.claude/projects/-Users-user-project/03a97ee1-fd93-490e-9368-d8dd372ddc0d.jsonl"
+}

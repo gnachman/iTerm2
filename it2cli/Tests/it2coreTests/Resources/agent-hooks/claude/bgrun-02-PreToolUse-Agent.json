@@ -1,0 +1,19 @@
+{
+  "cwd": "/Users/user/project",
+  "effort": {
+    "level": "medium"
+  },
+  "hook_event_name": "PreToolUse",
+  "permission_mode": "auto",
+  "prompt_id": "17464ee8-9389-49e4-a716-b40b3e0c4ec3",
+  "session_id": "03a97ee1-fd93-490e-9368-d8dd372ddc0d",
+  "tool_input": {
+    "description": "Run sleep and echo commands",
+    "prompt": "Run the Bash command `sleep 8; echo hi`, then run the Bash command `echo bye`. Then report the output of both commands briefly.",
+    "run_in_background": true,
+    "subagent_type": "general-purpose"
+  },
+  "tool_name": "Agent",
+  "tool_use_id": "toolu_01Am52SDMMztnaAa2UHSm365",
+  "transcript_path": "/Users/user/.claude/projects/-Users-user-project/03a97ee1-fd93-490e-9368-d8dd372ddc0d.jsonl"
+}

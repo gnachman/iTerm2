@@ -1,0 +1,19 @@
+{
+  "agent_id": "a5f2f9af87519b83f",
+  "agent_type": "general-purpose",
+  "cwd": "/Users/user/project",
+  "effort": {
+    "level": "medium"
+  },
+  "hook_event_name": "PreToolUse",
+  "permission_mode": "auto",
+  "prompt_id": "17464ee8-9389-49e4-a716-b40b3e0c4ec3",
+  "session_id": "03a97ee1-fd93-490e-9368-d8dd372ddc0d",
+  "tool_input": {
+    "command": "echo bye",
+    "description": "Echo bye"
+  },
+  "tool_name": "Bash",
+  "tool_use_id": "toolu_01937tH6pHphNZu5htPeEscE",
+  "transcript_path": "/Users/user/.claude/projects/-Users-user-project/03a97ee1-fd93-490e-9368-d8dd372ddc0d.jsonl"
+}

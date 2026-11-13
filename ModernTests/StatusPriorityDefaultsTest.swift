@@ -123,7 +123,7 @@ final class StatusPriorityDefaultsTest: XCTestCase {
 
         settings.restoreEntries(StatusPrioritySettings.defaultPatterns.map { StatusPriorityEntry(pattern: $0) })
 
-        let ordered = ["waiting", "done", "error", "working", "idle"].map { settings.priority(for: $0) }
+        let ordered = ["waiting", "done", "error", "working", "background", "idle"].map { settings.priority(for: $0) }
         XCTAssertEqual(ordered, ordered.sorted())
         XCTAssertEqual(Set(ordered).count, ordered.count)
         XCTAssertLessThan(settings.priority(for: "idle"), settings.unmatchedPriority)
@@ -159,5 +159,38 @@ final class StatusPriorityDefaultsTest: XCTestCase {
         XCTAssertEqual(migrated, [StatusPriorityEntry(pattern: "wait", notify: true),
                                   StatusPriorityEntry(pattern: "done"),
                                   StatusPriorityEntry(pattern: "err", notify: true)])
+    }
+
+    func testMigrationInsertsBackgroundAfterWorking() {
+        let saved = ["wait", "done", "error", "work", "idle"].map { StatusPriorityEntry(pattern: $0) }
+        let migrated = StatusPrioritySettings.addingBackground(to: saved)
+        XCTAssertEqual(migrated.map(\.pattern), ["wait", "done", "error", "work", "background", "idle"])
+    }
+
+    func testMigrationPutsBackgroundBeforeIdleWithoutWorking() {
+        let saved = ["wait", "idle", "done"].map { StatusPriorityEntry(pattern: $0) }
+        let migrated = StatusPrioritySettings.addingBackground(to: saved)
+        XCTAssertEqual(migrated.map(\.pattern), ["wait", "background", "idle", "done"])
+    }
+
+    func testMigrationPutsBackgroundLastWithoutWorkingOrIdle() {
+        let saved = ["wait", "done"].map { StatusPriorityEntry(pattern: $0) }
+        let migrated = StatusPrioritySettings.addingBackground(to: saved)
+        XCTAssertEqual(migrated.map(\.pattern), ["wait", "done", "background"])
+    }
+
+    // Until background existed this moment read working, which changed
+    // nothing, so nobody was being notified about it.
+    func testMigrationAddsBackgroundWithoutNotifyEvenWhenWorkingNotifies() {
+        let saved = [StatusPriorityEntry(pattern: "work", notify: true)]
+        let migrated = StatusPrioritySettings.addingBackground(to: saved)
+        XCTAssertEqual(migrated, [StatusPriorityEntry(pattern: "work", notify: true),
+                                  StatusPriorityEntry(pattern: "background")])
+    }
+
+    func testMigrationKeepsAnExistingMatchForBackground() {
+        let saved = [StatusPriorityEntry(pattern: "ground", notify: true),
+                     StatusPriorityEntry(pattern: "work")]
+        XCTAssertEqual(StatusPrioritySettings.addingBackground(to: saved), saved)
     }
 }

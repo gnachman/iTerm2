@@ -19,14 +19,20 @@ class StatusPrioritySettings: NSObject {
     // sharing the same prefs folder, which would add the patterns back to the
     // shared list there.
     private static let addedDoneAndErrorDefaultsKey = "StatusPriorityAddedDoneAndError"
+    // The same for the background pattern, added later on its own so that a
+    // list already given done and error still gets it.
+    private static let addedBackgroundDefaultsKey = "StatusPriorityAddedBackground"
 
     /// Default priority patterns. Matching is a lowercased-substring test
     /// against status text that arrives over the wire protocol, which is
     /// inherently English, so these stay stable English substrings regardless
     /// of the app's UI language. A program waiting on the user comes first,
     /// then one whose finished (or failed) result the user has not seen yet,
-    /// then one still working. Idle comes last: nothing there needs the user.
-    static let defaultPatterns = ["wait", "done", "error", "work", "idle"]
+    /// then one still working, then one whose own turn is over while work it
+    /// started keeps running in the background (it will take input, and its
+    /// results are still on the way). Idle comes last: nothing there needs the
+    /// user.
+    static let defaultPatterns = ["wait", "done", "error", "work", "background", "idle"]
 
     /// When enabled, all sessions in a workgroup collapse to a single row in
     /// the Session Status tool. Defaults to off to preserve prior behavior.
@@ -55,9 +61,11 @@ class StatusPrioritySettings: NSObject {
         if let data = try? JSONEncoder().encode(entries) {
             iTermUserDefaults.userDefaults().set(data, forKey: Self.entriesDefaultsKey)
         }
-        // Whatever the user saves is already a list that knows about done and
-        // error; a pattern missing from it was left out on purpose.
+        // Whatever the user saves is already a list that knows about done,
+        // error and background; a pattern missing from it was left out on
+        // purpose.
         iTermUserDefaults.userDefaults().set(true, forKey: Self.addedDoneAndErrorDefaultsKey)
+        iTermUserDefaults.userDefaults().set(true, forKey: Self.addedBackgroundDefaultsKey)
         // Remove legacy key on save
         iTermUserDefaults.userDefaults().removeObject(forKey: Self.defaultsKey)
         NotificationCenter.default.post(name: Self.didChangeNotification, object: self)
@@ -81,16 +89,20 @@ class StatusPrioritySettings: NSObject {
         }
         var needsMigration = false
         if let loaded {
-            if userDefaults.bool(forKey: Self.addedDoneAndErrorDefaultsKey) {
-                entries = loaded
-            } else {
-                entries = Self.addingDoneAndError(to: loaded)
+            var migrated = loaded
+            if !userDefaults.bool(forKey: Self.addedDoneAndErrorDefaultsKey) {
+                migrated = Self.addingDoneAndError(to: migrated)
                 needsMigration = true
             }
+            if !userDefaults.bool(forKey: Self.addedBackgroundDefaultsKey) {
+                migrated = Self.addingBackground(to: migrated)
+                needsMigration = true
+            }
+            entries = migrated
         } else {
             // Nothing saved, so nothing to migrate and nothing to record: the
-            // defaults already include done and error, and save() records the
-            // flag along with the first list the user saves.
+            // defaults already include done, error and background, and save()
+            // records the flags along with the first list the user saves.
             entries = Self.defaultPatterns.map { StatusPriorityEntry(pattern: $0) }
         }
         super.init()
@@ -102,18 +114,29 @@ class StatusPrioritySettings: NSObject {
         }
     }
 
-    /// Saves a list that has been given done and error, and records that it
-    /// was. Reports the change as a migration so a custom settings folder that
-    /// still holds the unmigrated list does not count it as an unsaved edit at
-    /// quit. Internal for testing.
+    /// Saves a list that has been given done, error and background, and
+    /// records that it was. Reports the change as a migration so a custom
+    /// settings folder that still holds the unmigrated list does not count it
+    /// as an unsaved edit at quit. Internal for testing.
     static func writeMigratedEntries(_ entries: [StatusPriorityEntry], to userDefaults: UserDefaults) {
-        iTermUserDefaults.migrateKeys([entriesDefaultsKey, defaultsKey, addedDoneAndErrorDefaultsKey],
+        iTermUserDefaults.migrateKeys([entriesDefaultsKey, defaultsKey, addedDoneAndErrorDefaultsKey,
+                                       addedBackgroundDefaultsKey],
                                       in: userDefaults) {
             if let data = try? JSONEncoder().encode(entries) {
                 userDefaults.set(data, forKey: entriesDefaultsKey)
                 userDefaults.removeObject(forKey: defaultsKey)
             }
             userDefaults.set(true, forKey: addedDoneAndErrorDefaultsKey)
+            userDefaults.set(true, forKey: addedBackgroundDefaultsKey)
+        }
+    }
+
+    /// The first entry whose pattern matches `status` under the same
+    /// lowercased-substring rule priority(for:) applies.
+    private static func index(matching status: String, in entries: [StatusPriorityEntry]) -> Int? {
+        return entries.firstIndex { entry in
+            let pattern = entry.pattern.lowercased()
+            return !pattern.isEmpty && status.contains(pattern)
         }
     }
 
@@ -122,12 +145,6 @@ class StatusPrioritySettings: NSObject {
     /// whatever matches “waiting” (or first, if nothing does), unless the list
     /// already has a pattern that matches them.
     static func addingDoneAndError(to saved: [StatusPriorityEntry]) -> [StatusPriorityEntry] {
-        func index(matching status: String, in entries: [StatusPriorityEntry]) -> Int? {
-            return entries.firstIndex { entry in
-                let pattern = entry.pattern.lowercased()
-                return !pattern.isEmpty && status.contains(pattern)
-            }
-        }
         // Before done and error existed, a finished or failed turn reported
         // idle, so whoever asked to be notified about that keeps being
         // notified about the same moment under its new name.
@@ -143,6 +160,25 @@ class StatusPrioritySettings: NSObject {
                 DLog("Saved status priorities already match \(status)")
             }
         }
+        return result
+    }
+
+    /// Lists saved before the background status existed rank it below
+    /// everything the user listed. Puts it where the defaults do, just after
+    /// whatever matches “working”, or else just before whatever matches
+    /// “idle”, or else last, unless the list already has a pattern that
+    /// matches it. It does not notify: until it existed this moment was still
+    /// “working”, which changed nothing anyone could be notified about.
+    static func addingBackground(to saved: [StatusPriorityEntry]) -> [StatusPriorityEntry] {
+        guard index(matching: "background", in: saved) == nil else {
+            DLog("Saved status priorities already match background")
+            return saved
+        }
+        let insertionIndex = index(matching: "working", in: saved).map { $0 + 1 }
+            ?? index(matching: "idle", in: saved)
+            ?? saved.count
+        var result = saved
+        result.insert(StatusPriorityEntry(pattern: "background"), at: insertionIndex)
         return result
     }
 

@@ -28132,13 +28132,14 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     // status the records put up. cc-status parks counts and turn flags with
     // updates that say nothing about the status, and an update whose
     // preconditions fail is dropped.
-    if (_programStatusController &&
-        status.assertsStatus &&
-        [self.tabStatusController.status preconditionsHoldFor:status]) {
+    const BOOL preconditionsHold = [self.tabStatusController.status preconditionsHoldFor:status];
+    if (_programStatusController && status.assertsStatus && preconditionsHold) {
         [_programStatusController otherWriterDidSetStatus];
     }
     [self.tabStatusController apply:status];
-    if (status.progressPresence == VT100TabStatusUpdateFieldSet) {
+    // A dropped update is dropped whole: its ring would otherwise start or stop beside a status
+    // it did not change, with nothing left to put it right.
+    if (preconditionsHold && status.progressPresence == VT100TabStatusUpdateFieldSet) {
         // The ring goes through the screen exactly as OSC 9;4 does, so the tab bar draws it and
         // the delegate hears that the program reported it (the status controller's cue that an
         // operation ended). The status controller was told first, above, so an update that both
