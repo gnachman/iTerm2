@@ -4794,6 +4794,7 @@
 		DDC6A04E4BD124950415EFEA /* iTermHDREngager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25F46F9F3BA829BDB185B38 /* iTermHDREngager.swift */; };
 		DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
 		DE3AD6D8904090E875D5EFF7 /* AIExplanationResponse+Mac.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F06ECF8A1AE910A311E3128 /* AIExplanationResponse+Mac.swift */; };
+		DE99387F4738F705DB245E77 /* UILanguageCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB849D15C563BC85AC9FC4B8 /* UILanguageCase.swift */; };
 		DECF12ECD66573849C34F781 /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E1B6BE78A6A0C18980A2A46 /* Helpers.swift */; };
 		DF93E577C867F721A8F84CB7 /* iTermTabGroupContiguity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842E85C7646AD1CE30E147AD /* iTermTabGroupContiguity.swift */; };
 		DFD374B25802C2E7C25B95F0 /* AILiveOllamaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EC03AC4196A9AA446D5A176 /* AILiveOllamaTests.swift */; };
@@ -9191,6 +9192,7 @@
 		FB4CEAC661436E55F3B3A668 /* iTermRemotePreferences.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRemotePreferences.m; sourceTree = "<group>"; tabWidth = 4; };
 		FB4CECF4AC4392B21E87A07B /* iTermRemotePreferences.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermRemotePreferences.h; sourceTree = "<group>"; tabWidth = 4; };
 		FB754C5F036EFC5301F955DB /* config.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = config.png; path = images/config.png; sourceTree = "<group>"; };
+		FB849D15C563BC85AC9FC4B8 /* UILanguageCase.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UILanguageCase.swift; sourceTree = "<group>"; };
 		FB896717038D935801F955DB /* newwin.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = newwin.png; path = images/newwin.png; sourceTree = "<group>"; };
 		FBB2EBCD040AC7C201F955DB /* important.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = important.png; path = images/important.png; sourceTree = "<group>"; };
 		FBD0AD0A0337A5B701F955DB /* PseudoTerminal.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = PseudoTerminal.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
@@ -13462,6 +13464,7 @@
 				A6EC8054281C852200493544 /* NSAttributedString+iTerm.swift */,
 				A615829D2E5E78D80094B718 /* TabularFormatter.swift */,
 				0B909F947250B4FBA741BC52 /* LocalizedUnitFormatter.swift */,
+				FB849D15C563BC85AC9FC4B8 /* UILanguageCase.swift */,
 			);
 			path = Formatting;
 			sourceTree = "<group>";
@@ -20586,6 +20589,7 @@
 				DA15C6ED3B5E1F6F74357D16 /* iTermEventTapBookkeeping.swift in Sources */,
 				2683D27699B9CA4F714C7FAA /* WorkgroupPeerStartingDirectory.swift in Sources */,
 				DC4B81183B28F3C6A956519D /* iTermTabSwitcher.swift in Sources */,
+				DE99387F4738F705DB245E77 /* UILanguageCase.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

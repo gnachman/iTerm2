@@ -13,6 +13,7 @@
 #import "iTermPasteSpecialViewController.h"
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSStringITerm.h"
@@ -259,7 +260,8 @@
                 }
             }
             NSString *label = [NSString stringWithFormat:@"%@: “%@”",
-                               [(description ?: NSLocalizedStringWithDefaultValue(@"PasteSpecial.UnknownType", nil, [NSBundle mainBundle], @"Unknown Type", @"Fallback description for an unknown pasteboard type")) stringByCapitalizingFirstLetter],
+                               [iTermUILanguageCase capitalizingFirstLetter:(description ?: NSLocalizedStringWithDefaultValue(@"PasteSpecial.UnknownType", nil, [NSBundle mainBundle], @"Unknown Type", @"Fallback description for an unknown pasteboard type"))
+                                                                    locale:iTermUILanguageCase.uiLocale],
                                [string ellipsizedDescriptionNoLongerThan:100]];
             [labels addObject:label];
         }

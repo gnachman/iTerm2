@@ -146,7 +146,7 @@ class iTermJobInfoPopoverViewController: NSViewController, NSTableViewDataSource
     // MARK: - Subview factories
 
     private static func headerLabel(_ string: String) -> NSTextField {
-        let label = NSTextField(labelWithString: string.uppercased())
+        let label = NSTextField(labelWithString: UILanguageCase.uppercase(string, locale: UILanguageCase.uiLocale))
         label.font = .boldSystemFont(ofSize: 10)
         label.textColor = .secondaryLabelColor
         return label

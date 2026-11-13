@@ -44,7 +44,7 @@ static NSString *const iTermSavePanelLoggingStyleUserDefaultsKey = @"NoSyncLoggi
 + (NSString *)nameForFileType:(NSString *)extension {
     UTType *type = [UTType typeWithFilenameExtension:extension];
     NSString *description = type.localizedDescription ?: extension;
-    NSString *capitalized = [description stringByCapitalizingFirstLetter];
+    NSString *capitalized = [iTermUILanguageCase capitalizingFirstLetter:description locale:iTermUILanguageCase.uiLocale];
     NSString *pattern = [NSString stringWithFormat:@"(%@)", extension];
     NSRange range = [capitalized rangeOfString:pattern];
     if (range.location != NSNotFound) {
