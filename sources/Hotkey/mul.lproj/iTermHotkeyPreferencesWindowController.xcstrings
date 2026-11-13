@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"⌥ Option\"; ObjectID = \"2Tz-89-YHl\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Option"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -125,6 +131,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Pin hotkey window (stays open on loss of keyboard focus)\"; ObjectID = \"3jk-f9-QFs\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Připnout okno horké klávesy (zůstane otevřené po ztrátě fokusu klávesnice)"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -245,6 +257,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Hotkey:\"; ObjectID = \"4F4-bg-0BG\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Horká klávesa:"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -365,6 +383,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Note: the window is reopened only if it was closed because another app became active.\"; ObjectID = \"6tA-bg-olR\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poznámka: okno se znovu otevře, jen pokud bylo zavřeno proto, že se aktivovala jiná aplikace."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -485,6 +509,12 @@
       "comment" : "Class = \"NSWindow\"; title = \"Additional Hotkeys\"; ObjectID = \"bEG-lb-Vft\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Další horké klávesy"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -605,6 +635,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"When you press the hotkey bound to this profile a dedicated window will show or hide. Each profile with a hotkey controls its own Hotkey Window.\"; ObjectID = \"dHI-y9-qMI\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Po stisknutí horké klávesy přiřazené k tomuto profilu se zobrazí nebo skryje vyhrazené okno. Každý profil s horkou klávesou ovládá své vlastní okno horké klávesy."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -725,6 +761,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Don’t do anything special\"; ObjectID = \"EOt-Jx-9Xl\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nedělat nic zvláštního"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -845,6 +887,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"⚠️\"; ObjectID = \"FSQ-IF-ujS\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -965,6 +1013,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Show this Hotkey Window\"; ObjectID = \"Hhf-xq-TzE\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobrazit toto okno horké klávesy"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1085,6 +1139,12 @@
       "comment" : "Class = \"NSWindow\"; title = \"HotKey Window Preferences\"; ObjectID = \"J17-Oy-pHl\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastavení okna horké klávesy"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1205,6 +1265,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"⌘ Command\"; ObjectID = \"Jg9-HV-xDm\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Command"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1325,6 +1391,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"⚠️ Another profile uses this shortcut\"; ObjectID = \"kMo-jN-Ngc\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Tuto zkratku používá jiný profil"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1445,6 +1517,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"⇧ Shift\"; ObjectID = \"l57-vU-TNJ\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Shift"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1565,6 +1643,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Double-tap key:\"; ObjectID = \"lBc-Et-eAS\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klávesa pro dvojí stisk:"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1685,6 +1769,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Automatically reopen on app reactivation\"; ObjectID = \"mrJ-OA-dYl\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automaticky znovu otevřít při opětovné aktivaci aplikace"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1805,6 +1895,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"⚠️ Another profile uses this double-tap\"; ObjectID = \"mtg-a1-mt3\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Tento dvojí stisk používá jiný profil"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1925,6 +2021,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Show this Hotkey Window if no other window is open\"; ObjectID = \"Njf-zs-yLP\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobrazit toto okno horké klávesy, pokud není otevřeno žádné jiné okno"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2045,6 +2147,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Floating windows overlap other windows and the dock, and other apps’ Full Screen windows (if the Hotkey Window’s Space is set to All Spaces).\"; ObjectID = \"NTW-IM-ZXD\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plovoucí okna překrývají ostatní okna, Dock a okna ostatních aplikací v režimu celé obrazovky (pokud je plocha okna horké klávesy nastavena na Všechny plochy)."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2165,6 +2273,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"OGS-mD-pmg\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušit"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2285,6 +2399,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"On Dock icon click:\"; ObjectID = \"t4R-9R-8yk\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Po kliknutí na ikonu v Docku:"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2405,6 +2525,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Animate showing and hiding\"; ObjectID = \"UCE-Hu-AKa\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animovat zobrazení a skrytí"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2525,6 +2651,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"OK\"; ObjectID = \"UEa-r8-RNP\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2645,6 +2777,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"OK\"; ObjectID = \"UUQ-aq-rDa\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2765,6 +2903,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Floating window\"; ObjectID = \"vtv-eH-WbP\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plovoucí okno"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2885,6 +3029,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"^ Control\"; ObjectID = \"wp1-Sh-ht3\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Control"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3005,6 +3155,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Additional Hotkeys…\"; ObjectID = \"y7i-Ti-5SX\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Další horké klávesy…"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",

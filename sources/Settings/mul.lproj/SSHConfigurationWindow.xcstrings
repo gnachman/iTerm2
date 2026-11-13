@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Path to SSH:\"; ObjectID = \"5Ya-mQ-QY5\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cesta k SSH:"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -125,6 +131,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Files to Copy to Remote Host:\"; ObjectID = \"BeO-Rn-T4R\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soubory ke zkopírování na vzdáleného hostitele:"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -245,6 +257,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"Destination\"; ObjectID = \"cb2-6S-OCc\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cíl"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -365,6 +383,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"OK\"; ObjectID = \"Fmg-GQ-fHY\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -485,6 +509,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; placeholderString = \"/usr/bin/ssh\"; ObjectID = \"IPF-xv-FWE\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/usr/bin/ssh"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -605,6 +635,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Browse\"; ObjectID = \"ium-gO-F7S\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procházet"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -725,6 +761,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"l94-S7-arn\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušit"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -845,6 +887,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"File or Folder\"; ObjectID = \"N76-mg-r19\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soubor nebo složka"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -965,6 +1013,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"SSH Integration\"; ObjectID = \"SOh-zL-23F\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integrace SSH"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1085,6 +1139,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Environment Variables to Copy to Remote Host:\"; ObjectID = \"UXs-4L-PQD\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proměnné prostředí ke zkopírování na vzdáleného hostitele:"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",

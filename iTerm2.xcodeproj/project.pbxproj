@@ -1181,6 +1181,7 @@
 		0CCB6CA85B2F71B032F49D68 /* repl_banner-it.txt in Resources */ = {isa = PBXBuildFile; fileRef = 558E4A7A09D1C7875371E58C /* repl_banner-it.txt */; };
 		3195EB4B8AA7757F9735F900 /* repl_banner-vi.txt in Resources */ = {isa = PBXBuildFile; fileRef = 20A217AA265878F2D1E2339D /* repl_banner-vi.txt */; };
 		09B54583D7F5F5703EB5F42D /* repl_banner-pl.txt in Resources */ = {isa = PBXBuildFile; fileRef = 9A5845214228257B63545200 /* repl_banner-pl.txt */; };
+		D4DE93BD6B88AB4A92450872 /* repl_banner-cs.txt in Resources */ = {isa = PBXBuildFile; fileRef = BCCBB39A609BFEBBB103FB9C /* repl_banner-cs.txt */; };
 		19F32F25B7612BA98BFAEBDA /* repl_banner-fi.txt in Resources */ = {isa = PBXBuildFile; fileRef = 4350A0552366F6D9FB355B3B /* repl_banner-fi.txt */; };
 		14616FF34FF283465B828031 /* repl_banner-nb.txt in Resources */ = {isa = PBXBuildFile; fileRef = CDF934C494BAD6FF1BD76C28 /* repl_banner-nb.txt */; };
 		63EFFFE511163DBEAF85FE65 /* repl_banner-da.txt in Resources */ = {isa = PBXBuildFile; fileRef = 38D839CA7530C040AC101600 /* repl_banner-da.txt */; };
@@ -4772,6 +4773,7 @@
 		2877EF037945DD91E2FA6876 /* repl_banner-it.txt in Resources */ = {isa = PBXBuildFile; fileRef = 558E4A7A09D1C7875371E58C /* repl_banner-it.txt */; };
 		DDF7515C2047CBD594C8E494 /* repl_banner-vi.txt in Resources */ = {isa = PBXBuildFile; fileRef = 20A217AA265878F2D1E2339D /* repl_banner-vi.txt */; };
 		D12A1458C128178184A90834 /* repl_banner-pl.txt in Resources */ = {isa = PBXBuildFile; fileRef = 9A5845214228257B63545200 /* repl_banner-pl.txt */; };
+		C2C3939C4441240F86361833 /* repl_banner-cs.txt in Resources */ = {isa = PBXBuildFile; fileRef = BCCBB39A609BFEBBB103FB9C /* repl_banner-cs.txt */; };
 		EB1C2E4CAAB6837B9A7971B2 /* repl_banner-fi.txt in Resources */ = {isa = PBXBuildFile; fileRef = 4350A0552366F6D9FB355B3B /* repl_banner-fi.txt */; };
 		5BF8DA367920D5CEBC3E0519 /* repl_banner-nb.txt in Resources */ = {isa = PBXBuildFile; fileRef = CDF934C494BAD6FF1BD76C28 /* repl_banner-nb.txt */; };
 		4196347B187776F2B0591B88 /* repl_banner-da.txt in Resources */ = {isa = PBXBuildFile; fileRef = 38D839CA7530C040AC101600 /* repl_banner-da.txt */; };
@@ -9079,6 +9081,7 @@
 		558E4A7A09D1C7875371E58C /* repl_banner-it.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-it.txt"; path = "sources/repl_banner-it.txt"; sourceTree = "<group>"; };
 		20A217AA265878F2D1E2339D /* repl_banner-vi.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-vi.txt"; path = "sources/repl_banner-vi.txt"; sourceTree = "<group>"; };
 		9A5845214228257B63545200 /* repl_banner-pl.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-pl.txt"; path = "sources/repl_banner-pl.txt"; sourceTree = "<group>"; };
+		BCCBB39A609BFEBBB103FB9C /* repl_banner-cs.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-cs.txt"; path = "sources/repl_banner-cs.txt"; sourceTree = "<group>"; };
 		4350A0552366F6D9FB355B3B /* repl_banner-fi.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-fi.txt"; path = "sources/repl_banner-fi.txt"; sourceTree = "<group>"; };
 		CDF934C494BAD6FF1BD76C28 /* repl_banner-nb.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-nb.txt"; path = "sources/repl_banner-nb.txt"; sourceTree = "<group>"; };
 		38D839CA7530C040AC101600 /* repl_banner-da.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-da.txt"; path = "sources/repl_banner-da.txt"; sourceTree = "<group>"; };
@@ -9619,6 +9622,7 @@
 				558E4A7A09D1C7875371E58C /* repl_banner-it.txt */,
 				20A217AA265878F2D1E2339D /* repl_banner-vi.txt */,
 				9A5845214228257B63545200 /* repl_banner-pl.txt */,
+				BCCBB39A609BFEBBB103FB9C /* repl_banner-cs.txt */,
 				4350A0552366F6D9FB355B3B /* repl_banner-fi.txt */,
 				CDF934C494BAD6FF1BD76C28 /* repl_banner-nb.txt */,
 				38D839CA7530C040AC101600 /* repl_banner-da.txt */,
@@ -17253,6 +17257,7 @@
 				da,
 				nb,
 				fi,
+				cs,
 				en,
 				Base,
 			);
@@ -17892,6 +17897,7 @@
 				0CCB6CA85B2F71B032F49D68 /* repl_banner-it.txt in Resources */,
 				3195EB4B8AA7757F9735F900 /* repl_banner-vi.txt in Resources */,
 				09B54583D7F5F5703EB5F42D /* repl_banner-pl.txt in Resources */,
+				D4DE93BD6B88AB4A92450872 /* repl_banner-cs.txt in Resources */,
 				19F32F25B7612BA98BFAEBDA /* repl_banner-fi.txt in Resources */,
 				14616FF34FF283465B828031 /* repl_banner-nb.txt in Resources */,
 				63EFFFE511163DBEAF85FE65 /* repl_banner-da.txt in Resources */,
@@ -18604,6 +18610,7 @@
 				2877EF037945DD91E2FA6876 /* repl_banner-it.txt in Resources */,
 				DDF7515C2047CBD594C8E494 /* repl_banner-vi.txt in Resources */,
 				D12A1458C128178184A90834 /* repl_banner-pl.txt in Resources */,
+				C2C3939C4441240F86361833 /* repl_banner-cs.txt in Resources */,
 				EB1C2E4CAAB6837B9A7971B2 /* repl_banner-fi.txt in Resources */,
 				5BF8DA367920D5CEBC3E0519 /* repl_banner-nb.txt in Resources */,
 				4196347B187776F2B0591B88 /* repl_banner-da.txt in Resources */,

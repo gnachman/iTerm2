@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSSegmentedCell\"; 0bO-7H-4vq.ibShadowedLabels[0] = \"All\"; ObjectID = \"0bO-7H-4vq\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vše"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -125,6 +131,12 @@
       "comment" : "Class = \"NSSegmentedCell\"; 0bO-7H-4vq.ibShadowedLabels[1] = \"Running\"; ObjectID = \"0bO-7H-4vq\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spuštěné"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -245,6 +257,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"Started\"; ObjectID = \"cfh-qe-s6c\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spuštěno"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -365,6 +383,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Scroll to bottom on update\"; ObjectID = \"Dad-6X-vZQ\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Při aktualizaci posunout na konec"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -485,6 +509,12 @@
       "comment" : "Class = \"NSTabViewItem\"; label = \"Calls\"; ObjectID = \"eTW-VX-hX3\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volání"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -605,6 +635,12 @@
       "comment" : "Class = \"NSWindow\"; title = \"Script Console\"; ObjectID = \"F0z-JX-Cv5\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konzole skriptů"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -725,6 +761,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; placeholderString = \"Filter\"; ObjectID = \"hqr-c6-ohx\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrovat"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -845,6 +887,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"Name\"; ObjectID = \"lw1-Nm-bBu\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Název"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -965,6 +1013,12 @@
       "comment" : "Class = \"NSTabViewItem\"; label = \"Logs\"; ObjectID = \"r7v-l8-Wnw\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Protokoly"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",

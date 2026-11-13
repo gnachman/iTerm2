@@ -5,6 +5,12 @@
       "comment": "Class = \"NSWindow\"; title = \"Python Runtime Installer\"; ObjectID = \"F0z-JX-Cv5\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instalátor běhového prostředí Pythonu"
+          }
+        },
         "da": {
           "stringUnit": {
             "state": "translated",
@@ -125,6 +131,12 @@
       "comment": "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"gzI-bv-tHD\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zrušit"
+          }
+        },
         "da": {
           "stringUnit": {
             "state": "translated",
@@ -245,6 +257,12 @@
       "comment": "Class = \"NSTextFieldCell\"; title = \"Downloading optional components…\"; ObjectID = \"zkn-hg-CCD\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stahování volitelných součástí…"
+          }
+        },
         "da": {
           "stringUnit": {
             "state": "translated",

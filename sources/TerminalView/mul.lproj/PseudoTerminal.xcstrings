@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Silently ignore errors from this command\"; ObjectID = \"7KR-E5-Cup\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiše ignorovat chyby tohoto příkazu"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -125,6 +131,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Coprocess command to run:\"; ObjectID = \"542\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Příkaz koprocesu ke spuštění:"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -245,6 +257,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"OK\"; ObjectID = \"543\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -365,6 +383,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"544\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušit"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -485,6 +509,12 @@
       "comment" : "Class = \"NSComboBoxCell\"; placeholderString = \"Enter Command\"; ObjectID = \"557\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zadejte příkaz"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",

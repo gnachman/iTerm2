@@ -5,6 +5,12 @@
       "comment": "Class = \"NSButtonCell\"; title = \"Include timestamps\"; ObjectID = \"Uwr-4G-I6t\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zahrnout časová razítka"
+          }
+        },
         "da": {
           "stringUnit": {
             "state": "translated",
@@ -125,6 +131,12 @@
       "comment": "Class = \"NSTextFieldCell\"; title = \"File Format:\"; ObjectID = \"qlh-rh-wve\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formát souboru:"
+          }
+        },
         "da": {
           "stringUnit": {
             "state": "translated",

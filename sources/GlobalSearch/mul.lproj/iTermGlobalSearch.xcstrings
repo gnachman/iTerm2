@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"HEADER CELL\"; ObjectID = \"BPF-Ns-hhl\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ZÁHLAVÍ"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -125,6 +131,12 @@
       "comment" : "Class = \"NSWindow\"; title = \"Find Globally\"; ObjectID = \"F0z-JX-Cv5\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hledat globálně"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -245,6 +257,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Substring — Case Sensitive\"; ObjectID = \"lB6-jU-NcS\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podřetězec (rozlišuje velikost písmen)"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -365,6 +383,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Substring — Automatic\"; ObjectID = \"oQV-ia-c2e\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podřetězec (automaticky)"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -485,6 +509,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Regex — Case Insensitive\"; ObjectID = \"PDj-il-aje\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regulární výraz (ignoruje velikost písmen)"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -605,6 +635,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Find\"; ObjectID = \"QAS-VR-5CF\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hledat"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -725,6 +761,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Regex — Case Sensitive\"; ObjectID = \"rAb-YJ-OeS\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regulární výraz (rozlišuje velikost písmen)"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -845,6 +887,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Substring — Case Insensitive\"; ObjectID = \"WUN-bs-wb8\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podřetězec (ignoruje velikost písmen)"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",

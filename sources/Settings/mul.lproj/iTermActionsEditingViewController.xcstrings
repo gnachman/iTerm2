@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"Action\"; ObjectID = \"3U6-gV-9Ii\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akce"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -167,6 +173,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"Title\"; ObjectID = \"SAm-L0-yhB\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Název"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",

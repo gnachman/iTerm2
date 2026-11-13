@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"/directory\"; ObjectID = \"0w1-N3-vpN\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -125,6 +131,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Copy directory\"; ObjectID = \"2qj-sU-AUO\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zkopírovat adresář"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -245,6 +257,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"12 bytes\"; ObjectID = \"08U-bp-m38\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 bajtů"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -365,6 +383,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Select command’s output\"; ObjectID = \"ais-yY-bgC\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrat výstup příkazu"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -485,6 +509,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"1h 35m\"; ObjectID = \"b7D-W4-4dx\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1h 35m"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -605,6 +635,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Output:\"; ObjectID = \"cYx-Tz-ls5\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Výstup:"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -725,6 +761,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Copied\"; ObjectID = \"eS6-Vw-gbd\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zkopírováno"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -845,6 +887,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Copy command to clipboard\"; ObjectID = \"gaG-d9-QES\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zkopírovat příkaz do schránky"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -965,6 +1013,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Started at %@\"; ObjectID = \"KCF-7e-H8C\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spuštěno: %@"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1085,6 +1139,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Open command in Composer\"; ObjectID = \"lEf-yQ-9GU\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otevřít příkaz v editoru příkazů"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1205,6 +1265,12 @@
       "comment" : "Class = \"NSImageView\"; ibShadowedToolTip = \"Draggable Folder\"; ObjectID = \"lO8-vd-LCm\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přetáhnutelná složka"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1325,6 +1391,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"command\"; ObjectID = \"MHQ-ga-Xvf\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "příkaz"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1445,6 +1517,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Write command to terminal\"; ObjectID = \"nN8-GS-lBf\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapsat příkaz do terminálu"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1565,6 +1643,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Directory:\"; ObjectID = \"OEf-DH-Kf3\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adresář:"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1685,6 +1769,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Return Code:\"; ObjectID = \"Oj2-Xr-SWy\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Návratový kód:"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1805,6 +1895,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Write directory to terminal\"; ObjectID = \"Plm-e7-RFK\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapsat adresář do terminálu"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1925,6 +2021,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Running Time:\"; ObjectID = \"ueU-pI-V9e\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doba běhu:"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2045,6 +2147,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Copy command’s output\"; ObjectID = \"w1e-QE-s74\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zkopírovat výstup příkazu"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2165,6 +2273,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Share command…\"; ObjectID = \"WLQ-uR-fm0\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sdílet příkaz…"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2285,6 +2399,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Command:\"; ObjectID = \"Xwa-Sy-XcB\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Příkaz:"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2405,6 +2525,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"127\"; ObjectID = \"YLQ-rO-0Mh\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2525,6 +2651,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Disable showing offscreen command\"; ObjectID = \"YSm-Mh-1SD\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nezobrazovat příkaz mimo obrazovku"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",

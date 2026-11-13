@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSWindow\"; title = \"Open Quickly\"; ObjectID = \"F0z-JX-Cv5\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otevřít rychle"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -125,6 +131,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Detail\"; ObjectID = \"NGu-Jc-J4f\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podrobnosti"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -245,6 +257,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; placeholderString = \"Search for sessions, profiles, or arrangements\"; ObjectID = \"ulN-O0-L4B\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hledat relace, profily nebo uspořádání"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",

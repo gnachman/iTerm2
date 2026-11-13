@@ -118,6 +118,12 @@
             "state" : "translated",
             "value" : "Status"
           }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stav"
+          }
         }
       }
     },
@@ -238,6 +244,12 @@
             "state" : "translated",
             "value" : "Importerer…"
           }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importuje se…"
+          }
         }
       }
     },
@@ -357,6 +369,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Importerer innstillinger og data…"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importují se nastavení a data…"
           }
         }
       }

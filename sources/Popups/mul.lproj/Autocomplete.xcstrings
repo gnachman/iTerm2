@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"Autocomplete\"; ObjectID = \"9\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatické dokončování"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",

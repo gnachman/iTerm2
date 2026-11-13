@@ -18,6 +18,12 @@
       "comment" : "Bundle name",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -138,6 +144,12 @@
       "comment" : "Privacy - AppleEvents Sending Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace v iTerm2 chce používat AppleScript."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -258,6 +270,12 @@
       "comment" : "Privacy - Bluetooth Always Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace v iTerm2 chce používat Bluetooth."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -378,6 +396,12 @@
       "comment" : "Privacy - Calendars Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace v iTerm2 chce používat data Kalendáře."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -498,6 +522,12 @@
       "comment" : "Privacy - Camera Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace v iTerm2 chce používat kameru."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -618,6 +648,12 @@
       "comment" : "Privacy - Contacts Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace v iTerm2 chce používat vaše kontakty."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -738,6 +774,12 @@
       "comment" : "Copyright (human-readable)",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPL v2"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -858,6 +900,12 @@
       "comment" : "Privacy - Local Network Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace v iTerm2 chce přistupovat k místní síti."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -978,6 +1026,12 @@
       "comment" : "Privacy - Location Always Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace v iTerm2 chce používat informace o vaší poloze, i na pozadí."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1098,6 +1152,12 @@
       "comment" : "Privacy - Location Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace v iTerm2 chce používat informace o vaší poloze."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1218,6 +1278,12 @@
       "comment" : "Privacy - Location When In Use Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace v iTerm2 chce používat informace o vaší poloze, když je aktivní."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1338,6 +1404,12 @@
       "comment" : "Privacy - Microphone Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace v iTerm2 chce používat váš mikrofon."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1458,6 +1530,12 @@
       "comment" : "Privacy - Photo Library Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace v iTerm2 chce používat knihovnu fotografií."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1578,6 +1656,12 @@
       "comment" : "Privacy - Reminders Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace v iTerm2 chce používat vaše připomínky."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1698,6 +1782,12 @@
       "comment" : "Privacy - Speech Recognition Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace v iTerm2 chce používat rozpoznávání řeči."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1818,6 +1908,12 @@
       "comment" : "Privacy - System Administration Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Operace prováděná programem v iTerm2 vyžaduje zvýšená oprávnění."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",

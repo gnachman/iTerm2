@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"9a1-1y-13U\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušit"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -125,6 +131,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"OK\"; ObjectID = \"13T-Vf-Een\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",

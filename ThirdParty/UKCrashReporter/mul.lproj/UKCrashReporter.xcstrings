@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSTabViewItem\"; label = \"Description\"; ObjectID = \"11\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Popis"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -125,6 +131,12 @@
       "comment" : "Class = \"NSTabViewItem\"; label = \"Crash Log\"; ObjectID = \"12\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Protokol o selhání"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -245,6 +257,12 @@
       "comment" : "Class = \"NSWindow\"; title = \"Crash Reporter\"; ObjectID = \"5\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hlášení o selhání"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -365,6 +383,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"It appears that {APPNAME} crashed the last time it was used. Do you want to send a crash log to the developers?\\n\\nCrash logs from Apple are not sent to other developers, so this is the only way the developers of {APPNAME} can find out about and fix this crash.\"; ObjectID = \"84\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace {APPNAME} se při posledním použití zřejmě zhroutila. Chcete vývojářům odeslat protokol o selhání?\n\nProtokoly o selhání od Applu se jiným vývojářům neodesílají, takže jen tak se mohou vývojáři aplikace {APPNAME} o tomto selhání dozvědět a opravit ho."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -485,6 +509,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"You can delete any information you do not want transmitted, but this will make it more difficult to detect the bug. By default, the crash log as well as what Mac you are using and your settings are transmitted.\"; ObjectID = \"85\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Můžete odstranit jakékoli informace, které odesílat nechcete, ale bude pak obtížnější chybu odhalit. Ve výchozím nastavení se odesílá protokol o selhání, model vašeho Macu a vaše nastavení."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -605,6 +635,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Send\"; ObjectID = \"86\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odeslat"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -725,6 +761,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Remind Me Later\"; ObjectID = \"87\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Připomenout později"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -845,6 +887,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Discard\"; ObjectID = \"88\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zahodit"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",

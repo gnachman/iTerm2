@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Install Nerd Font Bundle…\"; ObjectID = \"7bA-9Z-zK3\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nainstalovat balíček Nerd Font…"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -125,6 +131,12 @@
       "comment" : "Class = \"NSWindow\"; title = \"Edit Special Exception\"; ObjectID = \"7pL-Nx-6Zr\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upravit zvláštní výjimku"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -245,6 +257,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; placeholderString = \"U+xxx\"; ObjectID = \"19O-2l-lvt\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -365,6 +383,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Special Exceptions override fonts for specific Unicode ranges or scripts.\"; ObjectID = \"50c-TU-qXa\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zvláštní výjimky přepisují písma pro určité rozsahy nebo písma (skripty) Unicode."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -485,6 +509,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; placeholderString = \"U+xxx\"; ObjectID = \"Eaw-6f-gXv\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -605,6 +635,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"OK\"; ObjectID = \"GFP-YT-OoG\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -725,6 +761,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Of Font:\"; ObjectID = \"Hpa-f0-bgv\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Z písma:"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -845,6 +887,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"For characters starting at\"; ObjectID = \"jbS-ge-dwV\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro znaky od"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -965,6 +1013,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Add Preset…\"; ObjectID = \"K4n-LF-VUt\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přidat předvolbu…"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1085,6 +1139,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"Nme-0p-Ecj\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušit"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1205,6 +1265,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"to\"; ObjectID = \"nyP-1o-ltH\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "do"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1325,6 +1391,12 @@
       "comment" : "Class = \"NSWindow\"; title = \"Manage Special Exceptions\"; ObjectID = \"QvC-M9-y7g\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spravovat zvláštní výjimky"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1445,6 +1517,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"OK\"; ObjectID = \"raH-fi-CM2\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1565,6 +1643,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Use Code Points\"; ObjectID = \"w1n-Lp-vNo\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Použít kódové body"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1685,6 +1769,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"xs7-DG-LSZ\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušit"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1805,6 +1895,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; placeholderString = \"U+xxx\"; ObjectID = \"YOm-En-lgT\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",

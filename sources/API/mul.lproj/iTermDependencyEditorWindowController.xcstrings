@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Item 2\"; ObjectID = \"4vz-Hi-I7e\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Položka 2"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -125,6 +131,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"This script must be upgraded to a “full environment“ to add dependencies. Doing so makes a copy of the Python runtime but will not use any additional disk space.\"; ObjectID = \"5dO-zM-mKW\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aby bylo možné přidávat závislosti, je nutné tento skript aktualizovat na „plné prostředí“. Tím se vytvoří kopie běhového prostředí Pythonu, ale nezabere žádné další místo na disku."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -245,6 +257,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Python Version:\"; ObjectID = \"aZ5-bL-q1Z\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verze Pythonu:"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -365,6 +383,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Remove\"; ObjectID = \"Bbw-oV-sqL\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odstranit"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -485,6 +509,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Item 3\"; ObjectID = \"C7L-Fa-1P1\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Položka 3"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -605,6 +635,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Upgrade\"; ObjectID = \"cqu-zb-kcO\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktualizovat"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -725,6 +761,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Script:\"; ObjectID = \"dO8-q4-9ap\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skript:"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -845,6 +887,12 @@
       "comment" : "Class = \"NSWindow\"; title = \"Script Dependency Editor\"; ObjectID = \"F0z-JX-Cv5\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editor závislostí skriptu"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -965,6 +1013,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Item 1\"; ObjectID = \"KFo-Ti-RPi\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Položka 1"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1085,6 +1139,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"Package Name\"; ObjectID = \"l3B-Fs-Mb7\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Název balíčku"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1205,6 +1265,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Item 2\"; ObjectID = \"MaW-HJ-CZN\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Položka 2"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1325,6 +1391,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Item 3\"; ObjectID = \"MOF-xv-VwK\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Položka 3"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1445,6 +1517,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Check for Update\"; ObjectID = \"N2q-ka-O6q\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hledat aktualizaci"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1565,6 +1643,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"Installed Version\"; ObjectID = \"oTM-1A-6Cy\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nainstalovaná verze"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1685,6 +1769,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Item 1\"; ObjectID = \"Q0o-Bt-Ls8\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Položka 1"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1805,6 +1895,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"OK\"; ObjectID = \"Sum-p6-dXV\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1925,6 +2021,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Add\"; ObjectID = \"wIu-4M-jHf\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přidat"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",

@@ -5,6 +5,12 @@
       "comment": "Class = \"NSTextFieldCell\"; title = \"Tab size in spaces:\"; ObjectID = \"Htp-7L-sn0\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Velikost tabulátoru v mezerách:"
+          }
+        },
         "da": {
           "stringUnit": {
             "state": "translated",
@@ -125,6 +131,12 @@
       "comment": "Class = \"NSTextFieldCell\"; title = \"100\"; ObjectID = \"d6u-sa-c0E\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
         "da": {
           "stringUnit": {
             "state": "translated",

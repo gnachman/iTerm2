@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Use interpolated strings for parameters\"; ObjectID = \"88E-ST-PKZ\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Použít pro parametry interpolované řetězce"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -125,6 +131,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Copy to Profile\"; ObjectID = \"AEX-CI-4kN\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zkopírovat do profilu"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -245,6 +257,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Close\"; ObjectID = \"c0p-Xj-FkC\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zavřít"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -365,6 +383,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Triggers\"; ObjectID = \"gWO-i1-Pad\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spouštěče"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -485,6 +509,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"Regular Expression\"; ObjectID = \"hKE-xP-l4d\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regulární výraz"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -605,6 +635,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Select one trigger to view or edit\"; ObjectID = \"zb2-dV-MBm\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vyberte jeden spouštěč, který chcete zobrazit nebo upravit"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",

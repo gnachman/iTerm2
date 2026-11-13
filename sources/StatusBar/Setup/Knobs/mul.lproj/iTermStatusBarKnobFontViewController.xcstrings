@@ -5,6 +5,12 @@
       "comment": "Class = \"NSButtonCell\"; title = \"Label\"; ObjectID = \"g3L-BT-A3R\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Popisek"
+          }
+        },
         "da": {
           "stringUnit": {
             "state": "translated",

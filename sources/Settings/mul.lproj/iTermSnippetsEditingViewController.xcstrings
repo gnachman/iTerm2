@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Edit\"; ObjectID = \"0Np-Qf-kVH\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upravit"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -125,6 +131,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"Title\"; ObjectID = \"LNz-uY-GTV\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Název"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -245,6 +257,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"Text\"; ObjectID = \"olW-AG-GO6\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",

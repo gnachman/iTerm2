@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"Last Used\"; ObjectID = \"tpk-Nj-p6c\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naposledy použito"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -125,6 +131,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"Command\"; ObjectID = \"wev-Vy-2ea\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Příkaz"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",

@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"Directory\"; ObjectID = \"U7W-FQ-kpa\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adresář"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -125,6 +131,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"Last Used\"; ObjectID = \"Ulb-ua-5qo\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naposledy použito"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",

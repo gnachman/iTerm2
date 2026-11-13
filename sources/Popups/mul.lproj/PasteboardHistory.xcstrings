@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"Time\"; ObjectID = \"118\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Čas"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -125,6 +131,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"Value\"; ObjectID = \"119\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hodnota"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",

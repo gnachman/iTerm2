@@ -5,6 +5,12 @@
       "comment": "Class = \"NSTextFieldCell\"; title = \"Label\"; ObjectID = \"0cd-As-C9U\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Popisek"
+          }
+        },
         "da": {
           "stringUnit": {
             "state": "translated",

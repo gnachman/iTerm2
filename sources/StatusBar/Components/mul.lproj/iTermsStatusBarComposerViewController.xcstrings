@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSComboBoxCell\"; dNz-i8-KYx.ibShadowedObjectValues[0] = \"Item 1\"; ObjectID = \"dNz-i8-KYx\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Položka 1"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -125,6 +131,12 @@
       "comment" : "Class = \"NSComboBoxCell\"; dNz-i8-KYx.ibShadowedObjectValues[1] = \"Item 2\"; ObjectID = \"dNz-i8-KYx\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Položka 2"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -245,6 +257,12 @@
       "comment" : "Class = \"NSComboBoxCell\"; dNz-i8-KYx.ibShadowedObjectValues[2] = \"Item 3\"; ObjectID = \"dNz-i8-KYx\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Položka 3"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -365,6 +383,12 @@
       "comment" : "Class = \"NSComboBoxCell\"; placeholderString = \"Command\"; ObjectID = \"dNz-i8-KYx\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Příkaz"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",

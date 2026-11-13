@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Requires Shell Integration for prompt detection\"; ObjectID = \"5Lu-I0-zTV\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detekce výzvy vyžaduje integraci shellu"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -125,6 +131,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"This is enabled when the running app has sent an escape code to turn on “bracketed paste mode.” The pasted string will be “bracketed” by escape codes indicating the text within is from a paste operation.\"; ObjectID = \"6tG-RX-FWF\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapne se, když spuštěná aplikace odeslala escape kód pro zapnutí „režimu vkládání v závorkách“. Vkládaný řetězec bude „uzavřen v závorkách“ escape kódy, které označují, že text uvnitř pochází z operace vložení."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -245,6 +257,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Escape tabs with ^V\"; ObjectID = \"8UF-96-NRu\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escapovat tabulátory pomocí ^V"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -365,6 +383,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Paste with tabs\"; ObjectID = \"9FR-lE-vZJ\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vložit s tabulátory"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -485,6 +509,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Replace\"; ObjectID = \"65A-9c-omm\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nahradit"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -605,6 +635,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Convert Unicode punctuation\"; ObjectID = \"a6z-Q5-O3y\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Převést interpunkci Unicode"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -725,6 +761,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Respects vim escape sequences\"; ObjectID = \"a9K-ff-GBV\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respektuje escape sekvence vim"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -845,6 +887,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"1 ms\"; ObjectID = \"Ba7-4w-YL4\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 ms"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -965,6 +1013,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Converts various forms of quotation marks and dashes to their ASCII equivalents.\"; ObjectID = \"C2O-DY-y76\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Převede různé formy uvozovek a pomlček na jejich ekvivalenty v ASCII."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1085,6 +1139,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Convert tabs to spaces:\"; ObjectID = \"EeN-We-9AA\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Převést tabulátory na mezery:"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1205,6 +1265,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Both DOS and UNIX newlines are generally not used as input. CR is standard.\"; ObjectID = \"FKu-pE-gGN\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konce řádků DOS i UNIX se jako vstup obvykle nepoužívají. Standardem je CR."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1325,6 +1391,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Escape shell characters with \\\\\"; ObjectID = \"geX-hg-c5A\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escapovat znaky shellu pomocí \\"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1445,6 +1517,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Chunk Size:\"; ObjectID = \"gmQ-6D-hd3\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Velikost části:"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1565,6 +1643,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; placeholderString = \"Substitution\"; ObjectID = \"hpt-tW-eP7\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Náhrada"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1685,6 +1769,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Both DOS and UNIX newlines are generally not used as input. CR is standard.\"; ObjectID = \"I7q-KH-dfd\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konce řádků DOS i UNIX se jako vstup obvykle nepoužívají. Standardem je CR."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1805,6 +1895,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Tab, line feed, form feed, and carriage return are the only “safe” control codes.\"; ObjectID = \"ILq-w8-PQn\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jediné „bezpečné“ řídicí kódy jsou tabulátor, posun o řádek, posun o stránku a návrat vozíku."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1925,6 +2021,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Transforms\"; ObjectID = \"IOU-ld-y0b\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transformace"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2045,6 +2147,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"ICU regular expression syntax\"; ObjectID = \"Iuq-a0-6jh\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syntaxe regulárních výrazů ICU"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2165,6 +2273,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"100 ms\"; ObjectID = \"J7i-FI-poE\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100 ms"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2285,6 +2399,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"1 kB\"; ObjectID = \"lBa-zz-w0b\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 kB"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2405,6 +2525,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"with\"; ObjectID = \"M1n-rk-o3M\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "na"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2525,6 +2651,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Speed\"; ObjectID = \"mzg-ua-zxf\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rychlost"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2645,6 +2777,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Remove unsafe control codes\"; ObjectID = \"Nc9-bk-vWI\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odstranit nebezpečné řídicí kódy"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2765,6 +2903,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Wait for shell prompt before pasting each line\"; ObjectID = \"nQ4-xf-lMs\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Před vložením každého řádku počkat na výzvu shellu"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2885,6 +3029,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Interchunk Delay:\"; ObjectID = \"oIL-MU-4nf\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prodleva:"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3005,6 +3155,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"1 byte\"; ObjectID = \"q05-F1-Nx6\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 bajt"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3125,6 +3281,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; placeholderString = \"Regular Expression\"; ObjectID = \"Qmg-L3-fKu\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regulární výraz"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3245,6 +3407,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"1.2 kB\"; ObjectID = \"RNM-1C-IVn\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1,2 kB"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3365,6 +3533,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"150 ms\"; ObjectID = \"Rzy-TP-eag\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "150 ms"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3485,6 +3659,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"100\"; ObjectID = \"sRn-9b-46B\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3605,6 +3785,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Radio\"; ObjectID = \"T6S-me-J0t\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přepínač"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3725,6 +3911,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Remove newlines\"; ObjectID = \"TcS-Fq-kZn\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odstranit konce řádků"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3845,6 +4037,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Use $1, $2, etc. for capture groups\"; ObjectID = \"tpG-Jk-bWC\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skupiny: $1, $2 atd."
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3965,6 +4163,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Bracketed paste mode\"; ObjectID = \"vTr-f3-LoJ\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Režim vkládání v závorkách"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4085,6 +4289,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"1 MB\"; ObjectID = \"WDY-mt-Qhp\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 MB"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4205,6 +4415,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Convert CRLF and LF to CR\"; ObjectID = \"YGo-el-jcx\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Převést CRLF a LF na CR"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4325,6 +4541,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Base-64 encode\"; ObjectID = \"YXc-NP-geE\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zakódovat do Base64"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4445,6 +4667,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"10 sec\"; ObjectID = \"zMi-ws-xdZ\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10 s"
+          }
+        },
         "da" : {
           "stringUnit" : {
             "state" : "translated",

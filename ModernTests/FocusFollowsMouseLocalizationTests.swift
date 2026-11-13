@@ -10,7 +10,7 @@
 import XCTest
 
 final class FocusFollowsMouseLocalizationTests: XCTestCase {
-    private let languages = ["da", "de", "es", "fi", "fr", "it", "ja", "nb", "nl", "pl", "pt-BR", "ru", "sv", "tr", "vi", "zh-Hans", "zh-Hant"]
+    private let languages = ["cs", "da", "de", "es", "fi", "fr", "it", "ja", "nb", "nl", "pl", "pt-BR", "ru", "sv", "tr", "vi", "zh-Hans", "zh-Hant"]
 
     private func strings(_ relativePath: String) throws -> [String: Any] {
         let root = URL(fileURLWithPath: #filePath)

@@ -5,6 +5,12 @@
       "comment": "Class = \"NSTextFieldCell\"; title = \"Enter the value for \"; ObjectID = \"dGd-7A-1cT\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zadejte hodnotu pro "
+          }
+        },
         "da": {
           "stringUnit": {
             "state": "translated",
@@ -125,6 +131,12 @@
       "comment": "Class = \"NSButtonCell\"; title = \"OK\"; ObjectID = \"l61-gx-C1I\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        },
         "da": {
           "stringUnit": {
             "state": "translated",
@@ -245,6 +257,12 @@
       "comment": "Class = \"NSWindow\"; title = \"Session Parameter\"; ObjectID = \"n1r-T9-CaM\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parametr relace"
+          }
+        },
         "da": {
           "stringUnit": {
             "state": "translated",
@@ -365,6 +383,12 @@
       "comment": "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"rGI-aK-MA4\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zrušit"
+          }
+        },
         "da": {
           "stringUnit": {
             "state": "translated",
@@ -485,6 +509,12 @@
       "comment": "Class = \"NSTextFieldCell\"; title = \"Name\"; ObjectID = \"zWZ-Bc-Jiu\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Název"
+          }
+        },
         "da": {
           "stringUnit": {
             "state": "translated",
