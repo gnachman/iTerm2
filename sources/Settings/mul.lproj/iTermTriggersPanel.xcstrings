@@ -29,6 +29,12 @@
             "value" : "Utiliser des chaînes interpolées pour les paramètres"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usa stringhe interpolate per i parametri"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93,6 +99,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier dans le profil"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copia nel profilo"
           }
         },
         "ja" : {
@@ -161,6 +173,12 @@
             "value" : "Fermer"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chiudi"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -225,6 +243,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Déclencheurs"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attivatori"
           }
         },
         "ja" : {
@@ -293,6 +317,12 @@
             "value" : "Expression régulière"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Espressione regolare"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sélectionnez un déclencheur pour l’afficher ou le modifier"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleziona un attivatore per visualizzarlo o modificarlo"
           }
         },
         "ja" : {

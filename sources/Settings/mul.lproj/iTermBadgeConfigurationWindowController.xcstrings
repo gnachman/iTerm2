@@ -29,6 +29,12 @@
             "value" : "%"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -90,6 +96,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pt"
+          }
+        },
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "pt"
@@ -161,6 +173,12 @@
             "value" : "Largeur maximale :"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Larghezza massima:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -225,6 +243,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Marge haute :"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Margine superiore:"
           }
         },
         "ja" : {
@@ -293,6 +317,12 @@
             "value" : "Marge droite :"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Margine destro:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -354,6 +384,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%"
+          }
+        },
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%"
@@ -425,6 +461,12 @@
             "value" : "OK"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -486,6 +528,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pt"
+          }
+        },
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "pt"
@@ -557,6 +605,12 @@
             "value" : "Hauteur maximale :"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Altezza massima:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -621,6 +675,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Annuler"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulla"
           }
         },
         "ja" : {

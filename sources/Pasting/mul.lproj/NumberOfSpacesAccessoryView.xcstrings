@@ -29,6 +29,12 @@
             "value": "Taille de la tabulation en espaces :"
           }
         },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dimensione del tab in spazi:"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -90,6 +96,12 @@
           }
         },
         "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "it": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

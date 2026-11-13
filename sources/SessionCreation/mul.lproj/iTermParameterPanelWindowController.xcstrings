@@ -29,6 +29,12 @@
             "value": "Saisissez la valeur pour "
           }
         },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inserisci il valore per "
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -90,6 +96,12 @@
           }
         },
         "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        },
+        "it": {
           "stringUnit": {
             "state": "translated",
             "value": "OK"
@@ -161,6 +173,12 @@
             "value": "Paramètre de session"
           }
         },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parametro della sessione"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -227,6 +245,12 @@
             "value": "Annuler"
           }
         },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annulla"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -291,6 +315,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nom"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nome"
           }
         },
         "ja": {

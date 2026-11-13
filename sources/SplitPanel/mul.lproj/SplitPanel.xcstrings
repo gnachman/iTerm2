@@ -29,6 +29,12 @@
             "value" : "Scinder le volet actuel XXXalement"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dividi il riquadro corrente XXXmente"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -95,6 +101,12 @@
             "value" : "Annuler"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulla"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -159,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Scinder"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dividi"
           }
         },
         "ja" : {

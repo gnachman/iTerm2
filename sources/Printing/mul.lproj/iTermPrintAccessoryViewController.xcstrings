@@ -29,6 +29,12 @@
             "value": "Noir et blanc"
           }
         },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bianco e nero"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",

@@ -29,6 +29,12 @@
             "value" : "Télécharge la dernière version. Exécute curl | bash"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scarica l’ultima versione. Esegue curl | bash"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -95,6 +101,12 @@
             "value" : "Continuer"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continua"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -156,6 +168,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -227,6 +245,12 @@
             "value" : "Annuler"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulla"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -291,6 +315,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1. Détecter le shell que vous utilisez.\n2. Ajouter des fichiers de script dans votre répertoire de départ.\n3. Installer des scripts utilitaires.\n4. Modifier les scripts de démarrage de votre shell."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. Rilevare quale shell usi.\n2. Aggiungere file di script nella tua cartella Inizio.\n3. Installare script di utilità.\n4. Modificare gli script di avvio della tua shell."
           }
         },
         "ja" : {
@@ -359,6 +389,12 @@
             "value" : "Retour"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indietro"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -423,6 +459,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Les utilitaires comprennent des scripts pour télécharger des fichiers, afficher des images en ligne, et plus encore. "
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le utilità includono script per scaricare file, mostrare immagini in linea e altro. "
           }
         },
         "ja" : {
@@ -491,6 +533,12 @@
             "value" : "Retour"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indietro"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -555,6 +603,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Continuer"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continua"
           }
         },
         "ja" : {
@@ -623,6 +677,12 @@
             "value" : "Annuler"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulla"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -687,6 +747,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Passer"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salta"
           }
         },
         "ja" : {
@@ -755,6 +821,12 @@
             "value" : "Annuler"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulla"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -819,6 +891,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aperçu de la commande"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anteprima comando"
           }
         },
         "ja" : {
@@ -887,6 +965,12 @@
             "value" : "Installation sans Internet"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installazione senza internet"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +1035,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Télécharger et exécuter le programme d’installation"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scarica ed esegui il programma di installazione"
           }
         },
         "ja" : {
@@ -1019,6 +1109,12 @@
             "value" : "Installer aussi les utilitaires d’iTerm2"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installa anche le utilità di iTerm2"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1083,6 +1179,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Installation manuelle guidée. Aucun téléchargement requis."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installazione manuale guidata. Non richiede download."
           }
         },
         "ja" : {
@@ -1151,6 +1253,12 @@
             "value" : "Aperçu de la commande"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anteprima comando"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1217,6 +1325,12 @@
             "value" : "Continuer"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continua"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1278,6 +1392,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🎉"
+          }
+        },
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🎉"
@@ -1349,6 +1469,12 @@
             "value" : "Aperçu de la commande"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anteprima comando"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1413,6 +1539,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Retour"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indietro"
           }
         },
         "ja" : {
@@ -1481,6 +1613,12 @@
             "value" : "Comment souhaitez-vous installer l’intégration du shell ?\n\nDans ce processus, les scripts de démarrage de votre shell seront modifiés. Ce programme d’installation saisira des commandes dans la fenêtre du terminal à votre place."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Come vuoi installare l’integrazione shell?\n\nDurante questo processo gli script di avvio della tua shell verranno modificati. Questo programma di installazione inserirà i comandi nella finestra del terminale al posto tuo."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1545,6 +1683,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aperçu de la commande"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anteprima comando"
           }
         },
         "ja" : {
@@ -1613,6 +1757,12 @@
             "value" : "Installation terminée !"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installazione completata!"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1677,6 +1827,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cela exécutera la commande suivante :\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verrà eseguito il comando seguente:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
         "ja" : {
@@ -1745,6 +1901,12 @@
             "value" : "Créez un nouvel onglet pour l’essayer.\n\nPour de meilleurs résultats, installez l’intégration du shell sur tous les hôtes auxquels vous vous connectez en ssh."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crea un nuovo pannello per provarla.\n\nPer risultati ottimali, installa l’integrazione shell su tutti gli host a cui ti colleghi in ssh."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1809,6 +1971,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "L’intégration du shell se compose de scripts qui aident votre shell à communiquer avec iTerm2 afin qu’il puisse suivre les commandes que vous exécutez, votre répertoire actuel et d’autres états. "
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’integrazione shell è composta da script che aiutano la tua shell a comunicare con iTerm2, in modo che possa tenere traccia dei comandi che esegui, della directory corrente e di altri stati. "
           }
         },
         "ja" : {
@@ -1877,6 +2045,12 @@
             "value" : "Installer l’intégration du shell"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installa integrazione shell"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1941,6 +2115,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Annuler"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulla"
           }
         },
         "ja" : {

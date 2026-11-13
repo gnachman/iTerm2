@@ -29,6 +29,12 @@
             "value" : "Préréglages…"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preimpostazioni…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93,6 +99,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajouter un élément à la Touch Bar"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiungi elemento alla Touch Bar"
           }
         },
         "ja" : {
@@ -161,6 +173,12 @@
             "value" : "Action"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Azione"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -225,6 +243,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Contournements de la Touch Bar"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accorgimenti per la Touch Bar"
           }
         },
         "ja" : {
@@ -293,6 +317,12 @@
             "value" : "Indicateur visuel de la touche échap"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indicatore visivo del tasto esc"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Combinaison de touches"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Combinazione di tasti"
           }
         },
         "ja" : {
@@ -425,6 +461,12 @@
             "value" : "Retour haptique à l’appui sur échap"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Risposta aptica alla pressione di esc"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -486,6 +528,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -555,6 +603,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Clic sonore pour la touche échap"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clic sonoro per il tasto esc"
           }
         },
         "ja" : {

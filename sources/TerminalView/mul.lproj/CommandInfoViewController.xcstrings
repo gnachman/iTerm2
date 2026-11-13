@@ -29,6 +29,12 @@
             "value" : "/répertoire"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93,6 +99,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier le répertoire"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copia directory"
           }
         },
         "ja" : {
@@ -161,6 +173,12 @@
             "value" : "12 octets"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 byte"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -225,6 +243,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sélectionner la sortie de la commande"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleziona l’output del comando"
           }
         },
         "ja" : {
@@ -293,6 +317,12 @@
             "value" : "1 h 35 min"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1h 35m"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sortie :"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Output:"
           }
         },
         "ja" : {
@@ -425,6 +461,12 @@
             "value" : "Copié"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiato"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -489,6 +531,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier la commande dans le presse-papiers"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copia il comando negli Appunti"
           }
         },
         "ja" : {
@@ -557,6 +605,12 @@
             "value" : "Démarré à %@"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avviato alle %@"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -621,6 +675,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir la commande dans le compositeur"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apri il comando nel compositore"
           }
         },
         "ja" : {
@@ -689,6 +749,12 @@
             "value" : "Dossier déplaçable"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cartella trascinabile"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -753,6 +819,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "commande"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "comando"
           }
         },
         "ja" : {
@@ -821,6 +893,12 @@
             "value" : "Écrire la commande dans le terminal"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scrivi il comando nel terminale"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -885,6 +963,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Répertoire :"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Directory:"
           }
         },
         "ja" : {
@@ -953,6 +1037,12 @@
             "value" : "Code de retour :"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codice di ritorno:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1017,6 +1107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Écrire le répertoire dans le terminal"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scrivi la directory nel terminale"
           }
         },
         "ja" : {
@@ -1085,6 +1181,12 @@
             "value" : "Durée d’exécution :"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo di esecuzione:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1149,6 +1251,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier la sortie de la commande"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copia l’output del comando"
           }
         },
         "ja" : {
@@ -1217,6 +1325,12 @@
             "value" : "Partager la commande…"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Condividi comando…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1283,6 +1397,12 @@
             "value" : "Commande :"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comando:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1344,6 +1464,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "127"
@@ -1413,6 +1539,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Désactiver l’affichage de la commande hors écran"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disabilita la visualizzazione del comando fuori schermo"
           }
         },
         "ja" : {

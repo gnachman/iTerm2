@@ -29,6 +29,12 @@
             "value" : "Chemin"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Percorso"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93,6 +99,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Afficher"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra"
           }
         },
         "ja" : {
@@ -161,6 +173,12 @@
             "value" : "Signature"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Firma"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -225,6 +243,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Inspecteur de scripts"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ispettore script"
           }
         },
         "ja" : {
@@ -293,6 +317,12 @@
             "value" : "Sessions, onglets et fenêtres"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessioni, pannelli e finestre"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Variables"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variabili"
           }
         },
         "ja" : {
@@ -425,6 +461,12 @@
             "value" : "Rôle"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruolo"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -489,6 +531,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier le chemin"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copia percorso"
           }
         },
         "ja" : {
@@ -557,6 +605,12 @@
             "value" : "Fonctions enregistrées"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funzioni registrate"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -621,6 +675,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Valeur"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valore"
           }
         },
         "ja" : {
@@ -689,6 +749,12 @@
             "value" : "Copier l’ID"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copia ID"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -755,6 +821,12 @@
             "value" : "Nom de l’objet (ID)"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nome oggetto (ID)"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -816,6 +888,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⨁"
+          }
+        },
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⨁"
@@ -887,6 +965,12 @@
             "value" : "Script"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Script"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +1035,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier la valeur"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copia valore"
           }
         },
         "ja" : {

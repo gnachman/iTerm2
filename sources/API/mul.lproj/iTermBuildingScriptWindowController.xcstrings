@@ -29,6 +29,12 @@
             "value" : "Patientez ! Installation d’un nouvel environnement Python…"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un attimo di pazienza! Installazione di un nuovo ambiente Python…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",

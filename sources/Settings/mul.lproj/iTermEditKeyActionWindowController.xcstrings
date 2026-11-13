@@ -29,6 +29,12 @@
             "value" : "Déplacer par marque"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sposta per contrassegno"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93,6 +99,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Définir le raccourci clavier"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imposta abbreviazione da tastiera"
           }
         },
         "ja" : {
@@ -161,6 +173,12 @@
             "value" : "Annuler"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulla"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -225,6 +243,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Préréglage de couleurs :"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preimpostazione colori:"
           }
         },
         "ja" : {
@@ -293,6 +317,12 @@
             "value" : "Action :"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Azione:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Libellé à afficher dans la Touch Bar"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etichetta da mostrare nella Touch Bar"
           }
         },
         "ja" : {
@@ -425,6 +461,12 @@
             "value" : "Déplacer par caractère"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sposta per carattere"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -489,6 +531,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ex. : 0x7f"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "es.: 0x7f"
           }
         },
         "ja" : {
@@ -557,6 +605,12 @@
             "value" : "Profil :"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profilo:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -621,6 +675,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Déplacer par mot"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sposta per parola"
           }
         },
         "ja" : {
@@ -689,6 +749,12 @@
             "value" : "Le message d’erreur apparaît ici"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il messaggio di errore appare qui"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -753,6 +819,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Action :"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Azione:"
           }
         },
         "ja" : {
@@ -821,6 +893,12 @@
             "value" : "Échap+"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esc+"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -885,6 +963,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Raccourci clavier :"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abbreviazione da tastiera:"
           }
         },
         "ja" : {
@@ -953,6 +1037,12 @@
             "value" : "Déplacer par ligne"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sposta per riga"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1014,6 +1104,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"

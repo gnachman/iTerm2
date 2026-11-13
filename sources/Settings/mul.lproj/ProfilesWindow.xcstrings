@@ -29,6 +29,12 @@
             "value" : "Profils"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profili"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93,6 +99,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Modifier les profils…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifica profili…"
           }
         },
         "ja" : {
@@ -161,6 +173,12 @@
             "value" : "Nouvel onglet"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nuovo pannello"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -225,6 +243,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nouvelle fenêtre"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nuova finestra"
           }
         },
         "ja" : {
@@ -293,6 +317,12 @@
             "value" : "Fermer cette fenêtre après l’ouverture d’un profil."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chiudi questa finestra dopo aver aperto un profilo."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Onglets en nouvelle fenêtre"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pannelli in nuova finestra"
           }
         },
         "ja" : {
@@ -509,6 +545,12 @@
             "value" : "Tags >"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tag >"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -573,6 +615,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nouveau volet flottant"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nuovo riquadro mobile"
           }
         },
         "ja" : {

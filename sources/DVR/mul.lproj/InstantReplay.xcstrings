@@ -29,6 +29,12 @@
             "value": "Exporter…"
           }
         },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esporta…"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -93,6 +99,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Maintenant"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adesso"
           }
         },
         "ja": {
@@ -161,6 +173,12 @@
             "value": "Contrôle de la relecture instantanée"
           }
         },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Controllo replay istantaneo"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -225,6 +243,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Annuler"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annulla"
           }
         },
         "ja": {
@@ -293,6 +317,12 @@
             "value": "Vue en direct"
           }
         },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vista dal vivo"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -357,6 +387,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Heure"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ora"
           }
         },
         "ja": {

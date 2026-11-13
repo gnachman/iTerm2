@@ -35,6 +35,12 @@
             "value" : "État"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stato"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -101,6 +107,12 @@
             "value" : "Importation…"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importazione…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +177,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Importation des réglages et des données…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importazione di impostazioni e dati…"
           }
         },
         "ja" : {

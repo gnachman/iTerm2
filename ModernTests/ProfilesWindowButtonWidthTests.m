@@ -39,7 +39,7 @@
 
 - (NSArray<NSString *> *)translationsOfKey:(NSString *)key {
     NSMutableArray<NSString *> *result = [NSMutableArray array];
-    for (NSString *language in @[ @"de", @"es", @"fr", @"ja", @"pt-BR", @"ru", @"zh-Hans", @"zh-Hant" ]) {
+    for (NSString *language in @[ @"de", @"es", @"fr", @"it", @"ja", @"pt-BR", @"ru", @"zh-Hans", @"zh-Hant" ]) {
         NSString *path = [[NSBundle mainBundle] pathForResource:@"ProfilesWindow"
                                                          ofType:@"strings"
                                                     inDirectory:nil

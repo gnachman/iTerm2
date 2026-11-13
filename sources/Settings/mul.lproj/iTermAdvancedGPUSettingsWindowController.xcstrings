@@ -29,6 +29,12 @@
             "value" : "OK"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93,6 +99,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Désactiver le moteur de rendu GPU en mode économie d’énergie"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disabilita il motore di rendering GPU in modalità risparmio energetico"
           }
         },
         "ja" : {
@@ -161,6 +173,12 @@
             "value" : "Préférer le GPU intégré au GPU dédié"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preferisci la GPU integrata a quella dedicata"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -227,6 +245,12 @@
             "value" : "Désactiver le moteur de rendu GPU hors alimentation secteur"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disabilita il motore di rendering GPU quando non è collegato all’alimentazione"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -291,6 +315,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Annuler"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulla"
           }
         },
         "ja" : {

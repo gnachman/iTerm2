@@ -29,6 +29,12 @@
             "value" : "Nécessite l’intégration du shell pour détecter l’invite"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Richiede l’integrazione shell per rilevare il prompt"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93,6 +99,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Activé quand l’app en cours d’exécution a envoyé un code d’échappement activant le « mode de collage délimité ». La chaîne collée sera « délimitée » par des codes d’échappement indiquant que le texte provient d’une opération de collage."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si attiva quando l’app in esecuzione ha inviato un codice di escape per attivare la “modalità incolla delimitato”. Il testo incollato sarà “delimitato” da codici di escape che indicano che il contenuto proviene da un’operazione di incolla."
           }
         },
         "ja" : {
@@ -161,6 +173,12 @@
             "value" : "Échapper les tabulations avec ^V"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esegui escape dei tab con ^V"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -225,6 +243,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Coller avec les tabulations"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Incolla con i tab"
           }
         },
         "ja" : {
@@ -293,6 +317,12 @@
             "value" : "Remplacer"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sostituisci"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Convertir la ponctuation Unicode"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Converti punteggiatura Unicode"
           }
         },
         "ja" : {
@@ -425,6 +461,12 @@
             "value" : "Respecte les échappements de vim"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rispetta le sequenze di escape di vim"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -489,6 +531,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 ms"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 ms"
           }
         },
         "ja" : {
@@ -557,6 +605,12 @@
             "value" : "Convertit diverses formes de guillemets et de tirets en leurs équivalents ASCII."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Converte varie forme di virgolette e trattini nei corrispondenti caratteri ASCII."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -621,6 +675,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tabulations en espaces :"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Converti i tab in spazi:"
           }
         },
         "ja" : {
@@ -689,6 +749,12 @@
             "value" : "Les retours à la ligne DOS et UNIX ne sont généralement pas utilisés en entrée. CR est la norme."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I caratteri di a capo DOS e UNIX in genere non vengono usati come input. CR è lo standard."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -753,6 +819,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Échapper pour le shell avec \\"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esegui escape dei caratteri della shell con \\"
           }
         },
         "ja" : {
@@ -821,6 +893,12 @@
             "value" : "Taille du bloc :"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dimensione blocco:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -885,6 +963,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Substitution"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sostituzione"
           }
         },
         "ja" : {
@@ -953,6 +1037,12 @@
             "value" : "Les retours à la ligne DOS et UNIX ne sont généralement pas utilisés en entrée. CR est la norme."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I caratteri di a capo DOS e UNIX in genere non vengono usati come input. CR è lo standard."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1017,6 +1107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "La tabulation, le saut de ligne, le saut de page et le retour chariot sont les seuls codes de contrôle « sûrs »."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab, avanzamento riga, avanzamento pagina e ritorno a capo sono gli unici codici di controllo “sicuri”."
           }
         },
         "ja" : {
@@ -1085,6 +1181,12 @@
             "value" : "Transformations"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trasformazioni"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1149,6 +1251,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Syntaxe d’expression régulière ICU"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sintassi delle espressioni regolari ICU"
           }
         },
         "ja" : {
@@ -1217,6 +1325,12 @@
             "value" : "100 ms"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100 ms"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1281,6 +1395,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 ko"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 kB"
           }
         },
         "ja" : {
@@ -1349,6 +1469,12 @@
             "value" : "par"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "con"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1413,6 +1539,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vitesse"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Velocità"
           }
         },
         "ja" : {
@@ -1481,6 +1613,12 @@
             "value" : "Filtrer les codes de contrôle"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rimuovi codici di controllo non sicuri"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1545,6 +1683,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Attendre l’invite du shell avant de coller chaque ligne"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attendi il prompt della shell prima di incollare ogni riga"
           }
         },
         "ja" : {
@@ -1613,6 +1757,12 @@
             "value" : "Délai entre blocs :"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa tra blocchi:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1677,6 +1827,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 octet"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 byte"
           }
         },
         "ja" : {
@@ -1745,6 +1901,12 @@
             "value" : "Expression régulière"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Espressione regolare"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1809,6 +1971,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1,2 ko"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1,2 kB"
           }
         },
         "ja" : {
@@ -1877,6 +2045,12 @@
             "value" : "150 ms"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "150 ms"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1938,6 +2112,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100"
+          }
+        },
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "100"
@@ -2009,6 +2189,12 @@
             "value" : "Radio"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulsante di opzione"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2073,6 +2259,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Supprimer les retours à la ligne"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rimuovi a capo"
           }
         },
         "ja" : {
@@ -2141,6 +2333,12 @@
             "value" : "Groupes de capture : $1, $2, etc."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gruppi di cattura: $1, $2, ecc."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2205,6 +2403,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mode de collage délimité"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modalità incolla delimitato"
           }
         },
         "ja" : {
@@ -2273,6 +2477,12 @@
             "value" : "1 Mo"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 MB"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2337,6 +2547,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Convertir CRLF et LF en CR"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Converti CRLF e LF in CR"
           }
         },
         "ja" : {
@@ -2405,6 +2621,12 @@
             "value" : "Encoder en Base 64"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codifica in Base 64"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2469,6 +2691,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "10 s"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10 s"
           }
         },
         "ja" : {

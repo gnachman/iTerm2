@@ -29,6 +29,12 @@
             "value": "Libellé"
           }
         },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Etichetta"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",

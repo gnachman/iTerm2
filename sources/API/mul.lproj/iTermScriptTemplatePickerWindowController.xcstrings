@@ -29,6 +29,12 @@
             "value" : "Un script simple qui n’a aucune dépendance en dehors de la bibliothèque iterm2."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uno script semplice che non ha dipendenze oltre alla libreria iterm2."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -90,6 +96,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😈"
+          }
+        },
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😈"
@@ -161,6 +173,12 @@
             "value" : "De base"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Base"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -222,6 +240,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😊"
+          }
+        },
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😊"
@@ -293,6 +317,12 @@
             "value" : "Démon de longue durée"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daemon di lunga durata"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Simple"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semplice"
           }
         },
         "ja" : {
@@ -425,6 +461,12 @@
             "value" : "Annuler"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulla"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -489,6 +531,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Choisissez ce modèle pour un script simple qui effectue des actions puis se termine."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scegli questo modello per uno script semplice che esegue azioni e termina."
           }
         },
         "ja" : {
@@ -557,6 +605,12 @@
             "value" : "Un script qui dépend de paquets PyPI autres que la bibliothèque iterm2. Un pyenv privé sera créé pour ce script."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uno script che dipende da pacchetti PyPI diversi dalla libreria iterm2. Per questo script verrà creato un pyenv privato."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -618,6 +672,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔗"
+          }
+        },
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🔗"
@@ -689,6 +749,12 @@
             "value" : "Choisissez un modèle de script :"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scegli un modello di script:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -753,6 +819,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Environnement complet"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ambiente completo"
           }
         },
         "ja" : {
@@ -821,6 +893,12 @@
             "value" : "Choisissez ce modèle pour un script qui reste actif et répond aux notifications."
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scegli questo modello per uno script che resta in esecuzione e risponde alle notifiche."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -882,6 +960,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛠️"
+          }
+        },
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🛠️"
@@ -951,6 +1035,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Choisissez un environnement Python :"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scegli un ambiente Python:"
           }
         },
         "ja" : {

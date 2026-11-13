@@ -29,6 +29,12 @@
             "value" : "Configurer l’intelligence artificielle"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configura l’intelligenza artificiale"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93,6 +99,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Votre fournisseur d’IA peut vous facturer chaque jeton envoyé ou reçu."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il tuo provider IA potrebbe addebitarti ogni token inviato o ricevuto."
           }
         },
         "ja" : {
@@ -161,6 +173,12 @@
             "value" : "Saisissez la clé d’API ici"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inserisci qui la chiave API"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -227,6 +245,12 @@
             "value" : "Annuler"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulla"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -288,6 +312,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"

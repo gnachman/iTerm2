@@ -29,6 +29,12 @@
             "value": "Inclure les horodatages"
           }
         },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Includi data e ora"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -93,6 +99,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Format de fichier :"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formato file:"
           }
         },
         "ja": {

@@ -29,6 +29,12 @@
             "value" : "⌥ Option"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Opzione"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93,6 +99,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Épingler la fenêtre à raccourci global (reste ouverte quand le clavier perd le focus)"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fissa finestra ad abbreviazione globale (resta aperta quando perde il focus della tastiera)"
           }
         },
         "ja" : {
@@ -161,6 +173,12 @@
             "value" : "Raccourci global :"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abbreviazione globale:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -225,6 +243,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remarque : la fenêtre n’est rouverte que si elle a été fermée parce qu’une autre app est devenue active."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nota: la finestra viene riaperta solo se è stata chiusa perché un’altra app è diventata attiva."
           }
         },
         "ja" : {
@@ -293,6 +317,12 @@
             "value" : "Raccourcis globaux supplémentaires"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abbreviazioni globali aggiuntive"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quand vous appuyez sur le raccourci global associé à ce profil, une fenêtre dédiée s’affiche ou se masque. Chaque profil doté d’un raccourci global contrôle sa propre fenêtre à raccourci global."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quando premi l’abbreviazione globale associata a questo profilo, una finestra dedicata viene mostrata o nascosta. Ogni profilo con un’abbreviazione globale controlla la propria finestra ad abbreviazione globale."
           }
         },
         "ja" : {
@@ -425,6 +461,12 @@
             "value" : "Ne rien faire de particulier"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non fare nulla di speciale"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -486,6 +528,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -557,6 +605,12 @@
             "value" : "Afficher cette fenêtre à raccourci global"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra questa finestra ad abbreviazione globale"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -621,6 +675,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Réglages de la fenêtre à raccourci global"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impostazioni della finestra ad abbreviazione globale"
           }
         },
         "ja" : {
@@ -689,6 +749,12 @@
             "value" : "⌘ Commande"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Comando"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -753,6 +819,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️ Un autre profil utilise ce raccourci"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Un altro profilo usa questa abbreviazione"
           }
         },
         "ja" : {
@@ -821,6 +893,12 @@
             "value" : "⇧ Maj"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Maiuscole"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -885,6 +963,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touche de double appui :"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tasto a doppio tocco:"
           }
         },
         "ja" : {
@@ -953,6 +1037,12 @@
             "value" : "Rouvrir automatiquement à la réactivation de l’app"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riapri automaticamente alla riattivazione dell’app"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1017,6 +1107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️ Un autre profil utilise ce double appui"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Un altro profilo usa questo doppio tocco"
           }
         },
         "ja" : {
@@ -1085,6 +1181,12 @@
             "value" : "Afficher cette fenêtre à raccourci global si aucune autre fenêtre n’est ouverte"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra questa finestra ad abbreviazione globale se non ci sono altre finestre aperte"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1149,6 +1251,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Les fenêtres flottantes recouvrent les autres fenêtres, le Dock et les fenêtres en plein écran des autres apps (si l’espace de la fenêtre à raccourci global est réglé sur Tous les espaces)."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le finestre mobili si sovrappongono alle altre finestre, al Dock e alle finestre a tutto schermo di altre app (se lo spazio della finestra ad abbreviazione globale è impostato su Tutti gli spazi)."
           }
         },
         "ja" : {
@@ -1217,6 +1325,12 @@
             "value" : "Annuler"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulla"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1281,6 +1395,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Au clic sur l’icône du Dock :"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Al clic sull’icona del Dock:"
           }
         },
         "ja" : {
@@ -1349,6 +1469,12 @@
             "value" : "Animer l’affichage et le masquage"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anima mostra e nascondi"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1410,6 +1536,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -1481,6 +1613,12 @@
             "value" : "OK"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1545,6 +1683,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fenêtre flottante"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finestra mobile"
           }
         },
         "ja" : {
@@ -1613,6 +1757,12 @@
             "value" : "^ Contrôle"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Controllo"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1677,6 +1827,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Raccourcis globaux supplémentaires…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abbreviazioni globali aggiuntive…"
           }
         },
         "ja" : {

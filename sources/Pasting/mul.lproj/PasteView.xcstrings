@@ -29,6 +29,12 @@
             "value": "Collage en cours…"
           }
         },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incollo…"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -93,6 +99,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Annuler"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annulla"
           }
         },
         "ja": {

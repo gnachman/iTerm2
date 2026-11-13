@@ -29,6 +29,12 @@
             "value" : "Ouverture rapide"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apertura rapida"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -95,6 +101,12 @@
             "value" : "Détail"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dettaglio"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -159,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechercher des sessions, profils ou dispositions"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerca sessioni, profili o disposizioni"
           }
         },
         "ja" : {

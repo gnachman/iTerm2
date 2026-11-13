@@ -29,6 +29,12 @@
             "value" : "Complétion automatique"
           }
         },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completamento automatico"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",

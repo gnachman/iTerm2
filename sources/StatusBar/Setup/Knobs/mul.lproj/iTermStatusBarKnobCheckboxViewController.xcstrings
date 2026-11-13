@@ -29,6 +29,12 @@
             "value": "Cocher"
           }
         },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seleziona"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
