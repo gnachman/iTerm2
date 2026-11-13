@@ -674,6 +674,19 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
 @end
 
+// The three titles the editor's Fetch Models button switches among.
+static NSString *iTermManualAIModelEditorFetchModelsTitle(void) {
+    return NSLocalizedStringWithDefaultValue(@"AIModelEditor.FetchModels", nil, [NSBundle mainBundle], @"Fetch Models", @"Button that lists models installed on the server");
+}
+
+static NSString *iTermManualAIModelEditorRefreshModelsTitle(void) {
+    return NSLocalizedStringWithDefaultValue(@"AIModelEditor.RefreshModels", nil, [NSBundle mainBundle], @"Refresh Models", @"Button that re-lists models installed on the Ollama server");
+}
+
+static NSString *iTermManualAIModelEditorFetchingTitle(void) {
+    return NSLocalizedStringWithDefaultValue(@"AIModelEditor.FetchingProgress", nil, [NSBundle mainBundle], @"Fetching…", @"Transient button title while the app lists models from the server");
+}
+
 @implementation iTermManualAIModelEditorController {
     NSWindow *_window;
     NSDictionary *_base;
@@ -703,6 +716,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSMutableDictionary<NSString *, NSButton *> *_featureButtons;
     NSButton *_testButton;
     NSButton *_fetchModelsButton;
+    // Every title the Fetch Models button can show. -layoutForTranslations
+    // widens the button to fit the widest.
+    NSArray<NSString *> *_fetchModelsButtonTitles;
     // A Fetch Models request is in flight. The button stays disabled and reads
     // “Fetching…” until it finishes, whatever else changes in the editor.
     BOOL _fetchingModels;
@@ -862,12 +878,40 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         }
     }
 
+    [self fitFetchModelsButton];
+
     NSRect testFrame = _testButton.frame;
     testFrame.size.width = MAX(NSWidth(testFrame), ceil(_testButton.cell.cellSize.width));
     _testButton.frame = testFrame;
     NSRect spinnerFrame = _testSpinner.frame;
     spinnerFrame.origin.x = NSMaxX(testFrame) + 8;
     _testSpinner.frame = spinnerFrame;
+}
+
+// Widen the Fetch Models button leftward to fit the widest title it can show,
+// keeping its right edge flush with the fields below. The Model field (and the
+// popup that takes its place) gives up the room.
+- (void)fitFetchModelsButton {
+    NSString *currentTitle = _fetchModelsButton.title;
+    CGFloat needed = NSWidth(_fetchModelsButton.frame);
+    for (NSString *title in _fetchModelsButtonTitles) {
+        _fetchModelsButton.title = title;
+        needed = MAX(needed, ceil(_fetchModelsButton.cell.cellSize.width));
+    }
+    _fetchModelsButton.title = currentTitle;
+    const CGFloat growth = needed - NSWidth(_fetchModelsButton.frame);
+    if (growth <= 0) {
+        return;
+    }
+    NSRect buttonFrame = _fetchModelsButton.frame;
+    buttonFrame.origin.x -= growth;
+    buttonFrame.size.width += growth;
+    _fetchModelsButton.frame = buttonFrame;
+
+    NSRect nameFrame = _nameField.frame;
+    nameFrame.size.width -= growth;
+    _nameField.frame = nameFrame;
+    _modelPopup.frame = nameFrame;
 }
 
 - (void)buildWindowWithAPIKeyHintStrings:(NSArray<NSString *> *)apiKeyHintStrings {
@@ -959,7 +1003,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         NSRect nameFrame = _nameField.frame;
         nameFrame.size.width -= (fetchWidth + 6);
         _nameField.frame = nameFrame;
-        _fetchModelsButton = [NSButton buttonWithTitle:NSLocalizedStringWithDefaultValue(@"AIModelEditor.FetchModels", nil, [NSBundle mainBundle], @"Fetch Models", @"Button that lists models installed on the server")
+        _fetchModelsButtonTitles = @[ iTermManualAIModelEditorFetchModelsTitle(),
+                                      iTermManualAIModelEditorRefreshModelsTitle(),
+                                      iTermManualAIModelEditorFetchingTitle() ];
+        _fetchModelsButton = [NSButton buttonWithTitle:iTermManualAIModelEditorFetchModelsTitle()
                                                 target:self
                                                 action:@selector(fetchModels:)];
         _fetchModelsButton.bezelStyle = NSBezelStyleRounded;
@@ -1419,14 +1466,13 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 - (void)updateFetchModelsButton {
     if (_fetchingModels) {
         _fetchModelsButton.enabled = NO;
-        _fetchModelsButton.title = NSLocalizedStringWithDefaultValue(@"AIModelEditor.FetchingProgress", nil, [NSBundle mainBundle], @"Fetching…", @"Transient button title while the app lists models from the server");
+        _fetchModelsButton.title = iTermManualAIModelEditorFetchingTitle();
         return;
     }
     const iTermAIAPI api = (iTermAIAPI)_apiPopup.selectedItem.tag;
     _fetchModelsButton.enabled = (api == iTermAIAPILlama || [iTermAIModelListDiscovery supportsAPI:api]);
     const BOOL dynamic = _dynamicModelsButton.state == NSControlStateValueOn;
-    _fetchModelsButton.title = dynamic ? NSLocalizedStringWithDefaultValue(@"AIModelEditor.RefreshModels", nil, [NSBundle mainBundle], @"Refresh Models", @"Button that re-lists models installed on the Ollama server")
-                                       : NSLocalizedStringWithDefaultValue(@"AIModelEditor.FetchModels", nil, [NSBundle mainBundle], @"Fetch Models", @"Button that lists models installed on the server");
+    _fetchModelsButton.title = dynamic ? iTermManualAIModelEditorRefreshModelsTitle() : iTermManualAIModelEditorFetchModelsTitle();
 }
 
 - (void)controlTextDidChange:(NSNotification *)notification {

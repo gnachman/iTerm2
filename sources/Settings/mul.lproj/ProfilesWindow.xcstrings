@@ -23,6 +23,12 @@
             "value" : "Perfiles"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profils"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -75,6 +81,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Editar perfiles…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier les profils…"
           }
         },
         "ja" : {
@@ -131,6 +143,12 @@
             "value" : "Nueva pestaña"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvel onglet"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nueva ventana"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvelle fenêtre"
           }
         },
         "ja" : {
@@ -239,6 +263,12 @@
             "value" : "Cerrar esta ventana después de abrir un perfil."
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fermer cette fenêtre après l’ouverture d’un profil."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -291,6 +321,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pestañas en ventana nueva"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onglets en nouvelle fenêtre"
           }
         },
         "ja" : {
@@ -431,6 +467,12 @@
             "value" : "Tags >"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tags >"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +525,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nuevo panel flotante"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouveau volet flottant"
           }
         },
         "ja" : {

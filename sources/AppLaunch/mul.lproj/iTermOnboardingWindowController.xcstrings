@@ -23,6 +23,12 @@
             "value" : "Usa iTerm2 aunque estés lejos de tu Mac. Puedes controlarlo mediante el chat de IA, ver el contenido de las sesiones y recibir notificaciones push. El cifrado de extremo a extremo mantiene tus datos seguros. <a href=\"iterm2whatsnew:companion\">¡Pruébalo ahora!</a>"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilisez iTerm2 même loin de votre Mac. Vous pouvez le contrôler via le chat IA, consulter le contenu des sessions et recevoir des notifications push. Le chiffrement de bout en bout protège vos données. <a href=\"iterm2whatsnew:companion\">Essayez-le maintenant !</a>"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -72,6 +78,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -131,6 +143,12 @@
             "value" : "Un nuevo modo de chat de IA, Orquestación, deja que la IA se encargue de todo por ti. Puede crear ventanas, esperar a que se completen tareas (incluso en apps interactivas) y el nuevo verificador de seguridad automático te evita tener que responder a casi todas las solicitudes de permiso. <a href=\"iterm2whatsnew:orchestration\">¡Pruébalo ahora!</a>"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un nouveau mode de chat IA, l’orchestration, laisse l’IA diriger les opérations à votre place. Elle peut créer des fenêtres, attendre la fin de tâches (même dans des apps interactives), et le nouveau vérificateur de sécurité automatique vous évite de répondre à presque toutes les demandes d’autorisation. <a href=\"iterm2whatsnew:orchestration\">Essayez-la maintenant !</a>"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -180,6 +198,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -239,6 +263,12 @@
             "value" : "La nueva función Capturas de pantalla simplifica la creación de un PNG del contenido de tu terminal. Admite censuras y resaltados. Usa <a href=\"iterm2whatsnew:screenshot\">Sesión > Hacer captura de pantalla</a> para activarla."
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La nouvelle fonctionnalité Captures d’écran simplifie la création d’un PNG du contenu de votre terminal. Elle prend en charge le caviardage et la mise en évidence. Utilisez <a href=\"iterm2whatsnew:screenshot\">Session > Capturer l’écran</a> pour l’activer."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -293,6 +323,12 @@
             "value" : "Novedades de la versión 3.7"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouveautés de la version 3.7"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -342,6 +378,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ">"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : ">"
@@ -401,6 +443,12 @@
             "value" : "●"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -453,6 +501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Integración con Claude Code"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intégration de Claude Code"
           }
         },
         "ja" : {
@@ -509,6 +563,12 @@
             "value" : "Para ayudarte a gestionar un gran número de pestañas, ahora puedes combinarlas en grupos plegables. Además, la barra de pestañas ahora se desplaza en lugar de mostrar un menú de desbordamiento."
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour mieux gérer un grand nombre d’onglets, vous pouvez désormais les regrouper en groupes repliables. La barre d’onglets défile maintenant au lieu d’afficher un menu de débordement."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -558,6 +618,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -617,6 +683,12 @@
             "value" : "La integración con Claude Code organiza varias sesiones relacionadas (como la revisión de código y la lectura de diffs) en una interfaz personalizable. También muestra el estado de Claude para que encuentres fácilmente las instancias que necesitan tu atención. <a href=\"iterm2whatsnew:claudecode\">¡Pruébalo ahora!</a>"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’intégration de Claude Code organise plusieurs sessions liées (comme la revue de code et la lecture des diffs) dans une interface personnalisable. Elle expose aussi l’état de Claude pour que vous trouviez facilement les instances qui attendent votre attention. <a href=\"iterm2whatsnew:claudecode\">Essayez-la maintenant !</a>"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -671,6 +743,12 @@
             "value" : "App complementaria para iPhone"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App compagnon pour iPhone"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -720,6 +798,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -779,6 +863,12 @@
             "value" : "Orquestación"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orchestration"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -831,6 +921,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Grupos de pestañas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Groupes d’onglets"
           }
         },
         "ja" : {
@@ -887,6 +983,12 @@
             "value" : "Capturas de pantalla"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Captures d’écran"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -936,6 +1038,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "<"

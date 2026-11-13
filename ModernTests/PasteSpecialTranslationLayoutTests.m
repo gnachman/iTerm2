@@ -17,6 +17,7 @@
 - (void)layoutSpeedLabels;
 - (IBAction)chunkSizeDidChange:(id)sender;
 - (IBAction)delayBetweenChunksDidChange:(id)sender;
+- (void)layoutForTranslations;
 @end
 
 @protocol PasteSpecialWindowControllerLayoutForTesting <NSObject>
@@ -52,7 +53,7 @@
 }
 
 + (NSArray<NSString *> *)languages {
-    return @[ @"de", @"es", @"ja", @"pt-BR", @"ru", @"zh-Hans" ];
+    return @[ @"de", @"es", @"fr", @"ja", @"pt-BR", @"ru", @"zh-Hans" ];
 }
 
 - (NSString *)stringForKey:(NSString *)key table:(NSString *)table language:(NSString *)language {
@@ -177,6 +178,12 @@
     id<PasteSpecialViewControllerLayoutForTesting> vc = [self newViewController];
     XCTAssertEqual(NSMinX([[self outlet:@"chunkSizeLabel" of:vc] frame]), 116);
     XCTAssertEqual(NSMinX([[self outlet:@"delayBetweenChunksLabel" of:vc] frame]), 369);
+    // English titles fit the nib, so the translation layout moves nothing.
+    XCTAssertEqual(NSWidth(vc.view.frame), 444);
+    XCTAssertTrue(NSEqualRects([[self outlet:@"escapeShellCharsWithBackslash" of:vc] frame], NSMakeRect(235, 274, 207, 18)));
+    XCTAssertTrue(NSEqualRects([[self outlet:@"convertNewlines" of:vc] frame], NSMakeRect(-2, 274, 228, 18)));
+    XCTAssertTrue(NSEqualRects([[self outlet:@"tabTransform" of:vc] frame], NSMakeRect(0, 0, 196, 58)));
+    XCTAssertTrue(NSEqualRects([[self outlet:@"useRegexSubstitution" of:vc] frame], NSMakeRect(-2, 158, 84, 18)));
 }
 
 // Labels whose frames are fixed in the nib. Keys are the English text, which
@@ -198,6 +205,131 @@
                                      @"%@ clipped: %@", language, string);
         }
         XCTAssertLessThanOrEqual(NSMaxX(field.frame), NSWidth(vc.view.frame), @"%@ runs off the view", english);
+    }
+}
+
+// Every NSButton in `view` whose title is `title`, searching subviews.
+- (NSButton *)buttonIn:(NSView *)view withTitle:(NSString *)title {
+    for (NSView *subview in view.subviews) {
+        if ([subview isKindOfClass:NSButton.class] && [[(NSButton *)subview title] isEqualToString:title]) {
+            return (NSButton *)subview;
+        }
+        NSButton *found = [self buttonIn:subview withTitle:title];
+        if (found) {
+            return found;
+        }
+    }
+    return nil;
+}
+
+// Checkbox titles in the order the test applies them: English -> catalog key.
++ (NSDictionary<NSString *, NSString *> *)checkboxKeys {
+    return @{
+        @"Replace": @"65A-9c-omm.title",
+        @"Convert CRLF and LF to CR": @"YGo-el-jcx.title",
+        @"Escape shell characters with \\": @"geX-hg-c5A.title",
+        @"Remove newlines": @"TcS-Fq-kZn.title",
+        @"Convert Unicode punctuation": @"a6z-Q5-O3y.title",
+        @"Base-64 encode": @"YXc-NP-geE.title",
+        @"Bracketed paste mode": @"vTr-f3-LoJ.title",
+        @"Remove unsafe control codes": @"Nc9-bk-vWI.title",
+        @"Wait for shell prompt before pasting each line": @"nQ4-xf-lMs.title",
+    };
+}
+
++ (NSDictionary<NSString *, NSString *> *)radioKeys {
+    return @{
+        @"Paste with tabs": @"9FR-lE-vZJ.title",
+        @"Convert tabs to spaces:": @"EeN-We-9AA.title",
+        @"Escape tabs with ^V": @"8UF-96-NRu.title",
+    };
+}
+
+// A view controller showing `language`'s checkbox and radio titles, laid out
+// for them. Fills `checkboxes` with the checkboxes by English title.
+- (id<PasteSpecialViewControllerLayoutForTesting>)viewControllerTranslatedTo:(NSString *)language
+                                                                   checkboxes:(NSMutableDictionary<NSString *, NSButton *> *)checkboxes {
+    id<PasteSpecialViewControllerLayoutForTesting> vc = [self newViewController];
+    NSDictionary<NSString *, NSString *> *checkboxKeys = [PasteSpecialTranslationLayoutTests checkboxKeys];
+    for (NSString *english in checkboxKeys) {
+        NSButton *checkbox = [self buttonIn:vc.view withTitle:english];
+        XCTAssertNotNil(checkbox, @"No checkbox %@", english);
+        checkbox.title = [self viewControllerString:checkboxKeys[english] language:language];
+        if (checkbox) {
+            checkboxes[english] = checkbox;
+        }
+    }
+    NSMatrix *matrix = [self outlet:@"tabTransform" of:vc];
+    NSDictionary<NSString *, NSString *> *radioKeys = [PasteSpecialTranslationLayoutTests radioKeys];
+    for (NSInteger row = 0; row < matrix.numberOfRows; row++) {
+        NSButtonCell *cell = [matrix cellAtRow:row column:0];
+        NSString *key = radioKeys[cell.title];
+        XCTAssertNotNil(key, @"Unexpected radio %@", cell.title);
+        if (key) {
+            cell.title = [self viewControllerString:key language:language];
+        }
+    }
+    [vc layoutForTranslations];
+    return vc;
+}
+
+// French clipped “Échapper les caractères du…”, “Convertir la ponctuation
+// Uni…”, “Supprimer les codes de cont…”, and “Rempla…”, and other languages
+// clipped more. The columns widen to fit every checkbox title without the
+// columns running into each other or off the view.
+- (void)testCheckboxTitlesFit {
+    for (NSString *language in [PasteSpecialTranslationLayoutTests languages]) {
+        NSMutableDictionary<NSString *, NSButton *> *checkboxes = [NSMutableDictionary dictionary];
+        id<PasteSpecialViewControllerLayoutForTesting> vc = [self viewControllerTranslatedTo:language checkboxes:checkboxes];
+        NSView *view = vc.view;
+        for (NSString *english in checkboxes) {
+            NSButton *checkbox = checkboxes[english];
+            XCTAssertLessThanOrEqual(ceil(checkbox.cell.cellSize.width), NSWidth(checkbox.frame),
+                                     @"%@ clipped: %@", language, checkbox.title);
+            const NSRect frame = [checkbox.superview convertRect:checkbox.frame toView:view];
+            XCTAssertLessThanOrEqual(NSMaxX(frame), NSWidth(view.bounds), @"%@: %@ runs off the view", language, checkbox.title);
+        }
+        for (NSArray<NSString *> *pair in @[ @[ @"Convert CRLF and LF to CR", @"Escape shell characters with \\" ],
+                                             @[ @"Remove newlines", @"Convert Unicode punctuation" ],
+                                             @[ @"Bracketed paste mode", @"Remove unsafe control codes" ] ]) {
+            NSButton *left = checkboxes[pair[0]];
+            NSButton *right = checkboxes[pair[1]];
+            XCTAssertLessThanOrEqual(NSMaxX([left.superview convertRect:left.frame toView:view]),
+                                     NSMinX([right.superview convertRect:right.frame toView:view]),
+                                     @"%@: %@ runs into %@", language, left.title, right.title);
+        }
+        NSButton *replace = checkboxes[@"Replace"];
+        NSTextField *regex = [self outlet:@"regex" of:vc];
+        XCTAssertLessThanOrEqual(NSMaxX(replace.frame), NSMinX(regex.frame), @"%@: Replace runs into the regex field", language);
+    }
+}
+
+// The tab-handling radio buttons share one cell width, and the number of
+// spaces field sits on the Convert row, so that title ends where the field
+// begins. The matrix may not grow over the field or the stepper, which it
+// would otherwise hide from clicks. French clipped “Convertir les tabulations
+// e…” and “Échapper les tabulations a…”.
+- (void)testTabRadioTitlesFit {
+    for (NSString *language in [PasteSpecialTranslationLayoutTests languages]) {
+        id<PasteSpecialViewControllerLayoutForTesting> vc =
+            [self viewControllerTranslatedTo:language checkboxes:[NSMutableDictionary dictionary]];
+        NSMatrix *matrix = [self outlet:@"tabTransform" of:vc];
+        NSTextField *spaces = [self outlet:@"spacesPerTab" of:vc];
+        NSStepper *stepper = [self outlet:@"stepper" of:vc];
+        XCTAssertEqual(matrix.superview, spaces.superview);
+        XCTAssertLessThanOrEqual(NSMaxX(matrix.frame), NSMinX(spaces.frame) + 4,
+                                 @"%@: the radio buttons cover the spaces field", language);
+        XCTAssertLessThanOrEqual(NSMaxX(spaces.frame), NSMinX(stepper.frame), @"%@", language);
+        XCTAssertLessThanOrEqual(NSMaxX(stepper.frame), NSWidth(stepper.superview.bounds), @"%@", language);
+        for (NSInteger row = 0; row < matrix.numberOfRows; row++) {
+            NSButtonCell *cell = [matrix cellAtRow:row column:0];
+            const NSRect rowFrame = [matrix convertRect:[matrix cellFrameAtRow:row column:0] toView:matrix.superview];
+            CGFloat room = NSWidth(rowFrame);
+            if (NSMaxY(spaces.frame) > NSMinY(rowFrame) && NSMinY(spaces.frame) < NSMaxY(rowFrame)) {
+                room = MIN(room, NSMinX(spaces.frame) - NSMinX(rowFrame));
+            }
+            XCTAssertLessThanOrEqual(ceil(cell.cellSize.width), room, @"%@ clipped: %@", language, cell.title);
+        }
     }
 }
 

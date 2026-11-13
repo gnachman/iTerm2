@@ -23,6 +23,12 @@
             "value" : "Autocompletar"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Complétion automatique"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",

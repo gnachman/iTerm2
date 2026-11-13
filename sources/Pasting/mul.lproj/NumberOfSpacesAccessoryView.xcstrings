@@ -23,6 +23,12 @@
             "value": "Tamaño del tabulador en espacios:"
           }
         },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taille de la tabulation en espaces :"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -72,6 +78,12 @@
           }
         },
         "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

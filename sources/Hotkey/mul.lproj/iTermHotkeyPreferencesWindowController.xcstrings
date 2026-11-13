@@ -23,6 +23,12 @@
             "value" : "⌥ Opción"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Option"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -75,6 +81,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fijar ventana de tecla rápida (permanece abierta al perder el foco del teclado)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Épingler la fenêtre à raccourci global (reste ouverte quand le clavier perd le focus)"
           }
         },
         "ja" : {
@@ -131,6 +143,12 @@
             "value" : "Tecla rápida:"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raccourci global :"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nota: la ventana solo se vuelve a abrir si se cerró porque otra app pasó a estar activa."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remarque : la fenêtre n’est rouverte que si elle a été fermée parce qu’une autre app est devenue active."
           }
         },
         "ja" : {
@@ -239,6 +263,12 @@
             "value" : "Teclas rápidas adicionales"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raccourcis globaux supplémentaires"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -291,6 +321,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Al pulsar la tecla rápida asignada a este perfil, se mostrará u ocultará una ventana dedicada. Cada perfil con una tecla rápida controla su propia ventana de tecla rápida."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quand vous appuyez sur le raccourci global associé à ce profil, une fenêtre dédiée s’affiche ou se masque. Chaque profil doté d’un raccourci global contrôle sa propre fenêtre à raccourci global."
           }
         },
         "ja" : {
@@ -347,6 +383,12 @@
             "value" : "No hacer nada especial"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne rien faire de particulier"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -396,6 +438,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -455,6 +503,12 @@
             "value" : "Mostrar esta ventana de tecla rápida"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher cette fenêtre à raccourci global"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -507,6 +561,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajustes de la ventana de tecla rápida"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages de la fenêtre à raccourci global"
           }
         },
         "ja" : {
@@ -563,6 +623,12 @@
             "value" : "⌘ Comando"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Commande"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -615,6 +681,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️ Otro perfil usa este atajo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Un autre profil utilise ce raccourci"
           }
         },
         "ja" : {
@@ -671,6 +743,12 @@
             "value" : "⇧ Mayúsculas"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Maj"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -723,6 +801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tecla de doble toque:"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touche de double appui :"
           }
         },
         "ja" : {
@@ -779,6 +863,12 @@
             "value" : "Reabrir automáticamente al reactivar la app"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rouvrir automatiquement à la réactivation de l’app"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -831,6 +921,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️ Otro perfil usa este doble toque"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Un autre profil utilise ce double appui"
           }
         },
         "ja" : {
@@ -887,6 +983,12 @@
             "value" : "Mostrar esta ventana de tecla rápida si no hay otra ventana abierta"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher cette fenêtre à raccourci global si aucune autre fenêtre n’est ouverte"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -939,6 +1041,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Las ventanas flotantes se superponen a otras ventanas, al Dock y a las ventanas en pantalla completa de otras apps (si el espacio de la ventana de tecla rápida está configurado como Todos los espacios)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les fenêtres flottantes recouvrent les autres fenêtres, le Dock et les fenêtres en plein écran des autres apps (si l’espace de la fenêtre à raccourci global est réglé sur Tous les espaces)."
           }
         },
         "ja" : {
@@ -995,6 +1103,12 @@
             "value" : "Cancelar"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1047,6 +1161,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Al hacer clic en el icono del Dock:"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au clic sur l’icône du Dock :"
           }
         },
         "ja" : {
@@ -1103,6 +1223,12 @@
             "value" : "Animar al mostrar y ocultar"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animer l’affichage et le masquage"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1155,6 +1281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aceptar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "ja" : {
@@ -1211,6 +1343,12 @@
             "value" : "Aceptar"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1263,6 +1401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ventana flotante"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fenêtre flottante"
           }
         },
         "ja" : {
@@ -1319,6 +1463,12 @@
             "value" : "^ Control"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Contrôle"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1371,6 +1521,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Teclas rápidas adicionales…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raccourcis globaux supplémentaires…"
           }
         },
         "ja" : {

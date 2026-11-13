@@ -23,6 +23,12 @@
             "value": "Incluir marcas de tiempo"
           }
         },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inclure les horodatages"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -75,6 +81,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Formato de archivo:"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Format de fichier :"
           }
         },
         "ja": {

@@ -23,6 +23,12 @@
             "value": "Blanco y negro"
           }
         },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noir et blanc"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",

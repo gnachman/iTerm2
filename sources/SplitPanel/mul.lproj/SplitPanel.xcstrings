@@ -23,6 +23,12 @@
             "value" : "Dividir el panel actual XXXmente"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scinder le volet actuel XXXalement"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -77,6 +83,12 @@
             "value" : "Cancelar"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -129,6 +141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dividir"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scinder"
           }
         },
         "ja" : {

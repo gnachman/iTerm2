@@ -164,6 +164,24 @@
     [_estimatedDuration it_moveToFollowTitle:_estimatedDurationTitle gap:4];
 }
 
+// The paste special view widens itself for translations that need more room
+// than the nib's container has. Widen the window by the difference; the
+// container and everything right-aligned follow by autoresizing.
+- (void)growWindowToFitPasteSpecialView {
+    const CGFloat growth = NSWidth(_pasteSpecialViewController.view.frame) - NSWidth(_pasteSpecialViewContainer.frame);
+    if (growth <= 0) {
+        return;
+    }
+    NSWindow *window = _pasteSpecialViewContainer.window;
+    NSSize size = window.contentView.frame.size;
+    size.width += growth;
+    [window setContentSize:size];
+    // The nib sets the frame's minimum size.
+    NSSize minSize = window.minSize;
+    minSize.width += growth;
+    window.minSize = minSize;
+}
+
 - (void)awakeFromNib {
     const CGFloat heightBefore = _pasteSpecialViewController.view.frame.size.height;
     _pasteSpecialViewController.profileType = _profileType;
@@ -215,6 +233,7 @@
 
     [_pasteSpecialViewContainer addSubview:_pasteSpecialViewController.view];
     _pasteSpecialViewController.view.frame = _pasteSpecialViewController.view.bounds;
+    [self growWindowToFitPasteSpecialView];
 
     if ([iTermAdvancedSettingsModel includePasteHistoryInAdvancedPaste]) {
         [_itemList selectItemAtIndex:indexToSelect];

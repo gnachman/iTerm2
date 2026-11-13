@@ -23,6 +23,12 @@
             "value": "iTerm2"
           }
         },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iTerm2"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -75,6 +81,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Por George Nachman y colaboradores"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par George Nachman et les contributeurs"
           }
         },
         "ja": {

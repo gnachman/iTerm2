@@ -93,10 +93,133 @@ static NSString *const kSubstitution = @"Substitution";
     self.delayBetweenChunks = kDelayRange.visualCenter;
     self.chunkSize = kChunkSizeRange.visualCenter;
 
-    [self layoutSpeedLabels];
+    [self layoutForTranslations];
 
     [_icuRegexHelpLabel replaceWithHyperlinkTo:[NSURL URLWithString:@"https://iterm2.com/regex"]];
     _icuRegexHelpLabel = nil;
+}
+
+static CGFloat iTermPasteSpecialWidthNeeded(NSCell *cell) {
+    return ceil(cell.cellSize.width);
+}
+
+// How much wider `button` must be to show its title.
+static CGFloat iTermPasteSpecialShortfall(NSButton *button) {
+    return MAX(0, iTermPasteSpecialWidthNeeded(button.cell) - NSWidth(button.frame));
+}
+
+// The nib is laid out for English in two columns of checkboxes. Translated
+// titles can be wider, so widen the left column, the right column, or both to
+// fit the widest title in each, and widen the view to match. English is
+// unchanged. Hosts size themselves from the view's frame afterward. This runs
+// from -awakeFromNib, before anyone sets profileType, so the terminal-mode
+// enclosures save these frames as their original layout. Safe to call again
+// after a title changes.
+- (void)layoutForTranslations {
+    NSView *view = self.view;
+    NSArray<NSButton *> *leftCheckboxes = @[ _convertNewlines, _removeNewlines, _base64Encode, _bracketedPasteMode ];
+    NSArray<NSButton *> *rightCheckboxes = @[ _escapeShellCharsWithBackslash, _convertUnicodePunctuation, _removeControlCodes ];
+
+    // The Replace checkbox grows into the regex field beside it.
+    const CGFloat replaceExtra = iTermPasteSpecialShortfall(_useRegexSubstitution);
+    CGFloat leftExtra = replaceExtra;
+    for (NSButton *checkbox in leftCheckboxes) {
+        leftExtra = MAX(leftExtra, iTermPasteSpecialShortfall(checkbox));
+    }
+    // The tab radio buttons share one cell width. The row with the spaces field
+    // ends where the field begins (the matrix overlaps it by a few points in the
+    // nib, and must not overlap it more, since the matrix is in front of the
+    // field and would take its clicks).
+    const CGFloat matrixOverlap = MAX(0, NSMaxX(_tabTransform.frame) - NSMinX(_spacesPerTab.frame));
+    for (NSInteger row = 0; row < _tabTransform.numberOfRows; row++) {
+        NSCell *cell = [_tabTransform cellAtRow:row column:0];
+        const NSRect rowFrame = [_tabTransform convertRect:[_tabTransform cellFrameAtRow:row column:0]
+                                                    toView:_tabTransform.superview];
+        CGFloat room = NSWidth(rowFrame);
+        if (NSMaxY(_spacesPerTab.frame) > NSMinY(rowFrame) && NSMinY(_spacesPerTab.frame) < NSMaxY(rowFrame)) {
+            room = MIN(room, NSMinX(_spacesPerTab.frame) - NSMinX(rowFrame));
+        }
+        leftExtra = MAX(leftExtra, iTermPasteSpecialWidthNeeded(cell) - room);
+    }
+    CGFloat rightExtra = 0;
+    for (NSButton *checkbox in rightCheckboxes) {
+        rightExtra = MAX(rightExtra, iTermPasteSpecialShortfall(checkbox));
+    }
+    const CGFloat extra = MAX(leftExtra + rightExtra, iTermPasteSpecialShortfall(_waitForPrompts));
+    if (extra > 0) {
+        // Everything from the “with” label after the regex field rightward is in
+        // the right column.
+        const CGFloat rightColumnX = NSMaxX(_regex.frame);
+        const CGFloat oldWidth = NSWidth(view.bounds);
+        [self shiftSubviewsOf:view
+                 rightColumnX:rightColumnX
+                     oldWidth:oldWidth
+                    leftExtra:leftExtra
+                   rightExtra:rightExtra
+                        extra:extra
+                 replaceExtra:replaceExtra
+               leftCheckboxes:leftCheckboxes
+              rightCheckboxes:rightCheckboxes];
+        // Keep the matrix's overlap with the spaces field what the nib had.
+        NSRect matrixFrame = _tabTransform.frame;
+        matrixFrame.size.width = NSMinX(_spacesPerTab.frame) + matrixOverlap - NSMinX(matrixFrame);
+        _tabTransform.frame = matrixFrame;
+        _tabTransform.cellSize = NSMakeSize(NSWidth(matrixFrame), _tabTransform.cellSize.height);
+
+        NSRect frame = view.frame;
+        frame.size.width += extra;
+        view.frame = frame;
+    }
+    [self layoutSpeedLabels];
+}
+
+// Moves the subviews of `container` (the view or a terminal-mode enclosure in
+// it, which share its coordinates) for -layoutForTranslations.
+- (void)shiftSubviewsOf:(NSView *)container
+           rightColumnX:(CGFloat)rightColumnX
+               oldWidth:(CGFloat)oldWidth
+              leftExtra:(CGFloat)leftExtra
+             rightExtra:(CGFloat)rightExtra
+                  extra:(CGFloat)extra
+           replaceExtra:(CGFloat)replaceExtra
+         leftCheckboxes:(NSArray<NSButton *> *)leftCheckboxes
+        rightCheckboxes:(NSArray<NSButton *> *)rightCheckboxes {
+    for (NSView *subview in container.subviews) {
+        NSRect frame = subview.frame;
+        if (subview.subviews.count > 0 && ![subview isKindOfClass:NSControl.class]) {
+            // An enclosure: the full-width ones grow with the view; the one
+            // holding the tab radio buttons grows with the left column.
+            [self shiftSubviewsOf:subview
+                     rightColumnX:rightColumnX
+                         oldWidth:oldWidth
+                        leftExtra:leftExtra
+                       rightExtra:rightExtra
+                            extra:extra
+                     replaceExtra:replaceExtra
+                   leftCheckboxes:leftCheckboxes
+                  rightCheckboxes:rightCheckboxes];
+            frame.size.width += (NSMaxX(frame) >= oldWidth - 4) ? extra : leftExtra;
+        } else if (subview == _waitForPrompts) {
+            frame.size.width += extra;
+        } else if (subview == _spacesPerTab) {
+            frame.origin.x += leftExtra;
+        } else if (subview == _useRegexSubstitution) {
+            frame.size.width += replaceExtra;
+        } else if (subview == _regex) {
+            frame.origin.x += replaceExtra;
+            frame.size.width += leftExtra - replaceExtra;
+        } else if ([leftCheckboxes containsObject:(NSButton *)subview]) {
+            frame.size.width += leftExtra;
+        } else if (NSMinX(frame) >= rightColumnX) {
+            frame.origin.x += leftExtra;
+            if ([rightCheckboxes containsObject:(NSButton *)subview] ||
+                subview == _substitution ||
+                NSMaxX(subview.frame) >= oldWidth - 0.5) {
+                frame.size.width += rightExtra;
+            }
+        }
+        subview.frame = frame;
+    }
 }
 
 // Translated titles can be wider than the room the nib leaves before the

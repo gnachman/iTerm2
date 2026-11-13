@@ -23,6 +23,12 @@
             "value" : "Reutilizar el directorio de la sesión anterior"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réutiliser le répertoire de la session précédente"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -75,6 +81,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Directorio de inicio"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répertoire de départ"
           }
         },
         "ja" : {
@@ -131,6 +143,12 @@
             "value" : "Directorio de trabajo para pestañas nuevas"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répertoire de travail des nouveaux onglets"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -180,6 +198,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Radio"
@@ -239,6 +263,12 @@
             "value" : "Directorio de trabajo para ventanas nuevas"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répertoire de travail des nouvelles fenêtres"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -293,6 +323,12 @@
             "value" : "Reutilizar el directorio de la sesión anterior"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réutiliser le répertoire de la session précédente"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -342,6 +378,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Radio"
@@ -401,6 +443,12 @@
             "value" : "Reutilizar el directorio de la sesión anterior"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réutiliser le répertoire de la session précédente"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -453,6 +501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Directorio:"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répertoire :"
           }
         },
         "ja" : {
@@ -509,6 +563,12 @@
             "value" : "Directorio de trabajo para paneles divididos nuevos"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répertoire de travail des nouveaux volets scindés"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -561,6 +621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajustes avanzados del directorio de trabajo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages avancés du répertoire de travail"
           }
         },
         "ja" : {
@@ -617,6 +683,12 @@
             "value" : "Directorio:"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répertoire :"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -671,6 +743,12 @@
             "value" : "Directorio:"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répertoire :"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -720,6 +798,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Radio"
@@ -779,6 +863,12 @@
             "value" : "Directorio de inicio"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répertoire de départ"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -833,6 +923,12 @@
             "value" : "Directorio de inicio"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répertoire de départ"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -885,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aceptar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "ja" : {

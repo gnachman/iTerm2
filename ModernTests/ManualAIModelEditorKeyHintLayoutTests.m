@@ -32,7 +32,7 @@
 // Every shipped translation. English has no compiled table; its hints come
 // from the editor's own strings (see testEnglishHintsFitTheEditor).
 + (NSArray<NSString *> *)translations {
-    return @[ @"de", @"es", @"ja", @"pt-BR", @"ru", @"zh-Hans" ];
+    return @[ @"de", @"es", @"fr", @"ja", @"pt-BR", @"ru", @"zh-Hans" ];
 }
 
 // The English hints that take more than one line.

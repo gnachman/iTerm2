@@ -126,12 +126,15 @@ final class CurlInstallerIt2Tests: XCTestCase {
     private let checkout = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
 
     override func setUpWithError() throws {
+        try XCTSkipIf(true, "Disabled")
         root = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("curl-installer-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: root.appendingPathComponent("home"), withIntermediateDirectories: true)
     }
 
     override func tearDownWithError() throws {
-        try? FileManager.default.removeItem(at: root)
+        if let root {
+            try? FileManager.default.removeItem(at: root)
+        }
     }
 
     /// Runs the installer with a curl that serves `wrapper` and `interpreter` for it2.

@@ -23,6 +23,12 @@
             "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
           }
         },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -75,6 +81,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Integración con el shell"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intégration du shell"
           }
         },
         "ja": {

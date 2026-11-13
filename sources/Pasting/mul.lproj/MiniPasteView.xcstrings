@@ -23,6 +23,12 @@
             "value": "Pegando…"
           }
         },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collage en cours…"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",

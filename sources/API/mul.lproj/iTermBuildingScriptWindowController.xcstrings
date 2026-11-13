@@ -23,6 +23,12 @@
             "value" : "¡Un momento! Instalando un nuevo entorno de Python…"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Patientez ! Installation d’un nouvel environnement Python…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",

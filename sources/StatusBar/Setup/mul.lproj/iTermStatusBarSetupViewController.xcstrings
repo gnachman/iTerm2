@@ -23,6 +23,12 @@
             "value" : "Arrastra un componente del menú a Componentes activos para añadirlo a tu barra de estado."
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faites glisser un composant du menu vers Composants actifs pour l’ajouter à votre barre d’état."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -75,6 +81,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Preferir el empaquetado compacto a la posición estable"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préférer un agencement compact à un positionnement stable"
           }
         },
         "ja" : {
@@ -131,6 +143,12 @@
             "value" : "Aceptar"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Componentes activos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Composants actifs"
           }
         },
         "ja" : {
@@ -239,6 +263,12 @@
             "value" : "Desactivado"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivé"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -291,6 +321,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eliminar componentes con valores vacíos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer les composants dont la valeur est vide"
           }
         },
         "ja" : {
@@ -347,6 +383,12 @@
             "value" : "Dibujar un separador entre la barra de estado y la terminal"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dessiner un séparateur entre la barre d’état et le terminal"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -399,6 +441,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Automático"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatique"
           }
         },
         "ja" : {
@@ -455,6 +503,12 @@
             "value" : "Menú de componentes de la barra de estado"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menu des composants de la barre d’état"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -507,6 +561,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avanzado…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avancé…"
           }
         },
         "ja" : {
@@ -563,6 +623,12 @@
             "value" : "El algoritmo de empaquetado compacto permite que se vean más componentes de la barra de estado a la vez, pero tienden a moverse más."
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’agencement compact permet d’afficher davantage de composants de la barre d’état à la fois, mais ils ont tendance à bouger davantage."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -615,6 +681,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "🌈 Arcoíris automático:"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌈 Arc-en-ciel auto :"
           }
         },
         "ja" : {
@@ -671,6 +743,12 @@
             "value" : "Aquí va el nombre del tipo de letra"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le nom de la police va ici"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -723,6 +801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Colores oscuros"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couleurs sombres"
           }
         },
         "ja" : {
@@ -779,6 +863,12 @@
             "value" : "Cambiar"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -831,6 +921,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Color de texto predeterminado:"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couleur de texte par défaut :"
           }
         },
         "ja" : {
@@ -887,6 +983,12 @@
             "value" : "Configurar componente"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurer le composant"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -939,6 +1041,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "El algoritmo de empaquetado compacto permite que se vean más componentes de la barra de estado a la vez, pero tienden a moverse más."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’agencement compact permet d’afficher davantage de composants de la barre d’état à la fois, mais ils ont tendance à bouger davantage."
           }
         },
         "ja" : {
@@ -995,6 +1103,12 @@
             "value" : "Color del separador:"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couleur du séparateur :"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1047,6 +1161,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancelar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler"
           }
         },
         "ja" : {
@@ -1103,6 +1223,12 @@
             "value" : "Colores claros"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couleurs claires"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1155,6 +1281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tipo de letra:"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Police :"
           }
         },
         "ja" : {
@@ -1211,6 +1343,12 @@
             "value" : "Color de fondo:"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couleur d’arrière-plan :"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1265,6 +1403,12 @@
             "value" : "Aceptar"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1317,6 +1461,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dibuja una línea fina entre la barra de estado y el contenido de la terminal."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dessine une ligne fine entre la barre d’état et le contenu du terminal."
           }
         },
         "ja" : {

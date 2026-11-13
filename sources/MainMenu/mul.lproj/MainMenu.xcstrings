@@ -23,6 +23,12 @@
             "value" : "Alejar"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom arrière"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -75,6 +81,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instalar entorno de ejecución de Python"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installer l’environnement d’exécution Python"
           }
         },
         "ja" : {
@@ -131,6 +143,12 @@
             "value" : "Mover pestaña"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer l’onglet"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Duplicar sesión"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dupliquer la session"
           }
         },
         "ja" : {
@@ -239,6 +263,12 @@
             "value" : "Abrir ubicación…"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir l’emplacement…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -291,6 +321,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aumentar alto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Augmenter la hauteur"
           }
         },
         "ja" : {
@@ -347,6 +383,12 @@
             "value" : "Mover pestaña"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer l’onglet"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -401,6 +443,12 @@
             "value" : "Informe del foco"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signalement du focus"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -450,6 +498,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normal"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Normal"
@@ -509,6 +563,12 @@
             "value" : "Mover divisor hacia arriba"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer le séparateur vers le haut"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -561,6 +621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reemplazar por valor decodificado de Base 64"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplacer par la valeur décodée en Base 64"
           }
         },
         "ja" : {
@@ -617,6 +683,12 @@
             "value" : "Sesión"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Session"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -669,6 +741,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover sesión a panel dividido"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer la session vers un volet scindé"
           }
         },
         "ja" : {
@@ -725,6 +803,12 @@
             "value" : "Gestor de contraseñas"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestionnaire de mots de passe"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -777,6 +861,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ítem 1"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Élément 1"
           }
         },
         "ja" : {
@@ -833,6 +923,12 @@
             "value" : "Centrado"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centré"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -885,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reemplazar selección"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplacer la sélection"
           }
         },
         "ja" : {
@@ -941,6 +1043,12 @@
             "value" : "A la izquierda de la pantalla"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À gauche de l’écran"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -993,6 +1101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cursor de aplicación"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Curseur d’application"
           }
         },
         "ja" : {
@@ -1049,6 +1163,12 @@
             "value" : "Disposiciones"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dispositions"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1101,6 +1221,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Plegar líneas seleccionadas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replier les lignes sélectionnées"
           }
         },
         "ja" : {
@@ -1157,6 +1283,12 @@
             "value" : "Abrir directorios recientes…"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir les répertoires récents…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1209,6 +1341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pantalla completa"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plein écran"
           }
         },
         "ja" : {
@@ -1265,6 +1403,12 @@
             "value" : "Establecer marca con nombre"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Définir une marque nommée"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1317,6 +1461,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Acciones"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actions"
           }
         },
         "ja" : {
@@ -1373,6 +1523,12 @@
             "value" : "Capturar fotograma de la GPU"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturer une image GPU"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1425,6 +1581,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Marcas y anotaciones"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marques et annotations"
           }
         },
         "ja" : {
@@ -1481,6 +1643,12 @@
             "value" : "Altura completa a la izquierda de la pantalla"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pleine hauteur à gauche de l’écran"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1533,6 +1701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Duplicar ventana"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dupliquer la fenêtre"
           }
         },
         "ja" : {
@@ -1589,6 +1763,12 @@
             "value" : "Autocompletar comandos"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Complétion automatique des commandes"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1641,6 +1821,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Estilo de ventana"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Style de fenêtre"
           }
         },
         "ja" : {
@@ -1697,6 +1883,12 @@
             "value" : "Disponibilidad del renderizador de GPU"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disponibilité du moteur de rendu GPU"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1749,6 +1941,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ventana"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fenêtre"
           }
         },
         "ja" : {
@@ -1805,6 +2003,12 @@
             "value" : "Minimizar"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Placer dans le Dock"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1859,6 +2063,12 @@
             "value" : "Ventana"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fenêtre"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1908,6 +2118,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2"
@@ -1967,6 +2183,12 @@
             "value" : "iTerm2"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2021,6 +2243,12 @@
             "value" : "Cambiar perfil en la disposición…"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changer le profil dans la disposition…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2070,6 +2298,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shell"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shell"
@@ -2129,6 +2363,12 @@
             "value" : "Definir ancho predeterminado"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Définir la largeur par défaut"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2178,6 +2418,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shell"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shell"
@@ -2237,6 +2483,12 @@
             "value" : "Ayuda"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aide"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2289,6 +2541,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ayuda"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aide"
           }
         },
         "ja" : {
@@ -2345,6 +2603,12 @@
             "value" : "Ayuda de iTerm2"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aide d’iTerm2"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2397,6 +2661,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajustes…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages…"
           }
         },
         "ja" : {
@@ -2453,6 +2723,12 @@
             "value" : "Servicios"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Services"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2505,6 +2781,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Servicios"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Services"
           }
         },
         "ja" : {
@@ -2561,6 +2843,12 @@
             "value" : "Ocultar iTerm2"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer iTerm2"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2613,6 +2901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Salir de iTerm2"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitter iTerm2"
           }
         },
         "ja" : {
@@ -2669,6 +2963,12 @@
             "value" : "Ocultar otros"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer les autres"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2721,6 +3021,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar todo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout afficher"
           }
         },
         "ja" : {
@@ -2777,6 +3083,12 @@
             "value" : "Cortar"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couper"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2829,6 +3141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Edición"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Édition"
           }
         },
         "ja" : {
@@ -2885,6 +3203,12 @@
             "value" : "Edición"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Édition"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2937,6 +3261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seleccionar todo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout sélectionner"
           }
         },
         "ja" : {
@@ -2993,6 +3323,12 @@
             "value" : "Pegar"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coller"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3045,6 +3381,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Borrar búfer"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer le tampon"
           }
         },
         "ja" : {
@@ -3101,6 +3443,12 @@
             "value" : "Registro"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Journal"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3153,6 +3501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Registro"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Journal"
           }
         },
         "ja" : {
@@ -3209,6 +3563,12 @@
             "value" : "Acerca de iTerm2"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À propos d’iTerm2"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3261,6 +3621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Perfiles"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profils"
           }
         },
         "ja" : {
@@ -3317,6 +3683,12 @@
             "value" : "Perfiles"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profils"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3369,6 +3741,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cerrar ventana de Terminal"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fermer la fenêtre de Terminal"
           }
         },
         "ja" : {
@@ -3425,6 +3803,12 @@
             "value" : "Cerrar todos los paneles de la pestaña"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fermer tous les volets de l’onglet"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3477,6 +3861,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajustar página…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Format d’impression…"
           }
         },
         "ja" : {
@@ -3533,6 +3923,12 @@
             "value" : "Guardar texto seleccionado…"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer le texte sélectionné…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3585,6 +3981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Borrar búfer de desplazamiento"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer l’historique de défilement"
           }
         },
         "ja" : {
@@ -3641,6 +4043,12 @@
             "value" : "Usar selección para buscar"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser la sélection pour la recherche"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3693,6 +4101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher"
           }
         },
         "ja" : {
@@ -3749,6 +4163,12 @@
             "value" : "Buscar"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3801,6 +4221,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar siguiente"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher le suivant"
           }
         },
         "ja" : {
@@ -3857,6 +4283,12 @@
             "value" : "Buscar anterior"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher le précédent"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3909,6 +4341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ir a la selección"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aller à la sélection"
           }
         },
         "ja" : {
@@ -3965,6 +4403,12 @@
             "value" : "Visualización"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Présentation"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4017,6 +4461,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Visualización"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Présentation"
           }
         },
         "ja" : {
@@ -4073,6 +4523,12 @@
             "value" : "Aumentar texto"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agrandir le texte"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4125,6 +4581,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reducir texto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réduire le texte"
           }
         },
         "ja" : {
@@ -4181,6 +4643,12 @@
             "value" : "Imprimir"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imprimer"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4233,6 +4701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pantalla"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écran"
           }
         },
         "ja" : {
@@ -4289,6 +4763,12 @@
             "value" : "Imprimir"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imprimer"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4341,6 +4821,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Selección"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélection"
           }
         },
         "ja" : {
@@ -4397,6 +4883,12 @@
             "value" : "Búfer"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tampon"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4449,6 +4941,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seleccionar pestaña anterior"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionner l’onglet précédent"
           }
         },
         "ja" : {
@@ -4505,6 +5003,12 @@
             "value" : "Seleccionar pestaña siguiente"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionner l’onglet suivant"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4557,6 +5061,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seleccionar pestaña"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionner l’onglet"
           }
         },
         "ja" : {
@@ -4613,6 +5123,12 @@
             "value" : "Seleccionar pestaña"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionner l’onglet"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4665,6 +5181,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nueva pestaña"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvel onglet"
           }
         },
         "ja" : {
@@ -4721,6 +5243,12 @@
             "value" : "Nueva ventana"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvelle fenêtre"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4773,6 +5301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pulsa Opción para ventana nueva"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez sur Option pour une nouvelle fenêtre"
           }
         },
         "ja" : {
@@ -4829,6 +5363,12 @@
             "value" : "Abrir en ventana nueva"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir dans une nouvelle fenêtre"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4881,6 +5421,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar actualizaciones…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher les mises à jour…"
           }
         },
         "ja" : {
@@ -4937,6 +5483,12 @@
             "value" : "Zoom"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réduire/agrandir"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4989,6 +5541,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restablecer"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réinitialiser"
           }
         },
         "ja" : {
@@ -5045,6 +5603,12 @@
             "value" : "Activar/desactivar pantalla completa"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activer/désactiver le plein écran"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5097,6 +5661,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Activar/desactivar registro de depuración"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activer/désactiver le journal de débogage"
           }
         },
         "ja" : {
@@ -5153,6 +5723,12 @@
             "value" : "Abrir perfiles…"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir les profils…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5205,6 +5781,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Editar sesión…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier la session…"
           }
         },
         "ja" : {
@@ -5261,6 +5843,12 @@
             "value" : "Iniciar repetición instantánea"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Démarrer la relecture instantanée"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5313,6 +5901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Deshacer"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler"
           }
         },
         "ja" : {
@@ -5369,6 +5963,12 @@
             "value" : "Rehacer"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rétablir"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5421,6 +6021,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir historial de pegado…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir l’historique des collages…"
           }
         },
         "ja" : {
@@ -5477,6 +6083,12 @@
             "value" : "Abrir autocompletado…"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir la saisie automatique…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5529,6 +6141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pegado especial"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Collage spécial"
           }
         },
         "ja" : {
@@ -5585,6 +6203,12 @@
             "value" : "Pegado especial"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Collage spécial"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5637,6 +6261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pegar selección"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coller la sélection"
           }
         },
         "ja" : {
@@ -5693,6 +6323,12 @@
             "value" : "Pegar lentamente"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coller lentement"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5745,6 +6381,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Entrada segura de teclado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrée clavier sécurisée"
           }
         },
         "ja" : {
@@ -5801,6 +6443,12 @@
             "value" : "Organizar ventanas horizontalmente"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Organiser les fenêtres horizontalement"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5853,6 +6501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cerrar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fermer"
           }
         },
         "ja" : {
@@ -5909,6 +6563,12 @@
             "value" : "Dividir verticalmente con el perfil actual"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scinder verticalement avec le profil actuel"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5961,6 +6621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dividir horizontalmente con el perfil actual"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scinder horizontalement avec le profil actuel"
           }
         },
         "ja" : {
@@ -6017,6 +6683,12 @@
             "value" : "Guardar disposición de ventanas"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer la disposition de fenêtres"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6069,6 +6741,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seleccionar panel dividido"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionner le volet scindé"
           }
         },
         "ja" : {
@@ -6125,6 +6803,12 @@
             "value" : "Seleccionar panel dividido"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionner le volet scindé"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6177,6 +6861,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seleccionar panel de arriba"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionner le volet du dessus"
           }
         },
         "ja" : {
@@ -6233,6 +6923,12 @@
             "value" : "Seleccionar panel de abajo"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionner le volet du dessous"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6285,6 +6981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seleccionar panel de la izquierda"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionner le volet de gauche"
           }
         },
         "ja" : {
@@ -6341,6 +7043,12 @@
             "value" : "Seleccionar panel de la derecha"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionner le volet de droite"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6393,6 +7101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Usar transparencia"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser la transparence"
           }
         },
         "ja" : {
@@ -6449,6 +7163,12 @@
             "value" : "Maximizar panel activo"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agrandir le volet actif"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6501,6 +7221,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ítem 3"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Élément 3"
           }
         },
         "ja" : {
@@ -6557,6 +7283,12 @@
             "value" : "Ítem 2"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Élément 2"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6609,6 +7341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ítem 1"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Élément 1"
           }
         },
         "ja" : {
@@ -6665,6 +7403,12 @@
             "value" : "Establecer marca"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Définir une marque"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6717,6 +7461,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ir a la marca"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aller à la marque"
           }
         },
         "ja" : {
@@ -6773,6 +7523,12 @@
             "value" : "Panel siguiente"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volet suivant"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6825,6 +7581,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Panel anterior"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volet précédent"
           }
         },
         "ja" : {
@@ -6881,6 +7643,12 @@
             "value" : "Mostrar pestañas en pantalla completa"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les onglets en plein écran"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6933,6 +7701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Transmitir entrada"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diffuser la saisie"
           }
         },
         "ja" : {
@@ -6989,6 +7763,12 @@
             "value" : "Transmitir entrada"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diffuser la saisie"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7041,6 +7821,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Transmitir entrada a todos los paneles de todas las pestañas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diffuser la saisie à tous les volets de tous les onglets"
           }
         },
         "ja" : {
@@ -7097,6 +7883,12 @@
             "value" : "Transmitir entrada a todos los paneles de la pestaña actual"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diffuser la saisie à tous les volets de l’onglet actuel"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7149,6 +7941,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enviar entrada solo a la sesión actual"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoyer la saisie à la session actuelle uniquement"
           }
         },
         "ja" : {
@@ -7205,6 +8003,12 @@
             "value" : "Restaurar disposición de ventanas"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurer une disposition de fenêtres"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7257,6 +8061,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurar disposición de ventanas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurer une disposition de fenêtres"
           }
         },
         "ja" : {
@@ -7313,6 +8123,12 @@
             "value" : "Buscar cursor"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repérer le curseur"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7365,6 +8181,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dividir horizontalmente…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scinder horizontalement…"
           }
         },
         "ja" : {
@@ -7421,6 +8243,12 @@
             "value" : "Dividir verticalmente…"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scinder verticalement…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7473,6 +8301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Caja de herramientas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Boîte à outils"
           }
         },
         "ja" : {
@@ -7529,6 +8363,12 @@
             "value" : "Caja de herramientas"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Boîte à outils"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7581,6 +8421,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar caja de herramientas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher la boîte à outils"
           }
         },
         "ja" : {
@@ -7637,6 +8483,12 @@
             "value" : "Nueva pestaña con el perfil actual"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvel onglet avec le profil actuel"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7689,6 +8541,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ejecutar coproceso…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exécuter un coprocessus…"
           }
         },
         "ja" : {
@@ -7745,6 +8603,12 @@
             "value" : "Detener coproceso"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêter le coprocessus"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7797,6 +8661,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier"
           }
         },
         "ja" : {
@@ -7853,6 +8723,12 @@
             "value" : "Mover pestaña a nueva ventana"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer l’onglet vers une nouvelle fenêtre"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7905,6 +8781,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover pestaña a la derecha"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer l’onglet vers la droite"
           }
         },
         "ja" : {
@@ -7961,6 +8843,12 @@
             "value" : "Mostrar indicador de patrón de fondo"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher l’indicateur de motif d’arrière-plan"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8010,6 +8898,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "tmux"
@@ -8069,6 +8963,12 @@
             "value" : "tmux"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8121,6 +9021,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nueva pestaña de tmux"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvel onglet tmux"
           }
         },
         "ja" : {
@@ -8177,6 +9083,12 @@
             "value" : "Nueva ventana de tmux"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvelle fenêtre tmux"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8229,6 +9141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desconectar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détacher"
           }
         },
         "ja" : {
@@ -8285,6 +9203,12 @@
             "value" : "Tablero"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tableau de bord"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8337,6 +9261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tamaño normal del texto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rétablir la taille normale du texte"
           }
         },
         "ja" : {
@@ -8393,6 +9323,12 @@
             "value" : "Restaurar tamaño del texto y de la sesión"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurer la taille du texte et de la session"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8445,6 +9381,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hacer de iTerm2 la terminal predeterminada"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faire d’iTerm2 le terminal par défaut"
           }
         },
         "ja" : {
@@ -8501,6 +9443,12 @@
             "value" : "Hacer de Terminal la terminal predeterminada"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faire de Terminal le terminal par défaut"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8553,6 +9501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Activar/desactivar transmisión de entrada a la sesión actual"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activer/désactiver la diffusion de la saisie à la session actuelle"
           }
         },
         "ja" : {
@@ -8609,6 +9563,12 @@
             "value" : "Pegar más rápido"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coller plus vite"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8661,6 +9621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pegar más despacio"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coller plus lentement"
           }
         },
         "ja" : {
@@ -8717,6 +9683,12 @@
             "value" : "Pegar despacio más rápido"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coller lentement, plus vite"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8769,6 +9741,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pegar despacio más despacio"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coller lentement, plus lentement"
           }
         },
         "ja" : {
@@ -8825,6 +9803,12 @@
             "value" : "Restablecer juego de caracteres"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réinitialiser le jeu de caractères"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8879,6 +9863,12 @@
             "value" : "Archivos"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archives"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8928,6 +9918,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT400"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT400"
@@ -8987,6 +9983,12 @@
             "value" : "Anotar selección"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annoter la sélection"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9039,6 +10041,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ampliar selección"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoomer sur la sélection"
           }
         },
         "ja" : {
@@ -9095,6 +10103,12 @@
             "value" : "Mover divisor hacia la izquierda"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer le séparateur vers la gauche"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9147,6 +10161,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desactivar todo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout désactiver"
           }
         },
         "ja" : {
@@ -9203,6 +10223,12 @@
             "value" : "Mover sesión"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer la session"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9255,6 +10281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar compositor"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher le compositeur"
           }
         },
         "ja" : {
@@ -9311,6 +10343,12 @@
             "value" : "Forzar desconexión"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Forcer le détachement"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9363,6 +10401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Marcas con nombre"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marques nommées"
           }
         },
         "ja" : {
@@ -9419,6 +10463,12 @@
             "value" : "Buscar…"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9471,6 +10521,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Exportar grabación"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporter l’enregistrement"
           }
         },
         "ja" : {
@@ -9527,6 +10583,12 @@
             "value" : "Sin barra de título"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans barre de titre"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9576,6 +10638,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT500"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT500"
@@ -9635,6 +10703,12 @@
             "value" : "Mostrar recortes"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les coupures"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9687,6 +10761,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajustes del dispositivo complementario"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages de l’appareil compagnon"
           }
         },
         "ja" : {
@@ -9743,6 +10823,12 @@
             "value" : "Modo de copia"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode copie"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9795,6 +10881,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover sesión"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer la session"
           }
         },
         "ja" : {
@@ -9851,6 +10943,12 @@
             "value" : "Pestaña"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onglet"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9903,6 +11001,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Borrar hasta el inicio de la selección"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer jusqu’au début de la sélection"
           }
         },
         "ja" : {
@@ -9959,6 +11063,12 @@
             "value" : "Copiar estadísticas de rendimiento"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier les statistiques de performance"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10008,6 +11118,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scripts"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Scripts"
@@ -10067,6 +11183,12 @@
             "value" : "Guardar ventana actual como disposición"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer la fenêtre actuelle comme disposition"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10119,6 +11241,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Disparadores"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déclencheurs"
           }
         },
         "ja" : {
@@ -10175,6 +11303,12 @@
             "value" : "Mostrar guía del cursor"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher le repère du curseur"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10227,6 +11361,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bloquear tamaño"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verrouiller la taille"
           }
         },
         "ja" : {
@@ -10283,6 +11423,12 @@
             "value" : "Registrar en archivo"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Journaliser dans un fichier"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10337,6 +11483,12 @@
             "value" : "Exportar…"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporter…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10386,6 +11538,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Web"
@@ -10445,6 +11603,12 @@
             "value" : "Informar de texto asociado"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signaler le texte associé"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10497,6 +11661,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nuevo script de Python"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouveau script Python"
           }
         },
         "ja" : {
@@ -10553,6 +11723,12 @@
             "value" : "Licencias de código abierto"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Licences open source"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10605,6 +11781,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Borrar repetición instantánea"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer la relecture instantanée"
           }
         },
         "ja" : {
@@ -10661,6 +11843,12 @@
             "value" : "Reducir alto"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réduire la hauteur"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10710,6 +11898,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scripts"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Scripts"
@@ -10769,6 +11963,12 @@
             "value" : "Mostrar scripts en Finder"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les scripts dans le Finder"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10821,6 +12021,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Guardar contenido…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer le contenu…"
           }
         },
         "ja" : {
@@ -10877,6 +12083,12 @@
             "value" : "Traer todo al frente"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout ramener au premier plan"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10929,6 +12141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Plegar todo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout replier"
           }
         },
         "ja" : {
@@ -10985,6 +12203,12 @@
             "value" : "Archivos"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archives"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11037,6 +12261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurar disposición de ventanas como pestañas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurer une disposition de fenêtres sous forme d’onglets"
           }
         },
         "ja" : {
@@ -11093,6 +12323,12 @@
             "value" : "Añadir anotación en el cursor"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter une annotation au curseur"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11145,6 +12381,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desactivar transparencia en la ventana activa"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactiver la transparence pour la fenêtre active"
           }
         },
         "ja" : {
@@ -11201,6 +12443,12 @@
             "value" : "Pegado entre delimitadores"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Collage délimité"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11253,6 +12501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reemplazar por JSON con formato legible"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplacer par du JSON mis en forme"
           }
         },
         "ja" : {
@@ -11309,6 +12563,12 @@
             "value" : "Traer al frente"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ramener au premier plan"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11361,6 +12621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Acoplar panel flotante"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ancrer le volet flottant"
           }
         },
         "ja" : {
@@ -11417,6 +12683,12 @@
             "value" : "Ocultar paneles flotantes"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer les volets flottants"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11469,6 +12741,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover panel flotante hacia abajo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer le volet flottant vers le bas"
           }
         },
         "ja" : {
@@ -11525,6 +12803,12 @@
             "value" : "Mover panel flotante a la izquierda"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer le volet flottant vers la gauche"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11577,6 +12861,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover panel flotante a la derecha"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer le volet flottant vers la droite"
           }
         },
         "ja" : {
@@ -11633,6 +12923,12 @@
             "value" : "Mover panel flotante hacia arriba"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer le volet flottant vers le haut"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11685,6 +12981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nuevo panel flotante con el perfil actual"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouveau volet flottant avec le profil actuel"
           }
         },
         "ja" : {
@@ -11741,6 +13043,12 @@
             "value" : "Paneles flotantes"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volets flottants"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11793,6 +13101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Paneles flotantes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volets flottants"
           }
         },
         "ja" : {
@@ -11849,6 +13163,12 @@
             "value" : "Enviar al fondo"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoyer à l’arrière-plan"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11901,6 +13221,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar consejo del día"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher l’astuce du jour"
           }
         },
         "ja" : {
@@ -11957,6 +13283,12 @@
             "value" : "Anotación siguiente"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annotation suivante"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12009,6 +13341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cabina"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cockpit"
           }
         },
         "ja" : {
@@ -12065,6 +13403,12 @@
             "value" : "Mover sesión a pestaña"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer la session vers un onglet"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12117,6 +13461,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parte inferior de la pantalla"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bas de l’écran"
           }
         },
         "ja" : {
@@ -12173,6 +13523,12 @@
             "value" : "Preguntar si convertir tabuladores en espacios al pegar"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proposer de convertir les tabulations en espaces au collage"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12225,6 +13581,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alertas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alertes"
           }
         },
         "ja" : {
@@ -12281,6 +13643,12 @@
             "value" : "Copiar con secuencias de control"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier avec les séquences de contrôle"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12333,6 +13701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cambiar tamaño de la ventana"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redimensionner la fenêtre"
           }
         },
         "ja" : {
@@ -12389,6 +13763,12 @@
             "value" : "Restablecer"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réinitialiser"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12441,6 +13821,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Duplicar pestaña"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dupliquer l’onglet"
           }
         },
         "ja" : {
@@ -12497,6 +13883,12 @@
             "value" : "Recargar página"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recharger la page"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12549,6 +13941,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover sesión a ventana"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer la session vers une fenêtre"
           }
         },
         "ja" : {
@@ -12605,6 +14003,12 @@
             "value" : "Informar de todas las teclas como códigos de escape"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signaler toutes les touches comme séquences d’échappement"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12657,6 +14061,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Modo de informe de teclas sin procesar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode de signalement brut des touches"
           }
         },
         "ja" : {
@@ -12713,6 +14123,12 @@
             "value" : "Importar…"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importer…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12765,6 +14181,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avisar antes de pegar varias líneas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avertir avant un collage multiligne"
           }
         },
         "ja" : {
@@ -12821,6 +14243,12 @@
             "value" : "Mostrar chat en línea"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher le chat intégré"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12873,6 +14301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Activar/desactivar entrada en búfer"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activer/désactiver la saisie en tampon"
           }
         },
         "ja" : {
@@ -12929,6 +14363,12 @@
             "value" : "El host remoto puede controlar iTerm2"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’hôte distant peut contrôler iTerm2"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12981,6 +14421,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Comprobar truncamiento de los controles de ajustes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérifier la troncature des contrôles des réglages"
           }
         },
         "ja" : {
@@ -13037,6 +14483,12 @@
             "value" : "Disparadores"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déclencheurs"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13089,6 +14541,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "La selección respeta los límites flexibles"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La sélection respecte les limites souples"
           }
         },
         "ja" : {
@@ -13145,6 +14603,12 @@
             "value" : "Salir del grupo de trabajo"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitter le groupe de travail"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13197,6 +14661,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seleccionar salida del último comando"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionner la sortie de la dernière commande"
           }
         },
         "ja" : {
@@ -13253,6 +14723,12 @@
             "value" : "Reiniciar sesión"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redémarrer la session"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13305,6 +14781,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir Python REPL"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir le REPL Python"
           }
         },
         "ja" : {
@@ -13361,6 +14843,12 @@
             "value" : "Parte superior de la pantalla"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haut de l’écran"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13413,6 +14901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Combinar todas las ventanas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fusionner toutes les fenêtres"
           }
         },
         "ja" : {
@@ -13469,6 +14963,12 @@
             "value" : "Fijar ventana de tecla rápida"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Épingler la fenêtre à raccourci global"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13521,6 +15021,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "modifyOtherKeys modo 2"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys mode 2"
           }
         },
         "ja" : {
@@ -13577,6 +15083,12 @@
             "value" : "Abrir rápidamente"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouverture rapide"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13629,6 +15141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gestionar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gérer"
           }
         },
         "ja" : {
@@ -13685,6 +15203,12 @@
             "value" : "Desambiguar Esc"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lever l’ambiguïté d’Échap"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13737,6 +15261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Elegir resultado para abrir"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir le résultat à ouvrir"
           }
         },
         "ja" : {
@@ -13793,6 +15323,12 @@
             "value" : "Limitar aviso de pegado de varias líneas al prompt del shell"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limiter l’avertissement de collage multiligne à l’invite du shell"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13845,6 +15381,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Activar disparadores en apps interactivas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activer les déclencheurs dans les apps interactives"
           }
         },
         "ja" : {
@@ -13901,6 +15443,12 @@
             "value" : "Ítem 2"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Élément 2"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13953,6 +15501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Informe del ratón"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signalement de la souris"
           }
         },
         "ja" : {
@@ -14009,6 +15563,12 @@
             "value" : "Marcas y anotaciones"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marques et annotations"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14061,6 +15621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bloquear diseño"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verrouiller la disposition"
           }
         },
         "ja" : {
@@ -14117,6 +15683,12 @@
             "value" : "Bloquear ubicación"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verrouiller l’emplacement"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14169,6 +15741,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nueva ventana con el perfil actual"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvelle fenêtre avec le profil actuel"
           }
         },
         "ja" : {
@@ -14225,6 +15803,12 @@
             "value" : "Enterrar sesión"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enfouir la session"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14277,6 +15861,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar cuadro de alerta modal"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher une boîte d’alerte modale"
           }
         },
         "ja" : {
@@ -14333,6 +15923,12 @@
             "value" : "Activar todo"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout activer"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14385,6 +15981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Marca siguiente"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marque suivante"
           }
         },
         "ja" : {
@@ -14441,6 +16043,12 @@
             "value" : "Organizar ventanas"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Organiser les fenêtres"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14493,6 +16101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar todas las coincidencias de selección inteligente"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher toutes les correspondances de sélection intelligente"
           }
         },
         "ja" : {
@@ -14549,6 +16163,12 @@
             "value" : "Reproducir un sonido"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Émettre un son"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14601,6 +16221,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir historial de comandos…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir l’historique des commandes…"
           }
         },
         "ja" : {
@@ -14657,6 +16283,12 @@
             "value" : "Copiar con estilos"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier avec les styles"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14709,6 +16341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pantalla alternativa"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écran alternatif"
           }
         },
         "ja" : {
@@ -14765,6 +16403,12 @@
             "value" : "Altura completa a la derecha de la pantalla"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pleine hauteur à droite de l’écran"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14814,6 +16458,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -14873,6 +16523,12 @@
             "value" : "Modo de informe de teclas estándar"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode de signalement standard des touches"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14925,6 +16581,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cambiar tamaño del panel dividido"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redimensionner le volet scindé"
           }
         },
         "ja" : {
@@ -14981,6 +16643,12 @@
             "value" : "Alertas"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alertes"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15033,6 +16701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Notificar al cambiar el estado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifier en cas de changement d’état"
           }
         },
         "ja" : {
@@ -15089,6 +16763,12 @@
             "value" : "Seleccionar grupo de pestañas siguiente"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionner le groupe d’onglets suivant"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15141,6 +16821,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desinstalar integración con Claude Code"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désinstaller l’intégration de Claude Code"
           }
         },
         "ja" : {
@@ -15197,6 +16883,12 @@
             "value" : "Editar título de la pestaña"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier le titre de l’onglet"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15249,6 +16941,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Disposiciones"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dispositions"
           }
         },
         "ja" : {
@@ -15305,6 +17003,12 @@
             "value" : "Par anterior"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pair précédent"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15357,6 +17061,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Informar de teclas alternativas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signaler les touches alternatives"
           }
         },
         "ja" : {
@@ -15413,6 +17123,12 @@
             "value" : "Panel dividido"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volet scindé"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15465,6 +17181,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Estado de la terminal"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "État du terminal"
           }
         },
         "ja" : {
@@ -15521,6 +17243,12 @@
             "value" : "Deshacer cierre"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler la fermeture"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15573,6 +17301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chats de IA"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chats IA"
           }
         },
         "ja" : {
@@ -15629,6 +17363,12 @@
             "value" : "Adelante"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suivant"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15681,6 +17421,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bloquear ancho del panel dividido"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verrouiller la largeur du volet scindé"
           }
         },
         "ja" : {
@@ -15737,6 +17483,12 @@
             "value" : "Grupos de trabajo"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Groupes de travail"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15789,6 +17541,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Guardar archivo de la sesión actual…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer une archive de la session actuelle…"
           }
         },
         "ja" : {
@@ -15845,6 +17603,12 @@
             "value" : "Reemplazar selección"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplacer la sélection"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15894,6 +17658,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT300"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT300"
@@ -15953,6 +17723,12 @@
             "value" : "Mostrar anotaciones"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les annotations"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16002,6 +17778,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -16061,6 +17843,12 @@
             "value" : "Gestionar"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gérer"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16113,6 +17901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ítem 3"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Élément 3"
           }
         },
         "ja" : {
@@ -16169,6 +17963,12 @@
             "value" : "Seleccionar grupo de pestañas anterior"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionner le groupe d’onglets précédent"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16221,6 +18021,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sesiones enterradas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessions enfouies"
           }
         },
         "ja" : {
@@ -16277,6 +18083,12 @@
             "value" : "Anotación anterior"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annotation précédente"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16329,6 +18141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alertar sobre marcas en sesiones fuera de pantalla"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alerter pour les marques des sessions hors écran"
           }
         },
         "ja" : {
@@ -16385,6 +18203,12 @@
             "value" : "Centrada, sin barra de título"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centrée, sans barre de titre"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16437,6 +18261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instalar integración con Claude Code"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installer l’intégration de Claude Code"
           }
         },
         "ja" : {
@@ -16493,6 +18323,12 @@
             "value" : "Publicar notificación"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoyer une notification"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16545,6 +18381,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "La sesión actual es el origen de la transmisión"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La session actuelle est la source de diffusion"
           }
         },
         "ja" : {
@@ -16601,6 +18443,12 @@
             "value" : "Alertar en la siguiente marca"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alerter à la prochaine marque"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16653,6 +18501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aumentar ancho"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Augmenter la largeur"
           }
         },
         "ja" : {
@@ -16709,6 +18563,12 @@
             "value" : "Modo CSI u"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode CSI u"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16761,6 +18621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover divisor hacia abajo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer le séparateur vers le bas"
           }
         },
         "ja" : {
@@ -16817,6 +18683,12 @@
             "value" : "Cambiar tamaño del panel dividido"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redimensionner le volet scindé"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16869,6 +18741,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reinstalar integración con Claude Code"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réinstaller l’intégration de Claude Code"
           }
         },
         "ja" : {
@@ -16925,6 +18803,12 @@
             "value" : "Instalar integración con el shell"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installer l’intégration du shell"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16977,6 +18861,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Filtrar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrer"
           }
         },
         "ja" : {
@@ -17033,6 +18923,12 @@
             "value" : "Editar disparadores"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier les déclencheurs"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17085,6 +18981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausar panel"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suspendre le volet"
           }
         },
         "ja" : {
@@ -17141,6 +19043,12 @@
             "value" : "Guardar registros de depuración retrospectivos"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer les journaux de débogage rétrospectifs"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17193,6 +19101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fragmentos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Extraits"
           }
         },
         "ja" : {
@@ -17249,6 +19163,12 @@
             "value" : "Seleccionar comando actual"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionner la commande actuelle"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17301,6 +19221,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hacer captura de pantalla…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faire une capture d’écran…"
           }
         },
         "ja" : {
@@ -17357,6 +19283,12 @@
             "value" : "Renderizar selección de forma nativa"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher la sélection en mode natif"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17409,6 +19341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar nota de la sesión"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher la note de la session"
           }
         },
         "ja" : {
@@ -17465,6 +19403,12 @@
             "value" : "Fragmentos"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Extraits"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17517,6 +19461,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Editar título de la ventana"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier le titre de la fenêtre"
           }
         },
         "ja" : {
@@ -17573,6 +19523,12 @@
             "value" : "Alertas suprimidas…"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alertes désactivées…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17625,6 +19581,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Marca anterior"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marque précédente"
           }
         },
         "ja" : {
@@ -17681,6 +19643,12 @@
             "value" : "Instalar entorno de ejecución de Python ya descargado"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installer l’environnement d’exécution Python déjà téléchargé"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17733,6 +19701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover divisor hacia la derecha"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer le séparateur vers la droite"
           }
         },
         "ja" : {
@@ -17789,6 +19763,12 @@
             "value" : "Pestaña"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onglet"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17841,6 +19821,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Descargar archivos…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Télécharger des fichiers…"
           }
         },
         "ja" : {
@@ -17897,6 +19883,12 @@
             "value" : "Mover pestaña a la izquierda"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer l’onglet vers la gauche"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17949,6 +19941,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Añadir pestaña a nuevo grupo…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter l’onglet à un nouveau groupe…"
           }
         },
         "ja" : {
@@ -18005,6 +20003,12 @@
             "value" : "Mostrar barra de herramientas"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher la barre d’outils"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18057,6 +20061,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quitar pestaña del grupo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer l’onglet du groupe"
           }
         },
         "ja" : {
@@ -18113,6 +20123,12 @@
             "value" : "Compositor automático"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compositeur automatique"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18165,6 +20181,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir chat de IA…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir un chat IA…"
           }
         },
         "ja" : {
@@ -18221,6 +20243,12 @@
             "value" : "Mostrar marcas de tiempo"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les horodatages"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18273,6 +20301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pegado avanzado…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Collage avancé…"
           }
         },
         "ja" : {
@@ -18329,6 +20363,12 @@
             "value" : "Organizar ventanas"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Organiser les fenêtres"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18381,6 +20421,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nivel de emulación"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niveau d’émulation"
           }
         },
         "ja" : {
@@ -18437,6 +20483,12 @@
             "value" : "Seleccionar coincidencias"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionner les correspondances"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18489,6 +20541,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir selección"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir la sélection"
           }
         },
         "ja" : {
@@ -18545,6 +20603,12 @@
             "value" : "Historial"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historique"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18597,6 +20661,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurar archivo…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurer l’archive…"
           }
         },
         "ja" : {
@@ -18653,6 +20723,12 @@
             "value" : "Estilo de ventana"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Style de fenêtre"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18705,6 +20781,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ancho completo en la parte inferior de la pantalla"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pleine largeur en bas de l’écran"
           }
         },
         "ja" : {
@@ -18761,6 +20843,12 @@
             "value" : "Controles literales"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contrôles littéraux"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18813,6 +20901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Borrar búsqueda"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer la recherche"
           }
         },
         "ja" : {
@@ -18869,6 +20963,12 @@
             "value" : "Explicar salida con IA"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expliquer la sortie avec l’IA"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18921,6 +21021,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nivel de emulación"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niveau d’émulation"
           }
         },
         "ja" : {
@@ -18977,6 +21083,12 @@
             "value" : "Buscar URLs"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher des URL"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19029,6 +21141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reemplazar por JSON con formato legible"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplacer par du JSON mis en forme"
           }
         },
         "ja" : {
@@ -19085,6 +21203,12 @@
             "value" : "Acciones"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actions"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19137,6 +21261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Los cambios de tamaño actualizan el perfil"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les changements de taille mettent à jour le profil"
           }
         },
         "ja" : {
@@ -19193,6 +21323,12 @@
             "value" : "Eliminar perfiles recientes del menú del Dock"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer les profils récents du menu du Dock"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19245,6 +21381,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sesiones enterradas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessions enfouies"
           }
         },
         "ja" : {
@@ -19301,6 +21443,12 @@
             "value" : "Gestionar dependencias…"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gérer les dépendances…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19353,6 +21501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Atrás"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Précédent"
           }
         },
         "ja" : {
@@ -19409,6 +21563,12 @@
             "value" : "Grupos de trabajo"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Groupes de travail"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19461,6 +21621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cargar disposición desde archivo…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charger une disposition depuis un fichier…"
           }
         },
         "ja" : {
@@ -19517,6 +21683,12 @@
             "value" : "Atajos del modo de copia"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raccourcis du mode copie"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19569,6 +21741,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Panel dividido"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volet scindé"
           }
         },
         "ja" : {
@@ -19625,6 +21803,12 @@
             "value" : "Cambiar tamaño de la ventana"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redimensionner la fenêtre"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19677,6 +21861,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Informar de todos los tipos de eventos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signaler tous les types d’événements"
           }
         },
         "ja" : {
@@ -19733,6 +21923,12 @@
             "value" : "Añadir disparador…"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter un déclencheur…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19782,6 +21978,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Web"
@@ -19841,6 +22043,12 @@
             "value" : "modifyOtherKeys modo 1"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys mode 1"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19893,6 +22101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reducir ancho"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réduire la largeur"
           }
         },
         "ja" : {
@@ -19949,6 +22163,12 @@
             "value" : "A la derecha de la pantalla"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À droite de l’écran"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20001,6 +22221,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pegar archivo codificado en Base64"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coller le fichier encodé en Base64"
           }
         },
         "ja" : {
@@ -20057,6 +22283,12 @@
             "value" : "Borrar hasta la última marca"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer jusqu’à la dernière marque"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20109,6 +22341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Distribuir paneles divididos de forma uniforme"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répartir uniformément les volets scindés"
           }
         },
         "ja" : {
@@ -20165,6 +22403,12 @@
             "value" : "Importar grabación"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importer l’enregistrement"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20217,6 +22461,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Teclado numérico de aplicación"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pavé numérique d’application"
           }
         },
         "ja" : {
@@ -20273,6 +22523,12 @@
             "value" : "Ancho completo en la parte superior de la pantalla"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pleine largeur en haut de l’écran"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20322,6 +22578,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT100"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT100"
@@ -20381,6 +22643,12 @@
             "value" : "VT200"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT200"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20433,6 +22701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desconectar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déconnecter"
           }
         },
         "ja" : {
@@ -20489,6 +22763,12 @@
             "value" : "Avisar antes de pegar una línea que termina en salto de línea en el prompt del shell"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avertir avant de coller une ligne se terminant par un retour à la ligne à l’invite du shell"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20541,6 +22821,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar globalmente…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher globalement…"
           }
         },
         "ja" : {
@@ -20597,6 +22883,12 @@
             "value" : "Maximizada"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agrandie"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20649,6 +22941,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Consola"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Console"
           }
         },
         "ja" : {
@@ -20705,6 +23003,12 @@
             "value" : "Nueva pestaña junto a la pestaña actual"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvel onglet à côté de l’onglet actuel"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20757,6 +23061,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurar disposición de ventanas como pestañas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurer une disposition de fenêtres sous forme d’onglets"
           }
         },
         "ja" : {
@@ -20813,6 +23123,12 @@
             "value" : "Reemplazar por valor codificado en Base 64"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplacer par la valeur encodée en Base 64"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20865,6 +23181,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Activar inteligencia artificial"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activer l’intelligence artificielle"
           }
         },
         "ja" : {
@@ -20921,6 +23243,12 @@
             "value" : "Sesión"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Session"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20975,6 +23303,12 @@
             "value" : "Marcas con nombre"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marques nommées"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21027,6 +23361,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Par siguiente"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pair suivant"
           }
         },
         "ja" : {

@@ -23,6 +23,12 @@
             "value": "Marcar"
           }
         },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cocher"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",

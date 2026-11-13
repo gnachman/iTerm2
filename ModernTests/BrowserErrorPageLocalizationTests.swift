@@ -12,7 +12,7 @@ import XCTest
 @testable import iTerm2SharedARC
 
 final class BrowserErrorPageLocalizationTests: XCTestCase {
-    private let languages = ["de", "es", "ja", "pt-BR", "ru", "zh-Hans"]
+    private let languages = ["de", "es", "fr", "ja", "pt-BR", "ru", "zh-Hans"]
 
     private var repoRoot: URL {
         return URL(fileURLWithPath: #filePath)

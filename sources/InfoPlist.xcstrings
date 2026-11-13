@@ -36,6 +36,12 @@
             "value" : "iTerm2"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -88,6 +94,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Una aplicación en iTerm2 quiere usar AppleScript."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser AppleScript."
           }
         },
         "ja" : {
@@ -144,6 +156,12 @@
             "value" : "Una aplicación en iTerm2 quiere usar Bluetooth."
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser le Bluetooth."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -196,6 +214,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Una aplicación en iTerm2 quiere usar datos de Calendario."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser les données de Calendrier."
           }
         },
         "ja" : {
@@ -252,6 +276,12 @@
             "value" : "Una aplicación en iTerm2 quiere usar la cámara."
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser la caméra."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -306,6 +336,12 @@
             "value" : "Una aplicación en iTerm2 quiere usar tus contactos."
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser vos contacts."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -355,6 +391,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPL v2"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPL v2"
@@ -414,6 +456,12 @@
             "value" : "Una aplicación en iTerm2 quiere acceder a la red local."
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite accéder au réseau local."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -466,6 +514,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Una aplicación en iTerm2 quiere usar tu información de ubicación, incluso en segundo plano."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser vos informations de localisation, même en arrière-plan."
           }
         },
         "ja" : {
@@ -522,6 +576,12 @@
             "value" : "Una aplicación en iTerm2 quiere usar tu información de ubicación."
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser vos informations de localisation."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -574,6 +634,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Una aplicación en iTerm2 quiere usar tu información de ubicación mientras está activa."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser vos informations de localisation lorsqu’elle est active."
           }
         },
         "ja" : {
@@ -630,6 +696,12 @@
             "value" : "Una aplicación en iTerm2 quiere usar tu micrófono."
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser votre microphone."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -682,6 +754,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Una aplicación en iTerm2 quiere usar la fototeca."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser la photothèque."
           }
         },
         "ja" : {
@@ -738,6 +816,12 @@
             "value" : "Una aplicación en iTerm2 quiere usar tus recordatorios."
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser vos rappels."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -792,6 +876,12 @@
             "value" : "Una aplicación en iTerm2 quiere usar el reconocimiento de voz."
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser la reconnaissance vocale."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -844,6 +934,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "La operación que está realizando un programa en iTerm2 requiere permisos elevados."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’opération effectuée par un programme dans iTerm2 nécessite des autorisations élevées."
           }
         },
         "ja" : {

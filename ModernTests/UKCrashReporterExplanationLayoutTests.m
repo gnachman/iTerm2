@@ -44,7 +44,7 @@
 }
 
 + (NSArray<NSString *> *)translations {
-    return @[ @"de", @"es", @"ja", @"pt-BR", @"ru", @"zh-Hans" ];
+    return @[ @"de", @"es", @"fr", @"ja", @"pt-BR", @"ru", @"zh-Hans" ];
 }
 
 - (NSString *)stringForKey:(NSString *)key table:(NSString *)table localization:(NSString *)localization {
