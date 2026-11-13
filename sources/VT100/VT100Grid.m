@@ -2928,7 +2928,9 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 
 - (int)lengthOfParagraphFromLineNumber:(int)line {
     int length = 1;
-    for (int i = line; i < self.size.height; i++) {
+    // Stop before the last line: a paragraph still soft-wrapped at the bottom of the grid ends
+    // there, and counting past it would name a line beyond the grid.
+    for (int i = line; i < self.size.height - 1; i++) {
         if ([self continuationMarkForLineNumber:i] == EOL_HARD) {
             break;
         }

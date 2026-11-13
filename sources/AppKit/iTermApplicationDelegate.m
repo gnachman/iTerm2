@@ -383,6 +383,16 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
 
 #pragma mark - Interface Builder
 
+// -[NSMenu removeItem:] throws when the item is nil. An outlet can be nil when the binary loads a
+// MainMenu nib that predates the item, which has been seen in the field right after an update.
+- (void)removeMenuItemFromItsMenu:(NSMenuItem *)item {
+    if (!item) {
+        DLog(@"Not removing a nil menu item");
+        return;
+    }
+    [item.menu removeItem:item];
+}
+
 - (void)awakeFromNib {
     [ArchivesMenuBuilder setShared:[[ArchivesMenuBuilder alloc] initWithMenuItem:_archivesMenuItem]];
 
@@ -395,7 +405,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     [self addMenuItemView:labelTrackView toMenu:viewMenu title:NSLocalizedStringWithDefaultValue(@"ViewMenu.CurrentTabColor", nil, [NSBundle mainBundle], @"Current Tab Color", @"View menu item label for the current tab color picker")];
 
     if (![iTermTipController sharedInstance]) {
-        [_showTipOfTheDay.menu removeItem:_showTipOfTheDay];
+        [self removeMenuItemFromItsMenu:_showTipOfTheDay];
     }
 
     if ([iTermAdvancedSettingsModel showHintsInSplitPaneMenuItems]) {
@@ -421,12 +431,12 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     }
 #endif
     if (isReleaseBuild) {
-        [_iterm2Menu removeItem:_captureGPUFrameMenuItem];
+        [self removeMenuItemFromItsMenu:_captureGPUFrameMenuItem];
     }
 #if !ITERM_DEBUG
     // "Check Settings Control Truncation" is a Development-only diagnostic; drop it
     // from the menu in every build that doesn't define ITERM_DEBUG.
-    [_iterm2Menu removeItem:_checkSettingsTruncationMenuItem];
+    [self removeMenuItemFromItsMenu:_checkSettingsTruncationMenuItem];
 #endif
 
     [[iTermBuriedSessions sharedInstance] setMenus:[NSArray arrayWithObjects:_buriedSessions, _statusIconBuriedSessions, nil]];
@@ -3586,6 +3596,11 @@ static iTermKeyEventReplayer *gReplayer;
                                                       sessions:restorableSession.sessions
                                                       archives:archives
                                       forceOpeningHotKeyWindow:YES];
+                if (!term) {
+                    // -[iTermController addTerminalWindow:] throws on nil.
+                    DLog(@"Failed to restore window for undo close");
+                    break;
+                }
                 [[iTermController sharedInstance] addTerminalWindow:term];
                 term.terminalGuid = restorableSession.terminalGuid;
                 break;

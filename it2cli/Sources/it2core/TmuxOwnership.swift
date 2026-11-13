@@ -37,11 +37,23 @@ enum TmuxOwnership {
     /// trimmed environment, a peer launched from elsewhere, or a test. Without this such a call
     /// addresses the right pane but picks its socket from the inherited IT2_SUITE, which is a
     /// different instance whenever the two disagree.
-    static var explicitTMUX: String?
+    static var explicitTMUX: String? {
+        get { explicitLock.lock(); defer { explicitLock.unlock() }; return _explicitTMUX }
+        set { explicitLock.lock(); defer { explicitLock.unlock() }; _explicitTMUX = newValue }
+    }
 
     /// A $TMUX_PANE supplied on the command line with --tmux-pane, when the caller gave one.
     /// Set alongside explicitTMUX; see that property.
-    static var explicitTmuxPane: String?
+    static var explicitTmuxPane: String? {
+        get { explicitLock.lock(); defer { explicitLock.unlock() }; return _explicitTmuxPane }
+        set { explicitLock.lock(); defer { explicitLock.unlock() }; _explicitTmuxPane = newValue }
+    }
+
+    // Embedded in iTerm2, each it2 invocation runs on its own queue, so commands run
+    // concurrently. Unsynchronized writes to these statics double-released the old string.
+    private static let explicitLock = NSLock()
+    private static var _explicitTMUX: String?
+    private static var _explicitTmuxPane: String?
 
     /// Which $TMUX_PANE to believe, by the same rule as effectiveTMUX.
     static func effectivePane(explicit: String?, environment: [String: String]) -> String? {

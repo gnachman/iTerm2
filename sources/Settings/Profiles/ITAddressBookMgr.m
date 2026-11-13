@@ -185,8 +185,9 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
         case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             return windowType;
     }
-    ITAssertWithMessage(NO, @"Unknown window type %@", @(windowType));
-    return WINDOW_TYPE_NORMAL;
+    // A dynamic profile, script, or hand-edited plist can hold a value that isn't a known type.
+    DLog(@"Unknown window type %@; using the default", @(windowType));
+    return iTermThemedWindowType(WINDOW_TYPE_NORMAL);
 }
 
 NSString *iTermPercentageDescription(iTermPercentage percentage) {

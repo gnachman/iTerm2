@@ -180,6 +180,23 @@ class VT100GridTests: XCTestCase {
         XCTAssertEqual(grid.length(ofLineNumber: 2), 0)
     }
 
+    // A paragraph that is still soft-wrapped at the bottom of the grid has no hard EOL to end it,
+    // so its length must stop at the last line rather than running one line past the grid.
+    func testEnumerateParagraphsStopsAtBottomWhenLastLineIsSoftWrapped() {
+        let height: Int32 = 4
+        let grid = VT100Grid(size: VT100GridSize(width: 4, height: height), delegate: nil)!
+        grid.setContinuationMarkOnLine(0, to: unichar(EOL_HARD))
+        for line in 1..<height {
+            grid.setContinuationMarkOnLine(line, to: unichar(EOL_SOFT))
+        }
+        var paragraphs = [(Int32, Int)]()
+        grid.enumerateParagraphs { start, scas in
+            paragraphs.append((start, scas?.count ?? -1))
+        }
+        XCTAssertEqual(paragraphs.map { $0.0 }, [0, 1])
+        XCTAssertEqual(paragraphs.map { $0.1 }, [1, 3])
+    }
+
     func testMoveCursorDownOneLineNoScroll() {
         let width: Int32 = 4
         let height: Int32 = 4

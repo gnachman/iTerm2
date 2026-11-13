@@ -532,3 +532,24 @@ Bug Fixes:
   text as the explanation, or crash, depending
   on how the AI’s reply was laid out. Thanks
   to Kim Dong Han (@ehdgks0627) for the fix.
+- Fixed crashes when:
+  - launching right after an update;
+  - showing a tip of the day;
+  - using Undo Close on a hotkey window whose
+    profile no longer has a hotkey;
+  - a profile or status bar setting held a
+    malformed color or font;
+  - a profile had an unknown window type;
+  - a pointer binding split a pane with a
+    profile that had been deleted;
+  - an Action selected its own menu item;
+  - Claude Code hooks ran at the same moment;
+  - an AI chat model had no API key of its own;
+  - right-to-left text wrapped at the bottom of
+    the screen;
+  - a session ended while a disconnection
+    message was being shown;
+  - entering the alternate screen with an
+    annotation that began before the first line;
+  - opening the password manager after iTerm2
+    was replaced while running.

@@ -4000,6 +4000,12 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     PseudoTerminal *term = [PseudoTerminal bareTerminalWithArrangement:arrangement
                                               forceOpeningHotKeyWindow:force
                                                              restoring:NO];
+    if (!term) {
+        // This happens when the arrangement is for a hotkey window whose profile no longer
+        // has a hotkey. Don't revive the sessions since there is no window to hold them.
+        DLog(@"Could not create a window for arrangement");
+        return nil;
+    }
     NSMutableArray *revivedSessions = sessions ? [NSMutableArray array] : nil;
     for (PTYSession *session in sessions) {
         if ([session revive]) {
@@ -10799,7 +10805,17 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         _passwordManagerWindowController.didSendUserName = didSendUserName;
         _passwordManagerWindowController.delegate = self;
 
-        [self.window beginSheet:[_passwordManagerWindowController window] completionHandler:^(NSModalResponse returnCode) {
+        NSWindow *sheet = [_passwordManagerWindowController window];
+        if (!sheet) {
+            // -beginSheet: throws on nil. Seen when the app bundle was replaced while running, so
+            // the nib could not be loaded.
+            RLog(@"Password manager window failed to load");
+            _passwordManagerWindowController.delegate = nil;
+            [_passwordManagerWindowController autorelease];
+            _passwordManagerWindowController = nil;
+            return;
+        }
+        [self.window beginSheet:sheet completionHandler:^(NSModalResponse returnCode) {
             [[_passwordManagerWindowController window] close];
             [_passwordManagerWindowController autorelease];
             _passwordManagerWindowController = nil;
@@ -12039,7 +12055,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return;
     }
 
-    if (![iTermSessionLauncher profileIsWellFormed:theBookmark]) {
+    // A pointer binding for a split with a profile that has since been deleted passes nil, and
+    // profileIsWellFormed: accepts nil. -[iTermSessionFactory newSessionWithProfile:parent:]
+    // asserts it is nonnil.
+    if (!theBookmark || ![iTermSessionLauncher profileIsWellFormed:theBookmark]) {
+        RLog(@"Refusing to split with profile %@", theBookmark[KEY_NAME]);
         if (ready) {
             ready(nil, NO);
         }

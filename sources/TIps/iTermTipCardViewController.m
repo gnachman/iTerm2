@@ -8,6 +8,8 @@
 
 #import "iTermTipCardViewController.h"
 
+#import "DebugLogging.h"
+
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermFlippedView.h"
 #import "iTermTipCardActionButton.h"
@@ -124,7 +126,17 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
     _body.accessibilityRole = NSAccessibilityStaticTextRole;
     _body.accessibilityLabel = NSLocalizedStringWithDefaultValue(@"TipCard.BodyAccessibilityLabel", nil, [NSBundle mainBundle], @"Tip content", @"Accessibility label for the body of a tip card");
 
-    self.view.accessibilityChildren = @[ _body ];
+    self.view.accessibilityChildren = [self accessibilityChildrenWithButtons:@[]];
+}
+
+// _body has been seen to be nil in the field (8 users of 3.7.7, cause unknown), and an array
+// literal containing nil throws. Leave it out rather than crash.
+- (NSArray<NSView *> *)accessibilityChildrenWithButtons:(NSArray<NSView *> *)buttons {
+    if (!_body) {
+        RLog(@"Tip card body outlet is nil");
+        return buttons;
+    }
+    return [@[ _body ] arrayByAddingObjectsFromArray:buttons];
 }
 
 - (void)viewDidLoad {
@@ -224,7 +236,7 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
     // Place later buttons under earlier buttons and all under body so they can animate in and out.
     [_container addSubview:button positioned:NSWindowBelow relativeTo:viewToPlaceButtonBelow];
 
-    self.view.accessibilityChildren = [@[ _body ] arrayByAddingObjectsFromArray:_actionButtons];
+    self.view.accessibilityChildren = [self accessibilityChildrenWithButtons:_actionButtons];
     return button;
 }
 

@@ -6,6 +6,8 @@
 //
 
 #import "NSMenu+iTerm.h"
+
+#import "DebugLogging.h"
 #import "PTYWindow.h"
 #import "NSScreen+iTerm.h"
 #import "ITAddressBookMgr.h"
@@ -46,9 +48,23 @@
     if (target.hasSubmenu) {
         return YES;
     }
+    // A user-defined Action that selects a menu item can name its own entry in the Actions menu,
+    // or several can form a cycle. Firing an item that is already firing would recurse until the
+    // stack overflows.
+    static NSMutableSet<NSValue *> *firing;
+    if (!firing) {
+        firing = [[NSMutableSet alloc] init];
+    }
+    NSValue *key = [NSValue valueWithNonretainedObject:target];
+    if ([firing containsObject:key]) {
+        DLog(@"Refusing to recursively select menu item %@", target.title);
+        return NO;
+    }
+    [firing addObject:key];
     [NSApp sendAction:[target action]
                    to:[target target]
                  from:target];
+    [firing removeObject:key];
     return YES;
 }
 

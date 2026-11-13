@@ -1021,7 +1021,12 @@ static BOOL sOSC7DisabledWarningShown;
          self.currentGrid.cursorY,
          self.currentGrid.cursorY + [self.linebuffer numLinesWithWidth:self.currentGrid.size.width]);
 
-    assert(self.terminal);
+    if (!self.terminal) {
+        // The session terminated (which disables the terminal) after something like a
+        // disconnection banner was queued to be appended.
+        DLog(@"Not appending because the terminal is disabled");
+        return;
+    }
 
     // Check if we can use the preconverted data from the parser thread.
     BOOL needColorFixup = NO;
@@ -2697,6 +2702,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     NSArray<iTermTuple<Interval *, id<IntervalTreeObject>> *> *updates =
     [objects mapWithBlock:^id _Nullable(id<IntervalTreeObject> note) {
         if (note.entry.interval.location < screenInterval.location) {
+            if (screenInterval.location < 1) {
+                // The object starts at a negative location and the screen starts at 0, so
+                // the truncated interval would end before 0, which Interval can't represent.
+                DLog(@"Not truncating %@ because the screen starts at %@", note, @(screenInterval.location));
+                return nil;
+            }
             // Truncate note so that it ends just before screen.
             // Subtract 1 because end coord is inclusive of y even when x is 0.
             Interval *newInterval = [Interval intervalWithLocation:note.entry.interval.location

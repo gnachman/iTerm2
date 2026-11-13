@@ -40,11 +40,11 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
 
 + (instancetype)advancedConfigurationFromDictionary:(NSDictionary *)dict {
     iTermStatusBarAdvancedConfiguration *configuration = [[iTermStatusBarAdvancedConfiguration alloc] init];
-    configuration.separatorColor = [dict[iTermStatusBarLayoutDictionaryKeySeparatorColor] colorValue];
-    configuration.backgroundColor = [dict[iTermStatusBarLayoutDictionaryKeyBackgroundColor] colorValue];
-    configuration.defaultTextColor = [dict[iTermStatusBarLayoutDictionaryKeyDefaultTextColor] colorValue];
+    configuration.separatorColor = [[NSDictionary castFrom:dict[iTermStatusBarLayoutDictionaryKeySeparatorColor]] colorValue];
+    configuration.backgroundColor = [[NSDictionary castFrom:dict[iTermStatusBarLayoutDictionaryKeyBackgroundColor]] colorValue];
+    configuration.defaultTextColor = [[NSDictionary castFrom:dict[iTermStatusBarLayoutDictionaryKeyDefaultTextColor]] colorValue];
     configuration.layoutAlgorithm = [dict[iTermStatusBarLayoutDictionaryKeyAlgorithm] unsignedIntegerValue];
-    configuration.font = [dict[iTermStatusBarLayoutDictionaryKeyFont] fontValueWithLigaturesEnabled:YES];
+    configuration.font = [[NSString castFrom:dict[iTermStatusBarLayoutDictionaryKeyFont]] fontValueWithLigaturesEnabled:YES];
     configuration.autoRainbowStyle = [dict[iTermStatusBarLayoutDictionaryKeyAutoRainbowStyle] unsignedIntegerValue];
     configuration.removeEmptyComponents = [dict[iTermStatusBarLayoutDictionaryKeyRemoveEmptyComponents] boolValue];
     configuration.drawSeparatorBetweenStatusBarAndTerminal = [dict[iTermStatusBarLayoutDictionaryKeyDrawSeparatorBetweenStatusBarAndTerminal] boolValue];

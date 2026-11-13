@@ -1680,7 +1680,7 @@ class ChatAgent {
         if conversation.busy {
             conversation.cancelOutstandingOperation()
         }
-        conversation.complete(streaming: streamingCallback) { [weak self] result in
+        completeConversation(streaming: streamingCallback) { [weak self] result in
             // streamID is a LIVE accessor: the streaming callback mutates `uuid`, and
             // a Phase-4 retry re-streams, so the committed message must read the
             // post-retry id, not a snapshot.
@@ -1696,6 +1696,26 @@ class ChatAgent {
                                    didRetryExpiry: false,
                                    completion: completion)
         }
+    }
+
+    /// AIConversation.complete is mutating and can call back synchronously, for example when a
+    /// model's own API key is missing and the request fails before it is sent. The completion
+    /// reads self.conversation, which is still under modify access at that point, and that traps
+    /// on an exclusivity violation. Defer a synchronous callback to the next main-queue turn.
+    private func completeConversation(streaming: ((LLM.StreamingUpdate, String?) -> ())?,
+                                      completion: @escaping (Result<AIConversation, Error>) -> ()) {
+        var returned = false
+        conversation.complete(streaming: streaming) { result in
+            if returned {
+                completion(result)
+            } else {
+                DLog("AIConversation.complete called back synchronously; deferring")
+                DispatchQueue.main.async {
+                    completion(result)
+                }
+            }
+        }
+        returned = true
     }
 
     /// Finish (or fail) a turn, with a one-shot Phase-4 retry: an unusable Responses
@@ -1725,7 +1745,7 @@ class ChatAgent {
            Self.isUnusablePreviousResponseIDError(error) {
             RLog("ChatAgent: previous_response_id unusable in \(chatID); retrying as full stateless replay: \(error)")
             conversation.systemMessageDirty = true
-            conversation.complete(streaming: streamingCallback) { [weak self] result in
+            completeConversation(streaming: streamingCallback) { [weak self] result in
                 self?.handleTurnResult(result,
                                        userMessage: userMessage,
                                        streamID: streamID,

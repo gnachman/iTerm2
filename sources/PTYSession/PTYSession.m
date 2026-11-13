@@ -6299,6 +6299,18 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self setBackgroundImagePath:_backgroundImageRotator.currentImage];
 }
 
+
+// A malformed profile (for example, a hand-edited or dynamic profile) can hold something other than
+// a color dictionary, and messaging it with -colorValueForKey: would throw.
+- (NSColor *)colorForKey:(NSString *)key inProfile:(Profile *)profile {
+    NSDictionary *dict = [NSDictionary castFrom:[iTermProfilePreferences objectForKey:key inProfile:profile]];
+    if (!dict) {
+        DLog(@"Profile value for %@ is not a color dictionary; using the default", key);
+        dict = [NSDictionary castFrom:[iTermProfilePreferences defaultObjectForKey:key]];
+    }
+    return [dict colorValueForKey:key];
+}
+
 - (void)loadColorsFromProfile:(Profile *)aDict {
     const BOOL dark = [NSApp effectiveAppearance].it_isDark;
     NSDictionary<NSNumber *, NSString *> *keyMap = [self colorTableForProfile:aDict darkMode:dark];
@@ -6333,8 +6345,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         [_textview updatePortholeColorsWithUseSelectedTextColor:willUseSelectedTextColor
                                                     deferUpdate:YES];
     }
-    self.cursorGuideColor = [[iTermProfilePreferences objectForKey:iTermAmendedColorKey(KEY_CURSOR_GUIDE_COLOR, aDict, dark)
-                                                         inProfile:aDict] colorValueForKey:iTermAmendedColorKey(KEY_CURSOR_GUIDE_COLOR, aDict, dark)];
+    self.cursorGuideColor = [self colorForKey:iTermAmendedColorKey(KEY_CURSOR_GUIDE_COLOR, aDict, dark) inProfile:aDict];
     if (!_cursorGuideSettingHasChanged) {
         _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:iTermAmendedColorKey(KEY_USE_CURSOR_GUIDE, aDict, dark)
                                                                   inProfile:aDict];
@@ -6345,8 +6356,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
     self.useActivePaneBorder = [iTermProfilePreferences boolForKey:iTermAmendedColorKey(KEY_USE_ACTIVE_PANE_BORDER, aDict, dark)
                                                          inProfile:aDict];
-    self.activePaneBorderColor = [[iTermProfilePreferences objectForKey:iTermAmendedColorKey(KEY_ACTIVE_PANE_BORDER_COLOR, aDict, dark)
-                                                              inProfile:aDict] colorValueForKey:iTermAmendedColorKey(KEY_ACTIVE_PANE_BORDER_COLOR, aDict, dark)];
+    self.activePaneBorderColor = [self colorForKey:iTermAmendedColorKey(KEY_ACTIVE_PANE_BORDER_COLOR, aDict, dark) inProfile:aDict];
     [self updateFloatingPaneOutlineColor];
 
     [self setSmartCursorColor:[iTermProfilePreferences boolForKey:iTermAmendedColorKey(KEY_SMART_CURSOR_COLOR, aDict, dark)
