@@ -53,6 +53,12 @@
             "value" : "OK"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -195,6 +201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Onemogući alat za renderiranje pomoću GPU-a u modu niske potrošnje"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPU-renderelő letiltása alacsony fogyasztású módban"
           }
         },
         "it" : {
@@ -341,6 +353,12 @@
             "value" : "Radije koristi integriranu nego zasebnu GPU"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az integrált GPU előnyben részesítése a különállóval szemben"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -485,6 +503,12 @@
             "value" : "Onemogući alat za renderiranje pomoću GPU-a kada nije priključen na struju"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPU-renderelő letiltása, ha a gép nincs hálózatra csatlakoztatva"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Odustani"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mégsem"
           }
         },
         "it" : {

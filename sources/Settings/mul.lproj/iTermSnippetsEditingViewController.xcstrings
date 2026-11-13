@@ -53,6 +53,12 @@
             "value" : "Uredi"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szerkesztés"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -197,6 +203,12 @@
             "value" : "Naslov"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cím"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -339,6 +351,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tekst"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szöveg"
           }
         },
         "it" : {

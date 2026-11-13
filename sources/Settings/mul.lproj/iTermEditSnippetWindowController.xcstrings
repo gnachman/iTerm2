@@ -53,6 +53,12 @@
             "value" : "Vrijednost:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Érték:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -195,6 +201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Uredi isječak"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kódrészlet szerkesztése"
           }
         },
         "it" : {
@@ -341,6 +353,12 @@
             "value" : "Naslov:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cím:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Doslovni tekst bez escapeiranja"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escape nélküli szó szerinti szöveg"
           }
         },
         "it" : {
@@ -629,6 +653,12 @@
             "value" : "Koristite / u nazivima tagova za stvaranje mapa u izborniku Uredi > Isječci"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A címkenevekben a / jellel mappákat hozhat létre a Szerkesztés > Kódrészletek menüben"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -773,6 +803,12 @@
             "value" : "Odustani"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mégsem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -912,6 +948,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -1061,6 +1103,12 @@
             "value" : "Escapeiranje radi povratne kompatibilnosti"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visszamenőleges kompatibilitású escape-elés"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1205,6 +1253,12 @@
             "value" : "Tagovi:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Címkék:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1347,6 +1401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escapeiranje obrnutom kosom crtom u stilu jezika C"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C-stílusú visszaper jeles escape-elés"
           }
         },
         "it" : {

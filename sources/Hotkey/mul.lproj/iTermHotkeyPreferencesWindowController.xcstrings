@@ -53,6 +53,12 @@
             "value" : "⌥ Option"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Option"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -195,6 +201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zakvači prozor brze tipke (ostaje otvoren kad izgubi fokus tipkovnice)"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gyorsbillentyűs ablak kitűzése (megmarad, ha a billentyűzetfókusz elvész)"
           }
         },
         "it" : {
@@ -341,6 +353,12 @@
             "value" : "Brza tipka:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gyorsbillentyű:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Napomena: prozor se ponovno otvara samo ako je zatvoren zato što je druga aplikacija postala aktivna."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Megjegyzés: az ablak csak akkor nyílik meg újra, ha azért záródott be, mert egy másik alkalmazás vált aktívvá."
           }
         },
         "it" : {
@@ -629,6 +653,12 @@
             "value" : "Dodatne brze tipke"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "További gyorsbillentyűk"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -771,6 +801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kad pritisnete brzu tipku dodijeljenu ovom profilu, namjenski prozor bit će prikazan ili sakriven. Svaki profil s brzom tipkom upravlja vlastitim prozorom brze tipke."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A profilhoz rendelt gyorsbillentyű lenyomásakor egy dedikált ablak jelenik meg vagy rejtőzik el. Minden gyorsbillentyűvel rendelkező profil a saját gyorsbillentyűs ablakát vezérli."
           }
         },
         "it" : {
@@ -917,6 +953,12 @@
             "value" : "Nemoj ništa posebno raditi"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne történjen semmi különleges"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1056,6 +1098,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -1205,6 +1253,12 @@
             "value" : "Prikaži ovaj prozor brze tipke"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gyorsbillentyűs ablak megjelenítése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1349,6 +1403,12 @@
             "value" : "Postavke prozora brze tipke"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gyorsbillentyűs ablak beállításai"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1488,6 +1548,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Command"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⌘ Command"
@@ -1637,6 +1703,12 @@
             "value" : "⚠️ Drugi profil koristi ovaj prečac"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Egy másik profil is ezt a billentyűparancsot használja"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1776,6 +1848,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Shift"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⇧ Shift"
@@ -1925,6 +2003,12 @@
             "value" : "Tipka za dvostruki dodir:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dupla koppintású billentyű:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2067,6 +2151,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Automatski ponovno otvori pri ponovnoj aktivaciji aplikacije"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatikus újranyitás az alkalmazás újraaktiválásakor"
           }
         },
         "it" : {
@@ -2213,6 +2303,12 @@
             "value" : "⚠️ Drugi profil koristi ovaj dvostruki dodir"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Egy másik profil is ezt a dupla koppintást használja"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2355,6 +2451,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Prikaži ovaj prozor brze tipke ako nijedan drugi prozor nije otvoren"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gyorsbillentyűs ablak megjelenítése, ha nincs más ablak megnyitva"
           }
         },
         "it" : {
@@ -2501,6 +2603,12 @@
             "value" : "Plutajući prozori preklapaju druge prozore i Dock te prozore drugih aplikacija u prikazu preko cijelog zaslona (ako je radna površina prozora brze tipke postavljena na Sve radne površine)."
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A lebegő ablakok átfedik a többi ablakot, a Dockot és más alkalmazások teljes képernyős ablakait (ha a gyorsbillentyűs ablak Spaces-íróasztala az összes Spaces-íróasztalra van állítva)."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2643,6 +2751,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Odustani"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mégsem"
           }
         },
         "it" : {
@@ -2789,6 +2903,12 @@
             "value" : "Pri kliku na ikonu Docka:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A Dock-ikonra kattintáskor:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2933,6 +3053,12 @@
             "value" : "Animiraj prikazivanje i sakrivanje"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animáció megjelenítéskor és elrejtéskor"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3072,6 +3198,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -3221,6 +3353,12 @@
             "value" : "OK"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3365,6 +3503,12 @@
             "value" : "Plutajući prozor"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lebegő ablak"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3504,6 +3648,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Control"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "^ Control"
@@ -3651,6 +3801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dodatne brze tipke…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "További gyorsbillentyűk…"
           }
         },
         "it" : {

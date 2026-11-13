@@ -53,6 +53,12 @@
             "value" : "/directory"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -195,6 +201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kopiraj direktorij"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Könyvtár másolása"
           }
         },
         "it" : {
@@ -341,6 +353,12 @@
             "value" : "12 bajtova"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 bájt"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Odaberi izlaz naredbe"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A parancs kimenetének kijelölése"
           }
         },
         "it" : {
@@ -629,6 +653,12 @@
             "value" : "1h 35m"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 ó 35 p"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -771,6 +801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Izlaz:"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kimenet:"
           }
         },
         "it" : {
@@ -917,6 +953,12 @@
             "value" : "Kopirano"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Másolva"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1059,6 +1101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kopiraj naredbu u memorijski pretinac"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parancs másolása a vágólapra"
           }
         },
         "it" : {
@@ -1205,6 +1253,12 @@
             "value" : "Pokrenuto: %@"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indítva: %@"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1347,6 +1401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Otvori naredbu u Uređivaču naredbi"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parancs megnyitása a Parancsszerkesztőben"
           }
         },
         "it" : {
@@ -1493,6 +1553,12 @@
             "value" : "Mapa koja se može povući"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Húzható mappa"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1635,6 +1701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "naredba"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "parancs"
           }
         },
         "it" : {
@@ -1781,6 +1853,12 @@
             "value" : "Zapiši naredbu u terminal"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parancs írása a terminálba"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1923,6 +2001,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Direktorij:"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Könyvtár:"
           }
         },
         "it" : {
@@ -2069,6 +2153,12 @@
             "value" : "Povratni kôd:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visszatérési kód:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2211,6 +2301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zapiši direktorij u terminal"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Könyvtár írása a terminálba"
           }
         },
         "it" : {
@@ -2357,6 +2453,12 @@
             "value" : "Vrijeme izvođenja:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Futási idő:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2499,6 +2601,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kopiraj izlaz naredbe"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A parancs kimenetének másolása"
           }
         },
         "it" : {
@@ -2645,6 +2753,12 @@
             "value" : "Podijeli naredbu…"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parancs megosztása…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2789,6 +2903,12 @@
             "value" : "Naredba:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parancs:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2928,6 +3048,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "127"
@@ -3075,6 +3201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Onemogući prikaz naredbe izvan zaslona"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Képernyőn kívüli parancs megjelenítésének letiltása"
           }
         },
         "it" : {

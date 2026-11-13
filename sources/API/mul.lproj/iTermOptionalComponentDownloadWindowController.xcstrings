@@ -53,6 +53,12 @@
             "value": "Instalacijski program okruženja za izvođenje Pythona"
           }
         },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Python-futtatókörnyezet telepítője"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -197,6 +203,12 @@
             "value": "Odustani"
           }
         },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mégsem"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -339,6 +351,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Preuzimanje neobveznih komponenti…"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Választható összetevők letöltése…"
           }
         },
         "it": {

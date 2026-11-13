@@ -53,6 +53,12 @@
             "value" : "Stavka 2"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2. elem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -195,6 +201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ova skripta mora se nadograditi na “puno okruženje” da bi se mogle dodati ovisnosti. Time se izrađuje kopija okruženja za izvođenje Pythona, ali se ne troši dodatni prostor na disku."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ezt a szkriptet a „Teljes környezet” módra kell frissíteni a függőségek hozzáadásához. Ez lemásolja a Python futtatókörnyezetet, de nem használ további lemezterületet."
           }
         },
         "it" : {
@@ -341,6 +353,12 @@
             "value" : "Verzija Pythona:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Python-verzió:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ukloni"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eltávolítás"
           }
         },
         "it" : {
@@ -629,6 +653,12 @@
             "value" : "Stavka 3"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3. elem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -771,6 +801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nadogradi"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Frissítés"
           }
         },
         "it" : {
@@ -917,6 +953,12 @@
             "value" : "Skripta:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szkript:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1059,6 +1101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Uređivač ovisnosti skripte"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szkriptfüggőség-szerkesztő"
           }
         },
         "it" : {
@@ -1205,6 +1253,12 @@
             "value" : "Stavka 1"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. elem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1347,6 +1401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Naziv paketa"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Csomag neve"
           }
         },
         "it" : {
@@ -1493,6 +1553,12 @@
             "value" : "Stavka 2"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2. elem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1635,6 +1701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stavka 3"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3. elem"
           }
         },
         "it" : {
@@ -1781,6 +1853,12 @@
             "value" : "Provjeri ažuriranja"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Frissítés keresése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1923,6 +2001,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instalirana verzija"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Telepített verzió"
           }
         },
         "it" : {
@@ -2069,6 +2153,12 @@
             "value" : "Stavka 1"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. elem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2208,6 +2298,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -2355,6 +2451,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dodaj"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hozzáadás"
           }
         },
         "it" : {

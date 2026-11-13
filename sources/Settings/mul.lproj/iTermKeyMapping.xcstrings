@@ -53,6 +53,12 @@
             "value" : "Podešenja…"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Előbeállítások…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -195,6 +201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dodaj stavku za Touch Bar"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touch Bar-elem hozzáadása"
           }
         },
         "it" : {
@@ -341,6 +353,12 @@
             "value" : "Radnja"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Művelet"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ublažavanja za Touch Bar"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touch Bar-kerülőmegoldások"
           }
         },
         "it" : {
@@ -629,6 +653,12 @@
             "value" : "Vizualni indikator tipke esc"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az esc billentyű vizuális jelzője"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -771,6 +801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kombinacija tipki"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Billentyűkombináció"
           }
         },
         "it" : {
@@ -917,6 +953,12 @@
             "value" : "Haptička povratna informacija pri pritisku tipke esc"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haptikus visszajelzés az esc lenyomásakor"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1056,6 +1098,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -1203,6 +1251,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zvuk klika za tipku esc"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Billentyűkattanás az esc billentyűhöz"
           }
         },
         "it" : {

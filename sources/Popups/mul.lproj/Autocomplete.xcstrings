@@ -53,6 +53,12 @@
             "value" : "Automatsko dovršavanje"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatikus kiegészítés"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",

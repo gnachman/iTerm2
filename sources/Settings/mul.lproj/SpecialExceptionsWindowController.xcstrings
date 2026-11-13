@@ -53,6 +53,12 @@
             "value" : "Instaliraj paket Nerd Font…"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nerd Font-csomag telepítése…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -197,6 +203,12 @@
             "value" : "Uredi posebnu iznimku"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Különleges kivétel szerkesztése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -336,6 +348,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -485,6 +503,12 @@
             "value" : "Posebne iznimke nadjačavaju fontove za određene raspone ili pisma u Unicodeu."
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A különleges kivételek felülbírálják a betűtípusokat adott Unicode-tartományokhoz vagy írásrendszerekhez."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -624,6 +648,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -773,6 +803,12 @@
             "value" : "OK"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -915,6 +951,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fonta:"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Betűtípus:"
           }
         },
         "it" : {
@@ -1061,6 +1103,12 @@
             "value" : "Za znakove od"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az ettől kezdődő karakterekhez:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1203,6 +1251,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dodaj podešenje…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Előbeállítás hozzáadása…"
           }
         },
         "it" : {
@@ -1349,6 +1403,12 @@
             "value" : "Odustani"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mégsem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1491,6 +1551,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "do"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "eddig:"
           }
         },
         "it" : {
@@ -1637,6 +1703,12 @@
             "value" : "Upravljaj posebnim iznimkama"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Különleges kivételek kezelése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1776,6 +1848,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -1925,6 +2003,12 @@
             "value" : "Koristi kodne točke"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kódpontok használata"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2069,6 +2153,12 @@
             "value" : "Odustani"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mégsem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2208,6 +2298,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"

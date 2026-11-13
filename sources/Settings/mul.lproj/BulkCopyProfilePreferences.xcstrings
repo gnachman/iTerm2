@@ -53,6 +53,12 @@
             "value" : "Boje"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Színek"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -197,6 +203,12 @@
             "value" : "Tekst"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szöveg"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -336,6 +348,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Web"
@@ -485,6 +503,12 @@
             "value" : "Sesija"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Munkamenet"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Napredno"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haladó"
           }
         },
         "it" : {
@@ -773,6 +803,12 @@
             "value" : "Prozor"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ablak"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -912,6 +948,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx"
@@ -1061,6 +1103,12 @@
             "value" : "Terminal"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminál"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1203,6 +1251,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Za ove profile:"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ezekre a profilokra:"
           }
         },
         "it" : {
@@ -1349,6 +1403,12 @@
             "value" : "Odustani"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mégsem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1491,6 +1551,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kopiraj postavke profila"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Könyvjelző-beállítások másolása"
           }
         },
         "it" : {
@@ -1637,6 +1703,12 @@
             "value" : "Tipke"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Billentyűk"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1779,6 +1851,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kopiraj"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Másolás"
           }
         },
         "it" : {

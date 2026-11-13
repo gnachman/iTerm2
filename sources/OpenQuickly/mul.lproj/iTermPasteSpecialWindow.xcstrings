@@ -53,6 +53,12 @@
             "value" : "mm:ss"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mm:ss"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -195,6 +201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx redaka, xxx bajtova."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx sor, xxx bájt."
           }
         },
         "it" : {
@@ -341,6 +353,12 @@
             "value" : "Zalijepi"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beillesztés"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -485,6 +503,12 @@
             "value" : "Odustani"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mégsem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Minimalno trajanje:"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimális időtartam:"
           }
         },
         "it" : {

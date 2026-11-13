@@ -53,6 +53,12 @@
             "value" : "Otvori brzo"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gyors megnyitás"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -197,6 +203,12 @@
             "value" : "Detalj"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Részletek"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -339,6 +351,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Traži sesije, profile ili rasporede"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Munkamenetek, profilok vagy elrendezések keresése"
           }
         },
         "it" : {

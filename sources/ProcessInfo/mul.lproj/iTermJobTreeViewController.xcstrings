@@ -53,6 +53,12 @@
             "value" : "pid"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pid"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -195,6 +201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Proces"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folyamat"
           }
         },
         "it" : {
@@ -341,6 +353,12 @@
             "value" : "Kopiraj ID procesa"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folyamatazonosító másolása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stavka 1"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. elem"
           }
         },
         "it" : {
@@ -629,6 +653,12 @@
             "value" : "Stavka 2"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2. elem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -771,6 +801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stavka 3"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3. elem"
           }
         },
         "it" : {
@@ -917,6 +953,12 @@
             "value" : "Obavijesti pri završetku"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Értesítés befejezéskor"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1059,6 +1101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kopiraj naredbu"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parancs másolása"
           }
         },
         "it" : {

@@ -53,6 +53,12 @@
             "value" : "Sve"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mind"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -195,6 +201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "U izvođenju"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Futó"
           }
         },
         "it" : {
@@ -341,6 +353,12 @@
             "value" : "Pokrenuto"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indítva"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Listaj do dna pri ažuriranju"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Görgetés az aljára frissítéskor"
           }
         },
         "it" : {
@@ -629,6 +653,12 @@
             "value" : "Pozivi"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hívások"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -771,6 +801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Konzola skripti"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szkriptkonzol"
           }
         },
         "it" : {
@@ -917,6 +953,12 @@
             "value" : "Filtar"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szűrés"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1061,6 +1103,12 @@
             "value" : "Naziv"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Név"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1203,6 +1251,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zapisi"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naplók"
           }
         },
         "it" : {

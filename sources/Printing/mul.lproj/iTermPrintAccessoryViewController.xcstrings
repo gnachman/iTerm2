@@ -53,6 +53,12 @@
             "value": "Crno-bijelo"
           }
         },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fekete-fehér"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",

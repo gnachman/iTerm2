@@ -53,6 +53,12 @@
             "value": "Označi"
           }
         },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bejelölés"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",

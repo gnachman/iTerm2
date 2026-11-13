@@ -53,6 +53,12 @@
             "value" : "ZAGLAVLJE"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FEJLÉCCELLA"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -195,6 +201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pronađi globalno"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keresés mindenhol"
           }
         },
         "it" : {
@@ -341,6 +353,12 @@
             "value" : "Podniz: osjetljivo na veličinu slova"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Részkarakterlánc, kis- és nagybetűk megkülönböztetésével"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Podniz: automatski"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Részkarakterlánc, intelligens kis- és nagybetűkezeléssel"
           }
         },
         "it" : {
@@ -629,6 +653,12 @@
             "value" : "Regex: neosjetljivo na veličinu slova"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reguláris kifejezés, kis- és nagybetűk megkülönböztetése nélkül"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -771,6 +801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pronađi"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keresés"
           }
         },
         "it" : {
@@ -917,6 +953,12 @@
             "value" : "Regex: osjetljivo na veličinu slova"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reguláris kifejezés, kis- és nagybetűk megkülönböztetésével"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1059,6 +1101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Podniz: neosjetljivo na veličinu slova"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Részkarakterlánc, kis- és nagybetűk megkülönböztetése nélkül"
           }
         },
         "it" : {

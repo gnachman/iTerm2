@@ -53,6 +53,12 @@
             "value" : "%"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -192,6 +198,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pt"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "pt"
@@ -341,6 +353,12 @@
             "value" : "Maksimalna širina:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximális szélesség:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gornja margina:"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Felső margó:"
           }
         },
         "it" : {
@@ -629,6 +653,12 @@
             "value" : "Desna margina:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jobb margó:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -768,6 +798,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%"
@@ -917,6 +953,12 @@
             "value" : "OK"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1056,6 +1098,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pt"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "pt"
@@ -1205,6 +1253,12 @@
             "value" : "Maksimalna visina:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximális magasság:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1347,6 +1401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Odustani"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mégsem"
           }
         },
         "it" : {

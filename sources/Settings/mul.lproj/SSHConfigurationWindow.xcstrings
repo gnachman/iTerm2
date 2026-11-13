@@ -53,6 +53,12 @@
             "value" : "Putanja do SSH-a:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az SSH útvonala:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -195,6 +201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Datoteke za kopiranje na udaljeni host:"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A távoli hosztra másolandó fájlok:"
           }
         },
         "it" : {
@@ -341,6 +353,12 @@
             "value" : "Odredište"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cél"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -480,6 +498,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -629,6 +653,12 @@
             "value" : "/usr/bin/ssh"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/usr/bin/ssh"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -771,6 +801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pregledaj"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tallózás"
           }
         },
         "it" : {
@@ -917,6 +953,12 @@
             "value" : "Odustani"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mégsem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1059,6 +1101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Datoteka ili mapa"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fájl vagy mappa"
           }
         },
         "it" : {
@@ -1205,6 +1253,12 @@
             "value" : "Integracija za SSH"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH-integráció"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1347,6 +1401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Varijable okruženja za kopiranje na udaljeni host:"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A távoli hosztra másolandó környezeti változók:"
           }
         },
         "it" : {

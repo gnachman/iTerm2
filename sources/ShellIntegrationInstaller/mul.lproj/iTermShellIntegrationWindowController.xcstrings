@@ -53,6 +53,12 @@
             "value" : "Preuzima najnoviju verziju. Pokreće curl | bash"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letölti a legújabb verziót. A curl | bash parancsot futtatja"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -197,6 +203,12 @@
             "value" : "Nastavi"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folytatás"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -336,6 +348,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -485,6 +503,12 @@
             "value" : "Odustani"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mégsem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1. Utvrditi koju ljusku koristite.\n2. Dodati skriptne datoteke u svoj početni direktorij.\n3. Instalirati pomoćne skripte.\n4. Izmijeniti startne skripte vaše ljuske."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. A használt shell felderítése.\n2. Szkriptfájlok hozzáadása a saját könyvtárhoz.\n3. Segédszkriptek telepítése.\n4. A shell indítószkriptjeinek módosítása."
           }
         },
         "it" : {
@@ -773,6 +803,12 @@
             "value" : "Natrag"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vissza"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -915,6 +951,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pomoćni alati uključuju skripte za preuzimanje datoteka, prikaz slika u retku i više. "
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A segédprogramok között vannak szkriptek fájlok letöltéséhez, képek soron belüli megjelenítéséhez és egyebekhez. "
           }
         },
         "it" : {
@@ -1061,6 +1103,12 @@
             "value" : "Natrag"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vissza"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1203,6 +1251,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nastavi"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folytatás"
           }
         },
         "it" : {
@@ -1349,6 +1403,12 @@
             "value" : "Odustani"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mégsem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1491,6 +1551,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Preskoči"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kihagyás"
           }
         },
         "it" : {
@@ -1637,6 +1703,12 @@
             "value" : "Odustani"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mégsem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1779,6 +1851,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pregled naredbe"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parancs előnézete"
           }
         },
         "it" : {
@@ -1925,6 +2003,12 @@
             "value" : "Instalacija bez interneta"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Internet nélküli telepítés"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2067,6 +2151,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Preuzmi i pokreni instalacijski program"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Telepítő letöltése és futtatása"
           }
         },
         "it" : {
@@ -2213,6 +2303,12 @@
             "value" : "Instaliraj i pomoćne alate za iTerm2"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az iTerm2 segédprogramjainak telepítése is"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2355,6 +2451,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vođena ručna instalacija. Preuzimanje nije potrebno."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vezetett manuális telepítés. Letöltés nem szükséges."
           }
         },
         "it" : {
@@ -2501,6 +2603,12 @@
             "value" : "Pregled naredbe"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parancs előnézete"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2645,6 +2753,12 @@
             "value" : "Nastavi"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folytatás"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2784,6 +2898,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🎉"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🎉"
@@ -2933,6 +3053,12 @@
             "value" : "Pregled naredbe"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parancs előnézete"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3075,6 +3201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Natrag"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vissza"
           }
         },
         "it" : {
@@ -3221,6 +3353,12 @@
             "value" : "Kako želite instalirati integraciju ljuske?\n\nTijekom ovog postupka izmijenit će se startne skripte vaše ljuske. Instalacijski program upisat će naredbe u prozor terminala umjesto vas."
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hogyan szeretné telepíteni a shellintegrációt?\n\nA folyamat során a shell indítószkriptjei módosulnak. A telepítő a parancsokat Ön helyett beírja a terminálablakba."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3363,6 +3501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pregled naredbe"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parancs előnézete"
           }
         },
         "it" : {
@@ -3509,6 +3653,12 @@
             "value" : "Instalacija je dovršena!"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A telepítés befejeződött!"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3651,6 +3801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pokrenut će se sljedeća naredba:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ez a következő parancsot fogja futtatni:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
         "it" : {
@@ -3797,6 +3953,12 @@
             "value" : "Stvorite novu karticu da je isprobate.\n\nZa najbolje rezultate instalirajte integraciju ljuske na sve hostove na koje se spajate preko ssh-a."
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hozzon létre egy új lapot a kipróbáláshoz.\n\nA legjobb eredményhez telepítse a shellintegrációt minden hosztra, amelyre ssh-val bejelentkezik."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3939,6 +4101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Integracija ljuske sastoji se od skripti koje pomažu vašoj ljusci da komunicira s aplikacijom iTerm2 kako bi mogla pratiti naredbe koje pokrećete, vaš trenutačni direktorij i druga stanja. "
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A shellintegráció olyan szkriptekből áll, amelyek segítik a shellt az iTerm2-vel való kommunikációban, hogy az nyomon követhesse a futtatott parancsokat, az aktuális könyvtárat és egyéb állapotot. "
           }
         },
         "it" : {
@@ -4085,6 +4253,12 @@
             "value" : "Instaliraj integraciju ljuske"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shellintegráció telepítése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4227,6 +4401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Odustani"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mégsem"
           }
         },
         "it" : {

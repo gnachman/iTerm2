@@ -53,6 +53,12 @@
             "value" : "Radnja"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Művelet"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -237,6 +243,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Naslov"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cím"
           }
         },
         "it" : {

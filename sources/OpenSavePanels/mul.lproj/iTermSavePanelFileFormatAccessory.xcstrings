@@ -53,6 +53,12 @@
             "value": "Uključi vremenske oznake"
           }
         },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Időbélyegek belefoglalása"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -195,6 +201,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Format datoteke:"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fájlformátum:"
           }
         },
         "it": {

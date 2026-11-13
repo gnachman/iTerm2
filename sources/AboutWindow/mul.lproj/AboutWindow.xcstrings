@@ -53,6 +53,12 @@
             "value": "iTerm2"
           }
         },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iTerm2"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -195,6 +201,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Autor: George Nachman i suradnici"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "George Nachman és a közreműködők"
           }
         },
         "it": {

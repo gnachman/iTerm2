@@ -131,6 +131,12 @@
             "value" : "Status"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Állapot"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -275,6 +281,12 @@
             "value" : "Importiranje…"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importálás…"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -417,6 +429,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Importiranje postavki i podataka…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beállítások és adatok importálása…"
           }
         },
         "sk" : {

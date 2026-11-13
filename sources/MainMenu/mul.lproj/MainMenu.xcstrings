@@ -53,6 +53,12 @@
             "value" : "Smanji zum"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kicsinyítés"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -195,6 +201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instaliraj okruženje za izvođenje Pythona"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Python-futtatókörnyezet telepítése"
           }
         },
         "it" : {
@@ -341,6 +353,12 @@
             "value" : "Premjesti karticu"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lap áthelyezése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dupliciraj sesiju"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Munkamenet megkettőzése"
           }
         },
         "it" : {
@@ -629,6 +653,12 @@
             "value" : "Otvori lokaciju…"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hely megnyitása…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -771,6 +801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Povećaj visinu"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Magasság növelése"
           }
         },
         "it" : {
@@ -917,6 +953,12 @@
             "value" : "Premjesti karticu"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lap áthelyezése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1059,6 +1101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Izvještavanje o fokusu"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fókuszjelentés"
           }
         },
         "it" : {
@@ -1205,6 +1253,12 @@
             "value" : "Normalno"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normál"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1347,6 +1401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pomakni razdjelnik prema gore"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elválasztó mozgatása felfelé"
           }
         },
         "it" : {
@@ -1493,6 +1553,12 @@
             "value" : "Zamijeni vrijednošću dekodiranom iz Base 64"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Csere Base 64-dekódolt értékre"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1635,6 +1701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sesija"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Munkamenet"
           }
         },
         "it" : {
@@ -1781,6 +1853,12 @@
             "value" : "Premjesti sesiju u razdvojeno okno"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Munkamenet áthelyezése osztott panelbe"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1923,6 +2001,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Upravitelj lozinki"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jelszókezelő"
           }
         },
         "it" : {
@@ -2069,6 +2153,12 @@
             "value" : "Stavka 1"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. elem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2211,6 +2301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Centrirano"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Középen"
           }
         },
         "it" : {
@@ -2357,6 +2453,12 @@
             "value" : "Zamijeni odabir"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kijelölés cseréje"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2499,6 +2601,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lijevi rub zaslona"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A képernyő bal oldalán"
           }
         },
         "it" : {
@@ -2645,6 +2753,12 @@
             "value" : "Kursor aplikacije"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alkalmazáskurzor"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2787,6 +2901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rasporedi"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elrendezések"
           }
         },
         "it" : {
@@ -2933,6 +3053,12 @@
             "value" : "Sažmi odabrane retke"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kijelölt sorok összecsukása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3075,6 +3201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Otvori nedavne direktorije…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legutóbbi könyvtárak megnyitása…"
           }
         },
         "it" : {
@@ -3221,6 +3353,12 @@
             "value" : "Cijeli zaslon"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teljes képernyő"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3363,6 +3501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Postavi imenovanu oznaku"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elnevezett jelölő beállítása"
           }
         },
         "it" : {
@@ -3509,6 +3653,12 @@
             "value" : "Radnje"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Műveletek"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3651,6 +3801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Snimi okvir GPU-a"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPU-képkocka rögzítése"
           }
         },
         "it" : {
@@ -3797,6 +3953,12 @@
             "value" : "Oznake i bilješke"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jelölők és annotációk"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3939,6 +4101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cijela visina na lijevom rubu zaslona"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teljes magasságban a képernyő bal oldalán"
           }
         },
         "it" : {
@@ -4085,6 +4253,12 @@
             "value" : "Dupliciraj prozor"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ablak megkettőzése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4227,6 +4401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Automatsko dovršavanje naredbi"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatikus parancskiegészítés"
           }
         },
         "it" : {
@@ -4373,6 +4553,12 @@
             "value" : "Stil prozora"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ablakstílus"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4515,6 +4701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dostupnost alata za renderiranje pomoću GPU-a"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPU-renderelő elérhetősége"
           }
         },
         "it" : {
@@ -4661,6 +4853,12 @@
             "value" : "Prozor"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ablak"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4803,6 +5001,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Smanji"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kis méret"
           }
         },
         "it" : {
@@ -4949,6 +5153,12 @@
             "value" : "Prozor"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ablak"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5088,6 +5298,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2"
@@ -5237,6 +5453,12 @@
             "value" : "iTerm2"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5379,6 +5601,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Promijeni profil u rasporedu…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil módosítása az elrendezésben…"
           }
         },
         "it" : {
@@ -5525,6 +5753,12 @@
             "value" : "Ljuska"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shell"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5667,6 +5901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Postavi standardnu širinu"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alapértelmezett szélesség beállítása"
           }
         },
         "it" : {
@@ -5813,6 +6053,12 @@
             "value" : "Ljuska"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shell"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5955,6 +6201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pomoć"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Súgó"
           }
         },
         "it" : {
@@ -6101,6 +6353,12 @@
             "value" : "Pomoć"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Súgó"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6243,6 +6501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pomoć za iTerm2"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az iTerm2 súgója"
           }
         },
         "it" : {
@@ -6389,6 +6653,12 @@
             "value" : "Postavke…"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beállítások…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6531,6 +6801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Usluge"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szolgáltatások"
           }
         },
         "it" : {
@@ -6677,6 +6953,12 @@
             "value" : "Usluge"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szolgáltatások"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6819,6 +7101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sakrij iTerm2"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az iTerm2 elrejtése"
           }
         },
         "it" : {
@@ -6965,6 +7253,12 @@
             "value" : "Zatvori iTerm2"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kilépés az iTerm2-ből"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7107,6 +7401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sakrij ostalo"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A többi elrejtése"
           }
         },
         "it" : {
@@ -7253,6 +7553,12 @@
             "value" : "Prikaži sve"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Összes megjelenítése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7395,6 +7701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Izreži"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kivágás"
           }
         },
         "it" : {
@@ -7541,6 +7853,12 @@
             "value" : "Uredi"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szerkesztés"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7683,6 +8001,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Uredi"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szerkesztés"
           }
         },
         "it" : {
@@ -7829,6 +8153,12 @@
             "value" : "Odaberi sve"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Összes kijelölése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7971,6 +8301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zalijepi"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beillesztés"
           }
         },
         "it" : {
@@ -8117,6 +8453,12 @@
             "value" : "Očisti međuspremnik"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puffer törlése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8259,6 +8601,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zapis"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Napló"
           }
         },
         "it" : {
@@ -8405,6 +8753,12 @@
             "value" : "Zapis"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Napló"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8547,6 +8901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Više o aplikaciji iTerm2"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az iTerm2 névjegye"
           }
         },
         "it" : {
@@ -8693,6 +9053,12 @@
             "value" : "Profili"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profilok"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8835,6 +9201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Profili"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profilok"
           }
         },
         "it" : {
@@ -8981,6 +9353,12 @@
             "value" : "Zatvori prozor aplikacije Terminal"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminálablak bezárása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9123,6 +9501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zatvori sva okna u kartici"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A lap összes paneljének bezárása"
           }
         },
         "it" : {
@@ -9269,6 +9653,12 @@
             "value" : "Postavke stranice…"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oldalbeállítás…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9411,6 +9801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Spremi odabrani tekst…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kijelölt szöveg mentése…"
           }
         },
         "it" : {
@@ -9557,6 +9953,12 @@
             "value" : "Očisti međuspremnik listanja"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visszagörgetési puffer törlése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9699,6 +10101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Koristi odabir za traženje"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kijelölés használata kereséshez"
           }
         },
         "it" : {
@@ -9845,6 +10253,12 @@
             "value" : "Pronađi"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keresés"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9987,6 +10401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pronađi"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keresés"
           }
         },
         "it" : {
@@ -10133,6 +10553,12 @@
             "value" : "Pronađi sljedeće"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Következő keresése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10275,6 +10701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pronađi prethodno"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Előző keresése"
           }
         },
         "it" : {
@@ -10421,6 +10853,12 @@
             "value" : "Idi na odabir"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ugrás a kijelölésre"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10563,6 +11001,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Prikaz"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nézet"
           }
         },
         "it" : {
@@ -10709,6 +11153,12 @@
             "value" : "Prikaz"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nézet"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10851,6 +11301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Povećaj tekst"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szöveg nagyítása"
           }
         },
         "it" : {
@@ -10997,6 +11453,12 @@
             "value" : "Smanji tekst"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szöveg kicsinyítése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11139,6 +11601,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ispiši"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nyomtatás"
           }
         },
         "it" : {
@@ -11285,6 +11753,12 @@
             "value" : "Zaslon"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Képernyő"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11427,6 +11901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ispiši"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nyomtatás"
           }
         },
         "it" : {
@@ -11573,6 +12053,12 @@
             "value" : "Odabir"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kijelölés"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11715,6 +12201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Međuspremnik"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puffer"
           }
         },
         "it" : {
@@ -11861,6 +12353,12 @@
             "value" : "Odaberi prethodnu karticu"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Előző lap kijelölése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12003,6 +12501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Odaberi sljedeću karticu"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Következő lap kijelölése"
           }
         },
         "it" : {
@@ -12149,6 +12653,12 @@
             "value" : "Odaberi karticu"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lap kijelölése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12291,6 +12801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Odaberi karticu"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lap kijelölése"
           }
         },
         "it" : {
@@ -12437,6 +12953,12 @@
             "value" : "Nova kartica"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Új lap"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12579,6 +13101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Novi prozor"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Új ablak"
           }
         },
         "it" : {
@@ -12725,6 +13253,12 @@
             "value" : "Pritisnite Option za novi prozor"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Új ablakhoz nyomja le az Option billentyűt"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12867,6 +13401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Otvori u novom prozoru"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Megnyitás új ablakban"
           }
         },
         "it" : {
@@ -13013,6 +13553,12 @@
             "value" : "Provjeri ažuriranja…"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Frissítések keresése…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13155,6 +13701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zumiraj"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nagyítás"
           }
         },
         "it" : {
@@ -13301,6 +13853,12 @@
             "value" : "Resetiraj"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alaphelyzetbe állítás"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13443,6 +14001,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Uključi/isključi cijeli zaslon"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teljes képernyő be- és kikapcsolása"
           }
         },
         "it" : {
@@ -13589,6 +14153,12 @@
             "value" : "Uključi/isključi zapisivanje za uklanjanje grešaka"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hibakeresési napló be- és kikapcsolása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13731,6 +14301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Otvori profile…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profilok megnyitása…"
           }
         },
         "it" : {
@@ -13877,6 +14453,12 @@
             "value" : "Uredi sesiju…"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Munkamenet szerkesztése…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14019,6 +14601,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pokreni trenutačnu reprodukciju"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Azonnali visszajátszás indítása"
           }
         },
         "it" : {
@@ -14165,6 +14753,12 @@
             "value" : "Poništi"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visszavonás"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14307,6 +14901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ponovi"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ismétlés"
           }
         },
         "it" : {
@@ -14453,6 +15053,12 @@
             "value" : "Otvori povijest lijepljenja…"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beillesztési előzmények megnyitása…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14595,6 +15201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Otvori automatsko dovršavanje…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatikus kiegészítés megnyitása…"
           }
         },
         "it" : {
@@ -14741,6 +15353,12 @@
             "value" : "Posebno lijepljenje"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speciális beillesztés"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14883,6 +15501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Posebno lijepljenje"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speciális beillesztés"
           }
         },
         "it" : {
@@ -15029,6 +15653,12 @@
             "value" : "Zalijepi odabir"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kijelölés beillesztése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15171,6 +15801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zalijepi polako"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beillesztés lassan"
           }
         },
         "it" : {
@@ -15317,6 +15953,12 @@
             "value" : "Sigurni unos s tipkovnice"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Biztonságos billentyűzetbevitel"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15459,6 +16101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Poredaj prozore vodoravno"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ablakok elrendezése vízszintesen"
           }
         },
         "it" : {
@@ -15605,6 +16253,12 @@
             "value" : "Zatvori"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bezárás"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15747,6 +16401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Razdvoji okomito s trenutačnim profilom"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Függőleges felosztás az aktuális profillal"
           }
         },
         "it" : {
@@ -15893,6 +16553,12 @@
             "value" : "Razdvoji vodoravno s trenutačnim profilom"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vízszintes felosztás az aktuális profillal"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16035,6 +16701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Spremi raspored prozora"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ablakelrendezés mentése"
           }
         },
         "it" : {
@@ -16181,6 +16853,12 @@
             "value" : "Odaberi razdvojeno okno"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osztott panel kiválasztása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16323,6 +17001,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Odaberi razdvojeno okno"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osztott panel kiválasztása"
           }
         },
         "it" : {
@@ -16469,6 +17153,12 @@
             "value" : "Odaberi okno iznad"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A felső panel kiválasztása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16611,6 +17301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Odaberi okno ispod"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az alsó panel kiválasztása"
           }
         },
         "it" : {
@@ -16757,6 +17453,12 @@
             "value" : "Odaberi okno lijevo"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A bal oldali panel kiválasztása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16899,6 +17601,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Odaberi okno desno"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A jobb oldali panel kiválasztása"
           }
         },
         "it" : {
@@ -17045,6 +17753,12 @@
             "value" : "Koristi prozirnost"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Átlátszóság használata"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17187,6 +17901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Maksimiziraj aktivno okno"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktív panel maximalizálása"
           }
         },
         "it" : {
@@ -17333,6 +18053,12 @@
             "value" : "Stavka 3"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3. elem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17475,6 +18201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stavka 2"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2. elem"
           }
         },
         "it" : {
@@ -17621,6 +18353,12 @@
             "value" : "Stavka 1"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. elem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17763,6 +18501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Postavi oznaku"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jelölő beállítása"
           }
         },
         "it" : {
@@ -17909,6 +18653,12 @@
             "value" : "Idi na oznaku"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ugrás a jelölőre"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18051,6 +18801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sljedeće okno"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Következő panel"
           }
         },
         "it" : {
@@ -18197,6 +18953,12 @@
             "value" : "Prethodno okno"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Előző panel"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18339,6 +19101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Prikaži kartice u prikazu preko cijelog zaslona"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lapok megjelenítése teljes képernyőn"
           }
         },
         "it" : {
@@ -18485,6 +19253,12 @@
             "value" : "Emitiranje ulaza"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bemenet szórása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18627,6 +19401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Emitiranje ulaza"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bemenet szórása"
           }
         },
         "it" : {
@@ -18773,6 +19553,12 @@
             "value" : "Emitiraj ulaz u sva okna u svim karticama"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bemenet szórása az összes lap összes panelére"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18915,6 +19701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Emitiraj ulaz u sva okna u trenutačnoj kartici"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bemenet szórása az aktuális lap összes panelére"
           }
         },
         "it" : {
@@ -19061,6 +19853,12 @@
             "value" : "Šalji ulaz samo u trenutačnu sesiju"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bemenet küldése csak az aktuális munkamenetnek"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19203,6 +20001,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Obnovi raspored prozora"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ablakelrendezés visszaállítása"
           }
         },
         "it" : {
@@ -19349,6 +20153,12 @@
             "value" : "Obnovi raspored prozora"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ablakelrendezés visszaállítása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19491,6 +20301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pronađi kursor"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurzor keresése"
           }
         },
         "it" : {
@@ -19637,6 +20453,12 @@
             "value" : "Razdvoji vodoravno…"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vízszintes felosztás…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19779,6 +20601,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Razdvoji okomito…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Függőleges felosztás…"
           }
         },
         "it" : {
@@ -19925,6 +20753,12 @@
             "value" : "Pojas s alatima"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eszközöv"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20067,6 +20901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pojas s alatima"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eszközöv"
           }
         },
         "it" : {
@@ -20213,6 +21053,12 @@
             "value" : "Prikaži pojas s alatima"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eszközöv megjelenítése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20355,6 +21201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nova kartica s trenutačnim profilom"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Új lap az aktuális profillal"
           }
         },
         "it" : {
@@ -20501,6 +21353,12 @@
             "value" : "Pokreni koproces…"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Társfolyamat futtatása…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20643,6 +21501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zaustavi koproces"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Társfolyamat leállítása"
           }
         },
         "it" : {
@@ -20789,6 +21653,12 @@
             "value" : "Kopiraj"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Másolás"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20931,6 +21801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Premjesti karticu u novi prozor"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lap áthelyezése új ablakba"
           }
         },
         "it" : {
@@ -21077,6 +21953,12 @@
             "value" : "Premjesti karticu udesno"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lap mozgatása jobbra"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21221,6 +22103,12 @@
             "value" : "Prikaži indikator uzorka pozadine"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Háttérminta-jelző megjelenítése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21360,6 +22248,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "tmux"
@@ -21509,6 +22403,12 @@
             "value" : "tmux"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21651,6 +22551,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nova kartica za tmux"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Új tmux-lap"
           }
         },
         "it" : {
@@ -21797,6 +22703,12 @@
             "value" : "Novi prozor za tmux"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Új tmux-ablak"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21939,6 +22851,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Odvoji"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leválasztás"
           }
         },
         "it" : {
@@ -22085,6 +23003,12 @@
             "value" : "Nadzorna ploča"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Irányítópult"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22227,6 +23151,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Normalna veličina teksta"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szöveg normál mérete"
           }
         },
         "it" : {
@@ -22373,6 +23303,12 @@
             "value" : "Obnovi veličinu teksta i sesije"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szöveg- és munkamenet-méret visszaállítása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22515,6 +23451,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Postavi iTerm2 kao standardni terminal"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az iTerm2 legyen az alapértelmezett terminál"
           }
         },
         "it" : {
@@ -22661,6 +23603,12 @@
             "value" : "Postavi Terminal kao standardni terminal"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A Terminal legyen az alapértelmezett terminál"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22803,6 +23751,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Uključi/isključi emitiranje ulaza u trenutačnu sesiju"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bemenet szórása az aktuális munkamenetre be- és kikapcsolása"
           }
         },
         "it" : {
@@ -22949,6 +23903,12 @@
             "value" : "Lijepi brže"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gyorsabb beillesztés"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23091,6 +24051,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lijepi sporije"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lassabb beillesztés"
           }
         },
         "it" : {
@@ -23237,6 +24203,12 @@
             "value" : "Sporo lijepi brže"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lassú beillesztés gyorsabban"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23379,6 +24351,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sporo lijepi sporije"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lassú beillesztés lassabban"
           }
         },
         "it" : {
@@ -23525,6 +24503,12 @@
             "value" : "Resetiraj skup znakova"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Karakterkészlet alaphelyzetbe állítása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23669,6 +24653,12 @@
             "value" : "Arhive"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archívumok"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23808,6 +24798,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT400"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT400"
@@ -23957,6 +24953,12 @@
             "value" : "Dodaj bilješku odabiru"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kijelölés annotálása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24099,6 +25101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zumiraj odabir"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kijelölés nagyítása"
           }
         },
         "it" : {
@@ -24245,6 +25253,12 @@
             "value" : "Pomakni razdjelnik ulijevo"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elválasztó mozgatása balra"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24387,6 +25401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Onemogući sve"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Összes letiltása"
           }
         },
         "it" : {
@@ -24533,6 +25553,12 @@
             "value" : "Premjesti sesiju"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Munkamenet áthelyezése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24675,6 +25701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Prikaži uređivač naredbi"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parancsszerkesztő megjelenítése"
           }
         },
         "it" : {
@@ -24821,6 +25853,12 @@
             "value" : "Prisilno odvoji"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leválasztás kényszerítése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24963,6 +26001,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Imenovane oznake"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elnevezett jelölők"
           }
         },
         "it" : {
@@ -25109,6 +26153,12 @@
             "value" : "Pronađi…"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keresés…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25251,6 +26301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eksportiraj snimku"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Felvétel exportálása"
           }
         },
         "it" : {
@@ -25397,6 +26453,12 @@
             "value" : "Bez trake naslova"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Címsor nélkül"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25536,6 +26598,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT500"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT500"
@@ -25685,6 +26753,12 @@
             "value" : "Prikaži izreske"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kivágások megjelenítése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25827,6 +26901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Postavke pratećeg uređaja"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Társeszköz beállításai"
           }
         },
         "it" : {
@@ -25973,6 +27053,12 @@
             "value" : "Mod kopiranja"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Másolási mód"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26115,6 +27201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Premjesti sesiju"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Munkamenet áthelyezése"
           }
         },
         "it" : {
@@ -26261,6 +27353,12 @@
             "value" : "Kartica"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lap"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26403,6 +27501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Očisti do početka odabira"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Törlés a kijelölés elejéig"
           }
         },
         "it" : {
@@ -26549,6 +27653,12 @@
             "value" : "Kopiraj statistiku performansi"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teljesítménystatisztika másolása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26691,6 +27801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Skripte"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szkriptek"
           }
         },
         "it" : {
@@ -26837,6 +27953,12 @@
             "value" : "Spremi trenutačni prozor kao raspored"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktuális ablak mentése elrendezésként"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26979,6 +28101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Okidači"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eseményindítók"
           }
         },
         "it" : {
@@ -27125,6 +28253,12 @@
             "value" : "Prikaži vodilicu kursora"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurzorvezető megjelenítése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27267,6 +28401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zaključaj veličinu"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Méret zárolása"
           }
         },
         "it" : {
@@ -27413,6 +28553,12 @@
             "value" : "Zapisuj u datoteku"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naplózás fájlba"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27557,6 +28703,12 @@
             "value" : "Eksportiraj…"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportálás…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27696,6 +28848,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Web"
@@ -27845,6 +29003,12 @@
             "value" : "Izvještavaj o pridruženom tekstu"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Társított szöveg jelentése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27987,6 +29151,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nova Python skripta"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Új Python-szkript"
           }
         },
         "it" : {
@@ -28133,6 +29303,12 @@
             "value" : "Otvori licence otvorenog koda"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nyílt forráskódú licencek"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28275,6 +29451,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Očisti trenutačnu reprodukciju"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Azonnali visszajátszás törlése"
           }
         },
         "it" : {
@@ -28421,6 +29603,12 @@
             "value" : "Smanji visinu"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Magasság csökkentése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28563,6 +29751,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Skripte"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szkriptek"
           }
         },
         "it" : {
@@ -28709,6 +29903,12 @@
             "value" : "Prikaži skripte u Finderu"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szkriptek megjelenítése a Finderben"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28851,6 +30051,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Spremi sadržaj…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tartalom mentése…"
           }
         },
         "it" : {
@@ -28997,6 +30203,12 @@
             "value" : "Postavi sve naprijed"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Összes előtérbe hozása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29139,6 +30351,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sažmi sve"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Összes összecsukása"
           }
         },
         "it" : {
@@ -29285,6 +30503,12 @@
             "value" : "Arhive"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archívumok"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29427,6 +30651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Obnovi raspored prozora kao kartice"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ablakelrendezés visszaállítása lapokként"
           }
         },
         "it" : {
@@ -29573,6 +30803,12 @@
             "value" : "Dodaj bilješku na kursoru"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annotáció hozzáadása a kurzornál"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29715,6 +30951,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Onemogući prozirnost za aktivni prozor"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Átlátszóság letiltása az aktív ablakban"
           }
         },
         "it" : {
@@ -29861,6 +31103,12 @@
             "value" : "Lijepljenje u zagradama"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zárójeles beillesztés"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30003,6 +31251,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zamijeni formatiranim JSON-om"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Csere formázott JSON-ra"
           }
         },
         "it" : {
@@ -30227,6 +31481,12 @@
             "value" : "Postavi naprijed"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Előtérbe hozás"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30369,6 +31629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Usidri plutajuće okno"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lebegő panel dokkolása"
           }
         },
         "sk" : {
@@ -30515,6 +31781,12 @@
             "value" : "Sakrij plutajuća okna"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lebegő panelek elrejtése"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30657,6 +31929,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pomakni plutajuće okno prema dolje"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lebegő panel mozgatása lefelé"
           }
         },
         "sk" : {
@@ -30803,6 +32081,12 @@
             "value" : "Pomakni plutajuće okno ulijevo"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lebegő panel mozgatása balra"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30945,6 +32229,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pomakni plutajuće okno udesno"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lebegő panel mozgatása jobbra"
           }
         },
         "sk" : {
@@ -31091,6 +32381,12 @@
             "value" : "Pomakni plutajuće okno prema gore"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lebegő panel mozgatása felfelé"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31233,6 +32529,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Novo plutajuće okno s trenutačnim profilom"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Új lebegő panel az aktuális profillal"
           }
         },
         "sk" : {
@@ -31379,6 +32681,12 @@
             "value" : "Plutajuća okna"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lebegő panelek"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31521,6 +32829,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Plutajuća okna"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lebegő panelek"
           }
         },
         "sk" : {
@@ -31667,6 +32981,12 @@
             "value" : "Pošalji natrag"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hátraküldés"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31731,6 +33051,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Prikaži savjet dana"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A nap tippjének megjelenítése"
           }
         },
         "it" : {
@@ -31877,6 +33203,12 @@
             "value" : "Sljedeća bilješka"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Következő annotáció"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32016,6 +33348,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cockpit"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cockpit"
@@ -32165,6 +33503,12 @@
             "value" : "Premjesti sesiju u karticu"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Munkamenet áthelyezése lapra"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32307,6 +33651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Donji rub zaslona"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A képernyő alján"
           }
         },
         "it" : {
@@ -32453,6 +33803,12 @@
             "value" : "Pitaj za pretvaranje tabulatora u razmake pri lijepljenju"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rákérdezés a tabulátorok szóközökre cseréjére beillesztéskor"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32595,6 +33951,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Upozorenja"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Figyelmeztetések"
           }
         },
         "it" : {
@@ -32741,6 +34103,12 @@
             "value" : "Kopiraj s kontrolnim sekvencama"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Másolás vezérlőszekvenciákkal"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32883,6 +34251,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Promijeni veličinu prozora"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ablak átméretezése"
           }
         },
         "it" : {
@@ -33029,6 +34403,12 @@
             "value" : "Resetiraj"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alaphelyzetbe állítás"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33171,6 +34551,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dupliciraj karticu"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lap megkettőzése"
           }
         },
         "it" : {
@@ -33317,6 +34703,12 @@
             "value" : "Ponovno učitaj stranicu"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oldal újratöltése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33459,6 +34851,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Premjesti sesiju u prozor"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Munkamenet áthelyezése ablakba"
           }
         },
         "it" : {
@@ -33605,6 +35003,12 @@
             "value" : "Izvještavaj o svim tipkama kao escape kodovima"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minden billentyű jelentése escape-kódként"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33747,6 +35151,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mod izvještavanja o neobrađenim tipkama"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nyers billentyűjelentési mód"
           }
         },
         "it" : {
@@ -33893,6 +35303,12 @@
             "value" : "Importiraj…"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importálás…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34035,6 +35451,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Upozori prije lijepljenja više redaka"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Figyelmeztetés többsoros beillesztés előtt"
           }
         },
         "it" : {
@@ -34181,6 +35603,12 @@
             "value" : "Prikaži ugrađeni razgovor"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beágyazott csevegés megjelenítése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34325,6 +35753,12 @@
             "value" : "Uključi/isključi unos u međuspremnik"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pufferelt bemenet be- és kikapcsolása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34467,6 +35901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Udaljeni host može upravljati aplikacijom iTerm2"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A távoli hoszt vezérelheti az iTerm2-t"
           }
         },
         "it" : {
@@ -34691,6 +36131,12 @@
             "value" : "Provjeri skraćivanje kontrola postavki"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beállításvezérlők csonkolásának ellenőrzése"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34755,6 +36201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Okidači"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eseményindítók"
           }
         },
         "it" : {
@@ -34901,6 +36353,12 @@
             "value" : "Odabir poštuje meke granice"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A kijelölés tiszteletben tartja a lágy határokat"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35043,6 +36501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Izađi iz radne grupe"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kilépés a munkacsoportból"
           }
         },
         "it" : {
@@ -35189,6 +36653,12 @@
             "value" : "Odaberi izlaz zadnje naredbe"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az utolsó parancs kimenetének kijelölése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35331,6 +36801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ponovno pokreni sesiju"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Munkamenet újraindítása"
           }
         },
         "it" : {
@@ -35477,6 +36953,12 @@
             "value" : "Otvori Python REPL"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Python REPL megnyitása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35619,6 +37101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gornji rub zaslona"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A képernyő tetején"
           }
         },
         "it" : {
@@ -35765,6 +37253,12 @@
             "value" : "Spoji sve prozore"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Összes ablak egyesítése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35907,6 +37401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zakvači prozor brze tipke"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gyorsbillentyűs ablak kitűzése"
           }
         },
         "it" : {
@@ -36053,6 +37553,12 @@
             "value" : "modifyOtherKeys mod 2"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys 2. mód"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36195,6 +37701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Otvori brzo"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gyors megnyitás"
           }
         },
         "it" : {
@@ -36341,6 +37853,12 @@
             "value" : "Upravljaj"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kezelés"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36483,6 +38001,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Razlikuj Esc"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escape egyértelműsítése"
           }
         },
         "it" : {
@@ -36629,6 +38153,12 @@
             "value" : "Odaberi rezultat za otvaranje"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Megnyitandó találat kiválasztása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36771,6 +38301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ograniči upozorenje o lijepljenju više redaka na odzivnik ljuske"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Többsoros beillesztési figyelmeztetés korlátozása a shell promptra"
           }
         },
         "it" : {
@@ -36917,6 +38453,12 @@
             "value" : "Omogući okidače u interaktivnim aplikacijama"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eseményindítók engedélyezése interaktív alkalmazásokban"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37059,6 +38601,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stavka 2"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2. elem"
           }
         },
         "it" : {
@@ -37205,6 +38753,12 @@
             "value" : "Izvještavanje o mišu"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Egérjelentés"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37347,6 +38901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oznake i bilješke"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jelölők és annotációk"
           }
         },
         "it" : {
@@ -37493,6 +39053,12 @@
             "value" : "Zaključaj izgled"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elrendezés zárolása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37635,6 +39201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zaključaj lokaciju"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hely zárolása"
           }
         },
         "it" : {
@@ -37781,6 +39353,12 @@
             "value" : "Novi prozor s trenutačnim profilom"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Új ablak az aktuális profillal"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37923,6 +39501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zakopaj sesiju"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Munkamenet elásása"
           }
         },
         "it" : {
@@ -38069,6 +39653,12 @@
             "value" : "Prikaži modalni okvir upozorenja"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modális figyelmeztetési ablak megjelenítése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38211,6 +39801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Omogući sve"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Összes engedélyezése"
           }
         },
         "it" : {
@@ -38357,6 +39953,12 @@
             "value" : "Sljedeća oznaka"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Következő jelölő"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38499,6 +40101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Posloži prozore"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ablakok elrendezése"
           }
         },
         "it" : {
@@ -38645,6 +40253,12 @@
             "value" : "Pronađi sva podudaranja pametnog odabira"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az intelligens kijelölés összes találatának keresése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38787,6 +40401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reproduciraj zvuk"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hang lejátszása"
           }
         },
         "it" : {
@@ -38933,6 +40553,12 @@
             "value" : "Otvori povijest naredbi…"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parancselőzmények megnyitása…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39075,6 +40701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kopiraj sa stilovima"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Másolás stílusokkal"
           }
         },
         "it" : {
@@ -39221,6 +40853,12 @@
             "value" : "Alternativni zaslon"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alternatív képernyő"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39365,6 +41003,12 @@
             "value" : "Cijela visina na desnom rubu zaslona"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teljes magasságban a képernyő jobb oldalán"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39504,6 +41148,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -39653,6 +41303,12 @@
             "value" : "Standardni mod izvještavanja o tipkama"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szabványos billentyűjelentési mód"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39795,6 +41451,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Promijeni veličinu razdvojenog okna"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osztott panel átméretezése"
           }
         },
         "it" : {
@@ -39941,6 +41603,12 @@
             "value" : "Upozorenja"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Figyelmeztetések"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40083,6 +41751,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Obavijesti o promjeni statusa"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Értesítés állapotváltozáskor"
           }
         },
         "it" : {
@@ -40229,6 +41903,12 @@
             "value" : "Odaberi sljedeću grupu kartica"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Következő lapcsoport kijelölése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40371,6 +42051,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Deinstaliraj integraciju za Claude Code"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code-integráció eltávolítása"
           }
         },
         "it" : {
@@ -40517,6 +42203,12 @@
             "value" : "Uredi naslov kartice"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lapcím szerkesztése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40659,6 +42351,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rasporedi"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elrendezések"
           }
         },
         "it" : {
@@ -40805,6 +42503,12 @@
             "value" : "Prethodni član"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Előző társ"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40947,6 +42651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Izvještavaj o alternativnim tipkama"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alternatív billentyűk jelentése"
           }
         },
         "it" : {
@@ -41093,6 +42803,12 @@
             "value" : "Razdvojeno okno"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osztott panel"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41235,6 +42951,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stanje terminala"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminálállapot"
           }
         },
         "it" : {
@@ -41381,6 +43103,12 @@
             "value" : "Poništi zatvaranje"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bezárás visszavonása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41523,6 +43251,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI razgovori"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI-csevegések"
           }
         },
         "it" : {
@@ -41669,6 +43403,12 @@
             "value" : "Naprijed"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Előre"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41811,6 +43551,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zaključaj širinu razdvojenog okna"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osztott panel szélességének zárolása"
           }
         },
         "it" : {
@@ -41957,6 +43703,12 @@
             "value" : "Radne grupe"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Munkacsoportok"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42099,6 +43851,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Spremi arhivu trenutačne sesije…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az aktuális munkamenet archívumának mentése…"
           }
         },
         "it" : {
@@ -42245,6 +44003,12 @@
             "value" : "Zamijeni odabir"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kijelölés cseréje"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42384,6 +44148,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT300"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT300"
@@ -42533,6 +44303,12 @@
             "value" : "Prikaži bilješke"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annotációk megjelenítése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42672,6 +44448,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -42821,6 +44603,12 @@
             "value" : "Upravljaj"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kezelés"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42963,6 +44751,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stavka 3"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3. elem"
           }
         },
         "it" : {
@@ -43109,6 +44903,12 @@
             "value" : "Odaberi prethodnu grupu kartica"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Előző lapcsoport kijelölése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43251,6 +45051,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zakopane sesije"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elásott munkamenetek"
           }
         },
         "it" : {
@@ -43397,6 +45203,12 @@
             "value" : "Prethodna bilješka"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Előző annotáció"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43539,6 +45351,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Upozori na oznake u sesijama izvan zaslona"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Figyelmeztetés a képernyőn kívüli munkamenetek jelölőire"
           }
         },
         "it" : {
@@ -43763,6 +45581,12 @@
             "value" : "Centrirano, bez trake naslova"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Középen, címsor nélkül"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43827,6 +45651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instaliraj integraciju za Claude Code"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code-integráció telepítése"
           }
         },
         "it" : {
@@ -43973,6 +45803,12 @@
             "value" : "Objavi obavijest"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Értesítés közzététele"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44115,6 +45951,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Trenutačna sesija je izvor emitiranja"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az aktuális munkamenet a szórás forrása"
           }
         },
         "it" : {
@@ -44261,6 +46103,12 @@
             "value" : "Upozori na sljedećoj oznaci"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Figyelmeztetés a következő jelölőnél"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44403,6 +46251,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Povećaj širinu"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szélesség növelése"
           }
         },
         "it" : {
@@ -44549,6 +46403,12 @@
             "value" : "CSI u mod"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CSI u mód"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44691,6 +46551,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pomakni razdjelnik prema dolje"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elválasztó mozgatása lefelé"
           }
         },
         "it" : {
@@ -44837,6 +46703,12 @@
             "value" : "Promijeni veličinu razdvojenog okna"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osztott panel átméretezése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44979,6 +46851,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ponovno instaliraj integraciju za Claude Code"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code-integráció újratelepítése"
           }
         },
         "it" : {
@@ -45125,6 +47003,12 @@
             "value" : "Instaliraj integraciju ljuske"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shellintegráció telepítése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45267,6 +47151,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Filtriraj"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szűrés"
           }
         },
         "it" : {
@@ -45413,6 +47303,12 @@
             "value" : "Uredi okidače"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eseményindítók szerkesztése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45555,6 +47451,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pauziraj okno"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panel szüneteltetése"
           }
         },
         "it" : {
@@ -45701,6 +47603,12 @@
             "value" : "Spremi retrospektivne zapise uklanjanja grešaka"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visszamenőleges hibakeresési naplók mentése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45843,6 +47751,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Isječci"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kódrészletek"
           }
         },
         "it" : {
@@ -45989,6 +47903,12 @@
             "value" : "Odaberi trenutačnu naredbu"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktuális parancs kijelölése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46131,6 +48051,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Snimi zaslon…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Képernyőkép készítése…"
           }
         },
         "it" : {
@@ -46277,6 +48203,12 @@
             "value" : "Renderiraj odabir nativno"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kijelölés natív renderelése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46419,6 +48351,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Prikaži bilješku sesije"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Munkamenet-jegyzet megjelenítése"
           }
         },
         "it" : {
@@ -46565,6 +48503,12 @@
             "value" : "Isječci"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kódrészletek"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46707,6 +48651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Uredi naslov prozora"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ablakcím szerkesztése"
           }
         },
         "it" : {
@@ -46853,6 +48803,12 @@
             "value" : "Utišana upozorenja…"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elnémított figyelmeztetések…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46995,6 +48951,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Prethodna oznaka"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Előző jelölő"
           }
         },
         "it" : {
@@ -47141,6 +49103,12 @@
             "value" : "Instaliraj već preuzeto okruženje za izvođenje Pythona"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Már letöltött Python-futtatókörnyezet telepítése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47283,6 +49251,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pomakni razdjelnik udesno"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elválasztó mozgatása jobbra"
           }
         },
         "it" : {
@@ -47429,6 +49403,12 @@
             "value" : "Kartica"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lap"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47571,6 +49551,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Preuzmi datoteke…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fájlok letöltése…"
           }
         },
         "it" : {
@@ -47717,6 +49703,12 @@
             "value" : "Premjesti karticu ulijevo"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lap mozgatása balra"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47859,6 +49851,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dodaj karticu u novu grupu…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lap hozzáadása új lapcsoporthoz…"
           }
         },
         "it" : {
@@ -48005,6 +50003,12 @@
             "value" : "Prikaži alatnu traku"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eszközsor megjelenítése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48147,6 +50151,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ukloni karticu iz grupe"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lap eltávolítása a csoportból"
           }
         },
         "it" : {
@@ -48293,6 +50303,12 @@
             "value" : "Automatski uređivač naredbi"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatikus parancsszerkesztő"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48435,6 +50451,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Otvori AI razgovor…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI-csevegés megnyitása…"
           }
         },
         "it" : {
@@ -48581,6 +50603,12 @@
             "value" : "Prikaži vremenske oznake"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Időbélyegek megjelenítése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48723,6 +50751,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Napredno lijepljenje…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haladó beillesztés…"
           }
         },
         "it" : {
@@ -48869,6 +50903,12 @@
             "value" : "Posloži prozore"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ablakok elrendezése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49011,6 +51051,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Razina emulacije"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emulációs szint"
           }
         },
         "it" : {
@@ -49157,6 +51203,12 @@
             "value" : "Odaberi podudaranja"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Találatok kijelölése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49299,6 +51351,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Otvori odabir"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kijelölés megnyitása"
           }
         },
         "it" : {
@@ -49445,6 +51503,12 @@
             "value" : "Povijest"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Előzmények"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49587,6 +51651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Obnovi arhivu…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archívum visszaállítása…"
           }
         },
         "it" : {
@@ -49733,6 +51803,12 @@
             "value" : "Stil prozora"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ablakstílus"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49875,6 +51951,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cijela širina na donjem rubu zaslona"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teljes szélességben a képernyő alján"
           }
         },
         "it" : {
@@ -50021,6 +52103,12 @@
             "value" : "Doslovne kontrole"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Literális vezérlőkarakterek"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50163,6 +52251,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Očisti traženje"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keresés törlése"
           }
         },
         "it" : {
@@ -50309,6 +52403,12 @@
             "value" : "Objasni izlaz pomoću AI-ja"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kimenet magyarázata AI-val"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50451,6 +52551,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Razina emulacije"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emulációs szint"
           }
         },
         "it" : {
@@ -50597,6 +52703,12 @@
             "value" : "Pronađi URL-ove"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL-ek keresése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50739,6 +52851,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zamijeni formatiranim JSON-om"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Csere formázott JSON-ra"
           }
         },
         "it" : {
@@ -50885,6 +53003,12 @@
             "value" : "Radnje"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Műveletek"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51027,6 +53151,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Promjene veličine ažuriraju profil"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az átméretezés frissíti a profilt"
           }
         },
         "it" : {
@@ -51173,6 +53303,12 @@
             "value" : "Ukloni nedavne profile iz izbornika Docka"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legutóbbi profilok eltávolítása a Dock menüjéből"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51315,6 +53451,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zakopane sesije"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elásott munkamenetek"
           }
         },
         "it" : {
@@ -51461,6 +53603,12 @@
             "value" : "Upravljaj ovisnostima…"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Függőségek kezelése…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51603,6 +53751,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Natrag"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vissza"
           }
         },
         "it" : {
@@ -51749,6 +53903,12 @@
             "value" : "Radne grupe"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Munkacsoportok"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51891,6 +54051,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Učitaj raspored iz datoteke…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elrendezés betöltése fájlból…"
           }
         },
         "it" : {
@@ -52037,6 +54203,12 @@
             "value" : "Prečaci moda kopiranja"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Másolási mód billentyűparancsai"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -52179,6 +54351,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Razdvojeno okno"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osztott panel"
           }
         },
         "it" : {
@@ -52325,6 +54503,12 @@
             "value" : "Promijeni veličinu prozora"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ablak átméretezése"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -52467,6 +54651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Izvještavaj o svim vrstama događaja"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minden eseménytípus jelentése"
           }
         },
         "it" : {
@@ -52613,6 +54803,12 @@
             "value" : "Dodaj okidač…"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eseményindító hozzáadása…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -52752,6 +54948,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Web"
@@ -52901,6 +55103,12 @@
             "value" : "modifyOtherKeys mod 1"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys 1. mód"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53043,6 +55251,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Smanji širinu"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szélesség csökkentése"
           }
         },
         "it" : {
@@ -53189,6 +55403,12 @@
             "value" : "Desni rub zaslona"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A képernyő jobb oldalán"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53331,6 +55551,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zalijepi datoteku kodiranu u Base64"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fájl beillesztése Base64-kódolással"
           }
         },
         "it" : {
@@ -53477,6 +55703,12 @@
             "value" : "Očisti do zadnje oznake"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Törlés az utolsó jelölőig"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53619,6 +55851,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ravnomjerno rasporedi razdvojena okna"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osztott panelek egyenletes elrendezése"
           }
         },
         "it" : {
@@ -53765,6 +56003,12 @@
             "value" : "Importiraj snimku"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Felvétel importálása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53907,6 +56151,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Numerička tipkovnica aplikacije"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alkalmazás-számbillentyűzet"
           }
         },
         "it" : {
@@ -54053,6 +56303,12 @@
             "value" : "Cijela širina na gornjem rubu zaslona"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teljes szélességben a képernyő tetején"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54192,6 +56448,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT100"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT100"
@@ -54341,6 +56603,12 @@
             "value" : "VT200"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT200"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54483,6 +56751,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Prekini vezu"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kapcsolat bontása"
           }
         },
         "it" : {
@@ -54629,6 +56903,12 @@
             "value" : "Upozori prije lijepljenja jednog retka koji završava novim retkom na odzivniku ljuske"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Figyelmeztetés újsorral végződő egyetlen sor beillesztése előtt a shell promptnál"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54771,6 +57051,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pronađi globalno…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keresés mindenhol…"
           }
         },
         "it" : {
@@ -54917,6 +57203,12 @@
             "value" : "Maksimizirano"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nagy méretre állítva"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55059,6 +57351,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Konzola"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konzol"
           }
         },
         "it" : {
@@ -55205,6 +57503,12 @@
             "value" : "Nova kartica pokraj trenutačne kartice"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Új lap az aktuális lap mellett"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55347,6 +57651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Obnovi raspored prozora kao kartice"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ablakelrendezés visszaállítása lapokként"
           }
         },
         "it" : {
@@ -55493,6 +57803,12 @@
             "value" : "Zamijeni vrijednošću kodiranom u Base 64"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Csere Base 64-kódolt értékre"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55635,6 +57951,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aktiviraj umjetnu inteligenciju"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mesterséges intelligencia bevetése"
           }
         },
         "it" : {
@@ -55781,6 +58103,12 @@
             "value" : "Sesija"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Munkamenet"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55925,6 +58253,12 @@
             "value" : "Imenovane oznake"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elnevezett jelölők"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -56067,6 +58401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sljedeći član"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Következő társ"
           }
         },
         "it" : {

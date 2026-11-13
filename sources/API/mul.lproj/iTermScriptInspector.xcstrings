@@ -53,6 +53,12 @@
             "value" : "Putanja"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Útvonal"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -195,6 +201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Prikaži"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Megjelenítés"
           }
         },
         "it" : {
@@ -341,6 +353,12 @@
             "value" : "Potpis"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szignatúra"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Inspektor skriptiranja"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szkriptelési vizsgáló"
           }
         },
         "it" : {
@@ -629,6 +653,12 @@
             "value" : "Sesije, kartice i prozori"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Munkamenetek, lapok és ablakok"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -771,6 +801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Varijable"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Változók"
           }
         },
         "it" : {
@@ -917,6 +953,12 @@
             "value" : "Uloga"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szerep"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1059,6 +1101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kopiraj putanju"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Útvonal másolása"
           }
         },
         "it" : {
@@ -1205,6 +1253,12 @@
             "value" : "Registrirane funkcije"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regisztrált függvények"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1347,6 +1401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vrijednost"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Érték"
           }
         },
         "it" : {
@@ -1493,6 +1553,12 @@
             "value" : "Kopiraj ID"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Azonosító másolása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1637,6 +1703,12 @@
             "value" : "Naziv objekta (ID)"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objektum neve (azonosító)"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1776,6 +1848,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⨁"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⨁"
@@ -1925,6 +2003,12 @@
             "value" : "Skripta"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szkript"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2067,6 +2151,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kopiraj vrijednost"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Érték másolása"
           }
         },
         "it" : {

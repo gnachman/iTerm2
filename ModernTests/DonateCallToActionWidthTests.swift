@@ -68,7 +68,7 @@ final class DonateCallToActionWidthTests: XCTestCase {
     }
 
     func testEveryOfferedCallToActionIsWithinTheLimit() {
-        for localization in ["cs", "da", "de", "es", "fi", "fr", "hr", "it", "ja", "nb", "nl", "pl", "pt-BR", "ru", "sk", "sl", "sv", "tr", "vi", "zh-Hans", "zh-Hant"] {
+        for localization in ["cs", "da", "de", "es", "fi", "fr", "hr", "hu", "it", "ja", "nb", "nl", "pl", "pt-BR", "ru", "sk", "sl", "sv", "tr", "vi", "zh-Hans", "zh-Hant"] {
             let maxWidth = DonateViewController.maxTextWidth(windowWidth: editSessionWidth, title: "Edit Session")
             for text in fitting(callsToAction(localization: localization), maxWidth: maxWidth) {
                 XCTAssertLessThanOrEqual(DismissableLinkViewController.width(of: text), maxWidth,

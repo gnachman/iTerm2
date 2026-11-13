@@ -53,6 +53,12 @@
             "value" : "AI dovršavanje omogućeno: sav tekst šalje se AI-ju"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI-kiegészítés engedélyezve: az összes szöveg az AI-nak kerül elküldésre"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -195,6 +201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Opisuje kako se koristi uređivač naredbi."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leírja, hogyan kell használni a parancsszerkesztőt."
           }
         },
         "it" : {
@@ -341,6 +353,12 @@
             "value" : "Pritisnite ⇧↩ za slanje."
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Küldéshez nyomja meg a ⇧↩ billentyűkombinációt."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -480,6 +498,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI"

@@ -53,6 +53,12 @@
             "value": "Oznaka"
           }
         },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Címke"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",

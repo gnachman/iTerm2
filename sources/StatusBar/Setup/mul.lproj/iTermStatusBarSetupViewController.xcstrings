@@ -53,6 +53,12 @@
             "value" : "Povucite komponentu iz izbornika u Aktivne komponente da biste je dodali na traku statusa."
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Húzzon egy összetevőt a menüből az Aktív összetevők közé, hogy hozzáadja az állapotsorhoz."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -197,6 +203,12 @@
             "value" : "Radije zbijeno slaganje nego stabilan položaj"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A tömör elrendezés előnyben részesítése a stabil pozícióval szemben"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -336,6 +348,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -485,6 +503,12 @@
             "value" : "Aktivne komponente"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktív összetevők"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Onemogućeno"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letiltva"
           }
         },
         "it" : {
@@ -773,6 +803,12 @@
             "value" : "Ukloni komponente s praznim vrijednostima"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Üres értékű összetevők eltávolítása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -915,6 +951,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nacrtaj razdjelnik između trake statusa i terminala"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elválasztó rajzolása az állapotsor és a terminál között"
           }
         },
         "it" : {
@@ -1061,6 +1103,12 @@
             "value" : "Automatski"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatikus"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1203,6 +1251,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Izbornik komponenti trake statusa"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Állapotsor-összetevők menüje"
           }
         },
         "it" : {
@@ -1349,6 +1403,12 @@
             "value" : "Napredno…"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haladó…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1491,6 +1551,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Algoritam zbijenog slaganja omogućuje da je istodobno vidljivo više komponenti trake statusa, ali one se češće pomiču."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A tömör elrendezési algoritmus több állapotsor-összetevőt tesz egyszerre láthatóvá, de azok hajlamosabbak ugrálni."
           }
         },
         "it" : {
@@ -1637,6 +1703,12 @@
             "value" : "🌈 Automatska duga:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌈 Automatikus szivárvány:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1779,6 +1851,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ovdje ide naziv fonta"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ide kerül a betűtípus neve"
           }
         },
         "it" : {
@@ -1925,6 +2003,12 @@
             "value" : "Tamne boje"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sötét színek"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2067,6 +2151,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Promijeni"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Módosítás"
           }
         },
         "it" : {
@@ -2213,6 +2303,12 @@
             "value" : "Standardna boja teksta:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alapértelmezett szövegszín:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2355,6 +2451,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Konfiguriraj komponentu"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Összetevő beállítása"
           }
         },
         "it" : {
@@ -2501,6 +2603,12 @@
             "value" : "Algoritam zbijenog slaganja omogućuje da je istodobno vidljivo više komponenti trake statusa, ali one se češće pomiču."
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A tömör elrendezési algoritmus több állapotsor-összetevőt tesz egyszerre láthatóvá, de azok hajlamosabbak ugrálni."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2643,6 +2751,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Boja razdjelnika:"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elválasztó színe:"
           }
         },
         "it" : {
@@ -2789,6 +2903,12 @@
             "value" : "Odustani"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mégsem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2931,6 +3051,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Svijetle boje"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Világos színek"
           }
         },
         "it" : {
@@ -3077,6 +3203,12 @@
             "value" : "Font:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Betűtípus:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3221,6 +3353,12 @@
             "value" : "Boja pozadine:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Háttérszín:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3360,6 +3498,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -3507,6 +3651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Crta tanku liniju između trake statusa i sadržaja terminala."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vékony vonalat rajzol az állapotsor és a terminál tartalma közé."
           }
         },
         "it" : {

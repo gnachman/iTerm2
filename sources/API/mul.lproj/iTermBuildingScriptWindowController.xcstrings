@@ -53,6 +53,12 @@
             "value" : "Samo trenutak! Instalira se novo Python okruženje…"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Egy pillanat! Új Python-környezet telepítése…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",

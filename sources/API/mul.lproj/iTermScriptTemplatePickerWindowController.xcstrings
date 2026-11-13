@@ -53,6 +53,12 @@
             "value" : "Jednostavna skripta koja nema nikakvih ovisnosti osim biblioteke iterm2."
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Egyszerű szkript, amelynek az iterm2 könyvtáron kívül nincs más függősége."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -192,6 +198,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😈"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😈"
@@ -341,6 +353,12 @@
             "value" : "Osnovno"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alap"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -480,6 +498,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😊"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😊"
@@ -629,6 +653,12 @@
             "value" : "Daemon dugog trajanja"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hosszan futó démon"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -771,6 +801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Jednostavno"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Egyszerű"
           }
         },
         "it" : {
@@ -917,6 +953,12 @@
             "value" : "Odustani"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mégsem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1059,6 +1101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Odaberite ovaj predložak za jednostavnu skriptu koja izvršava radnje i završava."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ezt a sablont válassza olyan egyszerű szkripthez, amely végrehajt néhány műveletet, majd befejeződik."
           }
         },
         "it" : {
@@ -1205,6 +1253,12 @@
             "value" : "Skripta koja ovisi o PyPI paketima koji nisu biblioteka iterm2. Za ovu skriptu izradit će se privatni pyenv."
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Olyan szkript, amely az iterm2 könyvtáron kívül más PyPI-csomagoktól is függ. Ehhez a szkripthez egy saját pyenv jön létre."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1344,6 +1398,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔗"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🔗"
@@ -1493,6 +1553,12 @@
             "value" : "Odaberite predložak skripte:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Válasszon szkriptsablont:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1635,6 +1701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Puno okruženje"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teljes környezet"
           }
         },
         "it" : {
@@ -1781,6 +1853,12 @@
             "value" : "Odaberite ovaj predložak za skriptu koja ostaje pokrenuta i reagira na obavijesti."
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ezt a sablont válassza olyan szkripthez, amely folyamatosan fut, és reagál az értesítésekre."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1920,6 +1998,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛠️"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🛠️"
@@ -2067,6 +2151,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Odaberite Python okruženje:"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Válasszon Python-környezetet:"
           }
         },
         "it" : {

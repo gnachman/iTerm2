@@ -53,6 +53,12 @@
             "value": "Veličina tabulatora u razmacima:"
           }
         },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tabulátor mérete szóközökben:"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -192,6 +198,12 @@
           }
         },
         "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "hu": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

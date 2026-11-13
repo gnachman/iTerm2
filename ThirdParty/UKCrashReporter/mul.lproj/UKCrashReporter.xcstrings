@@ -53,6 +53,12 @@
             "value" : "Opis"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leírás"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -195,6 +201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zapis rušenja"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Összeomlási napló"
           }
         },
         "it" : {
@@ -341,6 +353,12 @@
             "value" : "Prijava rušenja"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Összeomlás-jelentő"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Čini se da se {APPNAME} srušio prilikom posljednjeg korištenja. Želite li poslati zapis rušenja programerima?\n\nZapisi rušenja koje šalje Apple ne šalju se drugim programerima, pa je ovo jedini način na koji programeri aplikacije {APPNAME} mogu saznati za ovo rušenje i popraviti ga."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Úgy tűnik, a(z) {APPNAME} összeomlott a legutóbbi használatkor. Szeretne összeomlási naplót küldeni a fejlesztőknek?\n\nAz Apple összeomlási naplóit nem kapják meg más fejlesztők, ezért a(z) {APPNAME} fejlesztői csak így értesülhetnek erről az összeomlásról, és csak így tudják kijavítani."
           }
         },
         "it" : {
@@ -629,6 +653,12 @@
             "value" : "Možete obrisati sve podatke koje ne želite poslati, ali to će otežati otkrivanje greške. Standardno se šalju zapis rušenja, model Maca koji koristite i vaše postavke."
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Törölhet minden olyan információt, amelyet nem szeretne elküldeni, de ez megnehezíti a hiba felderítését. Alapértelmezés szerint az összeomlási napló, az Ön által használt Mac típusa és a beállításai kerülnek elküldésre."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -771,6 +801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Šalji"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Küldés"
           }
         },
         "it" : {
@@ -917,6 +953,12 @@
             "value" : "Podsjeti me kasnije"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emlékeztessen később"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1059,6 +1101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Odbaci"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elvetés"
           }
         },
         "it" : {

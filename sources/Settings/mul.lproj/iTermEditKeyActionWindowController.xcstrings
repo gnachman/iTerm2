@@ -53,6 +53,12 @@
             "value" : "Pomakni po oznaci"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mozgatás jelölőnként"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -195,6 +201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Postavi prečac tipkovnice"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Billentyűparancs beállítása"
           }
         },
         "it" : {
@@ -341,6 +353,12 @@
             "value" : "Odustani"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mégsem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Podešenje boja:"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Színséma-előbeállítás:"
           }
         },
         "it" : {
@@ -629,6 +653,12 @@
             "value" : "Radnja:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Művelet:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -771,6 +801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oznaka za prikaz na Touch Baru"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A Touch Baron megjelenítendő címke"
           }
         },
         "it" : {
@@ -917,6 +953,12 @@
             "value" : "Pomakni po znaku"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mozgatás karakterenként"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1061,6 +1103,12 @@
             "value" : "npr.: 0x7f"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pl.: 0x7f"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1200,6 +1248,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil:"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Profil:"
@@ -1349,6 +1403,12 @@
             "value" : "Pomakni po riječi"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mozgatás szavanként"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1491,6 +1551,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ovdje ide poruka o grešci"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ide kerül a hibaüzenet"
           }
         },
         "it" : {
@@ -1637,6 +1703,12 @@
             "value" : "Radnja:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Művelet:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1776,6 +1848,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esc+"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Esc+"
@@ -1925,6 +2003,12 @@
             "value" : "Prečac tipkovnice:"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Billentyűparancs:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2069,6 +2153,12 @@
             "value" : "Pomakni po retku"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mozgatás soronként"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2208,6 +2298,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"

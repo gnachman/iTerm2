@@ -53,6 +53,12 @@
             "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
           }
         },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -195,6 +201,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Integracija ljuske"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shellintegráció"
           }
         },
         "it": {

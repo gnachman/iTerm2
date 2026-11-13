@@ -53,6 +53,12 @@
             "value": "Lijepljenje…"
           }
         },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beillesztés…"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",

@@ -53,6 +53,12 @@
             "value" : "Razdvoji trenutačno okno XXX"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az aktuális panel felosztása XXX"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -197,6 +203,12 @@
             "value" : "Odustani"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mégsem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -339,6 +351,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Razdvoji"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Felosztás"
           }
         },
         "it" : {

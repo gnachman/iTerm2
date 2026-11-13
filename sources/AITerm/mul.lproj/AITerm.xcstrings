@@ -53,6 +53,12 @@
             "value" : "Postavi umjetnu inteligenciju"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mesterséges intelligencia beállítása"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -195,6 +201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vaš pružatelj AI usluge može vam naplatiti svaki poslani ili primljeni token."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az AI-szolgáltató díjat számíthat fel minden elküldött vagy fogadott tokenért."
           }
         },
         "it" : {
@@ -341,6 +353,12 @@
             "value" : "Ovdje unesite API ključ"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adja meg ide az API-kulcsot"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -485,6 +503,12 @@
             "value" : "Odustani"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mégsem"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -624,6 +648,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"

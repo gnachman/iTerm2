@@ -53,6 +53,12 @@
             "value": "Podniz s pametnom veličinom slova"
           }
         },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Részkarakterlánc, intelligens kis- és nagybetűkezelés"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -195,6 +201,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Obriši povijest pretraživanja"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keresési előzmények törlése"
           }
         },
         "it": {
@@ -341,6 +353,12 @@
             "value": "Podniz neosjetljiv na veličinu slova"
           }
         },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Részkarakterlánc, kis- és nagybetűk megkülönböztetése nélkül"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -483,6 +501,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Regex neosjetljiv na veličinu slova"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reguláris kifejezés, kis- és nagybetűk megkülönböztetése nélkül"
           }
         },
         "it": {
@@ -629,6 +653,12 @@
             "value": "Podniz osjetljiv na veličinu slova"
           }
         },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Részkarakterlánc, kis- és nagybetűk megkülönböztetésével"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -771,6 +801,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Regex osjetljiv na veličinu slova"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reguláris kifejezés, kis- és nagybetűk megkülönböztetésével"
           }
         },
         "it": {

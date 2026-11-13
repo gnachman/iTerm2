@@ -53,6 +53,12 @@
             "value" : "Koristite iTerm2 i kad niste uz svoj Mac. Možete njime upravljati putem AI razgovora, pregledavati sadržaj sesija i primati push obavijesti. Sveobuhvatno šifriranje čuva vaše podatke sigurnima. <a href=\"iterm2whatsnew:companion\">Isprobajte odmah!</a>"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Használja az iTerm2-t akkor is, amikor nincs a Mac közelében. Vezérelheti AI-csevegéssel, megtekintheti a munkamenetek tartalmát, és push értesítéseket kaphat. A végpontok közötti titkosítás biztonságban tartja az adatait. <a href=\"iterm2whatsnew:companion\">Próbálja ki most!</a>"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -192,6 +198,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -341,6 +353,12 @@
             "value" : "Novi mod AI razgovora, Orkestracija, omogućuje AI-ju da sve odradi umjesto vas. Može izrađivati prozore, čekati završetak zadataka (čak i u interaktivnim aplikacijama), a novi automatski sigurnosni provjeravatelj oslobađa vas odgovaranja na gotovo sve zahtjeve za dopuštenje. <a href=\"iterm2whatsnew:orchestration\">Isprobajte odmah!</a>"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az AI-csevegés új módja, a Vezénylés, az AI-ra bízza az irányítást. Ablakokat hozhat létre, megvárhatja a feladatok befejezését (interaktív alkalmazásokban is), az új automatikus biztonsági ellenőrző pedig megkíméli Önt attól, hogy szinte minden engedélykérésre válaszolnia kelljen. <a href=\"iterm2whatsnew:orchestration\">Próbálja ki most!</a>"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -480,6 +498,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -629,6 +653,12 @@
             "value" : "Nova značajka Snimke zaslona pojednostavljuje izradu PNG-a sadržaja vašeg terminala. Podržava zacrnjivanja i isticanja. Aktivirajte je s <a href=\"iterm2whatsnew:screenshot\">Sesija > Snimi zaslon</a>."
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az új Képernyőképek funkció leegyszerűsíti a terminál tartalmáról készített PNG létrehozását. Támogatja a kitakarásokat és a kiemeléseket. Az aktiváláshoz használja a <a href=\"iterm2whatsnew:screenshot\">Munkamenet > Képernyőkép készítése</a> parancsot."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -773,6 +803,12 @@
             "value" : "Novosti u verziji 3.7"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A 3.7-es verzió újdonságai"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -912,6 +948,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ">"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : ">"
@@ -1061,6 +1103,12 @@
             "value" : "●"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1203,6 +1251,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Integracija s alatom Claude Code"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code-integráció"
           }
         },
         "it" : {
@@ -1349,6 +1403,12 @@
             "value" : "Za lakše upravljanje velikim brojem kartica sada ih možete spojiti u grupe koje se mogu sažeti. Traka s karticama sada se i listanjem pomiče umjesto da prikazuje izbornik prelijevanja."
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A lapok nagy számának kezeléséhez a lapokat mostantól összecsukható csoportokba vonhatja. A lapsor ezentúl görget a túlcsorduló lapok menüjének megjelenítése helyett."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1488,6 +1548,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -1637,6 +1703,12 @@
             "value" : "Integracija s alatom Claude Code organizira više povezanih sesija, kao što su pregled koda i čitanje diffova, u prilagodljivo sučelje. Također prikazuje Claudeov status pa lako možete pronaći instance koje čekaju vašu pažnju. <a href=\"iterm2whatsnew:claudecode\">Isprobajte odmah!</a>"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A Claude Code-integráció több kapcsolódó munkamenetet (például a kódáttekintést és a diffek olvasását) egy testreszabható felületen rendez. A Claude állapotát is megjeleníti, így könnyen megtalálhatja azokat a példányokat, amelyek az Ön figyelmére várnak. <a href=\"iterm2whatsnew:claudecode\">Próbálja ki most!</a>"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1781,6 +1853,12 @@
             "value" : "Prateća aplikacija za iPhone"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPhone-os társalkalmazás"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1920,6 +1998,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -2069,6 +2153,12 @@
             "value" : "Orkestracija"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vezénylés"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2211,6 +2301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Grupe kartica"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lapcsoportok"
           }
         },
         "it" : {
@@ -2357,6 +2453,12 @@
             "value" : "Snimke zaslona"
           }
         },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Képernyőképek"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2496,6 +2598,12 @@
           }
         },
         "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<"
+          }
+        },
+        "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "<"

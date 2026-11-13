@@ -53,6 +53,12 @@
             "value": "Lijepljenje…"
           }
         },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beillesztés…"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -195,6 +201,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Odustani"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mégsem"
           }
         },
         "it": {

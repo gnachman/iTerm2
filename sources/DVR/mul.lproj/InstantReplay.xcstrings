@@ -53,6 +53,12 @@
             "value": "Eksportiraj…"
           }
         },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportálás…"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -195,6 +201,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sada"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Most"
           }
         },
         "it": {
@@ -341,6 +353,12 @@
             "value": "Upravljanje trenutnom reprodukcijom"
           }
         },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Azonnali visszajátszás vezérlése"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -483,6 +501,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Odustani"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mégsem"
           }
         },
         "it": {
@@ -629,6 +653,12 @@
             "value": "Prikaz uživo"
           }
         },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Élő nézet"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -771,6 +801,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vrijeme"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Idő"
           }
         },
         "it": {
