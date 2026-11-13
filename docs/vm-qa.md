@@ -75,9 +75,11 @@ case by case, and note how each was tested when it wasn't the way a user would d
   gives the app one window at 100,80 sized 1400x800 (`--frame` changes it).
 - `build-baseline [REF]` builds a git ref in a separate VM checkout. The first one is a full
   build. Use it to decide whether a finding is a regression: run the same steps on both builds.
-- A test run on the same VM (`tools/run_tests_vm.sh`) quits every iTerm2 it built, including
-  yours. Don't run tests on the VM you're doing hands-on QA on; ask the developer for another
-  VM or wait.
+- Anything that goes through `tools/run_tests_vm.sh` force-quits every iTerm2 built on the VM,
+  including the one you're driving. That means test runs, and also `qa.sh build` and
+  `qa.sh build-baseline`. The app just vanishes with no crash report, so start builds before
+  you launch, or relaunch after they finish. Don't run tests on the VM you're doing hands-on QA
+  on; ask the developer for another VM or wait.
 
 ## Driving the app
 
