@@ -146,15 +146,39 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
     }
 
     // On some mapsmcOS versions evaluateJavascript crashes if undefined is returned. <3
-    private func makeSafe(_ script: String) -> String {
-        """
+    nonisolated static func makeSafe(_ script: String) -> String {
+        // A script that began with a comment would become `return // comment`, which automatic
+        // semicolon insertion turns into a bare `return`, so the script would never run.
+        let body = strippingLeadingComments(script)
+        return """
         (() => {
             let __result__ = (function() {
-                return \(script)
+                return \(body)
             })();
             return typeof __result__ === 'undefined' ? null : __result__;
         })()
         """
+    }
+
+    // Removes whitespace and any // or /* */ comments before the first token of a script.
+    nonisolated static func strippingLeadingComments(_ script: String) -> String {
+        var rest = Substring(script)
+        while true {
+            rest = rest.drop(while: { $0.isWhitespace })
+            if rest.hasPrefix("//") {
+                guard let newline = rest.firstIndex(where: { $0.isNewline }) else {
+                    return ""
+                }
+                rest = rest[newline...]
+            } else if rest.hasPrefix("/*") {
+                guard let end = rest.range(of: "*/") else {
+                    return ""
+                }
+                rest = rest[end.upperBound...]
+            } else {
+                return String(rest)
+            }
+        }
     }
 
     @MainActor func safelyEvaluateJavaScript(_ unsafeScript: String,
@@ -180,7 +204,7 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
     @MainActor func safelyEvaluateJavaScript(_ unsafeScript: String,
                                              in frame: WKFrameInfo? = nil,
                                              contentWorld: WKContentWorld) async throws -> Any? {
-        let javaScript = makeSafe(unsafeScript)
+        let javaScript = Self.makeSafe(unsafeScript)
         DLog("Evaluate:\n" + javaScript)
         do {
             let result = try await evaluateJavaScript(javaScript, in: frame, contentWorld: contentWorld)

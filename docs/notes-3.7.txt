@@ -229,6 +229,9 @@ Bug Fixes:
   search field.
 - Fixed a crash on a very long international
   domain name in terminal text.
+- Reader Mode and Remove Distractions in the
+  built-in browser did nothing when chosen.
+  They work again.
 - The tooltip for “Enable support for
   right-to-left scripts” in Settings > General >
   Experimental described a tmux setting instead.
