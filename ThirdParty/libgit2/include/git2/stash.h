@@ -13,8 +13,13 @@
 
 /**
  * @file git2/stash.h
- * @brief Git stash management routines
+ * @brief Stashes stores some uncommitted state in the repository
  * @ingroup Git
+ *
+ * Stashes stores some uncommitted state in the repository; generally
+ * this allows a user to stash some changes so that they can restore
+ * the working directory to an unmodified state. This can allow a
+ * developer to work on two different changes in parallel.
  * @{
  */
 GIT_BEGIN_DECL
@@ -45,6 +50,11 @@ typedef enum {
 	 * the working directory
 	 */
 	GIT_STASH_INCLUDE_IGNORED = (1 << 2),
+
+	/**
+	 * All changes in the index and working directory are left intact
+	 */
+	GIT_STASH_KEEP_ALL = (1 << 3)
 } git_stash_flags;
 
 /**
@@ -52,15 +62,10 @@ typedef enum {
  *
  * @param out Object id of the commit containing the stashed state.
  * This commit is also the target of the direct reference refs/stash.
- *
  * @param repo The owning repository.
- *
  * @param stasher The identity of the person performing the stashing.
- *
  * @param message Optional description along with the stashed state.
- *
  * @param flags Flags to control the stashing process. (see GIT_STASH_* above)
- *
  * @return 0 on success, GIT_ENOTFOUND where there's nothing to stash,
  * or error code.
  */
@@ -71,6 +76,63 @@ GIT_EXTERN(int) git_stash_save(
 	const char *message,
 	uint32_t flags);
 
+/**
+ * Stash save options structure
+ *
+ * Initialize with `GIT_STASH_SAVE_OPTIONS_INIT`. Alternatively, you can
+ * use `git_stash_save_options_init`.
+ *
+ */
+typedef struct git_stash_save_options {
+	unsigned int version;
+
+	/** Flags to control the stashing process. (see GIT_STASH_* above) */
+	uint32_t flags;
+
+	/** The identity of the person performing the stashing. */
+	const git_signature *stasher;
+
+	/** Optional description along with the stashed state. */
+	const char *message;
+
+	/** Optional paths that control which files are stashed. */
+	git_strarray paths;
+} git_stash_save_options;
+
+/** Current version for the `git_stash_save_options` structure */
+#define GIT_STASH_SAVE_OPTIONS_VERSION 1
+
+/** Static constructor for `git_stash_save_options` */
+#define GIT_STASH_SAVE_OPTIONS_INIT { GIT_STASH_SAVE_OPTIONS_VERSION }
+
+/**
+ * Initialize git_stash_save_options structure
+ *
+ * Initializes a `git_stash_save_options` with default values. Equivalent to
+ * creating an instance with `GIT_STASH_SAVE_OPTIONS_INIT`.
+ *
+ * @param opts The `git_stash_save_options` struct to initialize.
+ * @param version The struct version; pass `GIT_STASH_SAVE_OPTIONS_VERSION`.
+ * @return Zero on success; -1 on failure.
+ */
+GIT_EXTERN(int) git_stash_save_options_init(
+	git_stash_save_options *opts, unsigned int version);
+
+/**
+ * Save the local modifications to a new stash, with options.
+ *
+ * @param out Object id of the commit containing the stashed state.
+ * This commit is also the target of the direct reference refs/stash.
+ * @param repo The owning repository.
+ * @param opts The stash options.
+ * @return 0 on success, GIT_ENOTFOUND where there's nothing to stash,
+ * or error code.
+ */
+GIT_EXTERN(int) git_stash_save_with_opts(
+	git_oid *out,
+	git_repository *repo,
+	const git_stash_save_options *opts);
+
 /** Stash application flags. */
 typedef enum {
 	GIT_STASH_APPLY_DEFAULT = 0,
@@ -78,7 +140,7 @@ typedef enum {
 	/* Try to reinstate not only the working tree's changes,
 	 * but also the index's changes.
 	 */
-	GIT_STASH_APPLY_REINSTATE_INDEX = (1 << 0),
+	GIT_STASH_APPLY_REINSTATE_INDEX = (1 << 0)
 } git_stash_apply_flags;
 
 /** Stash apply progression states */
@@ -104,13 +166,17 @@ typedef enum {
 	GIT_STASH_APPLY_PROGRESS_CHECKOUT_MODIFIED,
 
 	/** The stash was applied successfully. */
-	GIT_STASH_APPLY_PROGRESS_DONE,
+	GIT_STASH_APPLY_PROGRESS_DONE
 } git_stash_apply_progress_t;
 
 /**
  * Stash application progress notification function.
  * Return 0 to continue processing, or a negative value to
  * abort the stash application.
+ *
+ * @param progress the progress information
+ * @param payload the user-specified payload to the apply function
+ * @return 0 on success, -1 on error
  */
 typedef int GIT_CALLBACK(git_stash_apply_progress_cb)(
 	git_stash_apply_progress_t progress,
@@ -137,7 +203,10 @@ typedef struct git_stash_apply_options {
 	void *progress_payload;
 } git_stash_apply_options;
 
+/** Current version for the `git_stash_apply_options` structure */
 #define GIT_STASH_APPLY_OPTIONS_VERSION 1
+
+/** Static constructor for `git_stash_apply_options` */
 #define GIT_STASH_APPLY_OPTIONS_INIT { \
 	GIT_STASH_APPLY_OPTIONS_VERSION, \
 	GIT_STASH_APPLY_DEFAULT, \
@@ -171,8 +240,6 @@ GIT_EXTERN(int) git_stash_apply_options_init(
  * GIT_EMERGECONFLICT and both the working directory and index will be left
  * unmodified.
  *
- * Note that a minimum checkout strategy of `GIT_CHECKOUT_SAFE` is implied.
- *
  * @param repo The owning repository.
  * @param index The position within the stash list. 0 points to the
  *              most recent stashed state.
@@ -200,7 +267,7 @@ GIT_EXTERN(int) git_stash_apply(
  */
 typedef int GIT_CALLBACK(git_stash_cb)(
 	size_t index,
-	const char* message,
+	const char *message,
 	const git_oid *stash_id,
 	void *payload);
 
@@ -257,4 +324,5 @@ GIT_EXTERN(int) git_stash_pop(
 
 /** @} */
 GIT_END_DECL
+
 #endif

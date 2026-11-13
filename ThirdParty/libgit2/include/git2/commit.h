@@ -14,9 +14,13 @@
 
 /**
  * @file git2/commit.h
- * @brief Git commit parsing, formatting routines
+ * @brief A representation of a set of changes in the repository
  * @defgroup git_commit Git commit parsing, formatting routines
  * @ingroup Git
+ *
+ * A commit represents a set of changes made to the files within a
+ * repository, and metadata about who made the changes, and when the
+ * changes were made.
  * @{
  */
 GIT_BEGIN_DECL
@@ -380,7 +384,38 @@ GIT_EXTERN(int) git_commit_create(
  *
  * All other parameters remain the same as `git_commit_create()`.
  *
- * @see git_commit_create
+ * @param id Pointer in which to store the OID of the newly created commit
+ *
+ * @param repo Repository where to store the commit
+ *
+ * @param update_ref If not NULL, name of the reference that
+ *	will be updated to point to this commit. If the reference
+ *	is not direct, it will be resolved to a direct reference.
+ *	Use "HEAD" to update the HEAD of the current branch and
+ *	make it point to this commit. If the reference doesn't
+ *	exist yet, it will be created. If it does exist, the first
+ *	parent must be the tip of this branch.
+ *
+ * @param author Signature with author and author time of commit
+ *
+ * @param committer Signature with committer and * commit time of commit
+ *
+ * @param message_encoding The encoding for the message in the
+ *  commit, represented with a standard encoding name.
+ *  E.g. "UTF-8". If NULL, no encoding header is written and
+ *  UTF-8 is assumed.
+ *
+ * @param message Full message for this commit
+ *
+ * @param tree An instance of a `git_tree` object that will
+ *  be used as the tree for the commit. This tree object must
+ *  also be owned by the given `repo`.
+ *
+ * @param parent_count Number of parents for this commit
+ *
+ * @return 0 or an error code
+ *	The created commit will be written to the Object Database and
+ *	the given reference will be updated to point to it
  */
 GIT_EXTERN(int) git_commit_create_v(
 	git_oid *id,
@@ -393,6 +428,52 @@ GIT_EXTERN(int) git_commit_create_v(
 	const git_tree *tree,
 	size_t parent_count,
 	...);
+
+typedef struct {
+	unsigned int version;
+
+	/**
+	 * Flags for creating the commit.
+	 *
+	 * If `allow_empty_commit` is specified, a commit with no changes
+	 * from the prior commit (and "empty" commit) is allowed. Otherwise,
+	 * commit creation will be stopped.
+	 */
+	unsigned int allow_empty_commit : 1;
+
+	/** The commit author, or NULL for the default. */
+	const git_signature *author;
+
+	/** The committer, or NULL for the default. */
+	const git_signature *committer;
+
+	/** Encoding for the commit message; leave NULL for default. */
+	const char *message_encoding;
+} git_commit_create_options;
+
+/** Current version for the `git_commit_create_options` structure */
+#define GIT_COMMIT_CREATE_OPTIONS_VERSION 1
+
+/** Static constructor for `git_commit_create_options` */
+#define GIT_COMMIT_CREATE_OPTIONS_INIT { GIT_COMMIT_CREATE_OPTIONS_VERSION }
+
+/**
+ * Commits the staged changes in the repository; this is a near analog to
+ * `git commit -m message`.
+ *
+ * By default, empty commits are not allowed.
+ *
+ * @param id pointer to store the new commit's object id
+ * @param repo repository to commit changes in
+ * @param message the commit message
+ * @param opts options for creating the commit
+ * @return 0 on success, GIT_EUNCHANGED if there were no changes to commit, or an error code
+ */
+GIT_EXTERN(int) git_commit_create_from_stage(
+	git_oid *id,
+	git_repository *repo,
+	const char *message,
+	const git_commit_create_options *opts);
 
 /**
  * Amend an existing commit by replacing only non-NULL values.
@@ -413,7 +494,36 @@ GIT_EXTERN(int) git_commit_create_v(
  *
  * All parameters have the same meanings as in `git_commit_create()`.
  *
- * @see git_commit_create
+ * @param id Pointer in which to store the OID of the newly created commit
+ *
+ * @param commit_to_amend The commit to amend
+ *
+ * @param update_ref If not NULL, name of the reference that
+ *	will be updated to point to this commit. If the reference
+ *	is not direct, it will be resolved to a direct reference.
+ *	Use "HEAD" to update the HEAD of the current branch and
+ *	make it point to this commit. If the reference doesn't
+ *	exist yet, it will be created. If it does exist, the first
+ *	parent must be the tip of this branch.
+ *
+ * @param author Signature with author and author time of commit
+ *
+ * @param committer Signature with committer and * commit time of commit
+ *
+ * @param message_encoding The encoding for the message in the
+ *  commit, represented with a standard encoding name.
+ *  E.g. "UTF-8". If NULL, no encoding header is written and
+ *  UTF-8 is assumed.
+ *
+ * @param message Full message for this commit
+ *
+ * @param tree An instance of a `git_tree` object that will
+ *  be used as the tree for the commit. This tree object must
+ *  also be owned by the given `repo`.
+ *
+ * @return 0 or an error code
+ *	The created commit will be written to the Object Database and
+ *	the given reference will be updated to point to it
  */
 GIT_EXTERN(int) git_commit_amend(
 	git_oid *id,
@@ -479,6 +589,7 @@ GIT_EXTERN(int) git_commit_create_buffer(
  * to the commit and write it into the given repository.
  *
  * @param out the resulting commit id
+ * @param repo the repository to create the commit in.
  * @param commit_content the content of the unsigned commit object
  * @param signature the signature to add to the commit. Leave `NULL`
  * to create a commit without adding a signature field.
@@ -499,30 +610,66 @@ GIT_EXTERN(int) git_commit_create_with_signature(
  *
  * @param out Pointer to store the copy of the commit
  * @param source Original commit to copy
+ * @return 0
  */
 GIT_EXTERN(int) git_commit_dup(git_commit **out, git_commit *source);
 
 /**
- * Commit signing callback.
+ * Commit creation callback: used when a function is going to create
+ * commits (for example, in `git_rebase_commit`) to allow callers to
+ * override the commit creation behavior.  For example, users may
+ * wish to sign commits by providing this information to
+ * `git_commit_create_buffer`, signing that buffer, then calling
+ * `git_commit_create_with_signature`.  The resultant commit id
+ * should be set in the `out` object id parameter.
  *
- * The callback will be called with the commit content, giving a user an
- * opportunity to sign the commit content. The signature_field
- * buf may be left empty to specify the default field "gpgsig".
- *
- * Signatures can take the form of any string, and can be created on an arbitrary
- * header field. Signatures are most commonly used for verifying authorship of a
- * commit using GPG or a similar cryptographically secure signing algorithm.
- * See https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work for more
- * details.
- *
- * When the callback:
- * - returns GIT_PASSTHROUGH, no signature will be added to the commit.
- * - returns < 0, commit creation will be aborted.
- * - returns GIT_OK, the signature parameter is expected to be filled.
+ * @param out pointer that this callback will populate with the object
+ *            id of the commit that is created
+ * @param author the author name and time of the commit
+ * @param committer the committer name and time of the commit
+ * @param message_encoding the encoding of the given message, or NULL
+ *                         to assume UTF8
+ * @param message the commit message
+ * @param tree the tree to be committed
+ * @param parent_count the number of parents for this commit
+ * @param parents the commit parents
+ * @param payload the payload pointer in the rebase options
+ * @return 0 if this callback has created the commit and populated the out
+ *         parameter, GIT_PASSTHROUGH if the callback has not created a
+ *         commit and wants the calling function to create the commit as
+ *         if no callback had been specified, any other value to stop
+ *         and return a failure
  */
-typedef int (*git_commit_signing_cb)(
-	git_buf *signature, git_buf *signature_field, const char *commit_content, void *payload);
+typedef int (*git_commit_create_cb)(
+	git_oid *out,
+	const git_signature *author,
+	const git_signature *committer,
+	const char *message_encoding,
+	const char *message,
+	const git_tree *tree,
+	size_t parent_count,
+	const git_commit *parents[],
+	void *payload);
+
+/** An array of commits returned from the library */
+typedef struct git_commitarray {
+	git_commit *const *commits;
+	size_t count;
+} git_commitarray;
+
+/**
+ * Free the commits contained in a commit array.  This method should
+ * be called on `git_commitarray` objects that were provided by the
+ * library.  Not doing so will result in a memory leak.
+ *
+ * This does not free the `git_commitarray` itself, since the library
+ * will never allocate that object directly itself.
+ *
+ * @param array The git_commitarray that contains commits to free
+ */
+GIT_EXTERN(void) git_commitarray_dispose(git_commitarray *array);
 
 /** @} */
 GIT_END_DECL
+
 #endif

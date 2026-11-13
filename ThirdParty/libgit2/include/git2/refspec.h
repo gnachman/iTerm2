@@ -14,8 +14,8 @@
 
 /**
  * @file git2/refspec.h
- * @brief Git refspec attributes
- * @defgroup git_refspec Git refspec attributes
+ * @brief Refspecs map local references to remote references
+ * @defgroup git_refspec Refspecs map local references to remote references
  * @ingroup Git
  * @{
  */
@@ -58,7 +58,7 @@ GIT_EXTERN(const char *) git_refspec_dst(const git_refspec *refspec);
  * Get the refspec's string
  *
  * @param refspec the refspec
- * @returns the refspec's original string
+ * @return the refspec's original string
  */
 GIT_EXTERN(const char *) git_refspec_string(const git_refspec *refspec);
 
@@ -79,7 +79,16 @@ GIT_EXTERN(int) git_refspec_force(const git_refspec *refspec);
 GIT_EXTERN(git_direction) git_refspec_direction(const git_refspec *spec);
 
 /**
- * Check if a refspec's source descriptor matches a reference 
+ * Check if a refspec's source descriptor matches a negative reference
+ *
+ * @param refspec the refspec
+ * @param refname the name of the reference to check
+ * @return 1 if the refspec matches, 0 otherwise
+ */
+GIT_EXTERN(int) git_refspec_src_matches_negative(const git_refspec *refspec, const char *refname);
+
+/**
+ * Check if a refspec's source descriptor matches a reference
  *
  * @param refspec the refspec
  * @param refname the name of the reference to check
@@ -116,6 +125,7 @@ GIT_EXTERN(int) git_refspec_transform(git_buf *out, const git_refspec *spec, con
  */
 GIT_EXTERN(int) git_refspec_rtransform(git_buf *out, const git_refspec *spec, const char *name);
 
+/** @} */
 GIT_END_DECL
 
 #endif

@@ -11,9 +11,9 @@
 #include "git2/credential.h"
 
 /**
- * @file git2/sys/cred.h
- * @brief Git credentials low-level implementation
- * @defgroup git_credential Git credentials low-level implementation
+ * @file git2/sys/credential.h
+ * @brief Low-level credentials implementation
+ * @defgroup git_credential Low-level credentials implementation
  * @ingroup Git
  * @{
  */
@@ -85,6 +85,7 @@ struct git_credential_ssh_custom {
 	void *payload;         /**< Payload passed to prompt_callback */
 };
 
+/** @} */
 GIT_END_DECL
 
 #endif

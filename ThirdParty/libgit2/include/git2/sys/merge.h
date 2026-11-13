@@ -14,13 +14,18 @@
 
 /**
  * @file git2/sys/merge.h
- * @brief Git merge driver backend and plugin routines
- * @defgroup git_merge Git merge driver APIs
+ * @brief Custom merge drivers
+ * @defgroup git_merge Custom merge drivers
  * @ingroup Git
  * @{
  */
 GIT_BEGIN_DECL
 
+/**
+ * A "merge driver" is a mechanism that can be configured to handle
+ * conflict resolution for files changed in both the "ours" and "theirs"
+ * side of a merge.
+ */
 typedef struct git_merge_driver git_merge_driver;
 
 /**
@@ -31,8 +36,11 @@ typedef struct git_merge_driver git_merge_driver;
  */
 GIT_EXTERN(git_merge_driver *) git_merge_driver_lookup(const char *name);
 
+/** The "text" merge driver */
 #define GIT_MERGE_DRIVER_TEXT   "text"
+/** The "binary" merge driver */
 #define GIT_MERGE_DRIVER_BINARY "binary"
+/** The "union" merge driver */
 #define GIT_MERGE_DRIVER_UNION  "union"
 
 /**
@@ -40,23 +48,48 @@ GIT_EXTERN(git_merge_driver *) git_merge_driver_lookup(const char *name);
  */
 typedef struct git_merge_driver_source git_merge_driver_source;
 
-/** Get the repository that the source data is coming from. */
+/**
+ * Get the repository that the source data is coming from.
+ *
+ * @param src the merge driver source
+ * @return the repository
+ */
 GIT_EXTERN(git_repository *) git_merge_driver_source_repo(
 	const git_merge_driver_source *src);
 
-/** Gets the ancestor of the file to merge. */
+/**
+ * Gets the ancestor of the file to merge.
+ *
+ * @param src the merge driver source
+ * @return the ancestor or NULL if there was no ancestor
+ */
 GIT_EXTERN(const git_index_entry *) git_merge_driver_source_ancestor(
 	const git_merge_driver_source *src);
 
-/** Gets the ours side of the file to merge. */
+/**
+ * Gets the ours side of the file to merge.
+ *
+ * @param src the merge driver source
+ * @return the ours side or NULL if there was no ours side
+ */
 GIT_EXTERN(const git_index_entry *) git_merge_driver_source_ours(
 	const git_merge_driver_source *src);
 
-/** Gets the theirs side of the file to merge. */
+/**
+ * Gets the theirs side of the file to merge.
+ *
+ * @param src the merge driver source
+ * @return the theirs side or NULL if there was no theirs side
+ */
 GIT_EXTERN(const git_index_entry *) git_merge_driver_source_theirs(
 	const git_merge_driver_source *src);
 
-/** Gets the merge file options that the merge was invoked with */
+/**
+ * Gets the merge file options that the merge was invoked with.
+ *
+ * @param src the merge driver source
+ * @return the options
+ */
 GIT_EXTERN(const git_merge_file_options *) git_merge_driver_source_file_options(
 	const git_merge_driver_source *src);
 
@@ -72,6 +105,9 @@ GIT_EXTERN(const git_merge_file_options *) git_merge_driver_source_file_options(
  * right before the first use of the driver, so you can defer expensive
  * initialization operations (in case libgit2 is being used in a way that
  * doesn't need the merge driver).
+ *
+ * @param self the merge driver to initialize
+ * @return 0 on success, or a negative number on failure
  */
 typedef int GIT_CALLBACK(git_merge_driver_init_fn)(git_merge_driver *self);
 
@@ -84,6 +120,8 @@ typedef int GIT_CALLBACK(git_merge_driver_init_fn)(git_merge_driver *self);
  * This may be called even if the `initialize` callback was not made.
  *
  * Typically this function will free the `git_merge_driver` object itself.
+ *
+ * @param self the merge driver to shutdown
  */
 typedef void GIT_CALLBACK(git_merge_driver_shutdown_fn)(git_merge_driver *self);
 
@@ -104,6 +142,14 @@ typedef void GIT_CALLBACK(git_merge_driver_shutdown_fn)(git_merge_driver *self);
  * specified by the file's attributes.
  *
  * The `src` contains the data about the file to be merged.
+ *
+ * @param self the merge driver
+ * @param path_out the resolved path
+ * @param mode_out the resolved mode
+ * @param merged_out the merged output contents
+ * @param filter_name the filter that was invoked
+ * @param src the data about the unmerged file
+ * @return 0 on success, or an error code
  */
 typedef int GIT_CALLBACK(git_merge_driver_apply_fn)(
 	git_merge_driver *self,
@@ -139,6 +185,7 @@ struct git_merge_driver {
 	git_merge_driver_apply_fn    apply;
 };
 
+/** The version for the `git_merge_driver` */
 #define GIT_MERGE_DRIVER_VERSION 1
 
 /**
@@ -179,4 +226,5 @@ GIT_EXTERN(int) git_merge_driver_unregister(const char *name);
 
 /** @} */
 GIT_END_DECL
+
 #endif

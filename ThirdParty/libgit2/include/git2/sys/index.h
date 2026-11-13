@@ -12,8 +12,8 @@
 
 /**
  * @file git2/sys/index.h
- * @brief Low-level Git index manipulation routines
- * @defgroup git_backend Git custom backend APIs
+ * @brief Low-level index manipulation routines
+ * @defgroup git_index Low-level index manipulation routines
  * @ingroup Git
  * @{
  */
@@ -67,6 +67,7 @@ GIT_EXTERN(const git_index_name_entry *) git_index_name_get_byindex(
  * @param ancestor the path of the file as it existed in the ancestor
  * @param ours the path of the file as it existed in our tree
  * @param theirs the path of the file as it existed in their tree
+ * @return 0 on success, or an error code
  */
 GIT_EXTERN(int) git_index_name_add(git_index *index,
 	const char *ancestor, const char *ours, const char *theirs);

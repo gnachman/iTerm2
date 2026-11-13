@@ -14,7 +14,7 @@
 
 /**
  * @file git2/patch.h
- * @brief Patch handling routines.
+ * @brief Patches store the textual diffs in a delta
  * @ingroup Git
  * @{
  */
@@ -27,6 +27,14 @@ GIT_BEGIN_DECL
  * them.
  */
 typedef struct git_patch git_patch;
+
+/**
+ * Get the repository associated with this patch. May be NULL.
+ *
+ * @param patch the patch
+ * @return a pointer to the repository
+ */
+GIT_EXTERN(git_repository *) git_patch_owner(const git_patch *patch);
 
 /**
  * Return a patch for an entry in the diff list.
@@ -131,17 +139,25 @@ GIT_EXTERN(int) git_patch_from_buffers(
 
 /**
  * Free a git_patch object.
+ *
+ * @param patch The patch to free.
  */
 GIT_EXTERN(void) git_patch_free(git_patch *patch);
 
 /**
  * Get the delta associated with a patch.  This delta points to internal
  * data and you do not have to release it when you are done with it.
+ *
+ * @param patch The patch in which to get the delta.
+ * @return The delta associated with the patch.
  */
 GIT_EXTERN(const git_diff_delta *) git_patch_get_delta(const git_patch *patch);
 
 /**
  * Get the number of hunks in a patch
+ *
+ * @param patch The patch in which to get the number of hunks.
+ * @return The number of hunks of the patch.
  */
 GIT_EXTERN(size_t) git_patch_num_hunks(const git_patch *patch);
 
@@ -267,8 +283,7 @@ GIT_EXTERN(int) git_patch_to_buf(
 	git_buf *out,
 	git_patch *patch);
 
-GIT_END_DECL
-
 /**@}*/
+GIT_END_DECL
 
 #endif

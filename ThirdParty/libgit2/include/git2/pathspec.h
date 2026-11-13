@@ -12,6 +12,13 @@
 #include "strarray.h"
 #include "diff.h"
 
+/**
+ * @file git2/pathspec.h
+ * @brief Specifiers for path matching
+ * @defgroup git_pathspec Specifiers for path matching
+ * @ingroup Git
+ * @{
+ */
 GIT_BEGIN_DECL
 
 /**
@@ -69,7 +76,7 @@ typedef enum {
 	 * just test if there were any matches at all or in combination with
 	 * GIT_PATHSPEC_FIND_FAILURES to validate a pathspec.
 	 */
-	GIT_PATHSPEC_FAILURES_ONLY  = (1u << 5),
+	GIT_PATHSPEC_FAILURES_ONLY  = (1u << 5)
 } git_pathspec_flag_t;
 
 /**
@@ -276,5 +283,7 @@ GIT_EXTERN(size_t) git_pathspec_match_list_failed_entrycount(
 GIT_EXTERN(const char *) git_pathspec_match_list_failed_entry(
 	const git_pathspec_match_list *m, size_t pos);
 
+/** @} */
 GIT_END_DECL
+
 #endif

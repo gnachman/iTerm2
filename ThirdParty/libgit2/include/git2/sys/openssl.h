@@ -9,6 +9,12 @@
 
 #include "git2/common.h"
 
+/**
+ * @file git2/sys/openssl.h
+ * @brief Custom OpenSSL functionality
+ * @defgroup git_openssl Custom OpenSSL functionality
+ * @{
+ */
 GIT_BEGIN_DECL
 
 /**
@@ -33,6 +39,7 @@ GIT_BEGIN_DECL
  */
 GIT_EXTERN(int) git_openssl_set_locking(void);
 
+/** @} */
 GIT_END_DECL
-#endif
 
+#endif

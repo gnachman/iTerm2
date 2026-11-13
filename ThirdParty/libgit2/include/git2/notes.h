@@ -11,7 +11,7 @@
 
 /**
  * @file git2/notes.h
- * @brief Git notes management routines
+ * @brief Notes are metadata attached to an object
  * @defgroup git_note Git notes management routines
  * @ingroup Git
  * @{
@@ -21,13 +21,15 @@ GIT_BEGIN_DECL
 /**
  * Callback for git_note_foreach.
  *
- * Receives:
- * - blob_id: Oid of the blob containing the message
- * - annotated_object_id: Oid of the git object being annotated
- * - payload: Payload data passed to `git_note_foreach`
+ * @param blob_id object id of the blob containing the message
+ * @param annotated_object_id the id of the object being annotated
+ * @param payload user-specified data to the foreach function
+ * @return 0 on success, or a negative number on failure
  */
 typedef int GIT_CALLBACK(git_note_foreach_cb)(
-	const git_oid *blob_id, const git_oid *annotated_object_id, void *payload);
+	const git_oid *blob_id,
+	const git_oid *annotated_object_id,
+	void *payload);
 
 /**
  * note iterator
@@ -84,8 +86,8 @@ GIT_EXTERN(void) git_note_iterator_free(git_note_iterator *it);
  *         (negative value)
  */
 GIT_EXTERN(int) git_note_next(
-	git_oid* note_id,
-	git_oid* annotated_id,
+	git_oid *note_id,
+	git_oid *annotated_id,
 	git_note_iterator *it);
 
 
@@ -303,4 +305,5 @@ GIT_EXTERN(int) git_note_foreach(
 
 /** @} */
 GIT_END_DECL
+
 #endif

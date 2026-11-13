@@ -14,8 +14,8 @@
 
 /**
  * @file git2/refs.h
- * @brief Git reference management routines
- * @defgroup git_reference Git reference management routines
+ * @brief References point to a commit; generally these are branches and tags
+ * @defgroup git_reference References point to a commit; generally these are branches and tags
  * @ingroup Git
  * @{
  */
@@ -29,7 +29,7 @@ GIT_BEGIN_DECL
  * The name will be checked for validity.
  * See `git_reference_symbolic_create()` for rules about valid names.
  *
- * @param out pointer to the looked-up reference
+ * @param[out] out pointer to the looked-up reference
  * @param repo the repository to look up the reference
  * @param name the long name for the reference (e.g. HEAD, refs/heads/master, refs/tags/v0.1.0, ...)
  * @return 0 on success, GIT_ENOTFOUND, GIT_EINVALIDSPEC or an error code.
@@ -57,7 +57,7 @@ GIT_EXTERN(int) git_reference_name_to_id(
 /**
  * Lookup a reference by DWIMing its short name
  *
- * Apply the git precendence rules to the given shorthand to determine
+ * Apply the git precedence rules to the given shorthand to determine
  * which reference the user is referring to.
  *
  * @param out pointer in which to store the reference
@@ -96,6 +96,9 @@ GIT_EXTERN(int) git_reference_dwim(git_reference **out, git_repository *repo, co
  * It will return GIT_EMODIFIED if the reference's value at the time
  * of updating does not match the one passed through `current_value`
  * (i.e. if the ref has changed since the user read it).
+ *
+ * If `current_value` is all zeros, this function will return GIT_EMODIFIED
+ * if the ref already exists.
  *
  * @param out Pointer to the newly created reference
  * @param repo Repository where that reference will live
@@ -169,7 +172,7 @@ GIT_EXTERN(int) git_reference_symbolic_create(git_reference **out, git_repositor
  *
  * The message for the reflog will be ignored if the reference does
  * not belong in the standard set (HEAD, branches and remote-tracking
- * branches) and and it does not have a reflog.
+ * branches) and it does not have a reflog.
  *
  * @param out Pointer to the newly created reference
  * @param repo Repository where that reference will live
@@ -206,7 +209,7 @@ GIT_EXTERN(int) git_reference_create(git_reference **out, git_repository *repo, 
  *
  * The message for the reflog will be ignored if the reference does
  * not belong in the standard set (HEAD, branches and remote-tracking
- * branches) and and it does not have a reflog.
+ * branches) and it does not have a reflog.
  *
  * It will return GIT_EMODIFIED if the reference's value at the time
  * of updating does not match the one passed through `current_id`
@@ -318,7 +321,7 @@ GIT_EXTERN(git_repository *) git_reference_owner(const git_reference *ref);
  *
  * The message for the reflog will be ignored if the reference does
  * not belong in the standard set (HEAD, branches and remote-tracking
- * branches) and and it does not have a reflog.
+ * branches) and it does not have a reflog.
  *
  * @param out Pointer to the newly created reference
  * @param ref The reference
@@ -368,6 +371,7 @@ GIT_EXTERN(int) git_reference_set_target(
  * reflog is enabled for the repository. We only rename
  * the reflog if it exists.
  *
+ * @param[out] new_ref The new reference
  * @param ref The reference to rename
  * @param new_name The new name for the reference
  * @param force Overwrite an existing reference
@@ -403,6 +407,7 @@ GIT_EXTERN(int) git_reference_delete(git_reference *ref);
  * This method removes the named reference from the repository without
  * looking at its old value.
  *
+ * @param repo The repository to remove the reference from
  * @param name The reference to remove
  * @return 0 or an error code
  */
@@ -515,7 +520,7 @@ GIT_EXTERN(int) git_reference_cmp(
 /**
  * Create an iterator for the repo's references
  *
- * @param out pointer in which to store the iterator
+ * @param[out] out pointer in which to store the iterator
  * @param repo the repository
  * @return 0 or an error code
  */
@@ -540,7 +545,7 @@ GIT_EXTERN(int) git_reference_iterator_glob_new(
 /**
  * Get the next reference
  *
- * @param out pointer in which to store the reference
+ * @param[out] out pointer in which to store the reference
  * @param iter the iterator
  * @return 0, GIT_ITEROVER if there are no more; or an error code
  */
@@ -683,7 +688,7 @@ typedef enum {
 	 * so the `ONELEVEL` naming rules aren't enforced and 'master'
 	 * becomes a valid name.
 	 */
-	GIT_REFERENCE_FORMAT_REFSPEC_SHORTHAND = (1u << 2),
+	GIT_REFERENCE_FORMAT_REFSPEC_SHORTHAND = (1u << 2)
 } git_reference_format_t;
 
 /**
@@ -721,7 +726,7 @@ GIT_EXTERN(int) git_reference_normalize_name(
  * If you pass `GIT_OBJECT_ANY` as the target type, then the object
  * will be peeled until a non-tag object is met.
  *
- * @param out Pointer to the peeled git_object
+ * @param[out] out Pointer to the peeled git_object
  * @param ref The reference to be processed
  * @param type The type of the requested object (GIT_OBJECT_COMMIT,
  * GIT_OBJECT_TAG, GIT_OBJECT_TREE, GIT_OBJECT_BLOB or GIT_OBJECT_ANY).
@@ -765,4 +770,5 @@ GIT_EXTERN(const char *) git_reference_shorthand(const git_reference *ref);
 
 /** @} */
 GIT_END_DECL
+
 #endif

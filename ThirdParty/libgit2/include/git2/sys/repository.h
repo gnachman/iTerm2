@@ -9,15 +9,70 @@
 
 #include "git2/common.h"
 #include "git2/types.h"
+#include "git2/oid.h"
 
 /**
  * @file git2/sys/repository.h
- * @brief Git repository custom implementation routines
- * @defgroup git_backend Git custom backend APIs
+ * @brief Custom repository handling
+ * @defgroup git_repository Custom repository handling
  * @ingroup Git
  * @{
  */
 GIT_BEGIN_DECL
+
+#ifdef GIT_EXPERIMENTAL_SHA256
+
+/**
+ * The options for creating an repository from scratch.
+ *
+ * Initialize with `GIT_REPOSITORY_NEW_OPTIONS_INIT`. Alternatively,
+ * you can use `git_repository_new_options_init`.
+ *
+ * @options[version] GIT_REPOSITORY_NEW_OPTIONS_VERSION
+ * @options[init_macro] GIT_REPOSITORY_NEW_OPTIONS_INIT
+ * @options[init_function] git_repository_new_options_init
+ */
+typedef struct git_repository_new_options {
+	unsigned int version; /**< The version */
+
+	/**
+	 * The object ID type for the object IDs that exist in the index.
+	 *
+	 * If this is not specified, this defaults to `GIT_OID_SHA1`.
+	 */
+	git_oid_t oid_type;
+} git_repository_new_options;
+
+/** Current version for the `git_repository_new_options` structure */
+#define GIT_REPOSITORY_NEW_OPTIONS_VERSION 1
+
+/** Static constructor for `git_repository_new_options` */
+#define GIT_REPOSITORY_NEW_OPTIONS_INIT { GIT_REPOSITORY_NEW_OPTIONS_VERSION }
+
+/**
+ * Initialize git_repository_new_options structure
+ *
+ * Initializes a `git_repository_new_options` with default values.
+ * Equivalent to creating an instance with
+ * `GIT_REPOSITORY_NEW_OPTIONS_INIT`.
+ *
+ * @param opts The `git_repository_new_options` struct to initialize.
+ * @param version The struct version; pass `GIT_REPOSITORY_NEW_OPTIONS_VERSION`.
+ * @return Zero on success; -1 on failure.
+ */
+GIT_EXTERN(int) git_repository_new_options_init(
+	git_repository_new_options *opts,
+	unsigned int version);
+
+/**
+ * Create a new repository with no backends.
+ *
+ * @param[out] out The blank repository
+ * @param opts the options for repository creation, or NULL for defaults
+ * @return 0 on success, or an error code
+ */
+GIT_EXTERN(int) git_repository_new(git_repository **out, git_repository_new_options *opts);
+#else
 
 /**
  * Create a new repository with neither backends nor config object
@@ -29,10 +84,12 @@ GIT_BEGIN_DECL
  * can fail to function properly: locations under $GIT_DIR, $GIT_COMMON_DIR,
  * or $GIT_INFO_DIR are impacted.
  *
- * @param out The blank repository
+ * @param[out] out The blank repository
  * @return 0 on success, or an error code
  */
 GIT_EXTERN(int) git_repository_new(git_repository **out);
+
+#endif
 
 /**
  * Reset all the internal state in a repository.
@@ -156,6 +213,7 @@ GIT_EXTERN(int) git_repository_set_bare(git_repository *repo);
  * and caches them so that subsequent calls to `git_submodule_lookup` are O(1).
  *
  * @param repo the repository whose submodules will be cached.
+ * @return 0 on success, or an error code
  */
 GIT_EXTERN(int) git_repository_submodule_cache_all(
 	git_repository *repo);
@@ -171,10 +229,12 @@ GIT_EXTERN(int) git_repository_submodule_cache_all(
  * of these has changed, the cache might become invalid.
  *
  * @param repo the repository whose submodule cache will be cleared
+ * @return 0 on success, or an error code
  */
 GIT_EXTERN(int) git_repository_submodule_cache_clear(
 	git_repository *repo);
 
 /** @} */
 GIT_END_DECL
+
 #endif

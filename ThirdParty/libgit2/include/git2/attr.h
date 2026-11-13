@@ -12,9 +12,13 @@
 
 /**
  * @file git2/attr.h
- * @brief Git attribute management routines
+ * @brief Attribute management routines
  * @defgroup git_attr Git attribute management routines
  * @ingroup Git
+ *
+ * Attributes specify additional information about how git should
+ * handle particular paths - for example, they may indicate whether
+ * a particular filter is applied, like LFS or line ending conversions.
  * @{
  */
 GIT_BEGIN_DECL
@@ -83,7 +87,7 @@ typedef enum {
 	GIT_ATTR_VALUE_UNSPECIFIED = 0, /**< The attribute has been left unspecified */
 	GIT_ATTR_VALUE_TRUE,   /**< The attribute has been set */
 	GIT_ATTR_VALUE_FALSE,  /**< The attribute has been unset */
-	GIT_ATTR_VALUE_STRING, /**< This attribute has a value */
+	GIT_ATTR_VALUE_STRING  /**< This attribute has a value */
 } git_attr_value_t;
 
 /**
@@ -114,25 +118,63 @@ GIT_EXTERN(git_attr_value_t) git_attr_value(const char *attr);
  * use index only for creating archives or for a bare repo (if an
  * index has been specified for the bare repo).
  */
+
+/** Examine attribute in working directory, then index */
 #define GIT_ATTR_CHECK_FILE_THEN_INDEX	0
+/** Examine attribute in index, then working directory */
 #define GIT_ATTR_CHECK_INDEX_THEN_FILE	1
-#define GIT_ATTR_CHECK_INDEX_ONLY		2
+/** Examine attributes only in the index */
+#define GIT_ATTR_CHECK_INDEX_ONLY	2
 
 /**
  * Check attribute flags: controlling extended attribute behavior.
  *
  * Normally, attribute checks include looking in the /etc (or system
- * equivalent) directory for a `gitattributes` file.  Passing this
- * flag will cause attribute checks to ignore that file.
  * equivalent) directory for a `gitattributes` file.  Passing the
  * `GIT_ATTR_CHECK_NO_SYSTEM` flag will cause attribute checks to
  * ignore that file.
  *
  * Passing the `GIT_ATTR_CHECK_INCLUDE_HEAD` flag will use attributes
  * from a `.gitattributes` file in the repository at the HEAD revision.
+ *
+ * Passing the `GIT_ATTR_CHECK_INCLUDE_COMMIT` flag will use attributes
+ * from a `.gitattributes` file in a specific commit.
  */
+
+/** Ignore system attributes */
 #define GIT_ATTR_CHECK_NO_SYSTEM        (1 << 2)
+/** Honor `.gitattributes` in the HEAD revision */
 #define GIT_ATTR_CHECK_INCLUDE_HEAD     (1 << 3)
+/** Honor `.gitattributes` in a specific commit */
+#define GIT_ATTR_CHECK_INCLUDE_COMMIT   (1 << 4)
+
+/**
+* An options structure for querying attributes.
+*/
+typedef struct {
+	unsigned int version;
+
+	/** A combination of GIT_ATTR_CHECK flags */
+	unsigned int flags;
+
+#ifdef GIT_DEPRECATE_HARD
+	void *reserved;
+#else
+	git_oid *commit_id;
+#endif
+
+	/**
+	 * The commit to load attributes from, when
+	 * `GIT_ATTR_CHECK_INCLUDE_COMMIT` is specified.
+	 */
+	git_oid attr_commit_id;
+} git_attr_options;
+
+/** Current version for the `git_attr_options` structure */
+#define GIT_ATTR_OPTIONS_VERSION 1
+
+/** Static constructor for `git_attr_options` */
+#define GIT_ATTR_OPTIONS_INIT {GIT_ATTR_OPTIONS_VERSION}
 
 /**
  * Look up the value of one git attribute for path.
@@ -148,11 +190,35 @@ GIT_EXTERN(git_attr_value_t) git_attr_value(const char *attr);
  *             not have to exist, but if it does not, then it will be
  *             treated as a plain file (not a directory).
  * @param name The name of the attribute to look up.
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_attr_get(
 	const char **value_out,
 	git_repository *repo,
 	uint32_t flags,
+	const char *path,
+	const char *name);
+
+/**
+ * Look up the value of one git attribute for path with extended options.
+ *
+ * @param value_out Output of the value of the attribute.  Use the GIT_ATTR_...
+ *             macros to test for TRUE, FALSE, UNSPECIFIED, etc. or just
+ *             use the string value for attributes set to a value.  You
+ *             should NOT modify or free this value.
+ * @param repo The repository containing the path.
+ * @param opts The `git_attr_options` to use when querying these attributes.
+ * @param path The path to check for attributes.  Relative paths are
+ *             interpreted relative to the repo root.  The file does
+ *             not have to exist, but if it does not, then it will be
+ *             treated as a plain file (not a directory).
+ * @param name The name of the attribute to look up.
+ * @return 0 or an error code.
+ */
+GIT_EXTERN(int) git_attr_get_ext(
+	const char **value_out,
+	git_repository *repo,
+	git_attr_options *opts,
 	const char *path,
 	const char *name);
 
@@ -184,11 +250,37 @@ GIT_EXTERN(int) git_attr_get(
  *             it will be treated as a plain file (i.e. not a directory).
  * @param num_attr The number of attributes being looked up
  * @param names An array of num_attr strings containing attribute names.
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_attr_get_many(
 	const char **values_out,
 	git_repository *repo,
 	uint32_t flags,
+	const char *path,
+	size_t num_attr,
+	const char **names);
+
+/**
+ * Look up a list of git attributes for path with extended options.
+ *
+ * @param values_out An array of num_attr entries that will have string
+ *             pointers written into it for the values of the attributes.
+ *             You should not modify or free the values that are written
+ *             into this array (although of course, you should free the
+ *             array itself if you allocated it).
+ * @param repo The repository containing the path.
+ * @param opts The `git_attr_options` to use when querying these attributes.
+ * @param path The path inside the repo to check attributes.  This
+ *             does not have to exist, but if it does not, then
+ *             it will be treated as a plain file (i.e. not a directory).
+ * @param num_attr The number of attributes being looked up
+ * @param names An array of num_attr strings containing attribute names.
+ * @return 0 or an error code.
+ */
+GIT_EXTERN(int) git_attr_get_many_ext(
+	const char **values_out,
+	git_repository *repo,
+	git_attr_options *opts,
 	const char *path,
 	size_t num_attr,
 	const char **names);
@@ -232,6 +324,26 @@ GIT_EXTERN(int) git_attr_foreach(
 	void *payload);
 
 /**
+ * Loop over all the git attributes for a path with extended options.
+ *
+ * @param repo The repository containing the path.
+ * @param opts The `git_attr_options` to use when querying these attributes.
+ * @param path Path inside the repo to check attributes.  This does not have
+ *             to exist, but if it does not, then it will be treated as a
+ *             plain file (i.e. not a directory).
+ * @param callback Function to invoke on each attribute name and value.
+ *                 See git_attr_foreach_cb.
+ * @param payload Passed on as extra parameter to callback function.
+ * @return 0 on success, non-zero callback return value, or error code
+ */
+GIT_EXTERN(int) git_attr_foreach_ext(
+	git_repository *repo,
+	git_attr_options *opts,
+	const char *path,
+	git_attr_foreach_cb callback,
+	void *payload);
+
+/**
  * Flush the gitattributes cache.
  *
  * Call this if you have reason to believe that the attributes files on
@@ -249,11 +361,16 @@ GIT_EXTERN(int) git_attr_cache_flush(
  * Add a macro definition.
  *
  * Macros will automatically be loaded from the top level `.gitattributes`
- * file of the repository (plus the build-in "binary" macro).  This
+ * file of the repository (plus the built-in "binary" macro).  This
  * function allows you to add others.  For example, to add the default
  * macro, you would call:
  *
  *     git_attr_add_macro(repo, "binary", "-diff -crlf");
+ *
+ * @param repo The repository to add the macro in.
+ * @param name The name of the macro.
+ * @param values The value for the macro.
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_attr_add_macro(
 	git_repository *repo,

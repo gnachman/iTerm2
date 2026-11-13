@@ -11,9 +11,12 @@
 
 /**
  * @file git2/credential.h
- * @brief Git authentication & credential management
+ * @brief Authentication and credential management
  * @defgroup git_credential Authentication & credential management
  * @ingroup Git
+ *
+ * Credentials specify how to authenticate to a remote system
+ * over HTTPS or SSH.
  * @{
  */
 GIT_BEGIN_DECL
@@ -75,7 +78,7 @@ typedef enum {
 	 *
 	 * @see git_credential_ssh_key_memory_new
 	 */
-	GIT_CREDENTIAL_SSH_MEMORY = (1u << 6),
+	GIT_CREDENTIAL_SSH_MEMORY = (1u << 6)
 } git_credential_t;
 
 /**
@@ -119,7 +122,7 @@ typedef struct git_credential_ssh_custom git_credential_ssh_custom;
  * an error. As such, it's easy to get in a loop if you fail to stop providing
  * the same incorrect credentials.
  *
- * @param out The newly created credential object.
+ * @param[out] out The newly created credential object.
  * @param url The resource for which we are demanding a credential.
  * @param username_from_url The username that was embedded in a "user\@host"
  *                          remote url, or NULL if not included.
@@ -241,6 +244,18 @@ typedef struct _LIBSSH2_USERAUTH_KBDINT_PROMPT LIBSSH2_USERAUTH_KBDINT_PROMPT;
 typedef struct _LIBSSH2_USERAUTH_KBDINT_RESPONSE LIBSSH2_USERAUTH_KBDINT_RESPONSE;
 #endif
 
+/**
+ * Callback for interactive SSH credentials.
+ *
+ * @param name the name
+ * @param name_len the length of the name
+ * @param instruction the authentication instruction
+ * @param instruction_len the length of the instruction
+ * @param num_prompts the number of prompts
+ * @param prompts the prompts
+ * @param responses the responses
+ * @param abstract the abstract
+ */
 typedef void GIT_CALLBACK(git_credential_ssh_interactive_cb)(
 	const char *name,
 	int name_len,
@@ -254,6 +269,7 @@ typedef void GIT_CALLBACK(git_credential_ssh_interactive_cb)(
  * Create a new ssh keyboard-interactive based credential object.
  * The supplied credential parameter will be internally duplicated.
  *
+ * @param out The newly created credential object.
  * @param username Username to use to authenticate.
  * @param prompt_callback The callback method used for prompts.
  * @param payload Additional data to pass to the callback.
@@ -277,6 +293,18 @@ GIT_EXTERN(int) git_credential_ssh_key_from_agent(
 	git_credential **out,
 	const char *username);
 
+/**
+ * Callback for credential signing.
+ *
+ * @param session the libssh2 session
+ * @param sig the signature
+ * @param sig_len the length of the signature
+ * @param data the data
+ * @param data_len the length of the data
+ * @param abstract the abstract
+ * @return 0 for success, < 0 to indicate an error, > 0 to indicate
+ *       no credential was acquired
+ */
 typedef int GIT_CALLBACK(git_credential_sign_cb)(
 	LIBSSH2_SESSION *session,
 	unsigned char **sig, size_t *sig_len,
@@ -311,4 +339,5 @@ GIT_EXTERN(int) git_credential_ssh_custom_new(
 
 /** @} */
 GIT_END_DECL
+
 #endif

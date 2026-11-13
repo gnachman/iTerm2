@@ -15,8 +15,8 @@
 
 /**
  * @file git2/sys/mempack.h
- * @brief Custom ODB backend that permits packing objects in-memory
- * @defgroup git_backend Git custom backend APIs
+ * @brief A custom object database backend for storing objects in-memory
+ * @defgroup git_mempack A custom object database backend for storing objects in-memory
  * @ingroup Git
  * @{
  */
@@ -43,6 +43,26 @@ GIT_BEGIN_DECL
  * @return 0 on success; error code otherwise
  */
 GIT_EXTERN(int) git_mempack_new(git_odb_backend **out);
+
+/**
+ * Write a thin packfile with the objects in the memory store.
+ *
+ * A thin packfile is a packfile that does not contain its transitive closure of
+ * references. This is useful for efficiently distributing additions to a
+ * repository over the network, but also finds use in the efficient bulk
+ * addition of objects to a repository, locally.
+ *
+ * This operation performs the (shallow) insert operations into the
+ * `git_packbuilder`, but does not write the packfile to disk;
+ * see `git_packbuilder_write_buf`.
+ *
+ * It also does not reset the in-memory object database; see `git_mempack_reset`.
+ *
+ * @param backend The mempack backend
+ * @param pb The packbuilder to use to write the packfile
+ * @return 0 on success or an error code
+ */
+GIT_EXTERN(int) git_mempack_write_thin_pack(git_odb_backend *backend, git_packbuilder *pb);
 
 /**
  * Dump all the queued in-memory writes to a packfile.
@@ -82,6 +102,16 @@ GIT_EXTERN(int) git_mempack_dump(git_buf *pack, git_repository *repo, git_odb_ba
  */
 GIT_EXTERN(int) git_mempack_reset(git_odb_backend *backend);
 
+/**
+ * Get the total number of objects in mempack
+ *
+ * @param count The count of objects in the mempack
+ * @param backend The mempack backend
+ * @return 0 on success, or -1 on error
+ */
+GIT_EXTERN(int) git_mempack_object_count(size_t *count, git_odb_backend *backend);
+
+/** @} */
 GIT_END_DECL
 
 #endif

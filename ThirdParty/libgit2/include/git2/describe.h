@@ -13,10 +13,14 @@
 
 /**
  * @file git2/describe.h
- * @brief Git describing routines
+ * @brief Describe a commit in reference to tags
  * @defgroup git_describe Git describing routines
  * @ingroup Git
  * @{
+ *
+ * Describe a commit, showing information about how the current commit
+ * relates to the tags. This can be useful for showing how the current
+ * commit has changed from a particular tagged version of the repository.
  */
 GIT_BEGIN_DECL
 
@@ -30,7 +34,7 @@ GIT_BEGIN_DECL
 typedef enum {
 	GIT_DESCRIBE_DEFAULT,
 	GIT_DESCRIBE_TAGS,
-	GIT_DESCRIBE_ALL,
+	GIT_DESCRIBE_ALL
 } git_describe_strategy_t;
 
 /**
@@ -60,10 +64,15 @@ typedef struct git_describe_options {
 	int show_commit_oid_as_fallback;
 } git_describe_options;
 
+/** Default maximum candidate tags */
 #define GIT_DESCRIBE_DEFAULT_MAX_CANDIDATES_TAGS 10
+/** Default abbreviated size */
 #define GIT_DESCRIBE_DEFAULT_ABBREVIATED_SIZE 7
 
+/** Current version for the `git_describe_options` structure */
 #define GIT_DESCRIBE_OPTIONS_VERSION 1
+
+/** Static constructor for `git_describe_options` */
 #define GIT_DESCRIBE_OPTIONS_INIT { \
 	GIT_DESCRIBE_OPTIONS_VERSION, \
 	GIT_DESCRIBE_DEFAULT_MAX_CANDIDATES_TAGS, \
@@ -110,7 +119,10 @@ typedef struct {
 	const char *dirty_suffix;
 } git_describe_format_options;
 
+/** Current version for the `git_describe_format_options` structure */
 #define GIT_DESCRIBE_FORMAT_OPTIONS_VERSION 1
+
+/** Static constructor for `git_describe_format_options` */
 #define GIT_DESCRIBE_FORMAT_OPTIONS_INIT { \
 		GIT_DESCRIBE_FORMAT_OPTIONS_VERSION,   \
 		GIT_DESCRIBE_DEFAULT_ABBREVIATED_SIZE, \
@@ -142,6 +154,7 @@ typedef struct git_describe_result git_describe_result;
  * you're done with it.
  * @param committish a committish to describe
  * @param opts the lookup options (or NULL for defaults)
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_describe_commit(
 	git_describe_result **result,
@@ -152,13 +165,14 @@ GIT_EXTERN(int) git_describe_commit(
  * Describe a commit
  *
  * Perform the describe operation on the current commit and the
- * worktree. After peforming describe on HEAD, a status is run and the
+ * worktree. After performing describe on HEAD, a status is run and the
  * description is considered to be dirty if there are.
  *
  * @param out pointer to store the result. You must free this once
  * you're done with it.
  * @param repo the repository in which to perform the describe
  * @param opts the lookup options (or NULL for defaults)
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_describe_workdir(
 	git_describe_result **out,
@@ -172,6 +186,7 @@ GIT_EXTERN(int) git_describe_workdir(
  * @param result the result from `git_describe_commit()` or
  * `git_describe_workdir()`.
  * @param opts the formatting options (or NULL for defaults)
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_describe_format(
 	git_buf *out,
@@ -180,6 +195,8 @@ GIT_EXTERN(int) git_describe_format(
 
 /**
  * Free the describe result.
+ *
+ * @param result The result to free.
  */
 GIT_EXTERN(void) git_describe_result_free(git_describe_result *result);
 

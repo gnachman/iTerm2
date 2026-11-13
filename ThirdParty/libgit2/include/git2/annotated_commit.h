@@ -13,9 +13,16 @@
 
 /**
  * @file git2/annotated_commit.h
- * @brief Git annotated commit routines
+ * @brief A commit and information about how it was looked up by the user.
  * @defgroup git_annotated_commit Git annotated commit routines
  * @ingroup Git
+ *
+ * An "annotated commit" is a commit that contains information about
+ * how the commit was resolved, which can be used for maintaining the
+ * user's "intent" through commands like merge and rebase. For example,
+ * if a user wants to "merge HEAD" then an annotated commit is used to
+ * both contain the HEAD commit _and_ the fact that it was resolved as
+ * the HEAD ref.
  * @{
  */
 GIT_BEGIN_DECL
@@ -25,7 +32,7 @@ GIT_BEGIN_DECL
  * The resulting git_annotated_commit must be freed with
  * `git_annotated_commit_free`.
  *
- * @param out pointer to store the git_annotated_commit result in
+ * @param[out] out pointer to store the git_annotated_commit result in
  * @param repo repository that contains the given reference
  * @param ref reference to use to lookup the git_annotated_commit
  * @return 0 on success or error code
@@ -40,7 +47,7 @@ GIT_EXTERN(int) git_annotated_commit_from_ref(
  * The resulting git_annotated_commit must be freed with
  * `git_annotated_commit_free`.
  *
- * @param out pointer to store the git_annotated_commit result in
+ * @param[out] out pointer to store the git_annotated_commit result in
  * @param repo repository that contains the given commit
  * @param branch_name name of the (remote) branch
  * @param remote_url url of the remote
@@ -67,7 +74,7 @@ GIT_EXTERN(int) git_annotated_commit_from_fetchhead(
  * most specific function (eg `git_annotated_commit_from_ref`)
  * instead of this one when that data is known.
  *
- * @param out pointer to store the git_annotated_commit result in
+ * @param[out] out pointer to store the git_annotated_commit result in
  * @param repo repository that contains the given commit
  * @param id the commit object id to lookup
  * @return 0 on success or error code
@@ -84,7 +91,7 @@ GIT_EXTERN(int) git_annotated_commit_lookup(
  * http://git-scm.com/docs/git-rev-parse.html#_specifying_revisions for
  * information on the syntax accepted.
  *
- * @param out pointer to store the git_annotated_commit result in
+ * @param[out] out pointer to store the git_annotated_commit result in
  * @param repo repository that contains the given commit
  * @param revspec the extended sha syntax string to use to lookup the commit
  * @return 0 on success or error code

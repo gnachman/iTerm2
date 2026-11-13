@@ -10,6 +10,17 @@
 
 #include "git2/common.h"
 
+/**
+ * @file git2/sys/alloc.h
+ * @brief Custom memory allocators
+ * @defgroup git_merge Git merge routines
+ * @ingroup Git
+ *
+ * Users can configure custom allocators; this is particularly
+ * interesting when running in constrained environments, when calling
+ * from another language, or during testing.
+ * @{
+ */
 GIT_BEGIN_DECL
 
 /**
@@ -25,45 +36,11 @@ typedef struct {
 	void * GIT_CALLBACK(gmalloc)(size_t n, const char *file, int line);
 
 	/**
-	 * Allocate memory for an array of `nelem` elements, where each element
-	 * has a size of `elsize`. Returned memory shall be initialized to
-	 * all-zeroes
-	 */
-	void * GIT_CALLBACK(gcalloc)(size_t nelem, size_t elsize, const char *file, int line);
-
-	/** Allocate memory for the string `str` and duplicate its contents. */
-	char * GIT_CALLBACK(gstrdup)(const char *str, const char *file, int line);
-
-	/**
-	 * Equivalent to the `gstrdup` function, but only duplicating at most
-	 * `n + 1` bytes
-	 */
-	char * GIT_CALLBACK(gstrndup)(const char *str, size_t n, const char *file, int line);
-
-	/**
-	 * Equivalent to `gstrndup`, but will always duplicate exactly `n` bytes
-	 * of `str`. Thus, out of bounds reads at `str` may happen.
-	 */
-	char * GIT_CALLBACK(gsubstrdup)(const char *str, size_t n, const char *file, int line);
-
-	/**
 	 * This function shall deallocate the old object `ptr` and return a
 	 * pointer to a new object that has the size specified by `size`. In
 	 * case `ptr` is `NULL`, a new array shall be allocated.
 	 */
 	void * GIT_CALLBACK(grealloc)(void *ptr, size_t size, const char *file, int line);
-
-	/**
-	 * This function shall be equivalent to `grealloc`, but allocating
-	 * `neleme * elsize` bytes.
-	 */
-	void * GIT_CALLBACK(greallocarray)(void *ptr, size_t nelem, size_t elsize, const char *file, int line);
-
-	/**
-	 * This function shall allocate a new array of `nelem` elements, where
-	 * each element has a size of `elsize` bytes.
-	 */
-	void * GIT_CALLBACK(gmallocarray)(size_t nelem, size_t elsize, const char *file, int line);
 
 	/**
 	 * This function shall free the memory pointed to by `ptr`. In case
@@ -96,6 +73,7 @@ int git_stdalloc_init_allocator(git_allocator *allocator);
  */
 int git_win32_crtdbg_init_allocator(git_allocator *allocator);
 
+/** @} */
 GIT_END_DECL
 
 #endif

@@ -4,13 +4,23 @@
  * This file is part of libgit2, distributed under the GNU GPL v2 with
  * a Linking Exception. For full terms see the included COPYING file.
  */
-#ifndef _INCLUDE_git_indexer_h__
-#define _INCLUDE_git_indexer_h__
+#ifndef INCLUDE_git_indexer_h__
+#define INCLUDE_git_indexer_h__
 
 #include "common.h"
 #include "types.h"
 #include "oid.h"
 
+/**
+ * @file git2/indexer.h
+ * @brief Packfile indexing
+ * @ingroup Git
+ * @{
+ *
+ * Indexing is the operation of taking a packfile - which is simply a
+ * collection of unordered commits - and producing an "index" so that
+ * one can lookup a commit in the packfile by object ID.
+ */
 GIT_BEGIN_DECL
 
 /** A git indexer object */
@@ -51,8 +61,9 @@ typedef struct git_indexer_progress {
  * Type for progress callbacks during indexing.  Return a value less
  * than zero to cancel the indexing or download.
  *
- * @param stats Structure containing information about the state of the tran    sfer
+ * @param stats Structure containing information about the state of the transfer
  * @param payload Payload provided by caller
+ * @return 0 on success or an error code
  */
 typedef int GIT_CALLBACK(git_indexer_progress_cb)(const git_indexer_progress *stats, void *payload);
 
@@ -62,8 +73,25 @@ typedef int GIT_CALLBACK(git_indexer_progress_cb)(const git_indexer_progress *st
 typedef struct git_indexer_options {
 	unsigned int version;
 
+#ifdef GIT_EXPERIMENTAL_SHA256
+	/** permissions to use creating packfile or 0 for defaults */
+	unsigned int mode;
+
+	/** the type of object ids in the packfile or 0 for SHA1 */
+	git_oid_t oid_type;
+
+	/**
+	 * object database from which to read base objects when
+	 * fixing thin packs. This can be NULL if there are no thin
+	 * packs; if a thin pack is encountered, an error will be
+	 * returned if there are bases missing.
+	 */
+	git_odb *odb;
+#endif
+
 	/** progress_cb function to call with progress information */
 	git_indexer_progress_cb progress_cb;
+
 	/** progress_cb_payload payload for the progress callback */
 	void *progress_cb_payload;
 
@@ -71,7 +99,10 @@ typedef struct git_indexer_options {
 	unsigned char verify;
 } git_indexer_options;
 
+/** Current version for the `git_indexer_options` structure */
 #define GIT_INDEXER_OPTIONS_VERSION 1
+
+/** Static constructor for `git_indexer_options` */
 #define GIT_INDEXER_OPTIONS_INIT { GIT_INDEXER_OPTIONS_VERSION }
 
 /**
@@ -86,6 +117,20 @@ GIT_EXTERN(int) git_indexer_options_init(
 	git_indexer_options *opts,
 	unsigned int version);
 
+#ifdef GIT_EXPERIMENTAL_SHA256
+/**
+ * Create a new indexer instance
+ *
+ * @param out where to store the indexer instance
+ * @param path to the directory where the packfile should be stored
+ * @param opts the options to create the indexer with
+ * @return 0 or an error code.
+ */
+GIT_EXTERN(int) git_indexer_new(
+		git_indexer **out,
+		const char *path,
+		git_indexer_options *opts);
+#else
 /**
  * Create a new indexer instance
  *
@@ -97,6 +142,7 @@ GIT_EXTERN(int) git_indexer_options_init(
  * will be returned if there are bases missing)
  * @param opts Optional structure containing additional options. See
  * `git_indexer_options` above.
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_indexer_new(
 		git_indexer **out,
@@ -104,6 +150,7 @@ GIT_EXTERN(int) git_indexer_new(
 		unsigned int mode,
 		git_odb *odb,
 		git_indexer_options *opts);
+#endif
 
 /**
  * Add data to the indexer
@@ -112,6 +159,7 @@ GIT_EXTERN(int) git_indexer_new(
  * @param data the data to add
  * @param size the size of the data in bytes
  * @param stats stat storage
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_indexer_append(git_indexer *idx, const void *data, size_t size, git_indexer_progress *stats);
 
@@ -121,18 +169,35 @@ GIT_EXTERN(int) git_indexer_append(git_indexer *idx, const void *data, size_t si
  * Resolve any pending deltas and write out the index file
  *
  * @param idx the indexer
+ * @param stats Stat storage.
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_indexer_commit(git_indexer *idx, git_indexer_progress *stats);
 
+#ifndef GIT_DEPRECATE_HARD
 /**
  * Get the packfile's hash
  *
  * A packfile's name is derived from the sorted hashing of all object
  * names. This is only correct after the index has been finalized.
  *
+ * @deprecated use git_indexer_name
  * @param idx the indexer instance
+ * @return the packfile's hash
  */
 GIT_EXTERN(const git_oid *) git_indexer_hash(const git_indexer *idx);
+#endif
+
+/**
+ * Get the unique name for the resulting packfile.
+ *
+ * The packfile's name is derived from the packfile's content.
+ * This is only correct after the index has been finalized.
+ *
+ * @param idx the indexer instance
+ * @return a NUL terminated string for the packfile name
+ */
+GIT_EXTERN(const char *) git_indexer_name(const git_indexer *idx);
 
 /**
  * Free the indexer and its resources
@@ -141,6 +206,7 @@ GIT_EXTERN(const git_oid *) git_indexer_hash(const git_indexer *idx);
  */
 GIT_EXTERN(void) git_indexer_free(git_indexer *idx);
 
+/** @} */
 GIT_END_DECL
 
 #endif

@@ -13,78 +13,134 @@
 
 /**
  * @file git2/config.h
- * @brief Git config management routines
+ * @brief Per-repository, per-user or per-system configuration
  * @defgroup git_config Git config management routines
  * @ingroup Git
+ *
+ * Git configuration affects the operation of the version control
+ * system, and can be specified on a per-repository basis, in user
+ * settings, or at the system level.
  * @{
  */
 GIT_BEGIN_DECL
 
 /**
  * Priority level of a config file.
+ *
  * These priority levels correspond to the natural escalation logic
- * (from higher to lower) when searching for config entries in git.git.
+ * (from higher to lower) when reading or searching for config entries
+ * in git.git. Meaning that for the same key, the configuration in
+ * the local configuration is preferred over the configuration in
+ * the system configuration file.
+ *
+ * Callers can add their own custom configuration, beginning at the
+ * `GIT_CONFIG_LEVEL_APP` level.
+ *
+ * Writes, by default, occur in the highest priority level backend
+ * that is writable. This ordering can be overridden with
+ * `git_config_set_writeorder`.
  *
  * git_config_open_default() and git_repository_config() honor those
  * priority levels as well.
+ *
+ * @see git_config_open_default
+ * @see git_repository_config
  */
 typedef enum {
-	/** System-wide on Windows, for compatibility with portable git */
+	/**
+	 * System-wide on Windows, for compatibility with "Portable Git".
+	 */
 	GIT_CONFIG_LEVEL_PROGRAMDATA = 1,
 
-	/** System-wide configuration file; /etc/gitconfig on Linux systems */
+	/**
+	 * System-wide configuration file; `/etc/gitconfig` on Linux.
+	 */
 	GIT_CONFIG_LEVEL_SYSTEM = 2,
 
-	/** XDG compatible configuration file; typically ~/.config/git/config */
+	/**
+	 * XDG compatible configuration file; typically
+	 * `~/.config/git/config`.
+	 */
 	GIT_CONFIG_LEVEL_XDG = 3,
 
-	/** User-specific configuration file (also called Global configuration
-	 * file); typically ~/.gitconfig
+	/**
+	 * Global configuration file is the user-specific configuration;
+	 * typically `~/.gitconfig`.
 	 */
 	GIT_CONFIG_LEVEL_GLOBAL = 4,
 
-	/** Repository specific configuration file; $WORK_DIR/.git/config on
-	 * non-bare repos
+	/**
+	 * Local configuration, the repository-specific configuration file;
+	 * typically `$GIT_DIR/config`.
 	 */
 	GIT_CONFIG_LEVEL_LOCAL = 5,
 
-	/** Application specific configuration file; freely defined by applications
+	/**
+	 * Worktree-specific configuration; typically
+	 * `$GIT_DIR/config.worktree`.
 	 */
-	GIT_CONFIG_LEVEL_APP = 6,
+	GIT_CONFIG_LEVEL_WORKTREE = 6,
 
-	/** Represents the highest level available config file (i.e. the most
-	 * specific config file available that actually is loaded)
+	/**
+	 * Application-specific configuration file. Callers into libgit2
+	 * can add their own configuration beginning at this level.
 	 */
-	GIT_CONFIG_HIGHEST_LEVEL = -1,
+	GIT_CONFIG_LEVEL_APP = 7,
+
+	/**
+	 * Not a configuration level; callers can use this value when
+	 * querying configuration levels to specify that they want to
+	 * have data from the highest-level currently configuration.
+	 * This can be used to indicate that callers want the most
+	 * specific config file available that actually is loaded.
+	 */
+	GIT_CONFIG_HIGHEST_LEVEL = -1
 } git_config_level_t;
 
 /**
  * An entry in a configuration file
  */
 typedef struct git_config_entry {
-	const char *name; /**< Name of the entry (normalised) */
-	const char *value; /**< String value of the entry */
-	unsigned int include_depth; /**< Depth of includes where this variable was found */
-	git_config_level_t level; /**< Which config file this was found in */
-	void GIT_CALLBACK(free)(struct git_config_entry *entry); /**< Free function for this entry */
-	void *payload; /**< Opaque value for the free function. Do not read or write */
+	/** Name of the configuration entry (normalized). */
+	const char *name;
+
+	/** Literal (string) value of the entry. */
+	const char *value;
+
+	/** The type of backend that this entry exists in (eg, "file"). */
+	const char *backend_type;
+
+	/**
+	 * The path to the origin of this entry. For config files, this is
+	 * the path to the file.
+	 */
+	const char *origin_path;
+
+	/** Depth of includes where this variable was found. */
+	unsigned int include_depth;
+
+	/** Configuration level for the file this was found in. */
+	git_config_level_t level;
 } git_config_entry;
 
 /**
- * Free a config entry
+ * Free a config entry.
+ *
+ * @param entry The entry to free.
  */
-GIT_EXTERN(void) git_config_entry_free(git_config_entry *);
+GIT_EXTERN(void) git_config_entry_free(git_config_entry *entry);
 
 /**
- * A config enumeration callback
+ * A config enumeration callback.
  *
  * @param entry the entry currently being enumerated
  * @param payload a user-specified pointer
+ * @return non-zero to terminate the iteration.
  */
 typedef int GIT_CALLBACK(git_config_foreach_cb)(const git_config_entry *entry, void *payload);
 
 /**
- * An opaque structure for a configuration iterator
+ * An opaque structure for a configuration iterator.
  */
 typedef struct git_config_iterator git_config_iterator;
 
@@ -119,7 +175,7 @@ typedef struct {
  * global configuration file.
  *
  * This method will not guess the path to the xdg compatible
- * config file (.config/git/config).
+ * config file (`.config/git/config`).
  *
  * @param out Pointer to a user-allocated git_buf in which to store the path
  * @return 0 if a global configuration file has been found. Its path will be stored in `out`.
@@ -146,8 +202,8 @@ GIT_EXTERN(int) git_config_find_xdg(git_buf *out);
 /**
  * Locate the path to the system configuration file
  *
- * If /etc/gitconfig doesn't exist, it will look for
- * %PROGRAMFILES%\Git\etc\gitconfig.
+ * If `/etc/gitconfig` doesn't exist, it will look for
+ * `%PROGRAMFILES%\Git\etc\gitconfig`.
  *
  * @param out Pointer to a user-allocated git_buf in which to store the path
  * @return 0 if a system configuration file has been
@@ -158,7 +214,7 @@ GIT_EXTERN(int) git_config_find_system(git_buf *out);
 /**
  * Locate the path to the configuration file in ProgramData
  *
- * Look for the file in %PROGRAMDATA%\Git\config used by portable git.
+ * Look for the file in `%PROGRAMDATA%\Git\config` used by portable git.
  *
  * @param out Pointer to a user-allocated git_buf in which to store the path
  * @return 0 if a ProgramData configuration file has been
@@ -209,9 +265,9 @@ GIT_EXTERN(int) git_config_new(git_config **out);
  * @param cfg the configuration to add the file to
  * @param path path to the configuration file to add
  * @param level the priority level of the backend
- * @param force replace config file at the given priority level
  * @param repo optional repository to allow parsing of
  *  conditional includes
+ * @param force replace config file at the given priority level
  * @return 0 on success, GIT_EEXISTS when adding more than one file
  *  for a given priority level (and force_replace set to 0),
  *  GIT_ENOTFOUND when the file doesn't exist or error code
@@ -263,14 +319,31 @@ GIT_EXTERN(int) git_config_open_level(
  *
  * Git allows you to store your global configuration at
  * `$HOME/.gitconfig` or `$XDG_CONFIG_HOME/git/config`. For backwards
- * compatability, the XDG file shouldn't be used unless the use has
+ * compatibility, the XDG file shouldn't be used unless the use has
  * created it explicitly. With this function you'll open the correct
  * one to write to.
  *
  * @param out pointer in which to store the config object
  * @param config the config object in which to look
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_config_open_global(git_config **out, git_config *config);
+
+/**
+ * Set the write order for configuration backends. By default, the
+ * write ordering does not match the read ordering; for example, the
+ * worktree configuration is a high-priority for reading, but is not
+ * written to unless explicitly chosen.
+ *
+ * @param cfg the configuration to change write order of
+ * @param levels the ordering of levels for writing
+ * @param len the length of the levels array
+ * @return 0 or an error code
+ */
+GIT_EXTERN(int) git_config_set_writeorder(
+	git_config *cfg,
+	git_config_level_t *levels,
+	size_t len);
 
 /**
  * Create a snapshot of the configuration
@@ -422,6 +495,7 @@ GIT_EXTERN(int) git_config_get_string_buf(git_buf *out, const git_config *cfg, c
  * interested in. Use NULL to indicate all
  * @param callback the function to be called on each value of the variable
  * @param payload opaque pointer to pass to the callback
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_config_get_multivar_foreach(const git_config *cfg, const char *name, const char *regexp, git_config_foreach_cb callback, void *payload);
 
@@ -437,14 +511,15 @@ GIT_EXTERN(int) git_config_get_multivar_foreach(const git_config *cfg, const cha
  * @param name the variable's name
  * @param regexp regular expression to filter which variables we're
  * interested in. Use NULL to indicate all
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_config_multivar_iterator_new(git_config_iterator **out, const git_config *cfg, const char *name, const char *regexp);
 
 /**
  * Return the current entry and advance the iterator
  *
- * The pointers returned by this function are valid until the iterator
- * is freed.
+ * The pointers returned by this function are valid until the next call
+ * to `git_config_next` or until the iterator is freed.
  *
  * @param entry pointer to store the entry
  * @param iter the iterator
@@ -515,6 +590,7 @@ GIT_EXTERN(int) git_config_set_string(git_config *cfg, const char *name, const c
  * @param name the variable's name
  * @param regexp a regular expression to indicate which values to replace
  * @param value the new value.
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_config_set_multivar(git_config *cfg, const char *name, const char *regexp, const char *value);
 
@@ -524,6 +600,7 @@ GIT_EXTERN(int) git_config_set_multivar(git_config *cfg, const char *name, const
  *
  * @param cfg the configuration
  * @param name the variable to delete
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_config_delete_entry(git_config *cfg, const char *name);
 
@@ -568,7 +645,8 @@ GIT_EXTERN(int) git_config_foreach(
  * `git_config_iterator_free` when done.
  *
  * @param out pointer to store the iterator
- * @param cfg where to ge the variables from
+ * @param cfg where to get the variables from
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_config_iterator_new(git_config_iterator **out, const git_config *cfg);
 
@@ -585,6 +663,7 @@ GIT_EXTERN(int) git_config_iterator_new(git_config_iterator **out, const git_con
  * @param out pointer to store the iterator
  * @param cfg where to ge the variables from
  * @param regexp regular expression to match the names
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_config_iterator_glob_new(git_config_iterator **out, const git_config *cfg, const char *regexp);
 
@@ -662,6 +741,7 @@ GIT_EXTERN(int) git_config_get_mapped(
  * @param maps array of `git_configmap` objects specifying the possible mappings
  * @param map_n number of mapping objects in `maps`
  * @param value value to parse
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_config_lookup_map_value(
 	int *out,
@@ -678,6 +758,7 @@ GIT_EXTERN(int) git_config_lookup_map_value(
  *
  * @param out place to store the result of the parsing
  * @param value value to parse
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_config_parse_bool(int *out, const char *value);
 
@@ -690,6 +771,7 @@ GIT_EXTERN(int) git_config_parse_bool(int *out, const char *value);
  *
  * @param out place to store the result of the parsing
  * @param value value to parse
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_config_parse_int32(int32_t *out, const char *value);
 
@@ -702,6 +784,7 @@ GIT_EXTERN(int) git_config_parse_int32(int32_t *out, const char *value);
  *
  * @param out place to store the result of the parsing
  * @param value value to parse
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_config_parse_int64(int64_t *out, const char *value);
 
@@ -717,6 +800,7 @@ GIT_EXTERN(int) git_config_parse_int64(int64_t *out, const char *value);
  *
  * @param out placae to store the result of parsing
  * @param value the path to evaluate
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_config_parse_path(git_buf *out, const char *value);
 
@@ -735,6 +819,7 @@ GIT_EXTERN(int) git_config_parse_path(git_buf *out, const char *value);
  * @param regexp regular expression to match against config names (can be NULL)
  * @param callback the function to call on each variable
  * @param payload the data to pass to the callback
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_config_backend_foreach_match(
 	git_config_backend *backend,
@@ -763,4 +848,5 @@ GIT_EXTERN(int) git_config_lock(git_transaction **tx, git_config *cfg);
 
 /** @} */
 GIT_END_DECL
+
 #endif

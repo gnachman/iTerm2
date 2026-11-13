@@ -12,8 +12,8 @@
 
 /**
  * @file git2/transaction.h
- * @brief Git transactional reference routines
- * @defgroup git_transaction Git transactional reference routines
+ * @brief Transactional reference handling
+ * @defgroup git_transaction Transactional reference handling
  * @ingroup Git
  * @{
  */
@@ -118,4 +118,5 @@ GIT_EXTERN(void) git_transaction_free(git_transaction *tx);
 
 /** @} */
 GIT_END_DECL
+
 #endif

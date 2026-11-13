@@ -14,9 +14,15 @@
 
 /**
  * @file git2/filter.h
- * @brief Git filter APIs
- *
+ * @brief Filters modify files during checkout or commit
  * @ingroup Git
+ *
+ * During checkout, filters update a file from a "canonical" state to
+ * a format appropriate for the local filesystem; during commit, filters
+ * produce the canonical state. For example, on Windows, the line ending
+ * filters _may_ take a canonical state (with Unix-style newlines) in
+ * the repository, and place the contents on-disk with Windows-style
+ * `\r\n` line endings.
  * @{
  */
 GIT_BEGIN_DECL
@@ -32,7 +38,7 @@ typedef enum {
 	GIT_FILTER_TO_WORKTREE = 0,
 	GIT_FILTER_SMUDGE = GIT_FILTER_TO_WORKTREE,
 	GIT_FILTER_TO_ODB = 1,
-	GIT_FILTER_CLEAN = GIT_FILTER_TO_ODB,
+	GIT_FILTER_CLEAN = GIT_FILTER_TO_ODB
 } git_filter_mode_t;
 
 /**
@@ -49,7 +55,41 @@ typedef enum {
 
 	/** Load attributes from `.gitattributes` in the root of HEAD */
 	GIT_FILTER_ATTRIBUTES_FROM_HEAD = (1u << 2),
+
+	/**
+	 * Load attributes from `.gitattributes` in a given commit.
+	 * This can only be specified in a `git_filter_options`.
+	 */
+	GIT_FILTER_ATTRIBUTES_FROM_COMMIT = (1u << 3)
 } git_filter_flag_t;
+
+/**
+ * Filtering options
+ */
+typedef struct {
+	unsigned int version;
+
+	/** See `git_filter_flag_t` above */
+	uint32_t flags;
+
+#ifdef GIT_DEPRECATE_HARD
+	void *reserved;
+#else
+	git_oid *commit_id;
+#endif
+
+	/**
+	 * The commit to load attributes from, when
+	 * `GIT_FILTER_ATTRIBUTES_FROM_COMMIT` is specified.
+	 */
+	git_oid attr_commit_id;
+} git_filter_options;
+
+/** Current version for the `git_filter_options` structure */
+#define GIT_FILTER_OPTIONS_VERSION 1
+
+/** Static constructor for `git_filter_options` */
+#define GIT_FILTER_OPTIONS_INIT {GIT_FILTER_OPTIONS_VERSION}
 
 /**
  * A filter that can transform file data
@@ -104,6 +144,29 @@ GIT_EXTERN(int) git_filter_list_load(
 	uint32_t flags);
 
 /**
+ * Load the filter list for a given path.
+ *
+ * This will return 0 (success) but set the output git_filter_list to NULL
+ * if no filters are requested for the given file.
+ *
+ * @param filters Output newly created git_filter_list (or NULL)
+ * @param repo Repository object that contains `path`
+ * @param blob The blob to which the filter will be applied (if known)
+ * @param path Relative path of the file to be filtered
+ * @param mode Filtering direction (WT->ODB or ODB->WT)
+ * @param opts The `git_filter_options` to use when loading filters
+ * @return 0 on success (which could still return NULL if no filters are
+ *         needed for the requested file), <0 on error
+ */
+GIT_EXTERN(int) git_filter_list_load_ext(
+	git_filter_list **filters,
+	git_repository *repo,
+	git_blob *blob,
+	const char *path,
+	git_filter_mode_t mode,
+	git_filter_options *opts);
+
+/**
  * Query the filter list to see if a given filter (by name) will run.
  * The built-in filters "crlf" and "ident" can be queried, otherwise this
  * is the name of the filter specified by the filter attribute.
@@ -122,27 +185,17 @@ GIT_EXTERN(int) git_filter_list_contains(
 /**
  * Apply filter list to a data buffer.
  *
- * See `git2/buffer.h` for background on `git_buf` objects.
- *
- * If the `in` buffer holds data allocated by libgit2 (i.e. `in->asize` is
- * not zero), then it will be overwritten when applying the filters.  If
- * not, then it will be left untouched.
- *
- * If there are no filters to apply (or `filters` is NULL), then the `out`
- * buffer will reference the `in` buffer data (with `asize` set to zero)
- * instead of allocating data.  This keeps allocations to a minimum, but
- * it means you have to be careful about freeing the `in` data since `out`
- * may be pointing to it!
- *
  * @param out Buffer to store the result of the filtering
  * @param filters A loaded git_filter_list (or NULL)
  * @param in Buffer containing the data to filter
+ * @param in_len The length of the input buffer
  * @return 0 on success, an error code otherwise
  */
-GIT_EXTERN(int) git_filter_list_apply_to_data(
+GIT_EXTERN(int) git_filter_list_apply_to_buffer(
 	git_buf *out,
 	git_filter_list *filters,
-	git_buf *in);
+	const char *in,
+	size_t in_len);
 
 /**
  * Apply a filter list to the contents of a file on disk
@@ -152,6 +205,7 @@ GIT_EXTERN(int) git_filter_list_apply_to_data(
  * @param repo the repository in which to perform the filtering
  * @param path the path of the file to filter, a relative path will be
  * taken as relative to the workdir
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_filter_list_apply_to_file(
 	git_buf *out,
@@ -165,6 +219,7 @@ GIT_EXTERN(int) git_filter_list_apply_to_file(
  * @param out buffer into which to store the filtered file
  * @param filters the list of filters to apply
  * @param blob the blob to filter
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_filter_list_apply_to_blob(
 	git_buf *out,
@@ -175,12 +230,15 @@ GIT_EXTERN(int) git_filter_list_apply_to_blob(
  * Apply a filter list to an arbitrary buffer as a stream
  *
  * @param filters the list of filters to apply
- * @param data the buffer to filter
+ * @param buffer the buffer to filter
+ * @param len the size of the buffer
  * @param target the stream into which the data will be written
+ * @return 0 or an error code.
  */
-GIT_EXTERN(int) git_filter_list_stream_data(
+GIT_EXTERN(int) git_filter_list_stream_buffer(
 	git_filter_list *filters,
-	git_buf *data,
+	const char *buffer,
+	size_t len,
 	git_writestream *target);
 
 /**
@@ -191,6 +249,7 @@ GIT_EXTERN(int) git_filter_list_stream_data(
  * @param path the path of the file to filter, a relative path will be
  * taken as relative to the workdir
  * @param target the stream into which the data will be written
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_filter_list_stream_file(
 	git_filter_list *filters,
@@ -204,6 +263,7 @@ GIT_EXTERN(int) git_filter_list_stream_file(
  * @param filters the list of filters to apply
  * @param blob the blob to filter
  * @param target the stream into which the data will be written
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_filter_list_stream_blob(
 	git_filter_list *filters,
@@ -217,9 +277,7 @@ GIT_EXTERN(int) git_filter_list_stream_blob(
  */
 GIT_EXTERN(void) git_filter_list_free(git_filter_list *filters);
 
-
-GIT_END_DECL
-
 /** @} */
+GIT_END_DECL
 
 #endif

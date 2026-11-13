@@ -10,6 +10,16 @@
 
 #include "git2/common.h"
 
+/**
+ * @file git2/sys/path.h
+ * @brief Custom path handling
+ * @defgroup git_path Custom path handling
+ * @ingroup Git
+ *
+ * Merge will take two commits and attempt to produce a commit that
+ * includes the changes that were made in both branches.
+ * @{
+ */
 GIT_BEGIN_DECL
 
 /**
@@ -59,6 +69,7 @@ typedef enum {
  */
 GIT_EXTERN(int) git_path_is_gitfile(const char *path, size_t pathlen, git_path_gitfile gitfile, git_path_fs fs);
 
+/** @} */
 GIT_END_DECL
 
-#endif	/* INCLUDE_sys_git_path */
+#endif

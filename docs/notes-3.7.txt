@@ -209,6 +209,8 @@ Improvements:
   prints. Servers too old to support RSA
   signatures with SHA-2 (roughly 2016 and
   earlier) can no longer be used with RSA keys.
+- Updated the library used to show git status
+  to pick up security fixes.
 
 Bug Fixes:
 - The tooltip for “Enable support for

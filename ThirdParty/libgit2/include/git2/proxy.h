@@ -12,6 +12,12 @@
 #include "cert.h"
 #include "credential.h"
 
+/**
+ * @file git2/proxy.h
+ * @brief TLS proxies
+ * @ingroup Git
+ * @{
+ */
 GIT_BEGIN_DECL
 
 /**
@@ -32,7 +38,7 @@ typedef enum {
 	/**
 	 * Connect via the URL given in the options
 	 */
-	GIT_PROXY_SPECIFIED,
+	GIT_PROXY_SPECIFIED
 } git_proxy_t;
 
 /**
@@ -64,9 +70,8 @@ typedef struct {
 	git_credential_acquire_cb credentials;
 
 	/**
-	 * If cert verification fails, this will be called to let the
-	 * user make the final decision of whether to allow the
-	 * connection to proceed. Returns 0 to allow the connection
+	 * This will be called to let the user make the final decision of whether
+	 * to allow the connection to proceed. Returns 0 to allow the connection
 	 * or a negative value to indicate an error.
 	 */
 	git_transport_certificate_check_cb certificate_check;
@@ -78,7 +83,10 @@ typedef struct {
 	void *payload;
 } git_proxy_options;
 
+/** Current version for the `git_proxy_options` structure */
 #define GIT_PROXY_OPTIONS_VERSION 1
+
+/** Static constructor for `git_proxy_options` */
 #define GIT_PROXY_OPTIONS_INIT {GIT_PROXY_OPTIONS_VERSION}
 
 /**
@@ -93,6 +101,7 @@ typedef struct {
  */
 GIT_EXTERN(int) git_proxy_options_init(git_proxy_options *opts, unsigned int version);
 
+/** @} */
 GIT_END_DECL
 
 #endif

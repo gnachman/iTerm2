@@ -13,9 +13,12 @@
 
 /**
  * @file git2/cherrypick.h
- * @brief Git cherry-pick routines
+ * @brief Cherry-pick the contents of an individual commit
  * @defgroup git_cherrypick Git cherry-pick routines
  * @ingroup Git
+ *
+ * "Cherry-pick" will attempts to re-apply the changes in an
+ * individual commit to the current index and working directory.
  * @{
  */
 GIT_BEGIN_DECL
@@ -33,8 +36,13 @@ typedef struct {
 	git_checkout_options checkout_opts; /**< Options for the checkout */
 } git_cherrypick_options;
 
+/** Current version for the `git_cherrypick_options` structure */
 #define GIT_CHERRYPICK_OPTIONS_VERSION 1
-#define GIT_CHERRYPICK_OPTIONS_INIT {GIT_CHERRYPICK_OPTIONS_VERSION, 0, GIT_MERGE_OPTIONS_INIT, GIT_CHECKOUT_OPTIONS_INIT}
+
+/** Static constructor for `git_cherrypick_options` */
+#define GIT_CHERRYPICK_OPTIONS_INIT { \
+	GIT_CHERRYPICK_OPTIONS_VERSION, 0, \
+	GIT_MERGE_OPTIONS_INIT, GIT_CHECKOUT_OPTIONS_INIT }
 
 /**
  * Initialize git_cherrypick_options structure
@@ -89,4 +97,3 @@ GIT_EXTERN(int) git_cherrypick(
 GIT_END_DECL
 
 #endif
-

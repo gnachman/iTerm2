@@ -14,7 +14,7 @@
 
 /**
  * @file git2/reset.h
- * @brief Git reset management routines
+ * @brief Reset will update the local repository to a prior state
  * @ingroup Git
  * @{
  */
@@ -26,7 +26,7 @@ GIT_BEGIN_DECL
 typedef enum {
 	GIT_RESET_SOFT  = 1, /**< Move the head to the given commit */
 	GIT_RESET_MIXED = 2, /**< SOFT plus reset index to the commit */
-	GIT_RESET_HARD  = 3, /**< MIXED plus changes in working tree discarded */
+	GIT_RESET_HARD  = 3  /**< MIXED plus changes in working tree discarded */
 } git_reset_t;
 
 /**
@@ -48,7 +48,7 @@ typedef enum {
  *
  * @param target Committish to which the Head should be moved to. This object
  * must belong to the given `repo` and can either be a git_commit or a
- * git_tag. When a git_tag is being passed, it should be dereferencable
+ * git_tag. When a git_tag is being passed, it should be dereferenceable
  * to a git_commit which oid will be used as the target of the branch.
  *
  * @param reset_type Kind of reset operation to perform.
@@ -75,11 +75,23 @@ GIT_EXTERN(int) git_reset(
  *
  * See the documentation for `git_reset()`.
  *
- * @see git_reset
+ * @param repo Repository where to perform the reset operation.
+ *
+ * @param target Annotated commit to which the Head should be moved to.
+ * This object must belong to the given `repo`, it will be dereferenced
+ * to a git_commit which oid will be used as the target of the branch.
+ *
+ * @param reset_type Kind of reset operation to perform.
+ *
+ * @param checkout_opts Optional checkout options to be used for a HARD reset.
+ * The checkout_strategy field will be overridden (based on reset_type).
+ * This parameter can be used to propagate notify and progress callbacks.
+ *
+ * @return 0 on success or an error code
  */
 GIT_EXTERN(int) git_reset_from_annotated(
 	git_repository *repo,
-	const git_annotated_commit *commit,
+	const git_annotated_commit *target,
 	git_reset_t reset_type,
 	const git_checkout_options *checkout_opts);
 
@@ -108,4 +120,5 @@ GIT_EXTERN(int) git_reset_default(
 
 /** @} */
 GIT_END_DECL
+
 #endif

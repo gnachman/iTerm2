@@ -13,8 +13,8 @@
 
 /**
  * @file git2/revwalk.h
- * @brief Git revision traversal routines
- * @defgroup git_revwalk Git revision traversal routines
+ * @brief Traverse (walk) the commit graph (revision history)
+ * @defgroup git_revwalk Traverse (walk) the commit graph (revision history)
  * @ingroup Git
  * @{
  */
@@ -49,7 +49,7 @@ typedef enum {
 	 * order; this sorting mode can be combined with
 	 * any of the above.
 	 */
-	GIT_SORT_REVERSE = 1 << 2,
+	GIT_SORT_REVERSE = 1 << 2
 } git_sort_t;
 
 /**
@@ -249,6 +249,7 @@ GIT_EXTERN(int) git_revwalk_push_range(git_revwalk *walk, const char *range);
  *
  * No parents other than the first for each commit will be enqueued.
  *
+ * @param walk The revision walker.
  * @return 0 or an error code
  */
 GIT_EXTERN(int) git_revwalk_simplify_first_parent(git_revwalk *walk);
@@ -277,6 +278,7 @@ GIT_EXTERN(git_repository *) git_revwalk_repository(git_revwalk *walk);
  *
  * @param commit_id oid of Commit
  * @param payload User-specified pointer to data to be passed as data payload
+ * @return non-zero to hide the commmit and it parent.
  */
 typedef int GIT_CALLBACK(git_revwalk_hide_cb)(
 	const git_oid *commit_id,
@@ -288,6 +290,7 @@ typedef int GIT_CALLBACK(git_revwalk_hide_cb)(
  * @param walk the revision walker
  * @param hide_cb  callback function to hide a commit and its parents
  * @param payload  data payload to be passed to callback function
+ * @return 0 or an error code.
  */
 GIT_EXTERN(int) git_revwalk_add_hide_cb(
 	git_revwalk *walk,
@@ -296,4 +299,5 @@ GIT_EXTERN(int) git_revwalk_add_hide_cb(
 
 /** @} */
 GIT_END_DECL
+
 #endif

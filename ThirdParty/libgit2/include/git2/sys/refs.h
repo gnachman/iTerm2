@@ -13,8 +13,8 @@
 
 /**
  * @file git2/sys/refs.h
- * @brief Low-level Git ref creation
- * @defgroup git_backend Git custom backend APIs
+ * @brief Low-level git reference creation
+ * @defgroup git_backend Low-level git reference creation
  * @ingroup Git
  * @{
  */
@@ -46,4 +46,5 @@ GIT_EXTERN(git_reference *) git_reference__alloc_symbolic(
 
 /** @} */
 GIT_END_DECL
+
 #endif

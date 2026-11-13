@@ -15,7 +15,7 @@
 
 /**
  * @file git2/sys/diff.h
- * @brief Low-level Git diff utilities
+ * @brief Low-level diff utilities
  * @ingroup Git
  * @{
  */
@@ -33,6 +33,12 @@ GIT_BEGIN_DECL
  * must pass a `git_buf *` value as the payload to the `git_diff_print`
  * and/or `git_patch_print` function.  The data will be appended to the
  * buffer (after any existing content).
+ *
+ * @param delta the delta being processed
+ * @param hunk the hunk being processed
+ * @param line the line being processed
+ * @param payload the payload provided by the diff generator
+ * @return 0 on success or an error code
  */
 GIT_EXTERN(int) git_diff_print_callback__to_buf(
 	const git_diff_delta *delta,
@@ -53,6 +59,12 @@ GIT_EXTERN(int) git_diff_print_callback__to_buf(
  * value from `fopen()`) as the payload to the `git_diff_print`
  * and/or `git_patch_print` function.  If you pass NULL, this will write
  * data to `stdout`.
+ *
+ * @param delta the delta being processed
+ * @param hunk the hunk being processed
+ * @param line the line being processed
+ * @param payload the payload provided by the diff generator
+ * @return 0 on success or an error code
  */
 GIT_EXTERN(int) git_diff_print_callback__to_file_handle(
 	const git_diff_delta *delta,
@@ -70,7 +82,10 @@ typedef struct {
 	size_t oid_calculations; /**< Number of ID calculations */
 } git_diff_perfdata;
 
+/** Current version for the `git_diff_perfdata_options` structure */
 #define GIT_DIFF_PERFDATA_VERSION 1
+
+/** Static constructor for `git_diff_perfdata_options` */
 #define GIT_DIFF_PERFDATA_INIT {GIT_DIFF_PERFDATA_VERSION,0,0}
 
 /**
@@ -85,10 +100,15 @@ GIT_EXTERN(int) git_diff_get_perfdata(
 
 /**
  * Get performance data for diffs from a git_status_list
+ *
+ * @param out Structure to be filled with diff performance data
+ * @param status Diff to read performance data from
+ * @return 0 for success, <0 for error
  */
 GIT_EXTERN(int) git_status_list_get_perfdata(
 	git_diff_perfdata *out, const git_status_list *status);
 
 /** @} */
 GIT_END_DECL
+
 #endif

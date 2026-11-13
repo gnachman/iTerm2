@@ -12,8 +12,8 @@
 
 /**
  * @file git2/revparse.h
- * @brief Git revision parsing routines
- * @defgroup git_revparse Git revision parsing routines
+ * @brief Parse the textual revision information
+ * @defgroup git_revparse Parse the textual revision information
  * @ingroup Git
  * @{
  */
@@ -70,12 +70,12 @@ GIT_EXTERN(int) git_revparse_ext(
  */
 typedef enum {
 	/** The spec targeted a single object. */
-	GIT_REVPARSE_SINGLE         = 1 << 0,
+	GIT_REVSPEC_SINGLE         = 1 << 0,
 	/** The spec targeted a range of commits. */
-	GIT_REVPARSE_RANGE          = 1 << 1,
+	GIT_REVSPEC_RANGE          = 1 << 1,
 	/** The spec used the '...' operator, which invokes special semantics. */
-	GIT_REVPARSE_MERGE_BASE     = 1 << 2,
-} git_revparse_mode_t;
+	GIT_REVSPEC_MERGE_BASE     = 1 << 2
+} git_revspec_t;
 
 /**
  * Git Revision Spec: output of a `git_revparse` operation
@@ -85,7 +85,7 @@ typedef struct {
 	git_object *from;
 	/** The right element of the revspec; must be freed by the user */
 	git_object *to;
-	/** The intent of the revspec (i.e. `git_revparse_mode_t` flags) */
+	/** The intent of the revspec (i.e. `git_revspec_mode_t` flags) */
 	unsigned int flags;
 } git_revspec;
 
@@ -107,7 +107,7 @@ GIT_EXTERN(int) git_revparse(
 	git_repository *repo,
 	const char *spec);
 
-
 /** @} */
 GIT_END_DECL
+
 #endif

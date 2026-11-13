@@ -18,6 +18,7 @@
 #include "describe.h"
 #include "diff.h"
 #include "errors.h"
+#include "filter.h"
 #include "index.h"
 #include "indexer.h"
 #include "merge.h"
@@ -29,6 +30,7 @@
 #include "trace.h"
 #include "repository.h"
 #include "revert.h"
+#include "revparse.h"
 #include "stash.h"
 #include "status.h"
 #include "submodule.h"
@@ -50,7 +52,7 @@
 
 /**
  * @file git2/deprecated.h
- * @brief libgit2 deprecated functions and values
+ * @brief Deprecated functions and values
  * @ingroup Git
  * @{
  */
@@ -67,15 +69,23 @@ GIT_BEGIN_DECL
  */
 /**@{*/
 
+/** @deprecated use GIT_ATTR_VALUE_UNSPECIFIED */
 #define GIT_ATTR_UNSPECIFIED_T GIT_ATTR_VALUE_UNSPECIFIED
+/** @deprecated use GIT_ATTR_VALUE_TRUE */
 #define GIT_ATTR_TRUE_T GIT_ATTR_VALUE_TRUE
+/** @deprecated use GIT_ATTR_VALUE_FALSE */
 #define GIT_ATTR_FALSE_T GIT_ATTR_VALUE_FALSE
+/** @deprecated use GIT_ATTR_VALUE_STRING */
 #define GIT_ATTR_VALUE_T GIT_ATTR_VALUE_STRING
 
+/** @deprecated use GIT_ATTR_IS_TRUE */
 #define GIT_ATTR_TRUE(attr) GIT_ATTR_IS_TRUE(attr)
+/** @deprecated use GIT_ATTR_IS_FALSE */
 #define GIT_ATTR_FALSE(attr) GIT_ATTR_IS_FALSE(attr)
+/** @deprecated use GIT_ATTR_IS_UNSPECIFIED */
 #define GIT_ATTR_UNSPECIFIED(attr) GIT_ATTR_IS_UNSPECIFIED(attr)
 
+/** @deprecated use git_attr_value_t */
 typedef git_attr_value_t git_attr_t;
 
 /**@}*/
@@ -91,6 +101,7 @@ typedef git_attr_value_t git_attr_t;
  */
 /**@{*/
 
+/** @deprecated use GIT_BLOB_FILTER_ATTRIBUTES_FROM_HEAD */
 #define GIT_BLOB_FILTER_ATTTRIBUTES_FROM_HEAD GIT_BLOB_FILTER_ATTRIBUTES_FROM_HEAD
 
 GIT_EXTERN(int) git_blob_create_fromworkdir(git_oid *id, git_repository *repo, const char *relative_path);
@@ -118,6 +129,66 @@ GIT_EXTERN(int) git_blob_filtered_content(
 
 /**@}*/
 
+/** @name Deprecated Filter Functions
+ *
+ * These functions are retained for backward compatibility.  The
+ * newer versions of these functions should be preferred in all
+ * new code.
+ *
+ * There is no plan to remove these backward compatibility values at
+ * this time.
+ */
+/**@{*/
+
+/** Deprecated in favor of `git_filter_list_stream_buffer`.
+ *
+ * @deprecated Use git_filter_list_stream_buffer
+ * @see Use git_filter_list_stream_buffer
+ */
+GIT_EXTERN(int) git_filter_list_stream_data(
+	git_filter_list *filters,
+	git_buf *data,
+	git_writestream *target);
+
+/** Deprecated in favor of `git_filter_list_apply_to_buffer`.
+ *
+ * @deprecated Use git_filter_list_apply_to_buffer
+ * @see Use git_filter_list_apply_to_buffer
+ */
+GIT_EXTERN(int) git_filter_list_apply_to_data(
+	git_buf *out,
+	git_filter_list *filters,
+	git_buf *in);
+
+/**@}*/
+
+/** @name Deprecated Tree Functions
+ *
+ * These functions are retained for backward compatibility.  The
+ * newer versions of these functions and values should be preferred
+ * in all new code.
+ *
+ * There is no plan to remove these backward compatibility values at
+ * this time.
+ */
+/**@{*/
+
+/**
+ * Write the contents of the tree builder as a tree object.
+ * This is an alias of `git_treebuilder_write` and is preserved
+ * for backward compatibility.
+ *
+ * This function is deprecated, but there is no plan to remove this
+ * function at this time.
+ *
+ * @deprecated Use git_treebuilder_write
+ * @see git_treebuilder_write
+ */
+GIT_EXTERN(int) git_treebuilder_write_with_buffer(
+	git_oid *oid, git_treebuilder *bld, git_buf *tree);
+
+/**@}*/
+
 /** @name Deprecated Buffer Functions
  *
  * These functions and enumeration values are retained for backward
@@ -128,6 +199,61 @@ GIT_EXTERN(int) git_blob_filtered_content(
  * this time.
  */
 /**@{*/
+
+/**
+ * Static initializer for git_buf from static buffer
+ */
+#define GIT_BUF_INIT_CONST(STR,LEN) { (char *)(STR), 0, (size_t)(LEN) }
+
+/**
+ * Resize the buffer allocation to make more space.
+ *
+ * This will attempt to grow the buffer to accommodate the target size.
+ *
+ * If the buffer refers to memory that was not allocated by libgit2 (i.e.
+ * the `asize` field is zero), then `ptr` will be replaced with a newly
+ * allocated block of data.  Be careful so that memory allocated by the
+ * caller is not lost.  As a special variant, if you pass `target_size` as
+ * 0 and the memory is not allocated by libgit2, this will allocate a new
+ * buffer of size `size` and copy the external data into it.
+ *
+ * Currently, this will never shrink a buffer, only expand it.
+ *
+ * If the allocation fails, this will return an error and the buffer will be
+ * marked as invalid for future operations, invaliding the contents.
+ *
+ * @param buffer The buffer to be resized; may or may not be allocated yet
+ * @param target_size The desired available size
+ * @return 0 on success, -1 on allocation failure
+ */
+GIT_EXTERN(int) git_buf_grow(git_buf *buffer, size_t target_size);
+
+/**
+ * Set buffer to a copy of some raw data.
+ *
+ * @param buffer The buffer to set
+ * @param data The data to copy into the buffer
+ * @param datalen The length of the data to copy into the buffer
+ * @return 0 on success, -1 on allocation failure
+ */
+GIT_EXTERN(int) git_buf_set(
+	git_buf *buffer, const void *data, size_t datalen);
+
+/**
+* Check quickly if buffer looks like it contains binary data
+*
+* @param buf Buffer to check
+* @return 1 if buffer looks like non-text data
+*/
+GIT_EXTERN(int) git_buf_is_binary(const git_buf *buf);
+
+/**
+* Check quickly if buffer contains a NUL byte
+*
+* @param buf Buffer to check
+* @return 1 if buffer contains a NUL byte
+*/
+GIT_EXTERN(int) git_buf_contains_nul(const git_buf *buf);
 
 /**
  * Free the memory referred to by the git_buf.  This is an alias of
@@ -143,16 +269,141 @@ GIT_EXTERN(void) git_buf_free(git_buf *buffer);
 
 /**@}*/
 
+/** @name Deprecated Commit Definitions
+ */
+/**@{*/
+
+/**
+ * Provide a commit signature during commit creation.
+ *
+ * Callers should instead define a `git_commit_create_cb` that
+ * generates a commit buffer using `git_commit_create_buffer`, sign
+ * that buffer and call `git_commit_create_with_signature`.
+ *
+ * @deprecated use a `git_commit_create_cb` instead
+ */
+typedef int (*git_commit_signing_cb)(
+	git_buf *signature,
+	git_buf *signature_field,
+	const char *commit_content,
+	void *payload);
+
+/**@}*/
+
 /** @name Deprecated Config Functions and Constants
  */
 /**@{*/
 
+/** @deprecated use GIT_CONFIGMAP_FALSE */
 #define GIT_CVAR_FALSE  GIT_CONFIGMAP_FALSE
+/** @deprecated use GIT_CONFIGMAP_TRUE */
 #define GIT_CVAR_TRUE   GIT_CONFIGMAP_TRUE
+/** @deprecated use GIT_CONFIGMAP_INT32 */
 #define GIT_CVAR_INT32  GIT_CONFIGMAP_INT32
+/** @deprecated use GIT_CONFIGMAP_STRING */
 #define GIT_CVAR_STRING GIT_CONFIGMAP_STRING
 
+/** @deprecated use git_cvar_map */
 typedef git_configmap git_cvar_map;
+
+/**@}*/
+
+/** @name Deprecated Diff Functions and Constants
+ *
+ * These functions and enumeration values are retained for backward
+ * compatibility.  The newer versions of these functions and values
+ * should be preferred in all new code.
+ *
+ * There is no plan to remove these backward compatibility values at
+ * this time.
+ */
+/**@{*/
+
+/**
+ * Formatting options for diff e-mail generation
+ */
+typedef enum {
+	/** Normal patch, the default */
+	GIT_DIFF_FORMAT_EMAIL_NONE = 0,
+
+	/** Don't insert "[PATCH]" in the subject header*/
+	GIT_DIFF_FORMAT_EMAIL_EXCLUDE_SUBJECT_PATCH_MARKER = (1 << 0)
+} git_diff_format_email_flags_t;
+
+/**
+ * Options for controlling the formatting of the generated e-mail.
+ *
+ * @deprecated use `git_email_create_options`
+ */
+typedef struct {
+	unsigned int version;
+
+	/** see `git_diff_format_email_flags_t` above */
+	uint32_t flags;
+
+	/** This patch number */
+	size_t patch_no;
+
+	/** Total number of patches in this series */
+	size_t total_patches;
+
+	/** id to use for the commit */
+	const git_oid *id;
+
+	/** Summary of the change */
+	const char *summary;
+
+	/** Commit message's body */
+	const char *body;
+
+	/** Author of the change */
+	const git_signature *author;
+} git_diff_format_email_options;
+
+/** @deprecated use `git_email_create_options` */
+#define GIT_DIFF_FORMAT_EMAIL_OPTIONS_VERSION 1
+/** @deprecated use `git_email_create_options` */
+#define GIT_DIFF_FORMAT_EMAIL_OPTIONS_INIT {GIT_DIFF_FORMAT_EMAIL_OPTIONS_VERSION, 0, 1, 1, NULL, NULL, NULL, NULL}
+
+/**
+ * Create an e-mail ready patch from a diff.
+ *
+ * @deprecated git_email_create_from_diff
+ * @see git_email_create_from_diff
+ */
+GIT_EXTERN(int) git_diff_format_email(
+	git_buf *out,
+	git_diff *diff,
+	const git_diff_format_email_options *opts);
+
+/**
+ * Create an e-mail ready patch for a commit.
+ *
+ * @deprecated git_email_create_from_commit
+ * @see git_email_create_from_commit
+ */
+GIT_EXTERN(int) git_diff_commit_as_email(
+	git_buf *out,
+	git_repository *repo,
+	git_commit *commit,
+	size_t patch_no,
+	size_t total_patches,
+	uint32_t flags,
+	const git_diff_options *diff_opts);
+
+/**
+ * Initialize git_diff_format_email_options structure
+ *
+ * Initializes a `git_diff_format_email_options` with default values. Equivalent
+ * to creating an instance with GIT_DIFF_FORMAT_EMAIL_OPTIONS_INIT.
+ *
+ * @param opts The `git_blame_options` struct to initialize.
+ * @param version The struct version; pass `GIT_DIFF_FORMAT_EMAIL_OPTIONS_VERSION`.
+ * @return Zero on success; -1 on failure.
+ */
+GIT_EXTERN(int) git_diff_format_email_options_init(
+	git_diff_format_email_options *opts,
+	unsigned int version);
 
 /**@}*/
 
@@ -167,40 +418,76 @@ typedef git_configmap git_cvar_map;
  */
 /**@{*/
 
+/** @deprecated use `GIT_ERROR_NONE` */
 #define GITERR_NONE GIT_ERROR_NONE
+/** @deprecated use `GIT_ERROR_NOMEMORY` */
 #define GITERR_NOMEMORY GIT_ERROR_NOMEMORY
+/** @deprecated use `GIT_ERROR_OS` */
 #define GITERR_OS GIT_ERROR_OS
+/** @deprecated use `GIT_ERROR_INVALID` */
 #define GITERR_INVALID GIT_ERROR_INVALID
+/** @deprecated use `GIT_ERROR_REFERENCE` */
 #define GITERR_REFERENCE GIT_ERROR_REFERENCE
+/** @deprecated use `GIT_ERROR_ZLIB` */
 #define GITERR_ZLIB GIT_ERROR_ZLIB
+/** @deprecated use `GIT_ERROR_REPOSITORY` */
 #define GITERR_REPOSITORY GIT_ERROR_REPOSITORY
+/** @deprecated use `GIT_ERROR_CONFIG` */
 #define GITERR_CONFIG GIT_ERROR_CONFIG
+/** @deprecated use `GIT_ERROR_REGEX` */
 #define GITERR_REGEX GIT_ERROR_REGEX
+/** @deprecated use `GIT_ERROR_ODB` */
 #define GITERR_ODB GIT_ERROR_ODB
+/** @deprecated use `GIT_ERROR_INDEX` */
 #define GITERR_INDEX GIT_ERROR_INDEX
+/** @deprecated use `GIT_ERROR_OBJECT` */
 #define GITERR_OBJECT GIT_ERROR_OBJECT
+/** @deprecated use `GIT_ERROR_NET` */
 #define GITERR_NET GIT_ERROR_NET
+/** @deprecated use `GIT_ERROR_TAG` */
 #define GITERR_TAG GIT_ERROR_TAG
+/** @deprecated use `GIT_ERROR_TREE` */
 #define GITERR_TREE GIT_ERROR_TREE
+/** @deprecated use `GIT_ERROR_INDEXER` */
 #define GITERR_INDEXER GIT_ERROR_INDEXER
+/** @deprecated use `GIT_ERROR_SSL` */
 #define GITERR_SSL GIT_ERROR_SSL
+/** @deprecated use `GIT_ERROR_SUBMODULE` */
 #define GITERR_SUBMODULE GIT_ERROR_SUBMODULE
+/** @deprecated use `GIT_ERROR_THREAD` */
 #define GITERR_THREAD GIT_ERROR_THREAD
+/** @deprecated use `GIT_ERROR_STASH` */
 #define GITERR_STASH GIT_ERROR_STASH
+/** @deprecated use `GIT_ERROR_CHECKOUT` */
 #define GITERR_CHECKOUT GIT_ERROR_CHECKOUT
+/** @deprecated use `GIT_ERROR_FETCHHEAD` */
 #define GITERR_FETCHHEAD GIT_ERROR_FETCHHEAD
+/** @deprecated use `GIT_ERROR_MERGE` */
 #define GITERR_MERGE GIT_ERROR_MERGE
+/** @deprecated use `GIT_ERROR_SSH` */
 #define GITERR_SSH GIT_ERROR_SSH
+/** @deprecated use `GIT_ERROR_FILTER` */
 #define GITERR_FILTER GIT_ERROR_FILTER
+/** @deprecated use `GIT_ERROR_REVERT` */
 #define GITERR_REVERT GIT_ERROR_REVERT
+/** @deprecated use `GIT_ERROR_CALLBACK` */
 #define GITERR_CALLBACK GIT_ERROR_CALLBACK
+/** @deprecated use `GIT_ERROR_CHERRYPICK` */
 #define GITERR_CHERRYPICK GIT_ERROR_CHERRYPICK
+/** @deprecated use `GIT_ERROR_DESCRIBE` */
 #define GITERR_DESCRIBE GIT_ERROR_DESCRIBE
+/** @deprecated use `GIT_ERROR_REBASE` */
 #define GITERR_REBASE GIT_ERROR_REBASE
+/** @deprecated use `GIT_ERROR_FILESYSTEM` */
 #define GITERR_FILESYSTEM GIT_ERROR_FILESYSTEM
+/** @deprecated use `GIT_ERROR_PATCH` */
 #define GITERR_PATCH GIT_ERROR_PATCH
+/** @deprecated use `GIT_ERROR_WORKTREE` */
 #define GITERR_WORKTREE GIT_ERROR_WORKTREE
+/** @deprecated use `GIT_ERROR_SHA1` */
 #define GITERR_SHA1 GIT_ERROR_SHA1
+/** @deprecated use `GIT_ERROR_SHA` */
+#define GIT_ERROR_SHA1 GIT_ERROR_SHA
 
 /**
  * Return the last `git_error` object that was generated for the
@@ -216,7 +503,7 @@ typedef git_configmap git_cvar_map;
 GIT_EXTERN(const git_error *) giterr_last(void);
 
 /**
- * Clear the last error.  This is an alias of `git_error_last` and is
+ * Clear the last error.  This is an alias of `git_error_clear` and is
  * preserved for backward compatibility.
  *
  * This function is deprecated, but there is no plan to remove this
@@ -264,37 +551,63 @@ GIT_EXTERN(void) giterr_set_oom(void);
  */
 /**@{*/
 
+/* The git_idxentry_extended_flag_t enum */
+/** @deprecated use `GIT_INDEX_ENTRY_NAMEMASK` */
 #define GIT_IDXENTRY_NAMEMASK          GIT_INDEX_ENTRY_NAMEMASK
+/** @deprecated use `GIT_INDEX_ENTRY_STAGEMASK` */
 #define GIT_IDXENTRY_STAGEMASK         GIT_INDEX_ENTRY_STAGEMASK
+/** @deprecated use `GIT_INDEX_ENTRY_STAGESHIFT` */
 #define GIT_IDXENTRY_STAGESHIFT        GIT_INDEX_ENTRY_STAGESHIFT
 
 /* The git_indxentry_flag_t enum */
+/** @deprecated use `GIT_INDEX_ENTRY_EXTENDED` */
 #define GIT_IDXENTRY_EXTENDED          GIT_INDEX_ENTRY_EXTENDED
+/** @deprecated use `GIT_INDEX_ENTRY_VALID` */
 #define GIT_IDXENTRY_VALID             GIT_INDEX_ENTRY_VALID
 
+/** @deprecated use `GIT_INDEX_ENTRY_STAGE` */
 #define GIT_IDXENTRY_STAGE(E)          GIT_INDEX_ENTRY_STAGE(E)
+/** @deprecated use `GIT_INDEX_ENTRY_STAGE_SET` */
 #define GIT_IDXENTRY_STAGE_SET(E,S)    GIT_INDEX_ENTRY_STAGE_SET(E,S)
 
 /* The git_idxentry_extended_flag_t enum */
+/** @deprecated use `GIT_INDEX_ENTRY_INTENT_TO_ADD` */
 #define GIT_IDXENTRY_INTENT_TO_ADD     GIT_INDEX_ENTRY_INTENT_TO_ADD
+/** @deprecated use `GIT_INDEX_ENTRY_SKIP_WORKTREE` */
 #define GIT_IDXENTRY_SKIP_WORKTREE     GIT_INDEX_ENTRY_SKIP_WORKTREE
+/** @deprecated use `GIT_INDEX_ENTRY_INTENT_TO_ADD | GIT_INDEX_ENTRY_SKIP_WORKTREE` */
 #define GIT_IDXENTRY_EXTENDED_FLAGS    (GIT_INDEX_ENTRY_INTENT_TO_ADD | GIT_INDEX_ENTRY_SKIP_WORKTREE)
+/** @deprecated this value is not public */
 #define GIT_IDXENTRY_EXTENDED2         (1 << 15)
+/** @deprecated this value is not public */
 #define GIT_IDXENTRY_UPDATE            (1 << 0)
+/** @deprecated this value is not public */
 #define GIT_IDXENTRY_REMOVE            (1 << 1)
+/** @deprecated this value is not public */
 #define GIT_IDXENTRY_UPTODATE          (1 << 2)
+/** @deprecated this value is not public */
 #define GIT_IDXENTRY_ADDED             (1 << 3)
+/** @deprecated this value is not public */
 #define GIT_IDXENTRY_HASHED            (1 << 4)
+/** @deprecated this value is not public */
 #define GIT_IDXENTRY_UNHASHED          (1 << 5)
+/** @deprecated this value is not public */
 #define GIT_IDXENTRY_WT_REMOVE         (1 << 6)
+/** @deprecated this value is not public */
 #define GIT_IDXENTRY_CONFLICTED        (1 << 7)
+/** @deprecated this value is not public */
 #define GIT_IDXENTRY_UNPACKED          (1 << 8)
+/** @deprecated this value is not public */
 #define GIT_IDXENTRY_NEW_SKIP_WORKTREE (1 << 9)
 
 /* The git_index_capability_t enum */
+/** @deprecated use `GIT_INDEX_CAPABILITY_IGNORE_CASE` */
 #define GIT_INDEXCAP_IGNORE_CASE       GIT_INDEX_CAPABILITY_IGNORE_CASE
+/** @deprecated use `GIT_INDEX_CAPABILITY_NO_FILEMODE` */
 #define GIT_INDEXCAP_NO_FILEMODE       GIT_INDEX_CAPABILITY_NO_FILEMODE
+/** @deprecated use `GIT_INDEX_CAPABILITY_NO_SYMLINKS` */
 #define GIT_INDEXCAP_NO_SYMLINKS       GIT_INDEX_CAPABILITY_NO_SYMLINKS
+/** @deprecated use `GIT_INDEX_CAPABILITY_FROM_OWNER` */
 #define GIT_INDEXCAP_FROM_OWNER        GIT_INDEX_CAPABILITY_FROM_OWNER
 
 GIT_EXTERN(int) git_index_add_frombuffer(
@@ -314,17 +627,28 @@ GIT_EXTERN(int) git_index_add_frombuffer(
  */
 /**@{*/
 
+/** @deprecate use `git_object_t` */
 #define git_otype git_object_t
 
+/** @deprecate use `GIT_OBJECT_ANY` */
 #define GIT_OBJ_ANY GIT_OBJECT_ANY
+/** @deprecate use `GIT_OBJECT_INVALID` */
 #define GIT_OBJ_BAD GIT_OBJECT_INVALID
+/** @deprecated this value is not public */
 #define GIT_OBJ__EXT1 0
+/** @deprecate use `GIT_OBJECT_COMMIT` */
 #define GIT_OBJ_COMMIT GIT_OBJECT_COMMIT
+/** @deprecate use `GIT_OBJECT_TREE` */
 #define GIT_OBJ_TREE GIT_OBJECT_TREE
+/** @deprecate use `GIT_OBJECT_BLOB` */
 #define GIT_OBJ_BLOB GIT_OBJECT_BLOB
+/** @deprecate use `GIT_OBJECT_TAG` */
 #define GIT_OBJ_TAG GIT_OBJECT_TAG
+/** @deprecated this value is not public */
 #define GIT_OBJ__EXT2 5
+/** @deprecate use `GIT_OBJECT_OFS_DELTA` */
 #define GIT_OBJ_OFS_DELTA GIT_OBJECT_OFS_DELTA
+/** @deprecate use `GIT_OBJECT_REF_DELTA` */
 #define GIT_OBJ_REF_DELTA GIT_OBJECT_REF_DELTA
 
 /**
@@ -376,17 +700,27 @@ GIT_EXTERN(int) git_remote_is_valid_name(const char *remote_name);
 /**@{*/
 
  /** Basic type of any Git reference. */
+/** @deprecate use `git_reference_t` */
 #define git_ref_t git_reference_t
+/** @deprecate use `git_reference_format_t` */
 #define git_reference_normalize_t git_reference_format_t
 
+/** @deprecate use `GIT_REFERENCE_INVALID` */
 #define GIT_REF_INVALID GIT_REFERENCE_INVALID
+/** @deprecate use `GIT_REFERENCE_DIRECT` */
 #define GIT_REF_OID GIT_REFERENCE_DIRECT
+/** @deprecate use `GIT_REFERENCE_SYMBOLIC` */
 #define GIT_REF_SYMBOLIC GIT_REFERENCE_SYMBOLIC
+/** @deprecate use `GIT_REFERENCE_ALL` */
 #define GIT_REF_LISTALL GIT_REFERENCE_ALL
 
+/** @deprecate use `GIT_REFERENCE_FORMAT_NORMAL` */
 #define GIT_REF_FORMAT_NORMAL GIT_REFERENCE_FORMAT_NORMAL
+/** @deprecate use `GIT_REFERENCE_FORMAT_ALLOW_ONELEVEL` */
 #define GIT_REF_FORMAT_ALLOW_ONELEVEL GIT_REFERENCE_FORMAT_ALLOW_ONELEVEL
+/** @deprecate use `GIT_REFERENCE_FORMAT_REFSPEC_PATTERN` */
 #define GIT_REF_FORMAT_REFSPEC_PATTERN GIT_REFERENCE_FORMAT_REFSPEC_PATTERN
+/** @deprecate use `GIT_REFERENCE_FORMAT_REFSPEC_SHORTHAND` */
 #define GIT_REF_FORMAT_REFSPEC_SHORTHAND GIT_REFERENCE_FORMAT_REFSPEC_SHORTHAND
 
 /**
@@ -414,6 +748,28 @@ GIT_EXTERN(int) git_tag_create_frombuffer(
 
 /**@}*/
 
+/** @name Deprecated Revspec Constants
+ *
+ * These enumeration values are retained for backward compatibility.
+ * The newer versions of these values should be preferred in all new
+ * code.
+ *
+ * There is no plan to remove these backward compatibility values at
+ * this time.
+ */
+/**@{*/
+
+typedef git_revspec_t git_revparse_mode_t;
+
+/** @deprecated use `GIT_REVSPEC_SINGLE` */
+#define GIT_REVPARSE_SINGLE GIT_REVSPEC_SINGLE
+/** @deprecated use `GIT_REVSPEC_RANGE` */
+#define GIT_REVPARSE_RANGE GIT_REVSPEC_RANGE
+/** @deprecated use `GIT_REVSPEC_MERGE_BASE` */
+#define GIT_REVPARSE_MERGE_BASE GIT_REVSPEC_MERGE_BASE
+
+/**@}*/
+
 /** @name Deprecated Credential Types
  *
  * These types are retained for backward compatibility.  The newer
@@ -422,6 +778,7 @@ GIT_EXTERN(int) git_tag_create_frombuffer(
  * There is no plan to remove these backward compatibility values at
  * this time.
  */
+/**@{*/
 
 typedef git_credential git_cred;
 typedef git_credential_userpass_plaintext git_cred_userpass_plaintext;
@@ -437,14 +794,22 @@ typedef git_credential_sign_cb git_cred_sign_cb;
 typedef git_credential_ssh_interactive_cb git_cred_ssh_interactive_callback;
 typedef git_credential_ssh_interactive_cb git_cred_ssh_interactive_cb;
 
+/** @deprecated use `git_credential_t` */
 #define git_credtype_t git_credential_t
 
+/** @deprecated use `GIT_CREDENTIAL_USERPASS_PLAINTEXT` */
 #define GIT_CREDTYPE_USERPASS_PLAINTEXT GIT_CREDENTIAL_USERPASS_PLAINTEXT
+/** @deprecated use `GIT_CREDENTIAL_SSH_KEY` */
 #define GIT_CREDTYPE_SSH_KEY GIT_CREDENTIAL_SSH_KEY
+/** @deprecated use `GIT_CREDENTIAL_SSH_CUSTOM` */
 #define GIT_CREDTYPE_SSH_CUSTOM GIT_CREDENTIAL_SSH_CUSTOM
+/** @deprecated use `GIT_CREDENTIAL_DEFAULT` */
 #define GIT_CREDTYPE_DEFAULT GIT_CREDENTIAL_DEFAULT
+/** @deprecated use `GIT_CREDENTIAL_SSH_INTERACTIVE` */
 #define GIT_CREDTYPE_SSH_INTERACTIVE GIT_CREDENTIAL_SSH_INTERACTIVE
+/** @deprecated use `GIT_CREDENTIAL_USERNAME` */
 #define GIT_CREDTYPE_USERNAME GIT_CREDENTIAL_USERNAME
+/** @deprecated use `GIT_CREDENTIAL_SSH_MEMORY` */
 #define GIT_CREDTYPE_SSH_MEMORY GIT_CREDENTIAL_SSH_MEMORY
 
 GIT_EXTERN(void) git_cred_free(git_credential *cred);
@@ -521,7 +886,40 @@ typedef git_trace_cb git_trace_callback;
  */
 /**@{*/
 
+#ifndef GIT_EXPERIMENTAL_SHA256
+/** Deprecated OID "raw size" definition */
+# define GIT_OID_RAWSZ    GIT_OID_SHA1_SIZE
+/** Deprecated OID "hex size" definition */
+# define GIT_OID_HEXSZ    GIT_OID_SHA1_HEXSIZE
+/** Deprecated OID "hex zero" definition */
+# define GIT_OID_HEX_ZERO GIT_OID_SHA1_HEXZERO
+#endif
+
 GIT_EXTERN(int) git_oid_iszero(const git_oid *id);
+
+/**@}*/
+
+/** @name Deprecated OID Array Functions
+ *
+ * These types are retained for backward compatibility.  The newer
+ * versions of these values should be preferred in all new code.
+ *
+ * There is no plan to remove these backward compatibility values at
+ * this time.
+ */
+/**@{*/
+
+/**
+ * Free the memory referred to by the git_oidarray.  This is an alias of
+ * `git_oidarray_dispose` and is preserved for backward compatibility.
+ *
+ * This function is deprecated, but there is no plan to remove this
+ * function at this time.
+ *
+ * @deprecated Use git_oidarray_dispose
+ * @see git_oidarray_dispose
+ */
+GIT_EXTERN(void) git_oidarray_free(git_oidarray *array);
 
 /**@}*/
 
@@ -603,6 +1001,24 @@ GIT_EXTERN(int) git_strarray_copy(git_strarray *tgt, const git_strarray *src);
  * @see git_strarray_dispose
  */
 GIT_EXTERN(void) git_strarray_free(git_strarray *array);
+
+/**@}*/
+
+/** @name Deprecated Version Constants
+ *
+ * These constants are retained for backward compatibility.  The newer
+ * versions of these constants should be preferred in all new code.
+ *
+ * There is no plan to remove these backward compatibility constants at
+ * this time.
+ */
+/**@{*/
+
+#define LIBGIT2_VER_MAJOR      LIBGIT2_VERSION_MAJOR
+#define LIBGIT2_VER_MINOR      LIBGIT2_VERSION_MINOR
+#define LIBGIT2_VER_REVISION   LIBGIT2_VERSION_REVISION
+#define LIBGIT2_VER_PATCH      LIBGIT2_VERSION_PATCH
+#define LIBGIT2_VER_PRERELEASE LIBGIT2_VERSION_PRERELEASE
 
 /**@}*/
 

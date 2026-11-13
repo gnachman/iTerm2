@@ -10,6 +10,13 @@
 #include "common.h"
 #include "oid.h"
 
+/**
+ * @file git2/oidarray.h
+ * @brief An array of object IDs
+ * @defgroup git_oidarray Arrays of object IDs
+ * @ingroup Git
+ * @{
+ */
 GIT_BEGIN_DECL
 
 /** Array of object ids */
@@ -19,22 +26,18 @@ typedef struct git_oidarray {
 } git_oidarray;
 
 /**
- * Free the OID array
- *
- * This method must (and must only) be called on `git_oidarray`
- * objects where the array is allocated by the library. Not doing so,
- * will result in a memory leak.
+ * Free the object IDs contained in an oid_array.  This method should
+ * be called on `git_oidarray` objects that were provided by the
+ * library.  Not doing so will result in a memory leak.
  *
  * This does not free the `git_oidarray` itself, since the library will
- * never allocate that object directly itself (it is more commonly embedded
- * inside another struct or created on the stack).
+ * never allocate that object directly itself.
  *
  * @param array git_oidarray from which to free oid data
  */
-GIT_EXTERN(void) git_oidarray_free(git_oidarray *array);
+GIT_EXTERN(void) git_oidarray_dispose(git_oidarray *array);
 
 /** @} */
 GIT_END_DECL
 
 #endif
-

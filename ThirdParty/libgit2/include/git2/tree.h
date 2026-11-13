@@ -14,8 +14,8 @@
 
 /**
  * @file git2/tree.h
- * @brief Git tree parsing, loading routines
- * @defgroup git_tree Git tree parsing, loading routines
+ * @brief Trees are collections of files and folders to make up the repository hierarchy
+ * @defgroup git_tree Trees are collections of files and folders to make up the repository hierarchy
  * @ingroup Git
  * @{
  */
@@ -24,7 +24,7 @@ GIT_BEGIN_DECL
 /**
  * Lookup a tree object from the repository.
  *
- * @param out Pointer to the looked up tree
+ * @param[out] out Pointer to the looked up tree
  * @param repo The repo to use when locating the tree.
  * @param id Identity of the tree to locate.
  * @return 0 or an error code
@@ -255,7 +255,7 @@ GIT_EXTERN(int) git_treebuilder_new(
 	git_treebuilder **out, git_repository *repo, const git_tree *source);
 
 /**
- * Clear all the entires in the builder
+ * Clear all the entries in the builder
  *
  * @param bld Builder to clear
  * @return 0 on success; error code otherwise
@@ -334,6 +334,7 @@ GIT_EXTERN(int) git_treebuilder_insert(
  *
  * @param bld Tree builder
  * @param filename Filename of the entry to remove
+ * @return 0 or an error code
  */
 GIT_EXTERN(int) git_treebuilder_remove(
 	git_treebuilder *bld, const char *filename);
@@ -344,6 +345,10 @@ GIT_EXTERN(int) git_treebuilder_remove(
  * The return value is treated as a boolean, with zero indicating that the
  * entry should be left alone and any non-zero value meaning that the
  * entry should be removed from the treebuilder list (i.e. filtered out).
+ *
+ * @param entry the tree entry for the callback to examine
+ * @param payload the payload from the caller
+ * @return 0 to do nothing, non-zero to remove the entry
  */
 typedef int GIT_CALLBACK(git_treebuilder_filter_cb)(
 	const git_tree_entry *entry, void *payload);
@@ -379,27 +384,20 @@ GIT_EXTERN(int) git_treebuilder_write(
 	git_oid *id, git_treebuilder *bld);
 
 /**
- * Write the contents of the tree builder as a tree object
- * using a shared git_buf.
+ * Callback for the tree traversal method.
  *
- * @see git_treebuilder_write
- *
- * @param oid Pointer to store the OID of the newly written tree
- * @param bld Tree builder to write
- * @param tree Shared buffer for writing the tree. Will be grown as necessary.
- * @return 0 or an error code
+ * @param root the current (relative) root to the entry
+ * @param entry the tree entry
+ * @param payload the caller-provided callback payload
+ * @return a positive value to skip the entry, a negative value to stop the walk
  */
-GIT_EXTERN(int) git_treebuilder_write_with_buffer(
-	git_oid *oid, git_treebuilder *bld, git_buf *tree);
-
-/** Callback for the tree traversal method */
 typedef int GIT_CALLBACK(git_treewalk_cb)(
 	const char *root, const git_tree_entry *entry, void *payload);
 
 /** Tree traversal modes */
 typedef enum {
 	GIT_TREEWALK_PRE = 0, /* Pre-order */
-	GIT_TREEWALK_POST = 1, /* Post-order */
+	GIT_TREEWALK_POST = 1 /* Post-order */
 } git_treewalk_mode;
 
 /**
@@ -431,6 +429,7 @@ GIT_EXTERN(int) git_tree_walk(
  *
  * @param out Pointer to store the copy of the tree
  * @param source Original tree to copy
+ * @return 0
  */
 GIT_EXTERN(int) git_tree_dup(git_tree **out, git_tree *source);
 
@@ -441,7 +440,7 @@ typedef enum {
 	/** Update or insert an entry at the specified path */
 	GIT_TREE_UPDATE_UPSERT,
 	/** Remove an entry from the specified path */
-	GIT_TREE_UPDATE_REMOVE,
+	GIT_TREE_UPDATE_REMOVE
 } git_tree_update_t;
 
 /**
@@ -477,10 +476,11 @@ typedef struct {
  * @param baseline the tree to base these changes on
  * @param nupdates the number of elements in the update list
  * @param updates the list of updates to perform
+ * @return 0 or an error code
  */
 GIT_EXTERN(int) git_tree_create_updated(git_oid *out, git_repository *repo, git_tree *baseline, size_t nupdates, const git_tree_update *updates);
 
 /** @} */
-
 GIT_END_DECL
+
 #endif
