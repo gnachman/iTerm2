@@ -5,6 +5,12 @@
       "comment": "Class = \"NSMenuItem\"; title = \"Smart Case Substring\"; ObjectID = \"16\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delstreng, smart store/små bogstaver"
+          }
+        },
         "de": {
           "stringUnit": {
             "state": "translated",
@@ -107,6 +113,12 @@
       "comment": "Class = \"NSMenuItem\"; title = \"Erase Search History\"; ObjectID = \"6DZ-ad-yVz\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slet søgehistorik"
+          }
+        },
         "de": {
           "stringUnit": {
             "state": "translated",
@@ -209,6 +221,12 @@
       "comment": "Class = \"NSMenuItem\"; title = \"Case-Insensitive Substring\"; ObjectID = \"6Px-6a-JTm\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delstreng, ignorer store/små bogstaver"
+          }
+        },
         "de": {
           "stringUnit": {
             "state": "translated",
@@ -311,6 +329,12 @@
       "comment": "Class = \"NSMenuItem\"; title = \"Case-Insensitive Regex\"; ObjectID = \"C2V-dA-zRG\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regex, ignorer store/små bogstaver"
+          }
+        },
         "de": {
           "stringUnit": {
             "state": "translated",
@@ -413,6 +437,12 @@
       "comment": "Class = \"NSMenuItem\"; title = \"Case-Sensitive Substring\"; ObjectID = \"IJN-DB-LJ2\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delstreng, forskel på store/små bogstaver"
+          }
+        },
         "de": {
           "stringUnit": {
             "state": "translated",
@@ -515,6 +545,12 @@
       "comment": "Class = \"NSMenuItem\"; title = \"Case-Sensitive Regex\"; ObjectID = \"s1o-x7-jkk\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regex, forskel på store/små bogstaver"
+          }
+        },
         "de": {
           "stringUnit": {
             "state": "translated",

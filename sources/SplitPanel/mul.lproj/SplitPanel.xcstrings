@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Split current pane XXXally\"; ObjectID = \"9\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opdel den aktuelle rude XXX"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -107,6 +113,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"10\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuller"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -209,6 +221,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Split\"; ObjectID = \"11\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opdel"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",

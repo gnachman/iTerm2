@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"%\"; ObjectID = \"4yt-Mn-eE0\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -107,6 +113,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"pt\"; ObjectID = \"9YR-jP-bZp\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pt"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -209,6 +221,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Maximum Width:\"; ObjectID = \"aOH-8A-NdL\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maksimal bredde:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -311,6 +329,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Top Margin:\"; ObjectID = \"IRy-Vu-Amx\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Margen foroven:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -413,6 +437,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Right Margin:\"; ObjectID = \"Lmx-Ar-Wkl\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Højre margen:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -515,6 +545,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"%\"; ObjectID = \"Mxx-AB-QVI\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -617,6 +653,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"OK\"; ObjectID = \"NmK-ja-Adb\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -719,6 +761,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"pt\"; ObjectID = \"R48-OO-NHL\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pt"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -821,6 +869,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Maximum Height:\"; ObjectID = \"VHg-jD-PO9\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maksimal højde:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -923,6 +977,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"yzX-Y9-9IP\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuller"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",

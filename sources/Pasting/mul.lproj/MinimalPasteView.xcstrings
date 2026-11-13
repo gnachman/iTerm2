@@ -5,6 +5,12 @@
       "comment": "Class = \"NSTextFieldCell\"; title = \"Pasting…\"; ObjectID = \"3\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indsætter…"
+          }
+        },
         "de": {
           "stringUnit": {
             "state": "translated",

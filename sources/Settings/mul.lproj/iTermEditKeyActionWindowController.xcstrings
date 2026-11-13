@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Move by Mark\"; ObjectID = \"cCu-Aq-YHj\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flyt pr. mærke"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -107,6 +113,12 @@
       "comment" : "Class = \"NSWindow\"; title = \"Set Keyboard Shortcut\"; ObjectID = \"F0z-JX-Cv5\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Angiv tastaturgenvej"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -209,6 +221,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"Fhv-Fo-bzd\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuller"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -311,6 +329,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Color Preset:\"; ObjectID = \"gdc-og-Wst\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farveforindstilling:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -413,6 +437,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Action:\"; ObjectID = \"GiU-A2-oLi\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Handling:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -515,6 +545,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; placeholderString = \"Label to show in Touch Bar\"; ObjectID = \"mYT-YJ-w7Z\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etiket, der vises i Touch Bar"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -617,6 +653,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Move by Character\"; ObjectID = \"nyw-Fu-OuP\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flyt pr. tegn"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -719,6 +761,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; placeholderString = \"ex: 0x7f\"; ObjectID = \"QTL-FQ-Diu\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "f.eks. 0x7f"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -821,6 +869,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Profile:\"; ObjectID = \"T00-UT-45K\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -923,6 +977,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Move by Word\"; ObjectID = \"Ujq-Yh-FZ2\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flyt pr. ord"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1025,6 +1085,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Error message goes here\"; ObjectID = \"v6X-rc-pu8\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fejlmeddelelsen står her"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1127,6 +1193,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Action:\"; ObjectID = \"vSP-yA-XuW\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Handling:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1229,6 +1301,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Esc+\"; ObjectID = \"WbG-ev-YAV\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esc+"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1331,6 +1409,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Keyboard Shortcut:\"; ObjectID = \"yKb-4m-EJs\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tastaturgenvej:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1433,6 +1517,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Move by Line\"; ObjectID = \"Ysw-TJ-E0w\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flyt pr. linje"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1535,6 +1625,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"OK\"; ObjectID = \"zMC-Yr-nMr\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",

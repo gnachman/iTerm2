@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Drag a component from the menu to Active Components to add it to your status bar.\"; ObjectID = \"0yl-ll-bce\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Træk en komponent fra menuen til Aktive komponenter for at føje den til din statuslinje."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -107,6 +113,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Prefer tight packing to stable positioning\"; ObjectID = \"5a8-iM-Enf\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foretræk tæt pakning frem for stabil placering"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -209,6 +221,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"OK\"; ObjectID = \"AKH-fX-DaK\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -311,6 +329,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Active Components\"; ObjectID = \"CB2-6V-rAj\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktive komponenter"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -413,6 +437,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Disabled\"; ObjectID = \"dl4-IN-dSo\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slået fra"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -515,6 +545,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Remove components with empty values\"; ObjectID = \"eaY-DS-MPQ\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fjern komponenter med tomme værdier"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -617,6 +653,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Draw separator between status bar and terminal\"; ObjectID = \"F1I-DI-vaO\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tegn skillelinje mellem statuslinjen og terminalen"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -719,6 +761,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Automatic\"; ObjectID = \"Fy4-yN-EYh\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisk"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -821,6 +869,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Status Bar Component Menu\"; ObjectID = \"Gvg-gH-qBh\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menu med statuslinjekomponenter"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -923,6 +977,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Advanced…\"; ObjectID = \"gwQ-ex-Mu1\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avanceret…"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1025,6 +1085,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"The tight packing algorithm allows more status bar components to be visible at a time but they tend to jump around more.\"; ObjectID = \"h3F-Ct-TxA\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algoritmen med tæt pakning gør det muligt at se flere statuslinjekomponenter ad gangen, men de har tendens til at hoppe mere rundt."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1127,6 +1193,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"🌈 Auto-Rainbow:\"; ObjectID = \"HTz-sS-eZA\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌈 Automatisk regnbue:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1229,6 +1301,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Font name goes here\"; ObjectID = \"hYG-rt-3qI\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skriftnavnet står her"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1331,6 +1409,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Dark Colors\"; ObjectID = \"jgD-En-XDb\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mørke farver"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1433,6 +1517,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Change\"; ObjectID = \"jOE-EE-nKA\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skift"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1535,6 +1625,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Default Text Color:\"; ObjectID = \"k1V-lZ-LEe\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standardtekstfarve:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1637,6 +1733,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Configure Component\"; ObjectID = \"KIr-xD-7ke\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konfigurer komponent"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1739,6 +1841,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"The tight packing algorithm allows more status bar components to be visible at a time but they tend to jump around more.\"; ObjectID = \"kXu-5A-6d1\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algoritmen med tæt pakning gør det muligt at se flere statuslinjekomponenter ad gangen, men de har tendens til at hoppe mere rundt."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1841,6 +1949,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Separator Color:\"; ObjectID = \"M3o-TT-tkC\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farve på skillelinje:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1943,6 +2057,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"Mzu-7J-rGb\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuller"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2045,6 +2165,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Light Colors\"; ObjectID = \"pjM-aG-lDH\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lyse farver"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2147,6 +2273,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Font:\"; ObjectID = \"Rgf-Sg-NLL\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrift:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2249,6 +2381,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Background Color:\"; ObjectID = \"UMd-lv-UJj\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Baggrundsfarve:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2351,6 +2489,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"OK\"; ObjectID = \"w0j-Sf-5ih\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2453,6 +2597,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Draws a thin line between the status bar and the terminal content.\"; ObjectID = \"ZqX-2h-twi\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tegner en tynd linje mellem statuslinjen og terminalens indhold."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",

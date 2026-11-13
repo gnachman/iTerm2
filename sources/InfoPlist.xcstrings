@@ -18,6 +18,12 @@
       "comment" : "Bundle name",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -120,6 +126,12 @@
       "comment" : "Privacy - AppleEvents Sending Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Et program i iTerm2 vil bruge AppleScript."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -222,6 +234,12 @@
       "comment" : "Privacy - Bluetooth Always Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Et program i iTerm2 vil bruge Bluetooth."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -324,6 +342,12 @@
       "comment" : "Privacy - Calendars Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Et program i iTerm2 vil bruge data fra Kalender."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -426,6 +450,12 @@
       "comment" : "Privacy - Camera Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Et program i iTerm2 vil bruge kameraet."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -528,6 +558,12 @@
       "comment" : "Privacy - Contacts Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Et program i iTerm2 vil bruge dine kontakter."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -630,6 +666,12 @@
       "comment" : "Copyright (human-readable)",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPL v2"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -732,6 +774,12 @@
       "comment" : "Privacy - Local Network Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Et program i iTerm2 vil have adgang til det lokale netværk."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -834,6 +882,12 @@
       "comment" : "Privacy - Location Always Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Et program i iTerm2 vil bruge oplysninger om din lokalitet, også i baggrunden."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -936,6 +990,12 @@
       "comment" : "Privacy - Location Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Et program i iTerm2 vil bruge oplysninger om din lokalitet."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1038,6 +1098,12 @@
       "comment" : "Privacy - Location When In Use Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Et program i iTerm2 vil bruge oplysninger om din lokalitet, mens det er aktivt."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1140,6 +1206,12 @@
       "comment" : "Privacy - Microphone Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Et program i iTerm2 vil bruge din mikrofon."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1242,6 +1314,12 @@
       "comment" : "Privacy - Photo Library Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Et program i iTerm2 vil bruge fotobiblioteket."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1344,6 +1422,12 @@
       "comment" : "Privacy - Reminders Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Et program i iTerm2 vil bruge dine påmindelser."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1446,6 +1530,12 @@
       "comment" : "Privacy - Speech Recognition Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Et program i iTerm2 vil bruge talegenkendelse."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1548,6 +1638,12 @@
       "comment" : "Privacy - System Administration Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Handlingen, som et program i iTerm2 udfører, kræver forhøjet tilladelse."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",

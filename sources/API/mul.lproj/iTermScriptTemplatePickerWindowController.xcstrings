@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"A simple script that doesn't have any dependencies besides the iterm2 library.\"; ObjectID = \"0PH-7V-7pR\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En enkel instruks uden andre afhængigheder end iterm2-biblioteket."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -107,6 +113,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"😈\"; ObjectID = \"3cc-Nd-Tie\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😈"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -209,6 +221,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Basic\"; ObjectID = \"4Ao-3N-cjn\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grundlæggende"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -311,6 +329,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"😊\"; ObjectID = \"8LH-HR-XoS\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😊"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -413,6 +437,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Long-Running Daemon\"; ObjectID = \"Bvi-lb-MnN\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langtidskørende daemon"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -515,6 +545,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Simple\"; ObjectID = \"erL-4L-rkl\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enkel"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -617,6 +653,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"hm4-4H-MvX\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuller"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -719,6 +761,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Choose this template for a simple script that performs actions and terminates.\"; ObjectID = \"keb-oF-eRS\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vælg denne skabelon til en enkel instruks, der udfører handlinger og afsluttes."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -821,6 +869,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"A script that depends on PyPI packages other than the iterm2 library. A private pyenv will be created for this script.\"; ObjectID = \"mIg-Ye-rwA\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En instruks, der afhænger af andre PyPI-pakker end iterm2-biblioteket. Der oprettes et privat pyenv til denne instruks."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -923,6 +977,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"🔗\"; ObjectID = \"nKj-9L-NfW\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔗"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1025,6 +1085,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Choose a script template:\"; ObjectID = \"Qv1-jV-kL5\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vælg en instrukskabelon:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1127,6 +1193,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Full Environment\"; ObjectID = \"vJf-M0-oyN\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fuldt miljø"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1229,6 +1301,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Choose this template for a script that stays running and responds to notifications.\"; ObjectID = \"vRx-t4-Url\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vælg denne skabelon til en instruks, der bliver ved med at køre og reagerer på notifikationer."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1331,6 +1409,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"🛠️\"; ObjectID = \"yaQ-52-C21\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛠️"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1433,6 +1517,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Choose a Python environment:\"; ObjectID = \"zMT-9q-c4b\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vælg et Python-miljø:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",

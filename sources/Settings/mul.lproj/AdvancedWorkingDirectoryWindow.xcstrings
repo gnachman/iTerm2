@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Reuse previous session's directory\"; ObjectID = \"5JZ-fv-M9U\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genbrug forrige sessions mappe"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -107,6 +113,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Home directory\"; ObjectID = \"6mB-LP-747\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hjemmemappe"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -209,6 +221,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Working Directory for New Tabs\"; ObjectID = \"8Os-WL-DkE\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arbejdsmappe til nye faner"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -311,6 +329,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Radio\"; ObjectID = \"BSH-xK-ICw\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -413,6 +437,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Working Directory for New Windows\"; ObjectID = \"buH-xK-CVR\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arbejdsmappe til nye vinduer"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -515,6 +545,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Reuse previous session's directory\"; ObjectID = \"dfK-M9-Uwn\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genbrug forrige sessions mappe"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -617,6 +653,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Radio\"; ObjectID = \"fDX-Cg-ad9\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -719,6 +761,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Reuse previous session's directory\"; ObjectID = \"ffv-Al-noL\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genbrug forrige sessions mappe"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -821,6 +869,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Directory:\"; ObjectID = \"Ieo-mE-vpq\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mappe:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -923,6 +977,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Working Directory for New Split Panes\"; ObjectID = \"MWK-km-GHQ\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arbejdsmappe til nye opdelte ruder"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1025,6 +1085,12 @@
       "comment" : "Class = \"NSWindow\"; title = \"Advanced Working Directory Settings\"; ObjectID = \"nKk-F6-OG0\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avancerede indstillinger for arbejdsmappe"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1127,6 +1193,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Directory:\"; ObjectID = \"nUw-Py-iKc\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mappe:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1229,6 +1301,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Directory:\"; ObjectID = \"SD9-ei-Zdb\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mappe:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1331,6 +1409,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Radio\"; ObjectID = \"VBx-Lu-ahF\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1433,6 +1517,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Home directory\"; ObjectID = \"yO6-Oa-WJ3\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hjemmemappe"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1535,6 +1625,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Home directory\"; ObjectID = \"Ziq-3t-wcN\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hjemmemappe"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1637,6 +1733,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"OK\"; ObjectID = \"zkM-uf-Mpi\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",

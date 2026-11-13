@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSTabViewItem\"; label = \"Description\"; ObjectID = \"11\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beskrivelse"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -107,6 +113,12 @@
       "comment" : "Class = \"NSTabViewItem\"; label = \"Crash Log\"; ObjectID = \"12\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nedbrudslog"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -209,6 +221,12 @@
       "comment" : "Class = \"NSWindow\"; title = \"Crash Reporter\"; ObjectID = \"5\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nedbrudsrapportering"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -311,6 +329,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"It appears that {APPNAME} crashed the last time it was used. Do you want to send a crash log to the developers?\\n\\nCrash logs from Apple are not sent to other developers, so this is the only way the developers of {APPNAME} can find out about and fix this crash.\"; ObjectID = \"84\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Det ser ud til, at {APPNAME} gik ned, sidste gang det blev brugt. Vil du sende en nedbrudslog til udviklerne?\n\nNedbrudslogs fra Apple sendes ikke til andre udviklere, så det er den eneste måde, udviklerne af {APPNAME} kan få kendskab til og rette dette nedbrud på."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -413,6 +437,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"You can delete any information you do not want transmitted, but this will make it more difficult to detect the bug. By default, the crash log as well as what Mac you are using and your settings are transmitted.\"; ObjectID = \"85\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du kan slette alle oplysninger, du ikke vil have sendt, men det gør det sværere at finde fejlen. Som standard sendes nedbrudslogen samt oplysninger om, hvilken Mac du bruger, og dine indstillinger."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -515,6 +545,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Send\"; ObjectID = \"86\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -617,6 +653,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Remind Me Later\"; ObjectID = \"87\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Påmind mig senere"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -719,6 +761,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Discard\"; ObjectID = \"88\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kassér"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",

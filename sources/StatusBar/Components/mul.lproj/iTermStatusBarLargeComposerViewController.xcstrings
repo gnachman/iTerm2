@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"AI completion enabled: all text sent to AI\"; ObjectID = \"d6h-kf-O57\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI-fuldførelse slået til: al tekst sendes til AI"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -107,6 +113,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Describes how to use the composer.\"; ObjectID = \"Due-Dn-30r\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beskriver, hvordan kommandoeditoren bruges."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -209,6 +221,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Press ⇧↩ to send.\"; ObjectID = \"mjF-rO-FZ2\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tryk på ⇧↩ for at sende."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -311,6 +329,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"AI\"; ObjectID = \"zb3-gB-4Zi\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",

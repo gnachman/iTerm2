@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Case-Sensitive Substring\"; ObjectID = \"9a5-fE-FWY\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delstreng med forskel på store/små bogstaver"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -107,6 +113,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Smart Case Substring\"; ObjectID = \"9vm-lJ-Kqt\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delstreng med smart store/små bogstaver"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -209,6 +221,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Case-Sensitive Regex\"; ObjectID = \"a2M-Nc-Alm\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex med forskel på store/små bogstaver"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -311,6 +329,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Case-Insensitive Regex\"; ObjectID = \"elJ-Qs-6bJ\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex uden forskel på store/små bogstaver"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -413,6 +437,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Case-Insensitive Substring\"; ObjectID = \"Gve-ot-1QH\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delstreng uden forskel på store/små bogstaver"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -515,6 +545,12 @@
       "comment" : "Class = \"NSSearchFieldCell\"; placeholderString = \"Filter\"; ObjectID = \"KgY-y0-6XN\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrer"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",

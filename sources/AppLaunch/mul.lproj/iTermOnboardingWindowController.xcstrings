@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Use iTerm2 while you are apart from your Mac. You can control it via AI chat, view session content, and receive push notifications. End-to-end encryption keeps your data safe. <a href=\\\"iterm2whatsnew:companion\\\">Try it now!</a>\"; ObjectID = \"0Bk-78-p2L\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brug iTerm2, mens du er væk fra din Mac. Du kan styre den via AI-chat, se sessionsindhold og modtage push-notifikationer. Ende-til-ende-kryptering holder dine data sikre. <a href=\"iterm2whatsnew:companion\">Prøv det nu!</a>"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -107,6 +113,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"●\"; ObjectID = \"7s1-aT-qfO\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -209,6 +221,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"A new AI chat mode, Orchestration, lets AI run the show for you. It can create windows, wait for tasks to complete (even in interactive apps), and the new automatic safety checker relieves you of having to respond to almost all permission prompts. <a href=\\\"iterm2whatsnew:orchestration\\\">Try it now!</a>\"; ObjectID = \"a2B-NS-5LJ\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En ny AI-chattilstand, Orkestrering, lader AI styre det hele for dig. Den kan oprette vinduer, vente på, at opgaver bliver færdige (også i interaktive apps), og den nye automatiske sikkerhedskontrol fritager dig for at skulle svare på næsten alle tilladelsesprompter. <a href=\"iterm2whatsnew:orchestration\">Prøv det nu!</a>"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -311,6 +329,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"●\"; ObjectID = \"a3u-gh-khi\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -413,6 +437,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"The new Screenshots feature simplifies creating a PNG of your terminal content. It supports redactions and highlights. Use <a href=\\\"iterm2whatsnew:screenshot\\\">Session > Make Screenshot</a> to activate it.\"; ObjectID = \"d4H-cG-h3K\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den nye funktion Skærmbilleder gør det nemt at lave en PNG af dit terminalindhold. Den understøtter censurering og fremhævning. Brug <a href=\"iterm2whatsnew:screenshot\">Session > Tag skærmbillede</a> for at aktivere den."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -515,6 +545,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"What’s New in Version 3.7\"; ObjectID = \"Dih-Go-912\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nyheder i version 3.7"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -617,6 +653,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \">\"; ObjectID = \"f8J-e6-gm5\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ">"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -719,6 +761,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"●\"; ObjectID = \"fum-rI-3gd\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -821,6 +869,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Claude Code Integration\"; ObjectID = \"hKz-h7-CcP\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code-integration"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -923,6 +977,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"To help manage a large number of tabs, you can now combine tabs into collapsible groups. The tab bar now scrolls instead of showing an overflow menu, too.\"; ObjectID = \"HuW-TG-xrj\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "For at gøre det lettere at håndtere mange faner kan du nu kombinere faner i sammenfoldelige grupper. Fanelinjen ruller nu også i stedet for at vise en overløbsmenu."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1025,6 +1085,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"●\"; ObjectID = \"IHu-13-I9y\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1127,6 +1193,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"The Claude Code integration organizes multiple related sessions—such as code review and reading diffs—into a customizable UI. It also exposes Claude’s status so you can easily find instances that are blocked on your attention. <a href=\\\"iterm2whatsnew:claudecode\\\">Try it now!</a>\"; ObjectID = \"Lvg-vI-G64\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code-integrationen organiserer flere relaterede sessioner (som kodegennemgang og læsning af diffs) i en tilpasselig brugerflade. Den viser også Claudes status, så du let kan finde instanser, der venter på din opmærksomhed. <a href=\"iterm2whatsnew:claudecode\">Prøv det nu!</a>"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1229,6 +1301,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Companion iPhone App\"; ObjectID = \"LXN-RX-ZgC\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ledsagerapp til iPhone"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1331,6 +1409,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"●\"; ObjectID = \"N2h-T9-zrt\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1433,6 +1517,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Orchestration\"; ObjectID = \"OAI-gn-AQ7\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orkestrering"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1535,6 +1625,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Tab Groups\"; ObjectID = \"Qva-A1-Vbd\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fanegrupper"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1637,6 +1733,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Screenshots\"; ObjectID = \"VcV-iJ-Nlq\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skærmbilleder"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1739,6 +1841,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"<\"; ObjectID = \"VdW-Ng-Wlh\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",

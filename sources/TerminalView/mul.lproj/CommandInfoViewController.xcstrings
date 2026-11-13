@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"/directory\"; ObjectID = \"0w1-N3-vpN\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -107,6 +113,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Copy directory\"; ObjectID = \"2qj-sU-AUO\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopier mappe"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -209,6 +221,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"12 bytes\"; ObjectID = \"08U-bp-m38\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 byte"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -311,6 +329,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Select command’s output\"; ObjectID = \"ais-yY-bgC\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markér kommandoens output"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -413,6 +437,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"1h 35m\"; ObjectID = \"b7D-W4-4dx\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1t 35m"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -515,6 +545,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Output:\"; ObjectID = \"cYx-Tz-ls5\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Output:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -617,6 +653,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Copied\"; ObjectID = \"eS6-Vw-gbd\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopieret"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -719,6 +761,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Copy command to clipboard\"; ObjectID = \"gaG-d9-QES\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopier kommando til udklipsholderen"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -821,6 +869,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Started at %@\"; ObjectID = \"KCF-7e-H8C\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Startet %@"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -923,6 +977,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Open command in Composer\"; ObjectID = \"lEf-yQ-9GU\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åbn kommando i kommandoeditoren"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1025,6 +1085,12 @@
       "comment" : "Class = \"NSImageView\"; ibShadowedToolTip = \"Draggable Folder\"; ObjectID = \"lO8-vd-LCm\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mappe, der kan trækkes"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1127,6 +1193,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"command\"; ObjectID = \"MHQ-ga-Xvf\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kommando"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1229,6 +1301,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Write command to terminal\"; ObjectID = \"nN8-GS-lBf\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skriv kommando til terminalen"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1331,6 +1409,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Directory:\"; ObjectID = \"OEf-DH-Kf3\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mappe:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1433,6 +1517,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Return Code:\"; ObjectID = \"Oj2-Xr-SWy\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Returkode:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1535,6 +1625,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Write directory to terminal\"; ObjectID = \"Plm-e7-RFK\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skriv mappe til terminalen"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1637,6 +1733,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Running Time:\"; ObjectID = \"ueU-pI-V9e\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Køretid:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1739,6 +1841,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Copy command’s output\"; ObjectID = \"w1e-QE-s74\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopier kommandoens output"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1841,6 +1949,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Share command…\"; ObjectID = \"WLQ-uR-fm0\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Del kommando…"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1943,6 +2057,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Command:\"; ObjectID = \"Xwa-Sy-XcB\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kommando:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2045,6 +2165,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"127\"; ObjectID = \"YLQ-rO-0Mh\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2147,6 +2273,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Disable showing offscreen command\"; ObjectID = \"YSm-Mh-1SD\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slå visning af kommando uden for skærmen fra"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",

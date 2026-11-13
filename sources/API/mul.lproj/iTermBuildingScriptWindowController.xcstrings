@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Hang tight! Installing a new Python environment…\"; ObjectID = \"9NL-Qh-f9P\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vent lidt! Installerer et nyt Python-miljø…"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",

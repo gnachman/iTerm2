@@ -5,6 +5,12 @@
       "comment": "Class = \"NSTextFieldCell\"; title = \"iTerm2\"; ObjectID = \"U4n-GV-8aZ\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iTerm2"
+          }
+        },
         "de": {
           "stringUnit": {
             "state": "translated",
@@ -107,6 +113,12 @@
       "comment": "Class = \"NSTextFieldCell\"; title = \"By George Nachman and Contributors\"; ObjectID = \"XAW-F5-RXa\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Af George Nachman og bidragydere"
+          }
+        },
         "de": {
           "stringUnit": {
             "state": "translated",

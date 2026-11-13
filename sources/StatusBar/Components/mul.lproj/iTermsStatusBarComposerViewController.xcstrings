@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSComboBoxCell\"; dNz-i8-KYx.ibShadowedObjectValues[0] = \"Item 1\"; ObjectID = \"dNz-i8-KYx\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emne 1"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -107,6 +113,12 @@
       "comment" : "Class = \"NSComboBoxCell\"; dNz-i8-KYx.ibShadowedObjectValues[1] = \"Item 2\"; ObjectID = \"dNz-i8-KYx\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emne 2"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -209,6 +221,12 @@
       "comment" : "Class = \"NSComboBoxCell\"; dNz-i8-KYx.ibShadowedObjectValues[2] = \"Item 3\"; ObjectID = \"dNz-i8-KYx\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emne 3"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -311,6 +329,12 @@
       "comment" : "Class = \"NSComboBoxCell\"; placeholderString = \"Command\"; ObjectID = \"dNz-i8-KYx\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kommando"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",

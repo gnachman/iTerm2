@@ -100,6 +100,12 @@
             "state" : "translated",
             "value" : "狀態"
           }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
         }
       }
     },
@@ -202,6 +208,12 @@
             "state" : "translated",
             "value" : "正在匯入…"
           }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importerer…"
+          }
         }
       }
     },
@@ -303,6 +315,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在匯入設定和資料…"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importerer indstillinger og data…"
           }
         }
       }

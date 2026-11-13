@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSWindow\"; title = \"Open Quickly\"; ObjectID = \"F0z-JX-Cv5\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åbn hurtigt"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -107,6 +113,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Detail\"; ObjectID = \"NGu-Jc-J4f\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detaljer"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -209,6 +221,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; placeholderString = \"Search for sessions, profiles, or arrangements\"; ObjectID = \"ulN-O0-L4B\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Søg efter sessioner, profiler eller opstillinger"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",

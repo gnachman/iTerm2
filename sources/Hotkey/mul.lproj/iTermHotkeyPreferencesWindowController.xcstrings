@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"⌥ Option\"; ObjectID = \"2Tz-89-YHl\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Alternativ"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -107,6 +113,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Pin hotkey window (stays open on loss of keyboard focus)\"; ObjectID = \"3jk-f9-QFs\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fastgør genvejstastvindue (forbliver åbent, når tastaturfokus mistes)"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -209,6 +221,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Hotkey:\"; ObjectID = \"4F4-bg-0BG\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genvejstast:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -311,6 +329,12 @@
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Note: the window is reopened only if it was closed because another app became active.\"; ObjectID = \"6tA-bg-olR\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bemærk: Vinduet åbnes kun igen, hvis det blev lukket, fordi et andet program blev aktivt."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -413,6 +437,12 @@
       "comment" : "Class = \"NSWindow\"; title = \"Additional Hotkeys\"; ObjectID = \"bEG-lb-Vft\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yderligere genvejstaster"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -515,6 +545,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"When you press the hotkey bound to this profile a dedicated window will show or hide. Each profile with a hotkey controls its own Hotkey Window.\"; ObjectID = \"dHI-y9-qMI\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Når du trykker på den genvejstast, der er knyttet til denne profil, vises eller skjules et dedikeret vindue. Hver profil med en genvejstast styrer sit eget genvejstastvindue."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -617,6 +653,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Don’t do anything special\"; ObjectID = \"EOt-Jx-9Xl\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gør ikke noget særligt"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -719,6 +761,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"⚠️\"; ObjectID = \"FSQ-IF-ujS\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -821,6 +869,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Show this Hotkey Window\"; ObjectID = \"Hhf-xq-TzE\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vis dette genvejstastvindue"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -923,6 +977,12 @@
       "comment" : "Class = \"NSWindow\"; title = \"HotKey Window Preferences\"; ObjectID = \"J17-Oy-pHl\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indstillinger for genvejstastvindue"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1025,6 +1085,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"⌘ Command\"; ObjectID = \"Jg9-HV-xDm\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Kommando"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1127,6 +1193,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"⚠️ Another profile uses this shortcut\"; ObjectID = \"kMo-jN-Ngc\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ En anden profil bruger denne genvej"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1229,6 +1301,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"⇧ Shift\"; ObjectID = \"l57-vU-TNJ\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Skift"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1331,6 +1409,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Double-tap key:\"; ObjectID = \"lBc-Et-eAS\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tast til dobbelttryk:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1433,6 +1517,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Automatically reopen on app reactivation\"; ObjectID = \"mrJ-OA-dYl\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åbn automatisk igen, når programmet genaktiveres"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1535,6 +1625,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"⚠️ Another profile uses this double-tap\"; ObjectID = \"mtg-a1-mt3\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ En anden profil bruger dette dobbelttryk"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1637,6 +1733,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Show this Hotkey Window if no other window is open\"; ObjectID = \"Njf-zs-yLP\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vis dette genvejstastvindue, hvis der ikke er andre vinduer åbne"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1739,6 +1841,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Floating windows overlap other windows and the dock, and other apps’ Full Screen windows (if the Hotkey Window’s Space is set to All Spaces).\"; ObjectID = \"NTW-IM-ZXD\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flydende vinduer ligger oven på andre vinduer, Dock og andre programmers vinduer i fuld skærm (hvis genvejstastvinduets skrivebord er indstillet til Alle skriveborde)."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1841,6 +1949,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"OGS-mD-pmg\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuller"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1943,6 +2057,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"On Dock icon click:\"; ObjectID = \"t4R-9R-8yk\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ved klik på symbolet i Dock:"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2045,6 +2165,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Animate showing and hiding\"; ObjectID = \"UCE-Hu-AKa\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animer visning og skjulning"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2147,6 +2273,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"OK\"; ObjectID = \"UEa-r8-RNP\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2249,6 +2381,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"OK\"; ObjectID = \"UUQ-aq-rDa\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2351,6 +2489,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Floating window\"; ObjectID = \"vtv-eH-WbP\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flydende vindue"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2453,6 +2597,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"^ Control\"; ObjectID = \"wp1-Sh-ht3\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Ctrl"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2555,6 +2705,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Additional Hotkeys…\"; ObjectID = \"y7i-Ti-5SX\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yderligere genvejstaster…"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",

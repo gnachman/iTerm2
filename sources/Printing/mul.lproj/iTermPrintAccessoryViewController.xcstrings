@@ -5,6 +5,12 @@
       "comment": "Class = \"NSButtonCell\"; title = \"Black and white\"; ObjectID = \"CkN-Sz-DhG\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sort/hvid"
+          }
+        },
         "de": {
           "stringUnit": {
             "state": "translated",
