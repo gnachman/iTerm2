@@ -94,7 +94,7 @@ fi
 
 [ -f "$NOTES_FILE" ] || die "Release notes $NOTES_FILE not found"
 git ls-files --error-unmatch "$NOTES_FILE" >/dev/null 2>&1 || die "$NOTES_FILE is not committed"
-grep -q "^Version $VERSION " <<< "$(head -1 "$NOTES_FILE")" || die "$NOTES_FILE does not start with “Version $VERSION”"
+grep -q "^Version $VERSION " <<< "$(head -1 "$NOTES_FILE")" || die "$NOTES_FILE does not start with “Version ${VERSION}”"
 
 # The website must serve the shell integration this release ships, so the
 # checked-out submodule must be exactly what HEAD records, and pushed.
@@ -143,12 +143,12 @@ done
 # ---------------------------------------------------------------------------
 step "Preflight: secrets"
 
-grep -qF "$SIGNING_AUTHORITY" <<< "$(security find-identity -v -p codesigning)" || die "Signing identity “$SIGNING_AUTHORITY” not found"
+grep -qF "$SIGNING_AUTHORITY" <<< "$(security find-identity -v -p codesigning)" || die "Signing identity “${SIGNING_AUTHORITY}” not found"
 
 EDPRIVKEY=$(security find-generic-password -s "$EDDSA_KEYCHAIN_SERVICE" -w 2>/dev/null) || die "Could not read the EdDSA key from the keychain (service $EDDSA_KEYCHAIN_SERVICE)"
 [ -n "$EDPRIVKEY" ] || die "The EdDSA key in the keychain is empty"
 
-xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null 2>&1 || die "notarytool keychain profile “$NOTARY_PROFILE” does not work"
+xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null 2>&1 || die "notarytool keychain profile “${NOTARY_PROFILE}” does not work"
 
 echo preflight | gpg --batch --clearsign >/dev/null 2>&1 || die "gpg could not sign; is the passphrase saved in the keychain via pinentry-mac?"
 
