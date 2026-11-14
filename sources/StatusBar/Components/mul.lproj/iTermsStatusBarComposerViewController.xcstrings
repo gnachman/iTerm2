@@ -41,6 +41,12 @@
             "value" : "Item 1"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 1"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -242,6 +248,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Item 2"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Item 2"
           }
         },
@@ -449,6 +461,12 @@
             "value" : "Item 3"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 3"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -650,6 +668,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Command"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Command"
           }
         },

@@ -41,6 +41,12 @@
             "value" : "Label"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Label"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -242,6 +248,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Label"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Label"
           }
         },

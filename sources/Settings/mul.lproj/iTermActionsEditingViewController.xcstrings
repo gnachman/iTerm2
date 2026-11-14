@@ -41,6 +41,12 @@
             "value" : "Action"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Action"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -284,6 +290,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Title"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Title"
           }
         },

@@ -41,6 +41,12 @@
             "value" : "Path"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Path"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -242,6 +248,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Reveal"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Reveal"
           }
         },
@@ -449,6 +461,12 @@
             "value" : "Signature"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signature"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -650,6 +668,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Scripting Inspector"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Scripting Inspector"
           }
         },
@@ -857,6 +881,12 @@
             "value" : "Sessions, Tabs, and Windows"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessions, Tabs, and Windows"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1058,6 +1088,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Variables"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Variables"
           }
         },
@@ -1265,6 +1301,12 @@
             "value" : "Role"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Role"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1466,6 +1508,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Copy Path"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Copy Path"
           }
         },
@@ -1673,6 +1721,12 @@
             "value" : "Registered Functions"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registered Functions"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1874,6 +1928,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Value"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Value"
           }
         },
@@ -2081,6 +2141,12 @@
             "value" : "Copy ID"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy ID"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2282,6 +2348,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Object Name (ID)"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Object Name (ID)"
           }
         },
@@ -2489,6 +2561,12 @@
             "value" : "⨁"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⨁"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2693,6 +2771,12 @@
             "value" : "Script"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Script"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2894,6 +2978,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Copy Value"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Copy Value"
           }
         },

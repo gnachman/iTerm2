@@ -197,6 +197,12 @@
             "value" : "Estat"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
+        },
         "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -401,6 +407,12 @@
             "value" : "Important…"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importing…"
+          }
+        },
         "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -603,6 +615,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Important la configuració i les dades…"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importing settings and data…"
           }
         },
         "yue-Hans" : {

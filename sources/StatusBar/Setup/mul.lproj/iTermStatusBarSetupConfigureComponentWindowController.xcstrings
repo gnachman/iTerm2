@@ -41,6 +41,12 @@
             "value" : "Cancel"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -242,6 +248,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "OK"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "OK"
           }
         },

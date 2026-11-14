@@ -41,6 +41,12 @@
             "value" : "mm:ss"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mm:ss"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -242,6 +248,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "xxx lines, xxx bytes."
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "xxx lines, xxx bytes."
           }
         },
@@ -449,6 +461,12 @@
             "value" : "Paste"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -653,6 +671,12 @@
             "value" : "Cancel"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -854,6 +878,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Minimum duration:"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Minimum duration:"
           }
         },

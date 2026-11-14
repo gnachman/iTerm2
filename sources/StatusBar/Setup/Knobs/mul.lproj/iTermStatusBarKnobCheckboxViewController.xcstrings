@@ -41,6 +41,12 @@
             "value": "Check"
           }
         },
+        "en-GB": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check"
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",

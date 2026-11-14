@@ -17323,6 +17323,7 @@
 				th,
 				ca,
 				"yue-Hans",
+				"en-GB",
 				en,
 				Base,
 			);

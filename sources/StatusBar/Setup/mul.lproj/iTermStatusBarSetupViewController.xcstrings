@@ -41,6 +41,12 @@
             "value" : "Drag a component from the menu to Active Components to add it to your status bar."
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drag a component from the menu to Active Components to add it to your status bar."
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -242,6 +248,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Prefer tight packing to stable positioning"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Prefer tight packing to stable positioning"
           }
         },
@@ -449,6 +461,12 @@
             "value" : "OK"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -650,6 +668,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Active Components"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Active Components"
           }
         },
@@ -857,6 +881,12 @@
             "value" : "Disabled"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disabled"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1058,6 +1088,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Remove components with empty values"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Remove components with empty values"
           }
         },
@@ -1265,6 +1301,12 @@
             "value" : "Draw separator between status bar and terminal"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Draw separator between status bar and terminal"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1466,6 +1508,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Automatic"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Automatic"
           }
         },
@@ -1673,6 +1721,12 @@
             "value" : "Status Bar Component Menu"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status Bar Component Menu"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1874,6 +1928,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Advanced…"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Advanced…"
           }
         },
@@ -2081,6 +2141,12 @@
             "value" : "The tight packing algorithm allows more status bar components to be visible at a time but they tend to jump around more."
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The tight packing algorithm allows more status bar components to be visible at a time but they tend to jump around more."
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2282,6 +2348,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "🌈 Auto-Rainbow:"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "🌈 Auto-Rainbow:"
           }
         },
@@ -2489,6 +2561,12 @@
             "value" : "Font name goes here"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Font name goes here"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2693,6 +2771,12 @@
             "value" : "Dark Colors"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dark Colours"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2894,6 +2978,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Change"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Change"
           }
         },
@@ -3101,6 +3191,12 @@
             "value" : "Default Text Color:"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Default Text Colour:"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3302,6 +3398,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Configure Component"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Configure Component"
           }
         },
@@ -3509,6 +3611,12 @@
             "value" : "The tight packing algorithm allows more status bar components to be visible at a time but they tend to jump around more."
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The tight packing algorithm allows more status bar components to be visible at a time but they tend to jump around more."
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3713,6 +3821,12 @@
             "value" : "Separator Color:"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Separator Colour:"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3914,6 +4028,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Cancel"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Cancel"
           }
         },
@@ -4121,6 +4241,12 @@
             "value" : "Light Colors"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Light Colours"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4322,6 +4448,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Font:"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Font:"
           }
         },
@@ -4529,6 +4661,12 @@
             "value" : "Background Color:"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Background Colour:"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4733,6 +4871,12 @@
             "value" : "OK"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4934,6 +5078,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Draws a thin line between the status bar and the terminal content."
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Draws a thin line between the status bar and the terminal content."
           }
         },

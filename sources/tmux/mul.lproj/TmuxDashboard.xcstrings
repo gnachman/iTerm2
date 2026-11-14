@@ -41,6 +41,12 @@
             "value" : "tmux Dashboard"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux Dashboard"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -242,6 +248,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Session"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Session"
           }
         },
@@ -449,6 +461,12 @@
             "value" : "Attach"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attach"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -650,6 +668,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Search Windows"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Search Windows"
           }
         },
@@ -857,6 +881,12 @@
             "value" : "Window"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Window"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1058,6 +1088,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Open in Windows"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Open in Windows"
           }
         },
@@ -1265,6 +1301,12 @@
             "value" : "Hide"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1466,6 +1508,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Open in Windows"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Open in Windows"
           }
         },
@@ -1673,6 +1721,12 @@
             "value" : "Open in Tabs"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open in Tabs"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1874,6 +1928,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Detach"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Detach"
           }
         },
@@ -2081,6 +2141,12 @@
             "value" : "Open dashboard when attaching if there are hidden windows"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open dashboard when attaching if there are hidden windows"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2282,6 +2348,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Don’t open windows when attaching if there are at least this many windows:"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Don’t open windows when attaching if there are at least this many windows:"
           }
         },

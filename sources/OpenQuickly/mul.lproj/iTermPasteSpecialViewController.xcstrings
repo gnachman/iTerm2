@@ -41,6 +41,12 @@
             "value" : "Requires Shell Integration for prompt detection"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Requires Shell Integration for prompt detection"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -242,6 +248,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "This is enabled when the running app has sent an escape code to turn on “bracketed paste mode.” The pasted string will be “bracketed” by escape codes indicating the text within is from a paste operation."
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "This is enabled when the running app has sent an escape code to turn on “bracketed paste mode.” The pasted string will be “bracketed” by escape codes indicating the text within is from a paste operation."
           }
         },
@@ -449,6 +461,12 @@
             "value" : "Escape tabs with ^V"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escape tabs with ^V"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -650,6 +668,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Paste with tabs"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Paste with tabs"
           }
         },
@@ -857,6 +881,12 @@
             "value" : "Replace"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replace"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1058,6 +1088,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Convert Unicode punctuation"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Convert Unicode punctuation"
           }
         },
@@ -1265,6 +1301,12 @@
             "value" : "Respects vim escape sequences"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respects vim escape sequences"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1466,6 +1508,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "1 ms"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "1 ms"
           }
         },
@@ -1673,6 +1721,12 @@
             "value" : "Converts various forms of quotation marks and dashes to their ASCII equivalents."
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Converts various forms of quotation marks and dashes to their ASCII equivalents."
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1874,6 +1928,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Convert tabs to spaces:"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Convert tabs to spaces:"
           }
         },
@@ -2081,6 +2141,12 @@
             "value" : "Both DOS and UNIX newlines are generally not used as input. CR is standard."
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Both DOS and UNIX newlines are generally not used as input. CR is standard."
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2282,6 +2348,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Escape shell characters with \\"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Escape shell characters with \\"
           }
         },
@@ -2489,6 +2561,12 @@
             "value" : "Chunk Size:"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chunk Size:"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2690,6 +2768,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Substitution"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Substitution"
           }
         },
@@ -2897,6 +2981,12 @@
             "value" : "Both DOS and UNIX newlines are generally not used as input. CR is standard."
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Both DOS and UNIX newlines are generally not used as input. CR is standard."
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3098,6 +3188,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Tab, line feed, form feed, and carriage return are the only “safe” control codes."
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Tab, line feed, form feed, and carriage return are the only “safe” control codes."
           }
         },
@@ -3305,6 +3401,12 @@
             "value" : "Transforms"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transforms"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3506,6 +3608,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "ICU regular expression syntax"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "ICU regular expression syntax"
           }
         },
@@ -3713,6 +3821,12 @@
             "value" : "100 ms"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100 ms"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3914,6 +4028,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "1 kB"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "1 kB"
           }
         },
@@ -4121,6 +4241,12 @@
             "value" : "with"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "with"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4322,6 +4448,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Speed"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Speed"
           }
         },
@@ -4529,6 +4661,12 @@
             "value" : "Remove unsafe control codes"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove unsafe control codes"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4730,6 +4868,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Wait for shell prompt before pasting each line"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Wait for shell prompt before pasting each line"
           }
         },
@@ -4937,6 +5081,12 @@
             "value" : "Interchunk Delay:"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interchunk Delay:"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5138,6 +5288,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "1 byte"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "1 byte"
           }
         },
@@ -5345,6 +5501,12 @@
             "value" : "Regular Expression"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regular Expression"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5546,6 +5708,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "1.2 kB"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "1.2 kB"
           }
         },
@@ -5753,6 +5921,12 @@
             "value" : "150 ms"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "150 ms"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5954,6 +6128,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "100"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "100"
           }
         },
@@ -6161,6 +6341,12 @@
             "value" : "Radio"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6362,6 +6548,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Remove newlines"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Remove newlines"
           }
         },
@@ -6569,6 +6761,12 @@
             "value" : "Use $1, $2, etc. for capture groups"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use $1, $2, etc. for capture groups"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6770,6 +6968,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Bracketed paste mode"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Bracketed paste mode"
           }
         },
@@ -6977,6 +7181,12 @@
             "value" : "1 MB"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 MB"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7178,6 +7388,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Convert CRLF and LF to CR"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Convert CRLF and LF to CR"
           }
         },
@@ -7385,6 +7601,12 @@
             "value" : "Base-64 encode"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Base-64 encode"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7586,6 +7808,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "10 sec"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "10 sec"
           }
         },

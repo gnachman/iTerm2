@@ -41,6 +41,12 @@
             "value": "Enter the value for "
           }
         },
+        "en-GB": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter the value for "
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
@@ -242,6 +248,12 @@
         "en": {
           "stringUnit": {
             "state": "new",
+            "value": "OK"
+          }
+        },
+        "en-GB": {
+          "stringUnit": {
+            "state": "translated",
             "value": "OK"
           }
         },
@@ -449,6 +461,12 @@
             "value": "Session Parameter"
           }
         },
+        "en-GB": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session Parameter"
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
@@ -653,6 +671,12 @@
             "value": "Cancel"
           }
         },
+        "en-GB": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
@@ -854,6 +878,12 @@
         "en": {
           "stringUnit": {
             "state": "new",
+            "value": "Name"
+          }
+        },
+        "en-GB": {
+          "stringUnit": {
+            "state": "translated",
             "value": "Name"
           }
         },

@@ -41,6 +41,12 @@
             "value" : "⌥ Option"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Option"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -242,6 +248,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Pin hotkey window (stays open on loss of keyboard focus)"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Pin hotkey window (stays open on loss of keyboard focus)"
           }
         },
@@ -449,6 +461,12 @@
             "value" : "Hotkey:"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hotkey:"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -650,6 +668,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Note: the window is reopened only if it was closed because another app became active."
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Note: the window is reopened only if it was closed because another app became active."
           }
         },
@@ -857,6 +881,12 @@
             "value" : "Additional Hotkeys"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Additional Hotkeys"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1058,6 +1088,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "When you press the hotkey bound to this profile a dedicated window will show or hide. Each profile with a hotkey controls its own Hotkey Window."
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "When you press the hotkey bound to this profile a dedicated window will show or hide. Each profile with a hotkey controls its own Hotkey Window."
           }
         },
@@ -1265,6 +1301,12 @@
             "value" : "Don’t do anything special"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don’t do anything special"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1466,6 +1508,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "⚠️"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "⚠️"
           }
         },
@@ -1673,6 +1721,12 @@
             "value" : "Show this Hotkey Window"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show this Hotkey Window"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1874,6 +1928,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "HotKey Window Preferences"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "HotKey Window Preferences"
           }
         },
@@ -2081,6 +2141,12 @@
             "value" : "⌘ Command"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Command"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2282,6 +2348,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "⚠️ Another profile uses this shortcut"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "⚠️ Another profile uses this shortcut"
           }
         },
@@ -2489,6 +2561,12 @@
             "value" : "⇧ Shift"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Shift"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2690,6 +2768,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Double-tap key:"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Double-tap key:"
           }
         },
@@ -2897,6 +2981,12 @@
             "value" : "Automatically reopen on app reactivation"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatically reopen on app reactivation"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3098,6 +3188,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "⚠️ Another profile uses this double-tap"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "⚠️ Another profile uses this double-tap"
           }
         },
@@ -3305,6 +3401,12 @@
             "value" : "Show this Hotkey Window if no other window is open"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show this Hotkey Window if no other window is open"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3506,6 +3608,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Floating windows overlap other windows and the dock, and other apps’ Full Screen windows (if the Hotkey Window’s Space is set to All Spaces)."
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Floating windows overlap other windows and the dock, and other apps’ Full Screen windows (if the Hotkey Window’s Space is set to All Spaces)."
           }
         },
@@ -3713,6 +3821,12 @@
             "value" : "Cancel"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3914,6 +4028,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "On Dock icon click:"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "On Dock icon click:"
           }
         },
@@ -4121,6 +4241,12 @@
             "value" : "Animate showing and hiding"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animate showing and hiding"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4322,6 +4448,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "OK"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "OK"
           }
         },
@@ -4529,6 +4661,12 @@
             "value" : "OK"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4730,6 +4868,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Floating window"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Floating window"
           }
         },
@@ -4937,6 +5081,12 @@
             "value" : "^ Control"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Control"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5138,6 +5288,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Additional Hotkeys…"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Additional Hotkeys…"
           }
         },

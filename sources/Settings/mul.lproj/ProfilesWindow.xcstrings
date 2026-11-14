@@ -41,6 +41,12 @@
             "value" : "Profiles"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profiles"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -242,6 +248,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Edit Profiles…"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Edit Profiles…"
           }
         },
@@ -449,6 +461,12 @@
             "value" : "New Tab"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Tab"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -650,6 +668,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "New Window"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "New Window"
           }
         },
@@ -857,6 +881,12 @@
             "value" : "Close this window after opening a profile."
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close this window after opening a profile."
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1058,6 +1088,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "New Tabs in New Window"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "New Tabs in New Window"
           }
         },
@@ -1346,6 +1382,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Tags >"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Tags >"
           }
         },
@@ -1707,6 +1749,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nova subfinestra flotant"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Floating Pane"
           }
         },
         "yue-Hans" : {

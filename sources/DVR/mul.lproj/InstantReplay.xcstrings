@@ -41,6 +41,12 @@
             "value": "Export…"
           }
         },
+        "en-GB": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export…"
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
@@ -242,6 +248,12 @@
         "en": {
           "stringUnit": {
             "state": "new",
+            "value": "Now"
+          }
+        },
+        "en-GB": {
+          "stringUnit": {
+            "state": "translated",
             "value": "Now"
           }
         },
@@ -449,6 +461,12 @@
             "value": "Instant Replay Control"
           }
         },
+        "en-GB": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instant Replay Control"
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
@@ -650,6 +668,12 @@
         "en": {
           "stringUnit": {
             "state": "new",
+            "value": "Cancel"
+          }
+        },
+        "en-GB": {
+          "stringUnit": {
+            "state": "translated",
             "value": "Cancel"
           }
         },
@@ -857,6 +881,12 @@
             "value": "Live View"
           }
         },
+        "en-GB": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live View"
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
@@ -1058,6 +1088,12 @@
         "en": {
           "stringUnit": {
             "state": "new",
+            "value": "Time"
+          }
+        },
+        "en-GB": {
+          "stringUnit": {
+            "state": "translated",
             "value": "Time"
           }
         },

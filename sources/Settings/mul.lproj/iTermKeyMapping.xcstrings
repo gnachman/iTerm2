@@ -41,6 +41,12 @@
             "value" : "Presets…"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presets…"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -242,6 +248,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Add Touch Bar Item"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Add Touch Bar Item"
           }
         },
@@ -449,6 +461,12 @@
             "value" : "Action"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Action"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -650,6 +668,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Touch Bar Mitigations"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Touch Bar Mitigations"
           }
         },
@@ -857,6 +881,12 @@
             "value" : "Visual esc key indicator"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visual esc key indicator"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1058,6 +1088,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Key Combination"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Key Combination"
           }
         },
@@ -1265,6 +1301,12 @@
             "value" : "Haptic feedback when pressing esc"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haptic feedback when pressing esc"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1469,6 +1511,12 @@
             "value" : "OK"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1670,6 +1718,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Key click for esc key"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Key click for esc key"
           }
         },

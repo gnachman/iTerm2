@@ -41,6 +41,12 @@
             "value" : "Edit"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -245,6 +251,12 @@
             "value" : "Title"
           }
         },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Title"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -446,6 +458,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Text"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Text"
           }
         },
