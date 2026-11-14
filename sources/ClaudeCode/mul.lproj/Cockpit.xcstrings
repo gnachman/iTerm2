@@ -83,6 +83,12 @@
             "value" : "Configuración"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configuración"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -336,6 +342,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configuración"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Configuración"
@@ -599,6 +611,12 @@
             "value" : "Agrupar"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agrupar"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -852,6 +870,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agrupar"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Agrupar"
@@ -1115,6 +1139,12 @@
             "value" : "Notificar"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notificar"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1368,6 +1398,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notificar"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Notificar"
@@ -1631,6 +1667,12 @@
             "value" : "Cabina"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cabina"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1889,6 +1931,12 @@
             "value" : "Buscar"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2142,6 +2190,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar"

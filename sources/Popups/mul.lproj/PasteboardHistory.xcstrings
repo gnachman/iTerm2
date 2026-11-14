@@ -83,6 +83,12 @@
             "value" : "Hora"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hora"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -336,6 +342,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valor"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Valor"

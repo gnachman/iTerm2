@@ -83,6 +83,12 @@
             "value": "Marcar"
           }
         },
+        "es-US": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcar"
+          }
+        },
         "fi": {
           "stringUnit": {
             "state": "translated",

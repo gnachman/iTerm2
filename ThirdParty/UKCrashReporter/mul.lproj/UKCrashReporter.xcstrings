@@ -83,6 +83,12 @@
             "value" : "Descripción"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descripción"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -336,6 +342,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registro de fallos"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Registro de fallos"
@@ -599,6 +611,12 @@
             "value" : "Reporte de fallos"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reporte de fallos"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -852,6 +870,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parece que {APPNAME} falló la última vez que se usó. ¿Quieres enviar un registro de fallos a los desarrolladores?\n\nApple no envía sus registros de fallos a otros desarrolladores, así que esta es la única forma de que los desarrolladores de {APPNAME} se enteren de este fallo y lo corrijan."
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parece que {APPNAME} falló la última vez que se usó. ¿Quieres enviar un registro de fallos a los desarrolladores?\n\nApple no envía sus registros de fallos a otros desarrolladores, así que esta es la única forma de que los desarrolladores de {APPNAME} se enteren de este fallo y lo corrijan."
@@ -1115,6 +1139,12 @@
             "value" : "Puedes eliminar cualquier información que no quieras enviar, pero eso dificultará detectar el error. De forma predeterminada, se envían el registro de fallos, el modelo de Mac que usas y tus configuración."
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puedes eliminar cualquier información que no quieras enviar, pero eso dificultará detectar el error. De forma predeterminada, se envían el registro de fallos, el modelo de Mac que usas y tus configuración."
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1368,6 +1398,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enviar"
@@ -1631,6 +1667,12 @@
             "value" : "Recordármelo más tarde"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recordármelo más tarde"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1884,6 +1926,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descartar"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Descartar"

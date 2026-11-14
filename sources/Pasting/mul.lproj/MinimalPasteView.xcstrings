@@ -83,6 +83,12 @@
             "value": "Pegando…"
           }
         },
+        "es-US": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pegando…"
+          }
+        },
         "fi": {
           "stringUnit": {
             "state": "translated",

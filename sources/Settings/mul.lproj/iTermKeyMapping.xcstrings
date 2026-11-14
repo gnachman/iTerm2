@@ -83,6 +83,12 @@
             "value" : "Preconfiguraciones…"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preconfiguraciones…"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -336,6 +342,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agregar elemento a la Touch Bar"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Agregar elemento a la Touch Bar"
@@ -599,6 +611,12 @@
             "value" : "Acción"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acción"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -852,6 +870,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mitigaciones de la Touch Bar"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mitigaciones de la Touch Bar"
@@ -1115,6 +1139,12 @@
             "value" : "Indicador visual de la tecla esc"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indicador visual de la tecla esc"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1368,6 +1398,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Combinación de teclas"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Combinación de teclas"
@@ -1631,6 +1667,12 @@
             "value" : "Respuesta háptica al presionar esc"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respuesta háptica al presionar esc"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1889,6 +1931,12 @@
             "value" : "OK"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2142,6 +2190,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonido de clic para la tecla esc"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sonido de clic para la tecla esc"

@@ -47,7 +47,7 @@ final class JapaneseUserTerminologyTests: XCTestCase {
     func testUnknownUserNameIsTranslated() throws {
         let catalog = try strings("xcstrings/Localizable.xcstrings")
         let localizations = (catalog["ConductorFileTransfer.UnknownUserName"] as? [String: Any])?["localizations"] as? [String: Any]
-        for language in ["ca", "cs", "da", "de", "el", "en-AU", "en-CA", "en-GB", "en-IN", "es", "es-419", "en-PH", "fi", "fr", "fr-CA", "hi", "hr", "hu", "id", "it", "ja", "ms", "nb", "nl", "pl", "pt-BR", "pt-PT", "ro", "ru", "sk", "sl", "sv", "th", "tr", "uk", "vi", "yue-Hans", "zh-HK", "zh-Hans", "zh-Hant"] {
+        for language in ["ca", "cs", "da", "de", "el", "en-AU", "en-CA", "en-GB", "en-IN", "es", "es-419", "en-PH", "es-US", "fi", "fr", "fr-CA", "hi", "hr", "hu", "id", "it", "ja", "ms", "nb", "nl", "pl", "pt-BR", "pt-PT", "ro", "ru", "sk", "sl", "sv", "th", "tr", "uk", "vi", "yue-Hans", "zh-HK", "zh-Hans", "zh-Hant"] {
             let unit = (localizations?[language] as? [String: Any])?["stringUnit"] as? [String: Any]
             XCTAssertEqual(unit?["state"] as? String, "translated", language)
         }

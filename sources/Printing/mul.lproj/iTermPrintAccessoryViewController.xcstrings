@@ -83,6 +83,12 @@
             "value": "Blanco y negro"
           }
         },
+        "es-US": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blanco y negro"
+          }
+        },
         "fi": {
           "stringUnit": {
             "state": "translated",

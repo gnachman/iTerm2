@@ -83,6 +83,12 @@
             "value": "Exportar…"
           }
         },
+        "es-US": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar…"
+          }
+        },
         "fi": {
           "stringUnit": {
             "state": "translated",
@@ -336,6 +342,12 @@
           }
         },
         "es-419": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ahora"
+          }
+        },
+        "es-US": {
           "stringUnit": {
             "state": "translated",
             "value": "Ahora"
@@ -599,6 +611,12 @@
             "value": "Control de repetición instantánea"
           }
         },
+        "es-US": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Control de repetición instantánea"
+          }
+        },
         "fi": {
           "stringUnit": {
             "state": "translated",
@@ -852,6 +870,12 @@
           }
         },
         "es-419": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelar"
+          }
+        },
+        "es-US": {
           "stringUnit": {
             "state": "translated",
             "value": "Cancelar"
@@ -1115,6 +1139,12 @@
             "value": "Vista en vivo"
           }
         },
+        "es-US": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vista en vivo"
+          }
+        },
         "fi": {
           "stringUnit": {
             "state": "translated",
@@ -1368,6 +1398,12 @@
           }
         },
         "es-419": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hora"
+          }
+        },
+        "es-US": {
           "stringUnit": {
             "state": "translated",
             "value": "Hora"

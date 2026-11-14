@@ -83,6 +83,12 @@
             "value": "Tamaño del tabulador en espacios:"
           }
         },
+        "es-US": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tamaño del tabulador en espacios:"
+          }
+        },
         "fi": {
           "stringUnit": {
             "state": "translated",
@@ -336,6 +342,12 @@
           }
         },
         "es-419": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "es-US": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

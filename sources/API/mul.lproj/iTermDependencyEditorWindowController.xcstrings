@@ -83,6 +83,12 @@
             "value" : "Elemento 2"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elemento 2"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -336,6 +342,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este script debe actualizarse a un “entorno completo” para poder agregar dependencias. Al hacerlo se crea una copia del entorno de ejecución de Python, pero no se usará espacio adicional en disco."
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Este script debe actualizarse a un “entorno completo” para poder agregar dependencias. Al hacerlo se crea una copia del entorno de ejecución de Python, pero no se usará espacio adicional en disco."
@@ -599,6 +611,12 @@
             "value" : "Versión de Python:"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versión de Python:"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -852,6 +870,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eliminar"
@@ -1115,6 +1139,12 @@
             "value" : "Elemento 3"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elemento 3"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1368,6 +1398,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizar"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Actualizar"
@@ -1631,6 +1667,12 @@
             "value" : "Script:"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Script:"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1884,6 +1926,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editor de dependencias del script"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Editor de dependencias del script"
@@ -2147,6 +2195,12 @@
             "value" : "Elemento 1"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elemento 1"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2400,6 +2454,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nombre del paquete"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nombre del paquete"
@@ -2663,6 +2723,12 @@
             "value" : "Elemento 2"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elemento 2"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2916,6 +2982,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elemento 3"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Elemento 3"
@@ -3179,6 +3251,12 @@
             "value" : "Buscar actualización"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar actualización"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3432,6 +3510,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versión instalada"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Versión instalada"
@@ -3695,6 +3779,12 @@
             "value" : "Elemento 1"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elemento 1"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3953,6 +4043,12 @@
             "value" : "OK"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4206,6 +4302,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agregar"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Agregar"

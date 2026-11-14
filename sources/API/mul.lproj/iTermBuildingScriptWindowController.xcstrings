@@ -83,6 +83,12 @@
             "value" : "¡Un momento! Instalando un nuevo entorno de Python…"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Un momento! Instalando un nuevo entorno de Python…"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",

@@ -83,6 +83,12 @@
             "value" : "Editar"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -341,6 +347,12 @@
             "value" : "Título"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Título"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -594,6 +606,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texto"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Texto"

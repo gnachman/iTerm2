@@ -83,6 +83,12 @@
             "value" : "Mover por marca"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover por marca"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -341,6 +347,12 @@
             "value" : "Definir atajo de teclado"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definir shortcut de teclado"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -594,6 +606,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancelar"
@@ -857,6 +875,12 @@
             "value" : "Preconfiguración de color:"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preconfiguración de color:"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1110,6 +1134,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acción:"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Acción:"
@@ -1373,6 +1403,12 @@
             "value" : "Etiqueta que mostrar en la Touch Bar"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etiqueta que mostrar en la Touch Bar"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1626,6 +1662,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover por carácter"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover por carácter"
@@ -1889,6 +1931,12 @@
             "value" : "p. ej.: 0x7f"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "p. ej.: 0x7f"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2142,6 +2190,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perfil:"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Perfil:"
@@ -2405,6 +2459,12 @@
             "value" : "Mover por palabra"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover por palabra"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2658,6 +2718,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El mensaje de error aparece aquí"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "El mensaje de error aparece aquí"
@@ -2921,6 +2987,12 @@
             "value" : "Acción:"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acción:"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3174,6 +3246,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esc+"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Esc+"
@@ -3437,6 +3515,12 @@
             "value" : "Atajo de teclado:"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shortcut de teclado:"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3695,6 +3779,12 @@
             "value" : "Mover por línea"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover por línea"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3948,6 +4038,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"

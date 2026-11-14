@@ -83,6 +83,12 @@
             "value": "Etiqueta"
           }
         },
+        "es-US": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Etiqueta"
+          }
+        },
         "fi": {
           "stringUnit": {
             "state": "translated",

@@ -83,6 +83,12 @@
             "value": "Incluir marcas de tiempo"
           }
         },
+        "es-US": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incluir marcas de tiempo"
+          }
+        },
         "fi": {
           "stringUnit": {
             "state": "translated",
@@ -336,6 +342,12 @@
           }
         },
         "es-419": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formato de archivo:"
+          }
+        },
+        "es-US": {
           "stringUnit": {
             "state": "translated",
             "value": "Formato de archivo:"

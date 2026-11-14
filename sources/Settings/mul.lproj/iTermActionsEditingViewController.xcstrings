@@ -83,6 +83,12 @@
             "value" : "Acción"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acción"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -378,6 +384,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Título"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Título"

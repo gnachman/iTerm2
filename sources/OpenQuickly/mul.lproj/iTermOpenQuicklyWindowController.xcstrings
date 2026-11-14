@@ -83,6 +83,12 @@
             "value" : "Abrir rápidamente"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir rápidamente"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -341,6 +347,12 @@
             "value" : "Detalle"
           }
         },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalle"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -594,6 +606,12 @@
           }
         },
         "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar sesiones, perfiles o disposiciones"
+          }
+        },
+        "es-US" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar sesiones, perfiles o disposiciones"
