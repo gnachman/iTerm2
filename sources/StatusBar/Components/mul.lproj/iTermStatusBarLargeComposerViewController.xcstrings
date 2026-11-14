@@ -71,6 +71,12 @@
             "value" : "Autocompletado con IA activado: todo el texto se envía a la IA"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autocompletado con IA activado: todo el texto se envía a la IA"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -300,6 +306,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Describe cómo usar el compositor."
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Describe cómo usar el compositor."
@@ -539,6 +551,12 @@
             "value" : "Pulsa ⇧↩ para enviar."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presiona ⇧↩ para enviar."
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -768,6 +786,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IA"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "IA"

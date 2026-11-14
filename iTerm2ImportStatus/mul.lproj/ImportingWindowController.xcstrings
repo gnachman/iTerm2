@@ -221,6 +221,12 @@
             "value" : "Status"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estado"
+          }
+        },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
@@ -455,6 +461,12 @@
             "value" : "Importing…"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importando…"
+          }
+        },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
@@ -687,6 +699,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Importing settings and data…"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importando configuración y datos…"
           }
         },
         "fr-CA" : {

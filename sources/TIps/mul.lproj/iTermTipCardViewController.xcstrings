@@ -71,6 +71,12 @@
             "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
           }
         },
+        "es-419": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
+          }
+        },
         "fi": {
           "stringUnit": {
             "state": "translated",
@@ -300,6 +306,12 @@
           }
         },
         "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integración con el shell"
+          }
+        },
+        "es-419": {
           "stringUnit": {
             "state": "translated",
             "value": "Integración con el shell"

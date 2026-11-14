@@ -71,6 +71,12 @@
             "value" : "/directory"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -300,6 +306,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar directorio"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar directorio"
@@ -539,6 +551,12 @@
             "value" : "12 bytes"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 bytes"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -768,6 +786,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar la salida del comando"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seleccionar la salida del comando"
@@ -1007,6 +1031,12 @@
             "value" : "1h 35m"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1h 35m"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1236,6 +1266,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salida:"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Salida:"
@@ -1475,6 +1511,12 @@
             "value" : "Copiado"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiado"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1704,6 +1746,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar comando al portapapeles"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar comando al portapapeles"
@@ -1943,6 +1991,12 @@
             "value" : "Iniciado a las %@"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciado a las %@"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2172,6 +2226,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir comando en el compositor"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir comando en el compositor"
@@ -2411,6 +2471,12 @@
             "value" : "Carpeta arrastrable"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carpeta arrastrable"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2640,6 +2706,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "comando"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "comando"
@@ -2879,6 +2951,12 @@
             "value" : "Escribir comando en la terminal"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escribir comando en la terminal"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3108,6 +3186,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Directorio:"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Directorio:"
@@ -3347,6 +3431,12 @@
             "value" : "Código de retorno:"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código de retorno:"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3576,6 +3666,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escribir directorio en la terminal"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escribir directorio en la terminal"
@@ -3815,6 +3911,12 @@
             "value" : "Tiempo de ejecución:"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiempo de ejecución:"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4044,6 +4146,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar la salida del comando"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar la salida del comando"
@@ -4283,6 +4391,12 @@
             "value" : "Compartir comando…"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartir comando…"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4512,6 +4626,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comando:"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Comando:"
@@ -4751,6 +4871,12 @@
             "value" : "127"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4980,6 +5106,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivar mostrar el comando fuera de pantalla"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desactivar mostrar el comando fuera de pantalla"

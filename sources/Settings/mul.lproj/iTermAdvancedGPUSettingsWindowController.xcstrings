@@ -71,6 +71,12 @@
             "value" : "Aceptar"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -300,6 +306,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivar el renderizador de GPU en modo de bajo consumo"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desactivar el renderizador de GPU en modo de bajo consumo"
@@ -539,6 +551,12 @@
             "value" : "Preferir la GPU integrada a la dedicada"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preferir la GPU integrada a la dedicada"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -773,6 +791,12 @@
             "value" : "Desactivar el renderizador de GPU al desconectar de la corriente"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivar el renderizador de GPU al desconectar de la corriente"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1002,6 +1026,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancelar"

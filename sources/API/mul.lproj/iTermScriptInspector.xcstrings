@@ -71,6 +71,12 @@
             "value" : "Ruta"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruta"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -300,6 +306,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar"
@@ -539,6 +551,12 @@
             "value" : "Firma"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Firma"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -768,6 +786,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inspector de scripts"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Inspector de scripts"
@@ -1007,6 +1031,12 @@
             "value" : "Sesiones, pestañas y ventanas"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesiones, pestañas y ventanas"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1236,6 +1266,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variables"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Variables"
@@ -1475,6 +1511,12 @@
             "value" : "Rol"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rol"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1704,6 +1746,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar ruta"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar ruta"
@@ -1943,6 +1991,12 @@
             "value" : "Funciones registradas"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funciones registradas"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2172,6 +2226,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valor"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Valor"
@@ -2411,6 +2471,12 @@
             "value" : "Copiar ID"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar ID"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2640,6 +2706,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nombre del objeto (ID)"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nombre del objeto (ID)"
@@ -2879,6 +2951,12 @@
             "value" : "⨁"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⨁"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3113,6 +3191,12 @@
             "value" : "Script"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Script"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3342,6 +3426,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar valor"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar valor"

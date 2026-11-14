@@ -71,6 +71,12 @@
             "value" : "⌥ Opción"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Opción"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -300,6 +306,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fijar ventana de tecla rápida (permanece abierta al perder el foco del teclado)"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fijar ventana de tecla rápida (permanece abierta al perder el foco del teclado)"
@@ -539,6 +551,12 @@
             "value" : "Tecla rápida:"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tecla rápida:"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -773,6 +791,12 @@
             "value" : "Nota: la ventana solo se vuelve a abrir si se cerró porque otra app pasó a estar activa."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nota: la ventana sólo se vuelve a abrir si se cerró porque otra app pasó a estar activa."
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1002,6 +1026,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teclas rápidas adicionales"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Teclas rápidas adicionales"
@@ -1241,6 +1271,12 @@
             "value" : "Al pulsar la tecla rápida asignada a este perfil, se mostrará u ocultará una ventana dedicada. Cada perfil con una tecla rápida controla su propia ventana de tecla rápida."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Al presionar la tecla rápida asignada a este perfil, se mostrará u ocultará una ventana dedicada. Cada perfil con una tecla rápida controla su propia ventana de tecla rápida."
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1470,6 +1506,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hacer nada especial"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "No hacer nada especial"
@@ -1709,6 +1751,12 @@
             "value" : "⚠️"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1938,6 +1986,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar esta ventana de tecla rápida"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar esta ventana de tecla rápida"
@@ -2177,6 +2231,12 @@
             "value" : "Ajustes de la ventana de tecla rápida"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configuración de la ventana de tecla rápida"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2406,6 +2466,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Comando"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⌘ Comando"
@@ -2645,6 +2711,12 @@
             "value" : "⚠️ Otro perfil usa este atajo"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Otro perfil usa este atajo"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2874,6 +2946,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Mayúsculas"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⇧ Mayúsculas"
@@ -3113,6 +3191,12 @@
             "value" : "Tecla de doble toque:"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tecla de doble toque:"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3342,6 +3426,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reabrir automáticamente al reactivar la app"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reabrir automáticamente al reactivar la app"
@@ -3581,6 +3671,12 @@
             "value" : "⚠️ Otro perfil usa este doble toque"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Otro perfil usa este doble toque"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3810,6 +3906,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar esta ventana de tecla rápida si no hay otra ventana abierta"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar esta ventana de tecla rápida si no hay otra ventana abierta"
@@ -4049,6 +4151,12 @@
             "value" : "Las ventanas flotantes se superponen a otras ventanas, al Dock y a las ventanas en pantalla completa de otras apps (si el espacio de la ventana de tecla rápida está configurado como Todos los espacios)."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las ventanas flotantes se superponen a otras ventanas, al Dock y a las ventanas en pantalla completa de otras apps (si el espacio de la ventana de tecla rápida está configurado como Todos los espacios)."
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4278,6 +4386,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancelar"
@@ -4517,6 +4631,12 @@
             "value" : "Al hacer clic en el icono del Dock:"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Al hacer clic en el ícono del Dock:"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4746,6 +4866,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animar al mostrar y ocultar"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Animar al mostrar y ocultar"
@@ -4985,6 +5111,12 @@
             "value" : "Aceptar"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5219,6 +5351,12 @@
             "value" : "Aceptar"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5448,6 +5586,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ventana flotante"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ventana flotante"
@@ -5687,6 +5831,12 @@
             "value" : "^ Control"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Control"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5916,6 +6066,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teclas rápidas adicionales…"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Teclas rápidas adicionales…"

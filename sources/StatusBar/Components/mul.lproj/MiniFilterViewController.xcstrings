@@ -71,6 +71,12 @@
             "value" : "Subcadena que distingue mayúsculas y minúsculas"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena que distingue mayúsculas y minúsculas"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -300,6 +306,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena con mayúsculas inteligentes"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Subcadena con mayúsculas inteligentes"
@@ -539,6 +551,12 @@
             "value" : "Regex que distingue mayúsculas y minúsculas"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex que distingue mayúsculas y minúsculas"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -768,6 +786,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex que no distingue mayúsculas y minúsculas"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Regex que no distingue mayúsculas y minúsculas"
@@ -1007,6 +1031,12 @@
             "value" : "Subcadena que no distingue mayúsculas y minúsculas"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena que no distingue mayúsculas y minúsculas"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1236,6 +1266,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrar"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Filtrar"

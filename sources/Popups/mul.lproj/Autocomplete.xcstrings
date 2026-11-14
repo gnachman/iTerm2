@@ -71,6 +71,12 @@
             "value" : "Autocompletar"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autocompletar"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",

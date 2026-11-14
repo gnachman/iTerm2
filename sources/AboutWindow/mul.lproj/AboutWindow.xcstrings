@@ -71,6 +71,12 @@
             "value": "iTerm2"
           }
         },
+        "es-419": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iTerm2"
+          }
+        },
         "fi": {
           "stringUnit": {
             "state": "translated",
@@ -300,6 +306,12 @@
           }
         },
         "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Por George Nachman y colaboradores"
+          }
+        },
+        "es-419": {
           "stringUnit": {
             "state": "translated",
             "value": "Por George Nachman y colaboradores"

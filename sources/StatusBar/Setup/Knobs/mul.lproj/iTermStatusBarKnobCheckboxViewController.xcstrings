@@ -71,6 +71,12 @@
             "value": "Marcar"
           }
         },
+        "es-419": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcar"
+          }
+        },
         "fi": {
           "stringUnit": {
             "state": "translated",

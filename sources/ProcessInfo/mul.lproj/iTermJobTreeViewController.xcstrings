@@ -71,6 +71,12 @@
             "value" : "pid"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pid"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -300,6 +306,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proceso"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Proceso"
@@ -539,6 +551,12 @@
             "value" : "Copiar ID del proceso"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar ID del proceso"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -771,6 +789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ítem 1"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elemento 1"
           }
         },
         "fi" : {
@@ -1007,6 +1031,12 @@
             "value" : "Ítem 2"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elemento 2"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1239,6 +1269,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ítem 3"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elemento 3"
           }
         },
         "fi" : {
@@ -1475,6 +1511,12 @@
             "value" : "Notificar al terminar"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notificar al terminar"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1704,6 +1746,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar comando"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar comando"

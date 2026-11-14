@@ -71,6 +71,12 @@
             "value" : "Filtrar"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrar"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -300,6 +306,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena que no distingue mayúsculas y minúsculas"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Subcadena que no distingue mayúsculas y minúsculas"
@@ -539,6 +551,12 @@
             "value" : "Subcadena con mayúsculas inteligentes"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena con mayúsculas inteligentes"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -768,6 +786,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena que distingue mayúsculas y minúsculas"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Subcadena que distingue mayúsculas y minúsculas"
@@ -1007,6 +1031,12 @@
             "value" : "Regex que no distingue mayúsculas y minúsculas"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex que no distingue mayúsculas y minúsculas"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1236,6 +1266,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrar historial de búsqueda"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Borrar historial de búsqueda"
@@ -1475,6 +1511,12 @@
             "value" : "Buscando solo en el comando seleccionado"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscando sólo en el comando seleccionado"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1704,6 +1746,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex que no distingue mayúsculas y minúsculas"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Regex que no distingue mayúsculas y minúsculas"
@@ -1943,6 +1991,12 @@
             "value" : "Filtrar"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrar"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2172,6 +2226,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena que distingue mayúsculas y minúsculas"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Subcadena que distingue mayúsculas y minúsculas"
@@ -2411,6 +2471,12 @@
             "value" : "Regex que distingue mayúsculas y minúsculas"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex que distingue mayúsculas y minúsculas"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2640,6 +2706,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena con mayúsculas inteligentes"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Subcadena con mayúsculas inteligentes"
@@ -2879,6 +2951,12 @@
             "value" : "Subcadena que no distingue mayúsculas y minúsculas"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena que no distingue mayúsculas y minúsculas"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3108,6 +3186,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex que distingue mayúsculas y minúsculas"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Regex que distingue mayúsculas y minúsculas"

@@ -71,6 +71,12 @@
             "value": "Pegando…"
           }
         },
+        "es-419": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pegando…"
+          }
+        },
         "fi": {
           "stringUnit": {
             "state": "translated",

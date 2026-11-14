@@ -71,6 +71,12 @@
             "value": "Instalador del entorno de ejecución de Python"
           }
         },
+        "es-419": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instalador del entorno de ejecución de Python"
+          }
+        },
         "fi": {
           "stringUnit": {
             "state": "translated",
@@ -305,6 +311,12 @@
             "value": "Cancelar"
           }
         },
+        "es-419": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelar"
+          }
+        },
         "fi": {
           "stringUnit": {
             "state": "translated",
@@ -534,6 +546,12 @@
           }
         },
         "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descargando componentes opcionales…"
+          }
+        },
+        "es-419": {
           "stringUnit": {
             "state": "translated",
             "value": "Descargando componentes opcionales…"

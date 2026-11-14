@@ -71,6 +71,12 @@
             "value": "Etiqueta"
           }
         },
+        "es-419": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Etiqueta"
+          }
+        },
         "fi": {
           "stringUnit": {
             "state": "translated",

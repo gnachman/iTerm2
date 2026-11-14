@@ -71,6 +71,12 @@
             "value" : "Usa iTerm2 aunque estés lejos de tu Mac. Puedes controlarlo mediante el chat de IA, ver el contenido de las sesiones y recibir notificaciones push. El cifrado de extremo a extremo mantiene tus datos seguros. <a href=\"iterm2whatsnew:companion\">¡Pruébalo ahora!</a>"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usa iTerm2 aunque estés lejos de tu Mac. Puedes controlarlo mediante el chat de IA, ver el contenido de las sesiones y recibir notificaciones push. El cifrado de extremo a extremo mantiene tus datos seguros. <a href=\"iterm2whatsnew:companion\">¡Pruébalo ahora!</a>"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -300,6 +306,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -539,6 +551,12 @@
             "value" : "Un nuevo modo de chat de IA, Orquestación, deja que la IA se encargue de todo por ti. Puede crear ventanas, esperar a que se completen tareas (incluso en apps interactivas) y el nuevo verificador de seguridad automático te evita tener que responder a casi todas las solicitudes de permiso. <a href=\"iterm2whatsnew:orchestration\">¡Pruébalo ahora!</a>"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un nuevo modo de chat de IA, Orquestación, deja que la IA se encargue de todo por ti. Puede crear ventanas, esperar a que se completen tareas (incluso en apps interactivas) y el nuevo verificador de seguridad automático te evita tener que responder a casi todas las solicitudes de permiso. <a href=\"iterm2whatsnew:orchestration\">¡Pruébalo ahora!</a>"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -768,6 +786,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -1007,6 +1031,12 @@
             "value" : "La nueva función Capturas de pantalla simplifica la creación de un PNG del contenido de tu terminal. Admite censuras y resaltados. Usa <a href=\"iterm2whatsnew:screenshot\">Sesión > Hacer captura de pantalla</a> para activarla."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La nueva función Capturas de pantalla simplifica la creación de un PNG del contenido de tu terminal. Admite censuras y resaltados. Usa <a href=\"iterm2whatsnew:screenshot\">Sesión > Hacer captura de pantalla</a> para activarla."
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1236,6 +1266,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novedades de la versión 3.7"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Novedades de la versión 3.7"
@@ -1475,6 +1511,12 @@
             "value" : ">"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ">"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1704,6 +1746,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -1943,6 +1991,12 @@
             "value" : "Integración con Claude Code"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integración con Claude Code"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2177,6 +2231,12 @@
             "value" : "Para ayudarte a gestionar un gran número de pestañas, ahora puedes combinarlas en grupos plegables. Además, la barra de pestañas ahora se desplaza en lugar de mostrar un menú de desbordamiento."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para ayudarte a administrar un gran número de pestañas, ahora puedes combinarlas en grupos plegables. Además, la barra de pestañas ahora se desplaza en lugar de mostrar un menú de desbordamiento."
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2406,6 +2466,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -2645,6 +2711,12 @@
             "value" : "La integración con Claude Code organiza varias sesiones relacionadas (como la revisión de código y la lectura de diffs) en una interfaz personalizable. También muestra el estado de Claude para que encuentres fácilmente las instancias que necesitan tu atención. <a href=\"iterm2whatsnew:claudecode\">¡Pruébalo ahora!</a>"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La integración con Claude Code organiza varias sesiones relacionadas (como la revisión de código y la lectura de diffs) en una interfaz personalizable. También muestra el estado de Claude para que encuentres fácilmente las instancias que necesitan tu atención. <a href=\"iterm2whatsnew:claudecode\">¡Pruébalo ahora!</a>"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2874,6 +2946,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App complementaria para iPhone"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "App complementaria para iPhone"
@@ -3113,6 +3191,12 @@
             "value" : "●"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3342,6 +3426,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orquestación"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Orquestación"
@@ -3581,6 +3671,12 @@
             "value" : "Grupos de pestañas"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grupos de pestañas"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3815,6 +3911,12 @@
             "value" : "Capturas de pantalla"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturas de pantalla"
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4044,6 +4146,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<"
+          }
+        },
+        "es-419" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "<"
