@@ -662,8 +662,9 @@ cc-status: force
 
 libgit2: force
 	mkdir -p submodules/libgit2/build
-	PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} -DBUILD_TESTS=OFF -DBUILD_CLI=OFF -DUSE_HTTPS=SecureTransport -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_ARCHITECTURES="$(CMAKE_ARCHS)" -DCMAKE_OSX_DEPLOYMENT_TARGET="$(DEPLOYMENT_TARGET)" -DCMAKE_INSTALL_PREFIX=../../../ThirdParty/libgit2 -DUSE_SSH=OFF -DUSE_ICONV=OFF ..
+	PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DBUILD_CLI=OFF -DUSE_HTTPS=SecureTransport -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_ARCHITECTURES="$(CMAKE_ARCHS)" -DCMAKE_OSX_DEPLOYMENT_TARGET="$(DEPLOYMENT_TARGET)" -DCMAKE_INSTALL_PREFIX=../../../ThirdParty/libgit2 -DUSE_SSH=OFF -DUSE_ICONV=OFF ..
 	PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} --build . --target install --parallel "$$(sysctl -n hw.ncpu)"
+	rm -rf ThirdParty/libgit2/lib/cmake
 
 sparkle: force
 	rm -rf ThirdParty/Sparkle.framework
