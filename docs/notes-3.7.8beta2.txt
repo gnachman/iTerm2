@@ -1,0 +1,221 @@
+Version 3.7.8beta2 of iTerm2 was built on
+November 13, 2026.
+
+New Features:
+- iTerm2 is now translated into Spanish, French,
+  Traditional Chinese, Italian, Turkish, Polish,
+  Vietnamese, Dutch, Swedish, Danish, Norwegian
+  Bokmål, Finnish, Czech, Slovak, Slovenian,
+  Croatian, Hungarian, Romanian, Greek,
+  Ukrainian, Indonesian, Malay, Hindi, Thai,
+  Catalan, Cantonese, British English,
+  Australian English, Canadian English, Indian
+  English, Canadian French, Latin American
+  Spanish, Traditional Chinese (Hong Kong),
+  European Portuguese, Philippine English, and
+  US Spanish. They are used when one of them is
+  your preferred language in System Settings >
+  General > Language & Region.
+- Control-Tab Switcher: holding the modifier for
+  Cycle Tabs Forward or Backward (Control-Tab by
+  default) can show the window’s tabs, most
+  recently used first, with each tab’s icon,
+  status, and when you last saw it, plus a
+  preview of the highlighted tab. Release the
+  modifier to switch. Turn it on in Settings >
+  Appearance > Tabs. Based on a contribution by
+  Oleh (kopyl).
+- A new key binding action, Set Character
+  Encoding, switches the current session’s
+  character encoding with one keystroke. Find it
+  under Profile in the key binding editor.
+- Click the pin indicator on a pinned hotkey
+  window to get a link that unpins it. Issue
+  13096.
+
+Other Improvements:
+- Fetch Models in the manual AI model editor now
+  lists the models on OpenAI- and
+  Anthropic-compatible servers such as vLLM, LM
+  Studio, and llama.cpp, not just Ollama.
+- A manual AI model’s URL can now be a base URL
+  such as http://localhost:8000/v1, or a
+  gateway’s Anthropic-compatible base URL such
+  as https://api.z.ai/api/anthropic. iTerm2 adds
+  the endpoint for the chosen API (for example
+  /chat/completions or /messages). This applies
+  to existing models too: a URL with no path, or
+  one ending in a version like /v1, /anthropic,
+  or /openai, now gets the endpoint added.
+- An update download that loses its network
+  connection now picks up where it left off, or
+  starts over, instead of failing with “An error
+  occurred while downloading the update.” Issue
+  13199.
+- Once an update is ready to install, you can
+  close its window and the update installs the
+  next time you quit iTerm2. Issue 13152.
+- With the Claude Code Integration, or when the
+  Session Status tool follows Codex CLI, a
+  session whose turn is over while agents or
+  commands it started keep running in the
+  background now shows “background” in purple
+  instead of “working”, so you can tell at a
+  glance that it is ready for input. Issue
+  13080.
+- Recent versions of Claude Code report their
+  own status to iTerm2 through the Program
+  Status Protocol. The tab now follows those
+  reports, and the Claude Code Integration adds
+  what they leave out: the “background” status
+  and Claude’s last message when a turn is done.
+  Before, the two took turns overwriting the
+  tab’s status.
+- Remapped modifier keys now apply in a floating
+  hotkey window and in Open Quickly while
+  another app is active.
+- Smooth-typing animation in Settings >
+  Profiles > Text now works with the box cursor
+  when GPU rendering is on. Thanks to Brian
+  Taylor (@pilotboy72) for the change.
+- When a program is reporting mouse clicks,
+  holding Option now switches the pointer to a
+  plain I-beam right away, showing that clicks
+  will select text instead of being reported.
+  Issue 13208.
+- With smart cursor color on, the character
+  under a full-white HDR cursor is now drawn in
+  black so it stays readable.
+- The new implementation of session input that
+  is on in beta builds is now also on for a
+  small share of stable users.
+- Updated the SSH and TLS libraries used for
+  downloading and uploading files with scp to
+  pick up security fixes. Host key prompts now
+  show SHA256 fingerprints, the same form ssh
+  prints. Servers too old to support RSA
+  signatures with SHA-2 (roughly 2016 and
+  earlier) can no longer be used with RSA keys.
+- Updated the library used to show git status
+  to pick up security fixes.
+- Updated the syntax highlighter used for text
+  files shown inline (for example with imgcat)
+  to pick up fixes for patterns that could make
+  iTerm2 hang.
+- Updated reader mode in the built-in browser to
+  pick up fixes for pages that could make it
+  hang.
+
+Bug Fixes:
+- After an upgrade or restart, iTerm2 could fail
+  to reconnect to running sessions, especially
+  when many were open. Each one was replaced by
+  a new shell showing a “Session contents
+  restored” banner. The fix covers sessions
+  created after installing this update, so
+  sessions that are already running can still
+  be affected the first time you upgrade.
+- When iTerm2 was busy, typing could lag in
+  other apps, especially with modifier
+  remapping or a hotkey set. Issue 12645.
+- A program that turned on the Kitty keyboard
+  protocol in the alternate screen, such as
+  Junie CLI, could leave it on for the shell
+  after exiting, so keystrokes showed up as
+  codes like “99;;99u” and Return did nothing.
+  The main and alternate screens now keep
+  separate keyboard modes. Issue 13204.
+- A sixel image with very large dimensions
+  could crash iTerm2’s image decoder or use
+  gigabytes of memory. Images with more pixels
+  than 8192×8192 are now rejected.
+- Fixed crashes when:
+  - launching right after an update;
+  - quitting iTerm2, including to install an
+    update, while Claude Code was running in a
+    session;
+  - splitting a pane or closing a window, if the
+    profile had a Variable Changed trigger whose
+    parameter used an interpolated string.
+    Thanks to Evan Alter (@hadees) for tracking
+    it down;
+  - an ssh server disconnected while
+    authenticating with keys from an ssh agent,
+    such as with “Too many authentication
+    failures”;
+  - typing a very long word or certain unusual
+    characters into the Settings search field;
+  - a very long international domain name
+    appeared in terminal text;
+  - showing a tip of the day;
+  - using Undo Close on a hotkey window whose
+    profile no longer has a hotkey;
+  - a profile or status bar setting held a
+    malformed color or font;
+  - a profile had an unknown window type;
+  - a pointer binding split a pane with a
+    profile that had been deleted;
+  - an Action selected its own menu item;
+  - Claude Code hooks ran at the same moment;
+  - an AI chat model had no API key of its own;
+  - right-to-left text wrapped at the bottom of
+    the screen;
+  - a session ended while a disconnection
+    message was being shown;
+  - entering the alternate screen with an
+    annotation that began before the first line;
+  - opening the password manager after iTerm2
+    was replaced while running.
+- A Variable Changed trigger on a tab variable
+  now also runs for a new split pane.
+- Reader Mode and Remove Distractions in the
+  built-in browser did nothing when chosen.
+  They work again.
+- With ligatures on and GPU rendering, a block
+  cursor on part of a ligature, such as the
+  second “-” of “--” in Fira Code, no longer
+  hides the rest of the ligature. Issue 13203.
+- Explain Output with AI could show the wrong
+  text as the explanation, or crash, depending
+  on how the AI’s reply was laid out. Thanks to
+  Kim Dong Han (@ehdgks0627) for the fix.
+- With “Quit when all windows are closed” on,
+  closing the last tmux window and choosing
+  Detach or Kill no longer quits iTerm2 before
+  the hidden session that started tmux can
+  reappear. Issue 12644.
+- With tmux integration connected to another
+  machine, panes a Claude Code workgroup opened
+  outside of tmux could show a notice that
+  their directory was unavailable, or start in
+  an unrelated directory on your Mac. They now
+  start in your home directory.
+- In tmux integration, a program that asked
+  whether iTerm2 supports the Program Status
+  Protocol got no answer, so it never reported
+  its status there.
+- Folding a command no longer strips the colors
+  from its first line, which mangled prompts
+  with colored segments such as powerline
+  themes. A folded double-width or
+  double-height first line is no longer spaced
+  out or drawn at double size.
+- On macOS 15 and later, Control-Shift-Arrow
+  keys sent nothing to the terminal when the
+  Mission Control or Spaces shortcuts were
+  enabled.
+- With the Claude Code Integration, agents
+  running inside Zellij no longer overwrite
+  each other’s Session Status. As with tmux
+  outside of tmux integration, iTerm2 can’t
+  tell which Zellij tab is showing, so no
+  status is shown.
+- The announcement offering to pretty-print a
+  hard-to-read JSON blob you copied could stop
+  appearing without ever being shown, such as
+  after copying text that began with a brace
+  but wasn’t JSON. Thanks to Kim Dong Han
+  (@ehdgks0627) for part of the fix.
+- Gestures in Settings > Pointer are now listed
+  in a consistent order instead of shifting
+  around between visits.
