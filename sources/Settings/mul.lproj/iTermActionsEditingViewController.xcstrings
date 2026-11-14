@@ -143,6 +143,12 @@
             "value" : "Eylem"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дія"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -345,6 +351,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Başlık"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Назва"
           }
         },
         "vi" : {

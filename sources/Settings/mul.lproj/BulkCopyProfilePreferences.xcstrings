@@ -143,6 +143,12 @@
             "value" : "Renkler"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Кольори"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Metin"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Текст"
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "Web"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Веб"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oturum"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сеанс"
           }
         },
         "vi" : {
@@ -791,6 +815,12 @@
             "value" : "Gelişmiş"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додатково"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -953,6 +983,12 @@
             "value" : "Pencere"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вікно"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1110,6 +1146,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx"
@@ -1277,6 +1319,12 @@
             "value" : "Terminal"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Термінал"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1437,6 +1485,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Şu profillere:"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для цих профілів:"
           }
         },
         "vi" : {
@@ -1601,6 +1655,12 @@
             "value" : "Vazgeç"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1761,6 +1821,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yer İşareti Ayarlarını Kopyala"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Копіювання параметрів закладки"
           }
         },
         "vi" : {
@@ -1925,6 +1991,12 @@
             "value" : "Tuşlar"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Клавіші"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2085,6 +2157,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kopyala"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скопіювати"
           }
         },
         "vi" : {

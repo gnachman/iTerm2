@@ -143,6 +143,12 @@
             "value" : "Geçerli bölmeyi XXX böl"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Розділити поточну панель XXX"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -305,6 +311,12 @@
             "value" : "Vazgeç"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -465,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Böl"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Розділити"
           }
         },
         "vi" : {

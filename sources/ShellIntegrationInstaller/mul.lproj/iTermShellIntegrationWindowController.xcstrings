@@ -143,6 +143,12 @@
             "value" : "En son sürümü indirir. curl | bash çalıştırır"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Викачує найновішу версію. Виконує curl | bash"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Devam Et"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Продовжити"
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "Tamam"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vazgeç"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати"
           }
         },
         "vi" : {
@@ -791,6 +815,12 @@
             "value" : "1. Hangi kabuğu kullandığınızı bulma.\n2. Ana dizininize betik dosyaları ekleme.\n3. Yardımcı betikleri yükleme.\n4. Kabuğunuzun başlangıç betiklerini değiştirme."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. Визначити, яким командним процесором ви користуєтеся.\n2. Додати файли скриптів у вашу домівку.\n3. Інсталювати допоміжні скрипти.\n4. Змінити скрипти запуску вашого командного процесора."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geri Dön"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Назад"
           }
         },
         "vi" : {
@@ -1115,6 +1151,12 @@
             "value" : "Yardımcı araçlar arasında dosya indirme, resimleri satır içinde gösterme ve daha fazlası için betikler bulunur. "
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Допоміжні засоби містять скрипти для викачування файлів, вбудованого показу зображень тощо. "
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1275,6 +1317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geri Dön"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Назад"
           }
         },
         "vi" : {
@@ -1439,6 +1487,12 @@
             "value" : "Devam Et"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Продовжити"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1599,6 +1653,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vazgeç"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати"
           }
         },
         "vi" : {
@@ -1763,6 +1823,12 @@
             "value" : "Atla"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пропустити"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1923,6 +1989,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vazgeç"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати"
           }
         },
         "vi" : {
@@ -2087,6 +2159,12 @@
             "value" : "Komutu Önizle"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Попередній перегляд команди"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2247,6 +2325,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "İnternetsiz Yükleme"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Інсталяція без інтернету"
           }
         },
         "vi" : {
@@ -2411,6 +2495,12 @@
             "value" : "Yükleyiciyi İndir ve Çalıştır"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Викачати й запустити інсталятор"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2571,6 +2661,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 yardımcı araçlarını da yükle"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Також інсталювати допоміжні засоби iTerm2"
           }
         },
         "vi" : {
@@ -2735,6 +2831,12 @@
             "value" : "Adım adım kılavuzlu elle yükleme. İndirme gerekmez."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ручна інсталяція з інструкціями. Без викачування."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2895,6 +2997,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Komutu Önizle"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Попередній перегляд команди"
           }
         },
         "vi" : {
@@ -3059,6 +3167,12 @@
             "value" : "Devam Et"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Продовжити"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3216,6 +3330,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🎉"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🎉"
@@ -3383,6 +3503,12 @@
             "value" : "Komutu Önizle"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Попередній перегляд команди"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3543,6 +3669,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geri Dön"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Назад"
           }
         },
         "vi" : {
@@ -3707,6 +3839,12 @@
             "value" : "Kabuk Entegrasyonunu nasıl yüklemek istersiniz?\n\nBu işlemde kabuğunuzun başlangıç betikleri değiştirilecektir. Bu yükleyici komutları sizin yerinize terminal penceresine girecektir."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Як інсталювати інтеграцію з командним процесором?\n\nУ цьому процесі буде змінено скрипти запуску вашого командного процесора. Інсталятор вводитиме команди у вікні термінала замість вас."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3867,6 +4005,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Komutu Önizle"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Попередній перегляд команди"
           }
         },
         "vi" : {
@@ -4031,6 +4175,12 @@
             "value" : "Yükleme tamamlandı!"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Інсталяцію завершено!"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4191,6 +4341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bu, şu komutu çalıştıracak:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Буде виконано таку команду:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
         "vi" : {
@@ -4355,6 +4511,12 @@
             "value" : "Denemek için yeni bir sekme oluşturun.\n\nEn iyi sonuç için kabuk entegrasyonunu ssh ile bağlandığınız tüm ana makinelere yükleyin."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Створіть нову вкладку, щоб спробувати.\n\nДля найкращих результатів інсталюйте інтеграцію з командним процесором на всіх вузлах, до яких підʼєднуєтеся через ssh."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4515,6 +4677,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kabuk Entegrasyonu, kabuğunuzun iTerm2 ile iletişim kurmasına yardımcı olan betiklerden oluşur; böylece iTerm2 çalıştırdığınız komutları, geçerli dizininizi ve diğer durumları izleyebilir. "
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Інтеграція з командним процесором складається зі скриптів, які допомагають вашому командному процесору звʼязуватися з iTerm2, щоб той міг відстежувати команди, які ви виконуєте, ваш поточний каталог та інший стан. "
           }
         },
         "vi" : {
@@ -4679,6 +4847,12 @@
             "value" : "Kabuk Entegrasyonunu Yükle"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Інсталювати інтеграцію з командним процесором"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4839,6 +5013,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vazgeç"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати"
           }
         },
         "vi" : {

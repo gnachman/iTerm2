@@ -143,6 +143,12 @@
             "value" : "iterm2 kitaplığı dışında hiçbir bağımlılığı olmayan basit bir betik."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Простий скрипт, який не має жодних залежностей, окрім бібліотеки iterm2."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -300,6 +306,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😈"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😈"
@@ -467,6 +479,12 @@
             "value" : "Temel"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Базовий"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -624,6 +642,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😊"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😊"
@@ -791,6 +815,12 @@
             "value" : "Uzun Süre Çalışan Arka Plan Hizmeti"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Довготривалий демон"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Basit"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Простий"
           }
         },
         "vi" : {
@@ -1115,6 +1151,12 @@
             "value" : "Vazgeç"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1275,6 +1317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eylemleri gerçekleştirip sonlanan basit bir betik için bu şablonu seçin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Виберіть цей шаблон для простого скрипта, який виконує дії й завершується."
           }
         },
         "vi" : {
@@ -1439,6 +1487,12 @@
             "value" : "iterm2 kitaplığı dışında PyPI paketlerine bağımlı bir betik. Bu betik için özel bir pyenv oluşturulur."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скрипт, що залежить від пакетів PyPI, окрім бібліотеки iterm2. Для цього скрипта буде створено окреме приватне середовище pyenv."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1596,6 +1650,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔗"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🔗"
@@ -1763,6 +1823,12 @@
             "value" : "Bir betik şablonu seçin:"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Виберіть шаблон скрипта:"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1923,6 +1989,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tam Ortam"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Повне середовище"
           }
         },
         "vi" : {
@@ -2087,6 +2159,12 @@
             "value" : "Çalışmaya devam eden ve bildirimlere yanıt veren bir betik için bu şablonu seçin."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Виберіть цей шаблон для скрипта, який залишається запущеним і відповідає на сповіщення."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2244,6 +2322,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛠️"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🛠️"
@@ -2409,6 +2493,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bir Python ortamı seçin:"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Виберіть середовище Python:"
           }
         },
         "vi" : {

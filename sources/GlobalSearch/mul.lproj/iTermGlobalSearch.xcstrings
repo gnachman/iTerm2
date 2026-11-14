@@ -143,6 +143,12 @@
             "value" : "BAŞLIK HÜCRESİ"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "КОМІРКА ЗАГОЛОВКА"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Genel Olarak Bul"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Глобальний пошук"
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "Alt Dize: Büyük/Küçük Harfe Duyarlı"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Підрядок, з урахуванням регістру"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alt Dize: Otomatik"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Підрядок, автоматично"
           }
         },
         "vi" : {
@@ -791,6 +815,12 @@
             "value" : "Düzenli İfade: Büyük/Küçük Harfe Duyarsız"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Регулярний вираз, без урахування регістру"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bul"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Знайти"
           }
         },
         "vi" : {
@@ -1115,6 +1151,12 @@
             "value" : "Düzenli İfade: Büyük/Küçük Harfe Duyarlı"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Регулярний вираз, з урахуванням регістру"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1275,6 +1317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alt Dize: Büyük/Küçük Harfe Duyarsız"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Підрядок, без урахування регістру"
           }
         },
         "vi" : {

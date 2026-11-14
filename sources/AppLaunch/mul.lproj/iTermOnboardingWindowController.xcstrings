@@ -143,6 +143,12 @@
             "value" : "Mac’inizden uzakta olduğunuzda da iTerm2’yi kullanın. Onu YZ sohbeti üzerinden kontrol edebilir, oturum içeriğini görüntüleyebilir ve anlık bildirimler alabilirsiniz. Uçtan uca şifreleme verilerinizi güvende tutar. <a href=\"iterm2whatsnew:companion\">Hemen deneyin!</a>"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Користуйтеся iTerm2, коли ви далеко від свого Mac. Ним можна керувати через чат ШІ, переглядати вміст сеансів і отримувати push-сповіщення. Наскрізне шифрування захищає ваші дані. <a href=\"iterm2whatsnew:companion\">Спробуйте зараз!</a>"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -300,6 +306,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -467,6 +479,12 @@
             "value" : "Yeni bir YZ sohbet modu olan Orkestrasyon, işi sizin yerinize YZ’nin yönetmesini sağlar. Pencere oluşturabilir, görevlerin tamamlanmasını bekleyebilir (etkileşimli uygulamalarda bile) ve yeni otomatik güvenlik denetleyicisi sayesinde neredeyse tüm izin istemlerini yanıtlamanız gerekmez. <a href=\"iterm2whatsnew:orchestration\">Hemen deneyin!</a>"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Новий режим чату ШІ, оркестрування, дає ШІ змогу керувати всім замість вас. Він може створювати вікна, чекати завершення завдань (навіть в інтерактивних програмах), а нова автоматична перевірка безпеки позбавляє вас потреби відповідати майже на всі запити дозволів. <a href=\"iterm2whatsnew:orchestration\">Спробуйте зараз!</a>"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -624,6 +642,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -791,6 +815,12 @@
             "value" : "Yeni Ekran Görüntüleri özelliği, terminal içeriğinizin PNG’sini oluşturmayı kolaylaştırır. Karartma ve vurgulamayı destekler. Etkinleştirmek için <a href=\"iterm2whatsnew:screenshot\">Oturum > Ekran Görüntüsü Oluştur</a> komutunu kullanın."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нова функція «Знімки екрана» спрощує створення PNG вмісту вашого терміналу. Вона підтримує затирання й підсвічування. Щоб увімкнути її, скористайтеся <a href=\"iterm2whatsnew:screenshot\">«Сеанс > Зробити знімок екрана…»</a>."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -953,6 +983,12 @@
             "value" : "Sürüm 3.7’deki Yenilikler"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Що нового у версії 3.7"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1110,6 +1146,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ">"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : ">"
@@ -1277,6 +1319,12 @@
             "value" : "●"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1437,6 +1485,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code Entegrasyonu"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Інтеграція з Claude Code"
           }
         },
         "vi" : {
@@ -1601,6 +1655,12 @@
             "value" : "Çok sayıda sekmeyi yönetmenize yardımcı olmak için artık sekmeleri daraltılabilir gruplar halinde birleştirebilirsiniz. Ayrıca sekme çubuğu artık taşma menüsü göstermek yerine kayıyor."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Щоб легше керувати великою кількістю вкладок, їх тепер можна обʼєднувати у згорнуті групи. Також панель вкладок тепер прокручується замість показу меню переповнення."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1758,6 +1818,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -1925,6 +1991,12 @@
             "value" : "Claude Code entegrasyonu, kod incelemesi ve diff okuma gibi birbiriyle ilişkili birden fazla oturumu özelleştirilebilir bir arayüzde düzenler. Ayrıca Claude’un durumunu göstererek dikkatinizi bekleyen örnekleri kolayca bulmanızı sağlar. <a href=\"iterm2whatsnew:claudecode\">Hemen deneyin!</a>"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Інтеграція з Claude Code упорядковує кілька повʼязаних сеансів (наприклад, рецензування коду й перегляд diff) у настроюваному інтерфейсі. Вона також показує стан Claude, тож ви легко знайдете екземпляри, що очікують на вашу увагу. <a href=\"iterm2whatsnew:claudecode\">Спробуйте зараз!</a>"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2087,6 +2159,12 @@
             "value" : "iPhone Eşlik Eden Uygulaması"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Супутня програма для iPhone"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2244,6 +2322,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -2411,6 +2495,12 @@
             "value" : "Orkestrasyon"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оркестрування"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2571,6 +2661,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sekme Grupları"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Групи вкладок"
           }
         },
         "vi" : {
@@ -2735,6 +2831,12 @@
             "value" : "Ekran Görüntüleri"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Знімки екрана"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2892,6 +2994,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "<"

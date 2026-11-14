@@ -143,6 +143,12 @@
             "value" : "tmux Gösterge Paneli"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Панель керування tmux"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oturum"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сеанс"
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "Bağlan"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Підʼєднати"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pencerelerde ara"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пошук вікон"
           }
         },
         "vi" : {
@@ -791,6 +815,12 @@
             "value" : "Pencere"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вікно"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pencerelerde Aç"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відкрити у вікнах"
           }
         },
         "vi" : {
@@ -1115,6 +1151,12 @@
             "value" : "Gizle"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сховати"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1275,6 +1317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pencerelerde Aç"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відкрити у вікнах"
           }
         },
         "vi" : {
@@ -1439,6 +1487,12 @@
             "value" : "Sekmelerde Aç"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відкрити у вкладках"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1599,6 +1653,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ayrıl"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відʼєднати"
           }
         },
         "vi" : {
@@ -1763,6 +1823,12 @@
             "value" : "Gizli pencereler varsa bağlanırken gösterge panelini aç"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відкривати панель керування під час підʼєднання, якщо є сховані вікна"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1923,6 +1989,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "En az bu kadar pencere varsa bağlanırken pencere açma:"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не відкривати вікна під час підʼєднання, якщо вікон щонайменше стільки:"
           }
         },
         "vi" : {

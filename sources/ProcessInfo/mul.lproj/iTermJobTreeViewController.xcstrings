@@ -143,6 +143,12 @@
             "value" : "pid"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pid"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "İşlem"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Процес"
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "İşlem Kimliğini Kopyala"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скопіювати ID процесу"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Öğe 1"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Елемент 1"
           }
         },
         "vi" : {
@@ -791,6 +815,12 @@
             "value" : "Öğe 2"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Елемент 2"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Öğe 3"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Елемент 3"
           }
         },
         "vi" : {
@@ -1115,6 +1151,12 @@
             "value" : "Sonlandığında Bildir"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сповіщати про завершення"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1275,6 +1317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Komutu Kopyala"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скопіювати команду"
           }
         },
         "vi" : {

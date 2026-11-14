@@ -143,6 +143,12 @@
             "value" : "Durum çubuğunuza eklemek için menüden bir bileşeni Etkin Bileşenler’e sürükleyin."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перетягніть компонент із меню до «Активні компоненти», щоб додати його на панель стану."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kararlı konum yerine sıkı yerleşimi tercih et"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Надавати перевагу щільному розміщенню перед стабільною позицією"
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "Tamam"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Etkin Bileşenler"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Активні компоненти"
           }
         },
         "vi" : {
@@ -791,6 +815,12 @@
             "value" : "Devre Dışı"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вимкнено"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Değeri boş olan bileşenleri kaldır"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вилучати компоненти з порожніми значеннями"
           }
         },
         "vi" : {
@@ -1115,6 +1151,12 @@
             "value" : "Durum çubuğu ile terminal arasına ayırıcı çiz"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Малювати роздільник між панеллю стану й терміналом"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1275,6 +1317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Otomatik"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Автоматично"
           }
         },
         "vi" : {
@@ -1439,6 +1487,12 @@
             "value" : "Durum Çubuğu Bileşeni Menüsü"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Меню компонентів панелі стану"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1599,6 +1653,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gelişmiş…"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додатково…"
           }
         },
         "vi" : {
@@ -1763,6 +1823,12 @@
             "value" : "Sıkı yerleşim algoritması aynı anda daha fazla durum çubuğu bileşeninin görünmesini sağlar, ancak bileşenler daha çok yer değiştirme eğilimindedir."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Алгоритм щільного розміщення дає змогу одночасно бачити більше компонентів панелі стану, але вони частіше зміщуються."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1923,6 +1989,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "🌈 Otomatik gökkuşağı:"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌈 Автоматична веселка:"
           }
         },
         "vi" : {
@@ -2087,6 +2159,12 @@
             "value" : "Font adı buraya gelir"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тут назва шрифту"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2247,6 +2325,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Koyu Renkler"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Темні кольори"
           }
         },
         "vi" : {
@@ -2411,6 +2495,12 @@
             "value" : "Değiştir"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Змінити"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2571,6 +2661,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Varsayılan metin rengi:"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Типовий колір тексту:"
           }
         },
         "vi" : {
@@ -2735,6 +2831,12 @@
             "value" : "Bileşeni Yapılandır"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Налаштувати компонент"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2895,6 +2997,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sıkı yerleşim algoritması aynı anda daha fazla durum çubuğu bileşeninin görünmesini sağlar, ancak bileşenler daha çok yer değiştirme eğilimindedir."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Алгоритм щільного розміщення дає змогу одночасно бачити більше компонентів панелі стану, але вони частіше зміщуються."
           }
         },
         "vi" : {
@@ -3059,6 +3167,12 @@
             "value" : "Ayırıcı rengi:"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Колір роздільника:"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3219,6 +3333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vazgeç"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати"
           }
         },
         "vi" : {
@@ -3383,6 +3503,12 @@
             "value" : "Açık Renkler"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Світлі кольори"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3543,6 +3669,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Font:"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Шрифт:"
           }
         },
         "vi" : {
@@ -3707,6 +3839,12 @@
             "value" : "Arka plan rengi:"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Колір тла:"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3869,6 +4007,12 @@
             "value" : "Tamam"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4029,6 +4173,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Durum çubuğu ile terminal içeriği arasına ince bir çizgi çizer."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Малює тонку лінію між панеллю стану та вмістом термінала."
           }
         },
         "vi" : {

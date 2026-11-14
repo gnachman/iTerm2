@@ -143,6 +143,12 @@
             "value" : "Bu komuttan gelen hataları sessizce yok say"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Мовчки ігнорувати помилки цієї команди"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Çalıştırılacak yardımcı işlem komutu:"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Команда співпроцесу для запуску:"
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "Tamam"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -629,6 +647,12 @@
             "value" : "Vazgeç"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -789,6 +813,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Komut girin"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Введіть команду"
           }
         },
         "vi" : {

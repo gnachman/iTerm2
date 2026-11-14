@@ -143,6 +143,12 @@
             "value": "Zaman damgalarını ekle"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Додати позначки часу"
+          }
+        },
         "vi": {
           "stringUnit": {
             "state": "translated",
@@ -303,6 +309,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dosya biçimi:"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Формат файлу:"
           }
         },
         "vi": {

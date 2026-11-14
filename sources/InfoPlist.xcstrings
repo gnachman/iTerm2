@@ -156,6 +156,12 @@
             "value" : "iTerm2"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -316,6 +322,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2’deki bir uygulama AppleScript’i kullanmak istiyor."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Програма в iTerm2 хоче використовувати AppleScript."
           }
         },
         "vi" : {
@@ -480,6 +492,12 @@
             "value" : "iTerm2’deki bir uygulama Bluetooth’u kullanmak istiyor."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Програма в iTerm2 хоче використовувати Bluetooth."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -640,6 +658,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2’deki bir uygulama Takvim verilerini kullanmak istiyor."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Програма в iTerm2 хоче використовувати дані Календаря."
           }
         },
         "vi" : {
@@ -804,6 +828,12 @@
             "value" : "iTerm2’deki bir uygulama kamerayı kullanmak istiyor."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Програма в iTerm2 хоче використовувати камеру."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -966,6 +996,12 @@
             "value" : "iTerm2’deki bir uygulama kişilerinizi kullanmak istiyor."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Програма в iTerm2 хоче використовувати ваші контакти."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1123,6 +1159,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPL v2"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPL v2"
@@ -1290,6 +1332,12 @@
             "value" : "iTerm2’deki bir uygulama yerel ağa erişmek istiyor."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Програма в iTerm2 хоче отримати доступ до локальної мережі."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1450,6 +1498,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2’deki bir uygulama, arka planda bile konum bilgilerinizi kullanmak istiyor."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Програма в iTerm2 хоче використовувати дані про ваше місцеперебування, навіть у фоновому режимі."
           }
         },
         "vi" : {
@@ -1614,6 +1668,12 @@
             "value" : "iTerm2’deki bir uygulama konum bilgilerinizi kullanmak istiyor."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Програма в iTerm2 хоче використовувати дані про ваше місцеперебування."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1774,6 +1834,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2’deki bir uygulama, etkinken konum bilgilerinizi kullanmak istiyor."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Програма в iTerm2 хоче використовувати дані про ваше місцеперебування, поки вона активна."
           }
         },
         "vi" : {
@@ -1938,6 +2004,12 @@
             "value" : "iTerm2’deki bir uygulama mikrofonunuzu kullanmak istiyor."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Програма в iTerm2 хоче використовувати ваш мікрофон."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2098,6 +2170,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2’deki bir uygulama Fotoğraflar kitaplığını kullanmak istiyor."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Програма в iTerm2 хоче використовувати бібліотеку фотографій."
           }
         },
         "vi" : {
@@ -2262,6 +2340,12 @@
             "value" : "iTerm2’deki bir uygulama anımsatıcılarınızı kullanmak istiyor."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Програма в iTerm2 хоче використовувати ваші нагадування."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2424,6 +2508,12 @@
             "value" : "iTerm2’deki bir uygulama konuşma tanımayı kullanmak istiyor."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Програма в iTerm2 хоче використовувати розпізнавання мовлення."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2584,6 +2674,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2’deki bir programın yaptığı işlem yükseltilmiş izin gerektiriyor."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Операція, яку виконує програма в iTerm2, потребує підвищених дозволів."
           }
         },
         "vi" : {

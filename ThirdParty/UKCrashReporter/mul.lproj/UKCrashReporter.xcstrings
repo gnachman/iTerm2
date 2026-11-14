@@ -143,6 +143,12 @@
             "value" : "Açıklama"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Опис"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Çökme Günlüğü"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Журнал збою"
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "Çökme Raporlayıcı"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Звітування про збої"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "{APPNAME} uygulamasının en son kullanıldığında çöktüğü anlaşılıyor. Geliştiricilere bir çökme günlüğü göndermek ister misiniz?\n\nApple’ın çökme günlükleri diğer geliştiricilere gönderilmez; bu nedenle {APPNAME} geliştiricilerinin bu çökmeden haberdar olmasının ve düzeltmesinin tek yolu budur."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Схоже, {APPNAME} зазнала збою під час останнього використання. Надіслати журнал збою розробникам?\n\nЖурнали збоїв від Apple не надсилаються іншим розробникам, тож це єдиний спосіб для розробників {APPNAME} дізнатися про цей збій і виправити його."
           }
         },
         "vi" : {
@@ -791,6 +815,12 @@
             "value" : "İletilmesini istemediğiniz bilgileri silebilirsiniz, ancak bu hatanın bulunmasını zorlaştırır. Varsayılan olarak çökme günlüğü, kullandığınız Mac modeli ve ayarlarınız iletilir."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ви можете видалити будь-які дані, які не хочете передавати, але це ускладнить пошук помилки. Типово передаються журнал збою, а також модель вашого Mac і ваші параметри."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gönder"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Надіслати"
           }
         },
         "vi" : {
@@ -1115,6 +1151,12 @@
             "value" : "Daha Sonra Hatırlat"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нагадати пізніше"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1275,6 +1317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yok Say"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відкинути"
           }
         },
         "vi" : {

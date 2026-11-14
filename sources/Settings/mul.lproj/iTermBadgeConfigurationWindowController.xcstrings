@@ -143,6 +143,12 @@
             "value" : "%"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "pt"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "пт"
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "En büyük genişlik:"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Максимальна ширина:"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Üst kenar boşluğu:"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Верхнє поле:"
           }
         },
         "vi" : {
@@ -791,6 +815,12 @@
             "value" : "Sağ kenar boşluğu:"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Праве поле:"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -948,6 +978,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%"
@@ -1115,6 +1151,12 @@
             "value" : "Tamam"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1275,6 +1317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "pt"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "пт"
           }
         },
         "vi" : {
@@ -1439,6 +1487,12 @@
             "value" : "En büyük yükseklik:"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Максимальна висота:"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1599,6 +1653,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vazgeç"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати"
           }
         },
         "vi" : {

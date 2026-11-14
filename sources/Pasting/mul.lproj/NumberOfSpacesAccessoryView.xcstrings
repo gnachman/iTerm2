@@ -143,6 +143,12 @@
             "value": "Sekme boyutu (boşluk sayısı):"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Розмір табуляції в пробілах:"
+          }
+        },
         "vi": {
           "stringUnit": {
             "state": "translated",
@@ -300,6 +306,12 @@
           }
         },
         "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "uk": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

@@ -143,6 +143,12 @@
             "value" : "Hazır Ayarlar…"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Набори параметрів…"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touch Bar Öğesi Ekle"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додати елемент Touch Bar"
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "Eylem"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дія"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touch Bar Hafifletmeleri"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обхідні рішення для Touch Bar"
           }
         },
         "vi" : {
@@ -791,6 +815,12 @@
             "value" : "Görsel esc tuşu göstergesi"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Візуальний індикатор клавіші esc"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tuş Kombinasyonu"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Комбінація клавіш"
           }
         },
         "vi" : {
@@ -1115,6 +1151,12 @@
             "value" : "esc tuşuna basarken dokunsal geri bildirim"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тактильний відгук під час натискання esc"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1277,6 +1319,12 @@
             "value" : "Tamam"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1437,6 +1485,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "esc tuşu için tuş tıklama sesi"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Звук клацання для клавіші esc"
           }
         },
         "vi" : {

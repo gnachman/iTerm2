@@ -143,6 +143,12 @@
             "value" : "Yol"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Шлях"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Göster"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показати"
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "İmza"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сигнатура"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Betik Denetçisi"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Інспектор скриптів"
           }
         },
         "vi" : {
@@ -791,6 +815,12 @@
             "value" : "Oturumlar, Sekmeler ve Pencereler"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сеанси, вкладки та вікна"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Değişkenler"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Змінні"
           }
         },
         "vi" : {
@@ -1115,6 +1151,12 @@
             "value" : "Rol"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Роль"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1275,6 +1317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yolu Kopyala"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скопіювати шлях"
           }
         },
         "vi" : {
@@ -1439,6 +1487,12 @@
             "value" : "Kayıtlı İşlevler"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Зареєстровані функції"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1599,6 +1653,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Değer"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Значення"
           }
         },
         "vi" : {
@@ -1763,6 +1823,12 @@
             "value" : "Kimliği Kopyala"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скопіювати ID"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1925,6 +1991,12 @@
             "value" : "Nesne Adı (Kimlik)"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Назва обʼєкта (ID)"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2082,6 +2154,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⨁"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⨁"
@@ -2249,6 +2327,12 @@
             "value" : "Betik"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скрипт"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2409,6 +2493,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Değeri Kopyala"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скопіювати значення"
           }
         },
         "vi" : {

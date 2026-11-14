@@ -143,6 +143,12 @@
             "value" : "Nerd Font Paketini Yükle…"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Інсталювати набір Nerd Font…"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -305,6 +311,12 @@
             "value" : "Özel İstisnayı Düzenle"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Змінити особливий виняток"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -462,6 +474,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -629,6 +647,12 @@
             "value" : "Özel İstisnalar, belirli Unicode aralıkları veya yazı sistemleri için fontları geçersiz kılar."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Особливі винятки перевизначають шрифти для окремих діапазонів Unicode або писемностей."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -786,6 +810,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -953,6 +983,12 @@
             "value" : "Tamam"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1113,6 +1149,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Font:"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Шрифт:"
           }
         },
         "vi" : {
@@ -1277,6 +1319,12 @@
             "value" : "Şu karakterden başlayan karakterler için"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для символів, починаючи з"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1437,6 +1485,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hazır Ayar Ekle…"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додати набір параметрів…"
           }
         },
         "vi" : {
@@ -1601,6 +1655,12 @@
             "value" : "Vazgeç"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1761,6 +1821,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ile"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "до"
           }
         },
         "vi" : {
@@ -1925,6 +1991,12 @@
             "value" : "Özel İstisnaları Yönet"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Керування особливими винятками"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2085,6 +2157,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tamam"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "vi" : {
@@ -2249,6 +2327,12 @@
             "value" : "Kod noktalarını kullan"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Використовувати кодові позиції"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2411,6 +2495,12 @@
             "value" : "Vazgeç"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2568,6 +2658,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"

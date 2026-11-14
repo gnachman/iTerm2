@@ -143,6 +143,12 @@
             "value" : "/directory"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dizini kopyala"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скопіювати каталог"
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "12 bayt"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 Б"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Komutun çıktısını seç"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вибрати вивід команди"
           }
         },
         "vi" : {
@@ -791,6 +815,12 @@
             "value" : "1sa 35dk"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 год 35 хв"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Çıktı:"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вивід:"
           }
         },
         "vi" : {
@@ -1115,6 +1151,12 @@
             "value" : "Kopyalandı"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скопійовано"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1275,6 +1317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Komutu panoya kopyala"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скопіювати команду в буфер обміну"
           }
         },
         "vi" : {
@@ -1439,6 +1487,12 @@
             "value" : "Başlangıç: %@"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Початок: %@"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1599,6 +1653,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Komutu Oluşturucu’da aç"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відкрити команду в редакторі команд"
           }
         },
         "vi" : {
@@ -1763,6 +1823,12 @@
             "value" : "Sürüklenebilir klasör"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Папка, яку можна перетягнути"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1923,6 +1989,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "komut"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "команда"
           }
         },
         "vi" : {
@@ -2087,6 +2159,12 @@
             "value" : "Komutu terminale yaz"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Записати команду в термінал"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2247,6 +2325,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dizin:"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Каталог:"
           }
         },
         "vi" : {
@@ -2411,6 +2495,12 @@
             "value" : "Dönüş kodu:"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Код повернення:"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2571,6 +2661,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dizini terminale yaz"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Записати каталог у термінал"
           }
         },
         "vi" : {
@@ -2735,6 +2831,12 @@
             "value" : "Çalışma süresi:"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Час виконання:"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2895,6 +2997,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Komutun çıktısını kopyala"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скопіювати вивід команди"
           }
         },
         "vi" : {
@@ -3059,6 +3167,12 @@
             "value" : "Komutu paylaş…"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поділитися командою…"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3221,6 +3335,12 @@
             "value" : "Komut:"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Команда:"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3378,6 +3498,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "127"
@@ -3543,6 +3669,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ekran dışı komutu göstermeyi devre dışı bırak"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не показувати команду поза екраном"
           }
         },
         "vi" : {

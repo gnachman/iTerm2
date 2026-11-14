@@ -143,6 +143,12 @@
             "value" : "Arama Geçmişini Sil"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Стерти історію пошуку"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Büyük/Küçük Harfe Duyarlı Alt Dize"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Підрядок з урахуванням регістру"
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "Büyük/Küçük Harfe Duyarsız Alt Dize"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Підрядок без урахування регістру"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ara"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пошук"
           }
         },
         "vi" : {
@@ -791,6 +815,12 @@
             "value" : "Büyük/Küçük Harfe Duyarlı Düzenli İfade"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Регулярний вираз з урахуванням регістру"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -953,6 +983,12 @@
             "value" : "Akıllı Büyük/Küçük Harf Alt Dize"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Підрядок із розумним регістром"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1113,6 +1149,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Büyük/Küçük Harfe Duyarsız Düzenli İfade"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Регулярний вираз без урахування регістру"
           }
         },
         "vi" : {

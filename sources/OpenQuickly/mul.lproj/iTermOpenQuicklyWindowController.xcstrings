@@ -143,6 +143,12 @@
             "value" : "Hızlı Aç"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Швидко відкрити"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -305,6 +311,12 @@
             "value" : "Ayrıntı"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подробиці"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -465,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oturumlarda, profillerde veya düzenlerde ara"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Шукайте сеанси, профілі або розміщення"
           }
         },
         "vi" : {

@@ -143,6 +143,12 @@
             "value": "Python Çalışma Zamanı Yükleyicisi"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Інсталятор середовища виконання Python"
+          }
+        },
         "vi": {
           "stringUnit": {
             "state": "translated",
@@ -305,6 +311,12 @@
             "value": "Vazgeç"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скасувати"
+          }
+        },
         "vi": {
           "stringUnit": {
             "state": "translated",
@@ -465,6 +477,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "İsteğe bağlı bileşenler indiriliyor…"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Викачування додаткових компонентів…"
           }
         },
         "vi": {

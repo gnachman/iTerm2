@@ -143,6 +143,12 @@
             "value": "iTerm2"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iTerm2"
+          }
+        },
         "vi": {
           "stringUnit": {
             "state": "translated",
@@ -303,6 +309,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "George Nachman ve Katkıda Bulunanlar"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Авторство: George Nachman і учасники проєкту"
           }
         },
         "vi": {

@@ -143,6 +143,12 @@
             "value": "İşaretle"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Позначити"
+          }
+        },
         "vi": {
           "stringUnit": {
             "state": "translated",

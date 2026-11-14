@@ -160,6 +160,12 @@
             "state" : "translated",
             "value" : "Stanje"
           }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Стан"
+          }
         }
       }
     },
@@ -322,6 +328,12 @@
             "state" : "translated",
             "value" : "Uvažanje …"
           }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Імпортування…"
+          }
         }
       }
     },
@@ -483,6 +495,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Uvažanje nastavitev in podatkov …"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Імпортування параметрів і даних…"
           }
         }
       }

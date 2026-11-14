@@ -143,6 +143,12 @@
             "value" : "Önceki oturumun dizinini yeniden kullan"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Використати каталог попереднього сеансу"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ana dizin"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Домашній каталог"
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "Yeni Sekmeler İçin Çalışma Dizini"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Робочий каталог для нових вкладок"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Radyo"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перемикач"
           }
         },
         "vi" : {
@@ -791,6 +815,12 @@
             "value" : "Yeni Pencereler İçin Çalışma Dizini"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Робочий каталог для нових вікон"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Önceki oturumun dizinini yeniden kullan"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Використати каталог попереднього сеансу"
           }
         },
         "vi" : {
@@ -1115,6 +1151,12 @@
             "value" : "Radyo"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перемикач"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1275,6 +1317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Önceki oturumun dizinini yeniden kullan"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Використати каталог попереднього сеансу"
           }
         },
         "vi" : {
@@ -1439,6 +1487,12 @@
             "value" : "Dizin:"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Каталог:"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1599,6 +1653,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yeni Bölmeler İçin Çalışma Dizini"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Робочий каталог для нових розділених панелей"
           }
         },
         "vi" : {
@@ -1763,6 +1823,12 @@
             "value" : "Gelişmiş Çalışma Dizini Ayarları"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додаткові параметри робочого каталогу"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1923,6 +1989,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dizin:"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Каталог:"
           }
         },
         "vi" : {
@@ -2087,6 +2159,12 @@
             "value" : "Dizin:"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Каталог:"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2247,6 +2325,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Radyo"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перемикач"
           }
         },
         "vi" : {
@@ -2411,6 +2495,12 @@
             "value" : "Ana dizin"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Домашній каталог"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2573,6 +2663,12 @@
             "value" : "Ana dizin"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Домашній каталог"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2733,6 +2829,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tamam"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "vi" : {

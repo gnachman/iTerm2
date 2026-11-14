@@ -143,6 +143,12 @@
             "value" : "İşaret İşaret Taşı"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Переміщення за позначкою"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Klavye Kısayolunu Ayarla"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Задати клавіатурне скорочення"
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "Vazgeç"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Renk hazır ayarı:"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Набір кольорів:"
           }
         },
         "vi" : {
@@ -791,6 +815,12 @@
             "value" : "Eylem:"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дія:"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touch Bar’da gösterilecek etiket"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Підпис для показу в Touch Bar"
           }
         },
         "vi" : {
@@ -1115,6 +1151,12 @@
             "value" : "Karakter Karakter Taşı"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Переміщення за символом"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1275,6 +1317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "örn.: 0x7f"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "напр.: 0x7f"
           }
         },
         "vi" : {
@@ -1439,6 +1487,12 @@
             "value" : "Profil:"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Профіль:"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1599,6 +1653,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sözcük Sözcük Taşı"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Переміщення за словом"
           }
         },
         "vi" : {
@@ -1763,6 +1823,12 @@
             "value" : "Hata mesajı buraya gelir"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тут повідомлення про помилку"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1925,6 +1991,12 @@
             "value" : "Eylem:"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дія:"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2082,6 +2154,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esc+"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Esc+"
@@ -2249,6 +2327,12 @@
             "value" : "Klavye kısayolu:"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Клавіатурне скорочення:"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2411,6 +2495,12 @@
             "value" : "Satır Satır Taşı"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Переміщення за рядком"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2571,6 +2661,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tamam"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "vi" : {

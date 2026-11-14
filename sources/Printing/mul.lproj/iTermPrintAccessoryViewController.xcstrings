@@ -143,6 +143,12 @@
             "value": "Siyah beyaz"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Чорно-біле"
+          }
+        },
         "vi": {
           "stringUnit": {
             "state": "translated",

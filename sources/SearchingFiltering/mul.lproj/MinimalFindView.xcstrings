@@ -143,6 +143,12 @@
             "value" : "Filtre"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Фільтрувати"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Büyük/Küçük Harfe Duyarsız Alt Dize"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Підрядок без урахування регістру"
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "Akıllı Büyük/Küçük Harf Alt Dize"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Підрядок, розумний регістр"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Büyük/Küçük Harfe Duyarlı Alt Dize"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Підрядок з урахуванням регістру"
           }
         },
         "vi" : {
@@ -791,6 +815,12 @@
             "value" : "Büyük/Küçük Harfe Duyarsız Düzenli İfade"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Регулярний вираз без урахування регістру"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arama Geçmişini Sil"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Стерти історію пошуку"
           }
         },
         "vi" : {
@@ -1115,6 +1151,12 @@
             "value" : "Yalnızca seçili komutta aranıyor"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пошук лише у вибраній команді"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1275,6 +1317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Büyük/Küçük Harfe Duyarsız Düzenli İfade"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Регулярний вираз без урахування регістру"
           }
         },
         "vi" : {
@@ -1439,6 +1487,12 @@
             "value" : "Filtrele"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Фільтрувати"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1599,6 +1653,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Büyük/Küçük Harfe Duyarlı Alt Dize"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Підрядок з урахуванням регістру"
           }
         },
         "vi" : {
@@ -1763,6 +1823,12 @@
             "value" : "Büyük/Küçük Harfe Duyarlı Düzenli İfade"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Регулярний вираз з урахуванням регістру"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1923,6 +1989,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Akıllı Büyük/Küçük Harf Alt Dize"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Підрядок, розумний регістр"
           }
         },
         "vi" : {
@@ -2087,6 +2159,12 @@
             "value" : "Büyük/Küçük Harfe Duyarsız Alt Dize"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Підрядок без урахування регістру"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2247,6 +2325,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Büyük/Küçük Harfe Duyarlı Düzenli İfade"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Регулярний вираз з урахуванням регістру"
           }
         },
         "vi" : {

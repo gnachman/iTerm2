@@ -143,6 +143,12 @@
             "value" : "Profiller"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Профілі"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Profilleri Düzenle…"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Змінити профілі…"
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "Yeni Sekme"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нова вкладка"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yeni Pencere"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нове вікно"
           }
         },
         "vi" : {
@@ -791,6 +815,12 @@
             "value" : "Bir profil açtıktan sonra bu pencereyi kapat."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Закрити це вікно після відкриття профілю."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yeni Pencerede Yeni Sekmeler"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нові вкладки в новому вікні"
           }
         },
         "vi" : {
@@ -1199,6 +1235,12 @@
             "value" : "Etiket ›"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Теги >"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1377,6 +1419,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Novo plavajoče podokno"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нова плавуча панель"
           }
         }
       }

@@ -18,7 +18,7 @@ final class SessionStatusHelpLocalizationTests: XCTestCase {
         let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
         let strings = json["strings"] as! [String: Any]
         let localizations = (strings["ToolStatus.HelpMarkdown"] as? [String: Any])?["localizations"] as? [String: Any]
-        for language in ["en", "cs", "da", "de", "el", "es", "fi", "fr", "hr", "hu", "it", "ja", "nb", "nl", "pl", "pt-BR", "ro", "ru", "sk", "sl", "sv", "tr", "vi", "zh-Hans", "zh-Hant"] {
+        for language in ["en", "cs", "da", "de", "el", "es", "fi", "fr", "hr", "hu", "it", "ja", "nb", "nl", "pl", "pt-BR", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "vi", "zh-Hans", "zh-Hant"] {
             let unit = (localizations?[language] as? [String: Any])?["stringUnit"] as? [String: Any]
             let value = unit?["value"] as? String ?? ""
             XCTAssertTrue(value.contains("OSC 7501"), language)

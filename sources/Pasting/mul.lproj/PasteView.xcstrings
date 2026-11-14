@@ -143,6 +143,12 @@
             "value": "Yapıştırılıyor…"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вставлення…"
+          }
+        },
         "vi": {
           "stringUnit": {
             "state": "translated",
@@ -303,6 +309,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vazgeç"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скасувати"
           }
         },
         "vi": {

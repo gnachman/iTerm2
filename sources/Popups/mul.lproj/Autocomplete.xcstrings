@@ -143,6 +143,12 @@
             "value" : "Otomatik Tamamlama"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Автозавершення"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",

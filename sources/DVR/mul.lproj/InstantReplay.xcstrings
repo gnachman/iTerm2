@@ -143,6 +143,12 @@
             "value": "Dışa Aktar…"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Експортувати…"
+          }
+        },
         "vi": {
           "stringUnit": {
             "state": "translated",
@@ -303,6 +309,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Şimdi"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Зараз"
           }
         },
         "vi": {
@@ -467,6 +479,12 @@
             "value": "Anında Tekrar Denetimi"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Керування миттєвим повтором"
+          }
+        },
         "vi": {
           "stringUnit": {
             "state": "translated",
@@ -627,6 +645,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vazgeç"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скасувати"
           }
         },
         "vi": {
@@ -791,6 +815,12 @@
             "value": "Canlı Görünüm"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Наживо"
+          }
+        },
         "vi": {
           "stringUnit": {
             "state": "translated",
@@ -951,6 +981,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Zaman"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Час"
           }
         },
         "vi": {

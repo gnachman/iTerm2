@@ -64,7 +64,7 @@
         @"5106": @"5113",
         @"v4W-f1-neV": @"BAw-ed-Of1",
     };
-    for (NSString *language in @[ @"cs", @"da", @"de", @"el", @"es", @"fi", @"fr", @"hr", @"hu", @"it", @"ja", @"nb", @"nl", @"pl", @"pt-BR", @"ro", @"ru", @"sk", @"sl", @"sv", @"tr", @"vi", @"zh-Hans", @"zh-Hant" ]) {
+    for (NSString *language in @[ @"cs", @"da", @"de", @"el", @"es", @"fi", @"fr", @"hr", @"hu", @"it", @"ja", @"nb", @"nl", @"pl", @"pt-BR", @"ro", @"ru", @"sk", @"sl", @"sv", @"tr", @"uk", @"vi", @"zh-Hans", @"zh-Hant" ]) {
         NSString *path = [[NSBundle mainBundle] pathForResource:@"PreferencePanel"
                                                          ofType:@"strings"
                                                     inDirectory:nil

@@ -143,6 +143,12 @@
             "value" : "Yapay Zekâyı Ayarla"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Налаштування штучного інтелекту"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "YZ sağlayıcınız gönderilen veya alınan her token için sizden ücret alabilir."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваш постачальник ШІ може стягувати плату за кожен надісланий або отриманий токен."
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "API anahtarını buraya girin"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Введіть тут ключ API"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -629,6 +647,12 @@
             "value" : "Vazgeç"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -789,6 +813,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tamam"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "vi" : {

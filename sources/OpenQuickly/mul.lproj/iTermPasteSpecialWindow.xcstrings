@@ -143,6 +143,12 @@
             "value" : "dd:ss"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "хх:сс"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx satır, xxx bayt."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx рядків, xxx байтів."
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "Yapıştır"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вставити"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -629,6 +647,12 @@
             "value" : "Vazgeç"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -789,6 +813,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "En kısa süre:"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Мінімальна тривалість:"
           }
         },
         "vi" : {

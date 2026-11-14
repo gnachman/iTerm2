@@ -143,6 +143,12 @@
             "value": "Etiket"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Підпис"
+          }
+        },
         "vi": {
           "stringUnit": {
             "state": "translated",

@@ -143,6 +143,12 @@
             "value" : "Lütfen bekleyin! Yeni bir Python ortamı yükleniyor…"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Зачекайте! Інсталяція нового середовища Python…"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",

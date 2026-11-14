@@ -143,6 +143,12 @@
             "value" : "İstem algılama için Kabuk Entegrasyonu gerekir"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для визначення запрошення потрібна інтеграція з командним процесором"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bu seçenek, çalışan uygulama “ayraçlı yapıştırma modunu” açan bir kaçış kodu gönderdiğinde etkinleşir. Yapıştırılan dize, içindeki metnin bir yapıştırma işleminden geldiğini belirten kaçış kodlarıyla “ayraçlanır”."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вмикається, коли запущена програма надіслала escape-код для ввімкнення «режиму вставлення в дужках». Вставлений рядок буде «взято в дужки» escape-кодами, які вказують, що текст усередині походить від операції вставлення."
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "Sekmeleri ^V ile kaçır"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Екранувати табуляції через ^V"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sekmelerle yapıştır"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вставляти з табуляціями"
           }
         },
         "vi" : {
@@ -791,6 +815,12 @@
             "value" : "Değiştir"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Замінити"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unicode noktalama işaretlerini dönüştür"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перетворювати пунктуацію Unicode"
           }
         },
         "vi" : {
@@ -1115,6 +1151,12 @@
             "value" : "vim kaçış dizilerine uyar"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Враховує escape-послідовності vim"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1275,6 +1317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 ms"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 мс"
           }
         },
         "vi" : {
@@ -1439,6 +1487,12 @@
             "value" : "Çeşitli tırnak işareti ve tire biçimlerini ASCII karşılıklarına dönüştürür."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перетворює різні види лапок і тире на їхні ASCII-відповідники."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1599,6 +1653,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sekmeleri boşluğa dönüştür:"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Замінювати табуляції пробілами:"
           }
         },
         "vi" : {
@@ -1763,6 +1823,12 @@
             "value" : "DOS ve UNIX satır sonları genellikle girdi olarak kullanılmaz. Standart olan CR’dir."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Символи нового рядка DOS і UNIX зазвичай не використовуються як ввід. Стандарт: CR."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1923,6 +1989,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kabuk karakterlerini \\ ile kaçır"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Екранувати символи командного процесора через \\"
           }
         },
         "vi" : {
@@ -2087,6 +2159,12 @@
             "value" : "Parça boyutu:"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Розмір фрагмента:"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2247,6 +2325,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yerine konacak"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Заміна"
           }
         },
         "vi" : {
@@ -2411,6 +2495,12 @@
             "value" : "DOS ve UNIX satır sonları genellikle girdi olarak kullanılmaz. Standart olan CR’dir."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Символи нового рядка DOS і UNIX зазвичай не використовуються як ввід. Стандарт: CR."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2571,6 +2661,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sekme, satır besleme, sayfa besleme ve satır başı yalnızca “güvenli” denetim kodlarıdır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Табуляція, переведення рядка, переведення сторінки та повернення каретки є єдиними «безпечними» керівними кодами."
           }
         },
         "vi" : {
@@ -2735,6 +2831,12 @@
             "value" : "Dönüşümler"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перетворення"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2895,6 +2997,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ICU düzenli ifade sözdizimi"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Синтаксис регулярних виразів ICU"
           }
         },
         "vi" : {
@@ -3059,6 +3167,12 @@
             "value" : "100 ms"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100 мс"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3219,6 +3333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 kB"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 КБ"
           }
         },
         "vi" : {
@@ -3383,6 +3503,12 @@
             "value" : "ile"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "на"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3543,6 +3669,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hız"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Швидкість"
           }
         },
         "vi" : {
@@ -3707,6 +3839,12 @@
             "value" : "Güvenli olmayan denetim kodlarını kaldır"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вилучати небезпечні керівні коди"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3867,6 +4005,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Her satırı yapıştırmadan önce kabuk istemini bekle"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Чекати запрошення командного рядка перед вставленням кожного рядка"
           }
         },
         "vi" : {
@@ -4031,6 +4175,12 @@
             "value" : "Parça gecikmesi:"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пауза:"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4191,6 +4341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 bayt"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 байт"
           }
         },
         "vi" : {
@@ -4355,6 +4511,12 @@
             "value" : "Düzenli ifade"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рег. вираз"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4515,6 +4677,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1,2 kB"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1,2 КБ"
           }
         },
         "vi" : {
@@ -4679,6 +4847,12 @@
             "value" : "150 ms"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "150 мс"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4836,6 +5010,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "100"
@@ -5003,6 +5183,12 @@
             "value" : "Radyo"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перемикач"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5163,6 +5349,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Satır sonlarını kaldır"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вилучати символи нового рядка"
           }
         },
         "vi" : {
@@ -5327,6 +5519,12 @@
             "value" : "Yakalama grupları için $1, $2 vb. kullanın"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Групи: $1, $2 тощо"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5487,6 +5685,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ayraçlı yapıştırma modu"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Режим вставлення в дужках"
           }
         },
         "vi" : {
@@ -5651,6 +5855,12 @@
             "value" : "1 MB"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 МБ"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5811,6 +6021,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "CRLF ve LF’yi CR’ye dönüştür"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перетворювати CRLF і LF на CR"
           }
         },
         "vi" : {
@@ -5975,6 +6191,12 @@
             "value" : "Base 64 olarak kodla"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Кодувати в Base 64"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6135,6 +6357,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "10 sn"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10 с"
           }
         },
         "vi" : {

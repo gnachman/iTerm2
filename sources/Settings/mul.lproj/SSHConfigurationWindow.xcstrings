@@ -143,6 +143,12 @@
             "value" : "SSH yolu:"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Шлях до SSH:"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Uzak ana makineye kopyalanacak dosyalar:"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Файли для копіювання на віддалений вузол:"
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "Hedef"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Призначення"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -629,6 +647,12 @@
             "value" : "Tamam"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -786,6 +810,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/usr/bin/ssh"
+          }
+        },
+        "uk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "/usr/bin/ssh"
@@ -953,6 +983,12 @@
             "value" : "Gözat"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вибрати"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1113,6 +1149,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vazgeç"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати"
           }
         },
         "vi" : {
@@ -1277,6 +1319,12 @@
             "value" : "Dosya veya Klasör"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Файл або папка"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1439,6 +1487,12 @@
             "value" : "SSH Entegrasyonu"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Інтеграція з SSH"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1599,6 +1653,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Uzak ana makineye kopyalanacak ortam değişkenleri:"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Змінні середовища для копіювання на віддалений вузол:"
           }
         },
         "vi" : {

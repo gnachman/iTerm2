@@ -143,6 +143,12 @@
             "value": "Şu parametrenin değerini girin: "
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Введіть значення для "
+          }
+        },
         "vi": {
           "stringUnit": {
             "state": "translated",
@@ -303,6 +309,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tamam"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
           }
         },
         "vi": {
@@ -467,6 +479,12 @@
             "value": "Oturum Parametresi"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Параметр сеансу"
+          }
+        },
         "vi": {
           "stringUnit": {
             "state": "translated",
@@ -629,6 +647,12 @@
             "value": "Vazgeç"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скасувати"
+          }
+        },
         "vi": {
           "stringUnit": {
             "state": "translated",
@@ -789,6 +813,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ad"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Імʼя"
           }
         },
         "vi": {

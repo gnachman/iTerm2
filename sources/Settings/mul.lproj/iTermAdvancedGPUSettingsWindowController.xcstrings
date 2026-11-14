@@ -143,6 +143,12 @@
             "value" : "Tamam"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Düşük güç modunda GPU işleyiciyi devre dışı bırak"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вимикати рушій GPU в режимі низького споживання"
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "Ayrık GPU yerine tümleşik GPU’yu tercih et"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Надавати перевагу інтегрованому GPU перед дискретним"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -629,6 +647,12 @@
             "value" : "Güç bağlantısı kesildiğinde GPU işleyiciyi devre dışı bırak"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вимикати рушій GPU, коли живлення відʼєднано"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -789,6 +813,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vazgeç"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скасувати"
           }
         },
         "vi" : {

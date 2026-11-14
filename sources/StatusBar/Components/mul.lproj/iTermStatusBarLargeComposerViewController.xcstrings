@@ -143,6 +143,12 @@
             "value" : "YZ tamamlama etkin: tüm metin YZ’ye gönderilir"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Автодоповнення ШІ ввімкнено: весь текст надсилається до ШІ"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oluşturucunun nasıl kullanılacağını açıklar."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Описує, як користуватися редактором команд."
           }
         },
         "vi" : {
@@ -467,6 +479,12 @@
             "value" : "Göndermek için ⇧↩ tuşlarına basın."
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Натисніть ⇧↩, щоб надіслати."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "YZ"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ШІ"
           }
         },
         "vi" : {

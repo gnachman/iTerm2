@@ -143,6 +143,12 @@
             "value" : "Düzenle"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Змінити"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -305,6 +311,12 @@
             "value" : "Başlık"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Назва"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -465,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Metin"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Текст"
           }
         },
         "vi" : {
