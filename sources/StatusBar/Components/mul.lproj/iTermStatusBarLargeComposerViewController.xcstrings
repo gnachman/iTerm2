@@ -227,6 +227,12 @@
             "value" : "已启用AI补全：所有文本都会发送给AI"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 補全已啟用：所有文字都會傳送給 AI"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -465,6 +471,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "介绍如何使用编写器。"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "説明如何使用編寫器。"
           }
         },
         "zh-Hans" : {
@@ -707,6 +719,12 @@
             "value" : "按 ⇧↩ 发送。"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按 ⇧↩ 傳送。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -942,6 +960,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI"

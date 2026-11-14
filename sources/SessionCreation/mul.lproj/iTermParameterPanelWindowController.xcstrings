@@ -227,6 +227,12 @@
             "value": "输入以下项的值： "
           }
         },
+        "zh-HK": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "輸入下列項目的值： "
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -462,6 +468,12 @@
           }
         },
         "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "好"
+          }
+        },
+        "zh-HK": {
           "stringUnit": {
             "state": "translated",
             "value": "好"
@@ -707,6 +719,12 @@
             "value": "会话参数"
           }
         },
+        "zh-HK": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "工作階段參數"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -942,6 +960,12 @@
           }
         },
         "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消"
+          }
+        },
+        "zh-HK": {
           "stringUnit": {
             "state": "translated",
             "value": "取消"
@@ -1185,6 +1209,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "名称"
+          }
+        },
+        "zh-HK": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "名稱"
           }
         },
         "zh-Hans": {

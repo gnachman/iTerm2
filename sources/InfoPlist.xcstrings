@@ -240,6 +240,12 @@
             "value" : "iTerm2"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -478,6 +484,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2中的某个App想要使用AppleScript。"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 中的應用程式想要使用 AppleScript。"
           }
         },
         "zh-Hans" : {
@@ -720,6 +732,12 @@
             "value" : "iTerm2中的某个App想要使用蓝牙。"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 中的應用程式想要使用藍牙。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -958,6 +976,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2中的某个App想要使用“日历”数据。"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 中的應用程式想要使用日曆資料。"
           }
         },
         "zh-Hans" : {
@@ -1200,6 +1224,12 @@
             "value" : "iTerm2中的某个App想要使用摄像头。"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 中的應用程式想要使用相機。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1440,6 +1470,12 @@
             "value" : "iTerm2中的某个App想要使用你的通讯录。"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 中的應用程式想要使用你的通訊錄。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1675,6 +1711,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPL v2"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPL v2"
@@ -1920,6 +1962,12 @@
             "value" : "iTerm2中的某个App想要访问本地网络。"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 中的應用程式想要取用區域網絡。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2158,6 +2206,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2中的某个App想要使用你的位置信息，即使在后台也是如此。"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 中的應用程式想要使用你的位置資料，即使在背景執行時也一樣。"
           }
         },
         "zh-Hans" : {
@@ -2400,6 +2454,12 @@
             "value" : "iTerm2中的某个App想要使用你的位置信息。"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 中的應用程式想要使用你的位置資料。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2638,6 +2698,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2中的某个App想要在使用期间使用你的位置信息。"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 中的應用程式想要在使用中時使用你的位置資料。"
           }
         },
         "zh-Hans" : {
@@ -2880,6 +2946,12 @@
             "value" : "iTerm2中的某个App想要使用你的麦克风。"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 中的應用程式想要使用你的咪高風。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3118,6 +3190,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2中的某个App想要使用照片图库。"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 中的應用程式想要使用照片圖庫。"
           }
         },
         "zh-Hans" : {
@@ -3360,6 +3438,12 @@
             "value" : "iTerm2中的某个App想要使用你的提醒事项。"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 中的應用程式想要使用你的提醒事項。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3600,6 +3684,12 @@
             "value" : "iTerm2中的某个App想要使用语音识别。"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 中的應用程式想要使用語音識別。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3838,6 +3928,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2中的程序正在执行的操作需要提升权限。"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 中的程式所執行的操作需要更高的權限。"
           }
         },
         "zh-Hans" : {

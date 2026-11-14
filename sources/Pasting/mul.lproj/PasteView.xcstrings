@@ -227,6 +227,12 @@
             "value": "正在粘贴…"
           }
         },
+        "zh-HK": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在貼上…"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -462,6 +468,12 @@
           }
         },
         "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消"
+          }
+        },
+        "zh-HK": {
           "stringUnit": {
             "state": "translated",
             "value": "取消"

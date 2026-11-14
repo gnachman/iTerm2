@@ -227,6 +227,12 @@
             "value" : "mm:ss"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mm:ss"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -465,6 +471,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx行，xxx字节。"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx 行，xxx 位元組。"
           }
         },
         "zh-Hans" : {
@@ -707,6 +719,12 @@
             "value" : "粘贴"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "貼上"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -942,6 +960,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消"
@@ -1185,6 +1209,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最短时长："
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最短時間長度："
           }
         },
         "zh-Hans" : {

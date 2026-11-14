@@ -227,6 +227,12 @@
             "value" : "缩小"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "縮小"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -465,6 +471,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "安装Python运行时环境"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安裝 Python 執行環境"
           }
         },
         "zh-Hans" : {
@@ -707,6 +719,12 @@
             "value" : "移动标签页"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移動分頁"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -945,6 +963,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "复制会话"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "製作工作階段副本"
           }
         },
         "zh-Hans" : {
@@ -1187,6 +1211,12 @@
             "value" : "打开位置…"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟位置…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1425,6 +1455,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "增大高度"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "增加高度"
           }
         },
         "zh-Hans" : {
@@ -1667,6 +1703,12 @@
             "value" : "移动标签页"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移動分頁"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1905,6 +1947,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "焦点报告"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "焦點報告"
           }
         },
         "zh-Hans" : {
@@ -2147,6 +2195,12 @@
             "value" : "普通"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "標準"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2385,6 +2439,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "上移分隔条"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分隔線上移"
           }
         },
         "zh-Hans" : {
@@ -2627,6 +2687,12 @@
             "value" : "替换为Base 64解码后的值"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取代為 Base64 解碼後的值"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2865,6 +2931,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "会话"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "工作階段"
           }
         },
         "zh-Hans" : {
@@ -3107,6 +3179,12 @@
             "value" : "将会话移到拆分窗格"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將工作階段移至分割窗格"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3345,6 +3423,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "密码管理器"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "密碼管理器"
           }
         },
         "zh-Hans" : {
@@ -3587,6 +3671,12 @@
             "value" : "项目1"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目 1"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3825,6 +3915,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "居中"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "置中"
           }
         },
         "zh-Hans" : {
@@ -4067,6 +4163,12 @@
             "value" : "替换所选内容"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取代選取範圍"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4305,6 +4407,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "屏幕左侧"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "螢幕左側"
           }
         },
         "zh-Hans" : {
@@ -4547,6 +4655,12 @@
             "value" : "应用程序光标"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "應用程式游標"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4785,6 +4899,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "布局"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "排列"
           }
         },
         "zh-Hans" : {
@@ -5027,6 +5147,12 @@
             "value" : "折叠所选行"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "摺疊選取的行"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5265,6 +5391,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "打开最近使用的目录…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟最近的目錄…"
           }
         },
         "zh-Hans" : {
@@ -5507,6 +5639,12 @@
             "value" : "全屏幕"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全螢幕"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5745,6 +5883,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "设置命名标记"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定具名標記"
           }
         },
         "zh-Hans" : {
@@ -5987,6 +6131,12 @@
             "value" : "操作"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動作"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6225,6 +6375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "捕获GPU帧"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "截取 GPU 影格"
           }
         },
         "zh-Hans" : {
@@ -6467,6 +6623,12 @@
             "value" : "标记与注释"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "標記與註解"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6705,6 +6867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "屏幕左侧全高"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "螢幕左側全高"
           }
         },
         "zh-Hans" : {
@@ -6947,6 +7115,12 @@
             "value" : "复制窗口"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "製作視窗副本"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7185,6 +7359,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "自动命令补全"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動指令補全"
           }
         },
         "zh-Hans" : {
@@ -7427,6 +7607,12 @@
             "value" : "窗口样式"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "視窗樣式"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7665,6 +7851,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPU渲染器可用性"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPU 繪製器可用性"
           }
         },
         "zh-Hans" : {
@@ -7907,6 +8099,12 @@
             "value" : "窗口"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "視窗"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8145,6 +8343,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最小化"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "縮到最細"
           }
         },
         "zh-Hans" : {
@@ -8387,6 +8591,12 @@
             "value" : "窗口"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "視窗"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8622,6 +8832,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2"
@@ -8867,6 +9083,12 @@
             "value" : "iTerm2"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9107,6 +9329,12 @@
             "value" : "更改布局中的描述文件…"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "變更排列中的描述檔…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9342,6 +9570,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shell"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shell"
@@ -9587,6 +9821,12 @@
             "value" : "设置默认宽度"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定預設寬度"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9822,6 +10062,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shell"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shell"
@@ -10067,6 +10313,12 @@
             "value" : "帮助"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輔助説明"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10305,6 +10557,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "帮助"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輔助説明"
           }
         },
         "zh-Hans" : {
@@ -10547,6 +10805,12 @@
             "value" : "iTerm2帮助"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 輔助説明"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10785,6 +11049,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "设置…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定…"
           }
         },
         "zh-Hans" : {
@@ -11027,6 +11297,12 @@
             "value" : "服务"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "服務"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11265,6 +11541,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "服务"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "服務"
           }
         },
         "zh-Hans" : {
@@ -11507,6 +11789,12 @@
             "value" : "隐藏iTerm2"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隱藏 iTerm2"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11745,6 +12033,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "退出iTerm2"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "結束 iTerm2"
           }
         },
         "zh-Hans" : {
@@ -11987,6 +12281,12 @@
             "value" : "隐藏其他"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隱藏其他"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12225,6 +12525,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "全部显示"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示全部"
           }
         },
         "zh-Hans" : {
@@ -12467,6 +12773,12 @@
             "value" : "剪切"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "剪下"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12705,6 +13017,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "编辑"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編輯"
           }
         },
         "zh-Hans" : {
@@ -12947,6 +13265,12 @@
             "value" : "编辑"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編輯"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13185,6 +13509,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "全选"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全選"
           }
         },
         "zh-Hans" : {
@@ -13427,6 +13757,12 @@
             "value" : "粘贴"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "貼上"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13665,6 +14001,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "清除缓冲区"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除緩衝區"
           }
         },
         "zh-Hans" : {
@@ -13907,6 +14249,12 @@
             "value" : "日志"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "記錄"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14145,6 +14493,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "日志"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "記錄"
           }
         },
         "zh-Hans" : {
@@ -14387,6 +14741,12 @@
             "value" : "关于iTerm2"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "關於 iTerm2"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14625,6 +14985,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "描述文件"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "描述檔"
           }
         },
         "zh-Hans" : {
@@ -14867,6 +15233,12 @@
             "value" : "描述文件"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "描述檔"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15105,6 +15477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "关闭终端窗口"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "關閉終端機視窗"
           }
         },
         "zh-Hans" : {
@@ -15347,6 +15725,12 @@
             "value" : "关闭标签页中的所有窗格"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "關閉分頁中的所有窗格"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15585,6 +15969,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "页面设置…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "頁面設定…"
           }
         },
         "zh-Hans" : {
@@ -15827,6 +16217,12 @@
             "value" : "存储所选文本…"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "儲存選取的文字…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16065,6 +16461,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "清除回滚缓冲区"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除捲動緩衝區"
           }
         },
         "zh-Hans" : {
@@ -16307,6 +16709,12 @@
             "value" : "将所选内容用于查找"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用選取範圍尋找"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16545,6 +16953,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "查找"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尋找"
           }
         },
         "zh-Hans" : {
@@ -16787,6 +17201,12 @@
             "value" : "查找"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尋找"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17025,6 +17445,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "查找下一个"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尋找下一個"
           }
         },
         "zh-Hans" : {
@@ -17267,6 +17693,12 @@
             "value" : "查找上一个"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尋找上一個"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17505,6 +17937,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "跳到所选内容"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跳至選取範圍"
           }
         },
         "zh-Hans" : {
@@ -17747,6 +18185,12 @@
             "value" : "显示"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示方式"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17985,6 +18429,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示方式"
           }
         },
         "zh-Hans" : {
@@ -18227,6 +18677,12 @@
             "value" : "放大文本"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放大文字"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18465,6 +18921,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "缩小文本"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "縮小文字"
           }
         },
         "zh-Hans" : {
@@ -18707,6 +19169,12 @@
             "value" : "打印"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "列印"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18945,6 +19413,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "屏幕"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "螢幕"
           }
         },
         "zh-Hans" : {
@@ -19187,6 +19661,12 @@
             "value" : "打印"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "列印"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19425,6 +19905,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "所选内容"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選取範圍"
           }
         },
         "zh-Hans" : {
@@ -19667,6 +20153,12 @@
             "value" : "缓冲区"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "緩衝區"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19905,6 +20397,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "选择上一个标签页"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇上一個分頁"
           }
         },
         "zh-Hans" : {
@@ -20147,6 +20645,12 @@
             "value" : "选择下一个标签页"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇下一個分頁"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20385,6 +20889,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "选择标签页"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇分頁"
           }
         },
         "zh-Hans" : {
@@ -20627,6 +21137,12 @@
             "value" : "选择标签页"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇分頁"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20865,6 +21381,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "新建标签页"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增分頁"
           }
         },
         "zh-Hans" : {
@@ -21107,6 +21629,12 @@
             "value" : "新建窗口"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增視窗"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21345,6 +21873,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "按住Option键新建窗口"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按住 Option 以新增視窗"
           }
         },
         "zh-Hans" : {
@@ -21587,6 +22121,12 @@
             "value" : "在新窗口中打开"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在新視窗中開啟"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21825,6 +22365,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "检查更新…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "檢查更新…"
           }
         },
         "zh-Hans" : {
@@ -22067,6 +22613,12 @@
             "value" : "缩放"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "縮放"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22305,6 +22857,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "还原"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重設"
           }
         },
         "zh-Hans" : {
@@ -22547,6 +23105,12 @@
             "value" : "切换全屏幕"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切換全螢幕"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22785,6 +23349,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "切换调试日志记录"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切換除錯記錄"
           }
         },
         "zh-Hans" : {
@@ -23027,6 +23597,12 @@
             "value" : "打开描述文件…"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟描述檔…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23265,6 +23841,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "编辑会话…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編輯工作階段…"
           }
         },
         "zh-Hans" : {
@@ -23507,6 +24089,12 @@
             "value" : "开始即时回放"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開始即時重播"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23747,6 +24335,12 @@
             "value" : "撤销"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "還原"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23982,6 +24576,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重做"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "重做"
@@ -24227,6 +24827,12 @@
             "value" : "打开粘贴历史记录…"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟貼上歷史記錄…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24465,6 +25071,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "打开自动补全…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟自動完成…"
           }
         },
         "zh-Hans" : {
@@ -24707,6 +25319,12 @@
             "value" : "特殊粘贴"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "特殊貼上"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24945,6 +25563,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "特殊粘贴"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "特殊貼上"
           }
         },
         "zh-Hans" : {
@@ -25187,6 +25811,12 @@
             "value" : "粘贴所选内容"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "貼上選取範圍"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25425,6 +26055,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "缓慢粘贴"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "慢速貼上"
           }
         },
         "zh-Hans" : {
@@ -25667,6 +26303,12 @@
             "value" : "安全键盘输入"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安全鍵盤輸入"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25905,6 +26547,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "水平排列窗口"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "水平排列視窗"
           }
         },
         "zh-Hans" : {
@@ -26147,6 +26795,12 @@
             "value" : "关闭"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "關閉"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26385,6 +27039,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用当前描述文件垂直拆分"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用目前的描述檔垂直分割"
           }
         },
         "zh-Hans" : {
@@ -26627,6 +27287,12 @@
             "value" : "使用当前描述文件水平拆分"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用目前的描述檔水平分割"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26865,6 +27531,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "存储窗口布局"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "儲存視窗排列"
           }
         },
         "zh-Hans" : {
@@ -27107,6 +27779,12 @@
             "value" : "选择拆分窗格"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇分割窗格"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27345,6 +28023,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "选择拆分窗格"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇分割窗格"
           }
         },
         "zh-Hans" : {
@@ -27587,6 +28271,12 @@
             "value" : "选择上方窗格"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇上方窗格"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27825,6 +28515,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "选择下方窗格"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇下方窗格"
           }
         },
         "zh-Hans" : {
@@ -28067,6 +28763,12 @@
             "value" : "选择左侧窗格"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇左側窗格"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28307,6 +29009,12 @@
             "value" : "选择右侧窗格"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇右側窗格"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28542,6 +29250,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用透明度"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用透明度"
@@ -28787,6 +29501,12 @@
             "value" : "最大化活跃窗格"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最大化使用中的窗格"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29025,6 +29745,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "项目3"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目 3"
           }
         },
         "zh-Hans" : {
@@ -29267,6 +29993,12 @@
             "value" : "项目2"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目 2"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29505,6 +30237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "项目1"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目 1"
           }
         },
         "zh-Hans" : {
@@ -29747,6 +30485,12 @@
             "value" : "设置标记"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定標記"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29985,6 +30729,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "跳到标记"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跳至標記"
           }
         },
         "zh-Hans" : {
@@ -30227,6 +30977,12 @@
             "value" : "下一个窗格"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下一個窗格"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30465,6 +31221,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "上一个窗格"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上一個窗格"
           }
         },
         "zh-Hans" : {
@@ -30707,6 +31469,12 @@
             "value" : "在全屏幕中显示标签页"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在全螢幕中顯示分頁"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30945,6 +31713,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "广播输入"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "廣播輸入"
           }
         },
         "zh-Hans" : {
@@ -31187,6 +31961,12 @@
             "value" : "广播输入"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "廣播輸入"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31425,6 +32205,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "向所有标签页中的所有窗格广播输入"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向所有分頁中的所有窗格廣播輸入"
           }
         },
         "zh-Hans" : {
@@ -31667,6 +32453,12 @@
             "value" : "向当前标签页中的所有窗格广播输入"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向目前分頁中的所有窗格廣播輸入"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31905,6 +32697,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "仅向当前会话发送输入"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "僅向目前的工作階段傳送輸入"
           }
         },
         "zh-Hans" : {
@@ -32147,6 +32945,12 @@
             "value" : "恢复窗口布局"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "還原視窗排列"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32385,6 +33189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "恢复窗口布局"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "還原視窗排列"
           }
         },
         "zh-Hans" : {
@@ -32627,6 +33437,12 @@
             "value" : "查找光标"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尋找游標"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32865,6 +33681,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "水平拆分…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "水平分割…"
           }
         },
         "zh-Hans" : {
@@ -33107,6 +33929,12 @@
             "value" : "垂直拆分…"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "垂直分割…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33345,6 +34173,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "工具带"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "工具帶"
           }
         },
         "zh-Hans" : {
@@ -33587,6 +34421,12 @@
             "value" : "工具带"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "工具帶"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33825,6 +34665,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示工具带"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示工具帶"
           }
         },
         "zh-Hans" : {
@@ -34067,6 +34913,12 @@
             "value" : "使用当前描述文件新建标签页"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用目前的描述檔新增分頁"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34305,6 +35157,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "运行协同进程…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "執行協同程序…"
           }
         },
         "zh-Hans" : {
@@ -34547,6 +35405,12 @@
             "value" : "停止协同进程"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止協同程序"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34785,6 +35649,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "拷贝"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "複製"
           }
         },
         "zh-Hans" : {
@@ -35027,6 +35897,12 @@
             "value" : "将标签页移到新窗口"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將分頁移至新視窗"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35265,6 +36141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将标签页右移"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分頁右移"
           }
         },
         "zh-Hans" : {
@@ -35507,6 +36389,12 @@
             "value" : "显示背景图案指示器"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示背景圖樣指示器"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35742,6 +36630,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "tmux"
@@ -35987,6 +36881,12 @@
             "value" : "tmux"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36225,6 +37125,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "新建tmux标签页"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增 tmux 分頁"
           }
         },
         "zh-Hans" : {
@@ -36467,6 +37373,12 @@
             "value" : "新建tmux窗口"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增 tmux 視窗"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36705,6 +37617,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "分离"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分離"
           }
         },
         "zh-Hans" : {
@@ -36947,6 +37865,12 @@
             "value" : "仪表板"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "儀表板"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37185,6 +38109,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "文本正常大小"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "恢復一般文字大小"
           }
         },
         "zh-Hans" : {
@@ -37427,6 +38357,12 @@
             "value" : "恢复文本和会话大小"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "還原文字和工作階段大小"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37665,6 +38601,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将iTerm2设为默认终端"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將 iTerm2 設為預設終端機"
           }
         },
         "zh-Hans" : {
@@ -37907,6 +38849,12 @@
             "value" : "将“终端”设为默认终端"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將 Terminal 設為預設終端機"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38145,6 +39093,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "切换向当前会话的广播输入"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切換向目前工作階段廣播輸入"
           }
         },
         "zh-Hans" : {
@@ -38387,6 +39341,12 @@
             "value" : "粘贴更快"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加快貼上速度"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38625,6 +39585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "粘贴更慢"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放慢貼上速度"
           }
         },
         "zh-Hans" : {
@@ -38867,6 +39833,12 @@
             "value" : "缓慢粘贴更快"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加快慢速貼上"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39105,6 +40077,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "缓慢粘贴更慢"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放慢慢速貼上"
           }
         },
         "zh-Hans" : {
@@ -39347,6 +40325,12 @@
             "value" : "还原字符集"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重設字元集"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39587,6 +40571,12 @@
             "value" : "归档"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "封存檔"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39822,6 +40812,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT400"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT400"
@@ -40067,6 +41063,12 @@
             "value" : "为所选内容添加注释"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "註解選取範圍"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40305,6 +41307,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "放大所选内容"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放大選取範圍"
           }
         },
         "zh-Hans" : {
@@ -40547,6 +41555,12 @@
             "value" : "左移分隔条"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分隔線左移"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40782,6 +41796,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部停用"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "全部停用"
@@ -41027,6 +42047,12 @@
             "value" : "移动会话"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移動工作階段"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41265,6 +42291,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示编写器"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示編寫器"
           }
         },
         "zh-Hans" : {
@@ -41507,6 +42539,12 @@
             "value" : "强制分离"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "強制分離"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41745,6 +42783,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "命名标记"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "具名標記"
           }
         },
         "zh-Hans" : {
@@ -41987,6 +43031,12 @@
             "value" : "查找…"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尋找…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42225,6 +43275,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "导出录制内容"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "匯出錄製內容"
           }
         },
         "zh-Hans" : {
@@ -42467,6 +43523,12 @@
             "value" : "无标题栏"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無標題列"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42702,6 +43764,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT500"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT500"
@@ -42947,6 +44015,12 @@
             "value" : "显示剪辑"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示剪輯"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43185,6 +44259,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "配套设备设置"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搭配裝置設定"
           }
         },
         "zh-Hans" : {
@@ -43427,6 +44507,12 @@
             "value" : "拷贝模式"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "複製模式"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43665,6 +44751,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "移动会话"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移動工作階段"
           }
         },
         "zh-Hans" : {
@@ -43907,6 +44999,12 @@
             "value" : "标签页"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分頁"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44145,6 +45243,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "清除到所选内容开头"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除至選取範圍起點"
           }
         },
         "zh-Hans" : {
@@ -44387,6 +45491,12 @@
             "value" : "拷贝性能统计信息"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "複製效能統計資料"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44625,6 +45735,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "脚本"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "腳本"
           }
         },
         "zh-Hans" : {
@@ -44867,6 +45983,12 @@
             "value" : "将当前窗口存储为布局"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將目前視窗儲存為排列"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45105,6 +46227,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "触发器"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "觸發器"
           }
         },
         "zh-Hans" : {
@@ -45347,6 +46475,12 @@
             "value" : "显示光标参考线"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示游標輔助線"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45585,6 +46719,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "锁定大小"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "鎖定大小"
           }
         },
         "zh-Hans" : {
@@ -45827,6 +46967,12 @@
             "value" : "记录到文件"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "記錄至檔案"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46065,6 +47211,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "导出…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "匯出…"
           }
         },
         "zh-Hans" : {
@@ -46307,6 +47459,12 @@
             "value" : "网页"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "網頁"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46545,6 +47703,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "报告关联文本"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "報告關聯文字"
           }
         },
         "zh-Hans" : {
@@ -46787,6 +47951,12 @@
             "value" : "新建Python脚本"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增 Python 腳本"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47025,6 +48195,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "开放源代码许可证"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟原始碼授權條款"
           }
         },
         "zh-Hans" : {
@@ -47267,6 +48443,12 @@
             "value" : "清除即时回放"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除即時重播"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47505,6 +48687,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "减小高度"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "減少高度"
           }
         },
         "zh-Hans" : {
@@ -47747,6 +48935,12 @@
             "value" : "脚本"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "腳本"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47985,6 +49179,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在访达中显示脚本"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Finder 中顯示腳本"
           }
         },
         "zh-Hans" : {
@@ -48227,6 +49427,12 @@
             "value" : "存储内容…"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "儲存內容…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48465,6 +49671,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "前置全部窗口"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將此程式所有視窗移至最前"
           }
         },
         "zh-Hans" : {
@@ -48707,6 +49919,12 @@
             "value" : "全部折叠"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部摺疊"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48945,6 +50163,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "归档"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "封存檔"
           }
         },
         "zh-Hans" : {
@@ -49187,6 +50411,12 @@
             "value" : "将窗口布局恢复为标签页"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以分頁還原視窗排列"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49425,6 +50655,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在光标处添加注释"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在游標處加入註解"
           }
         },
         "zh-Hans" : {
@@ -49667,6 +50903,12 @@
             "value" : "停用活跃窗口的透明度"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停用使用中視窗的透明度"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49907,6 +51149,12 @@
             "value" : "括号粘贴"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "括號貼上"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50145,6 +51393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "替换为格式化的JSON"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取代為格式化的 JSON"
           }
         },
         "zh-Hans" : {
@@ -50398,6 +51652,12 @@
             "state" : "translated",
             "value" : "前置"
           }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移至最前"
+          }
         }
       }
     },
@@ -50637,6 +51897,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "停靠浮动窗格"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停靠浮動窗格"
           }
         }
       }
@@ -50878,6 +52144,12 @@
             "state" : "translated",
             "value" : "隐藏浮动窗格"
           }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隱藏浮動窗格"
+          }
         }
       }
     },
@@ -51117,6 +52389,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "下移浮动窗格"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向下移動浮動窗格"
           }
         }
       }
@@ -51358,6 +52636,12 @@
             "state" : "translated",
             "value" : "左移浮动窗格"
           }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向左移動浮動窗格"
+          }
         }
       }
     },
@@ -51597,6 +52881,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "右移浮动窗格"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向右移動浮動窗格"
           }
         }
       }
@@ -51838,6 +53128,12 @@
             "state" : "translated",
             "value" : "上移浮动窗格"
           }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向上移動浮動窗格"
+          }
         }
       }
     },
@@ -52077,6 +53373,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用当前描述文件新建浮动窗格"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以目前描述檔新增浮動窗格"
           }
         }
       }
@@ -52318,6 +53620,12 @@
             "state" : "translated",
             "value" : "浮动窗格"
           }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "浮動窗格"
+          }
         }
       }
     },
@@ -52557,6 +53865,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "浮动窗格"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "浮動窗格"
           }
         }
       }
@@ -52798,6 +54112,12 @@
             "state" : "translated",
             "value" : "后置"
           }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移至最後"
+          }
         }
       }
     },
@@ -53025,6 +54345,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示小提示"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示每日小技巧"
           }
         },
         "zh-Hans" : {
@@ -53267,6 +54593,12 @@
             "value" : "下一个注释"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下一個註解"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53502,6 +54834,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cockpit"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cockpit"
@@ -53747,6 +55085,12 @@
             "value" : "将会话移到标签页"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將工作階段移至分頁"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53985,6 +55329,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "屏幕底部"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "螢幕底部"
           }
         },
         "zh-Hans" : {
@@ -54227,6 +55577,12 @@
             "value" : "粘贴时提示将制表符转换为空格"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "貼上時提示將 Tab 轉換為空格"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54465,6 +55821,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "提醒"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "警示"
           }
         },
         "zh-Hans" : {
@@ -54707,6 +56069,12 @@
             "value" : "拷贝并保留控制序列"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "連同控制序列複製"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54945,6 +56313,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "调整窗口大小"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "調整視窗大小"
           }
         },
         "zh-Hans" : {
@@ -55187,6 +56561,12 @@
             "value" : "还原"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重設"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55425,6 +56805,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "复制标签页"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "製作分頁副本"
           }
         },
         "zh-Hans" : {
@@ -55667,6 +57053,12 @@
             "value" : "重新载入网页"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新載入頁面"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55905,6 +57297,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将会话移到窗口"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將工作階段移至視窗"
           }
         },
         "zh-Hans" : {
@@ -56147,6 +57545,12 @@
             "value" : "将所有按键报告为转义码"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將所有按鍵報告為跳脫碼"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -56385,6 +57789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "原始按键报告模式"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "原始按鍵報告模式"
           }
         },
         "zh-Hans" : {
@@ -56627,6 +58037,12 @@
             "value" : "导入…"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "匯入…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -56865,6 +58281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "多行粘贴前警告"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "貼上多行內容前發出警告"
           }
         },
         "zh-Hans" : {
@@ -57107,6 +58529,12 @@
             "value" : "显示内联聊天"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示內嵌聊天"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -57347,6 +58775,12 @@
             "value" : "切换缓冲区输入"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切換緩衝區輸入"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -57585,6 +59019,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "远程主机可控制iTerm2"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "遙距主機可控制 iTerm2"
           }
         },
         "zh-Hans" : {
@@ -57838,6 +59278,12 @@
             "state" : "translated",
             "value" : "检查设置控件截断"
           }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "檢查設定控制項是否被截斷"
+          }
         }
       }
     },
@@ -58065,6 +59511,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "触发器"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "觸發器"
           }
         },
         "zh-Hans" : {
@@ -58307,6 +59759,12 @@
             "value" : "所选内容遵循软边界"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選取範圍遵循軟邊界"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -58545,6 +60003,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "退出工作组"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "結束工作群組"
           }
         },
         "zh-Hans" : {
@@ -58787,6 +60251,12 @@
             "value" : "选择上一条命令的输出"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇上一個指令的輸出"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -59025,6 +60495,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "重新启动会话"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新啟動工作階段"
           }
         },
         "zh-Hans" : {
@@ -59267,6 +60743,12 @@
             "value" : "打开Python REPL"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟 Python REPL"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -59505,6 +60987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "屏幕顶部"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "螢幕頂部"
           }
         },
         "zh-Hans" : {
@@ -59747,6 +61235,12 @@
             "value" : "合并所有窗口"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "合併所有視窗"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -59985,6 +61479,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "固定热键窗口"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "釘選全域快捷鍵視窗"
           }
         },
         "zh-Hans" : {
@@ -60227,6 +61727,12 @@
             "value" : "modifyOtherKeys模式2"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys 模式 2"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -60467,6 +61973,12 @@
             "value" : "快速打开"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "快速開啟"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -60702,6 +62214,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "管理"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "管理"
@@ -60947,6 +62465,12 @@
             "value" : "消除Esc歧义"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "區分 Esc 鍵"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -61185,6 +62709,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "选择要打开的结果"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇要開啟的結果"
           }
         },
         "zh-Hans" : {
@@ -61427,6 +62957,12 @@
             "value" : "仅在shell提示符处显示多行粘贴警告"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "僅在 Shell 提示符號處對多行貼上發出警告"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -61665,6 +63201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在交互式App中启用触发器"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在互動式 App 中啟用觸發器"
           }
         },
         "zh-Hans" : {
@@ -61907,6 +63449,12 @@
             "value" : "项目2"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目 2"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -62145,6 +63693,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "鼠标报告"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "滑鼠報告"
           }
         },
         "zh-Hans" : {
@@ -62387,6 +63941,12 @@
             "value" : "标记与注释"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "標記與註解"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -62625,6 +64185,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "锁定布局"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "鎖定版面配置"
           }
         },
         "zh-Hans" : {
@@ -62867,6 +64433,12 @@
             "value" : "锁定位置"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "鎖定位置"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63105,6 +64677,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用当前描述文件新建窗口"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以目前描述檔新增視窗"
           }
         },
         "zh-Hans" : {
@@ -63347,6 +64925,12 @@
             "value" : "埋藏会话"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "埋藏工作階段"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63585,6 +65169,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示模态提醒框"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示強制回應警示框"
           }
         },
         "zh-Hans" : {
@@ -63827,6 +65417,12 @@
             "value" : "全部启用"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部啟用"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -64065,6 +65661,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "下一个标记"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下一個標記"
           }
         },
         "zh-Hans" : {
@@ -64307,6 +65909,12 @@
             "value" : "排列窗口"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "排列視窗"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -64545,6 +66153,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "查找所有智能选择匹配项"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尋找所有智慧型選取的符合項目"
           }
         },
         "zh-Hans" : {
@@ -64787,6 +66401,12 @@
             "value" : "播放声音"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "播放音效"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65025,6 +66645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "打开命令历史记录…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟指令歷史記錄…"
           }
         },
         "zh-Hans" : {
@@ -65267,6 +66893,12 @@
             "value" : "拷贝并保留样式"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "連同樣式複製"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65505,6 +67137,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "备用屏幕"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "替代螢幕"
           }
         },
         "zh-Hans" : {
@@ -65747,6 +67385,12 @@
             "value" : "屏幕右侧全高"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "螢幕右側全高"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65982,6 +67626,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -66227,6 +67877,12 @@
             "value" : "标准按键报告模式"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "標準按鍵報告模式"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -66465,6 +68121,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "调整拆分窗格大小"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "調整分割窗格大小"
           }
         },
         "zh-Hans" : {
@@ -66707,6 +68369,12 @@
             "value" : "提醒"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "警示"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -66945,6 +68613,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "状态更改时通知"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "狀態變更時通知"
           }
         },
         "zh-Hans" : {
@@ -67187,6 +68861,12 @@
             "value" : "选择下一个标签页组"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇下一個分頁群組"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -67425,6 +69105,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "卸载Claude Code集成"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "解除安裝 Claude Code 整合"
           }
         },
         "zh-Hans" : {
@@ -67667,6 +69353,12 @@
             "value" : "编辑标签页标题"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編輯分頁標題"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -67905,6 +69597,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "布局"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "排列"
           }
         },
         "zh-Hans" : {
@@ -68147,6 +69845,12 @@
             "value" : "上一个同伴"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上一個同儕"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -68385,6 +70089,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "报告备用按键"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "報告替代按鍵"
           }
         },
         "zh-Hans" : {
@@ -68627,6 +70337,12 @@
             "value" : "拆分窗格"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分割窗格"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -68865,6 +70581,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "终端状态"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "終端機狀態"
           }
         },
         "zh-Hans" : {
@@ -69107,6 +70829,12 @@
             "value" : "撤销关闭"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "還原關閉"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -69345,6 +71073,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI聊天"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 聊天"
           }
         },
         "zh-Hans" : {
@@ -69587,6 +71321,12 @@
             "value" : "前进"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下一頁"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -69825,6 +71565,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "锁定拆分窗格宽度"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "鎖定分割窗格寬度"
           }
         },
         "zh-Hans" : {
@@ -70067,6 +71813,12 @@
             "value" : "工作组"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "工作群組"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -70305,6 +72057,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "存储当前会话的归档…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "儲存目前工作階段的封存檔…"
           }
         },
         "zh-Hans" : {
@@ -70547,6 +72305,12 @@
             "value" : "替换所选内容"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取代選取範圍"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -70782,6 +72546,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT300"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT300"
@@ -71027,6 +72797,12 @@
             "value" : "显示注释"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示註解"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -71262,6 +73038,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -71507,6 +73289,12 @@
             "value" : "管理"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "管理"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -71745,6 +73533,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "项目3"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目 3"
           }
         },
         "zh-Hans" : {
@@ -71987,6 +73781,12 @@
             "value" : "选择上一个标签页组"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇上一個分頁群組"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -72225,6 +74025,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已埋藏的会话"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已埋藏的工作階段"
           }
         },
         "zh-Hans" : {
@@ -72467,6 +74273,12 @@
             "value" : "上一个注释"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上一個註解"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -72705,6 +74517,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在屏幕外会话的标记处提醒"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "螢幕外的工作階段出現標記時警示"
           }
         },
         "zh-Hans" : {
@@ -72958,6 +74776,12 @@
             "state" : "translated",
             "value" : "居中，无标题栏"
           }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "置中，無標題列"
+          }
         }
       }
     },
@@ -73185,6 +75009,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "安装Claude Code集成"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安裝 Claude Code 整合"
           }
         },
         "zh-Hans" : {
@@ -73427,6 +75257,12 @@
             "value" : "发布通知"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "發送通知"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -73665,6 +75501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "当前会话是广播来源"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目前工作階段為廣播來源"
           }
         },
         "zh-Hans" : {
@@ -73907,6 +75749,12 @@
             "value" : "在下一个标记处提醒"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在下一個標記處警示"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -74145,6 +75993,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "增大宽度"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "增加寬度"
           }
         },
         "zh-Hans" : {
@@ -74387,6 +76241,12 @@
             "value" : "CSI u模式"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CSI u 模式"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -74625,6 +76485,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "下移分隔条"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分隔線下移"
           }
         },
         "zh-Hans" : {
@@ -74867,6 +76733,12 @@
             "value" : "调整拆分窗格大小"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "調整分割窗格大小"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -75105,6 +76977,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "重新安装Claude Code集成"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新安裝 Claude Code 整合"
           }
         },
         "zh-Hans" : {
@@ -75347,6 +77225,12 @@
             "value" : "安装Shell集成"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安裝 Shell 整合"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -75585,6 +77469,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "过滤"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "篩選"
           }
         },
         "zh-Hans" : {
@@ -75827,6 +77717,12 @@
             "value" : "编辑触发器"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編輯觸發器"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -76065,6 +77961,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "暂停窗格"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暫停窗格"
           }
         },
         "zh-Hans" : {
@@ -76307,6 +78209,12 @@
             "value" : "存储追溯调试日志"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "儲存回溯除錯記錄"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -76545,6 +78453,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "代码片段"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "片段"
           }
         },
         "zh-Hans" : {
@@ -76787,6 +78701,12 @@
             "value" : "选择当前命令"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇目前指令"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -77025,6 +78945,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "制作屏幕截图…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "製作螢幕截圖…"
           }
         },
         "zh-Hans" : {
@@ -77267,6 +79193,12 @@
             "value" : "以原生方式渲染所选内容"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以原生方式繪製選取範圍"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -77505,6 +79437,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示会话备注"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示工作階段備註"
           }
         },
         "zh-Hans" : {
@@ -77747,6 +79685,12 @@
             "value" : "代码片段"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "片段"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -77985,6 +79929,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "编辑窗口标题"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編輯視窗標題"
           }
         },
         "zh-Hans" : {
@@ -78227,6 +80177,12 @@
             "value" : "已隐藏的提醒…"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不再顯示的警示…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -78465,6 +80421,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "上一个标记"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上一個標記"
           }
         },
         "zh-Hans" : {
@@ -78707,6 +80669,12 @@
             "value" : "安装已下载的Python运行时环境"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安裝已下載的 Python 執行環境"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -78945,6 +80913,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "右移分隔条"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分隔線右移"
           }
         },
         "zh-Hans" : {
@@ -79187,6 +81161,12 @@
             "value" : "标签页"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分頁"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -79425,6 +81405,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "下载文件…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下載檔案…"
           }
         },
         "zh-Hans" : {
@@ -79667,6 +81653,12 @@
             "value" : "将标签页左移"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分頁左移"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -79905,6 +81897,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将标签页添加到新组…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將分頁加入新群組…"
           }
         },
         "zh-Hans" : {
@@ -80147,6 +82145,12 @@
             "value" : "显示工具栏"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示工具列"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -80385,6 +82389,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "从组中移除标签页"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "從群組中移除分頁"
           }
         },
         "zh-Hans" : {
@@ -80627,6 +82637,12 @@
             "value" : "自动编写器"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動編寫器"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -80865,6 +82881,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "打开AI聊天…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟 AI 聊天…"
           }
         },
         "zh-Hans" : {
@@ -81107,6 +83129,12 @@
             "value" : "显示时间戳"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示時間戳記"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -81345,6 +83373,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "高级粘贴…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "進階貼上…"
           }
         },
         "zh-Hans" : {
@@ -81587,6 +83621,12 @@
             "value" : "排列窗口"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "排列視窗"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -81825,6 +83865,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "仿真级别"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模擬層級"
           }
         },
         "zh-Hans" : {
@@ -82067,6 +84113,12 @@
             "value" : "选择匹配项"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇符合項目"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -82305,6 +84357,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "打开所选内容"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟選取範圍"
           }
         },
         "zh-Hans" : {
@@ -82547,6 +84605,12 @@
             "value" : "历史记录"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "歷史記錄"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -82785,6 +84849,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "恢复归档…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "還原封存檔…"
           }
         },
         "zh-Hans" : {
@@ -83027,6 +85097,12 @@
             "value" : "窗口样式"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "視窗樣式"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -83265,6 +85341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "屏幕底部全宽"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "螢幕底部全寬"
           }
         },
         "zh-Hans" : {
@@ -83507,6 +85589,12 @@
             "value" : "字面控制字符"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字面控制字元"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -83745,6 +85833,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "清除查找"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除尋找"
           }
         },
         "zh-Hans" : {
@@ -83987,6 +86081,12 @@
             "value" : "用AI解释输出"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用 AI 解釋輸出"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -84225,6 +86325,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "仿真级别"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模擬層級"
           }
         },
         "zh-Hans" : {
@@ -84467,6 +86573,12 @@
             "value" : "查找URL"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尋找 URL"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -84705,6 +86817,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "替换为格式化的JSON"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取代為格式化的 JSON"
           }
         },
         "zh-Hans" : {
@@ -84947,6 +87065,12 @@
             "value" : "操作"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動作"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -85185,6 +87309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "大小更改时更新描述文件"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大小變更時更新描述檔"
           }
         },
         "zh-Hans" : {
@@ -85427,6 +87557,12 @@
             "value" : "从程序坞菜单中移除最近使用的描述文件"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "從 Dock 選單移除最近使用的描述檔"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -85665,6 +87801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已埋藏的会话"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已埋藏的工作階段"
           }
         },
         "zh-Hans" : {
@@ -85907,6 +88049,12 @@
             "value" : "管理依赖项…"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "管理相依項目…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -86145,6 +88293,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "返回"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上一頁"
           }
         },
         "zh-Hans" : {
@@ -86387,6 +88541,12 @@
             "value" : "工作组"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "工作群組"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -86625,6 +88785,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "从文件载入布局…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "從檔案載入排列…"
           }
         },
         "zh-Hans" : {
@@ -86867,6 +89033,12 @@
             "value" : "拷贝模式快捷键"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "複製模式快捷鍵"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -87105,6 +89277,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "拆分窗格"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分割窗格"
           }
         },
         "zh-Hans" : {
@@ -87347,6 +89525,12 @@
             "value" : "调整窗口大小"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "調整視窗大小"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -87585,6 +89769,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "报告所有事件类型"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "報告所有事件類型"
           }
         },
         "zh-Hans" : {
@@ -87827,6 +90017,12 @@
             "value" : "添加触发器…"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加入觸發器…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -88065,6 +90261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "网页"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "網頁"
           }
         },
         "zh-Hans" : {
@@ -88307,6 +90509,12 @@
             "value" : "modifyOtherKeys模式1"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys 模式 1"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -88545,6 +90753,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "减小宽度"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "減少寬度"
           }
         },
         "zh-Hans" : {
@@ -88787,6 +91001,12 @@
             "value" : "屏幕右侧"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "螢幕右側"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -89025,6 +91245,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "以Base64编码粘贴文件"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以 Base64 編碼貼上檔案"
           }
         },
         "zh-Hans" : {
@@ -89267,6 +91493,12 @@
             "value" : "清除到上一个标记"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除至上一個標記"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -89505,6 +91737,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "均匀排列拆分窗格"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "平均排列分割窗格"
           }
         },
         "zh-Hans" : {
@@ -89747,6 +91985,12 @@
             "value" : "导入录制内容"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "匯入錄製內容"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -89985,6 +92229,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "应用程序小键盘"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "應用程式數字鍵台"
           }
         },
         "zh-Hans" : {
@@ -90227,6 +92477,12 @@
             "value" : "屏幕顶部全宽"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "螢幕頂部全寬"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -90462,6 +92718,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT100"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT100"
@@ -90707,6 +92969,12 @@
             "value" : "VT200"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT200"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -90945,6 +93213,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "断开连接"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "中斷連線"
           }
         },
         "zh-Hans" : {
@@ -91187,6 +93461,12 @@
             "value" : "在shell提示符处粘贴以换行结尾的单行前警告"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Shell 提示符號處貼上以換行結尾的單行前發出警告"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -91427,6 +93707,12 @@
             "value" : "全局查找…"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全域尋找…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -91662,6 +93948,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最大化"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "最大化"
@@ -91907,6 +94199,12 @@
             "value" : "控制台"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主控台"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -92145,6 +94443,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在当前标签页旁新建标签页"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在目前分頁旁新增分頁"
           }
         },
         "zh-Hans" : {
@@ -92387,6 +94691,12 @@
             "value" : "将窗口布局恢复为标签页"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以分頁還原視窗排列"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -92625,6 +94935,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "替换为Base 64编码后的值"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取代為 Base64 編碼的值"
           }
         },
         "zh-Hans" : {
@@ -92867,6 +95183,12 @@
             "value" : "启用人工智能"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "啟用人工智慧"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93105,6 +95427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "会话"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "工作階段"
           }
         },
         "zh-Hans" : {
@@ -93347,6 +95675,12 @@
             "value" : "命名标记"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "具名標記"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93585,6 +95919,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "下一个同伴"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下一個同儕"
           }
         },
         "zh-Hans" : {

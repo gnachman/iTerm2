@@ -227,6 +227,12 @@
             "value": "包含时间戳"
           }
         },
+        "zh-HK": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "包含時間戳記"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -465,6 +471,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "文件格式："
+          }
+        },
+        "zh-HK": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "檔案格式："
           }
         },
         "zh-Hans": {

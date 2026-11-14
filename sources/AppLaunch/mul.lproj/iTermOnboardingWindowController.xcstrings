@@ -227,6 +227,12 @@
             "value" : "不在Mac旁边时也能使用iTerm2。你可以通过AI聊天控制它、查看会话内容并接收推送通知。端到端加密可确保你的数据安全。<a href=\"iterm2whatsnew:companion\">立即试用！</a>"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不在 Mac 旁時也能使用 iTerm2。你可以透過 AI 聊天控制它、查看工作階段內容並接收推播通知。端對端加密確保你的資料安全。<a href=\"iterm2whatsnew:companion\">立即試用！</a>"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -462,6 +468,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -707,6 +719,12 @@
             "value" : "全新的AI聊天模式“编排”让AI替你全权处理。它可以创建窗口、等待任务完成（即使在交互式App中也可以），而新的自动安全检查器让你几乎无需再响应各种权限提示。<a href=\"iterm2whatsnew:orchestration\">立即试用！</a>"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全新的 AI 聊天模式「協作調度」讓 AI 為你掌控全局。它可以建立視窗、等待工作完成（即使在互動式 App 中也行），而新的自動安全檢查器讓你幾乎不必回應任何權限提示。<a href=\"iterm2whatsnew:orchestration\">立即試用！</a>"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -942,6 +960,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -1187,6 +1211,12 @@
             "value" : "全新的“屏幕截图”功能可简化创建终端内容PNG的过程，并支持遮盖和高亮。使用<a href=\"iterm2whatsnew:screenshot\">会话 > 制作屏幕截图</a>来启用它。"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全新的「螢幕截圖」功能簡化了將終端機內容製作成 PNG 的流程。它支援遮蔽和醒目標示。使用<a href=\"iterm2whatsnew:screenshot\">工作階段 > 製作螢幕截圖</a>來啟用它。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1427,6 +1457,12 @@
             "value" : "3.7版本的新功能"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3.7 版的新功能"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1662,6 +1698,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ">"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : ">"
@@ -1907,6 +1949,12 @@
             "value" : "●"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2145,6 +2193,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code集成"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code 整合"
           }
         },
         "zh-Hans" : {
@@ -2387,6 +2441,12 @@
             "value" : "为了帮助管理大量标签页，你现在可以将标签页合并为可折叠的标签页组。标签页栏现在也会滚动，而不是显示溢出菜单。"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "為了方便管理大量分頁，現在可以將分頁合併成可摺疊的群組。分頁列現在也會捲動，而不是顯示溢位選單。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2622,6 +2682,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -2867,6 +2933,12 @@
             "value" : "Claude Code集成会将多个相关会话（例如代码审查和阅读diff）整理到可自定的界面中。它还会显示Claude的状态，让你轻松找到需要你关注而处于阻塞状态的实例。<a href=\"iterm2whatsnew:claudecode\">立即试用！</a>"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code 整合會將多個相關的工作階段（例如程式碼審查和閲讀差異）整理到可自訂的介面中。它也會顯示 Claude 的狀態，讓你輕鬆找到正在等待你處理的執行個體。<a href=\"iterm2whatsnew:claudecode\">立即試用！</a>"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3107,6 +3179,12 @@
             "value" : "iPhone配套App"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搭配 iPhone App"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3342,6 +3420,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -3587,6 +3671,12 @@
             "value" : "编排"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "協作調度"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3825,6 +3915,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "标签页组"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分頁群組"
           }
         },
         "zh-Hans" : {
@@ -4067,6 +4163,12 @@
             "value" : "屏幕截图"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "螢幕截圖"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4302,6 +4404,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "<"

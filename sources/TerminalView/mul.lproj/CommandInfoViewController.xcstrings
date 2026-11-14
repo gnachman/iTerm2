@@ -227,6 +227,12 @@
             "value" : "/directory"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -465,6 +471,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "拷贝目录"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "複製目錄"
           }
         },
         "zh-Hans" : {
@@ -707,6 +719,12 @@
             "value" : "12字节"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 位元組"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -947,6 +965,12 @@
             "value" : "选择命令的输出"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇指令的輸出"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1182,6 +1206,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1h 35m"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1h 35m"
@@ -1427,6 +1457,12 @@
             "value" : "输出："
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輸出："
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1665,6 +1701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已拷贝"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已複製"
           }
         },
         "zh-Hans" : {
@@ -1907,6 +1949,12 @@
             "value" : "将命令拷贝到剪贴板"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將指令複製至剪貼簿"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2145,6 +2193,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "开始于%@"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "於 %@ 開始"
           }
         },
         "zh-Hans" : {
@@ -2387,6 +2441,12 @@
             "value" : "在编写器中打开命令"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在編寫器中開啟指令"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2625,6 +2685,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "可拖移的文件夹"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可拖移的資料夾"
           }
         },
         "zh-Hans" : {
@@ -2867,6 +2933,12 @@
             "value" : "命令"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "指令"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3105,6 +3177,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将命令写入终端"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將指令寫入終端機"
           }
         },
         "zh-Hans" : {
@@ -3347,6 +3425,12 @@
             "value" : "目录："
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目錄："
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3585,6 +3669,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "返回码："
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "結束代碼："
           }
         },
         "zh-Hans" : {
@@ -3827,6 +3917,12 @@
             "value" : "将目录写入终端"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將目錄寫入終端機"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4065,6 +4161,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "运行时间："
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "執行時間："
           }
         },
         "zh-Hans" : {
@@ -4307,6 +4409,12 @@
             "value" : "拷贝命令的输出"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "複製指令的輸出"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4545,6 +4653,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "共享命令…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分享指令…"
           }
         },
         "zh-Hans" : {
@@ -4787,6 +4901,12 @@
             "value" : "命令："
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "指令："
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5022,6 +5142,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "127"
@@ -5265,6 +5391,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "停用显示屏幕外的命令"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停用顯示螢幕外的指令"
           }
         },
         "zh-Hans" : {

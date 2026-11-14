@@ -227,6 +227,12 @@
             "value" : "pid"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pid"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -465,6 +471,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "进程"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "程序"
           }
         },
         "zh-Hans" : {
@@ -707,6 +719,12 @@
             "value" : "拷贝进程ID"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "複製程序 ID"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -945,6 +963,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "项目1"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目 1"
           }
         },
         "zh-Hans" : {
@@ -1187,6 +1211,12 @@
             "value" : "项目2"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目 2"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1425,6 +1455,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "项目3"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目 3"
           }
         },
         "zh-Hans" : {
@@ -1667,6 +1703,12 @@
             "value" : "终止时通知"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "結束時通知"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1905,6 +1947,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "拷贝命令"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "複製指令"
           }
         },
         "zh-Hans" : {

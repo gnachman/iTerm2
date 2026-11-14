@@ -227,6 +227,12 @@
             "value" : "tmux仪表板"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux 儀表板"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -467,6 +473,12 @@
             "value" : "会话"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "工作階段"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -702,6 +714,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "附加"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "附加"
@@ -947,6 +965,12 @@
             "value" : "搜索窗口"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜尋視窗"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1185,6 +1209,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "窗口"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "視窗"
           }
         },
         "zh-Hans" : {
@@ -1427,6 +1457,12 @@
             "value" : "在窗口中打开"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在多個視窗中開啟"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1665,6 +1701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "隐藏"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隱藏"
           }
         },
         "zh-Hans" : {
@@ -1907,6 +1949,12 @@
             "value" : "在窗口中打开"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在多個視窗中開啟"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2145,6 +2193,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在标签页中打开"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在分頁中開啟"
           }
         },
         "zh-Hans" : {
@@ -2387,6 +2441,12 @@
             "value" : "分离"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分離"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2627,6 +2687,12 @@
             "value" : "附加时如有隐藏的窗口，则打开仪表板"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有隱藏的視窗時，附加時開啟儀表板"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2865,6 +2931,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "如果至少有这么多个窗口，附加时不打开窗口："
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如至少有這麼多個視窗，附加時不開啟視窗："
           }
         },
         "zh-Hans" : {

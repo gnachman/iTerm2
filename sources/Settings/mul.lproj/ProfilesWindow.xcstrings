@@ -227,6 +227,12 @@
             "value" : "描述文件"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "描述檔"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -465,6 +471,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "编辑描述文件…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編輯描述檔…"
           }
         },
         "zh-Hans" : {
@@ -707,6 +719,12 @@
             "value" : "新建标签页"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增分頁"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -945,6 +963,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "新建窗口"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增視窗"
           }
         },
         "zh-Hans" : {
@@ -1187,6 +1211,12 @@
             "value" : "打开描述文件后关闭此窗口。"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟描述檔後關閉此視窗。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1425,6 +1455,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "新窗口中的新标签页"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在新視窗中新增分頁"
           }
         },
         "zh-Hans" : {
@@ -1751,6 +1787,12 @@
             "value" : "标签 >"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "標籤 >"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2001,6 +2043,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "新建浮动窗格"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增浮動窗格"
           }
         }
       }

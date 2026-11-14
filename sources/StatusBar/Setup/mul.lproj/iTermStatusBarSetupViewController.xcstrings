@@ -227,6 +227,12 @@
             "value" : "将组件从菜单拖到“活跃组件”中，即可将其添加到状态栏。"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將元件從選單拖至「使用中的元件」，即可將其加入你的狀態列。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -467,6 +473,12 @@
             "value" : "优先紧凑排列而非位置稳定"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "優先緊湊排列而非穩定定位"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -702,6 +714,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "好"
@@ -947,6 +965,12 @@
             "value" : "活跃组件"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用中的元件"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1182,6 +1206,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已停用"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "已停用"
@@ -1427,6 +1457,12 @@
             "value" : "移除值为空的组件"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除值為空的元件"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1665,6 +1701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在状态栏和终端之间绘制分隔线"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在狀態列與終端機之間繪製分隔線"
           }
         },
         "zh-Hans" : {
@@ -1907,6 +1949,12 @@
             "value" : "自动"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2145,6 +2193,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "状态栏组件菜单"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "狀態列元件選單"
           }
         },
         "zh-Hans" : {
@@ -2387,6 +2441,12 @@
             "value" : "高级…"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "進階…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2625,6 +2685,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "紧凑排列算法可让更多状态栏组件同时可见，但它们的位置往往会更频繁地跳动。"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "緊湊排列演算法可同時顯示更多狀態列元件，但它們較容易跳動。"
           }
         },
         "zh-Hans" : {
@@ -2867,6 +2933,12 @@
             "value" : "🌈 自动彩虹："
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌈 自動彩虹色："
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3105,6 +3177,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "字体名称显示在此处"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字體名稱置於此處"
           }
         },
         "zh-Hans" : {
@@ -3347,6 +3425,12 @@
             "value" : "深色颜色"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "深色"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3585,6 +3669,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "更改"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "變更"
           }
         },
         "zh-Hans" : {
@@ -3827,6 +3917,12 @@
             "value" : "默认文本颜色："
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "預設文字顏色："
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4065,6 +4161,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "配置组件"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定元件"
           }
         },
         "zh-Hans" : {
@@ -4307,6 +4409,12 @@
             "value" : "紧凑排列算法可让更多状态栏组件同时可见，但它们的位置往往会更频繁地跳动。"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "緊湊排列演算法可同時顯示更多狀態列元件，但它們較容易跳動。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4547,6 +4655,12 @@
             "value" : "分隔线颜色："
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分隔線顏色："
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4782,6 +4896,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消"
@@ -5027,6 +5147,12 @@
             "value" : "浅色颜色"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "淺色"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5265,6 +5391,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "字体："
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字體："
           }
         },
         "zh-Hans" : {
@@ -5507,6 +5639,12 @@
             "value" : "背景颜色："
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "背景顏色："
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5742,6 +5880,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "好"
@@ -5985,6 +6129,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在状态栏和终端内容之间绘制一条细线。"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在狀態列與終端機內容之間繪製一條細線。"
           }
         },
         "zh-Hans" : {

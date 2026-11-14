@@ -227,6 +227,12 @@
             "value" : "快速打开"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "快速開啟"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -467,6 +473,12 @@
             "value" : "详细信息"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "詳細資料"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -705,6 +717,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "搜索会话、描述文件或布局"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜尋工作階段、描述檔或排列"
           }
         },
         "zh-Hans" : {

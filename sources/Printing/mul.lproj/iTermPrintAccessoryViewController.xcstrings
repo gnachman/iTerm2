@@ -227,6 +227,12 @@
             "value": "黑白"
           }
         },
+        "zh-HK": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "黑白"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",

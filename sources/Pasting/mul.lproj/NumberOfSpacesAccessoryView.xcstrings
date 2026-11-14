@@ -227,6 +227,12 @@
             "value": "制表符大小（空格数）："
           }
         },
+        "zh-HK": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tab 的空格數："
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -462,6 +468,12 @@
           }
         },
         "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "zh-HK": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

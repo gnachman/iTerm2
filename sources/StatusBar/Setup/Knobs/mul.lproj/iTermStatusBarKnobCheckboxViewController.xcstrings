@@ -227,6 +227,12 @@
             "value": "勾选"
           }
         },
+        "zh-HK": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "勾選"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",

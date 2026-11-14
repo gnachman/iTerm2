@@ -227,6 +227,12 @@
             "value" : "标题单元格"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HEADER CELL"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -465,6 +471,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "全局查找"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全域尋找"
           }
         },
         "zh-Hans" : {
@@ -707,6 +719,12 @@
             "value" : "子字符串：区分大小写"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "子字串（區分大小寫）"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -945,6 +963,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "子字符串：自动"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "子字串（自動）"
           }
         },
         "zh-Hans" : {
@@ -1187,6 +1211,12 @@
             "value" : "正则表达式：不区分大小写"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正規表示式（不區分大小寫）"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1425,6 +1455,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "查找"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尋找"
           }
         },
         "zh-Hans" : {
@@ -1667,6 +1703,12 @@
             "value" : "正则表达式：区分大小写"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正規表示式（區分大小寫）"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1905,6 +1947,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "子字符串：不区分大小写"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "子字串（不區分大小寫）"
           }
         },
         "zh-Hans" : {

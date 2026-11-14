@@ -227,6 +227,12 @@
             "value" : "自动补全"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動完成"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",

@@ -227,6 +227,12 @@
             "value" : "说明"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "描述"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -465,6 +471,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "崩溃日志"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "當機記錄"
           }
         },
         "zh-Hans" : {
@@ -707,6 +719,12 @@
             "value" : "崩溃报告程序"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "當機報告程式"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -945,6 +963,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "{APPNAME}上次使用时似乎发生了崩溃。要向开发者发送崩溃日志吗？\n\nApple的崩溃日志不会发送给其他开发者，因此这是{APPNAME}开发者了解并修复此崩溃的唯一途径。"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "{APPNAME} 上次使用時似乎發生了當機。要將當機記錄傳送給開發人員嗎？\n\nApple 的當機記錄不會傳送給其他開發人員，因此這是 {APPNAME} 開發人員得知並修正此當機問題的唯一方式。"
           }
         },
         "zh-Hans" : {
@@ -1187,6 +1211,12 @@
             "value" : "你可以删除任何不想发送的信息，但这会让查找错误变得更困难。默认情况下，会发送崩溃日志、你所用的Mac机型以及你的设置。"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你可以刪除任何不想傳送的資料，但這會讓偵測錯誤更加困難。依預設，會傳送當機記錄、你使用的 Mac 機型以及你的設定。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1425,6 +1455,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "发送"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "傳送"
           }
         },
         "zh-Hans" : {
@@ -1667,6 +1703,12 @@
             "value" : "稍后提醒我"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "稍後提醒我"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1905,6 +1947,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "放弃"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "捨棄"
           }
         },
         "zh-Hans" : {

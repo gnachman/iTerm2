@@ -227,6 +227,12 @@
             "value": "导出…"
           }
         },
+        "zh-HK": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "匯出…"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -465,6 +471,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "现在"
+          }
+        },
+        "zh-HK": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現在"
           }
         },
         "zh-Hans": {
@@ -707,6 +719,12 @@
             "value": "即时回放控制"
           }
         },
+        "zh-HK": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "即時重播控制"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -942,6 +960,12 @@
           }
         },
         "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消"
+          }
+        },
+        "zh-HK": {
           "stringUnit": {
             "state": "translated",
             "value": "取消"
@@ -1187,6 +1211,12 @@
             "value": "实时视图"
           }
         },
+        "zh-HK": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "即時檢視"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -1425,6 +1455,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "时间"
+          }
+        },
+        "zh-HK": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "時間"
           }
         },
         "zh-Hans": {

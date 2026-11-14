@@ -227,6 +227,12 @@
             "value": "iTerm2"
           }
         },
+        "zh-HK": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iTerm2"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -465,6 +471,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "作者：George Nachman及贡献者"
+          }
+        },
+        "zh-HK": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "作者：George Nachman 與貢獻者"
           }
         },
         "zh-Hans": {

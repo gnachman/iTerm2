@@ -1181,6 +1181,7 @@
 		0CCB6CA85B2F71B032F49D68 /* repl_banner-it.txt in Resources */ = {isa = PBXBuildFile; fileRef = 558E4A7A09D1C7875371E58C /* repl_banner-it.txt */; };
 		3195EB4B8AA7757F9735F900 /* repl_banner-vi.txt in Resources */ = {isa = PBXBuildFile; fileRef = 20A217AA265878F2D1E2339D /* repl_banner-vi.txt */; };
 		09B54583D7F5F5703EB5F42D /* repl_banner-pl.txt in Resources */ = {isa = PBXBuildFile; fileRef = 9A5845214228257B63545200 /* repl_banner-pl.txt */; };
+		880E17828056F9DC0BEA5693 /* repl_banner-zh-HK.txt in Resources */ = {isa = PBXBuildFile; fileRef = 1855826888D25CE7E76E7072 /* repl_banner-zh-HK.txt */; };
 		B43B43937FD66132223ECFFD /* repl_banner-es-419.txt in Resources */ = {isa = PBXBuildFile; fileRef = 30552B692A76FB5B53F89205 /* repl_banner-es-419.txt */; };
 		7E7753E38AC20B4FD465724E /* repl_banner-fr-CA.txt in Resources */ = {isa = PBXBuildFile; fileRef = A9549F67C83F6A0B87911EDD /* repl_banner-fr-CA.txt */; };
 		444F4AA2E53DFA72B0A325FA /* repl_banner-yue-Hans.txt in Resources */ = {isa = PBXBuildFile; fileRef = 9F126231B0DA0BB11C07FD69 /* repl_banner-yue-Hans.txt */; };
@@ -4788,6 +4789,7 @@
 		2877EF037945DD91E2FA6876 /* repl_banner-it.txt in Resources */ = {isa = PBXBuildFile; fileRef = 558E4A7A09D1C7875371E58C /* repl_banner-it.txt */; };
 		DDF7515C2047CBD594C8E494 /* repl_banner-vi.txt in Resources */ = {isa = PBXBuildFile; fileRef = 20A217AA265878F2D1E2339D /* repl_banner-vi.txt */; };
 		D12A1458C128178184A90834 /* repl_banner-pl.txt in Resources */ = {isa = PBXBuildFile; fileRef = 9A5845214228257B63545200 /* repl_banner-pl.txt */; };
+		7E5030965C8A3E35069B6986 /* repl_banner-zh-HK.txt in Resources */ = {isa = PBXBuildFile; fileRef = 1855826888D25CE7E76E7072 /* repl_banner-zh-HK.txt */; };
 		8105EDD85B93831A8840FF66 /* repl_banner-es-419.txt in Resources */ = {isa = PBXBuildFile; fileRef = 30552B692A76FB5B53F89205 /* repl_banner-es-419.txt */; };
 		F5BAFC2D639ECC38E4BAAFCB /* repl_banner-fr-CA.txt in Resources */ = {isa = PBXBuildFile; fileRef = A9549F67C83F6A0B87911EDD /* repl_banner-fr-CA.txt */; };
 		9B4A77C45871B86EB20209F3 /* repl_banner-yue-Hans.txt in Resources */ = {isa = PBXBuildFile; fileRef = 9F126231B0DA0BB11C07FD69 /* repl_banner-yue-Hans.txt */; };
@@ -9111,6 +9113,7 @@
 		558E4A7A09D1C7875371E58C /* repl_banner-it.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-it.txt"; path = "sources/repl_banner-it.txt"; sourceTree = "<group>"; };
 		20A217AA265878F2D1E2339D /* repl_banner-vi.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-vi.txt"; path = "sources/repl_banner-vi.txt"; sourceTree = "<group>"; };
 		9A5845214228257B63545200 /* repl_banner-pl.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-pl.txt"; path = "sources/repl_banner-pl.txt"; sourceTree = "<group>"; };
+		1855826888D25CE7E76E7072 /* repl_banner-zh-HK.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-zh-HK.txt"; path = "sources/repl_banner-zh-HK.txt"; sourceTree = "<group>"; };
 		30552B692A76FB5B53F89205 /* repl_banner-es-419.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-es-419.txt"; path = "sources/repl_banner-es-419.txt"; sourceTree = "<group>"; };
 		A9549F67C83F6A0B87911EDD /* repl_banner-fr-CA.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-fr-CA.txt"; path = "sources/repl_banner-fr-CA.txt"; sourceTree = "<group>"; };
 		9F126231B0DA0BB11C07FD69 /* repl_banner-yue-Hans.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-yue-Hans.txt"; path = "sources/repl_banner-yue-Hans.txt"; sourceTree = "<group>"; };
@@ -9667,6 +9670,7 @@
 				558E4A7A09D1C7875371E58C /* repl_banner-it.txt */,
 				20A217AA265878F2D1E2339D /* repl_banner-vi.txt */,
 				9A5845214228257B63545200 /* repl_banner-pl.txt */,
+				1855826888D25CE7E76E7072 /* repl_banner-zh-HK.txt */,
 				30552B692A76FB5B53F89205 /* repl_banner-es-419.txt */,
 				A9549F67C83F6A0B87911EDD /* repl_banner-fr-CA.txt */,
 				9F126231B0DA0BB11C07FD69 /* repl_banner-yue-Hans.txt */,
@@ -17337,6 +17341,7 @@
 				"en-IN",
 				"fr-CA",
 				"es-419",
+				"zh-HK",
 				en,
 				Base,
 			);
@@ -17976,6 +17981,7 @@
 				0CCB6CA85B2F71B032F49D68 /* repl_banner-it.txt in Resources */,
 				3195EB4B8AA7757F9735F900 /* repl_banner-vi.txt in Resources */,
 				09B54583D7F5F5703EB5F42D /* repl_banner-pl.txt in Resources */,
+				880E17828056F9DC0BEA5693 /* repl_banner-zh-HK.txt in Resources */,
 				B43B43937FD66132223ECFFD /* repl_banner-es-419.txt in Resources */,
 				7E7753E38AC20B4FD465724E /* repl_banner-fr-CA.txt in Resources */,
 				444F4AA2E53DFA72B0A325FA /* repl_banner-yue-Hans.txt in Resources */,
@@ -18704,6 +18710,7 @@
 				2877EF037945DD91E2FA6876 /* repl_banner-it.txt in Resources */,
 				DDF7515C2047CBD594C8E494 /* repl_banner-vi.txt in Resources */,
 				D12A1458C128178184A90834 /* repl_banner-pl.txt in Resources */,
+				7E5030965C8A3E35069B6986 /* repl_banner-zh-HK.txt in Resources */,
 				8105EDD85B93831A8840FF66 /* repl_banner-es-419.txt in Resources */,
 				F5BAFC2D639ECC38E4BAAFCB /* repl_banner-fr-CA.txt in Resources */,
 				9B4A77C45871B86EB20209F3 /* repl_banner-yue-Hans.txt in Resources */,

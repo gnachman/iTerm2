@@ -227,6 +227,12 @@
             "value" : "⌥ Option"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Option"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -465,6 +471,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "固定热键窗口（键盘焦点移走后仍保持打开）"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "釘選全域快捷鍵視窗（失去鍵盤焦點時保持開啟）"
           }
         },
         "zh-Hans" : {
@@ -707,6 +719,12 @@
             "value" : "热键："
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全域快捷鍵："
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -945,6 +963,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "注意：仅当窗口因其他App变为活跃状态而关闭时，才会重新打开。"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "注意：只有在視窗是因為其他 App 變成使用中而關閉時，才會重新開啟。"
           }
         },
         "zh-Hans" : {
@@ -1187,6 +1211,12 @@
             "value" : "其他热键"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他全域快捷鍵"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1425,6 +1455,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "按下绑定到此描述文件的热键时，将显示或隐藏一个专用窗口。每个设有热键的描述文件各自控制自己的热键窗口。"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按下與此描述檔綁定的全域快捷鍵時，專用視窗會顯示或隱藏。每個設有全域快捷鍵的描述檔都控制各自的全域快捷鍵視窗。"
           }
         },
         "zh-Hans" : {
@@ -1667,6 +1703,12 @@
             "value" : "不做任何特殊处理"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不做任何特殊處理"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1902,6 +1944,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -2147,6 +2195,12 @@
             "value" : "显示此热键窗口"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示此全域快捷鍵視窗"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2387,6 +2441,12 @@
             "value" : "热键窗口设置"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全域快捷鍵視窗設定"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2622,6 +2682,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Command"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⌘ Command"
@@ -2867,6 +2933,12 @@
             "value" : "⚠️ 另一个描述文件使用了此快捷键"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ 另一個描述檔使用了此快捷鍵"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3102,6 +3174,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Shift"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⇧ Shift"
@@ -3347,6 +3425,12 @@
             "value" : "连按两下键："
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "連按兩下的按鍵："
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3585,6 +3669,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "App重新激活时自动重新打开"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App 重新啟用時自動重新開啟"
           }
         },
         "zh-Hans" : {
@@ -3827,6 +3917,12 @@
             "value" : "⚠️ 另一个描述文件使用了此连按两下操作"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ 另一個描述檔使用了此連按兩下"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4065,6 +4161,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "没有其他窗口打开时显示此热键窗口"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有其他視窗開啟時，顯示此全域快捷鍵視窗"
           }
         },
         "zh-Hans" : {
@@ -4307,6 +4409,12 @@
             "value" : "浮动窗口会覆盖其他窗口、程序坞以及其他App的全屏幕窗口（如果热键窗口的空间设为“所有空间”）。"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "浮動視窗會與其他視窗、Dock 以及其他 App 的全螢幕視窗重疊（如果全域快捷鍵視窗的空間設為「所有空間」）。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4542,6 +4650,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消"
@@ -4787,6 +4901,12 @@
             "value" : "点按程序坞图标时："
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按一下 Dock 圖像時："
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5027,6 +5147,12 @@
             "value" : "显示和隐藏时使用动画"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示和隱藏時使用動畫"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5262,6 +5388,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "好"
@@ -5507,6 +5639,12 @@
             "value" : "好"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5747,6 +5885,12 @@
             "value" : "浮动窗口"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "浮動視窗"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5982,6 +6126,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Control"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "^ Control"
@@ -6225,6 +6375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "其他热键…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他全域快捷鍵…"
           }
         },
         "zh-Hans" : {

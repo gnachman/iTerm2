@@ -227,6 +227,12 @@
             "value" : "沿用上一个会话的目录"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重複使用上一個工作階段的目錄"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -465,6 +471,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "个人目录"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "個人專屬目錄"
           }
         },
         "zh-Hans" : {
@@ -707,6 +719,12 @@
             "value" : "新建标签页的工作目录"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新分頁的工作目錄"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -945,6 +963,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "单选按钮"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "單選按鈕"
           }
         },
         "zh-Hans" : {
@@ -1187,6 +1211,12 @@
             "value" : "新建窗口的工作目录"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新視窗的工作目錄"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1425,6 +1455,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "沿用上一个会话的目录"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重複使用上一個工作階段的目錄"
           }
         },
         "zh-Hans" : {
@@ -1667,6 +1703,12 @@
             "value" : "单选按钮"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "單選按鈕"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1905,6 +1947,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "沿用上一个会话的目录"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重複使用上一個工作階段的目錄"
           }
         },
         "zh-Hans" : {
@@ -2147,6 +2195,12 @@
             "value" : "目录："
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目錄："
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2385,6 +2439,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "新建拆分窗格的工作目录"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新分割窗格的工作目錄"
           }
         },
         "zh-Hans" : {
@@ -2627,6 +2687,12 @@
             "value" : "高级工作目录设置"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "進階工作目錄設定"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2865,6 +2931,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "目录："
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目錄："
           }
         },
         "zh-Hans" : {
@@ -3107,6 +3179,12 @@
             "value" : "目录："
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目錄："
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3345,6 +3423,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "单选按钮"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "單選按鈕"
           }
         },
         "zh-Hans" : {
@@ -3587,6 +3671,12 @@
             "value" : "个人目录"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "個人專屬目錄"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3827,6 +3917,12 @@
             "value" : "个人目录"
           }
         },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "個人專屬目錄"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4062,6 +4158,12 @@
           }
         },
         "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
+        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "好"
