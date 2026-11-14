@@ -47,6 +47,12 @@
             "value": "Black and white"
           }
         },
+        "en-CA": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Black and white"
+          }
+        },
         "en-GB": {
           "stringUnit": {
             "state": "translated",

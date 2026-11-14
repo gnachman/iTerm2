@@ -203,6 +203,12 @@
             "value" : "Status"
           }
         },
+        "en-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -419,6 +425,12 @@
             "value" : "Importing…"
           }
         },
+        "en-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importing…"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -630,6 +642,12 @@
           }
         },
         "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importing settings and data…"
+          }
+        },
+        "en-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Importing settings and data…"

@@ -21,10 +21,10 @@ New Features:
   Bokmål, Finnish, Czech, Slovak, Slovenian,
   Croatian, Hungarian, Romanian, Greek, Ukrainian,
   Indonesian, Malay, Hindi, Thai, Catalan,
-  Cantonese, British English, and Australian
-  English. They are used when one of them is your
-  preferred language in System Settings > General
-  > Language & Region.
+  Cantonese, British English, Australian English,
+  and Canadian English. They are used when one of
+  them is your preferred language in System
+  Settings > General > Language & Region.
 - iTerm2 > Suppressed Alerts lists most alerts
   and announcements at the top of a session that
   are no longer shown because you chose “Never,”

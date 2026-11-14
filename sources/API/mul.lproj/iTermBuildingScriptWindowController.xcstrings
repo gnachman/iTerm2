@@ -47,6 +47,12 @@
             "value" : "Hang tight! Installing a new Python environment…"
           }
         },
+        "en-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hang tight! Installing a new Python environment…"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",

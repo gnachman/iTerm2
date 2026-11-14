@@ -30,7 +30,7 @@
 }
 
 + (NSArray<NSString *> *)languages {
-    return @[ @"ca", @"cs", @"da", @"de", @"el", @"en-AU", @"en-GB", @"es", @"fi", @"fr", @"hi", @"hr", @"hu", @"id", @"it", @"ja", @"ms", @"nb", @"nl", @"pl", @"pt-BR", @"ro", @"ru", @"sk", @"sl", @"sv", @"th", @"tr", @"uk", @"vi", @"yue-Hans", @"zh-Hans", @"zh-Hant" ];
+    return @[ @"ca", @"cs", @"da", @"de", @"el", @"en-AU", @"en-CA", @"en-GB", @"es", @"fi", @"fr", @"hi", @"hr", @"hu", @"id", @"it", @"ja", @"ms", @"nb", @"nl", @"pl", @"pt-BR", @"ro", @"ru", @"sk", @"sl", @"sv", @"th", @"tr", @"uk", @"vi", @"yue-Hans", @"zh-Hans", @"zh-Hant" ];
 }
 
 - (void)setUp {

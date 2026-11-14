@@ -47,6 +47,12 @@
             "value": "Pasting…"
           }
         },
+        "en-CA": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pasting…"
+          }
+        },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
