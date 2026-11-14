@@ -41,6 +41,12 @@
             "value" : "pid"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pid"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -248,6 +254,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Job"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Job"
           }
         },
@@ -461,6 +473,12 @@
             "value" : "Copy Process ID"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy Process ID"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -668,6 +686,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Item 1"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Item 1"
           }
         },
@@ -881,6 +905,12 @@
             "value" : "Item 2"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 2"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1088,6 +1118,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Item 3"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Item 3"
           }
         },
@@ -1301,6 +1337,12 @@
             "value" : "Notify on Termination"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notify on Termination"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1508,6 +1550,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Copy Command"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Copy Command"
           }
         },

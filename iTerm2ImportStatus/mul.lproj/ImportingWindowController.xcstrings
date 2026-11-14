@@ -197,6 +197,12 @@
             "value" : "Estat"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -407,6 +413,12 @@
             "value" : "Important…"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importing…"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -615,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Important la configuració i les dades…"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importing settings and data…"
           }
         },
         "en-GB" : {

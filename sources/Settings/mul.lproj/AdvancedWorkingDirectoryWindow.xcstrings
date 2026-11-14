@@ -41,6 +41,12 @@
             "value" : "Reuse previous session's directory"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reuse previous session's directory"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -248,6 +254,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Home directory"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Home directory"
           }
         },
@@ -461,6 +473,12 @@
             "value" : "Working Directory for New Tabs"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Working Directory for New Tabs"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -668,6 +686,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Radio"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Radio"
           }
         },
@@ -881,6 +905,12 @@
             "value" : "Working Directory for New Windows"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Working Directory for New Windows"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1088,6 +1118,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Reuse previous session's directory"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Reuse previous session's directory"
           }
         },
@@ -1301,6 +1337,12 @@
             "value" : "Radio"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1508,6 +1550,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Reuse previous session's directory"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Reuse previous session's directory"
           }
         },
@@ -1721,6 +1769,12 @@
             "value" : "Directory:"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Directory:"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1928,6 +1982,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Working Directory for New Split Panes"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Working Directory for New Split Panes"
           }
         },
@@ -2141,6 +2201,12 @@
             "value" : "Advanced Working Directory Settings"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Advanced Working Directory Settings"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2348,6 +2414,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Directory:"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Directory:"
           }
         },
@@ -2561,6 +2633,12 @@
             "value" : "Directory:"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Directory:"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2768,6 +2846,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Radio"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Radio"
           }
         },
@@ -2981,6 +3065,12 @@
             "value" : "Home directory"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home directory"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3191,6 +3281,12 @@
             "value" : "Home directory"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home directory"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3398,6 +3494,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "OK"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "OK"
           }
         },

@@ -41,6 +41,12 @@
             "value" : "All"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -248,6 +254,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Running"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Running"
           }
         },
@@ -461,6 +473,12 @@
             "value" : "Started"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Started"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -668,6 +686,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Scroll to bottom on update"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Scroll to bottom on update"
           }
         },
@@ -881,6 +905,12 @@
             "value" : "Calls"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calls"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1088,6 +1118,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Script Console"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Script Console"
           }
         },
@@ -1301,6 +1337,12 @@
             "value" : "Filter"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1511,6 +1553,12 @@
             "value" : "Name"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1718,6 +1766,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Logs"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Logs"
           }
         },

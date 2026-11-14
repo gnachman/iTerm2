@@ -41,6 +41,12 @@
             "value" : "Zoom Out"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom Out"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -248,6 +254,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Install Python Runtime"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Install Python Runtime"
           }
         },
@@ -461,6 +473,12 @@
             "value" : "Move Tab"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move Tab"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -668,6 +686,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Duplicate Session"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Duplicate Session"
           }
         },
@@ -881,6 +905,12 @@
             "value" : "Open Location…"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Location…"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1088,6 +1118,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Increase Height"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Increase Height"
           }
         },
@@ -1301,6 +1337,12 @@
             "value" : "Move Tab"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move Tab"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1508,6 +1550,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Focus Reporting"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Focus Reporting"
           }
         },
@@ -1721,6 +1769,12 @@
             "value" : "Normal"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normal"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1928,6 +1982,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Move Divider Up"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Move Divider Up"
           }
         },
@@ -2141,6 +2201,12 @@
             "value" : "Replace with Base 64-Decoded Value"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replace with Base 64-Decoded Value"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2348,6 +2414,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Session"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Session"
           }
         },
@@ -2561,6 +2633,12 @@
             "value" : "Move Session to Split Pane"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move Session to Split Pane"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2768,6 +2846,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Password Manager"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Password Manager"
           }
         },
@@ -2981,6 +3065,12 @@
             "value" : "Item 1"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 1"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3191,6 +3281,12 @@
             "value" : "Centered"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centred"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3398,6 +3494,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Replace Selection"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Replace Selection"
           }
         },
@@ -3611,6 +3713,12 @@
             "value" : "Left of Screen"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Left of Screen"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3818,6 +3926,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Application Cursor"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Application Cursor"
           }
         },
@@ -4031,6 +4145,12 @@
             "value" : "Arrangements"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrangements"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4238,6 +4358,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Fold Selected Lines"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Fold Selected Lines"
           }
         },
@@ -4451,6 +4577,12 @@
             "value" : "Open Recent Directories…"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Recent Directories…"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4658,6 +4790,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Full Screen"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Full Screen"
           }
         },
@@ -4871,6 +5009,12 @@
             "value" : "Set Named Mark"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set Named Mark"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5078,6 +5222,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Actions"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Actions"
           }
         },
@@ -5291,6 +5441,12 @@
             "value" : "Capture GPU Frame"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capture GPU Frame"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5498,6 +5654,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Marks and Annotations"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Marks and Annotations"
           }
         },
@@ -5711,6 +5873,12 @@
             "value" : "Full-Height Left of Screen"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full-Height Left of Screen"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5918,6 +6086,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Duplicate Window"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Duplicate Window"
           }
         },
@@ -6131,6 +6305,12 @@
             "value" : "Auto Command Completion"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto Command Completion"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6338,6 +6518,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Window Style"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Window Style"
           }
         },
@@ -6551,6 +6737,12 @@
             "value" : "GPU Renderer Availability"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPU Renderer Availability"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6758,6 +6950,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Window"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Window"
           }
         },
@@ -6971,6 +7169,12 @@
             "value" : "Minimize"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimise"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7178,6 +7382,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Window"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Window"
           }
         },
@@ -7391,6 +7601,12 @@
             "value" : "iTerm2"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7598,6 +7814,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "iTerm2"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "iTerm2"
           }
         },
@@ -7811,6 +8033,12 @@
             "value" : "Change Profile in Arrangement…"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change Profile in Arrangement…"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8018,6 +8246,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Shell"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Shell"
           }
         },
@@ -8231,6 +8465,12 @@
             "value" : "Set Default Width"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set Default Width"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8438,6 +8678,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Shell"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Shell"
           }
         },
@@ -8651,6 +8897,12 @@
             "value" : "Help"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Help"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8858,6 +9110,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Help"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Help"
           }
         },
@@ -9071,6 +9329,12 @@
             "value" : "iTerm2 Help"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 Help"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9278,6 +9542,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Preferences…"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Preferences…"
           }
         },
@@ -9491,6 +9761,12 @@
             "value" : "Services"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Services"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9698,6 +9974,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Services"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Services"
           }
         },
@@ -9911,6 +10193,12 @@
             "value" : "Hide iTerm2"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide iTerm2"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10118,6 +10406,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Quit iTerm2"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Quit iTerm2"
           }
         },
@@ -10331,6 +10625,12 @@
             "value" : "Hide Others"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide Others"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10538,6 +10838,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Show All"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Show All"
           }
         },
@@ -10751,6 +11057,12 @@
             "value" : "Cut"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cut"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10958,6 +11270,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Edit"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Edit"
           }
         },
@@ -11171,6 +11489,12 @@
             "value" : "Edit"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11378,6 +11702,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Select All"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Select All"
           }
         },
@@ -11591,6 +11921,12 @@
             "value" : "Paste"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11798,6 +12134,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Clear Buffer"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Clear Buffer"
           }
         },
@@ -12011,6 +12353,12 @@
             "value" : "Log"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12218,6 +12566,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Log"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Log"
           }
         },
@@ -12431,6 +12785,12 @@
             "value" : "About iTerm2"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "About iTerm2"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12638,6 +12998,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Profiles"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Profiles"
           }
         },
@@ -12851,6 +13217,12 @@
             "value" : "Profiles"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profiles"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13058,6 +13430,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Close Terminal Window"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Close Terminal Window"
           }
         },
@@ -13271,6 +13649,12 @@
             "value" : "Close All Panes in Tab"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close All Panes in Tab"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13478,6 +13862,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Page Setup…"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Page Setup…"
           }
         },
@@ -13691,6 +14081,12 @@
             "value" : "Save Selected Text…"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save Selected Text…"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13898,6 +14294,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Clear Scrollback Buffer"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Clear Scrollback Buffer"
           }
         },
@@ -14111,6 +14513,12 @@
             "value" : "Use Selection for Find"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use Selection for Find"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14318,6 +14726,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Find"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Find"
           }
         },
@@ -14531,6 +14945,12 @@
             "value" : "Find"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14738,6 +15158,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Find Next"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Find Next"
           }
         },
@@ -14951,6 +15377,12 @@
             "value" : "Find Previous"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find Previous"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15158,6 +15590,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Jump to Selection"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Jump to Selection"
           }
         },
@@ -15371,6 +15809,12 @@
             "value" : "View"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "View"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15578,6 +16022,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "View"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "View"
           }
         },
@@ -15791,6 +16241,12 @@
             "value" : "Make Text Bigger"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Make Text Bigger"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15998,6 +16454,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Make Text Smaller"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Make Text Smaller"
           }
         },
@@ -16211,6 +16673,12 @@
             "value" : "Print"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Print"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16418,6 +16886,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Screen"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Screen"
           }
         },
@@ -16631,6 +17105,12 @@
             "value" : "Print"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Print"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16838,6 +17318,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Selection"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Selection"
           }
         },
@@ -17051,6 +17537,12 @@
             "value" : "Buffer"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buffer"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17258,6 +17750,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Select Previous Tab"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Select Previous Tab"
           }
         },
@@ -17471,6 +17969,12 @@
             "value" : "Select Next Tab"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select Next Tab"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17678,6 +18182,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Select Tab"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Select Tab"
           }
         },
@@ -17891,6 +18401,12 @@
             "value" : "Select Tab"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select Tab"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18098,6 +18614,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "New Tab"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "New Tab"
           }
         },
@@ -18311,6 +18833,12 @@
             "value" : "New Window"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Window"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18518,6 +19046,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Press Option for New Window"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Press Option for New Window"
           }
         },
@@ -18731,6 +19265,12 @@
             "value" : "Open In New Window"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open In New Window"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18938,6 +19478,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Check for Updates…"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Check for Updates…"
           }
         },
@@ -19151,6 +19697,12 @@
             "value" : "Zoom"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19358,6 +19910,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Reset"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Reset"
           }
         },
@@ -19571,6 +20129,12 @@
             "value" : "Toggle Full Screen"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toggle Full Screen"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19778,6 +20342,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Toggle Debug Logging"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Toggle Debug Logging"
           }
         },
@@ -19991,6 +20561,12 @@
             "value" : "Open Profiles…"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Profiles…"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20198,6 +20774,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Edit Session…"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Edit Session…"
           }
         },
@@ -20411,6 +20993,12 @@
             "value" : "Start Instant Replay"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Instant Replay"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20618,6 +21206,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Undo"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Undo"
           }
         },
@@ -20831,6 +21425,12 @@
             "value" : "Redo"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redo"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21038,6 +21638,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Open Paste History…"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Open Paste History…"
           }
         },
@@ -21251,6 +21857,12 @@
             "value" : "Open Autocomplete…"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Autocomplete…"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21458,6 +22070,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Paste Special"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Paste Special"
           }
         },
@@ -21671,6 +22289,12 @@
             "value" : "Paste Special"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste Special"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21878,6 +22502,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Paste Selection"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Paste Selection"
           }
         },
@@ -22091,6 +22721,12 @@
             "value" : "Paste Slowly"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste Slowly"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22298,6 +22934,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Secure Keyboard Entry"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Secure Keyboard Entry"
           }
         },
@@ -22511,6 +23153,12 @@
             "value" : "Arrange Windows Horizontally"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrange Windows Horizontally"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22718,6 +23366,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Close"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Close"
           }
         },
@@ -22931,6 +23585,12 @@
             "value" : "Split Vertically with Current Profile"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Split Vertically with Current Profile"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23138,6 +23798,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Split Horizontally with Current Profile"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Split Horizontally with Current Profile"
           }
         },
@@ -23351,6 +24017,12 @@
             "value" : "Save Window Arrangement"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save Window Arrangement"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23558,6 +24230,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Select Split Pane"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Select Split Pane"
           }
         },
@@ -23771,6 +24449,12 @@
             "value" : "Select Split Pane"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select Split Pane"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23978,6 +24662,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Select Pane Above"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Select Pane Above"
           }
         },
@@ -24191,6 +24881,12 @@
             "value" : "Select Pane Below"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select Pane Below"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24398,6 +25094,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Select Pane Left"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Select Pane Left"
           }
         },
@@ -24611,6 +25313,12 @@
             "value" : "Select Pane Right"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select Pane Right"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24818,6 +25526,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Use Transparency"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Use Transparency"
           }
         },
@@ -25031,6 +25745,12 @@
             "value" : "Maximize Active Pane"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximise Active Pane"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25238,6 +25958,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Item 3"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Item 3"
           }
         },
@@ -25451,6 +26177,12 @@
             "value" : "Item 2"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 2"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25658,6 +26390,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Item 1"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Item 1"
           }
         },
@@ -25871,6 +26609,12 @@
             "value" : "Set Mark"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set Mark"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26078,6 +26822,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Jump to Mark"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Jump to Mark"
           }
         },
@@ -26291,6 +27041,12 @@
             "value" : "Next Pane"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next Pane"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26498,6 +27254,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Previous Pane"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Previous Pane"
           }
         },
@@ -26711,6 +27473,12 @@
             "value" : "Show Tabs in Fullscreen"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Tabs in Fullscreen"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26918,6 +27686,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Broadcast Input"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Broadcast Input"
           }
         },
@@ -27131,6 +27905,12 @@
             "value" : "Broadcast Input"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Broadcast Input"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27338,6 +28118,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Broadcast Input to All Panes in All Tabs"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Broadcast Input to All Panes in All Tabs"
           }
         },
@@ -27551,6 +28337,12 @@
             "value" : "Broadcast Input to All Panes in Current Tab"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Broadcast Input to All Panes in Current Tab"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27758,6 +28550,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Send Input to Current Session Only"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Send Input to Current Session Only"
           }
         },
@@ -27971,6 +28769,12 @@
             "value" : "Restore Window Arrangement"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore Window Arrangement"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28178,6 +28982,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Restore Window Arrangement"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Restore Window Arrangement"
           }
         },
@@ -28391,6 +29201,12 @@
             "value" : "Find Cursor"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find Cursor"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28598,6 +29414,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Split Horizontally…"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Split Horizontally…"
           }
         },
@@ -28811,6 +29633,12 @@
             "value" : "Split Vertically…"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Split Vertically…"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29018,6 +29846,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Toolbelt"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Toolbelt"
           }
         },
@@ -29231,6 +30065,12 @@
             "value" : "Toolbelt"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toolbelt"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29438,6 +30278,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Show Toolbelt"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Show Toolbelt"
           }
         },
@@ -29651,6 +30497,12 @@
             "value" : "New Tab with Current Profile"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Tab with Current Profile"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29858,6 +30710,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Run Coprocess…"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Run Coprocess…"
           }
         },
@@ -30071,6 +30929,12 @@
             "value" : "Stop Coprocess"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop Coprocess"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30278,6 +31142,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Copy"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Copy"
           }
         },
@@ -30491,6 +31361,12 @@
             "value" : "Move Tab to New Window"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move Tab to New Window"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30698,6 +31574,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Move Tab Right"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Move Tab Right"
           }
         },
@@ -30911,6 +31793,12 @@
             "value" : "Show Background Pattern Indicator"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Background Pattern Indicator"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31118,6 +32006,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "tmux"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "tmux"
           }
         },
@@ -31331,6 +32225,12 @@
             "value" : "tmux"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31538,6 +32438,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "New Tmux Tab"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "New Tmux Tab"
           }
         },
@@ -31751,6 +32657,12 @@
             "value" : "New Tmux Window"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Tmux Window"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31958,6 +32870,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Detach"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Detach"
           }
         },
@@ -32171,6 +33089,12 @@
             "value" : "Dashboard"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dashboard"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32378,6 +33302,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Make Text Normal Size"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Make Text Normal Size"
           }
         },
@@ -32591,6 +33521,12 @@
             "value" : "Restore Text and Session Size"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore Text and Session Size"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32798,6 +33734,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Make iTerm2 Default Term"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Make iTerm2 Default Term"
           }
         },
@@ -33011,6 +33953,12 @@
             "value" : "Make Terminal Default Term"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Make Terminal Default Term"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33218,6 +34166,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Toggle Broadcast Input to Current Session"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Toggle Broadcast Input to Current Session"
           }
         },
@@ -33431,6 +34385,12 @@
             "value" : "Paste Faster"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste Faster"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33638,6 +34598,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Paste Slower"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Paste Slower"
           }
         },
@@ -33851,6 +34817,12 @@
             "value" : "Paste Slowly Faster"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste Slowly Faster"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34058,6 +35030,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Paste Slowly Slower"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Paste Slowly Slower"
           }
         },
@@ -34271,6 +35249,12 @@
             "value" : "Reset Character Set"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset Character Set"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34478,6 +35462,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Archives"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Archives"
           }
         },
@@ -34691,6 +35681,12 @@
             "value" : "VT400"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT400"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34898,6 +35894,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Annotate Selection"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Annotate Selection"
           }
         },
@@ -35111,6 +36113,12 @@
             "value" : "Zoom In on Selection"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom In on Selection"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35318,6 +36326,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Move Divider Left"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Move Divider Left"
           }
         },
@@ -35531,6 +36545,12 @@
             "value" : "Disable All"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disable All"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35738,6 +36758,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Move Session"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Move Session"
           }
         },
@@ -35951,6 +36977,12 @@
             "value" : "Show Composer"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Composer"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36158,6 +37190,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Force Detach"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Force Detach"
           }
         },
@@ -36371,6 +37409,12 @@
             "value" : "Named Marks"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Named Marks"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36578,6 +37622,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Find…"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Find…"
           }
         },
@@ -36791,6 +37841,12 @@
             "value" : "Export Recording"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export Recording"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36998,6 +38054,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "No Title Bar"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "No Title Bar"
           }
         },
@@ -37211,6 +38273,12 @@
             "value" : "VT500"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT500"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37418,6 +38486,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Show Clippings"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Show Clippings"
           }
         },
@@ -37631,6 +38705,12 @@
             "value" : "Companion Device Settings"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Companion Device Settings"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37838,6 +38918,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Copy Mode"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Copy Mode"
           }
         },
@@ -38051,6 +39137,12 @@
             "value" : "Move Session"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move Session"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38258,6 +39350,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Tab"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Tab"
           }
         },
@@ -38471,6 +39569,12 @@
             "value" : "Clear to Start of Selection"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear to Start of Selection"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38678,6 +39782,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Copy Performance Stats"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Copy Performance Stats"
           }
         },
@@ -38891,6 +40001,12 @@
             "value" : "Scripts"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scripts"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39098,6 +40214,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Save Current Window as Arrangement"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Save Current Window as Arrangement"
           }
         },
@@ -39311,6 +40433,12 @@
             "value" : "Triggers"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Triggers"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39518,6 +40646,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Show Cursor Guide"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Show Cursor Guide"
           }
         },
@@ -39731,6 +40865,12 @@
             "value" : "Lock Size"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lock Size"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39938,6 +41078,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Log to File"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Log to File"
           }
         },
@@ -40151,6 +41297,12 @@
             "value" : "Export…"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export…"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40358,6 +41510,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Web"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Web"
           }
         },
@@ -40571,6 +41729,12 @@
             "value" : "Report Associated Text"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Report Associated Text"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40778,6 +41942,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "New Python Script"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "New Python Script"
           }
         },
@@ -40991,6 +42161,12 @@
             "value" : "Open Source Licenses"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Source Licences"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41198,6 +42374,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Clear Instant Replay"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Clear Instant Replay"
           }
         },
@@ -41411,6 +42593,12 @@
             "value" : "Decrease Height"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Decrease Height"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41618,6 +42806,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Scripts"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Scripts"
           }
         },
@@ -41831,6 +43025,12 @@
             "value" : "Reveal Scripts in Finder"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reveal Scripts in Finder"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42038,6 +43238,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Save Contents…"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Save Contents…"
           }
         },
@@ -42251,6 +43457,12 @@
             "value" : "Bring All To Front"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bring All To Front"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42458,6 +43670,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Fold All"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Fold All"
           }
         },
@@ -42671,6 +43889,12 @@
             "value" : "Archives"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archives"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42878,6 +44102,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Restore Window Arrangement as Tabs"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Restore Window Arrangement as Tabs"
           }
         },
@@ -43091,6 +44321,12 @@
             "value" : "Add Annotation at Cursor"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add Annotation at Cursor"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43298,6 +44534,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Disable Transparency for Active Window"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Disable Transparency for Active Window"
           }
         },
@@ -43511,6 +44753,12 @@
             "value" : "Paste Bracketing"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste Bracketing"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43718,6 +44966,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Replace with Pretty-Printed JSON"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Replace with Pretty-Printed JSON"
           }
         },
@@ -44087,6 +45341,12 @@
             "value" : "Porta a primer pla"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bring to Front"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44295,6 +45555,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Acobla la subfinestra flotant"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dock Floating Pane"
           }
         },
         "en-GB" : {
@@ -44507,6 +45773,12 @@
             "value" : "Oculta les subfinestres flotants"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide Floating Panes"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44715,6 +45987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mou la subfinestra flotant cap avall"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move Floating Pane Down"
           }
         },
         "en-GB" : {
@@ -44927,6 +46205,12 @@
             "value" : "Mou la subfinestra flotant a l’esquerra"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move Floating Pane Left"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45135,6 +46419,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mou la subfinestra flotant a la dreta"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move Floating Pane Right"
           }
         },
         "en-GB" : {
@@ -45347,6 +46637,12 @@
             "value" : "Mou la subfinestra flotant cap amunt"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move Floating Pane Up"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45555,6 +46851,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nova subfinestra flotant amb el perfil actual"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Floating Pane with Current Profile"
           }
         },
         "en-GB" : {
@@ -45767,6 +47069,12 @@
             "value" : "Subfinestres flotants"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Floating Panes"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45975,6 +47283,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Subfinestres flotants"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Floating Panes"
           }
         },
         "en-GB" : {
@@ -46187,6 +47501,12 @@
             "value" : "Envia al fons"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send to Back"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46238,6 +47558,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Show Tip of the Day"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Show Tip of the Day"
           }
         },
@@ -46451,6 +47777,12 @@
             "value" : "Next Annotation"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next Annotation"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46658,6 +47990,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Cockpit"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Cockpit"
           }
         },
@@ -46871,6 +48209,12 @@
             "value" : "Move Session to Tab"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move Session to Tab"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47078,6 +48422,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Bottom of Screen"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Bottom of Screen"
           }
         },
@@ -47291,6 +48641,12 @@
             "value" : "Prompt to Convert Tabs to Spaces when Pasting"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prompt to Convert Tabs to Spaces when Pasting"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47498,6 +48854,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Alerts"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Alerts"
           }
         },
@@ -47711,6 +49073,12 @@
             "value" : "Copy with Control Sequences"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy with Control Sequences"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47918,6 +49286,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Resize Window"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Resize Window"
           }
         },
@@ -48131,6 +49505,12 @@
             "value" : "Reset"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48338,6 +49718,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Duplicate Tab"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Duplicate Tab"
           }
         },
@@ -48551,6 +49937,12 @@
             "value" : "Reload Page"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reload Page"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48758,6 +50150,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Move Session to Window"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Move Session to Window"
           }
         },
@@ -48971,6 +50369,12 @@
             "value" : "Report All Keys as Escape Codes"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Report All Keys as Escape Codes"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49178,6 +50582,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Raw Key Reporting Mode"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Raw Key Reporting Mode"
           }
         },
@@ -49391,6 +50801,12 @@
             "value" : "Import…"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import…"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49598,6 +51014,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Warn Before Multi-Line Paste"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Warn Before Multi-Line Paste"
           }
         },
@@ -49811,6 +51233,12 @@
             "value" : "Show Inline Chat"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Inline Chat"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50021,6 +51449,12 @@
             "value" : "Toggle Buffer Input"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toggle Buffer Input"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50228,6 +51662,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Remote host can control iTerm2"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Remote host can control iTerm2"
           }
         },
@@ -50597,6 +52037,12 @@
             "value" : "Comprova el truncament dels controls de configuració"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check Settings Control Truncation"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50648,6 +52094,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Triggers"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Triggers"
           }
         },
@@ -50861,6 +52313,12 @@
             "value" : "Selection Respects Soft Boundaries"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selection Respects Soft Boundaries"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51068,6 +52526,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Exit Workgroup"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Exit Workgroup"
           }
         },
@@ -51281,6 +52745,12 @@
             "value" : "Select Output of Last Command"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select Output of Last Command"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51488,6 +52958,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Restart Session"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Restart Session"
           }
         },
@@ -51701,6 +53177,12 @@
             "value" : "Open Python REPL"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Python REPL"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51908,6 +53390,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Top of Screen"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Top of Screen"
           }
         },
@@ -52121,6 +53609,12 @@
             "value" : "Merge All Windows"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Merge All Windows"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -52328,6 +53822,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Pin Hotkey Window"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Pin Hotkey Window"
           }
         },
@@ -52541,6 +54041,12 @@
             "value" : "modifyOtherKeys Mode 2"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys Mode 2"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -52748,6 +54254,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Open Quickly"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Open Quickly"
           }
         },
@@ -52961,6 +54473,12 @@
             "value" : "Manage"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manage"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53168,6 +54686,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Disambiguate Escape"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Disambiguate Escape"
           }
         },
@@ -53381,6 +54905,12 @@
             "value" : "Pick Result to Open"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick Result to Open"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53588,6 +55118,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Limit Multi-Line Paste Warning to Shell Prompt"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Limit Multi-Line Paste Warning to Shell Prompt"
           }
         },
@@ -53801,6 +55337,12 @@
             "value" : "Enable Triggers in Interactive Apps"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enable Triggers in Interactive Apps"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54008,6 +55550,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Item 2"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Item 2"
           }
         },
@@ -54221,6 +55769,12 @@
             "value" : "Mouse Reporting"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mouse Reporting"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54428,6 +55982,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Marks and Annotations"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Marks and Annotations"
           }
         },
@@ -54641,6 +56201,12 @@
             "value" : "Lock Layout"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lock Layout"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54848,6 +56414,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Lock Location"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Lock Location"
           }
         },
@@ -55061,6 +56633,12 @@
             "value" : "New Window with Current Profile"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Window with Current Profile"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55268,6 +56846,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Bury Session"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Bury Session"
           }
         },
@@ -55481,6 +57065,12 @@
             "value" : "Show Modal Alert Box"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Modal Alert Box"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55688,6 +57278,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Enable All"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Enable All"
           }
         },
@@ -55901,6 +57497,12 @@
             "value" : "Next Mark"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next Mark"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -56108,6 +57710,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Arrange Windows"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Arrange Windows"
           }
         },
@@ -56321,6 +57929,12 @@
             "value" : "Find All Smart Selection Matches"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find All Smart Selection Matches"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -56528,6 +58142,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Play a Sound"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Play a Sound"
           }
         },
@@ -56741,6 +58361,12 @@
             "value" : "Open Command History…"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Command History…"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -56948,6 +58574,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Copy with Styles"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Copy with Styles"
           }
         },
@@ -57161,6 +58793,12 @@
             "value" : "Alternate Screen"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alternate Screen"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -57368,6 +59006,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Full-Height Right of Screen"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Full-Height Right of Screen"
           }
         },
@@ -57581,6 +59225,12 @@
             "value" : "ssh"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -57788,6 +59438,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Standard Key Reporting Mode"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Standard Key Reporting Mode"
           }
         },
@@ -58001,6 +59657,12 @@
             "value" : "Resize Split Pane"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resize Split Pane"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -58208,6 +59870,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Alerts"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Alerts"
           }
         },
@@ -58421,6 +60089,12 @@
             "value" : "Notify on Status Change"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notify on Status Change"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -58628,6 +60302,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Select Next Tab Group"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Select Next Tab Group"
           }
         },
@@ -58841,6 +60521,12 @@
             "value" : "Uninstall Claude Code Integration"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uninstall Claude Code Integration"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -59048,6 +60734,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Edit Tab Title"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Edit Tab Title"
           }
         },
@@ -59261,6 +60953,12 @@
             "value" : "Arrangements"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrangements"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -59468,6 +61166,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Previous Peer"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Previous Peer"
           }
         },
@@ -59681,6 +61385,12 @@
             "value" : "Report Alternate Keys"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Report Alternate Keys"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -59888,6 +61598,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Split Pane"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Split Pane"
           }
         },
@@ -60101,6 +61817,12 @@
             "value" : "Terminal State"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminal State"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -60308,6 +62030,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Undo Close"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Undo Close"
           }
         },
@@ -60521,6 +62249,12 @@
             "value" : "AI Chats"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI Chats"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -60728,6 +62462,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Forward"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Forward"
           }
         },
@@ -60941,6 +62681,12 @@
             "value" : "Lock Split Pane Width"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lock Split Pane Width"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -61148,6 +62894,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Workgroups"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Workgroups"
           }
         },
@@ -61361,6 +63113,12 @@
             "value" : "Save Archive of Current Session…"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save Archive of Current Session…"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -61568,6 +63326,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Replace Selection"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Replace Selection"
           }
         },
@@ -61781,6 +63545,12 @@
             "value" : "VT300"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT300"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -61988,6 +63758,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Show Annotations"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Show Annotations"
           }
         },
@@ -62201,6 +63977,12 @@
             "value" : "ssh"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -62408,6 +64190,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Manage"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Manage"
           }
         },
@@ -62621,6 +64409,12 @@
             "value" : "Item 3"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 3"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -62828,6 +64622,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Select Previous Tab Group"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Select Previous Tab Group"
           }
         },
@@ -63041,6 +64841,12 @@
             "value" : "Buried Sessions"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buried Sessions"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63251,6 +65057,12 @@
             "value" : "Previous Annotation"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous Annotation"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63458,6 +65270,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Alert on Marks in Offscreen Sessions"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Alert on Marks in Offscreen Sessions"
           }
         },
@@ -63827,6 +65645,12 @@
             "value" : "Centrada, sense barra de títol"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centred, No Title Bar"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63878,6 +65702,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Install Claude Code Integration"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Install Claude Code Integration"
           }
         },
@@ -64091,6 +65921,12 @@
             "value" : "Post Notification"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Post Notification"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -64298,6 +66134,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Current Session is Broadcast Source"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Current Session is Broadcast Source"
           }
         },
@@ -64511,6 +66353,12 @@
             "value" : "Alert on Next Mark"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alert on Next Mark"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -64718,6 +66566,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Increase Width"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Increase Width"
           }
         },
@@ -64931,6 +66785,12 @@
             "value" : "CSI u Mode"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CSI u Mode"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65138,6 +66998,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Move Divider Down"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Move Divider Down"
           }
         },
@@ -65351,6 +67217,12 @@
             "value" : "Resize Split Pane"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resize Split Pane"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65558,6 +67430,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Reinstall Claude Code Integration"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Reinstall Claude Code Integration"
           }
         },
@@ -65771,6 +67649,12 @@
             "value" : "Install Shell Integration"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Install Shell Integration"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65978,6 +67862,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Filter"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Filter"
           }
         },
@@ -66191,6 +68081,12 @@
             "value" : "Edit Triggers"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Triggers"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -66398,6 +68294,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Pause Pane"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Pause Pane"
           }
         },
@@ -66611,6 +68513,12 @@
             "value" : "Save Retrospective Debug Logs"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save Retrospective Debug Logs"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -66818,6 +68726,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Snippets"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Snippets"
           }
         },
@@ -67031,6 +68945,12 @@
             "value" : "Select Current Command"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select Current Command"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -67238,6 +69158,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Make Screenshot…"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Make Screenshot…"
           }
         },
@@ -67451,6 +69377,12 @@
             "value" : "Render Selection Natively"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Render Selection Natively"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -67658,6 +69590,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Show Session Note"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Show Session Note"
           }
         },
@@ -67871,6 +69809,12 @@
             "value" : "Snippets"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Snippets"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -68078,6 +70022,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Edit Window Title"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Edit Window Title"
           }
         },
@@ -68291,6 +70241,12 @@
             "value" : "Suppressed Alerts…"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suppressed Alerts…"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -68498,6 +70454,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Previous Mark"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Previous Mark"
           }
         },
@@ -68711,6 +70673,12 @@
             "value" : "Install Already-Downloaded Python Runtime"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Install Already-Downloaded Python Runtime"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -68918,6 +70886,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Move Divider Right"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Move Divider Right"
           }
         },
@@ -69131,6 +71105,12 @@
             "value" : "Tab"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -69338,6 +71318,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Download Files…"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Download Files…"
           }
         },
@@ -69551,6 +71537,12 @@
             "value" : "Move Tab Left"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move Tab Left"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -69758,6 +71750,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Add Tab to New Group…"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Add Tab to New Group…"
           }
         },
@@ -69971,6 +71969,12 @@
             "value" : "Show Toolbar"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Toolbar"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -70178,6 +72182,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Remove Tab from Group"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Remove Tab from Group"
           }
         },
@@ -70391,6 +72401,12 @@
             "value" : "Auto Composer"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto Composer"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -70598,6 +72614,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Open AI Chat…"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Open AI Chat…"
           }
         },
@@ -70811,6 +72833,12 @@
             "value" : "Show Timestamps"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Timestamps"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -71018,6 +73046,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Advanced Paste…"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Advanced Paste…"
           }
         },
@@ -71231,6 +73265,12 @@
             "value" : "Arrange Windows"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrange Windows"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -71438,6 +73478,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Emulation Level"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Emulation Level"
           }
         },
@@ -71651,6 +73697,12 @@
             "value" : "Select Matches"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select Matches"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -71858,6 +73910,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Open Selection"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Open Selection"
           }
         },
@@ -72071,6 +74129,12 @@
             "value" : "History"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "History"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -72278,6 +74342,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Restore Archive…"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Restore Archive…"
           }
         },
@@ -72491,6 +74561,12 @@
             "value" : "Window Style"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Window Style"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -72698,6 +74774,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Full-Width Bottom of Screen"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Full-Width Bottom of Screen"
           }
         },
@@ -72911,6 +74993,12 @@
             "value" : "Literal Controls"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Literal Controls"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -73118,6 +75206,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Clear Find"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Clear Find"
           }
         },
@@ -73331,6 +75425,12 @@
             "value" : "Explain Output with AI"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Explain Output with AI"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -73538,6 +75638,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Emulation Level"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Emulation Level"
           }
         },
@@ -73751,6 +75857,12 @@
             "value" : "Find URLs"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find URLs"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -73958,6 +76070,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Replace with Pretty-Printed JSON"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Replace with Pretty-Printed JSON"
           }
         },
@@ -74171,6 +76289,12 @@
             "value" : "Actions"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actions"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -74378,6 +76502,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Size Changes Update Profile"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Size Changes Update Profile"
           }
         },
@@ -74591,6 +76721,12 @@
             "value" : "Remove Recent Profiles from Dock Menu"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove Recent Profiles from Dock Menu"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -74798,6 +76934,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Buried Sessions"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Buried Sessions"
           }
         },
@@ -75011,6 +77153,12 @@
             "value" : "Manage Dependencies…"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manage Dependencies…"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -75218,6 +77366,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Back"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Back"
           }
         },
@@ -75431,6 +77585,12 @@
             "value" : "Workgroups"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workgroups"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -75638,6 +77798,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Load Arrangement from File…"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Load Arrangement from File…"
           }
         },
@@ -75851,6 +78017,12 @@
             "value" : "Copy Mode Shortcuts"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy Mode Shortcuts"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -76058,6 +78230,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Split Pane"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Split Pane"
           }
         },
@@ -76271,6 +78449,12 @@
             "value" : "Resize Window"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resize Window"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -76478,6 +78662,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Report All Event Types"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Report All Event Types"
           }
         },
@@ -76691,6 +78881,12 @@
             "value" : "Add Trigger…"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add Trigger…"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -76898,6 +79094,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Web"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Web"
           }
         },
@@ -77111,6 +79313,12 @@
             "value" : "modifyOtherKeys Mode 1"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys Mode 1"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -77318,6 +79526,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Decrease Width"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Decrease Width"
           }
         },
@@ -77531,6 +79745,12 @@
             "value" : "Right of Screen"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Right of Screen"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -77738,6 +79958,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Paste File Base64-Encoded"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Paste File Base64-Encoded"
           }
         },
@@ -77951,6 +80177,12 @@
             "value" : "Clear to Last Mark"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear to Last Mark"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -78158,6 +80390,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Arrange Split Panes Evenly"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Arrange Split Panes Evenly"
           }
         },
@@ -78371,6 +80609,12 @@
             "value" : "Import Recording"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import Recording"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -78578,6 +80822,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Application Keypad"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Application Keypad"
           }
         },
@@ -78791,6 +81041,12 @@
             "value" : "Full-Width Top of Screen"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full-Width Top of Screen"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -78998,6 +81254,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "VT100"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "VT100"
           }
         },
@@ -79211,6 +81473,12 @@
             "value" : "VT200"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT200"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -79418,6 +81686,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Disconnect"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Disconnect"
           }
         },
@@ -79631,6 +81905,12 @@
             "value" : "Warn Before Pasting One Line Ending in a Newline at Shell Prompt"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warn Before Pasting One Line Ending in a Newline at Shell Prompt"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -79838,6 +82118,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Find Globally…"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Find Globally…"
           }
         },
@@ -80051,6 +82337,12 @@
             "value" : "Maximized"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximised"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -80258,6 +82550,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Console"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Console"
           }
         },
@@ -80471,6 +82769,12 @@
             "value" : "New Tab Next to Current Tab"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Tab Next to Current Tab"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -80678,6 +82982,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Restore Window Arrangement as Tabs"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Restore Window Arrangement as Tabs"
           }
         },
@@ -80891,6 +83201,12 @@
             "value" : "Replace with Base 64-Encoded Value"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replace with Base 64-Encoded Value"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -81098,6 +83414,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Engage Artificial Intelligence"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Engage Artificial Intelligence"
           }
         },
@@ -81311,6 +83633,12 @@
             "value" : "Session"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Session"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -81521,6 +83849,12 @@
             "value" : "Named Marks"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Named Marks"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -81728,6 +84062,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Next Peer"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Next Peer"
           }
         },

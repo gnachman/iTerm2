@@ -41,6 +41,12 @@
             "value" : "Settings"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -248,6 +254,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Settings"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Settings"
           }
         },
@@ -461,6 +473,12 @@
             "value" : "Group"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Group"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -668,6 +686,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Group"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Group"
           }
         },
@@ -881,6 +905,12 @@
             "value" : "Notify"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notify"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1088,6 +1118,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Notify"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Notify"
           }
         },
@@ -1301,6 +1337,12 @@
             "value" : "Cockpit"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cockpit"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1511,6 +1553,12 @@
             "value" : "Search"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1718,6 +1766,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Search"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Search"
           }
         },

@@ -41,6 +41,12 @@
             "value": "Pasting…"
           }
         },
+        "en-AU": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pasting…"
+          }
+        },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
@@ -248,6 +254,12 @@
         "en": {
           "stringUnit": {
             "state": "new",
+            "value": "Cancel"
+          }
+        },
+        "en-AU": {
+          "stringUnit": {
+            "state": "translated",
             "value": "Cancel"
           }
         },

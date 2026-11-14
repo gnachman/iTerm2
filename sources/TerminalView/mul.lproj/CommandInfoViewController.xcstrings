@@ -41,6 +41,12 @@
             "value" : "/directory"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -248,6 +254,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Copy directory"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Copy directory"
           }
         },
@@ -461,6 +473,12 @@
             "value" : "12 bytes"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 bytes"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -668,6 +686,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Select command’s output"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Select command’s output"
           }
         },
@@ -881,6 +905,12 @@
             "value" : "1h 35m"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1h 35m"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1088,6 +1118,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Output:"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Output:"
           }
         },
@@ -1301,6 +1337,12 @@
             "value" : "Copied"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copied"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1508,6 +1550,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Copy command to clipboard"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Copy command to clipboard"
           }
         },
@@ -1721,6 +1769,12 @@
             "value" : "Started at %@"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Started at %@"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1928,6 +1982,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Open command in Composer"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Open command in Composer"
           }
         },
@@ -2141,6 +2201,12 @@
             "value" : "Draggable Folder"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Draggable Folder"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2348,6 +2414,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "command"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "command"
           }
         },
@@ -2561,6 +2633,12 @@
             "value" : "Write command to terminal"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Write command to terminal"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2768,6 +2846,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Directory:"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Directory:"
           }
         },
@@ -2981,6 +3065,12 @@
             "value" : "Return Code:"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Return Code:"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3188,6 +3278,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Write directory to terminal"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Write directory to terminal"
           }
         },
@@ -3401,6 +3497,12 @@
             "value" : "Running Time:"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Running Time:"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3608,6 +3710,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Copy command’s output"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Copy command’s output"
           }
         },
@@ -3821,6 +3929,12 @@
             "value" : "Share command…"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share command…"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4028,6 +4142,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Command:"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Command:"
           }
         },
@@ -4241,6 +4361,12 @@
             "value" : "127"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4448,6 +4574,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Disable showing offscreen command"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Disable showing offscreen command"
           }
         },

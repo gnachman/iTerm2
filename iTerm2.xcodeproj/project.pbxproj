@@ -17324,6 +17324,7 @@
 				ca,
 				"yue-Hans",
 				"en-GB",
+				"en-AU",
 				en,
 				Base,
 			);

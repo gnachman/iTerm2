@@ -41,6 +41,12 @@
             "value" : "Downloads the latest version. Runs curl | bash"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Downloads the latest version. Runs curl | bash"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -248,6 +254,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Continue"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Continue"
           }
         },
@@ -461,6 +473,12 @@
             "value" : "OK"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -668,6 +686,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Cancel"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Cancel"
           }
         },
@@ -881,6 +905,12 @@
             "value" : "1. Discover which shell you use.\n2. Add script files under your home directory.\n3. Install utility scripts.\n4. Modify your shell’s startup scripts."
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. Discover which shell you use.\n2. Add script files under your home directory.\n3. Install utility scripts.\n4. Modify your shell’s startup scripts."
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1088,6 +1118,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Go Back"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Go Back"
           }
         },
@@ -1301,6 +1337,12 @@
             "value" : "Utilities include scripts to download files, display images inline, and more. "
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilities include scripts to download files, display images inline, and more. "
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1508,6 +1550,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Go Back"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Go Back"
           }
         },
@@ -1721,6 +1769,12 @@
             "value" : "Continue"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1928,6 +1982,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Cancel"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Cancel"
           }
         },
@@ -2141,6 +2201,12 @@
             "value" : "Skip"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2348,6 +2414,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Cancel"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Cancel"
           }
         },
@@ -2561,6 +2633,12 @@
             "value" : "Preview Command"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preview Command"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2768,6 +2846,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Internet-Free Install"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Internet-Free Install"
           }
         },
@@ -2981,6 +3065,12 @@
             "value" : "Download and Run Installer"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download and Run Installer"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3188,6 +3278,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Also install iTerm2 Utilities"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Also install iTerm2 Utilities"
           }
         },
@@ -3401,6 +3497,12 @@
             "value" : "Guided manual installation. No download required."
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guided manual installation. No download required."
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3608,6 +3710,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Preview Command"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Preview Command"
           }
         },
@@ -3821,6 +3929,12 @@
             "value" : "Continue"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4028,6 +4142,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "🎉"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "🎉"
           }
         },
@@ -4241,6 +4361,12 @@
             "value" : "Preview Command"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preview Command"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4448,6 +4574,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Go Back"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Go Back"
           }
         },
@@ -4661,6 +4793,12 @@
             "value" : "How would you like to install Shell Integration?\n\nIn this process, your shell’s startup scripts will be modified. This installer will enter commands in the terminal window for you."
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How would you like to install Shell Integration?\n\nIn this process, your shell’s startup scripts will be modified. This installer will enter commands in the terminal window for you."
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4868,6 +5006,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Preview Command"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Preview Command"
           }
         },
@@ -5081,6 +5225,12 @@
             "value" : "Installation complete!"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installation complete!"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5288,6 +5438,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "This will run the following command:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "This will run the following command:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
@@ -5501,6 +5657,12 @@
             "value" : "Create a new tab to try it out.\n\nFor best results, install shell integration on all hosts you ssh in to."
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create a new tab to try it out.\n\nFor best results, install shell integration on all hosts you ssh in to."
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5708,6 +5870,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Shell Integration consists of scripts that help your shell communicate with iTerm2 so it can track the commands you’re running, your current directory, and other state. "
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Shell Integration consists of scripts that help your shell communicate with iTerm2 so it can track the commands you’re running, your current directory, and other state. "
           }
         },
@@ -5921,6 +6089,12 @@
             "value" : "Install Shell Integration"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Install Shell Integration"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6128,6 +6302,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Cancel"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Cancel"
           }
         },

@@ -41,6 +41,12 @@
             "value" : "Move by Mark"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move by Mark"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -248,6 +254,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Set Keyboard Shortcut"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Set Keyboard Shortcut"
           }
         },
@@ -461,6 +473,12 @@
             "value" : "Cancel"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -671,6 +689,12 @@
             "value" : "Color Preset:"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colour Preset:"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -878,6 +902,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Action:"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Action:"
           }
         },
@@ -1091,6 +1121,12 @@
             "value" : "Label to show in Touch Bar"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Label to show in Touch Bar"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1298,6 +1334,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Move by Character"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Move by Character"
           }
         },
@@ -1511,6 +1553,12 @@
             "value" : "ex: 0x7f"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ex: 0x7f"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1718,6 +1766,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Profile:"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Profile:"
           }
         },
@@ -1931,6 +1985,12 @@
             "value" : "Move by Word"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move by Word"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2138,6 +2198,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Error message goes here"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Error message goes here"
           }
         },
@@ -2351,6 +2417,12 @@
             "value" : "Action:"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Action:"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2558,6 +2630,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Esc+"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Esc+"
           }
         },
@@ -2771,6 +2849,12 @@
             "value" : "Keyboard Shortcut:"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keyboard Shortcut:"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2981,6 +3065,12 @@
             "value" : "Move by Line"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move by Line"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3188,6 +3278,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "OK"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "OK"
           }
         },

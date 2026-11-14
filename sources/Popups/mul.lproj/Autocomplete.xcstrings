@@ -41,6 +41,12 @@
             "value" : "Autocomplete"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autocomplete"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",

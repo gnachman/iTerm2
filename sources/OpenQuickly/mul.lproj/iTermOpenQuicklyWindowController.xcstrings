@@ -41,6 +41,12 @@
             "value" : "Open Quickly"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Quickly"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -251,6 +257,12 @@
             "value" : "Detail"
           }
         },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detail"
+          }
+        },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
@@ -458,6 +470,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Search for sessions, profiles, or arrangements"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Search for sessions, profiles, or arrangements"
           }
         },
