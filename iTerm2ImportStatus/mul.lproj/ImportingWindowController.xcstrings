@@ -233,6 +233,12 @@
             "value" : "État"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estado"
+          }
+        },
         "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -479,6 +485,12 @@
             "value" : "Importation…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A importar…"
+          }
+        },
         "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -723,6 +735,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Importation des réglages et des données…"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A importar definições e dados…"
           }
         },
         "yue-Hans" : {

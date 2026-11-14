@@ -167,6 +167,12 @@
             "value" : "mm:ss"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mm:ss"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -408,6 +414,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx linhas, xxx bytes."
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx linhas, xxx bytes."
@@ -659,6 +671,12 @@
             "value" : "Colar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -905,6 +923,12 @@
             "value" : "Cancelar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1146,6 +1170,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duração mínima:"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Duração mínima:"

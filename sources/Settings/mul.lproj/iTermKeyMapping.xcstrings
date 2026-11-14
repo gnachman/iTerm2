@@ -167,6 +167,12 @@
             "value" : "Predefinições…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Predefinições…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -408,6 +414,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar item da Touch Bar"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Adicionar item da Touch Bar"
@@ -659,6 +671,12 @@
             "value" : "Ação"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ação"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -900,6 +918,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mitigações da Touch Bar"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mitigações da Touch Bar"
@@ -1151,6 +1175,12 @@
             "value" : "Indicador visual da tecla esc"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indicador visual da tecla esc"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1392,6 +1422,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Combinação de teclas"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Combinação de teclas"
@@ -1643,6 +1679,12 @@
             "value" : "Feedback tátil ao pressionar esc"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resposta tátil ao premir esc"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1889,6 +1931,12 @@
             "value" : "OK"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2130,6 +2178,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Som de clique para a tecla esc"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Som de clique para a tecla esc"

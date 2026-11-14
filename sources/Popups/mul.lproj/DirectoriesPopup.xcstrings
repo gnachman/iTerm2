@@ -167,6 +167,12 @@
             "value" : "Diretório"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diretório"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -408,6 +414,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Último uso"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Último uso"

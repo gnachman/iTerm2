@@ -167,6 +167,12 @@
             "value" : "Item 2"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 2"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -413,6 +419,12 @@
             "value" : "Este script precisa ser atualizado para um “ambiente completo” para adicionar dependências. Isso cria uma cópia do runtime do Python, mas não usará espaço em disco adicional."
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este script tem de ser atualizado para um “ambiente completo” para adicionar dependências. Isto cria uma cópia do runtime do Python, mas não utilizará espaço adicional em disco."
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -654,6 +666,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versão do Python:"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Versão do Python:"
@@ -905,6 +923,12 @@
             "value" : "Remover"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1146,6 +1170,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 3"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 3"
@@ -1397,6 +1427,12 @@
             "value" : "Atualizar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1638,6 +1674,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Script:"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Script:"
@@ -1889,6 +1931,12 @@
             "value" : "Editor de dependências de scripts"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editor de dependências de scripts"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2130,6 +2178,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 1"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 1"
@@ -2381,6 +2435,12 @@
             "value" : "Nome do pacote"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nome do pacote"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2622,6 +2682,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 2"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 2"
@@ -2873,6 +2939,12 @@
             "value" : "Item 3"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 3"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3114,6 +3186,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verificar atualização"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verificar atualização"
@@ -3365,6 +3443,12 @@
             "value" : "Versão instalada"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versão instalada"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3606,6 +3690,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 1"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 1"
@@ -3857,6 +3947,12 @@
             "value" : "OK"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4098,6 +4194,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Adicionar"

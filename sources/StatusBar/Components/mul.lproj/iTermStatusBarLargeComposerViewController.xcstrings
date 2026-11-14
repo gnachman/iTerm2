@@ -167,6 +167,12 @@
             "value" : "Preenchimento por IA ativado: todo o texto é enviado à IA"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preenchimento por IA ativado: todo o texto é enviado à IA"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -408,6 +414,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descreve como usar o Compositor."
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Descreve como usar o Compositor."
@@ -659,6 +671,12 @@
             "value" : "Pressione ⇧↩ para enviar."
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prima ⇧↩ para enviar."
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -900,6 +918,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IA"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "IA"

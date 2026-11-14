@@ -167,6 +167,12 @@
             "value" : "CÉLULA DE CABEÇALHO"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CÉLULA DE CABEÇALHO"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -413,6 +419,12 @@
             "value" : "Buscar globalmente"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procurar globalmente"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -654,6 +666,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substring - distinção de maiúsculas"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Substring - distinção de maiúsculas"
@@ -905,6 +923,12 @@
             "value" : "Substring - automático"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substring - automático"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1146,6 +1170,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex - sem distinção de maiúsculas"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Regex - sem distinção de maiúsculas"
@@ -1397,6 +1427,12 @@
             "value" : "Buscar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procurar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1643,6 +1679,12 @@
             "value" : "Regex - distinção de maiúsculas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex - distinção de maiúsculas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1884,6 +1926,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substring - sem distinção de maiúsculas"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Substring - sem distinção de maiúsculas"

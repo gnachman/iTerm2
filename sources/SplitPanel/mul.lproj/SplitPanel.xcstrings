@@ -167,6 +167,12 @@
             "value" : "Dividir o painel atual XXXalmente"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dividir o painel atual XXXalmente"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -413,6 +419,12 @@
             "value" : "Cancelar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -654,6 +666,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dividir"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dividir"

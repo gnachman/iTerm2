@@ -167,6 +167,12 @@
             "value" : "Aguarde! Instalando um novo ambiente Python…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aguarde! A instalar um novo ambiente Python…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",

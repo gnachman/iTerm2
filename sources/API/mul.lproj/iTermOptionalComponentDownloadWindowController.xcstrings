@@ -167,6 +167,12 @@
             "value": "Instalador do runtime do Python"
           }
         },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instalador do runtime do Python"
+          }
+        },
         "ro": {
           "stringUnit": {
             "state": "translated",
@@ -408,6 +414,12 @@
           }
         },
         "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelar"
+          }
+        },
+        "pt-PT": {
           "stringUnit": {
             "state": "translated",
             "value": "Cancelar"
@@ -657,6 +669,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Transferindo componentes opcionais…"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A transferir componentes opcionais…"
           }
         },
         "ro": {

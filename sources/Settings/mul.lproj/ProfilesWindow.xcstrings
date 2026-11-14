@@ -167,6 +167,12 @@
             "value" : "Perfis"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perfis"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -408,6 +414,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar perfis…"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Editar perfis…"
@@ -659,6 +671,12 @@
             "value" : "Nova aba"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novo separador"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -900,6 +918,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nova janela"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nova janela"
@@ -1151,6 +1175,12 @@
             "value" : "Fechar esta janela após abrir um perfil."
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fechar esta janela após abrir um perfil."
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1395,6 +1425,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Novas abas em nova janela"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Separadores numa nova janela"
           }
         },
         "ro" : {
@@ -1727,6 +1763,12 @@
             "value" : "Tags >"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tags >"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2037,6 +2079,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nouveau volet flottant"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novo painel flutuante"
           }
         },
         "yue-Hans" : {

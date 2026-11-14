@@ -167,6 +167,12 @@
             "value" : "Usar strings interpoladas para os parâmetros"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar strings interpoladas para os parâmetros"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -408,6 +414,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar para o perfil"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar para o perfil"
@@ -659,6 +671,12 @@
             "value" : "Fechar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fechar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -900,6 +918,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gatilhos"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gatilhos"
@@ -1151,6 +1175,12 @@
             "value" : "Expressão regular"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expressão regular"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1395,6 +1425,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Selecione um trigger para ver ou editar"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecione um gatilho para ver ou editar"
           }
         },
         "ro" : {

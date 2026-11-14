@@ -167,6 +167,12 @@
             "value": "Incluir marcas de tempo"
           }
         },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incluir carimbos de data/hora"
+          }
+        },
         "ro": {
           "stringUnit": {
             "state": "translated",
@@ -411,6 +417,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Formato do arquivo:"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formato do ficheiro:"
           }
         },
         "ro": {

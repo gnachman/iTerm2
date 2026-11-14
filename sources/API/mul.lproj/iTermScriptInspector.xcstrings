@@ -167,6 +167,12 @@
             "value" : "Caminho"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caminho"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -408,6 +414,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar"
@@ -659,6 +671,12 @@
             "value" : "Assinatura"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Assinatura"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -900,6 +918,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inspetor de scripts"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Inspetor de scripts"
@@ -1151,6 +1175,12 @@
             "value" : "Sessões, abas e janelas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessões, separadores e janelas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1392,6 +1422,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variáveis"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Variáveis"
@@ -1643,6 +1679,12 @@
             "value" : "Função"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Função"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1884,6 +1926,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar caminho"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar caminho"
@@ -2135,6 +2183,12 @@
             "value" : "Funções registradas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funções registadas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2376,6 +2430,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valor"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Valor"
@@ -2627,6 +2687,12 @@
             "value" : "Copiar ID"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar ID"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2868,6 +2934,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nome do objeto (ID)"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nome do objeto (ID)"
@@ -3119,6 +3191,12 @@
             "value" : "⨁"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⨁"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3365,6 +3443,12 @@
             "value" : "Script"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Script"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3606,6 +3690,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar valor"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar valor"

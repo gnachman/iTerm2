@@ -167,6 +167,12 @@
             "value": "Substring com caixa inteligente"
           }
         },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Substring com caixa inteligente"
+          }
+        },
         "ro": {
           "stringUnit": {
             "state": "translated",
@@ -413,6 +419,12 @@
             "value": "Apagar histórico de busca"
           }
         },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apagar histórico de pesquisa"
+          }
+        },
         "ro": {
           "stringUnit": {
             "state": "translated",
@@ -654,6 +666,12 @@
           }
         },
         "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Substring sem diferenciação de maiúsculas"
+          }
+        },
+        "pt-PT": {
           "stringUnit": {
             "state": "translated",
             "value": "Substring sem diferenciação de maiúsculas"
@@ -905,6 +923,12 @@
             "value": "Regex sem diferenciação de maiúsculas"
           }
         },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regex sem diferenciação de maiúsculas"
+          }
+        },
         "ro": {
           "stringUnit": {
             "state": "translated",
@@ -1151,6 +1175,12 @@
             "value": "Substring com diferenciação de maiúsculas"
           }
         },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Substring com diferenciação de maiúsculas"
+          }
+        },
         "ro": {
           "stringUnit": {
             "state": "translated",
@@ -1392,6 +1422,12 @@
           }
         },
         "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regex com diferenciação de maiúsculas"
+          }
+        },
+        "pt-PT": {
           "stringUnit": {
             "state": "translated",
             "value": "Regex com diferenciação de maiúsculas"

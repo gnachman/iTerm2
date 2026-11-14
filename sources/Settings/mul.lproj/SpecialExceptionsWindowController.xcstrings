@@ -167,6 +167,12 @@
             "value" : "Instalar pacote Nerd Font…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalar pacote Nerd Font…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -408,6 +414,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar exceção especial"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Editar exceção especial"
@@ -659,6 +671,12 @@
             "value" : "U+xxx"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -905,6 +923,12 @@
             "value" : "As exceções especiais substituem fontes para intervalos ou sistemas de escrita Unicode específicos."
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As exceções especiais substituem os tipos de letra para intervalos ou sistemas de escrita Unicode específicos."
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1146,6 +1170,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -1397,6 +1427,12 @@
             "value" : "OK"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1641,6 +1677,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Da fonte:"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Do tipo de letra:"
           }
         },
         "ro" : {
@@ -1889,6 +1931,12 @@
             "value" : "Para caracteres começando em"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para carateres a partir de"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2130,6 +2178,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar predefinição…"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Adicionar predefinição…"
@@ -2381,6 +2435,12 @@
             "value" : "Cancelar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2622,6 +2682,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "até"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "até"
@@ -2873,6 +2939,12 @@
             "value" : "Gerenciar exceções especiais"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gerir exceções especiais"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3114,6 +3186,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -3365,6 +3443,12 @@
             "value" : "Usar pontos de código"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar pontos de código"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3611,6 +3695,12 @@
             "value" : "Cancelar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3852,6 +3942,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"

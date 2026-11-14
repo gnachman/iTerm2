@@ -167,6 +167,12 @@
             "value": "Exportar…"
           }
         },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar…"
+          }
+        },
         "ro": {
           "stringUnit": {
             "state": "translated",
@@ -408,6 +414,12 @@
           }
         },
         "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agora"
+          }
+        },
+        "pt-PT": {
           "stringUnit": {
             "state": "translated",
             "value": "Agora"
@@ -659,6 +671,12 @@
             "value": "Controle do Instant Replay"
           }
         },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Controlo do Instant Replay"
+          }
+        },
         "ro": {
           "stringUnit": {
             "state": "translated",
@@ -900,6 +918,12 @@
           }
         },
         "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelar"
+          }
+        },
+        "pt-PT": {
           "stringUnit": {
             "state": "translated",
             "value": "Cancelar"
@@ -1151,6 +1175,12 @@
             "value": "Visualização ao vivo"
           }
         },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visualização em direto"
+          }
+        },
         "ro": {
           "stringUnit": {
             "state": "translated",
@@ -1392,6 +1422,12 @@
           }
         },
         "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hora"
+          }
+        },
+        "pt-PT": {
           "stringUnit": {
             "state": "translated",
             "value": "Hora"

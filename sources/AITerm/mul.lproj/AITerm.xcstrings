@@ -167,6 +167,12 @@
             "value" : "Configurar inteligência artificial"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurar inteligência artificial"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -411,6 +417,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seu provedor de IA pode cobrar por cada token enviado ou recebido."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O seu fornecedor de IA pode cobrar por cada token enviado ou recebido."
           }
         },
         "ro" : {
@@ -659,6 +671,12 @@
             "value" : "Digite a chave de API aqui"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Introduza a chave de API aqui"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -905,6 +923,12 @@
             "value" : "Cancelar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1146,6 +1170,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"

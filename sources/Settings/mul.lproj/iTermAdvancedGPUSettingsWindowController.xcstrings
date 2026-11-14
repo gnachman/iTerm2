@@ -167,6 +167,12 @@
             "value" : "OK"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -411,6 +417,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desativar renderizador de GPU no modo de baixo consumo"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativar o renderizador de GPU no modo de baixo consumo"
           }
         },
         "ro" : {
@@ -659,6 +671,12 @@
             "value" : "Preferir GPU integrada à dedicada"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preferir a GPU integrada à dedicada"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -905,6 +923,12 @@
             "value" : "Desativar renderizador de GPU quando desconectado da energia"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativar o renderizador de GPU quando desligado da corrente"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1146,6 +1170,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancelar"

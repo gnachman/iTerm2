@@ -167,6 +167,12 @@
             "value" : "Painel do tmux"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Painel do tmux"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -408,6 +414,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessão"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sessão"
@@ -659,6 +671,12 @@
             "value" : "Anexar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ligar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -905,6 +923,12 @@
             "value" : "Buscar janelas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pesquisar janelas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1146,6 +1170,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Janela"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Janela"
@@ -1397,6 +1427,12 @@
             "value" : "Abrir em janelas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir em janelas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1638,6 +1674,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ocultar"
@@ -1889,6 +1931,12 @@
             "value" : "Abrir em janelas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir em janelas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2133,6 +2181,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir em abas"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir em separadores"
           }
         },
         "ro" : {
@@ -2381,6 +2435,12 @@
             "value" : "Desanexar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desligar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2627,6 +2687,12 @@
             "value" : "Abrir painel ao anexar se houver janelas ocultas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir o painel ao ligar se existirem janelas ocultas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2871,6 +2937,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Não abrir janelas ao anexar se houver pelo menos esta quantidade de janelas:"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não abrir janelas ao ligar se existir pelo menos este número de janelas:"
           }
         },
         "ro" : {

@@ -167,6 +167,12 @@
             "value" : "Autocompletar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autocompletar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",

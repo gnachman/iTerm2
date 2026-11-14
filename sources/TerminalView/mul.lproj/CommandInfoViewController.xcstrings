@@ -167,6 +167,12 @@
             "value" : "/directory"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -408,6 +414,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar diretório"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar diretório"
@@ -659,6 +671,12 @@
             "value" : "12 bytes"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 bytes"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -900,6 +918,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecionar a saída do comando"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Selecionar a saída do comando"
@@ -1151,6 +1175,12 @@
             "value" : "1h 35m"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1h 35m"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1392,6 +1422,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saída:"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Saída:"
@@ -1643,6 +1679,12 @@
             "value" : "Copiado"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiado"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1887,6 +1929,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar comando para a área de transferência"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar comando para o clipboard"
           }
         },
         "ro" : {
@@ -2135,6 +2183,12 @@
             "value" : "Iniciado em %@"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciado às %@"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2376,6 +2430,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir comando no Compositor"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir comando no Compositor"
@@ -2627,6 +2687,12 @@
             "value" : "Pasta arrastável"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pasta arrastável"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2868,6 +2934,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "comando"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "comando"
@@ -3119,6 +3191,12 @@
             "value" : "Escrever comando no terminal"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escrever comando no terminal"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3360,6 +3438,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diretório:"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Diretório:"
@@ -3611,6 +3695,12 @@
             "value" : "Código de retorno:"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código de retorno:"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3852,6 +3942,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escrever diretório no terminal"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escrever diretório no terminal"
@@ -4103,6 +4199,12 @@
             "value" : "Tempo de execução:"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo de execução:"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4344,6 +4446,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar a saída do comando"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar a saída do comando"
@@ -4595,6 +4703,12 @@
             "value" : "Compartilhar comando…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partilhar comando…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4836,6 +4950,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comando:"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Comando:"
@@ -5087,6 +5207,12 @@
             "value" : "127"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5331,6 +5457,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desativar exibição de comando fora da tela"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativar a apresentação de comando fora do ecrã"
           }
         },
         "ro" : {

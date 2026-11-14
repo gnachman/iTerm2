@@ -167,6 +167,12 @@
             "value": "Tamanho da tabulação em espaços:"
           }
         },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tamanho da tabulação em espaços:"
+          }
+        },
         "ro": {
           "stringUnit": {
             "state": "translated",
@@ -408,6 +414,12 @@
           }
         },
         "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "pt-PT": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

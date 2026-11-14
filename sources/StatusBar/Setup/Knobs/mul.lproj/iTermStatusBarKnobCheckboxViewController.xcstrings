@@ -167,6 +167,12 @@
             "value": "Marcar"
           }
         },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcar"
+          }
+        },
         "ro": {
           "stringUnit": {
             "state": "translated",

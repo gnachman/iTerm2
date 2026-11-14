@@ -167,6 +167,12 @@
             "value" : "Editar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -413,6 +419,12 @@
             "value" : "Título"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Título"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -654,6 +666,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texto"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Texto"

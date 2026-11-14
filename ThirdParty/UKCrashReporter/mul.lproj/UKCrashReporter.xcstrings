@@ -167,6 +167,12 @@
             "value" : "Descrição"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descrição"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -413,6 +419,12 @@
             "value" : "Log de falhas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registo de falhas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -654,6 +666,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relatório de falhas"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Relatório de falhas"
@@ -905,6 +923,12 @@
             "value" : "Parece que o {APPNAME} travou na última vez em que foi usado. Deseja enviar um log de falhas aos desenvolvedores?\n\nOs logs de falhas da Apple não são enviados a outros desenvolvedores, então esta é a única maneira de os desenvolvedores do {APPNAME} descobrirem e corrigirem esta falha."
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parece que o {APPNAME} bloqueou da última vez que foi utilizado. Pretende enviar um registo de falhas aos programadores?\n\nOs registos de falhas da Apple não são enviados a outros programadores, por isso esta é a única maneira de os programadores do {APPNAME} descobrirem e corrigirem esta falha."
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1151,6 +1175,12 @@
             "value" : "Você pode apagar qualquer informação que não queira transmitir, mas isto tornará mais difícil detectar o bug. Por padrão, são transmitidos o log de falhas, o Mac que você está usando e seus ajustes."
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pode apagar qualquer informação que não queira transmitir, mas isto tornará mais difícil detetar o bug. Por predefinição, são transmitidos o registo de falhas, o Mac que está a usar e as suas definições."
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1392,6 +1422,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enviar"
@@ -1643,6 +1679,12 @@
             "value" : "Lembrar mais tarde"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lembrar mais tarde"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1884,6 +1926,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descartar"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Descartar"

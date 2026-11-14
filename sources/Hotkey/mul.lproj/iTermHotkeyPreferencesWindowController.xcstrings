@@ -167,6 +167,12 @@
             "value" : "⌥ Option"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Option"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -408,6 +414,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fixar janela de hotkey (permanece aberta ao perder o foco do teclado)"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fixar janela de hotkey (permanece aberta ao perder o foco do teclado)"
@@ -659,6 +671,12 @@
             "value" : "Hotkey:"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hotkey:"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -905,6 +923,12 @@
             "value" : "Nota: a janela só é reaberta se tiver sido fechada porque outro app se tornou ativo."
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nota: a janela só é reaberta se tiver sido fechada porque outra aplicação se tornou ativa."
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1146,6 +1170,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hotkeys adicionais"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hotkeys adicionais"
@@ -1397,6 +1427,12 @@
             "value" : "Ao pressionar a hotkey vinculada a este perfil, uma janela dedicada será exibida ou ocultada. Cada perfil com uma hotkey controla sua própria janela de hotkey."
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ao premir a hotkey associada a este perfil, uma janela dedicada será mostrada ou ocultada. Cada perfil com uma hotkey controla a sua própria janela de hotkey."
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1638,6 +1674,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não fazer nada de especial"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Não fazer nada de especial"
@@ -1889,6 +1931,12 @@
             "value" : "⚠️"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2130,6 +2178,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar esta janela de hotkey"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar esta janela de hotkey"
@@ -2381,6 +2435,12 @@
             "value" : "Ajustes da janela de hotkey"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definições da janela de hotkey"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2622,6 +2682,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Command"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⌘ Command"
@@ -2873,6 +2939,12 @@
             "value" : "⚠️ Outro perfil usa este atalho"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Outro perfil usa este atalho"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3114,6 +3186,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Shift"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⇧ Shift"
@@ -3365,6 +3443,12 @@
             "value" : "Tecla de toque duplo:"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tecla de toque duplo:"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3611,6 +3695,12 @@
             "value" : "Reabrir automaticamente ao reativar o app"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reabrir automaticamente ao reativar a aplicação"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3852,6 +3942,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Outro perfil usa este toque duplo"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️ Outro perfil usa este toque duplo"
@@ -4103,6 +4199,12 @@
             "value" : "Mostrar esta janela de hotkey se nenhuma outra janela estiver aberta"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar esta janela de hotkey se nenhuma outra janela estiver aberta"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4349,6 +4451,12 @@
             "value" : "Janelas flutuantes se sobrepõem a outras janelas e ao Dock, e às janelas em tela cheia de outros apps (se o espaço da janela de hotkey estiver definido como Todos os espaços)."
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Janelas flutuantes sobrepõem-se a outras janelas e ao Dock, e às janelas em ecrã completo de outras aplicações (se o espaço da janela de hotkey estiver definido como Todos os espaços)."
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4590,6 +4698,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancelar"
@@ -4841,6 +4955,12 @@
             "value" : "Ao clicar no ícone do Dock:"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ao clicar no ícone do Dock:"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5087,6 +5207,12 @@
             "value" : "Animar exibição e ocultação"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animar a apresentação e a ocultação"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5328,6 +5454,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -5579,6 +5711,12 @@
             "value" : "OK"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5820,6 +5958,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Janela flutuante"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Janela flutuante"
@@ -6071,6 +6215,12 @@
             "value" : "^ Control"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Control"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6312,6 +6462,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hotkeys adicionais…"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hotkeys adicionais…"

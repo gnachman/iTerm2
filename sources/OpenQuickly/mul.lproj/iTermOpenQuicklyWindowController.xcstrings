@@ -167,6 +167,12 @@
             "value" : "Abrir rapidamente"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir rapidamente"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -408,6 +414,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalhe"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Detalhe"
@@ -657,6 +669,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar sessões, perfis ou disposições"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pesquisar sessões, perfis ou disposições"
           }
         },
         "ro" : {

@@ -167,6 +167,12 @@
             "value": "Rótulo"
           }
         },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rótulo"
+          }
+        },
         "ro": {
           "stringUnit": {
             "state": "translated",

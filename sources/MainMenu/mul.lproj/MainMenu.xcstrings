@@ -167,6 +167,12 @@
             "value" : "Reduzir zoom"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reduzir zoom"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -408,6 +414,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalar runtime do Python"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instalar runtime do Python"
@@ -659,6 +671,12 @@
             "value" : "Mover aba"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover separador"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -900,6 +918,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicar sessão"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Duplicar sessão"
@@ -1151,6 +1175,12 @@
             "value" : "Abrir localização…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir localização…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1392,6 +1422,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aumentar altura"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aumentar altura"
@@ -1643,6 +1679,12 @@
             "value" : "Mover aba"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover separador"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1884,6 +1926,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relatório de foco"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Relatório de foco"
@@ -2135,6 +2183,12 @@
             "value" : "Normal"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normal"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2376,6 +2430,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover divisor para cima"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover divisor para cima"
@@ -2627,6 +2687,12 @@
             "value" : "Substituir por valor decodificado em Base 64"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substituir por valor decodificado em Base 64"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2868,6 +2934,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessão"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sessão"
@@ -3119,6 +3191,12 @@
             "value" : "Mover sessão para painel dividido"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover sessão para painel dividido"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3365,6 +3443,12 @@
             "value" : "Cofre de senhas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestor de palavras-passe"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3606,6 +3690,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 1"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 1"
@@ -3857,6 +3947,12 @@
             "value" : "Centralizado"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centrado"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4098,6 +4194,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substituir seleção"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Substituir seleção"
@@ -4349,6 +4451,12 @@
             "value" : "À esquerda da tela"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À esquerda do ecrã"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4593,6 +4701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cursor de aplicativo"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cursor de aplicação"
           }
         },
         "ro" : {
@@ -4841,6 +4955,12 @@
             "value" : "Arranjos"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disposições"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5082,6 +5202,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recolher linhas selecionadas"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Recolher linhas selecionadas"
@@ -5333,6 +5459,12 @@
             "value" : "Abrir diretórios recentes…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir diretórios recentes…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5579,6 +5711,12 @@
             "value" : "Tela cheia"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ecrã completo"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5820,6 +5958,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definir marca nomeada"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Definir marca nomeada"
@@ -6071,6 +6215,12 @@
             "value" : "Ações"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ações"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6317,6 +6467,12 @@
             "value" : "Capturar quadro da GPU"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturar fotograma da GPU"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6558,6 +6714,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcas e anotações"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Marcas e anotações"
@@ -6809,6 +6971,12 @@
             "value" : "Altura total no lado esquerdo da tela"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Altura total no lado esquerdo do ecrã"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7050,6 +7218,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicar janela"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Duplicar janela"
@@ -7301,6 +7475,12 @@
             "value" : "Autocompletar comandos"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autocompletar comandos"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7542,6 +7722,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estilo da janela"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Estilo da janela"
@@ -7793,6 +7979,12 @@
             "value" : "Disponibilidade do renderizador de GPU"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disponibilidade do renderizador de GPU"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8034,6 +8226,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Janela"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Janela"
@@ -8285,6 +8483,12 @@
             "value" : "Minimizar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimizar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8526,6 +8730,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Janela"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Janela"
@@ -8777,6 +8987,12 @@
             "value" : "iTerm2"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9018,6 +9234,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2"
@@ -9269,6 +9491,12 @@
             "value" : "Alterar perfil na disposição…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alterar perfil na disposição…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9510,6 +9738,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shell"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shell"
@@ -9761,6 +9995,12 @@
             "value" : "Definir largura padrão"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definir largura predefinida"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10002,6 +10242,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shell"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shell"
@@ -10253,6 +10499,12 @@
             "value" : "Ajuda"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajuda"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10494,6 +10746,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajuda"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajuda"
@@ -10745,6 +11003,12 @@
             "value" : "Ajuda do iTerm2"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajuda do iTerm2"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10991,6 +11255,12 @@
             "value" : "Ajustes…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definições…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11232,6 +11502,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serviços"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Serviços"
@@ -11483,6 +11759,12 @@
             "value" : "Serviços"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serviços"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11724,6 +12006,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar o iTerm2"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ocultar o iTerm2"
@@ -11975,6 +12263,12 @@
             "value" : "Encerrar o iTerm2"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sair do iTerm2"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12221,6 +12515,12 @@
             "value" : "Ocultar outros"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar outras aplicações"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12462,6 +12762,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar tudo"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar tudo"
@@ -12713,6 +13019,12 @@
             "value" : "Recortar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cortar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12954,6 +13266,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Editar"
@@ -13205,6 +13523,12 @@
             "value" : "Editar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13446,6 +13770,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecionar tudo"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Selecionar tudo"
@@ -13697,6 +14027,12 @@
             "value" : "Colar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13938,6 +14274,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limpar buffer"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Limpar buffer"
@@ -14189,6 +14531,12 @@
             "value" : "Registro"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registo"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14435,6 +14783,12 @@
             "value" : "Registro"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registo"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14676,6 +15030,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sobre o iTerm2"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sobre o iTerm2"
@@ -14927,6 +15287,12 @@
             "value" : "Perfis"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perfis"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15168,6 +15534,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perfis"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Perfis"
@@ -15419,6 +15791,12 @@
             "value" : "Fechar janela do Terminal"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fechar janela do Terminal"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15665,6 +16043,12 @@
             "value" : "Fechar todos os painéis na aba"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fechar todos os painéis no separador"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15906,6 +16290,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurar página…"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Configurar página…"
@@ -16157,6 +16547,12 @@
             "value" : "Salvar texto selecionado…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar texto selecionado…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16401,6 +16797,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Limpar histórico de rolagem"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limpar histórico de deslocamento"
           }
         },
         "ro" : {
@@ -16649,6 +17051,12 @@
             "value" : "Usar seleção para buscar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar seleção para procurar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16893,6 +17301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procurar"
           }
         },
         "ro" : {
@@ -17141,6 +17555,12 @@
             "value" : "Buscar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procurar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17385,6 +17805,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar próximo"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procurar seguinte"
           }
         },
         "ro" : {
@@ -17633,6 +18059,12 @@
             "value" : "Buscar anterior"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procurar anterior"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17874,6 +18306,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ir para a seleção"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ir para a seleção"
@@ -18125,6 +18563,12 @@
             "value" : "Visualizar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visualização"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18371,6 +18815,12 @@
             "value" : "Visualizar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visualização"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18612,6 +19062,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aumentar texto"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aumentar texto"
@@ -18863,6 +19319,12 @@
             "value" : "Diminuir texto"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diminuir texto"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19104,6 +19566,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imprimir"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Imprimir"
@@ -19355,6 +19823,12 @@
             "value" : "Tela"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ecrã"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19596,6 +20070,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imprimir"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Imprimir"
@@ -19847,6 +20327,12 @@
             "value" : "Seleção"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleção"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20088,6 +20574,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buffer"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buffer"
@@ -20339,6 +20831,12 @@
             "value" : "Selecionar aba anterior"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecionar separador anterior"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20583,6 +21081,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Selecionar próxima aba"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecionar separador seguinte"
           }
         },
         "ro" : {
@@ -20831,6 +21335,12 @@
             "value" : "Selecionar aba"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecionar separador"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21075,6 +21585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Selecionar aba"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecionar separador"
           }
         },
         "ro" : {
@@ -21323,6 +21839,12 @@
             "value" : "Nova aba"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novo separador"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21564,6 +22086,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nova janela"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nova janela"
@@ -21815,6 +22343,12 @@
             "value" : "Pressione Option para nova janela"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prima Option para nova janela"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22056,6 +22590,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir em nova janela"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir em nova janela"
@@ -22307,6 +22847,12 @@
             "value" : "Buscar atualizações…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procurar atualizações…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22548,6 +23094,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zoom"
@@ -22799,6 +23351,12 @@
             "value" : "Redefinir"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repor"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23043,6 +23601,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ativar/desativar tela cheia"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ativar/desativar ecrã completo"
           }
         },
         "ro" : {
@@ -23291,6 +23855,12 @@
             "value" : "Ativar/desativar registro de depuração"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ativar/desativar registo de depuração"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23532,6 +24102,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir perfis…"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir perfis…"
@@ -23783,6 +24359,12 @@
             "value" : "Editar sessão…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar sessão…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24024,6 +24606,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar Instant Replay"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Iniciar Instant Replay"
@@ -24275,6 +24863,12 @@
             "value" : "Desfazer"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desfazer"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24516,6 +25110,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refazer"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Refazer"
@@ -24767,6 +25367,12 @@
             "value" : "Abrir histórico de colagem…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir histórico de colagem…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25008,6 +25614,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir autocompletar…"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir autocompletar…"
@@ -25259,6 +25871,12 @@
             "value" : "Colar especial"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colar especial"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25500,6 +26118,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colar especial"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Colar especial"
@@ -25751,6 +26375,12 @@
             "value" : "Colar seleção"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colar seleção"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25992,6 +26622,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colar lentamente"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Colar lentamente"
@@ -26243,6 +26879,12 @@
             "value" : "Entrada de teclado segura"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrada de teclado segura"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26484,6 +27126,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Organizar janelas horizontalmente"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Organizar janelas horizontalmente"
@@ -26735,6 +27383,12 @@
             "value" : "Fechar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fechar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26976,6 +27630,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dividir verticalmente com o perfil atual"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dividir verticalmente com o perfil atual"
@@ -27227,6 +27887,12 @@
             "value" : "Dividir horizontalmente com o perfil atual"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dividir horizontalmente com o perfil atual"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27473,6 +28139,12 @@
             "value" : "Salvar disposição de janelas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar disposição de janelas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27714,6 +28386,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecionar painel dividido"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Selecionar painel dividido"
@@ -27965,6 +28643,12 @@
             "value" : "Selecionar painel dividido"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecionar painel dividido"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28206,6 +28890,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecionar painel acima"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Selecionar painel acima"
@@ -28457,6 +29147,12 @@
             "value" : "Selecionar painel abaixo"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecionar painel abaixo"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28698,6 +29394,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecionar painel à esquerda"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Selecionar painel à esquerda"
@@ -28949,6 +29651,12 @@
             "value" : "Selecionar painel à direita"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecionar painel à direita"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29190,6 +29898,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar transparência"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Usar transparência"
@@ -29441,6 +30155,12 @@
             "value" : "Maximizar painel ativo"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximizar painel ativo"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29682,6 +30402,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 3"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 3"
@@ -29933,6 +30659,12 @@
             "value" : "Item 2"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 2"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30174,6 +30906,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 1"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 1"
@@ -30425,6 +31163,12 @@
             "value" : "Definir marca"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definir marca"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30666,6 +31410,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ir para a marca"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ir para a marca"
@@ -30917,6 +31667,12 @@
             "value" : "Próximo painel"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Painel seguinte"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31158,6 +31914,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Painel anterior"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Painel anterior"
@@ -31409,6 +32171,12 @@
             "value" : "Mostrar abas em tela cheia"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar separadores em ecrã completo"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31650,6 +32418,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transmitir entrada"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Transmitir entrada"
@@ -31901,6 +32675,12 @@
             "value" : "Transmitir entrada"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transmitir entrada"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32145,6 +32925,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Transmitir entrada para todos os painéis de todas as abas"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transmitir entrada para todos os painéis em todos os separadores"
           }
         },
         "ro" : {
@@ -32393,6 +33179,12 @@
             "value" : "Transmitir entrada para todos os painéis da aba atual"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transmitir entrada para todos os painéis do separador atual"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32634,6 +33426,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar entrada apenas para a sessão atual"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enviar entrada apenas para a sessão atual"
@@ -32885,6 +33683,12 @@
             "value" : "Restaurar disposição de janelas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurar disposição de janelas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33126,6 +33930,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurar disposição de janelas"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurar disposição de janelas"
@@ -33377,6 +34187,12 @@
             "value" : "Localizar cursor"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Localizar cursor"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33618,6 +34434,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dividir horizontalmente…"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dividir horizontalmente…"
@@ -33869,6 +34691,12 @@
             "value" : "Dividir verticalmente…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dividir verticalmente…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34110,6 +34938,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caixa de ferramentas"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Caixa de ferramentas"
@@ -34361,6 +35195,12 @@
             "value" : "Caixa de ferramentas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caixa de ferramentas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34605,6 +35445,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar Caixa de ferramentas"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar caixa de ferramentas"
           }
         },
         "ro" : {
@@ -34853,6 +35699,12 @@
             "value" : "Nova aba com o perfil atual"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novo separador com o perfil atual"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35094,6 +35946,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Executar coprocesso…"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Executar coprocesso…"
@@ -35345,6 +36203,12 @@
             "value" : "Parar coprocesso"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parar coprocesso"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35586,6 +36450,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar"
@@ -35837,6 +36707,12 @@
             "value" : "Mover aba para nova janela"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover separador para nova janela"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36083,6 +36959,12 @@
             "value" : "Mover aba para a direita"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover separador para a direita"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36324,6 +37206,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar indicador de padrão de fundo"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar indicador de padrão de fundo"
@@ -36575,6 +37463,12 @@
             "value" : "tmux"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36816,6 +37710,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "tmux"
@@ -37067,6 +37967,12 @@
             "value" : "Nova aba do tmux"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novo separador do tmux"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37308,6 +38214,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nova janela do tmux"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nova janela do tmux"
@@ -37559,6 +38471,12 @@
             "value" : "Desanexar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desanexar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37800,6 +38718,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Painel"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Painel"
@@ -38051,6 +38975,12 @@
             "value" : "Tamanho normal do texto"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamanho normal do texto"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38292,6 +39222,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurar tamanho do texto e da sessão"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurar tamanho do texto e da sessão"
@@ -38543,6 +39479,12 @@
             "value" : "Tornar o iTerm2 o terminal padrão"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tornar o iTerm2 o terminal predefinido"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38789,6 +39731,12 @@
             "value" : "Tornar o Terminal o terminal padrão"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tornar o Terminal o terminal predefinido"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39030,6 +39978,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ativar/desativar transmissão de entrada para a sessão atual"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ativar/desativar transmissão de entrada para a sessão atual"
@@ -39281,6 +40235,12 @@
             "value" : "Colar mais rápido"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colar mais rápido"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39522,6 +40482,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colar mais devagar"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Colar mais devagar"
@@ -39773,6 +40739,12 @@
             "value" : "Colar lentamente mais rápido"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colar lentamente mais rápido"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40014,6 +40986,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colar lentamente mais devagar"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Colar lentamente mais devagar"
@@ -40265,6 +41243,12 @@
             "value" : "Redefinir conjunto de caracteres"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repor conjunto de caracteres"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40506,6 +41490,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arquivos"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arquivos"
@@ -40757,6 +41747,12 @@
             "value" : "VT400"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT400"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40998,6 +41994,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anotar seleção"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Anotar seleção"
@@ -41249,6 +42251,12 @@
             "value" : "Ampliar seleção"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ampliar seleção"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41495,6 +42503,12 @@
             "value" : "Mover divisória para a esquerda"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover divisor para a esquerda"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41736,6 +42750,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativar tudo"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desativar tudo"
@@ -41987,6 +43007,12 @@
             "value" : "Mover sessão"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover sessão"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42233,6 +43259,12 @@
             "value" : "Mostrar Compositor"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar compositor"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42474,6 +43506,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Forçar desanexação"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Forçar desanexação"
@@ -42725,6 +43763,12 @@
             "value" : "Marcas nomeadas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcas nomeadas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42971,6 +44015,12 @@
             "value" : "Buscar…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procurar…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43212,6 +44262,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportar gravação"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Exportar gravação"
@@ -43463,6 +44519,12 @@
             "value" : "Sem barra de título"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem barra de título"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43704,6 +44766,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT500"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT500"
@@ -43955,6 +45023,12 @@
             "value" : "Mostrar recortes"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar recortes"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44201,6 +45275,12 @@
             "value" : "Ajustes do dispositivo Companion"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definições do dispositivo Companion"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44442,6 +45522,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo de cópia"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Modo de cópia"
@@ -44693,6 +45779,12 @@
             "value" : "Mover sessão"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover sessão"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44937,6 +46029,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aba"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Separador"
           }
         },
         "ro" : {
@@ -45185,6 +46283,12 @@
             "value" : "Limpar até o início da seleção"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limpar até ao início da seleção"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45426,6 +46530,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar estatísticas de desempenho"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar estatísticas de desempenho"
@@ -45677,6 +46787,12 @@
             "value" : "Scripts"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scripts"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45923,6 +47039,12 @@
             "value" : "Salvar janela atual como disposição"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar janela atual como disposição"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46164,6 +47286,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gatilhos"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gatilhos"
@@ -46415,6 +47543,12 @@
             "value" : "Mostrar guia do cursor"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar guia do cursor"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46656,6 +47790,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquear tamanho"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bloquear tamanho"
@@ -46907,6 +48047,12 @@
             "value" : "Registrar em arquivo"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registar num ficheiro"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47148,6 +48294,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportar…"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Exportar…"
@@ -47399,6 +48551,12 @@
             "value" : "Web"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47640,6 +48798,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relatar texto associado"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Relatar texto associado"
@@ -47891,6 +49055,12 @@
             "value" : "Novo script Python"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novo script Python"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48132,6 +49302,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Licenças de código aberto"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Licenças de código aberto"
@@ -48383,6 +49559,12 @@
             "value" : "Limpar Instant Replay"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limpar Instant Replay"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48624,6 +49806,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diminuir altura"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Diminuir altura"
@@ -48875,6 +50063,12 @@
             "value" : "Scripts"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scripts"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49116,6 +50310,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revelar scripts no Finder"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Revelar scripts no Finder"
@@ -49367,6 +50567,12 @@
             "value" : "Salvar conteúdo…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar conteúdo…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49608,6 +50814,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trazer tudo para a frente"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Trazer tudo para a frente"
@@ -49859,6 +51071,12 @@
             "value" : "Recolher tudo"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recolher tudo"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50100,6 +51318,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arquivos"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arquivos"
@@ -50351,6 +51575,12 @@
             "value" : "Restaurar organização de janelas como abas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurar disposição de janelas como separadores"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50592,6 +51822,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar anotação no cursor"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Adicionar anotação no cursor"
@@ -50843,6 +52079,12 @@
             "value" : "Desativar transparência para a janela ativa"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativar transparência na janela ativa"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51089,6 +52331,12 @@
             "value" : "Delimitação de colagem"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delimitação de colagem"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51330,6 +52578,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substituir por JSON formatado"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Substituir por JSON formatado"
@@ -51647,6 +52901,12 @@
             "value" : "Ramener au premier plan"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trazer para a frente"
+          }
+        },
         "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51891,6 +53151,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ancrer le volet flottant"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acoplar painel flutuante"
           }
         },
         "yue-Hans" : {
@@ -52139,6 +53405,12 @@
             "value" : "Masquer les volets flottants"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar painéis flutuantes"
+          }
+        },
         "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -52383,6 +53655,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Déplacer le volet flottant vers le bas"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover painel flutuante para baixo"
           }
         },
         "yue-Hans" : {
@@ -52631,6 +53909,12 @@
             "value" : "Déplacer le volet flottant vers la gauche"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover painel flutuante para a esquerda"
+          }
+        },
         "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -52875,6 +54159,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Déplacer le volet flottant vers la droite"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover painel flutuante para a direita"
           }
         },
         "yue-Hans" : {
@@ -53123,6 +54413,12 @@
             "value" : "Déplacer le volet flottant vers le haut"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover painel flutuante para cima"
+          }
+        },
         "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53367,6 +54663,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nouveau volet flottant avec le profil actuel"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novo painel flutuante com o perfil atual"
           }
         },
         "yue-Hans" : {
@@ -53615,6 +54917,12 @@
             "value" : "Volets flottants"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Painéis flutuantes"
+          }
+        },
         "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53859,6 +55167,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Volets flottants"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Painéis flutuantes"
           }
         },
         "yue-Hans" : {
@@ -54107,6 +55421,12 @@
             "value" : "Envoyer à l’arrière-plan"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar para trás"
+          }
+        },
         "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54282,6 +55602,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar dica do dia"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar dica do dia"
@@ -54533,6 +55859,12 @@
             "value" : "Próxima anotação"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próxima anotação"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54774,6 +56106,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cabine de comando"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cabine de comando"
@@ -55025,6 +56363,12 @@
             "value" : "Mover sessão para aba"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover sessão para separador"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55271,6 +56615,12 @@
             "value" : "Parte inferior da tela"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parte inferior do ecrã"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55512,6 +56862,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perguntar se deve converter tabulações em espaços ao colar"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Perguntar se deve converter tabulações em espaços ao colar"
@@ -55763,6 +57119,12 @@
             "value" : "Alertas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alertas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -56009,6 +57371,12 @@
             "value" : "Copiar com sequências de controle"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar com sequências de controlo"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -56250,6 +57618,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redimensionar janela"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Redimensionar janela"
@@ -56501,6 +57875,12 @@
             "value" : "Redefinir"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repor"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -56747,6 +58127,12 @@
             "value" : "Duplicar aba"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicar separador"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -56988,6 +58374,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recarregar página"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Recarregar página"
@@ -57239,6 +58631,12 @@
             "value" : "Mover sessão para janela"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover sessão para janela"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -57480,6 +58878,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relatar todas as teclas como códigos de escape"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Relatar todas as teclas como códigos de escape"
@@ -57731,6 +59135,12 @@
             "value" : "Modo de relatório de teclas bruto"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo de relatório de teclas em bruto"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -57972,6 +59382,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importar…"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Importar…"
@@ -58223,6 +59639,12 @@
             "value" : "Avisar antes de colar múltiplas linhas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avisar antes de colar várias linhas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -58464,6 +59886,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar chat inline"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar chat inline"
@@ -58715,6 +60143,12 @@
             "value" : "Alternar entrada em buffer"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alternar entrada em buffer"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -58956,6 +60390,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O host remoto pode controlar o iTerm2"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "O host remoto pode controlar o iTerm2"
@@ -59273,6 +60713,12 @@
             "value" : "Vérifier la troncature des contrôles des réglages"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verificar truncamento dos controlos das definições"
+          }
+        },
         "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -59448,6 +60894,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gatilhos"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gatilhos"
@@ -59699,6 +61151,12 @@
             "value" : "Seleção respeita limites flexíveis"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleção respeita limites flexíveis"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -59940,6 +61398,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sair do grupo de trabalho"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sair do grupo de trabalho"
@@ -60191,6 +61655,12 @@
             "value" : "Selecionar saída do último comando"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecionar saída do último comando"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -60432,6 +61902,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reiniciar sessão"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reiniciar sessão"
@@ -60683,6 +62159,12 @@
             "value" : "Abrir Python REPL"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir Python REPL"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -60927,6 +62409,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parte superior da tela"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parte superior do ecrã"
           }
         },
         "ro" : {
@@ -61175,6 +62663,12 @@
             "value" : "Mesclar todas as janelas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reunir todas as janelas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -61421,6 +62915,12 @@
             "value" : "Fixar janela de hotkey"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afixar janela de hotkey"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -61662,6 +63162,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys modo 2"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "modifyOtherKeys modo 2"
@@ -61913,6 +63419,12 @@
             "value" : "Abrir rapidamente"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir rapidamente"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -62159,6 +63671,12 @@
             "value" : "Gerenciar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gerir"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -62400,6 +63918,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desambiguar Escape"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desambiguar Escape"
@@ -62651,6 +64175,12 @@
             "value" : "Escolher resultado para abrir"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolher resultado para abrir"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -62895,6 +64425,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Limitar aviso de colagem de múltiplas linhas ao prompt do shell"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limitar aviso de colagem de várias linhas ao prompt do shell"
           }
         },
         "ro" : {
@@ -63143,6 +64679,12 @@
             "value" : "Ativar gatilhos em apps interativos"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ativar gatilhos em aplicações interativas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63384,6 +64926,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 2"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 2"
@@ -63635,6 +65183,12 @@
             "value" : "Relatório de mouse"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relatório de rato"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63876,6 +65430,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcas e anotações"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Marcas e anotações"
@@ -64127,6 +65687,12 @@
             "value" : "Bloquear layout"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquear disposição"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -64368,6 +65934,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquear localização"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bloquear localização"
@@ -64619,6 +66191,12 @@
             "value" : "Nova janela com o perfil atual"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nova janela com o perfil atual"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -64860,6 +66438,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar sessão"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ocultar sessão"
@@ -65111,6 +66695,12 @@
             "value" : "Mostrar caixa de alerta modal"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar caixa de alerta modal"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65352,6 +66942,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ativar tudo"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ativar tudo"
@@ -65603,6 +67199,12 @@
             "value" : "Próxima marca"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próxima marca"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65844,6 +67446,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Organizar janelas"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Organizar janelas"
@@ -66095,6 +67703,12 @@
             "value" : "Buscar todas as correspondências de seleção inteligente"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procurar todas as correspondências de seleção inteligente"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -66336,6 +67950,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproduzir um som"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reproduzir um som"
@@ -66587,6 +68207,12 @@
             "value" : "Abrir histórico de comandos…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir histórico de comandos…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -66828,6 +68454,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar com estilos"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar com estilos"
@@ -67079,6 +68711,12 @@
             "value" : "Tela alternativa"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ecrã alternativo"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -67325,6 +68963,12 @@
             "value" : "Direita da tela em altura total"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Direita do ecrã em altura total"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -67566,6 +69210,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -67817,6 +69467,12 @@
             "value" : "Modo de relatório de teclas padrão"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo de relatório de teclas padrão"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -68058,6 +69714,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redimensionar painel"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Redimensionar painel"
@@ -68309,6 +69971,12 @@
             "value" : "Alertas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alertas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -68553,6 +70221,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Notificar ao mudar de status"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notificar ao mudar de estado"
           }
         },
         "ro" : {
@@ -68801,6 +70475,12 @@
             "value" : "Selecionar próximo grupo de abas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecionar grupo de separadores seguinte"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -69042,6 +70722,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desinstalar integração do Claude Code"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desinstalar integração do Claude Code"
@@ -69293,6 +70979,12 @@
             "value" : "Editar título da aba"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar título do separador"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -69539,6 +71231,12 @@
             "value" : "Arranjos"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disposições"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -69780,6 +71478,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Par anterior"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Par anterior"
@@ -70031,6 +71735,12 @@
             "value" : "Relatar teclas alternativas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relatar teclas alternativas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -70272,6 +71982,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dividir painel"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dividir painel"
@@ -70523,6 +72239,12 @@
             "value" : "Estado do terminal"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estado do terminal"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -70769,6 +72491,12 @@
             "value" : "Desfazer fechamento"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desfazer fecho"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -71010,6 +72738,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chats de IA"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chats de IA"
@@ -71261,6 +72995,12 @@
             "value" : "Avançar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avançar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -71502,6 +73242,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquear largura do painel"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bloquear largura do painel"
@@ -71753,6 +73499,12 @@
             "value" : "Grupos de trabalho"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grupos de trabalho"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -71999,6 +73751,12 @@
             "value" : "Salvar arquivo da sessão atual…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar arquivo da sessão atual…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -72240,6 +73998,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substituir seleção"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Substituir seleção"
@@ -72491,6 +74255,12 @@
             "value" : "VT300"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT300"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -72732,6 +74502,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar anotações"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar anotações"
@@ -72983,6 +74759,12 @@
             "value" : "ssh"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -73229,6 +75011,12 @@
             "value" : "Gerenciar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gerir"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -73470,6 +75258,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 3"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 3"
@@ -73721,6 +75515,12 @@
             "value" : "Selecionar grupo de abas anterior"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecionar grupo de separadores anterior"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -73962,6 +75762,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessões ocultas"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sessões ocultas"
@@ -74213,6 +76019,12 @@
             "value" : "Anotação anterior"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anotação anterior"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -74457,6 +76269,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alertar sobre marcas em sessões fora da tela"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alertar sobre marcas em sessões fora do ecrã"
           }
         },
         "ro" : {
@@ -74771,6 +76589,12 @@
             "value" : "Centrée, sans barre de titre"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centrada, sem barra de título"
+          }
+        },
         "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -74946,6 +76770,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalar integração do Claude Code"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instalar integração do Claude Code"
@@ -75197,6 +77027,12 @@
             "value" : "Enviar notificação"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar notificação"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -75438,6 +77274,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessão atual é a origem da transmissão"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sessão atual é a origem da transmissão"
@@ -75689,6 +77531,12 @@
             "value" : "Alertar na próxima marca"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alertar na próxima marca"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -75930,6 +77778,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aumentar largura"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aumentar largura"
@@ -76181,6 +78035,12 @@
             "value" : "Modo CSI u"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo CSI u"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -76422,6 +78282,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover divisor para baixo"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover divisor para baixo"
@@ -76673,6 +78539,12 @@
             "value" : "Redimensionar painel"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redimensionar painel"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -76914,6 +78786,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reinstalar integração do Claude Code"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reinstalar integração do Claude Code"
@@ -77165,6 +79043,12 @@
             "value" : "Instalar Shell Integration"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalar Shell Integration"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -77406,6 +79290,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrar"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Filtrar"
@@ -77657,6 +79547,12 @@
             "value" : "Editar gatilhos"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar gatilhos"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -77898,6 +79794,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar painel"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausar painel"
@@ -78149,6 +80051,12 @@
             "value" : "Salvar logs de depuração retrospectivos"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar registos de depuração retrospetivos"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -78390,6 +80298,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fragmentos"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fragmentos"
@@ -78641,6 +80555,12 @@
             "value" : "Selecionar comando atual"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecionar comando atual"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -78887,6 +80807,12 @@
             "value" : "Fazer captura de tela…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fazer captura de ecrã…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -79128,6 +81054,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renderizar seleção nativamente"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Renderizar seleção nativamente"
@@ -79379,6 +81311,12 @@
             "value" : "Mostrar nota da sessão"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar nota da sessão"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -79620,6 +81558,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fragmentos"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fragmentos"
@@ -79871,6 +81815,12 @@
             "value" : "Editar título da janela"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar título da janela"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -80112,6 +82062,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alertas suprimidos…"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alertas suprimidos…"
@@ -80363,6 +82319,12 @@
             "value" : "Marca anterior"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marca anterior"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -80609,6 +82571,12 @@
             "value" : "Instalar runtime Python já transferido"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalar runtime Python já descarregado"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -80850,6 +82818,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover divisor para a direita"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover divisor para a direita"
@@ -81101,6 +83075,12 @@
             "value" : "Aba"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Separador"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -81345,6 +83325,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Transferir arquivos…"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descarregar ficheiros…"
           }
         },
         "ro" : {
@@ -81593,6 +83579,12 @@
             "value" : "Mover aba para a esquerda"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover separador para a esquerda"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -81839,6 +83831,12 @@
             "value" : "Adicionar aba a novo grupo…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar separador a novo grupo…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -82080,6 +84078,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar barra de ferramentas"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar barra de ferramentas"
@@ -82331,6 +84335,12 @@
             "value" : "Remover aba do grupo"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover separador do grupo"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -82577,6 +84587,12 @@
             "value" : "Auto Compositor"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compositor automático"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -82818,6 +84834,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir chat de IA…"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir chat de IA…"
@@ -83069,6 +85091,12 @@
             "value" : "Mostrar marcações de tempo"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar carimbos de data/hora"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -83310,6 +85338,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colagem avançada…"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Colagem avançada…"
@@ -83561,6 +85595,12 @@
             "value" : "Organizar janelas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Organizar janelas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -83802,6 +85842,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nível de emulação"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nível de emulação"
@@ -84053,6 +86099,12 @@
             "value" : "Selecionar correspondências"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecionar correspondências"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -84294,6 +86346,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir seleção"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir seleção"
@@ -84545,6 +86603,12 @@
             "value" : "Histórico"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Histórico"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -84786,6 +86850,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurar arquivo…"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurar arquivo…"
@@ -85037,6 +87107,12 @@
             "value" : "Estilo da janela"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estilo da janela"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -85281,6 +87357,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parte inferior da tela em largura total"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parte inferior do ecrã em largura total"
           }
         },
         "ro" : {
@@ -85529,6 +87611,12 @@
             "value" : "Controles literais"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controlos literais"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -85775,6 +87863,12 @@
             "value" : "Limpar busca"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limpar pesquisa"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -86016,6 +88110,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Explicar saída com IA"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Explicar saída com IA"
@@ -86267,6 +88367,12 @@
             "value" : "Nível de emulação"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nível de emulação"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -86513,6 +88619,12 @@
             "value" : "Buscar URLs"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procurar URLs"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -86754,6 +88866,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substituir por JSON formatado"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Substituir por JSON formatado"
@@ -87005,6 +89123,12 @@
             "value" : "Ações"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ações"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -87251,6 +89375,12 @@
             "value" : "Mudanças de tamanho atualizam o perfil"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alterações de tamanho atualizam o perfil"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -87492,6 +89622,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover perfis recentes do menu do Dock"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remover perfis recentes do menu do Dock"
@@ -87743,6 +89879,12 @@
             "value" : "Sessões ocultas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessões ocultas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -87989,6 +90131,12 @@
             "value" : "Gerenciar dependências…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gerir dependências…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -88230,6 +90378,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voltar"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Voltar"
@@ -88481,6 +90635,12 @@
             "value" : "Grupos de trabalho"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grupos de trabalho"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -88727,6 +90887,12 @@
             "value" : "Carregar organização de arquivo…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carregar disposição de ficheiro…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -88968,6 +91134,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atalhos do modo de cópia"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Atalhos do modo de cópia"
@@ -89219,6 +91391,12 @@
             "value" : "Dividir painel"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dividir painel"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -89460,6 +91638,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redimensionar janela"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Redimensionar janela"
@@ -89711,6 +91895,12 @@
             "value" : "Relatar todos os tipos de eventos"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relatar todos os tipos de eventos"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -89952,6 +92142,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar gatilho…"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Adicionar gatilho…"
@@ -90203,6 +92399,12 @@
             "value" : "Web"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -90444,6 +92646,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys modo 1"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "modifyOtherKeys modo 1"
@@ -90695,6 +92903,12 @@
             "value" : "Diminuir largura"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diminuir largura"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -90939,6 +93153,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "À direita da tela"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À direita do ecrã"
           }
         },
         "ro" : {
@@ -91187,6 +93407,12 @@
             "value" : "Colar arquivo codificado em Base64"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colar ficheiro codificado em Base64"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -91433,6 +93659,12 @@
             "value" : "Limpar até a última marca"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limpar até à última marca"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -91674,6 +93906,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distribuir painéis divididos uniformemente"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Distribuir painéis divididos uniformemente"
@@ -91925,6 +94163,12 @@
             "value" : "Importar gravação"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importar gravação"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -92169,6 +94413,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Teclado numérico do aplicativo"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teclado numérico da aplicação"
           }
         },
         "ro" : {
@@ -92417,6 +94667,12 @@
             "value" : "Parte superior da tela em largura total"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parte superior do ecrã em largura total"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -92658,6 +94914,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT100"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT100"
@@ -92909,6 +95171,12 @@
             "value" : "VT200"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT200"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93155,6 +95423,12 @@
             "value" : "Desconectar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desligar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93396,6 +95670,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avisar antes de colar uma linha que termina com nova linha no prompt do shell"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avisar antes de colar uma linha que termina com nova linha no prompt do shell"
@@ -93647,6 +95927,12 @@
             "value" : "Buscar globalmente…"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procurar globalmente…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93888,6 +96174,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximizada"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Maximizada"
@@ -94139,6 +96431,12 @@
             "value" : "Console"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Console"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -94383,6 +96681,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nova aba ao lado da aba atual"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novo separador junto ao separador atual"
           }
         },
         "ro" : {
@@ -94631,6 +96935,12 @@
             "value" : "Restaurar organização de janelas como abas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurar disposição de janelas como separadores"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -94872,6 +97182,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substituir por valor codificado em Base64"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Substituir por valor codificado em Base64"
@@ -95123,6 +97439,12 @@
             "value" : "Ativar inteligência artificial"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ativar inteligência artificial"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -95364,6 +97686,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessão"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sessão"
@@ -95615,6 +97943,12 @@
             "value" : "Marcas nomeadas"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcas nomeadas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -95856,6 +98190,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próximo par"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Próximo par"

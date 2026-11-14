@@ -167,6 +167,12 @@
             "value" : "Arraste um componente do menu para Componentes ativos a fim de adicioná-lo à sua barra de status."
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arraste um componente do menu para Componentes ativos para o adicionar à sua barra de estado."
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -413,6 +419,12 @@
             "value" : "Preferir empacotamento compacto ao posicionamento estável"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preferir empacotamento compacto à posição estável"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -654,6 +666,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -905,6 +923,12 @@
             "value" : "Componentes ativos"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Componentes ativos"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1146,6 +1170,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativado"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desativado"
@@ -1397,6 +1427,12 @@
             "value" : "Remover componentes com valores vazios"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover componentes com valores vazios"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1643,6 +1679,12 @@
             "value" : "Desenhar separador entre a barra de status e o terminal"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desenhar separador entre a barra de estado e o terminal"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1884,6 +1926,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automático"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Automático"
@@ -2135,6 +2183,12 @@
             "value" : "Menu de componentes da barra de status"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menu de componentes da barra de estado"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2376,6 +2430,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avançado…"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avançado…"
@@ -2627,6 +2687,12 @@
             "value" : "O algoritmo de empacotamento compacto permite que mais componentes da barra de status fiquem visíveis ao mesmo tempo, mas eles tendem a se mover mais."
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O algoritmo de empacotamento compacto permite que mais componentes da barra de estado fiquem visíveis ao mesmo tempo, mas tendem a mover-se mais."
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2868,6 +2934,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌈 Arco-íris automático:"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🌈 Arco-íris automático:"
@@ -3119,6 +3191,12 @@
             "value" : "O nome da fonte aparece aqui"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O nome do tipo de letra aparece aqui"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3360,6 +3438,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cores escuras"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cores escuras"
@@ -3611,6 +3695,12 @@
             "value" : "Alterar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alterar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3857,6 +3947,12 @@
             "value" : "Cor de texto padrão:"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cor de texto predefinida:"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4098,6 +4194,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurar componente"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Configurar componente"
@@ -4349,6 +4451,12 @@
             "value" : "O algoritmo de empacotamento compacto permite que mais componentes da barra de status fiquem visíveis ao mesmo tempo, mas eles tendem a se mover mais."
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O algoritmo de empacotamento compacto permite que mais componentes da barra de estado fiquem visíveis ao mesmo tempo, mas tendem a mover-se mais."
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4590,6 +4698,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cor do separador:"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cor do separador:"
@@ -4841,6 +4955,12 @@
             "value" : "Cancelar"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5082,6 +5202,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cores claras"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cores claras"
@@ -5333,6 +5459,12 @@
             "value" : "Fonte:"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tipo de letra:"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5579,6 +5711,12 @@
             "value" : "Cor do plano de fundo:"
           }
         },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cor de fundo:"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5820,6 +5958,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -6069,6 +6213,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desenha uma linha fina entre a barra de status e o conteúdo do terminal."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desenha uma linha fina entre a barra de estado e o conteúdo do terminal."
           }
         },
         "ro" : {
