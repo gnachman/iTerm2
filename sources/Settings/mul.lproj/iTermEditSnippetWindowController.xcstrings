@@ -89,6 +89,12 @@
             "value" : "값:"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nilai:"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스니펫 편집"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Coretan"
           }
         },
         "nb" : {
@@ -437,6 +449,12 @@
             "value" : "제목:"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tajuk:"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -609,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이스케이프하지 않은 리터럴 텍스트"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teks Literal Tanpa Escape"
           }
         },
         "nb" : {
@@ -785,6 +809,12 @@
             "value" : "태그 이름에 /를 사용하면 편집 > 스니펫 메뉴에 폴더가 만들어집니다"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gunakan / dalam nama tag untuk membuat folder dalam menu Edit > Coretan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -957,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "취소"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batal"
           }
         },
         "nb" : {
@@ -1133,6 +1169,12 @@
             "value" : "확인"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1305,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "하위 호환 이스케이프"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escape Keserasian ke Belakang"
           }
         },
         "nb" : {
@@ -1481,6 +1529,12 @@
             "value" : "태그:"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tag:"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1653,6 +1707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "C 스타일 백슬래시 이스케이프"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escape Garis Condong Terbalik Gaya C"
           }
         },
         "nb" : {

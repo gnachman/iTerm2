@@ -89,6 +89,12 @@
             "value" : "축소"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zum Keluar"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Python 런타임 설치"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pasang Masa Jalan Python"
           }
         },
         "nb" : {
@@ -437,6 +449,12 @@
             "value" : "탭 이동"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alihkan Tab"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -609,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션 복제"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplikasi Sesi"
           }
         },
         "nb" : {
@@ -785,6 +809,12 @@
             "value" : "위치 열기…"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka Lokasi…"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -957,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "높이 늘리기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tambah Tinggi"
           }
         },
         "nb" : {
@@ -1133,6 +1169,12 @@
             "value" : "탭 이동"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alihkan Tab"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1305,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "포커스 리포팅"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pelaporan Fokus"
           }
         },
         "nb" : {
@@ -1481,6 +1529,12 @@
             "value" : "보통"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Biasa"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1653,6 +1707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "구분선을 위로 이동"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alihkan Pembahagi ke Atas"
           }
         },
         "nb" : {
@@ -1829,6 +1889,12 @@
             "value" : "Base64로 디코딩된 값으로 대치"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ganti dengan Nilai Nyahkod Base 64"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2001,6 +2067,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesi"
           }
         },
         "nb" : {
@@ -2177,6 +2249,12 @@
             "value" : "세션을 분할 패널로 이동"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alihkan Sesi ke Anak Tetingkap Pisah"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2349,6 +2427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "암호 관리자"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pengurus Kata Laluan"
           }
         },
         "nb" : {
@@ -2525,6 +2609,12 @@
             "value" : "항목 1"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 1"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2697,6 +2787,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "가운데"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dipusatkan"
           }
         },
         "nb" : {
@@ -2873,6 +2969,12 @@
             "value" : "선택 영역 대치"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ganti Pilihan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3045,6 +3147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "화면 왼쪽"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kiri Skrin"
           }
         },
         "nb" : {
@@ -3221,6 +3329,12 @@
             "value" : "애플리케이션 커서"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kursor Aplikasi"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3393,6 +3507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "배치"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Susunan"
           }
         },
         "nb" : {
@@ -3569,6 +3689,12 @@
             "value" : "선택한 줄 접기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Runtuhkan Baris Terpilih"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3741,6 +3867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "최근 디렉토리 열기…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka Direktori Terbaharu…"
           }
         },
         "nb" : {
@@ -3917,6 +4049,12 @@
             "value" : "전체 화면"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrin Penuh"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4089,6 +4227,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이름 있는 마크 설정"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tetapkan Tanda Bernama"
           }
         },
         "nb" : {
@@ -4265,6 +4409,12 @@
             "value" : "동작"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tindakan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4437,6 +4587,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPU 프레임 캡처"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tangkap Bingkai GPU"
           }
         },
         "nb" : {
@@ -4613,6 +4769,12 @@
             "value" : "마크 및 주석"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tanda dan Anotasi"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4785,6 +4947,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "화면 왼쪽 전체 높이"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tinggi Penuh di Kiri Skrin"
           }
         },
         "nb" : {
@@ -4961,6 +5129,12 @@
             "value" : "윈도우 복제"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplikasi Tetingkap"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5133,6 +5307,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "명령 자동 완성"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Penyiapan Perintah Automatik"
           }
         },
         "nb" : {
@@ -5309,6 +5489,12 @@
             "value" : "윈도우 스타일"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gaya Tetingkap"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5481,6 +5667,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPU 렌더러 사용 가능 여부"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ketersediaan Pemapar GPU"
           }
         },
         "nb" : {
@@ -5657,6 +5849,12 @@
             "value" : "윈도우"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tetingkap"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5829,6 +6027,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "최소화"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimumkan"
           }
         },
         "nb" : {
@@ -6005,6 +6209,12 @@
             "value" : "윈도우"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tetingkap"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6174,6 +6384,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2"
@@ -6353,6 +6569,12 @@
             "value" : "iTerm2"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6525,6 +6747,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우 배치의 프로파일 변경…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tukar Profil dalam Susunan…"
           }
         },
         "nb" : {
@@ -6701,6 +6929,12 @@
             "value" : "셸"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cangkerang"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6873,6 +7107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "기본 너비 설정"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tetapkan Lebar Lalai"
           }
         },
         "nb" : {
@@ -7049,6 +7289,12 @@
             "value" : "셸"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cangkerang"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7221,6 +7467,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "도움말"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bantuan"
           }
         },
         "nb" : {
@@ -7397,6 +7649,12 @@
             "value" : "도움말"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bantuan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7569,6 +7827,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 도움말"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bantuan iTerm2"
           }
         },
         "nb" : {
@@ -7745,6 +8009,12 @@
             "value" : "환경설정…"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seting…"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7917,6 +8187,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "서비스"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perkhidmatan"
           }
         },
         "nb" : {
@@ -8093,6 +8369,12 @@
             "value" : "서비스"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perkhidmatan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8265,6 +8547,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 가리기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sembunyikan iTerm2"
           }
         },
         "nb" : {
@@ -8441,6 +8729,12 @@
             "value" : "iTerm2 종료"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keluar daripada iTerm2"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8613,6 +8907,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "기타 가리기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sembunyikan Lain"
           }
         },
         "nb" : {
@@ -8789,6 +9089,12 @@
             "value" : "모두 보기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tunjukkan Semua"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8961,6 +9267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "오려두기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Potong"
           }
         },
         "nb" : {
@@ -9137,6 +9449,12 @@
             "value" : "편집"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9309,6 +9627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "편집"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
           }
         },
         "nb" : {
@@ -9485,6 +9809,12 @@
             "value" : "모두 선택"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih Semua"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9657,6 +9987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "붙여넣기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tampal"
           }
         },
         "nb" : {
@@ -9833,6 +10169,12 @@
             "value" : "버퍼 지우기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kosongkan Penimbal"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10005,6 +10347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "로그"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log"
           }
         },
         "nb" : {
@@ -10181,6 +10529,12 @@
             "value" : "로그"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10353,6 +10707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2에 관하여"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perihal iTerm2"
           }
         },
         "nb" : {
@@ -10529,6 +10889,12 @@
             "value" : "프로파일"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10701,6 +11067,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "프로파일"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil"
           }
         },
         "nb" : {
@@ -10877,6 +11249,12 @@
             "value" : "터미널 윈도우 닫기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutup Tetingkap Terminal"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11049,6 +11427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "탭의 모든 패널 닫기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutup Semua Anak Tetingkap dalam Tab"
           }
         },
         "nb" : {
@@ -11225,6 +11609,12 @@
             "value" : "페이지 설정…"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Persediaan Halaman…"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11397,6 +11787,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "선택한 텍스트 저장…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simpan Teks Dipilih…"
           }
         },
         "nb" : {
@@ -11573,6 +11969,12 @@
             "value" : "스크롤백 버퍼 지우기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kosongkan Penimbal Skrol Balik"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11745,6 +12147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "선택 항목으로 찾기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gunakan Pilihan untuk Cari"
           }
         },
         "nb" : {
@@ -11921,6 +12329,12 @@
             "value" : "찾기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cari"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12093,6 +12507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "찾기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cari"
           }
         },
         "nb" : {
@@ -12269,6 +12689,12 @@
             "value" : "다음 찾기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cari Seterusnya"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12441,6 +12867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이전 찾기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cari Sebelumnya"
           }
         },
         "nb" : {
@@ -12617,6 +13049,12 @@
             "value" : "선택 항목으로 이동"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lompat ke Pilihan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12789,6 +13227,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "보기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paparan"
           }
         },
         "nb" : {
@@ -12965,6 +13409,12 @@
             "value" : "보기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paparan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13137,6 +13587,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "텍스트 크게"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Besarkan Teks"
           }
         },
         "nb" : {
@@ -13313,6 +13769,12 @@
             "value" : "텍스트 작게"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kecilkan Teks"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13485,6 +13947,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "프린트"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cetak"
           }
         },
         "nb" : {
@@ -13661,6 +14129,12 @@
             "value" : "화면"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrin"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13833,6 +14307,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "프린트"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cetak"
           }
         },
         "nb" : {
@@ -14009,6 +14489,12 @@
             "value" : "선택 영역"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilihan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14181,6 +14667,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "버퍼"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Penimbal"
           }
         },
         "nb" : {
@@ -14357,6 +14849,12 @@
             "value" : "이전 탭 선택"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih Tab Sebelumnya"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14529,6 +15027,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "다음 탭 선택"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih Tab Seterusnya"
           }
         },
         "nb" : {
@@ -14705,6 +15209,12 @@
             "value" : "탭 선택"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih Tab"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14877,6 +15387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "탭 선택"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih Tab"
           }
         },
         "nb" : {
@@ -15053,6 +15569,12 @@
             "value" : "새로운 탭"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab Baharu"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15225,6 +15747,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 윈도우"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tetingkap Baharu"
           }
         },
         "nb" : {
@@ -15401,6 +15929,12 @@
             "value" : "Option 키를 누르면 새로운 윈도우"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tekan Option untuk Tetingkap Baharu"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15573,6 +16107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 윈도우에서 열기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka dalam Tetingkap Baharu"
           }
         },
         "nb" : {
@@ -15749,6 +16289,12 @@
             "value" : "업데이트 확인…"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semak Kemas Kini…"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15921,6 +16467,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "확대/축소"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zum"
           }
         },
         "nb" : {
@@ -16097,6 +16649,12 @@
             "value" : "재설정"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16269,6 +16827,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "전체 화면 전환"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Togol Skrin Penuh"
           }
         },
         "nb" : {
@@ -16445,6 +17009,12 @@
             "value" : "디버그 로깅 전환"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Togol Pengelogan Nyahpepijat"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16617,6 +17187,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "프로파일 열기…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka Profil…"
           }
         },
         "nb" : {
@@ -16793,6 +17369,12 @@
             "value" : "세션 편집…"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Sesi…"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16965,6 +17547,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "즉시 재생 시작"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mulakan Main Semula Segera"
           }
         },
         "nb" : {
@@ -17141,6 +17729,12 @@
             "value" : "실행 취소"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buat Asal"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17313,6 +17907,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "실행 복귀"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buat Semula"
           }
         },
         "nb" : {
@@ -17489,6 +18089,12 @@
             "value" : "붙여넣기 기록 열기…"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka Sejarah Tampal…"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17661,6 +18267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "자동 완성 열기…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka Autolengkap…"
           }
         },
         "nb" : {
@@ -17837,6 +18449,12 @@
             "value" : "특수 붙여넣기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tampal Khas"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18009,6 +18627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "특수 붙여넣기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tampal Khas"
           }
         },
         "nb" : {
@@ -18185,6 +18809,12 @@
             "value" : "선택 영역 붙여넣기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tampal Pilihan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18357,6 +18987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "천천히 붙여넣기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tampal Perlahan-lahan"
           }
         },
         "nb" : {
@@ -18533,6 +19169,12 @@
             "value" : "보안 키보드 입력"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kemasukan Papan Kekunci Selamat"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18705,6 +19347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우를 가로로 정렬"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Susun Tetingkap Secara Mendatar"
           }
         },
         "nb" : {
@@ -18881,6 +19529,12 @@
             "value" : "닫기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutup"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19053,6 +19707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "현재 프로파일로 세로로 분할"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pisah Secara Menegak dengan Profil Semasa"
           }
         },
         "nb" : {
@@ -19229,6 +19889,12 @@
             "value" : "현재 프로파일로 가로로 분할"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pisah Secara Mendatar dengan Profil Semasa"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19401,6 +20067,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우 배치 저장"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simpan Susunan Tetingkap"
           }
         },
         "nb" : {
@@ -19577,6 +20249,12 @@
             "value" : "분할 패널 선택"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih Anak Tetingkap Pisah"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19749,6 +20427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "분할 패널 선택"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih Anak Tetingkap Pisah"
           }
         },
         "nb" : {
@@ -19925,6 +20609,12 @@
             "value" : "위쪽 패널 선택"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih Anak Tetingkap di Atas"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20097,6 +20787,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "아래쪽 패널 선택"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih Anak Tetingkap di Bawah"
           }
         },
         "nb" : {
@@ -20273,6 +20969,12 @@
             "value" : "왼쪽 패널 선택"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih Anak Tetingkap di Kiri"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20445,6 +21147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "오른쪽 패널 선택"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih Anak Tetingkap di Kanan"
           }
         },
         "nb" : {
@@ -20621,6 +21329,12 @@
             "value" : "투명도 사용"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gunakan Kelutsinaran"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20793,6 +21507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "활성 패널 최대화"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maksimumkan Anak Tetingkap Aktif"
           }
         },
         "nb" : {
@@ -20969,6 +21689,12 @@
             "value" : "항목 3"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 3"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21141,6 +21867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "항목 2"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 2"
           }
         },
         "nb" : {
@@ -21317,6 +22049,12 @@
             "value" : "항목 1"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 1"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21489,6 +22227,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "마크 설정"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tetapkan Tanda"
           }
         },
         "nb" : {
@@ -21665,6 +22409,12 @@
             "value" : "마크로 이동"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lompat ke Tanda"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21837,6 +22587,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "다음 패널"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anak Tetingkap Seterusnya"
           }
         },
         "nb" : {
@@ -22013,6 +22769,12 @@
             "value" : "이전 패널"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anak Tetingkap Sebelumnya"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22185,6 +22947,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "전체 화면에서 탭 보기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tunjukkan Tab dalam Skrin Penuh"
           }
         },
         "nb" : {
@@ -22361,6 +23129,12 @@
             "value" : "입력 브로드캐스트"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siarkan Input"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22533,6 +23307,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "입력 브로드캐스트"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siarkan Input"
           }
         },
         "nb" : {
@@ -22709,6 +23489,12 @@
             "value" : "모든 탭의 모든 패널에 입력 브로드캐스트"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siarkan Input ke Semua Anak Tetingkap dalam Semua Tab"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22881,6 +23667,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "현재 탭의 모든 패널에 입력 브로드캐스트"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siarkan Input ke Semua Anak Tetingkap dalam Tab Semasa"
           }
         },
         "nb" : {
@@ -23057,6 +23849,12 @@
             "value" : "현재 세션에만 입력 보내기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hantar Input ke Sesi Semasa Sahaja"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23229,6 +24027,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우 배치 복원"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulihkan Susunan Tetingkap"
           }
         },
         "nb" : {
@@ -23405,6 +24209,12 @@
             "value" : "윈도우 배치 복원"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulihkan Susunan Tetingkap"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23577,6 +24387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "커서 찾기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cari Kursor"
           }
         },
         "nb" : {
@@ -23753,6 +24569,12 @@
             "value" : "가로로 분할…"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pisah Secara Mendatar…"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23925,6 +24747,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세로로 분할…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pisah Secara Menegak…"
           }
         },
         "nb" : {
@@ -24101,6 +24929,12 @@
             "value" : "도구 벨트"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tali Pinggang Alat"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24273,6 +25107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "도구 벨트"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tali Pinggang Alat"
           }
         },
         "nb" : {
@@ -24449,6 +25289,12 @@
             "value" : "도구 벨트 보기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tunjukkan Tali Pinggang Alat"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24621,6 +25467,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "현재 프로파일로 새로운 탭"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab Baharu dengan Profil Semasa"
           }
         },
         "nb" : {
@@ -24797,6 +25649,12 @@
             "value" : "코프로세스 실행…"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jalankan Proses Bersama…"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24969,6 +25827,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "코프로세스 중단"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Henti Proses Bersama"
           }
         },
         "nb" : {
@@ -25145,6 +26009,12 @@
             "value" : "복사"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salin"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25317,6 +26187,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "탭을 새로운 윈도우로 이동"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alihkan Tab ke Tetingkap Baharu"
           }
         },
         "nb" : {
@@ -25493,6 +26369,12 @@
             "value" : "탭을 오른쪽으로 이동"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alihkan Tab ke Kanan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25667,6 +26549,12 @@
             "value" : "배경 패턴 표시기 보기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tunjukkan Penunjuk Corak Latar Belakang"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25836,6 +26724,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "tmux"
@@ -26015,6 +26909,12 @@
             "value" : "tmux"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26187,6 +27087,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 tmux 탭"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab tmux Baharu"
           }
         },
         "nb" : {
@@ -26363,6 +27269,12 @@
             "value" : "새로운 tmux 윈도우"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tetingkap tmux Baharu"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26535,6 +27447,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "분리"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Putuskan"
           }
         },
         "nb" : {
@@ -26711,6 +27629,12 @@
             "value" : "대시보드"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Papan Pemuka"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26883,6 +27807,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "텍스트 기본 크기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jadikan Teks Bersaiz Biasa"
           }
         },
         "nb" : {
@@ -27059,6 +27989,12 @@
             "value" : "텍스트 및 세션 크기 복원"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulihkan Saiz Teks dan Sesi"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27231,6 +28167,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2를 기본 터미널로 설정"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jadikan iTerm2 Terminal Lalai"
           }
         },
         "nb" : {
@@ -27407,6 +28349,12 @@
             "value" : "터미널 앱을 기본 터미널로 설정"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jadikan Terminal sebagai Terminal Lalai"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27579,6 +28527,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "현재 세션으로 입력 브로드캐스트 전환"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Togol Siaran Input ke Sesi Semasa"
           }
         },
         "nb" : {
@@ -27755,6 +28709,12 @@
             "value" : "더 빠르게 붙여넣기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tampal Lebih Pantas"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27927,6 +28887,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "더 느리게 붙여넣기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tampal Lebih Perlahan"
           }
         },
         "nb" : {
@@ -28103,6 +29069,12 @@
             "value" : "천천히 붙여넣기 더 빠르게"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tampal Perlahan Lebih Pantas"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28275,6 +29247,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "천천히 붙여넣기 더 느리게"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tampal Perlahan Lebih Perlahan"
           }
         },
         "nb" : {
@@ -28451,6 +29429,12 @@
             "value" : "문자 세트 재설정"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset Set Aksara"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28625,6 +29609,12 @@
             "value" : "아카이브"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arkib"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28794,6 +29784,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT400"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT400"
@@ -28973,6 +29969,12 @@
             "value" : "선택 영역에 주석 달기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anotasikan Pilihan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29145,6 +30147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "선택 영역 확대"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zum Masuk pada Pilihan"
           }
         },
         "nb" : {
@@ -29321,6 +30329,12 @@
             "value" : "구분선을 왼쪽으로 이동"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alihkan Pembahagi ke Kiri"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29493,6 +30507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "모두 끄기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nyahdayakan Semua"
           }
         },
         "nb" : {
@@ -29669,6 +30689,12 @@
             "value" : "세션 이동"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alihkan Sesi"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29841,6 +30867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "컴포저 보기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tunjukkan Penyusun Perintah"
           }
         },
         "nb" : {
@@ -30017,6 +31049,12 @@
             "value" : "강제 분리"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paksa Putuskan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30189,6 +31227,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이름 있는 마크"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tanda Bernama"
           }
         },
         "nb" : {
@@ -30365,6 +31409,12 @@
             "value" : "찾기…"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cari…"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30537,6 +31587,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "녹화 내보내기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eksport Rakaman"
           }
         },
         "nb" : {
@@ -30713,6 +31769,12 @@
             "value" : "제목 막대 없음"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiada Bar Tajuk"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30882,6 +31944,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT500"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT500"
@@ -31061,6 +32129,12 @@
             "value" : "클리핑 보기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tunjukkan Keratan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31233,6 +32307,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "컴패니언 기기 설정"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seting Peranti Pengiring"
           }
         },
         "nb" : {
@@ -31409,6 +32489,12 @@
             "value" : "복사 모드"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mod Salin"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31581,6 +32667,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션 이동"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alihkan Sesi"
           }
         },
         "nb" : {
@@ -31757,6 +32849,12 @@
             "value" : "탭"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31929,6 +33027,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "선택 영역 시작까지 지우기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kosongkan hingga Permulaan Pilihan"
           }
         },
         "nb" : {
@@ -32105,6 +33209,12 @@
             "value" : "성능 통계 복사"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salin Statistik Prestasi"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32277,6 +33387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스크립트"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrip"
           }
         },
         "nb" : {
@@ -32453,6 +33569,12 @@
             "value" : "현재 윈도우를 윈도우 배치로 저장"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simpan Tetingkap Semasa sebagai Susunan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32625,6 +33747,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "트리거"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pencetus"
           }
         },
         "nb" : {
@@ -32801,6 +33929,12 @@
             "value" : "커서 가이드 보기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tunjukkan Panduan Kursor"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32973,6 +34107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "크기 잠금"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kunci Saiz"
           }
         },
         "nb" : {
@@ -33149,6 +34289,12 @@
             "value" : "파일에 기록"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log ke Fail"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33321,6 +34467,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "내보내기…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eksport…"
           }
         },
         "nb" : {
@@ -33497,6 +34649,12 @@
             "value" : "웹"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33669,6 +34827,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "연관된 텍스트 리포팅"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laporkan Teks Berkaitan"
           }
         },
         "nb" : {
@@ -33845,6 +35009,12 @@
             "value" : "새로운 Python 스크립트"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrip Python Baharu"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34017,6 +35187,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "오픈 소스 라이선스"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka Lesen Sumber Terbuka"
           }
         },
         "nb" : {
@@ -34193,6 +35369,12 @@
             "value" : "즉시 재생 지우기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kosongkan Main Semula Segera"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34365,6 +35547,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "높이 줄이기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurangkan Tinggi"
           }
         },
         "nb" : {
@@ -34541,6 +35729,12 @@
             "value" : "스크립트"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrip"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34713,6 +35907,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Finder에서 스크립트 보기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tunjukkan Skrip dalam Finder"
           }
         },
         "nb" : {
@@ -34889,6 +36089,12 @@
             "value" : "내용 저장…"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simpan Kandungan…"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35061,6 +36267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "모두 앞으로 가져오기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hantar Semua ke Depan Sekali"
           }
         },
         "nb" : {
@@ -35237,6 +36449,12 @@
             "value" : "모두 접기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Runtuhkan Semua"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35409,6 +36627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "아카이브"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arkib"
           }
         },
         "nb" : {
@@ -35585,6 +36809,12 @@
             "value" : "윈도우 배치를 탭으로 복원"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulihkan Susunan Tetingkap sebagai Tab"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35757,6 +36987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "커서 위치에 주석 추가"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tambah Anotasi pada Kursor"
           }
         },
         "nb" : {
@@ -35933,6 +37169,12 @@
             "value" : "활성 윈도우의 투명도 끄기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nyahdayakan Kelutsinaran untuk Tetingkap Aktif"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36107,6 +37349,12 @@
             "value" : "브래킷 붙여넣기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tampal Berkurungan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36279,6 +37527,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "보기 좋게 정리된 JSON으로 대치"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ganti dengan JSON Terformat"
           }
         },
         "nb" : {
@@ -36515,6 +37769,12 @@
             "value" : "Pindahkan ke Depan"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hantar ke Depan Sekali"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36687,6 +37947,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tambatkan Panel Mengambang"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Labuhkan Anak Tetingkap Terapung"
           }
         },
         "ro" : {
@@ -36863,6 +38129,12 @@
             "value" : "Sembunyikan Panel Mengambang"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sembunyikan Anak Tetingkap Terapung"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37035,6 +38307,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pindahkan Panel Mengambang ke Bawah"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alihkan Anak Tetingkap Terapung ke Bawah"
           }
         },
         "ro" : {
@@ -37211,6 +38489,12 @@
             "value" : "Pindahkan Panel Mengambang ke Kiri"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alihkan Anak Tetingkap Terapung ke Kiri"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37383,6 +38667,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pindahkan Panel Mengambang ke Kanan"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alihkan Anak Tetingkap Terapung ke Kanan"
           }
         },
         "ro" : {
@@ -37559,6 +38849,12 @@
             "value" : "Pindahkan Panel Mengambang ke Atas"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alihkan Anak Tetingkap Terapung ke Atas"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37731,6 +39027,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Panel Mengambang Baru dengan Profil Saat Ini"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anak Tetingkap Terapung Baharu dengan Profil Semasa"
           }
         },
         "ro" : {
@@ -37907,6 +39209,12 @@
             "value" : "Panel Mengambang"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anak Tetingkap Terapung"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38079,6 +39387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Panel Mengambang"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anak Tetingkap Terapung"
           }
         },
         "ro" : {
@@ -38255,6 +39569,12 @@
             "value" : "Kirim ke Belakang"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hantar ke Belakang Sekali"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38367,6 +39687,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "오늘의 팁 보기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tunjukkan Petua Hari Ini"
           }
         },
         "nb" : {
@@ -38543,6 +39869,12 @@
             "value" : "다음 주석"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anotasi Seterusnya"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38715,6 +40047,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "콕핏"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cockpit"
           }
         },
         "nb" : {
@@ -38891,6 +40229,12 @@
             "value" : "세션을 탭으로 이동"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alihkan Sesi ke Tab"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39063,6 +40407,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "화면 하단"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bawah Skrin"
           }
         },
         "nb" : {
@@ -39239,6 +40589,12 @@
             "value" : "붙여넣을 때 탭을 공백으로 변환할지 묻기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gesa untuk Tukar Tab kepada Ruang semasa Menampal"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39411,6 +40767,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "경고"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Isyarat"
           }
         },
         "nb" : {
@@ -39587,6 +40949,12 @@
             "value" : "제어 시퀀스와 함께 복사"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salin dengan Jujukan Kawalan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39759,6 +41127,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우 크기 조절"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ubah Saiz Tetingkap"
           }
         },
         "nb" : {
@@ -39935,6 +41309,12 @@
             "value" : "재설정"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40107,6 +41487,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "탭 복제"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplikasi Tab"
           }
         },
         "nb" : {
@@ -40283,6 +41669,12 @@
             "value" : "페이지 다시 로드"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muat Semula Halaman"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40455,6 +41847,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션을 윈도우로 이동"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alihkan Sesi ke Tetingkap"
           }
         },
         "nb" : {
@@ -40631,6 +42029,12 @@
             "value" : "모든 키를 이스케이프 코드로 리포팅"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laporkan Semua Kekunci sebagai Kod Escape"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40803,6 +42207,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "원시 키 리포팅 모드"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mod Pelaporan Kekunci Mentah"
           }
         },
         "nb" : {
@@ -40979,6 +42389,12 @@
             "value" : "가져오기…"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import…"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41151,6 +42567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "여러 줄 붙여넣기 전에 경고"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beri Amaran Sebelum Tampal Berbilang Baris"
           }
         },
         "nb" : {
@@ -41327,6 +42749,12 @@
             "value" : "인라인 채팅 보기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tunjukkan Sembang Sebaris"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41501,6 +42929,12 @@
             "value" : "버퍼 입력 전환"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Togol Input Penimbal"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41673,6 +43107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "원격 호스트가 iTerm2를 제어할 수 있음"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hos jauh boleh mengawal iTerm2"
           }
         },
         "nb" : {
@@ -41909,6 +43349,12 @@
             "value" : "Periksa Pemotongan Kontrol Pengaturan"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semak Pemotongan Kawalan Seting"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42021,6 +43467,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "트리거"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pencetus"
           }
         },
         "nb" : {
@@ -42197,6 +43649,12 @@
             "value" : "선택 영역이 소프트 경계를 따름"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilihan Menghormati Sempadan Lembut"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42369,6 +43827,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "워크그룹 나가기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keluar daripada Kumpulan Kerja"
           }
         },
         "nb" : {
@@ -42545,6 +44009,12 @@
             "value" : "마지막 명령의 출력 선택"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih Output Perintah Terakhir"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42717,6 +44187,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션 재시작"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mulakan Semula Sesi"
           }
         },
         "nb" : {
@@ -42893,6 +44369,12 @@
             "value" : "Python REPL 열기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka Python REPL"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43065,6 +44547,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "화면 상단"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atas Skrin"
           }
         },
         "nb" : {
@@ -43241,6 +44729,12 @@
             "value" : "모든 윈도우 병합"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gabungkan Semua Tetingkap"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43413,6 +44907,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "단축키 윈도우 고정"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pin Tetingkap Kekunci Panas"
           }
         },
         "nb" : {
@@ -43589,6 +45089,12 @@
             "value" : "modifyOtherKeys 모드 2"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys Mod 2"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43761,6 +45267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "빠르게 열기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka dengan Cepat"
           }
         },
         "nb" : {
@@ -43937,6 +45449,12 @@
             "value" : "관리"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Urus"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44109,6 +45627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이스케이프 구분"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nyahkaburkan Escape"
           }
         },
         "nb" : {
@@ -44285,6 +45809,12 @@
             "value" : "열 결과 선택"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih Hasil untuk Dibuka"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44457,6 +45987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "여러 줄 붙여넣기 경고를 셸 프롬프트로 제한"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hadkan Amaran Tampal Berbilang Baris kepada Gesaan Cangkerang"
           }
         },
         "nb" : {
@@ -44633,6 +46169,12 @@
             "value" : "대화형 앱에서 트리거 활성화"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dayakan Pencetus dalam App Interaktif"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44805,6 +46347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "항목 2"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 2"
           }
         },
         "nb" : {
@@ -44981,6 +46529,12 @@
             "value" : "마우스 리포팅"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pelaporan Tetikus"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45153,6 +46707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "마크 및 주석"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tanda dan Anotasi"
           }
         },
         "nb" : {
@@ -45329,6 +46889,12 @@
             "value" : "레이아웃 잠금"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kunci Reka Letak"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45501,6 +47067,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "위치 잠금"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kunci Lokasi"
           }
         },
         "nb" : {
@@ -45677,6 +47249,12 @@
             "value" : "현재 프로파일로 새로운 윈도우"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tetingkap Baharu dengan Profil Semasa"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45849,6 +47427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션 숨겨두기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tanam Sesi"
           }
         },
         "nb" : {
@@ -46025,6 +47609,12 @@
             "value" : "모달 경고 상자 보기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tunjukkan Kotak Isyarat Modal"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46197,6 +47787,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "모두 켜기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dayakan Semua"
           }
         },
         "nb" : {
@@ -46373,6 +47969,12 @@
             "value" : "다음 마크"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tanda Seterusnya"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46545,6 +48147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우 정렬"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Susun Tetingkap"
           }
         },
         "nb" : {
@@ -46721,6 +48329,12 @@
             "value" : "모든 스마트 선택 일치 항목 찾기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cari Semua Padanan Pilihan Pintar"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46893,6 +48507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "사운드 재생"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mainkan Bunyi"
           }
         },
         "nb" : {
@@ -47069,6 +48689,12 @@
             "value" : "명령 기록 열기…"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka Sejarah Perintah…"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47241,6 +48867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스타일과 함께 복사"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salin dengan Gaya"
           }
         },
         "nb" : {
@@ -47417,6 +49049,12 @@
             "value" : "대체 화면"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrin Alternatif"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47591,6 +49229,12 @@
             "value" : "화면 오른쪽 전체 높이"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tinggi Penuh di Kanan Skrin"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47760,6 +49404,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -47939,6 +49589,12 @@
             "value" : "표준 키 리포팅 모드"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mod Pelaporan Kekunci Standard"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48111,6 +49767,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "분할 패널 크기 조절"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ubah Saiz Anak Tetingkap Pisah"
           }
         },
         "nb" : {
@@ -48287,6 +49949,12 @@
             "value" : "경고"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Isyarat"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48459,6 +50127,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "상태 변경 시 알림"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beritahu apabila Status Berubah"
           }
         },
         "nb" : {
@@ -48635,6 +50309,12 @@
             "value" : "다음 탭 그룹 선택"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih Kumpulan Tab Seterusnya"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48807,6 +50487,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code 통합 제거"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nyahpasang Integrasi Claude Code"
           }
         },
         "nb" : {
@@ -48983,6 +50669,12 @@
             "value" : "탭 제목 편집"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Tajuk Tab"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49155,6 +50847,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "배치"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Susunan"
           }
         },
         "nb" : {
@@ -49331,6 +51029,12 @@
             "value" : "이전 피어"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rakan Sebelumnya"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49503,6 +51207,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "대체 키 리포팅"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laporkan Kekunci Alternatif"
           }
         },
         "nb" : {
@@ -49679,6 +51389,12 @@
             "value" : "패널 분할"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anak Tetingkap Pisah"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49851,6 +51567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "터미널 상태"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keadaan Terminal"
           }
         },
         "nb" : {
@@ -50027,6 +51749,12 @@
             "value" : "닫기 실행 취소"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buat Asal Tutup"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50199,6 +51927,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI 채팅"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sembang AI"
           }
         },
         "nb" : {
@@ -50375,6 +52109,12 @@
             "value" : "앞으로"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maju"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50547,6 +52287,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "분할 패널 너비 잠금"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kunci Lebar Anak Tetingkap Pisah"
           }
         },
         "nb" : {
@@ -50723,6 +52469,12 @@
             "value" : "워크그룹"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kumpulan Kerja"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50895,6 +52647,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "현재 세션의 아카이브 저장…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simpan Arkib Sesi Semasa…"
           }
         },
         "nb" : {
@@ -51071,6 +52829,12 @@
             "value" : "선택 영역 대치"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ganti Pilihan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51240,6 +53004,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT300"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT300"
@@ -51419,6 +53189,12 @@
             "value" : "주석 보기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tunjukkan Anotasi"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51588,6 +53364,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -51767,6 +53549,12 @@
             "value" : "관리"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Urus"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51939,6 +53727,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "항목 3"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 3"
           }
         },
         "nb" : {
@@ -52115,6 +53909,12 @@
             "value" : "이전 탭 그룹 선택"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih Kumpulan Tab Sebelumnya"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -52287,6 +54087,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "숨겨둔 세션"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesi Tertanam"
           }
         },
         "nb" : {
@@ -52463,6 +54269,12 @@
             "value" : "이전 주석"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anotasi Sebelumnya"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -52635,6 +54447,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "화면 밖 세션의 마크에서 경고"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beri Isyarat pada Tanda dalam Sesi di Luar Skrin"
           }
         },
         "nb" : {
@@ -52871,6 +54689,12 @@
             "value" : "Tengah, Tanpa Bar Judul"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dipusatkan, Tiada Bar Tajuk"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -52983,6 +54807,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code 통합 설치"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pasang Integrasi Claude Code"
           }
         },
         "nb" : {
@@ -53159,6 +54989,12 @@
             "value" : "알림 게시"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hantar Pemberitahuan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53331,6 +55167,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "현재 세션이 브로드캐스트 소스"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesi Semasa ialah Sumber Siaran"
           }
         },
         "nb" : {
@@ -53507,6 +55349,12 @@
             "value" : "다음 마크에서 경고"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Isyarat pada Tanda Seterusnya"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53679,6 +55527,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "너비 늘리기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tambah Lebar"
           }
         },
         "nb" : {
@@ -53855,6 +55709,12 @@
             "value" : "CSI u 모드"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mod CSI u"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54027,6 +55887,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "구분선을 아래로 이동"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alihkan Pembahagi ke Bawah"
           }
         },
         "nb" : {
@@ -54203,6 +56069,12 @@
             "value" : "분할 패널 크기 조절"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ubah Saiz Anak Tetingkap Pisah"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54375,6 +56247,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code 통합 재설치"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pasang Semula Integrasi Claude Code"
           }
         },
         "nb" : {
@@ -54551,6 +56429,12 @@
             "value" : "셸 통합 설치"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pasang Integrasi Cangkerang"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54723,6 +56607,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "필터"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tapis"
           }
         },
         "nb" : {
@@ -54899,6 +56789,12 @@
             "value" : "트리거 편집"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Pencetus"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55071,6 +56967,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "패널 일시 정지"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeda Anak Tetingkap"
           }
         },
         "nb" : {
@@ -55247,6 +57149,12 @@
             "value" : "소급 디버그 로그 저장"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simpan Log Nyahpepijat Retrospektif"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55419,6 +57327,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스니펫"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coretan"
           }
         },
         "nb" : {
@@ -55595,6 +57509,12 @@
             "value" : "현재 명령 선택"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih Perintah Semasa"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55767,6 +57687,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스크린샷 찍기…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buat Tangkapan Skrin…"
           }
         },
         "nb" : {
@@ -55943,6 +57869,12 @@
             "value" : "선택 영역을 네이티브로 렌더링"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paparkan Pilihan Secara Natif"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -56115,6 +58047,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션 메모 보기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tunjukkan Nota Sesi"
           }
         },
         "nb" : {
@@ -56291,6 +58229,12 @@
             "value" : "스니펫"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coretan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -56463,6 +58407,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우 제목 편집"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Tajuk Tetingkap"
           }
         },
         "nb" : {
@@ -56639,6 +58589,12 @@
             "value" : "숨긴 경고…"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Isyarat Disenyapkan…"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -56811,6 +58767,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이전 마크"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tanda Sebelumnya"
           }
         },
         "nb" : {
@@ -56987,6 +58949,12 @@
             "value" : "이미 다운로드한 Python 런타임 설치"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pasang Masa Jalan Python yang Sudah Dimuat Turun"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -57159,6 +59127,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "구분선을 오른쪽으로 이동"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alihkan Pembahagi ke Kanan"
           }
         },
         "nb" : {
@@ -57335,6 +59309,12 @@
             "value" : "탭"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -57507,6 +59487,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "파일 다운로드…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muat Turun Fail…"
           }
         },
         "nb" : {
@@ -57683,6 +59669,12 @@
             "value" : "탭을 왼쪽으로 이동"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alihkan Tab ke Kiri"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -57855,6 +59847,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 그룹에 탭 추가…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tambah Tab ke Kumpulan Baharu…"
           }
         },
         "nb" : {
@@ -58031,6 +60029,12 @@
             "value" : "도구 막대 보기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tunjukkan Bar Alat"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -58203,6 +60207,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "그룹에서 탭 제거"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keluarkan Tab daripada Kumpulan"
           }
         },
         "nb" : {
@@ -58379,6 +60389,12 @@
             "value" : "자동 컴포저"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Penyusun Perintah Automatik"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -58551,6 +60567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI 채팅 열기…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka Sembang AI…"
           }
         },
         "nb" : {
@@ -58727,6 +60749,12 @@
             "value" : "타임스탬프 보기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tunjukkan Cap Masa"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -58899,6 +60927,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "고급 붙여넣기…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tampal Lanjutan…"
           }
         },
         "nb" : {
@@ -59075,6 +61109,12 @@
             "value" : "윈도우 정렬"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Susun Tetingkap"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -59247,6 +61287,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "에뮬레이션 수준"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tahap Emulasi"
           }
         },
         "nb" : {
@@ -59423,6 +61469,12 @@
             "value" : "일치 항목 선택"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih Padanan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -59595,6 +61647,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "선택 영역 열기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka Pilihan"
           }
         },
         "nb" : {
@@ -59771,6 +61829,12 @@
             "value" : "기록"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sejarah"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -59943,6 +62007,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "아카이브 복원…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulihkan Arkib…"
           }
         },
         "nb" : {
@@ -60119,6 +62189,12 @@
             "value" : "윈도우 스타일"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gaya Tetingkap"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -60291,6 +62367,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "화면 아래쪽 전체 너비"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lebar Penuh di Bawah Skrin"
           }
         },
         "nb" : {
@@ -60467,6 +62549,12 @@
             "value" : "리터럴 제어 문자"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kawalan Literal"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -60639,6 +62727,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "찾기 지우기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kosongkan Carian"
           }
         },
         "nb" : {
@@ -60815,6 +62909,12 @@
             "value" : "AI로 출력 설명"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terangkan Output dengan AI"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -60987,6 +63087,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "에뮬레이션 수준"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tahap Emulasi"
           }
         },
         "nb" : {
@@ -61163,6 +63269,12 @@
             "value" : "URL 찾기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cari URL"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -61335,6 +63447,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "보기 좋게 정리된 JSON으로 대치"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ganti dengan JSON Terformat"
           }
         },
         "nb" : {
@@ -61511,6 +63629,12 @@
             "value" : "동작"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tindakan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -61683,6 +63807,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "크기 변경 시 프로파일 업데이트"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perubahan Saiz Mengemas Kini Profil"
           }
         },
         "nb" : {
@@ -61859,6 +63989,12 @@
             "value" : "Dock 메뉴에서 최근 프로파일 제거"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keluarkan Profil Terbaharu daripada Menu Dock"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -62031,6 +64167,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "숨겨둔 세션"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesi Tertanam"
           }
         },
         "nb" : {
@@ -62207,6 +64349,12 @@
             "value" : "의존성 관리…"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Urus Kebergantungan…"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -62379,6 +64527,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "뒤로"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Balik"
           }
         },
         "nb" : {
@@ -62555,6 +64709,12 @@
             "value" : "워크그룹"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kumpulan Kerja"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -62727,6 +64887,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "파일에서 윈도우 배치 불러오기…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muat Susunan daripada Fail…"
           }
         },
         "nb" : {
@@ -62903,6 +65069,12 @@
             "value" : "복사 모드 단축키"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pintasan Mod Salin"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63075,6 +65247,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "패널 분할"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anak Tetingkap Pisah"
           }
         },
         "nb" : {
@@ -63251,6 +65429,12 @@
             "value" : "윈도우 크기 조절"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ubah Saiz Tetingkap"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63423,6 +65607,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "모든 이벤트 유형 리포팅"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laporkan Semua Jenis Peristiwa"
           }
         },
         "nb" : {
@@ -63599,6 +65789,12 @@
             "value" : "트리거 추가…"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tambah Pencetus…"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63771,6 +65967,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "웹"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
           }
         },
         "nb" : {
@@ -63947,6 +66149,12 @@
             "value" : "modifyOtherKeys 모드 1"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys Mod 1"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -64119,6 +66327,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "너비 줄이기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurangkan Lebar"
           }
         },
         "nb" : {
@@ -64295,6 +66509,12 @@
             "value" : "화면 오른쪽"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kanan Skrin"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -64467,6 +66687,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Base64로 인코딩된 파일 붙여넣기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tampal Fail Terkod Base64"
           }
         },
         "nb" : {
@@ -64643,6 +66869,12 @@
             "value" : "마지막 마크까지 지우기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kosongkan hingga Tanda Terakhir"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -64815,6 +67047,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "분할 패널 균등하게 정렬"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Susun Anak Tetingkap Pisah Secara Sekata"
           }
         },
         "nb" : {
@@ -64991,6 +67229,12 @@
             "value" : "녹화 가져오기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import Rakaman"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65163,6 +67407,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "응용 프로그램 키패드"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pad Kekunci Aplikasi"
           }
         },
         "nb" : {
@@ -65339,6 +67589,12 @@
             "value" : "화면 위쪽 전체 너비"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lebar Penuh di Atas Skrin"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65508,6 +67764,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT100"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT100"
@@ -65687,6 +67949,12 @@
             "value" : "VT200"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT200"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65859,6 +68127,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "연결 해제"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Putuskan Sambungan"
           }
         },
         "nb" : {
@@ -66035,6 +68309,12 @@
             "value" : "셸 프롬프트에서 줄바꿈으로 끝나는 한 줄을 붙여넣기 전에 경고"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beri Amaran Sebelum Menampal Satu Baris Berakhir dengan Baris Baharu pada Gesaan Cangkerang"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -66207,6 +68487,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "전체에서 찾기…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cari Secara Global…"
           }
         },
         "nb" : {
@@ -66383,6 +68669,12 @@
             "value" : "최대화됨"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dimaksimumkan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -66555,6 +68847,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "콘솔"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konsol"
           }
         },
         "nb" : {
@@ -66731,6 +69029,12 @@
             "value" : "현재 탭 옆에 새로운 탭"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab Baharu di Sebelah Tab Semasa"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -66903,6 +69207,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우 배치를 탭으로 복원"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulihkan Susunan Tetingkap sebagai Tab"
           }
         },
         "nb" : {
@@ -67079,6 +69389,12 @@
             "value" : "Base64로 인코딩된 값으로 대치"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ganti dengan Nilai Terkod Base 64"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -67251,6 +69567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "인공지능 가동"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Libatkan Kecerdasan Buatan"
           }
         },
         "nb" : {
@@ -67427,6 +69749,12 @@
             "value" : "세션"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesi"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -67601,6 +69929,12 @@
             "value" : "이름 있는 마크"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tanda Bernama"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -67773,6 +70107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "다음 피어"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rakan Seterusnya"
           }
         },
         "nb" : {

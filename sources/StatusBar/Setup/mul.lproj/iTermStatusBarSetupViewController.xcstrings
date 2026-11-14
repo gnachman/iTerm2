@@ -89,6 +89,12 @@
             "value" : "메뉴에서 구성요소를 활성 구성요소로 드래그하여 상태 막대에 추가하십시오."
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seret komponen daripada menu ke Komponen Aktif untuk menambahkannya ke bar status anda."
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "안정적인 위치보다 빽빽한 배치 우선"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utamakan pembungkusan padat berbanding kedudukan stabil"
           }
         },
         "nb" : {
@@ -437,6 +449,12 @@
             "value" : "확인"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -609,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "활성 구성요소"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Komponen Aktif"
           }
         },
         "nb" : {
@@ -785,6 +809,12 @@
             "value" : "꺼짐"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dinyahdayakan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -957,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "값이 비어 있는 구성요소 제거"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keluarkan komponen dengan nilai kosong"
           }
         },
         "nb" : {
@@ -1133,6 +1169,12 @@
             "value" : "상태 막대와 터미널 사이에 구분선 그리기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lukis pemisah antara bar status dan terminal"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1305,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "자동"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatik"
           }
         },
         "nb" : {
@@ -1481,6 +1529,12 @@
             "value" : "상태 막대 구성요소 메뉴"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menu Komponen Bar Status"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1653,6 +1707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "고급…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lanjutan…"
           }
         },
         "nb" : {
@@ -1829,6 +1889,12 @@
             "value" : "빽빽한 배치 알고리즘을 사용하면 한 번에 더 많은 상태 막대 구성요소를 표시할 수 있지만, 구성요소의 위치가 더 자주 바뀌는 경향이 있습니다."
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algoritma pembungkusan padat membolehkan lebih banyak komponen bar status kelihatan pada satu masa tetapi ia cenderung lebih kerap berpindah."
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2001,6 +2067,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "🌈 자동 무지개:"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌈 Pelangi Automatik:"
           }
         },
         "nb" : {
@@ -2177,6 +2249,12 @@
             "value" : "서체 이름이 여기에 표시됩니다"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nama fon di sini"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2349,6 +2427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "어두운 색상"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warna Gelap"
           }
         },
         "nb" : {
@@ -2525,6 +2609,12 @@
             "value" : "변경"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tukar"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2697,6 +2787,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "기본 텍스트 색상:"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warna Teks Lalai:"
           }
         },
         "nb" : {
@@ -2873,6 +2969,12 @@
             "value" : "구성요소 구성"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konfigurasikan Komponen"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3045,6 +3147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "빽빽한 배치 알고리즘을 사용하면 한 번에 더 많은 상태 막대 구성요소를 표시할 수 있지만, 구성요소의 위치가 더 자주 바뀌는 경향이 있습니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algoritma pembungkusan padat membolehkan lebih banyak komponen bar status kelihatan pada satu masa tetapi ia cenderung lebih kerap berpindah."
           }
         },
         "nb" : {
@@ -3221,6 +3329,12 @@
             "value" : "구분선 색상:"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warna Pemisah:"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3393,6 +3507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "취소"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batal"
           }
         },
         "nb" : {
@@ -3569,6 +3689,12 @@
             "value" : "밝은 색상"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warna Cerah"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3741,6 +3867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "서체:"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fon:"
           }
         },
         "nb" : {
@@ -3917,6 +4049,12 @@
             "value" : "배경 색상:"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warna Latar Belakang:"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4091,6 +4229,12 @@
             "value" : "확인"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4263,6 +4407,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "상태 막대와 터미널 내용 사이에 가는 선을 그립니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Melukis garis nipis antara bar status dan kandungan terminal."
           }
         },
         "nb" : {

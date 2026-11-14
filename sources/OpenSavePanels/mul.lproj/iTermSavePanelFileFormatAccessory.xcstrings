@@ -89,6 +89,12 @@
             "value": "타임스탬프 포함"
           }
         },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sertakan cap masa"
+          }
+        },
         "nb": {
           "stringUnit": {
             "state": "translated",
@@ -261,6 +267,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "파일 형식:"
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Format Fail:"
           }
         },
         "nb": {

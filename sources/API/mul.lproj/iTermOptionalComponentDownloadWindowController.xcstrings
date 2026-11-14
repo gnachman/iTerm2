@@ -89,6 +89,12 @@
             "value": "Python 런타임 설치 프로그램"
           }
         },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pemasang Masa Jalan Python"
+          }
+        },
         "nb": {
           "stringUnit": {
             "state": "translated",
@@ -263,6 +269,12 @@
             "value": "취소"
           }
         },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Batal"
+          }
+        },
         "nb": {
           "stringUnit": {
             "state": "translated",
@@ -435,6 +447,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "선택적 구성요소 다운로드 중…"
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Memuat turun komponen pilihan…"
           }
         },
         "nb": {

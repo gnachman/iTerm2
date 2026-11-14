@@ -89,6 +89,12 @@
             "value" : "pid"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pid"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "작업"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proses"
           }
         },
         "nb" : {
@@ -437,6 +449,12 @@
             "value" : "프로세스 ID 복사"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salin ID Proses"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -609,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "항목 1"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 1"
           }
         },
         "nb" : {
@@ -785,6 +809,12 @@
             "value" : "항목 2"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 2"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -957,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "항목 3"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 3"
           }
         },
         "nb" : {
@@ -1133,6 +1169,12 @@
             "value" : "종료 시 알림"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beritahu apabila Ditamatkan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1305,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "명령 복사"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salin Perintah"
           }
         },
         "nb" : {

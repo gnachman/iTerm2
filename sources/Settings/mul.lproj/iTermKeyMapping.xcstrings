@@ -89,6 +89,12 @@
             "value" : "사전 설정…"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Praset…"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touch Bar 항목 추가"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tambah Item Touch Bar"
           }
         },
         "nb" : {
@@ -437,6 +449,12 @@
             "value" : "동작"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tindakan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -609,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touch Bar 문제 완화"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mitigasi Touch Bar"
           }
         },
         "nb" : {
@@ -785,6 +809,12 @@
             "value" : "Esc 키 시각적 표시기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Penunjuk visual kekunci esc"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -957,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "키 조합"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gabungan Kekunci"
           }
         },
         "nb" : {
@@ -1133,6 +1169,12 @@
             "value" : "Esc 키를 누를 때 햅틱 피드백"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maklum balas haptik apabila menekan esc"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1307,6 +1349,12 @@
             "value" : "확인"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1479,6 +1527,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Esc 키 클릭음"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klik kekunci untuk kekunci esc"
           }
         },
         "nb" : {

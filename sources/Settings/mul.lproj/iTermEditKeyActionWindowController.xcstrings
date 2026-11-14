@@ -89,6 +89,12 @@
             "value" : "마크 단위로 이동"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alih mengikut Tanda"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "키보드 단축키 설정"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tetapkan Pintasan Papan Kekunci"
           }
         },
         "nb" : {
@@ -437,6 +449,12 @@
             "value" : "취소"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batal"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -609,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "색상 사전 설정:"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Praset Warna:"
           }
         },
         "nb" : {
@@ -785,6 +809,12 @@
             "value" : "동작:"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tindakan:"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -957,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touch Bar에 표시할 레이블"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Label untuk ditunjukkan dalam Touch Bar"
           }
         },
         "nb" : {
@@ -1133,6 +1169,12 @@
             "value" : "문자 단위로 이동"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alih mengikut Aksara"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1305,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "예: 0x7f"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "cth: 0x7f"
           }
         },
         "nb" : {
@@ -1481,6 +1529,12 @@
             "value" : "프로파일:"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil:"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1653,6 +1707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "단어 단위로 이동"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alih mengikut Perkataan"
           }
         },
         "nb" : {
@@ -1829,6 +1889,12 @@
             "value" : "오류 메시지가 여기에 표시됩니다"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mesej ralat di sini"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2003,6 +2069,12 @@
             "value" : "동작:"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tindakan:"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2172,6 +2244,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esc+"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Esc+"
@@ -2351,6 +2429,12 @@
             "value" : "키보드 단축키:"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pintasan Papan Kekunci:"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2525,6 +2609,12 @@
             "value" : "줄 단위로 이동"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alih mengikut Baris"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2697,6 +2787,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "확인"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "nb" : {

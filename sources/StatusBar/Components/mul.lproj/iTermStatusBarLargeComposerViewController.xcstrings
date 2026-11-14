@@ -89,6 +89,12 @@
             "value" : "AI 완성 켜짐: 모든 텍스트가 AI로 전송됨"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pelengkapan AI didayakan: semua teks dihantar kepada AI"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "컴포저 사용 방법을 설명합니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menerangkan cara menggunakan penyusun perintah."
           }
         },
         "nb" : {
@@ -437,6 +449,12 @@
             "value" : "보내려면 ⇧↩를 누르십시오."
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tekan ⇧↩ untuk menghantar."
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -606,6 +624,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI"

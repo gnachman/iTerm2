@@ -89,6 +89,12 @@
             "value" : "/directory"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "디렉토리 복사"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salin direktori"
           }
         },
         "nb" : {
@@ -437,6 +449,12 @@
             "value" : "12바이트"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 bait"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -609,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "명령 출력 선택"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih output perintah"
           }
         },
         "nb" : {
@@ -785,6 +809,12 @@
             "value" : "1시간 35분"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1j 35m"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -957,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "출력:"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Output:"
           }
         },
         "nb" : {
@@ -1133,6 +1169,12 @@
             "value" : "복사됨"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disalin"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1305,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "명령을 클립보드에 복사"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salin perintah ke papan klip"
           }
         },
         "nb" : {
@@ -1481,6 +1529,12 @@
             "value" : "%@에 시작됨"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dimulakan pada %@"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1653,6 +1707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "컴포저에서 명령 열기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka perintah dalam Penyusun Perintah"
           }
         },
         "nb" : {
@@ -1829,6 +1889,12 @@
             "value" : "드래그 가능한 폴더"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folder Boleh Diseret"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2001,6 +2067,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "명령"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "perintah"
           }
         },
         "nb" : {
@@ -2177,6 +2249,12 @@
             "value" : "명령을 터미널에 쓰기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tulis perintah ke terminal"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2349,6 +2427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "디렉토리:"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Direktori:"
           }
         },
         "nb" : {
@@ -2525,6 +2609,12 @@
             "value" : "반환 코드:"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kod Pulangan:"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2697,6 +2787,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "디렉토리를 터미널에 쓰기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tulis direktori ke terminal"
           }
         },
         "nb" : {
@@ -2873,6 +2969,12 @@
             "value" : "실행 시간:"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masa Berjalan:"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3045,6 +3147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "명령 출력 복사"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salin output perintah"
           }
         },
         "nb" : {
@@ -3221,6 +3329,12 @@
             "value" : "명령 공유…"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kongsi perintah…"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3395,6 +3509,12 @@
             "value" : "명령:"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perintah:"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3564,6 +3684,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "127"
@@ -3741,6 +3867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "화면 밖 명령 보기 끄기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nyahdayakan paparan perintah luar skrin"
           }
         },
         "nb" : {

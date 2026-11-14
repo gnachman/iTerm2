@@ -89,6 +89,12 @@
             "value" : "헤더 셀"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SEL PENGEPALA"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "전역 찾기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cari Secara Global"
           }
         },
         "nb" : {
@@ -437,6 +449,12 @@
             "value" : "부분 문자열(대소문자 구분)"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subrentetan: Peka Huruf Besar/Kecil"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -609,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "부분 문자열(자동)"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subrentetan: Automatik"
           }
         },
         "nb" : {
@@ -785,6 +809,12 @@
             "value" : "정규 표현식(대소문자 구분 안 함)"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex: Abaikan Huruf Besar/Kecil"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -957,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "찾기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cari"
           }
         },
         "nb" : {
@@ -1133,6 +1169,12 @@
             "value" : "정규 표현식(대소문자 구분)"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex: Peka Huruf Besar/Kecil"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1305,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "부분 문자열(대소문자 구분 안 함)"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subrentetan: Abaikan Huruf Besar/Kecil"
           }
         },
         "nb" : {

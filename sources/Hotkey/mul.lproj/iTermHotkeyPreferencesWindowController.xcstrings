@@ -89,6 +89,12 @@
             "value" : "⌥ Option"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Option"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "단축키 윈도우 고정(키보드 포커스를 잃어도 열린 상태 유지)"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pin tetingkap kekunci panas (kekal terbuka apabila fokus papan kekunci hilang)"
           }
         },
         "nb" : {
@@ -437,6 +449,12 @@
             "value" : "단축키:"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kekunci panas:"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -609,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "참고: 다른 앱이 활성화되어 윈도우가 닫힌 경우에만 윈도우가 다시 열립니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nota: tetingkap hanya dibuka semula jika ia ditutup kerana app lain menjadi aktif."
           }
         },
         "nb" : {
@@ -785,6 +809,12 @@
             "value" : "추가 단축키"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kekunci Panas Tambahan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -957,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이 프로파일에 지정된 단축키를 누르면 전용 윈도우가 보이거나 가려집니다. 단축키가 있는 각 프로파일은 자체 단축키 윈도우를 제어합니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apabila anda menekan kekunci panas yang terikat pada profil ini, tetingkap khusus akan ditunjukkan atau disembunyikan. Setiap profil dengan kekunci panas mengawal Tetingkap Kekunci Panasnya sendiri."
           }
         },
         "nb" : {
@@ -1133,6 +1169,12 @@
             "value" : "특별한 동작 안 함"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jangan lakukan apa-apa yang istimewa"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1302,6 +1344,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -1481,6 +1529,12 @@
             "value" : "이 단축키 윈도우 보기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tunjukkan Tetingkap Kekunci Panas Ini"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1655,6 +1709,12 @@
             "value" : "단축키 윈도우 설정"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seting Tetingkap Kekunci Panas"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1824,6 +1884,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Command"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⌘ Command"
@@ -2003,6 +2069,12 @@
             "value" : "⚠️ 다른 프로파일에서 이 단축키를 사용합니다"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Profil lain menggunakan pintasan ini"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2172,6 +2244,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Shift"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⇧ Shift"
@@ -2351,6 +2429,12 @@
             "value" : "이중 탭 키:"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kekunci ketik dua kali:"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2523,6 +2607,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "앱이 다시 활성화될 때 자동으로 다시 열기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka semula secara automatik apabila app diaktifkan semula"
           }
         },
         "nb" : {
@@ -2699,6 +2789,12 @@
             "value" : "⚠️ 다른 프로파일에서 이 이중 탭을 사용합니다"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Profil lain menggunakan ketik dua kali ini"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2871,6 +2967,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "열려 있는 다른 윈도우가 없으면 이 단축키 윈도우 보기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tunjukkan Tetingkap Kekunci Panas ini jika tiada tetingkap lain dibuka"
           }
         },
         "nb" : {
@@ -3047,6 +3149,12 @@
             "value" : "플로팅 윈도우는 다른 윈도우와 Dock, 그리고 다른 앱의 전체 화면 윈도우 위에 겹쳐 표시됩니다(단축키 윈도우의 데스크탑이 모든 데스크탑으로 설정된 경우)."
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tetingkap terapung bertindih dengan tetingkap lain dan dock, serta tetingkap Skrin Penuh app lain (jika Space Tetingkap Kekunci Panas ditetapkan kepada Semua Space)."
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3219,6 +3327,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "취소"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batal"
           }
         },
         "nb" : {
@@ -3395,6 +3509,12 @@
             "value" : "Dock 아이콘 클릭 시:"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apabila ikon Dock diklik:"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3567,6 +3687,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "보기 및 가리기에 애니메이션 적용"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animasikan semasa menunjukkan dan menyembunyikan"
           }
         },
         "nb" : {
@@ -3743,6 +3869,12 @@
             "value" : "확인"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3915,6 +4047,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "확인"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "nb" : {
@@ -4091,6 +4229,12 @@
             "value" : "플로팅 윈도우"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tetingkap terapung"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4260,6 +4404,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Control"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "^ Control"
@@ -4437,6 +4587,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "추가 단축키…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kekunci Panas Tambahan…"
           }
         },
         "nb" : {

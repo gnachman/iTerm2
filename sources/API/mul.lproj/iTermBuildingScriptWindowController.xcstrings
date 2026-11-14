@@ -89,6 +89,12 @@
             "value" : "잠시만 기다려 주십시오! 새로운 Python 환경을 설치하는 중…"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sila tunggu sebentar! Memasang persekitaran Python baharu…"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",

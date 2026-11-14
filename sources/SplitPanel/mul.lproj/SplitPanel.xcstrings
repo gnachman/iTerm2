@@ -89,6 +89,12 @@
             "value" : "현재 패널을 XXX로 분할"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pisahkan anak tetingkap semasa secara XXX"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -263,6 +269,12 @@
             "value" : "취소"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batal"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -435,6 +447,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "분할"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pisah"
           }
         },
         "nb" : {

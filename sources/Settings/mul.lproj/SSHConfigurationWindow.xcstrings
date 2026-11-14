@@ -89,6 +89,12 @@
             "value" : "SSH 경로:"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laluan ke SSH:"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "원격 호스트에 복사할 파일:"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fail untuk Disalin ke Hos Jauh:"
           }
         },
         "nb" : {
@@ -437,6 +449,12 @@
             "value" : "대상"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Destinasi"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -611,6 +629,12 @@
             "value" : "확인"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -780,6 +804,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/usr/bin/ssh"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "/usr/bin/ssh"
@@ -959,6 +989,12 @@
             "value" : "찾아보기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semak Imbas"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1131,6 +1167,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "취소"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batal"
           }
         },
         "nb" : {
@@ -1307,6 +1349,12 @@
             "value" : "파일 또는 폴더"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fail atau Folder"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1481,6 +1529,12 @@
             "value" : "SSH 통합"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integrasi SSH"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1653,6 +1707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "원격 호스트에 복사할 환경 변수:"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pemboleh Ubah Persekitaran untuk Disalin ke Hos Jauh:"
           }
         },
         "nb" : {

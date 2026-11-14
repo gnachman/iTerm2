@@ -89,6 +89,12 @@
             "value" : "편집"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -263,6 +269,12 @@
             "value" : "제목"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tajuk"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -435,6 +447,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "텍스트"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teks"
           }
         },
         "nb" : {

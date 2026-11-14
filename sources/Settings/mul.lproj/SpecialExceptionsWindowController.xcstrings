@@ -89,6 +89,12 @@
             "value" : "Nerd Font 번들 설치…"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pasang Himpunan Nerd Font…"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -263,6 +269,12 @@
             "value" : "특별 예외 편집"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Pengecualian Khas"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -432,6 +444,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -611,6 +629,12 @@
             "value" : "특별 예외는 특정 유니코드 범위나 문자 체계에 대해 서체를 재정의합니다."
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pengecualian Khas menggantikan fon untuk julat atau skrip Unicode tertentu."
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -780,6 +804,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -959,6 +989,12 @@
             "value" : "확인"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1131,6 +1167,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "서체:"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bagi Fon:"
           }
         },
         "nb" : {
@@ -1307,6 +1349,12 @@
             "value" : "다음에서 시작하는 문자"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Untuk aksara bermula pada"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1479,6 +1527,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "사전 설정 추가…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tambah Praset…"
           }
         },
         "nb" : {
@@ -1655,6 +1709,12 @@
             "value" : "취소"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batal"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1827,6 +1887,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "~"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hingga"
           }
         },
         "nb" : {
@@ -2003,6 +2069,12 @@
             "value" : "특별 예외 관리"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Urus Pengecualian Khas"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2175,6 +2247,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "확인"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "nb" : {
@@ -2351,6 +2429,12 @@
             "value" : "코드 포인트 사용"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gunakan Titik Kod"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2525,6 +2609,12 @@
             "value" : "취소"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batal"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2694,6 +2784,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"

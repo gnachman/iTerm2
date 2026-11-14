@@ -11,7 +11,7 @@ import AppKit
 import XCTest
 
 final class SessionUndoTimeoutLabelLocalizationTests: XCTestCase {
-    private let languages = ["en", "cs", "da", "de", "el", "es", "fi", "fr", "hr", "hu", "id", "it", "ja", "nb", "nl", "pl", "pt-BR", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "vi", "zh-Hans", "zh-Hant"]
+    private let languages = ["en", "cs", "da", "de", "el", "es", "fi", "fr", "hr", "hu", "id", "it", "ja", "ms", "nb", "nl", "pl", "pt-BR", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "vi", "zh-Hans", "zh-Hant"]
 
     // The label (JdL-vz-9Vf in PreferencePanel.xib) is 551pt wide and clips. Its cell insets
     // leave about 547pt for text in the system font. Keep a little slack below that.

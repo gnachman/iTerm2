@@ -89,6 +89,12 @@
             "value" : "자동 완성"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autolengkap"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",

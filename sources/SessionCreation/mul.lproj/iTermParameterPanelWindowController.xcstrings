@@ -89,6 +89,12 @@
             "value": "다음 매개변수의 값 입력: "
           }
         },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masukkan nilai untuk "
+          }
+        },
         "nb": {
           "stringUnit": {
             "state": "translated",
@@ -261,6 +267,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "확인"
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
           }
         },
         "nb": {
@@ -437,6 +449,12 @@
             "value": "세션 매개변수"
           }
         },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parameter Sesi"
+          }
+        },
         "nb": {
           "stringUnit": {
             "state": "translated",
@@ -611,6 +629,12 @@
             "value": "취소"
           }
         },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Batal"
+          }
+        },
         "nb": {
           "stringUnit": {
             "state": "translated",
@@ -783,6 +807,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "이름"
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nama"
           }
         },
         "nb": {

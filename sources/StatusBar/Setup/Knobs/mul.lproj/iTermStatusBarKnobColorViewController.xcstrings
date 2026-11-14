@@ -89,6 +89,12 @@
             "value": "레이블"
           }
         },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Label"
+          }
+        },
         "nb": {
           "stringUnit": {
             "state": "translated",

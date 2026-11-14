@@ -89,6 +89,12 @@
             "value" : "mm:ss"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mm:ss"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx줄, xxx바이트."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx baris, xxx bait."
           }
         },
         "nb" : {
@@ -437,6 +449,12 @@
             "value" : "붙여넣기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tampal"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -611,6 +629,12 @@
             "value" : "취소"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batal"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -783,6 +807,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "최소 지속 시간:"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempoh minimum:"
           }
         },
         "nb" : {

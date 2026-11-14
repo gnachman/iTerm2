@@ -89,6 +89,12 @@
             "value" : "iterm2 라이브러리 외에는 종속성이 없는 간단한 스크립트입니다."
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrip ringkas yang tidak mempunyai sebarang kebergantungan selain pustaka iterm2."
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -258,6 +264,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😈"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😈"
@@ -437,6 +449,12 @@
             "value" : "기본"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asas"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -606,6 +624,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😊"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😊"
@@ -785,6 +809,12 @@
             "value" : "장기 실행 데몬"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daemon Jangka Panjang"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -957,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "단순"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ringkas"
           }
         },
         "nb" : {
@@ -1133,6 +1169,12 @@
             "value" : "취소"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batal"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1305,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "동작을 수행하고 종료하는 간단한 스크립트에는 이 템플릿을 선택하십시오."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih templat ini untuk skrip ringkas yang melakukan tindakan dan tamat."
           }
         },
         "nb" : {
@@ -1481,6 +1529,12 @@
             "value" : "iterm2 라이브러리 이외의 PyPI 패키지에 의존하는 스크립트입니다. 이 스크립트 전용 pyenv가 생성됩니다."
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrip yang bergantung pada pakej PyPI selain pustaka iterm2. pyenv persendirian akan dicipta untuk skrip ini."
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1650,6 +1704,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔗"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🔗"
@@ -1829,6 +1889,12 @@
             "value" : "스크립트 템플릿 선택:"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih templat skrip:"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2001,6 +2067,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "전체 환경"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Persekitaran Penuh"
           }
         },
         "nb" : {
@@ -2177,6 +2249,12 @@
             "value" : "계속 실행되면서 알림에 응답하는 스크립트에는 이 템플릿을 선택하십시오."
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih templat ini untuk skrip yang terus berjalan dan bertindak balas kepada pemberitahuan."
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2346,6 +2424,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛠️"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🛠️"
@@ -2523,6 +2607,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Python 환경 선택:"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih persekitaran Python:"
           }
         },
         "nb" : {

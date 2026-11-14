@@ -89,6 +89,12 @@
             "value" : "인공지능 설정"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sediakan Kecerdasan Buatan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI 제공업체가 송수신하는 토큰마다 요금을 부과할 수 있습니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anda mungkin dicaj oleh penyedia AI anda untuk setiap token yang dihantar atau diterima."
           }
         },
         "nb" : {
@@ -437,6 +449,12 @@
             "value" : "여기에 API 키 입력"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masukkan Kunci API di Sini"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -611,6 +629,12 @@
             "value" : "취소"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batal"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -783,6 +807,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "확인"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "nb" : {

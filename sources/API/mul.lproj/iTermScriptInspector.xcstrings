@@ -89,6 +89,12 @@
             "value" : "경로"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laluan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "보기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tunjukkan"
           }
         },
         "nb" : {
@@ -437,6 +449,12 @@
             "value" : "시그니처"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tandatangan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -609,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스크립팅 검사기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pemeriksa Skrip"
           }
         },
         "nb" : {
@@ -785,6 +809,12 @@
             "value" : "세션, 탭 및 윈도우"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesi, Tab dan Tetingkap"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -957,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "변수"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pemboleh Ubah"
           }
         },
         "nb" : {
@@ -1133,6 +1169,12 @@
             "value" : "역할"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peranan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1305,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "경로 복사"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salin Laluan"
           }
         },
         "nb" : {
@@ -1481,6 +1529,12 @@
             "value" : "등록된 함수"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fungsi Berdaftar"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1653,6 +1707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "값"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nilai"
           }
         },
         "nb" : {
@@ -1829,6 +1889,12 @@
             "value" : "ID 복사"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salin ID"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2003,6 +2069,12 @@
             "value" : "객체 이름(ID)"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nama Objek (ID)"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2172,6 +2244,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⨁"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⨁"
@@ -2351,6 +2429,12 @@
             "value" : "스크립트"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrip"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2523,6 +2607,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "값 복사"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salin Nilai"
           }
         },
         "nb" : {

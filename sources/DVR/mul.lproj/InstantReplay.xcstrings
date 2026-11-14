@@ -89,6 +89,12 @@
             "value": "내보내기…"
           }
         },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eksport…"
+          }
+        },
         "nb": {
           "stringUnit": {
             "state": "translated",
@@ -261,6 +267,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "현재"
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sekarang"
           }
         },
         "nb": {
@@ -437,6 +449,12 @@
             "value": "즉시 재생 제어"
           }
         },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kawalan Main Semula Segera"
+          }
+        },
         "nb": {
           "stringUnit": {
             "state": "translated",
@@ -609,6 +627,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "취소"
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Batal"
           }
         },
         "nb": {
@@ -785,6 +809,12 @@
             "value": "실시간 보기"
           }
         },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paparan Langsung"
+          }
+        },
         "nb": {
           "stringUnit": {
             "state": "translated",
@@ -957,6 +987,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "시간"
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masa"
           }
         },
         "nb": {

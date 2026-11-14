@@ -89,6 +89,12 @@
             "value" : "색상"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warna"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "텍스트"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teks"
           }
         },
         "nb" : {
@@ -437,6 +449,12 @@
             "value" : "웹"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -609,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesi"
           }
         },
         "nb" : {
@@ -785,6 +809,12 @@
             "value" : "고급"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lanjutan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -959,6 +989,12 @@
             "value" : "윈도우"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tetingkap"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1128,6 +1164,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx"
@@ -1307,6 +1349,12 @@
             "value" : "터미널"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminal"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1479,6 +1527,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "대상 프로파일:"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kepada profil ini:"
           }
         },
         "nb" : {
@@ -1655,6 +1709,12 @@
             "value" : "취소"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batal"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1827,6 +1887,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "북마크 설정 복사"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salin Seting Penanda Buku"
           }
         },
         "nb" : {
@@ -2003,6 +2069,12 @@
             "value" : "키"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kekunci"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2175,6 +2247,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "복사"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salin"
           }
         },
         "nb" : {

@@ -89,6 +89,12 @@
             "value": "스마트 대소문자 부분 문자열"
           }
         },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subrentetan Huruf Besar/Kecil Pintar"
+          }
+        },
         "nb": {
           "stringUnit": {
             "state": "translated",
@@ -261,6 +267,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "검색 기록 지우기"
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Padam Sejarah Carian"
           }
         },
         "nb": {
@@ -437,6 +449,12 @@
             "value": "대소문자 무시 부분 문자열"
           }
         },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subrentetan Abaikan Huruf Besar/Kecil"
+          }
+        },
         "nb": {
           "stringUnit": {
             "state": "translated",
@@ -609,6 +627,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "대소문자 무시 정규 표현식"
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regex Abaikan Huruf Besar/Kecil"
           }
         },
         "nb": {
@@ -785,6 +809,12 @@
             "value": "대소문자 구분 부분 문자열"
           }
         },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subrentetan Peka Huruf Besar/Kecil"
+          }
+        },
         "nb": {
           "stringUnit": {
             "state": "translated",
@@ -957,6 +987,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "대소문자 구분 정규 표현식"
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regex Peka Huruf Besar/Kecil"
           }
         },
         "nb": {

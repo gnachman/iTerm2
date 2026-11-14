@@ -89,6 +89,12 @@
             "value" : "프로파일"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "프로파일 편집…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Profil…"
           }
         },
         "nb" : {
@@ -437,6 +449,12 @@
             "value" : "새로운 탭"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab Baharu"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -609,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 윈도우"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tetingkap Baru"
           }
         },
         "nb" : {
@@ -785,6 +809,12 @@
             "value" : "프로파일을 연 후 이 윈도우 닫기"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutup tetingkap ini selepas membuka profil."
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -957,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 윈도우에 새로운 탭으로"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab dalam Tetingkap Baharu"
           }
         },
         "nb" : {
@@ -1217,6 +1253,12 @@
             "value" : "태그 >"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tag >"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1449,6 +1491,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Panel Mengambang Baru"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anak Tetingkap Terapung Baharu"
           }
         },
         "ro" : {

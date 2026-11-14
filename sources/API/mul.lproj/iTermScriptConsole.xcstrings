@@ -89,6 +89,12 @@
             "value" : "모두"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semua"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "실행 중"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Berjalan"
           }
         },
         "nb" : {
@@ -437,6 +449,12 @@
             "value" : "시작 시간"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dimulakan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -609,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "업데이트 시 맨 아래로 스크롤"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrol ke bawah semasa kemas kini"
           }
         },
         "nb" : {
@@ -785,6 +809,12 @@
             "value" : "호출"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panggilan"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -957,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스크립트 콘솔"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konsol Skrip"
           }
         },
         "nb" : {
@@ -1133,6 +1169,12 @@
             "value" : "필터"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tapis"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1307,6 +1349,12 @@
             "value" : "이름"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nama"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1479,6 +1527,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "로그"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log"
           }
         },
         "nb" : {

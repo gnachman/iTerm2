@@ -89,6 +89,12 @@
             "value" : "항목 2"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 2"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "종속성을 추가하려면 이 스크립트를 “전체 환경“으로 업그레이드해야 합니다. 업그레이드하면 Python 런타임의 복사본이 만들어지지만 추가 디스크 공간은 사용하지 않습니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrip ini mesti dinaik taraf kepada “persekitaran penuh” untuk menambah kebergantungan. Berbuat demikian akan membuat salinan masa jalan Python tetapi tidak akan menggunakan sebarang ruang cakera tambahan."
           }
         },
         "nb" : {
@@ -437,6 +449,12 @@
             "value" : "Python 버전:"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versi Python:"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -609,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "제거"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keluarkan"
           }
         },
         "nb" : {
@@ -785,6 +809,12 @@
             "value" : "항목 3"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 3"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -957,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "업그레이드"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naik Taraf"
           }
         },
         "nb" : {
@@ -1133,6 +1169,12 @@
             "value" : "스크립트:"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrip:"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1305,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스크립트 종속성 편집기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editor Kebergantungan Skrip"
           }
         },
         "nb" : {
@@ -1481,6 +1529,12 @@
             "value" : "항목 1"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 1"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1653,6 +1707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "패키지 이름"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nama Pakej"
           }
         },
         "nb" : {
@@ -1829,6 +1889,12 @@
             "value" : "항목 2"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 2"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2001,6 +2067,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "항목 3"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 3"
           }
         },
         "nb" : {
@@ -2177,6 +2249,12 @@
             "value" : "업데이트 확인"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semak Kemas Kini"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2349,6 +2427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "설치된 버전"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versi Dipasang"
           }
         },
         "nb" : {
@@ -2525,6 +2609,12 @@
             "value" : "항목 1"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 1"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2699,6 +2789,12 @@
             "value" : "확인"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2871,6 +2967,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "추가"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tambah"
           }
         },
         "nb" : {

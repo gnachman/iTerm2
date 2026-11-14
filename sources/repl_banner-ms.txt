@@ -1,0 +1,13 @@
+[1mSelamat datang ke REPL Python iTerm2![m
+
+Ini ialah penterjemah Python interaktif tempat anda boleh bereksperimen
+dengan skrip. Tidak seperti penterjemah Python standard, anda boleh
+menggunakan “await” di luar fungsi async. Berikut ialah contoh skrip untuk
+dicuba:
+
+import iterm2
+connection=await iterm2.Connection.async_create()
+await iterm2.Window.async_create(connection)
+
+]8;;https://iterm2.com/python-api⌘-klik di sini untuk Dokumentasi API Python iTerm2]8;;
+

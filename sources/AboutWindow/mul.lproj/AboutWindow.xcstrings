@@ -89,6 +89,12 @@
             "value": "iTerm2"
           }
         },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iTerm2"
+          }
+        },
         "nb": {
           "stringUnit": {
             "state": "translated",
@@ -261,6 +267,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "제작: George Nachman 및 기여자"
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oleh George Nachman dan Penyumbang"
           }
         },
         "nb": {

@@ -89,6 +89,12 @@
             "value": "체크"
           }
         },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tanda"
+          }
+        },
         "nb": {
           "stringUnit": {
             "state": "translated",

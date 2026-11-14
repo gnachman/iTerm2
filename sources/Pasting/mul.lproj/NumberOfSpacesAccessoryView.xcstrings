@@ -89,6 +89,12 @@
             "value": "탭 크기(공백 수):"
           }
         },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saiz tab dalam ruang:"
+          }
+        },
         "nb": {
           "stringUnit": {
             "state": "translated",
@@ -258,6 +264,12 @@
           }
         },
         "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "ms": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

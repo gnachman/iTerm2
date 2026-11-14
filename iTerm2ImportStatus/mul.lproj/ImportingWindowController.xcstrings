@@ -149,6 +149,12 @@
             "value" : "Status"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -323,6 +329,12 @@
             "value" : "Mengimpor…"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mengimport…"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mengimpor pengaturan dan data…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mengimport seting dan data…"
           }
         },
         "ro" : {

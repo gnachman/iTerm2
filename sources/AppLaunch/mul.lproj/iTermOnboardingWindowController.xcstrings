@@ -89,6 +89,12 @@
             "value" : "Mac에서 떨어져 있을 때도 iTerm2를 사용하십시오. AI 채팅으로 제어하고, 세션 내용을 보고, 푸시 알림을 받을 수 있습니다. 종단 간 암호화로 데이터를 안전하게 보호합니다. <a href=\"iterm2whatsnew:companion\">지금 사용해 보기!</a>"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gunakan iTerm2 semasa anda jauh daripada Mac anda. Anda boleh mengawalnya melalui sembang AI, melihat kandungan sesi dan menerima pemberitahuan push. Penyulitan hujung ke hujung memastikan data anda selamat. <a href=\"iterm2whatsnew:companion\">Cuba sekarang!</a>"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -258,6 +264,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -437,6 +449,12 @@
             "value" : "새로운 AI 채팅 모드인 오케스트레이션을 사용하면 AI가 작업을 주도합니다. 윈도우를 만들고 (대화형 앱에서도) 작업이 완료될 때까지 기다릴 수 있으며, 새로운 자동 안전 검사기 덕분에 거의 모든 권한 요청에 일일이 응답할 필요가 없습니다. <a href=\"iterm2whatsnew:orchestration\">지금 사용해 보기!</a>"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mod sembang AI baharu, Orkestrasi, membolehkan AI menguruskan segalanya untuk anda. Ia boleh mencipta tetingkap, menunggu tugas selesai (walaupun dalam app interaktif), dan penyemak keselamatan automatik yang baharu melegakan anda daripada perlu menjawab hampir semua gesaan kebenaran. <a href=\"iterm2whatsnew:orchestration\">Cuba sekarang!</a>"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -606,6 +624,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -785,6 +809,12 @@
             "value" : "새로운 스크린샷 기능으로 터미널 내용을 PNG로 쉽게 만들 수 있습니다. 가리기 및 강조 표시를 지원합니다. 사용하려면 <a href=\"iterm2whatsnew:screenshot\">세션 > 스크린샷 찍기</a>를 선택하십시오."
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ciri Tangkapan Skrin yang baharu memudahkan pembuatan PNG kandungan terminal anda. Ia menyokong penghitaman dan serlahan. Gunakan <a href=\"iterm2whatsnew:screenshot\">Sesi > Buat Tangkapan Skrin</a> untuk mengaktifkannya."
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -959,6 +989,12 @@
             "value" : "버전 3.7의 새로운 기능"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perkara Baharu dalam Versi 3.7"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1128,6 +1164,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ">"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : ">"
@@ -1307,6 +1349,12 @@
             "value" : "●"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1479,6 +1527,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code 통합"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integrasi Claude Code"
           }
         },
         "nb" : {
@@ -1655,6 +1709,12 @@
             "value" : "많은 탭을 관리하기 쉽도록 이제 탭을 접을 수 있는 그룹으로 묶을 수 있습니다. 또한 탭 막대는 이제 오버플로 메뉴를 표시하는 대신 스크롤됩니다."
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Untuk membantu mengurus sejumlah besar tab, anda kini boleh menggabungkan tab ke dalam kumpulan yang boleh diruntuhkan. Bar tab juga kini boleh diskrol dan tidak lagi menunjukkan menu limpahan."
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1824,6 +1884,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -2003,6 +2069,12 @@
             "value" : "Claude Code 통합은 코드 리뷰, diff 읽기 등 서로 관련된 여러 세션을 사용자 지정 가능한 UI로 정리합니다. 또한 Claude의 상태를 보여 주므로 사용자의 응답을 기다리며 멈춰 있는 인스턴스를 쉽게 찾을 수 있습니다. <a href=\"iterm2whatsnew:claudecode\">지금 사용해 보기!</a>"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integrasi Claude Code menyusun beberapa sesi berkaitan, seperti semakan kod dan pembacaan diff, ke dalam UI yang boleh disesuaikan. Ia juga mendedahkan status Claude supaya anda mudah menemui contoh yang menunggu perhatian anda. <a href=\"iterm2whatsnew:claudecode\">Cuba sekarang!</a>"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2177,6 +2249,12 @@
             "value" : "iPhone 보조 앱"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Pengiring iPhone"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2346,6 +2424,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -2525,6 +2609,12 @@
             "value" : "오케스트레이션"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orkestrasi"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2697,6 +2787,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "탭 그룹"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kumpulan Tab"
           }
         },
         "nb" : {
@@ -2873,6 +2969,12 @@
             "value" : "스크린샷"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tangkapan Skrin"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3042,6 +3144,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<"
+          }
+        },
+        "ms" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "<"
