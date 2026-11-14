@@ -155,6 +155,12 @@
             "value": "Installationsprogram för Python-körmiljö"
           }
         },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ตัวติดตั้งรันไทม์ Python"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -341,6 +347,12 @@
             "value": "Avbryt"
           }
         },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ยกเลิก"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -525,6 +537,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hämtar valfria komponenter…"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "กำลังดาวน์โหลดส่วนประกอบเสริม…"
           }
         },
         "tr": {

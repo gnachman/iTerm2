@@ -155,6 +155,12 @@
             "value" : "Delsträng, skiftlägeskänslig"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สตริงย่อยแบบยึดตามตัวพิมพ์ใหญ่-เล็ก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -339,6 +345,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delsträng, smart skiftläge"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สตริงย่อยแบบตัวพิมพ์ใหญ่-เล็กอัจฉริยะ"
           }
         },
         "tr" : {
@@ -527,6 +539,12 @@
             "value" : "Regex, skiftlägeskänslig"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex แบบยึดตามตัวพิมพ์ใหญ่-เล็ก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -711,6 +729,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Regex, ignorera skiftläge"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex แบบไม่ยึดตามตัวพิมพ์ใหญ่-เล็ก"
           }
         },
         "tr" : {
@@ -899,6 +923,12 @@
             "value" : "Delsträng, ignorera skiftläge"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สตริงย่อยแบบไม่ยึดตามตัวพิมพ์ใหญ่-เล็ก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1083,6 +1113,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Filter"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตัวกรอง"
           }
         },
         "tr" : {

@@ -155,6 +155,12 @@
             "value": "Klistrar in…"
           }
         },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "กำลังวาง…"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",

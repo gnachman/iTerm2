@@ -155,6 +155,12 @@
             "value": "Markera"
           }
         },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "เลือก"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",

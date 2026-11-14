@@ -155,6 +155,12 @@
             "value" : "Installera Nerd Font-paket…"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ติดตั้งชุด Nerd Font…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -341,6 +347,12 @@
             "value" : "Redigera specialundantag"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แก้ไขข้อยกเว้นพิเศษ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -522,6 +534,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -713,6 +731,12 @@
             "value" : "Specialundantag åsidosätter typsnitt för specifika Unicode-intervall eller skriftsystem."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ข้อยกเว้นพิเศษใช้แทนที่แบบอักษรสำหรับช่วง Unicode หรืออักษรเฉพาะ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -894,6 +918,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -1085,6 +1115,12 @@
             "value" : "OK"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตกลง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1269,6 +1305,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Av typsnittet:"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ของแบบอักษร:"
           }
         },
         "tr" : {
@@ -1457,6 +1499,12 @@
             "value" : "För tecken från och med"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สำหรับอักขระตั้งแต่"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1641,6 +1689,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lägg till förinställning…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เพิ่มค่าที่ตั้งไว้…"
           }
         },
         "tr" : {
@@ -1829,6 +1883,12 @@
             "value" : "Avbryt"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ยกเลิก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2013,6 +2073,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "till"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ถึง"
           }
         },
         "tr" : {
@@ -2201,6 +2267,12 @@
             "value" : "Hantera specialundantag"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "จัดการข้อยกเว้นพิเศษ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2385,6 +2457,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตกลง"
           }
         },
         "tr" : {
@@ -2573,6 +2651,12 @@
             "value" : "Använd kodpunkter"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ใช้จุดรหัส"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2759,6 +2843,12 @@
             "value" : "Avbryt"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ยกเลิก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2940,6 +3030,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"

@@ -179,6 +179,12 @@
             "value" : "Stanje"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สถานะ"
+          }
+        },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -365,6 +371,12 @@
             "value" : "Uvažanje …"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กำลังนำเข้า…"
+          }
+        },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +561,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Uvažanje nastavitev in podatkov …"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กำลังนำเข้าการตั้งค่าและข้อมูล…"
           }
         },
         "uk" : {

@@ -155,6 +155,12 @@
             "value" : "Öppna snabbt"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดอย่างรวดเร็ว"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -341,6 +347,12 @@
             "value" : "Detaljer"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รายละเอียด"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -525,6 +537,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sök efter sessioner, profiler eller arrangemang"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ค้นหาเซสชั่น โปรไฟล์ หรือการจัดเรียง"
           }
         },
         "tr" : {

@@ -155,6 +155,12 @@
             "value" : "tmux-översikt"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แดชบอร์ด tmux"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -339,6 +345,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Session"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เซสชั่น"
           }
         },
         "tr" : {
@@ -527,6 +539,12 @@
             "value" : "Koppla till"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ต่อเข้า"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -711,6 +729,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sök fönster"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ค้นหาหน้าต่าง"
           }
         },
         "tr" : {
@@ -899,6 +923,12 @@
             "value" : "Fönster"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หน้าต่าง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1083,6 +1113,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Öppna i fönster"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดในหน้าต่าง"
           }
         },
         "tr" : {
@@ -1271,6 +1307,12 @@
             "value" : "Göm"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ซ่อน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1455,6 +1497,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Öppna i fönster"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดในหน้าต่าง"
           }
         },
         "tr" : {
@@ -1643,6 +1691,12 @@
             "value" : "Öppna i flikar"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดในแถบ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1827,6 +1881,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Koppla från"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แยกออก"
           }
         },
         "tr" : {
@@ -2015,6 +2075,12 @@
             "value" : "Öppna översikten vid anslutning om det finns dolda fönster"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดแดชบอร์ดเมื่อต่อเข้าหากมีหน้าต่างที่ซ่อนอยู่"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2199,6 +2265,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Öppna inte fönster vid anslutning om det finns minst så här många fönster:"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ไม่เปิดหน้าต่างเมื่อต่อเข้าหากมีหน้าต่างอย่างน้อยจำนวนนี้:"
           }
         },
         "tr" : {

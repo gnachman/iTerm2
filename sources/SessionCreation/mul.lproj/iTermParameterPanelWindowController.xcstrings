@@ -155,6 +155,12 @@
             "value": "Ange värdet för "
           }
         },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ป้อนค่าสำหรับ "
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -339,6 +345,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "OK"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ตกลง"
           }
         },
         "tr": {
@@ -527,6 +539,12 @@
             "value": "Sessionsparameter"
           }
         },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "พารามิเตอร์เซสชั่น"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -713,6 +731,12 @@
             "value": "Avbryt"
           }
         },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ยกเลิก"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -897,6 +921,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Namn"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ชื่อ"
           }
         },
         "tr": {

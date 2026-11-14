@@ -155,6 +155,12 @@
             "value" : "Ignorera fel från det här kommandot tyst"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ไม่สนใจข้อผิดพลาดจากคำสั่งนี้โดยไม่แจ้งเตือน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -339,6 +345,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Samprocesskommando att köra:"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คำสั่งโปรเซสร่วมที่จะเรียกใช้:"
           }
         },
         "tr" : {
@@ -527,6 +539,12 @@
             "value" : "OK"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตกลง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -713,6 +731,12 @@
             "value" : "Avbryt"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ยกเลิก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -897,6 +921,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ange kommando"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ป้อนคำสั่ง"
           }
         },
         "tr" : {

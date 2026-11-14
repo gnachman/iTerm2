@@ -155,6 +155,12 @@
             "value" : "Förinställningar…"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ค่าที่ตั้งไว้…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -339,6 +345,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lägg till Touch Bar-objekt"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เพิ่มรายการ Touch Bar"
           }
         },
         "tr" : {
@@ -527,6 +539,12 @@
             "value" : "Åtgärd"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การดำเนินการ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -711,6 +729,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touch Bar-lösningar"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การบรรเทาปัญหาของ Touch Bar"
           }
         },
         "tr" : {
@@ -899,6 +923,12 @@
             "value" : "Visuell indikator för esc-tangenten"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตัวบ่งชี้ปุ่ม esc แบบภาพ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1083,6 +1113,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tangentkombination"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ชุดปุ่ม"
           }
         },
         "tr" : {
@@ -1271,6 +1307,12 @@
             "value" : "Haptisk respons vid tryck på esc"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การตอบสนองแบบสัมผัสเมื่อกด esc"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1457,6 +1499,12 @@
             "value" : "OK"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตกลง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1641,6 +1689,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Klickljud för esc-tangenten"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เสียงคลิกสำหรับปุ่ม esc"
           }
         },
         "tr" : {

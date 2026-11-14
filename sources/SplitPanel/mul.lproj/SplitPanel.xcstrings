@@ -155,6 +155,12 @@
             "value" : "Dela aktuell panel XXX"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แยกบานหน้าต่างปัจจุบัน XXX"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -341,6 +347,12 @@
             "value" : "Avbryt"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ยกเลิก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -525,6 +537,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dela"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แยก"
           }
         },
         "tr" : {

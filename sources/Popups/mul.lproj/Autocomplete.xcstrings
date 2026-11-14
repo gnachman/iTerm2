@@ -155,6 +155,12 @@
             "value" : "Autokomplettering"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เติมอัตโนมัติ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",

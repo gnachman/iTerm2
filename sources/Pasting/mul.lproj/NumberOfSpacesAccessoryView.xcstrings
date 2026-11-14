@@ -155,6 +155,12 @@
             "value": "Tabbstorlek i mellanslag:"
           }
         },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ขนาด Tab เป็นช่องว่าง:"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -336,6 +342,12 @@
           }
         },
         "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "th": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

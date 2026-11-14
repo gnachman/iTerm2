@@ -155,6 +155,12 @@
             "value" : "Zooma ut"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ซูมออก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -339,6 +345,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Installera Python-körmiljö"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ติดตั้งรันไทม์ Python"
           }
         },
         "tr" : {
@@ -527,6 +539,12 @@
             "value" : "Flytta flik"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้ายแถบ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -711,6 +729,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Duplicera session"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ทำสำเนาเซสชั่น"
           }
         },
         "tr" : {
@@ -899,6 +923,12 @@
             "value" : "Öppna plats…"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดตำแหน่งที่ตั้ง…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1083,6 +1113,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Öka höjd"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เพิ่มความสูง"
           }
         },
         "tr" : {
@@ -1271,6 +1307,12 @@
             "value" : "Flytta flik"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้ายแถบ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1455,6 +1497,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fokusrapportering"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การรายงานโฟกัส"
           }
         },
         "tr" : {
@@ -1643,6 +1691,12 @@
             "value" : "Normal"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ปกติ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1827,6 +1881,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Flytta avdelare uppåt"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้ายตัวแบ่งขึ้น"
           }
         },
         "tr" : {
@@ -2015,6 +2075,12 @@
             "value" : "Ersätt med Base64-avkodat värde"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แทนที่ด้วยค่าที่ถอดรหัส Base 64 แล้ว"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2199,6 +2265,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Session"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เซสชั่น"
           }
         },
         "tr" : {
@@ -2387,6 +2459,12 @@
             "value" : "Flytta session till delad panel"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้ายเซสชั่นไปยังบานหน้าต่างแยก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2571,6 +2649,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lösenordshanterare"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตัวจัดการรหัสผ่าน"
           }
         },
         "tr" : {
@@ -2759,6 +2843,12 @@
             "value" : "Objekt 1"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รายการ 1"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2943,6 +3033,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Centrerad"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กึ่งกลาง"
           }
         },
         "tr" : {
@@ -3131,6 +3227,12 @@
             "value" : "Ersätt markering"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แทนที่ส่วนที่เลือก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3315,6 +3417,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Skärmens vänstra sida"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ด้านซ้ายของหน้าจอ"
           }
         },
         "tr" : {
@@ -3503,6 +3611,12 @@
             "value" : "Programmarkör"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เคอร์เซอร์ของแอปพลิเคชัน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3687,6 +3801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arrangemang"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การจัดเรียง"
           }
         },
         "tr" : {
@@ -3875,6 +3995,12 @@
             "value" : "Fäll ihop markerade rader"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ยุบบรรทัดที่เลือก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4059,6 +4185,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Öppna senaste kataloger…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดไดเรกทอรีล่าสุด…"
           }
         },
         "tr" : {
@@ -4247,6 +4379,12 @@
             "value" : "Helskärmsläge"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เต็มหน้าจอ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4431,6 +4569,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sätt namngivet märke"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตั้งเครื่องหมายที่มีชื่อ"
           }
         },
         "tr" : {
@@ -4619,6 +4763,12 @@
             "value" : "Åtgärder"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การดำเนินการ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4803,6 +4953,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fånga GPU-bildruta"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "จับเฟรม GPU"
           }
         },
         "tr" : {
@@ -4991,6 +5147,12 @@
             "value" : "Märken och anteckningar"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เครื่องหมายและคำอธิบายประกอบ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5175,6 +5337,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Full höjd, skärmens vänstra sida"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เต็มความสูงทางซ้ายของหน้าจอ"
           }
         },
         "tr" : {
@@ -5363,6 +5531,12 @@
             "value" : "Duplicera fönster"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ทำสำเนาหน้าต่าง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5547,6 +5721,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Automatisk komplettering av kommandon"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เติมคำสั่งอัตโนมัติ"
           }
         },
         "tr" : {
@@ -5735,6 +5915,12 @@
             "value" : "Fönsterstil"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รูปแบบหน้าต่าง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5919,6 +6105,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tillgänglighet för GPU-renderare"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ความพร้อมใช้งานของตัวเรนเดอร์ GPU"
           }
         },
         "tr" : {
@@ -6107,6 +6299,12 @@
             "value" : "Fönster"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หน้าต่าง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6291,6 +6489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Minimera"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย่อ"
           }
         },
         "tr" : {
@@ -6479,6 +6683,12 @@
             "value" : "Fönster"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หน้าต่าง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6660,6 +6870,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2"
@@ -6851,6 +7067,12 @@
             "value" : "iTerm2"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7035,6 +7257,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ändra profil i arrangemang…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปลี่ยนโปรไฟล์ในการจัดเรียง…"
           }
         },
         "tr" : {
@@ -7223,6 +7451,12 @@
             "value" : "Skal"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เชลล์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7407,6 +7641,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ange förvald bredd"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตั้งความกว้างเริ่มต้น"
           }
         },
         "tr" : {
@@ -7595,6 +7835,12 @@
             "value" : "Skal"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เชลล์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7779,6 +8025,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hjälp"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "วิธีใช้"
           }
         },
         "tr" : {
@@ -7967,6 +8219,12 @@
             "value" : "Hjälp"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "วิธีใช้"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8151,6 +8409,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2-hjälp"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "วิธีใช้ iTerm2"
           }
         },
         "tr" : {
@@ -8339,6 +8603,12 @@
             "value" : "Inställningar…"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การตั้งค่า…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8523,6 +8793,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tjänster"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บริการ"
           }
         },
         "tr" : {
@@ -8711,6 +8987,12 @@
             "value" : "Tjänster"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บริการ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8895,6 +9177,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Göm iTerm2"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ซ่อน iTerm2"
           }
         },
         "tr" : {
@@ -9083,6 +9371,12 @@
             "value" : "Avsluta iTerm2"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ออกจาก iTerm2"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9267,6 +9561,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Göm övriga"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ซ่อนอื่นๆ"
           }
         },
         "tr" : {
@@ -9455,6 +9755,12 @@
             "value" : "Visa alla"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงทั้งหมด"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9639,6 +9945,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Klipp ut"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตัด"
           }
         },
         "tr" : {
@@ -9827,6 +10139,12 @@
             "value" : "Redigera"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แก้ไข"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10011,6 +10329,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Redigera"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แก้ไข"
           }
         },
         "tr" : {
@@ -10199,6 +10523,12 @@
             "value" : "Markera alla"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกทั้งหมด"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10383,6 +10713,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Klistra in"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "วาง"
           }
         },
         "tr" : {
@@ -10571,6 +10907,12 @@
             "value" : "Rensa buffert"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ล้างบัฟเฟอร์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10755,6 +11097,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Logg"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บันทึกการใช้งาน"
           }
         },
         "tr" : {
@@ -10943,6 +11291,12 @@
             "value" : "Logg"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บันทึกการใช้งาน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11127,6 +11481,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Om iTerm2"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เกี่ยวกับ iTerm2"
           }
         },
         "tr" : {
@@ -11315,6 +11675,12 @@
             "value" : "Profiler"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "โปรไฟล์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11499,6 +11865,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Profiler"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "โปรไฟล์"
           }
         },
         "tr" : {
@@ -11687,6 +12059,12 @@
             "value" : "Stäng terminalfönster"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ปิดหน้าต่างเทอร์มินัล"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11871,6 +12249,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stäng alla paneler i fliken"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ปิดบานหน้าต่างทั้งหมดในแถบ"
           }
         },
         "tr" : {
@@ -12059,6 +12443,12 @@
             "value" : "Utskriftsformat…"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตั้งค่าหน้ากระดาษ…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12243,6 +12633,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Spara markerad text…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บันทึกข้อความที่เลือก…"
           }
         },
         "tr" : {
@@ -12431,6 +12827,12 @@
             "value" : "Rensa rullningshistoriken"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ล้างบัฟเฟอร์เลื่อนย้อน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12615,6 +13017,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Använd markering för sökning"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ใช้ส่วนที่เลือกสำหรับการค้นหา"
           }
         },
         "tr" : {
@@ -12803,6 +13211,12 @@
             "value" : "Sök"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ค้นหา"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12987,6 +13401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sök"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ค้นหา"
           }
         },
         "tr" : {
@@ -13175,6 +13595,12 @@
             "value" : "Sök nästa"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ค้นหาถัดไป"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13359,6 +13785,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sök föregående"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ค้นหาก่อนหน้า"
           }
         },
         "tr" : {
@@ -13547,6 +13979,12 @@
             "value" : "Hoppa till markering"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ไปยังส่วนที่เลือก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13731,6 +14169,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Innehåll"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "มุมมอง"
           }
         },
         "tr" : {
@@ -13919,6 +14363,12 @@
             "value" : "Innehåll"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "มุมมอง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14103,6 +14553,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Öka textstorleken"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ทำให้ข้อความใหญ่ขึ้น"
           }
         },
         "tr" : {
@@ -14291,6 +14747,12 @@
             "value" : "Minska textstorleken"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ทำให้ข้อความเล็กลง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14475,6 +14937,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Skriv ut"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "พิมพ์"
           }
         },
         "tr" : {
@@ -14663,6 +15131,12 @@
             "value" : "Skärm"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หน้าจอ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14847,6 +15321,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Skriv ut"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "พิมพ์"
           }
         },
         "tr" : {
@@ -15035,6 +15515,12 @@
             "value" : "Markering"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การเลือก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15219,6 +15705,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buffert"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บัฟเฟอร์"
           }
         },
         "tr" : {
@@ -15407,6 +15899,12 @@
             "value" : "Välj föregående flik"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกแถบก่อนหน้า"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15591,6 +16089,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Välj nästa flik"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกแถบถัดไป"
           }
         },
         "tr" : {
@@ -15779,6 +16283,12 @@
             "value" : "Välj flik"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกแถบ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15963,6 +16473,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Välj flik"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกแถบ"
           }
         },
         "tr" : {
@@ -16151,6 +16667,12 @@
             "value" : "Ny flik"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แถบใหม่"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16335,6 +16857,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nytt fönster"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หน้าต่างใหม่"
           }
         },
         "tr" : {
@@ -16523,6 +17051,12 @@
             "value" : "Tryck på alternativtangenten för nytt fönster"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กดปุ่ม Option เพื่อเปิดหน้าต่างใหม่"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16707,6 +17241,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Öppna i nytt fönster"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดในหน้าต่างใหม่"
           }
         },
         "tr" : {
@@ -16895,6 +17435,12 @@
             "value" : "Sök efter uppdateringar…"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตรวจหาอัปเดต…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17079,6 +17625,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zooma"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ซูม"
           }
         },
         "tr" : {
@@ -17267,6 +17819,12 @@
             "value" : "Nollställ"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รีเซ็ต"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17451,6 +18009,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Slå på/av helskärmsläge"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิด/ปิดโหมดเต็มหน้าจอ"
           }
         },
         "tr" : {
@@ -17639,6 +18203,12 @@
             "value" : "Slå på/av felsökningslogg"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิด/ปิดการบันทึกการดีบั๊ก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17823,6 +18393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Öppna profiler…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดโปรไฟล์…"
           }
         },
         "tr" : {
@@ -18011,6 +18587,12 @@
             "value" : "Redigera session…"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แก้ไขเซสชั่น…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18195,6 +18777,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Starta direktuppspelning"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เริ่มเล่นซ้ำทันที"
           }
         },
         "tr" : {
@@ -18383,6 +18971,12 @@
             "value" : "Ångra"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลิกทำ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18567,6 +19161,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gör om"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ทำกลับมาใหม่"
           }
         },
         "tr" : {
@@ -18755,6 +19355,12 @@
             "value" : "Öppna inklistringshistorik…"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดประวัติการวาง…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18939,6 +19545,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Öppna autokomplettering…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดการเติมข้อความอัตโนมัติ…"
           }
         },
         "tr" : {
@@ -19127,6 +19739,12 @@
             "value" : "Klistra in special"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "วางแบบพิเศษ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19311,6 +19929,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Klistra in special"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "วางแบบพิเศษ"
           }
         },
         "tr" : {
@@ -19499,6 +20123,12 @@
             "value" : "Klistra in markering"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "วางส่วนที่เลือก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19683,6 +20313,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Klistra in långsamt"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "วางอย่างช้าๆ"
           }
         },
         "tr" : {
@@ -19871,6 +20507,12 @@
             "value" : "Säker tangentbordsinmatning"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การป้อนข้อมูลด้วยแป้นพิมพ์แบบปลอดภัย"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20055,6 +20697,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ordna fönster horisontellt"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "จัดเรียงหน้าต่างแนวนอน"
           }
         },
         "tr" : {
@@ -20243,6 +20891,12 @@
             "value" : "Stäng"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ปิด"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20427,6 +21081,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dela vertikalt med aktuell profil"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แยกแนวตั้งด้วยโปรไฟล์ปัจจุบัน"
           }
         },
         "tr" : {
@@ -20615,6 +21275,12 @@
             "value" : "Dela horisontellt med aktuell profil"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แยกแนวนอนด้วยโปรไฟล์ปัจจุบัน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20799,6 +21465,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Spara fönsterarrangemang"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บันทึกการจัดเรียงหน้าต่าง"
           }
         },
         "tr" : {
@@ -20987,6 +21659,12 @@
             "value" : "Välj delad panel"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกบานหน้าต่างแยก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21171,6 +21849,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Välj delad panel"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกบานหน้าต่างแยก"
           }
         },
         "tr" : {
@@ -21359,6 +22043,12 @@
             "value" : "Välj panelen ovanför"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกบานหน้าต่างด้านบน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21543,6 +22233,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Välj panelen nedanför"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกบานหน้าต่างด้านล่าง"
           }
         },
         "tr" : {
@@ -21731,6 +22427,12 @@
             "value" : "Välj panelen till vänster"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกบานหน้าต่างด้านซ้าย"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21915,6 +22617,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Välj panelen till höger"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกบานหน้าต่างด้านขวา"
           }
         },
         "tr" : {
@@ -22103,6 +22811,12 @@
             "value" : "Använd transparens"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ใช้ความโปร่งใส"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22287,6 +23001,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Maximera aktiv panel"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ขยายบานหน้าต่างที่ใช้งานอยู่ให้ใหญ่สุด"
           }
         },
         "tr" : {
@@ -22475,6 +23195,12 @@
             "value" : "Objekt 3"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รายการ 3"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22659,6 +23385,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Objekt 2"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รายการ 2"
           }
         },
         "tr" : {
@@ -22847,6 +23579,12 @@
             "value" : "Objekt 1"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รายการ 1"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23031,6 +23769,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sätt märke"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตั้งเครื่องหมาย"
           }
         },
         "tr" : {
@@ -23219,6 +23963,12 @@
             "value" : "Hoppa till märke"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ไปยังเครื่องหมาย"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23403,6 +24153,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nästa panel"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บานหน้าต่างถัดไป"
           }
         },
         "tr" : {
@@ -23591,6 +24347,12 @@
             "value" : "Föregående panel"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บานหน้าต่างก่อนหน้า"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23775,6 +24537,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Visa flikar i helskärmsläge"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงแถบในโหมดเต็มหน้าจอ"
           }
         },
         "tr" : {
@@ -23963,6 +24731,12 @@
             "value" : "Sänd indata"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กระจายข้อมูลเข้า"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24147,6 +24921,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sänd indata"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กระจายข้อมูลเข้า"
           }
         },
         "tr" : {
@@ -24335,6 +25115,12 @@
             "value" : "Sänd indata till alla paneler i alla flikar"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กระจายข้อมูลเข้าไปยังบานหน้าต่างทั้งหมดในทุกแถบ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24519,6 +25305,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sänd indata till alla paneler i aktuell flik"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กระจายข้อมูลเข้าไปยังบานหน้าต่างทั้งหมดในแถบปัจจุบัน"
           }
         },
         "tr" : {
@@ -24707,6 +25499,12 @@
             "value" : "Skicka indata endast till aktuell session"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ส่งข้อมูลเข้าไปยังเซสชั่นปัจจุบันเท่านั้น"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24891,6 +25689,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Återskapa fönsterarrangemang"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กู้คืนการจัดเรียงหน้าต่าง"
           }
         },
         "tr" : {
@@ -25079,6 +25883,12 @@
             "value" : "Återskapa fönsterarrangemang"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กู้คืนการจัดเรียงหน้าต่าง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25263,6 +26073,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hitta markören"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ค้นหาเคอร์เซอร์"
           }
         },
         "tr" : {
@@ -25451,6 +26267,12 @@
             "value" : "Dela horisontellt…"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แยกแนวนอน…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25635,6 +26457,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dela vertikalt…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แยกแนวตั้ง…"
           }
         },
         "tr" : {
@@ -25823,6 +26651,12 @@
             "value" : "Verktygsbälte"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เข็มขัดเครื่องมือ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26007,6 +26841,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verktygsbälte"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เข็มขัดเครื่องมือ"
           }
         },
         "tr" : {
@@ -26195,6 +27035,12 @@
             "value" : "Visa verktygsbältet"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงเข็มขัดเครื่องมือ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26379,6 +27225,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ny flik med aktuell profil"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แถบใหม่ด้วยโปรไฟล์ปัจจุบัน"
           }
         },
         "tr" : {
@@ -26567,6 +27419,12 @@
             "value" : "Kör samprocess…"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สั่งทำงานโปรเซสร่วม…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26751,6 +27609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stoppa samprocess"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หยุดโปรเซสร่วม"
           }
         },
         "tr" : {
@@ -26939,6 +27803,12 @@
             "value" : "Kopiera"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คัดลอก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27123,6 +27993,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Flytta flik till nytt fönster"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้ายแถบไปยังหน้าต่างใหม่"
           }
         },
         "tr" : {
@@ -27311,6 +28187,12 @@
             "value" : "Flytta flik åt höger"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้ายแถบไปทางขวา"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27497,6 +28379,12 @@
             "value" : "Visa indikator för bakgrundsmönster"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงตัวบ่งชี้ลวดลายพื้นหลัง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27678,6 +28566,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "tmux"
@@ -27869,6 +28763,12 @@
             "value" : "tmux"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28053,6 +28953,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ny tmux-flik"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แถบ tmux ใหม่"
           }
         },
         "tr" : {
@@ -28241,6 +29147,12 @@
             "value" : "Nytt tmux-fönster"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หน้าต่าง tmux ใหม่"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28425,6 +29337,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Koppla från"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แยกออก"
           }
         },
         "tr" : {
@@ -28613,6 +29531,12 @@
             "value" : "Översikt"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แดชบอร์ด"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28797,6 +29721,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Normal textstorlek"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ทำให้ข้อความมีขนาดปกติ"
           }
         },
         "tr" : {
@@ -28985,6 +29915,12 @@
             "value" : "Återställ text- och sessionsstorlek"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กู้คืนขนาดข้อความและเซสชั่น"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29169,6 +30105,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gör iTerm2 till förvald terminal"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตั้ง iTerm2 เป็นเทอร์มินัลเริ่มต้น"
           }
         },
         "tr" : {
@@ -29357,6 +30299,12 @@
             "value" : "Gör Terminal till förvald terminal"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตั้ง Terminal เป็นเทอร์มินัลเริ่มต้น"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29541,6 +30489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Slå på/av sändning av indata till aktuell session"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิด/ปิดการกระจายข้อมูลเข้าไปยังเซสชั่นปัจจุบัน"
           }
         },
         "tr" : {
@@ -29729,6 +30683,12 @@
             "value" : "Klistra in snabbare"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "วางเร็วขึ้น"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29913,6 +30873,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Klistra in långsammare"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "วางช้าลง"
           }
         },
         "tr" : {
@@ -30101,6 +31067,12 @@
             "value" : "Klistra in långsamt, snabbare"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "วางแบบช้าให้เร็วขึ้น"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30285,6 +31257,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Klistra in långsamt, långsammare"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "วางแบบช้าให้ช้าลง"
           }
         },
         "tr" : {
@@ -30473,6 +31451,12 @@
             "value" : "Nollställ teckenuppsättning"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รีเซ็ตชุดอักขระ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30659,6 +31643,12 @@
             "value" : "Arkiv"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ไฟล์เก็บถาวร"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30840,6 +31830,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT400"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT400"
@@ -31031,6 +32027,12 @@
             "value" : "Anteckna markering"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เพิ่มคำอธิบายประกอบให้ส่วนที่เลือก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31215,6 +32217,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zooma in på markering"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ซูมเข้าที่ส่วนที่เลือก"
           }
         },
         "tr" : {
@@ -31403,6 +32411,12 @@
             "value" : "Flytta avdelare åt vänster"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้ายตัวแบ่งไปทางซ้าย"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31587,6 +32601,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avaktivera alla"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ปิดใช้งานทั้งหมด"
           }
         },
         "tr" : {
@@ -31775,6 +32795,12 @@
             "value" : "Flytta session"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้ายเซสชั่น"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31959,6 +32985,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Visa kommandoredigeraren"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงตัวเขียนคำสั่ง"
           }
         },
         "tr" : {
@@ -32147,6 +33179,12 @@
             "value" : "Tvinga frånkoppling"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บังคับแยกออก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32331,6 +33369,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Namngivna märken"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เครื่องหมายที่มีชื่อ"
           }
         },
         "tr" : {
@@ -32519,6 +33563,12 @@
             "value" : "Sök…"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ค้นหา…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32703,6 +33753,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Exportera inspelning"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ส่งออกการบันทึก"
           }
         },
         "tr" : {
@@ -32891,6 +33947,12 @@
             "value" : "Utan titelfält"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ไม่มีแถบชื่อ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33072,6 +34134,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT500"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT500"
@@ -33263,6 +34331,12 @@
             "value" : "Visa urklippsbitar"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงข้อความที่ตัดเก็บ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33447,6 +34521,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Inställningar för följeslagarenhet"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การตั้งค่าอุปกรณ์คู่หู"
           }
         },
         "tr" : {
@@ -33635,6 +34715,12 @@
             "value" : "Kopieringsläge"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "โหมดคัดลอก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33819,6 +34905,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Flytta session"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้ายเซสชั่น"
           }
         },
         "tr" : {
@@ -34007,6 +35099,12 @@
             "value" : "Flik"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แถบ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34191,6 +35289,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rensa till början av markeringen"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ล้างจนถึงจุดเริ่มต้นของส่วนที่เลือก"
           }
         },
         "tr" : {
@@ -34379,6 +35483,12 @@
             "value" : "Kopiera prestandastatistik"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คัดลอกสถิติประสิทธิภาพ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34563,6 +35673,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Skript"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สคริปต์"
           }
         },
         "tr" : {
@@ -34751,6 +35867,12 @@
             "value" : "Spara aktuellt fönster som arrangemang"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บันทึกหน้าต่างปัจจุบันเป็นการจัดเรียง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34935,6 +36057,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Utlösare"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ทริกเกอร์"
           }
         },
         "tr" : {
@@ -35123,6 +36251,12 @@
             "value" : "Visa markörlinjal"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงเส้นนำเคอร์เซอร์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35307,6 +36441,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lås storlek"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ล็อคขนาด"
           }
         },
         "tr" : {
@@ -35495,6 +36635,12 @@
             "value" : "Logga till fil"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บันทึกลงไฟล์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35679,6 +36825,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Exportera…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ส่งออก…"
           }
         },
         "tr" : {
@@ -35867,6 +37019,12 @@
             "value" : "Webb"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เว็บ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36051,6 +37209,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rapportera associerad text"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รายงานข้อความที่เกี่ยวข้อง"
           }
         },
         "tr" : {
@@ -36239,6 +37403,12 @@
             "value" : "Nytt Python-skript"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สคริปต์ Python ใหม่"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36423,6 +37593,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Licenser för öppen källkod"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สัญญาอนุญาตโอเพนซอร์ส"
           }
         },
         "tr" : {
@@ -36611,6 +37787,12 @@
             "value" : "Rensa direktuppspelning"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ล้างเล่นซ้ำทันที"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36795,6 +37977,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Minska höjd"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ลดความสูง"
           }
         },
         "tr" : {
@@ -36983,6 +38171,12 @@
             "value" : "Skript"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สคริปต์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37167,6 +38361,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Visa skript i Finder"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงสคริปต์ใน Finder"
           }
         },
         "tr" : {
@@ -37355,6 +38555,12 @@
             "value" : "Spara innehåll…"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บันทึกเนื้อหา…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37539,6 +38745,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lägg alla överst"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "นำทั้งหมดมาด้านหน้า"
           }
         },
         "tr" : {
@@ -37727,6 +38939,12 @@
             "value" : "Fäll ihop alla"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ยุบทั้งหมด"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37911,6 +39129,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arkiv"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ไฟล์เก็บถาวร"
           }
         },
         "tr" : {
@@ -38099,6 +39323,12 @@
             "value" : "Återskapa fönsterarrangemang som flikar"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กู้คืนการจัดเรียงหน้าต่างเป็นแถบ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38283,6 +39513,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lägg till anteckning vid markören"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เพิ่มคำอธิบายประกอบที่เคอร์เซอร์"
           }
         },
         "tr" : {
@@ -38471,6 +39707,12 @@
             "value" : "Avaktivera transparens för aktivt fönster"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ปิดความโปร่งใสสำหรับหน้าต่างที่ใช้งานอยู่"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38657,6 +39899,12 @@
             "value" : "Inklistring inom hakparentes"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การวางแบบมีวงเล็บกำกับ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38841,6 +40089,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ersätt med formaterad JSON"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แทนที่ด้วย JSON ที่จัดรูปแบบแล้ว"
           }
         },
         "tr" : {
@@ -39053,6 +40307,12 @@
             "value" : "Postavi v ospredje"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "นำมาด้านหน้า"
+          }
+        },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39237,6 +40497,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zasidraj plavajoče podokno"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ยึดติดบานหน้าต่างลอย"
           }
         },
         "uk" : {
@@ -39425,6 +40691,12 @@
             "value" : "Skrij plavajoča podokna"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ซ่อนบานหน้าต่างลอย"
+          }
+        },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39609,6 +40881,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Premakni plavajoče podokno navzdol"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้ายบานหน้าต่างลอยลง"
           }
         },
         "uk" : {
@@ -39797,6 +41075,12 @@
             "value" : "Premakni plavajoče podokno levo"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้ายบานหน้าต่างลอยไปทางซ้าย"
+          }
+        },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39981,6 +41265,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Premakni plavajoče podokno desno"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้ายบานหน้าต่างลอยไปทางขวา"
           }
         },
         "uk" : {
@@ -40169,6 +41459,12 @@
             "value" : "Premakni plavajoče podokno navzgor"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้ายบานหน้าต่างลอยขึ้น"
+          }
+        },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40353,6 +41649,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Novo plavajoče podokno s trenutnim profilom"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บานหน้าต่างลอยใหม่ด้วยโปรไฟล์ปัจจุบัน"
           }
         },
         "uk" : {
@@ -40541,6 +41843,12 @@
             "value" : "Plavajoča podokna"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บานหน้าต่างลอย"
+          }
+        },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40725,6 +42033,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Plavajoča podokna"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บานหน้าต่างลอย"
           }
         },
         "uk" : {
@@ -40913,6 +42227,12 @@
             "value" : "Pošlji v ozadje"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ส่งไปด้านหลัง"
+          }
+        },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41073,6 +42393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Visa dagens tips"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงเคล็ดลับประจำวัน"
           }
         },
         "tr" : {
@@ -41261,6 +42587,12 @@
             "value" : "Nästa anteckning"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คำอธิบายประกอบถัดไป"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41442,6 +42774,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cockpit"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cockpit"
@@ -41633,6 +42971,12 @@
             "value" : "Flytta session till flik"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้ายเซสชั่นไปยังแถบ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41817,6 +43161,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Skärmens nederkant"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ด้านล่างของหน้าจอ"
           }
         },
         "tr" : {
@@ -42005,6 +43355,12 @@
             "value" : "Fråga om tabbtecken ska konverteras till mellanslag vid inklistring"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ถามก่อนแปลง Tab เป็นช่องว่างเมื่อวาง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42189,6 +43545,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Varningar"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การเตือน"
           }
         },
         "tr" : {
@@ -42377,6 +43739,12 @@
             "value" : "Kopiera med styrsekvenser"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คัดลอกพร้อมลำดับควบคุม"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42561,6 +43929,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ändra fönsterstorlek"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ปรับขนาดหน้าต่าง"
           }
         },
         "tr" : {
@@ -42749,6 +44123,12 @@
             "value" : "Nollställ"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รีเซ็ต"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42933,6 +44313,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Duplicera flik"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ทำสำเนาแถบ"
           }
         },
         "tr" : {
@@ -43121,6 +44507,12 @@
             "value" : "Ladda om sidan"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "โหลดหน้าเว็บใหม่"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43305,6 +44697,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Flytta session till fönster"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้ายเซสชั่นไปยังหน้าต่าง"
           }
         },
         "tr" : {
@@ -43493,6 +44891,12 @@
             "value" : "Rapportera alla tangenter som escapekoder"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รายงานทุกปุ่มเป็นรหัส Escape"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43677,6 +45081,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Läge för rå tangentrapportering"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "โหมดการรายงานปุ่มแบบดิบ"
           }
         },
         "tr" : {
@@ -43865,6 +45275,12 @@
             "value" : "Importera…"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "นำเข้า…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44049,6 +45465,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Varna före inklistring av flera rader"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เตือนก่อนวางหลายบรรทัด"
           }
         },
         "tr" : {
@@ -44237,6 +45659,12 @@
             "value" : "Visa inbäddad chatt"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงแชทแบบอินไลน์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44423,6 +45851,12 @@
             "value" : "Slå på/av buffertindata"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิด/ปิดข้อมูลเข้าแบบบัฟเฟอร์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44607,6 +46041,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fjärrvärden kan styra iTerm2"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "โฮสต์ระยะไกลควบคุม iTerm2 ได้"
           }
         },
         "tr" : {
@@ -44819,6 +46259,12 @@
             "value" : "Preveri okrajšanje kontrolnikov nastavitev"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตรวจสอบการตัดทอนของตัวควบคุมการตั้งค่า"
+          }
+        },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44979,6 +46425,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Utlösare"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ทริกเกอร์"
           }
         },
         "tr" : {
@@ -45167,6 +46619,12 @@
             "value" : "Markering respekterar mjuka gränser"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การเลือกยึดตามขอบเขตแบบยืดหยุ่น"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45351,6 +46809,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lämna arbetsgrupp"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ออกจากกลุ่มทำงาน"
           }
         },
         "tr" : {
@@ -45539,6 +47003,12 @@
             "value" : "Markera utdata från senaste kommandot"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกข้อมูลออกของคำสั่งล่าสุด"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45723,6 +47193,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Starta om session"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เริ่มเซสชั่นใหม่"
           }
         },
         "tr" : {
@@ -45911,6 +47387,12 @@
             "value" : "Öppna Python-REPL"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิด Python REPL"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46095,6 +47577,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Skärmens överkant"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ด้านบนของหน้าจอ"
           }
         },
         "tr" : {
@@ -46283,6 +47771,12 @@
             "value" : "Slå samman alla fönster"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รวมทุกหน้าต่าง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46467,6 +47961,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fäst snabbtangentsfönster"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ปักหมุดหน้าต่างปุ่มลัดด่วน"
           }
         },
         "tr" : {
@@ -46655,6 +48155,12 @@
             "value" : "modifyOtherKeys-läge 2"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys โหมด 2"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46839,6 +48345,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Öppna snabbt"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดอย่างรวดเร็ว"
           }
         },
         "tr" : {
@@ -47027,6 +48539,12 @@
             "value" : "Hantera"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "จัดการ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47211,6 +48729,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Särskilj Esc"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แยกความกำกวมของ Escape"
           }
         },
         "tr" : {
@@ -47399,6 +48923,12 @@
             "value" : "Välj resultat att öppna"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกผลลัพธ์ที่จะเปิด"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47583,6 +49113,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Begränsa varning för inklistring av flera rader till skalprompten"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "จำกัดการเตือนการวางหลายบรรทัดไว้ที่พร้อมท์ของเชลล์"
           }
         },
         "tr" : {
@@ -47771,6 +49307,12 @@
             "value" : "Aktivera utlösare i interaktiva appar"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดใช้งานทริกเกอร์ในแอปแบบโต้ตอบ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47955,6 +49497,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Objekt 2"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รายการ 2"
           }
         },
         "tr" : {
@@ -48143,6 +49691,12 @@
             "value" : "Musrapportering"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การรายงานเมาส์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48327,6 +49881,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Märken och anteckningar"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เครื่องหมายและคำอธิบายประกอบ"
           }
         },
         "tr" : {
@@ -48515,6 +50075,12 @@
             "value" : "Lås layout"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ล็อคเลย์เอาต์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48699,6 +50265,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lås plats"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ล็อคตำแหน่ง"
           }
         },
         "tr" : {
@@ -48887,6 +50459,12 @@
             "value" : "Nytt fönster med aktuell profil"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หน้าต่างใหม่ด้วยโปรไฟล์ปัจจุบัน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49071,6 +50649,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Begrav session"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ฝังเซสชั่น"
           }
         },
         "tr" : {
@@ -49259,6 +50843,12 @@
             "value" : "Visa modal varningsruta"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงกล่องการเตือนแบบโมดัล"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49443,6 +51033,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aktivera alla"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดใช้งานทั้งหมด"
           }
         },
         "tr" : {
@@ -49631,6 +51227,12 @@
             "value" : "Nästa märke"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เครื่องหมายถัดไป"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49815,6 +51417,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ordna fönster"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "จัดเรียงหน้าต่าง"
           }
         },
         "tr" : {
@@ -50003,6 +51611,12 @@
             "value" : "Hitta alla träffar för smart markering"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ค้นหารายการที่ตรงกันของการเลือกอัจฉริยะทั้งหมด"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50187,6 +51801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Spela upp ett ljud"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เล่นเสียง"
           }
         },
         "tr" : {
@@ -50375,6 +51995,12 @@
             "value" : "Öppna kommandohistorik…"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดประวัติคำสั่ง…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50559,6 +52185,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kopiera med stilar"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คัดลอกพร้อมรูปแบบ"
           }
         },
         "tr" : {
@@ -50747,6 +52379,12 @@
             "value" : "Alternativ skärm"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หน้าจอสำรอง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50933,6 +52571,12 @@
             "value" : "Full höjd, skärmens högra sida"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เต็มความสูงทางขวาของหน้าจอ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51114,6 +52758,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -51305,6 +52955,12 @@
             "value" : "Standardläge för tangentrapportering"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "โหมดการรายงานปุ่มมาตรฐาน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51489,6 +53145,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ändra storlek på delad panel"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ปรับขนาดบานหน้าต่างแยก"
           }
         },
         "tr" : {
@@ -51677,6 +53339,12 @@
             "value" : "Varningar"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การเตือน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51861,6 +53529,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Meddela vid statusändring"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แจ้งเตือนเมื่อสถานะเปลี่ยน"
           }
         },
         "tr" : {
@@ -52049,6 +53723,12 @@
             "value" : "Välj nästa flikgrupp"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกกลุ่มแถบถัดไป"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -52233,6 +53913,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avinstallera Claude Code-integrering"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ถอนการติดตั้งการผสานรวม Claude Code"
           }
         },
         "tr" : {
@@ -52421,6 +54107,12 @@
             "value" : "Redigera fliktitel"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แก้ไขชื่อแถบ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -52605,6 +54297,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arrangemang"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การจัดเรียง"
           }
         },
         "tr" : {
@@ -52793,6 +54491,12 @@
             "value" : "Föregående medlem"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สมาชิกก่อนหน้า"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -52977,6 +54681,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rapportera alternativa tangenter"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รายงานปุ่มสำรอง"
           }
         },
         "tr" : {
@@ -53165,6 +54875,12 @@
             "value" : "Delad panel"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บานหน้าต่างแยก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53349,6 +55065,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Terminaltillstånd"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สถานะเทอร์มินัล"
           }
         },
         "tr" : {
@@ -53537,6 +55259,12 @@
             "value" : "Ångra stängning"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลิกทำการปิด"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53721,6 +55449,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI-chattar"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แชท AI"
           }
         },
         "tr" : {
@@ -53909,6 +55643,12 @@
             "value" : "Framåt"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ไปข้างหน้า"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54093,6 +55833,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lås bredden på delad panel"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ล็อคความกว้างบานหน้าต่างแยก"
           }
         },
         "tr" : {
@@ -54281,6 +56027,12 @@
             "value" : "Arbetsgrupper"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กลุ่มทำงาน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54465,6 +56217,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Spara arkiv av aktuell session…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บันทึกไฟล์เก็บถาวรของเซสชั่นปัจจุบัน…"
           }
         },
         "tr" : {
@@ -54653,6 +56411,12 @@
             "value" : "Ersätt markering"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แทนที่ส่วนที่เลือก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54834,6 +56598,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT300"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT300"
@@ -55025,6 +56795,12 @@
             "value" : "Visa anteckningar"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงคำอธิบายประกอบ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55206,6 +56982,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -55397,6 +57179,12 @@
             "value" : "Hantera"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "จัดการ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55581,6 +57369,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Objekt 3"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รายการ 3"
           }
         },
         "tr" : {
@@ -55769,6 +57563,12 @@
             "value" : "Välj föregående flikgrupp"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกกลุ่มแถบก่อนหน้า"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55953,6 +57753,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Begravda sessioner"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เซสชั่นที่ฝังไว้"
           }
         },
         "tr" : {
@@ -56141,6 +57947,12 @@
             "value" : "Föregående anteckning"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คำอธิบายประกอบก่อนหน้า"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -56325,6 +58137,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Varna vid märken i sessioner utanför skärmen"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เตือนเมื่อมีเครื่องหมายในเซสชั่นที่อยู่นอกหน้าจอ"
           }
         },
         "tr" : {
@@ -56537,6 +58355,12 @@
             "value" : "Na sredini, brez naslovne vrstice"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กึ่งกลาง ไม่มีแถบชื่อ"
+          }
+        },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -56697,6 +58521,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Installera Claude Code-integrering"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ติดตั้งการผสานรวม Claude Code"
           }
         },
         "tr" : {
@@ -56885,6 +58715,12 @@
             "value" : "Skicka notis"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "โพสต์การแจ้งเตือน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -57069,6 +58905,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aktuell session är sändningskälla"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เซสชั่นปัจจุบันเป็นต้นทางการกระจาย"
           }
         },
         "tr" : {
@@ -57257,6 +59099,12 @@
             "value" : "Varna vid nästa märke"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เตือนเมื่อถึงเครื่องหมายถัดไป"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -57441,6 +59289,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Öka bredd"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เพิ่มความกว้าง"
           }
         },
         "tr" : {
@@ -57629,6 +59483,12 @@
             "value" : "CSI u-läge"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "โหมด CSI u"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -57813,6 +59673,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Flytta avdelare nedåt"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้ายตัวแบ่งลง"
           }
         },
         "tr" : {
@@ -58001,6 +59867,12 @@
             "value" : "Ändra storlek på delad panel"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ปรับขนาดบานหน้าต่างแยก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -58185,6 +60057,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Installera om Claude Code-integrering"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ติดตั้งการผสานรวม Claude Code ใหม่"
           }
         },
         "tr" : {
@@ -58373,6 +60251,12 @@
             "value" : "Installera skalintegrering"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ติดตั้งการผสานรวมเชลล์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -58557,6 +60441,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Filtrera"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กรอง"
           }
         },
         "tr" : {
@@ -58745,6 +60635,12 @@
             "value" : "Redigera utlösare"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แก้ไขทริกเกอร์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -58929,6 +60825,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausa panel"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หยุดบานหน้าต่างชั่วคราว"
           }
         },
         "tr" : {
@@ -59117,6 +61019,12 @@
             "value" : "Spara retrospektiva felsökningsloggar"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บันทึกบันทึกการดีบั๊กย้อนหลัง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -59301,6 +61209,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Textsnuttar"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สนิปเพ็ต"
           }
         },
         "tr" : {
@@ -59489,6 +61403,12 @@
             "value" : "Markera aktuellt kommando"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกคำสั่งปัจจุบัน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -59673,6 +61593,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ta skärmavbild…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ถ่ายภาพหน้าจอ…"
           }
         },
         "tr" : {
@@ -59861,6 +61787,12 @@
             "value" : "Rendera markering nativt"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เรนเดอร์ส่วนที่เลือกแบบเนทีฟ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -60045,6 +61977,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Visa sessionsanteckning"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงบันทึกย่อของเซสชั่น"
           }
         },
         "tr" : {
@@ -60233,6 +62171,12 @@
             "value" : "Textsnuttar"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สนิปเพ็ต"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -60417,6 +62361,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Redigera fönstertitel"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แก้ไขชื่อหน้าต่าง"
           }
         },
         "tr" : {
@@ -60605,6 +62555,12 @@
             "value" : "Dolda varningar…"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การเตือนที่ซ่อนไว้…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -60789,6 +62745,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Föregående märke"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เครื่องหมายก่อนหน้า"
           }
         },
         "tr" : {
@@ -60977,6 +62939,12 @@
             "value" : "Installera redan hämtad Python-körmiljö"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ติดตั้งรันไทม์ Python ที่ดาวน์โหลดไว้แล้ว"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -61161,6 +63129,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Flytta avdelare åt höger"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้ายตัวแบ่งไปทางขวา"
           }
         },
         "tr" : {
@@ -61349,6 +63323,12 @@
             "value" : "Flik"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แถบ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -61533,6 +63513,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hämta filer…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ดาวน์โหลดไฟล์…"
           }
         },
         "tr" : {
@@ -61721,6 +63707,12 @@
             "value" : "Flytta flik åt vänster"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้ายแถบไปทางซ้าย"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -61905,6 +63897,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lägg till flik i ny grupp…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เพิ่มแถบไปยังกลุ่มใหม่…"
           }
         },
         "tr" : {
@@ -62093,6 +64091,12 @@
             "value" : "Visa verktygsfältet"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงแถบเครื่องมือ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -62277,6 +64281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ta bort flik från grupp"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เอาแถบออกจากกลุ่ม"
           }
         },
         "tr" : {
@@ -62465,6 +64475,12 @@
             "value" : "Automatisk kommandoredigerare"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตัวเขียนคำสั่งอัตโนมัติ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -62649,6 +64665,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Öppna AI-chatt…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดแชท AI…"
           }
         },
         "tr" : {
@@ -62837,6 +64859,12 @@
             "value" : "Visa tidsstämplar"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงการประทับเวลา"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63021,6 +65049,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avancerad inklistring…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "วางขั้นสูง…"
           }
         },
         "tr" : {
@@ -63209,6 +65243,12 @@
             "value" : "Ordna fönster"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "จัดเรียงหน้าต่าง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63393,6 +65433,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Emuleringsnivå"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ระดับการจำลอง"
           }
         },
         "tr" : {
@@ -63581,6 +65627,12 @@
             "value" : "Markera träffar"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกรายการที่ตรงกัน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63765,6 +65817,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Öppna markering"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดส่วนที่เลือก"
           }
         },
         "tr" : {
@@ -63953,6 +66011,12 @@
             "value" : "Historik"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ประวัติ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -64137,6 +66201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Återskapa arkiv…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กู้คืนไฟล์เก็บถาวร…"
           }
         },
         "tr" : {
@@ -64325,6 +66395,12 @@
             "value" : "Fönsterstil"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รูปแบบหน้าต่าง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -64509,6 +66585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Full bredd, skärmens nederkant"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เต็มความกว้างด้านล่างของหน้าจอ"
           }
         },
         "tr" : {
@@ -64697,6 +66779,12 @@
             "value" : "Bokstavliga styrtecken"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตัวควบคุมตามตัวอักษร"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -64881,6 +66969,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rensa sökning"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ล้างการค้นหา"
           }
         },
         "tr" : {
@@ -65069,6 +67163,12 @@
             "value" : "Förklara utdata med AI"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "อธิบายข้อมูลออกด้วย AI"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65253,6 +67353,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Emuleringsnivå"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ระดับการจำลอง"
           }
         },
         "tr" : {
@@ -65441,6 +67547,12 @@
             "value" : "Sök efter URL:er"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ค้นหา URL"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65625,6 +67737,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ersätt med formaterad JSON"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แทนที่ด้วย JSON ที่จัดรูปแบบแล้ว"
           }
         },
         "tr" : {
@@ -65813,6 +67931,12 @@
             "value" : "Åtgärder"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การดำเนินการ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65997,6 +68121,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Storleksändringar uppdaterar profilen"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การเปลี่ยนขนาดจะอัปเดตโปรไฟล์"
           }
         },
         "tr" : {
@@ -66185,6 +68315,12 @@
             "value" : "Ta bort senaste profiler från Dock-menyn"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เอาโปรไฟล์ล่าสุดออกจากเมนู Dock"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -66369,6 +68505,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Begravda sessioner"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เซสชั่นที่ฝังไว้"
           }
         },
         "tr" : {
@@ -66557,6 +68699,12 @@
             "value" : "Hantera beroenden…"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "จัดการส่วนที่ต้องพึ่งพา…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -66741,6 +68889,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bakåt"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้อนกลับ"
           }
         },
         "tr" : {
@@ -66929,6 +69083,12 @@
             "value" : "Arbetsgrupper"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กลุ่มทำงาน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -67113,6 +69273,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Läs in arrangemang från fil…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "โหลดการจัดเรียงจากไฟล์…"
           }
         },
         "tr" : {
@@ -67301,6 +69467,12 @@
             "value" : "Kortkommandon för kopieringsläge"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ปุ่มลัดของโหมดคัดลอก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -67485,6 +69657,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delad panel"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บานหน้าต่างแยก"
           }
         },
         "tr" : {
@@ -67673,6 +69851,12 @@
             "value" : "Ändra fönsterstorlek"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ปรับขนาดหน้าต่าง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -67857,6 +70041,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rapportera alla händelsetyper"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รายงานเหตุการณ์ทุกประเภท"
           }
         },
         "tr" : {
@@ -68045,6 +70235,12 @@
             "value" : "Lägg till utlösare…"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เพิ่มทริกเกอร์…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -68229,6 +70425,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Webb"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เว็บ"
           }
         },
         "tr" : {
@@ -68417,6 +70619,12 @@
             "value" : "modifyOtherKeys-läge 1"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys โหมด 1"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -68601,6 +70809,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Minska bredd"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ลดความกว้าง"
           }
         },
         "tr" : {
@@ -68789,6 +71003,12 @@
             "value" : "Skärmens högra sida"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ด้านขวาของหน้าจอ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -68973,6 +71193,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Klistra in fil Base64-kodad"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "วางไฟล์ที่เข้ารหัส Base64"
           }
         },
         "tr" : {
@@ -69161,6 +71387,12 @@
             "value" : "Rensa till senaste märket"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ล้างจนถึงเครื่องหมายล่าสุด"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -69345,6 +71577,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fördela delade paneler jämnt"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "จัดบานหน้าต่างแยกให้เท่ากัน"
           }
         },
         "tr" : {
@@ -69533,6 +71771,12 @@
             "value" : "Importera inspelning"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "นำเข้าการบันทึก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -69717,6 +71961,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Programknappsats"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แป้นตัวเลขของแอปพลิเคชัน"
           }
         },
         "tr" : {
@@ -69905,6 +72155,12 @@
             "value" : "Full bredd, skärmens överkant"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เต็มความกว้างด้านบนของหน้าจอ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -70086,6 +72342,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT100"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT100"
@@ -70277,6 +72539,12 @@
             "value" : "VT200"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT200"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -70461,6 +72729,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Koppla från"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตัดการเชื่อมต่อ"
           }
         },
         "tr" : {
@@ -70649,6 +72923,12 @@
             "value" : "Varna före inklistring av en rad som slutar med radbrytning vid skalprompten"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เตือนก่อนวางหนึ่งบรรทัดที่ลงท้ายด้วยการขึ้นบรรทัดใหม่ที่พร้อมท์ของเชลล์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -70833,6 +73113,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sök globalt…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ค้นหาทั่วทั้งระบบ…"
           }
         },
         "tr" : {
@@ -71021,6 +73307,12 @@
             "value" : "Maximerad"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ขยายใหญ่สุด"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -71205,6 +73497,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Konsol"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คอนโซล"
           }
         },
         "tr" : {
@@ -71393,6 +73691,12 @@
             "value" : "Ny flik bredvid aktuell flik"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แถบใหม่ถัดจากแถบปัจจุบัน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -71577,6 +73881,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Återskapa fönsterarrangemang som flikar"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กู้คืนการจัดเรียงหน้าต่างเป็นแถบ"
           }
         },
         "tr" : {
@@ -71765,6 +74075,12 @@
             "value" : "Ersätt med Base64-kodat värde"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แทนที่ด้วยค่าที่เข้ารหัส Base 64"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -71949,6 +74265,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aktivera artificiell intelligens"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เรียกใช้ปัญญาประดิษฐ์"
           }
         },
         "tr" : {
@@ -72137,6 +74459,12 @@
             "value" : "Session"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เซสชั่น"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -72323,6 +74651,12 @@
             "value" : "Namngivna märken"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เครื่องหมายที่มีชื่อ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -72507,6 +74841,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nästa medlem"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สมาชิกถัดไป"
           }
         },
         "tr" : {

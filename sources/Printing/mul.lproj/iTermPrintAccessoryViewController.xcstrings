@@ -155,6 +155,12 @@
             "value": "Svartvitt"
           }
         },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ขาวดำ"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",

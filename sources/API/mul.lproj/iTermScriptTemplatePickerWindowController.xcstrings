@@ -155,6 +155,12 @@
             "value" : "Ett enkelt skript som inte har några beroenden förutom iterm2-biblioteket."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สคริปต์ง่ายๆ ที่ไม่มีส่วนที่ต้องพึ่งพาอื่นนอกจากไลบรารี iterm2"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -336,6 +342,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😈"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😈"
@@ -527,6 +539,12 @@
             "value" : "Grundläggande"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "พื้นฐาน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -708,6 +726,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😊"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😊"
@@ -899,6 +923,12 @@
             "value" : "Långkörande daemon"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "daemon ที่ทำงานระยะยาว"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1083,6 +1113,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enkel"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ง่าย"
           }
         },
         "tr" : {
@@ -1271,6 +1307,12 @@
             "value" : "Avbryt"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ยกเลิก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1455,6 +1497,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Välj den här mallen för ett enkelt skript som utför åtgärder och sedan avslutas."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกเทมเพลตนี้สำหรับสคริปต์ง่ายๆ ที่ทำการดำเนินการแล้วสิ้นสุดการทำงาน"
           }
         },
         "tr" : {
@@ -1643,6 +1691,12 @@
             "value" : "Ett skript som är beroende av PyPI-paket utöver iterm2-biblioteket. En privat pyenv skapas för skriptet."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สคริปต์ที่พึ่งพาแพ็กเกจ PyPI นอกเหนือจากไลบรารี iterm2 โดยจะสร้าง pyenv ส่วนตัวสำหรับสคริปต์นี้"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1824,6 +1878,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔗"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🔗"
@@ -2015,6 +2075,12 @@
             "value" : "Välj en skriptmall:"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกเทมเพลตสคริปต์:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2199,6 +2265,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fullständig miljö"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สภาพแวดล้อมแบบเต็ม"
           }
         },
         "tr" : {
@@ -2387,6 +2459,12 @@
             "value" : "Välj den här mallen för ett skript som fortsätter köras och svarar på notiser."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกเทมเพลตนี้สำหรับสคริปต์ที่ทำงานค้างอยู่และตอบสนองต่อการแจ้งเตือน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2568,6 +2646,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛠️"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🛠️"
@@ -2757,6 +2841,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Välj en Python-miljö:"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกสภาพแวดล้อม Python:"
           }
         },
         "tr" : {

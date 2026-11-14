@@ -155,6 +155,12 @@
             "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
           }
         },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -339,6 +345,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Skalintegrering"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "การผสานรวมเชลล์"
           }
         },
         "tr": {

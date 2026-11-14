@@ -155,6 +155,12 @@
             "value" : "Sökväg"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เส้นทาง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -339,6 +345,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Visa"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดง"
           }
         },
         "tr" : {
@@ -527,6 +539,12 @@
             "value" : "Signatur"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ซิกเนเจอร์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -711,6 +729,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Skriptgranskare"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตัวตรวจสอบสคริปต์"
           }
         },
         "tr" : {
@@ -899,6 +923,12 @@
             "value" : "Sessioner, flikar och fönster"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เซสชั่น แถบ และหน้าต่าง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1083,6 +1113,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Variabler"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตัวแปร"
           }
         },
         "tr" : {
@@ -1271,6 +1307,12 @@
             "value" : "Roll"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บทบาท"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1455,6 +1497,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kopiera sökväg"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คัดลอกเส้นทาง"
           }
         },
         "tr" : {
@@ -1643,6 +1691,12 @@
             "value" : "Registrerade funktioner"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ฟังก์ชันที่ลงทะเบียน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1827,6 +1881,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Värde"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ค่า"
           }
         },
         "tr" : {
@@ -2015,6 +2075,12 @@
             "value" : "Kopiera ID"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คัดลอก ID"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2201,6 +2267,12 @@
             "value" : "Objektnamn (ID)"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ชื่อออบเจ็กต์ (ID)"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2382,6 +2454,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⨁"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⨁"
@@ -2573,6 +2651,12 @@
             "value" : "Skript"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สคริปต์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2757,6 +2841,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kopiera värde"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คัดลอกค่า"
           }
         },
         "tr" : {

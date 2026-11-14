@@ -155,6 +155,12 @@
             "value" : "Kräver skalintegrering för att identifiera prompten"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ต้องใช้การผสานรวมเชลล์เพื่อตรวจจับพร้อมท์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -339,6 +345,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aktiveras när det körande programmet har skickat en escapekod för att slå på ”läget för inklistring inom hakparentes”. Den inklistrade strängen omges då av escapekoder som anger att texten kommer från en inklistring."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดใช้งานเมื่อแอปที่กำลังทำงานส่งรหัส Escape เพื่อเปิด “โหมดการวางแบบมีวงเล็บกำกับ” สตริงที่วางจะถูก “กำกับ” ด้วยรหัส Escape ที่ระบุว่าข้อความภายในมาจากการวาง"
           }
         },
         "tr" : {
@@ -527,6 +539,12 @@
             "value" : "Escapea tabbtecken med ^V"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escape อักขระ Tab ด้วย ^V"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -711,6 +729,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Klistra in med tabbtecken"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "วางพร้อมอักขระ Tab"
           }
         },
         "tr" : {
@@ -899,6 +923,12 @@
             "value" : "Ersätt"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แทนที่"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1083,6 +1113,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Konvertera Unicode-skiljetecken"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แปลงเครื่องหมายวรรคตอน Unicode"
           }
         },
         "tr" : {
@@ -1271,6 +1307,12 @@
             "value" : "Respekterar vims escapesekvenser"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รองรับลำดับ Escape ของ vim"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1452,6 +1494,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 ms"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 ms"
@@ -1643,6 +1691,12 @@
             "value" : "Konverterar olika former av citattecken och tankstreck till deras ASCII-motsvarigheter."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แปลงเครื่องหมายอัญประกาศและเครื่องหมายขีดรูปแบบต่างๆ เป็นอักขระ ASCII ที่เทียบเท่า"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1827,6 +1881,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Konvertera tabbtecken till mellanslag:"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แปลง Tab เป็นช่องว่าง:"
           }
         },
         "tr" : {
@@ -2015,6 +2075,12 @@
             "value" : "Radbrytningar i DOS och UNIX används vanligtvis inte som indata. CR är standard."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "โดยทั่วไปไม่ใช้การขึ้นบรรทัดใหม่แบบ DOS และ UNIX เป็นข้อมูลเข้า CR คือมาตรฐาน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2199,6 +2265,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escapea skaltecken med \\"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escape อักขระของเชลล์ด้วย \\"
           }
         },
         "tr" : {
@@ -2387,6 +2459,12 @@
             "value" : "Delstorlek:"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ขนาดส่วนย่อย:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2571,6 +2649,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ersättning"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ข้อความที่แทนที่"
           }
         },
         "tr" : {
@@ -2759,6 +2843,12 @@
             "value" : "Radbrytningar i DOS och UNIX används vanligtvis inte som indata. CR är standard."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "โดยทั่วไปไม่ใช้การขึ้นบรรทัดใหม่แบบ DOS และ UNIX เป็นข้อมูลเข้า CR คือมาตรฐาน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2943,6 +3033,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tabb, radmatning, sidmatning och vagnretur är de enda ”säkra” kontrolltecknen."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab, line feed, form feed และ carriage return เป็นรหัสควบคุมเพียงชนิดเดียวที่ “ปลอดภัย”"
           }
         },
         "tr" : {
@@ -3131,6 +3227,12 @@
             "value" : "Omvandlingar"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การแปลง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3317,6 +3419,12 @@
             "value" : "ICU-syntax för reguljära uttryck"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ไวยากรณ์นิพจน์ทั่วไปของ ICU"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3498,6 +3606,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100 ms"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "100 ms"
@@ -3689,6 +3803,12 @@
             "value" : "1 kB"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 kB"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3873,6 +3993,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "med"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ด้วย"
           }
         },
         "tr" : {
@@ -4061,6 +4187,12 @@
             "value" : "Hastighet"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ความเร็ว"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4245,6 +4377,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ta bort osäkra kontrolltecken"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เอารหัสควบคุมที่ไม่ปลอดภัยออก"
           }
         },
         "tr" : {
@@ -4433,6 +4571,12 @@
             "value" : "Vänta på skalprompten före inklistring av varje rad"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รอพร้อมท์ของเชลล์ก่อนวางแต่ละบรรทัด"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4617,6 +4761,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fördröjning:"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ระยะหน่วง:"
           }
         },
         "tr" : {
@@ -4805,6 +4955,12 @@
             "value" : "1 byte"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 ไบต์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4989,6 +5145,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reguljärt uttryck"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "นิพจน์ทั่วไป"
           }
         },
         "tr" : {
@@ -5177,6 +5339,12 @@
             "value" : "1,2 kB"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1.2 kB"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5358,6 +5526,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "150 ms"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "150 ms"
@@ -5549,6 +5723,12 @@
             "value" : "100"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5733,6 +5913,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Radioknapp"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ปุ่มตัวเลือก"
           }
         },
         "tr" : {
@@ -5921,6 +6107,12 @@
             "value" : "Ta bort radbrytningar"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เอาการขึ้นบรรทัดใหม่ออก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6105,6 +6297,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Använd $1, $2 osv. för fångstgrupper"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ใช้ $1, $2 ฯลฯ สำหรับกลุ่มที่จับ"
           }
         },
         "tr" : {
@@ -6293,6 +6491,12 @@
             "value" : "Läge för inklistring inom hakparentes"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "โหมดการวางแบบมีวงเล็บกำกับ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6474,6 +6678,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 MB"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 MB"
@@ -6665,6 +6875,12 @@
             "value" : "Konvertera CRLF och LF till CR"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แปลง CRLF และ LF เป็น CR"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6851,6 +7067,12 @@
             "value" : "Base64-koda"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เข้ารหัส Base-64"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7035,6 +7257,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "10 s"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10 วินาที"
           }
         },
         "tr" : {

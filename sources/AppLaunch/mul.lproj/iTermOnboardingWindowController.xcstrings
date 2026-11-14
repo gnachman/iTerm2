@@ -155,6 +155,12 @@
             "value" : "Använd iTerm2 även när du är borta från din Mac. Du kan styra den via AI-chatt, visa sessionsinnehåll och ta emot push-notiser. End-to-end-kryptering skyddar dina data. <a href=\"iterm2whatsnew:companion\">Prova nu!</a>"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ใช้ iTerm2 ได้แม้อยู่ห่างจาก Mac ของคุณ คุณสามารถควบคุมผ่านแชท AI ดูเนื้อหาของเซสชั่น และรับการแจ้งเตือนแบบพุช การเข้ารหัสแบบ end-to-end ช่วยรักษาข้อมูลของคุณให้ปลอดภัย <a href=\"iterm2whatsnew:companion\">ลองเลย</a>"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -336,6 +342,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -527,6 +539,12 @@
             "value" : "Ett nytt AI-chattläge, Orkestrering, låter AI sköta allt åt dig. Det kan skapa fönster, vänta på att uppgifter blir klara (även i interaktiva program), och den nya automatiska säkerhetskontrollen gör att du slipper svara på nästan alla behörighetsfrågor. <a href=\"iterm2whatsnew:orchestration\">Prova nu!</a>"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "โหมดแชท AI ใหม่ที่ชื่อการประสานงาน ให้ AI ดูแลทุกอย่างแทนคุณ โดยสามารถสร้างหน้าต่าง รอให้งานเสร็จสิ้น (แม้ในแอปแบบโต้ตอบ) และตัวตรวจสอบความปลอดภัยอัตโนมัติใหม่ช่วยให้คุณไม่ต้องตอบพร้อมท์ขอสิทธิ์เกือบทั้งหมด <a href=\"iterm2whatsnew:orchestration\">ลองเลย</a>"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -708,6 +726,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -899,6 +923,12 @@
             "value" : "Den nya funktionen Skärmavbilder gör det enkelt att skapa en PNG av terminalens innehåll. Den stöder censurering och markeringar. Använd <a href=\"iterm2whatsnew:screenshot\">Session > Ta skärmavbild</a> för att aktivera den."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คุณสมบัติภาพหน้าจอใหม่ช่วยให้สร้าง PNG ของเนื้อหาเทอร์มินัลได้ง่ายขึ้น รองรับการปิดบังและการไฮไลท์ ใช้ <a href=\"iterm2whatsnew:screenshot\">เซสชั่น > ถ่ายภาพหน้าจอ</a> เพื่อเปิดใช้งาน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1085,6 +1115,12 @@
             "value" : "Nyheter i version 3.7"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "มีอะไรใหม่ในเวอร์ชัน 3.7"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1266,6 +1302,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ">"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : ">"
@@ -1457,6 +1499,12 @@
             "value" : "●"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1641,6 +1689,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code-integrering"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การผสานรวม Claude Code"
           }
         },
         "tr" : {
@@ -1829,6 +1883,12 @@
             "value" : "För att hjälpa dig hantera många flikar kan du nu kombinera flikar i hopfällbara grupper. Flikfältet rullar nu också i stället för att visa en överflödesmeny."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เพื่อช่วยจัดการแถบจำนวนมาก ตอนนี้คุณสามารถรวมแถบเป็นกลุ่มที่ยุบได้ รายการแถบยังเลื่อนได้แทนการแสดงเมนูส่วนที่เกิน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2010,6 +2070,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -2201,6 +2267,12 @@
             "value" : "Claude Code-integreringen organiserar flera relaterade sessioner, till exempel kodgranskning och läsning av diffar, i ett anpassningsbart gränssnitt. Den visar också Claudes status så att du enkelt hittar instanser som väntar på din uppmärksamhet. <a href=\"iterm2whatsnew:claudecode\">Prova nu!</a>"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การผสานรวม Claude Code จัดระเบียบเซสชั่นที่เกี่ยวข้องกันหลายเซสชั่น (เช่น การตรวจทานโค้ดและการอ่าน diff) ไว้ในส่วนติดต่อผู้ใช้ที่ปรับแต่งได้ และยังแสดงสถานะของ Claude เพื่อให้คุณค้นหาอินสแตนซ์ที่รอความสนใจจากคุณได้ง่าย <a href=\"iterm2whatsnew:claudecode\">ลองเลย</a>"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2387,6 +2459,12 @@
             "value" : "Följeslagarapp för iPhone"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แอปคู่หูบน iPhone"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2568,6 +2646,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -2759,6 +2843,12 @@
             "value" : "Orkestrering"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การประสานงาน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2943,6 +3033,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Flikgrupper"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กลุ่มแถบ"
           }
         },
         "tr" : {
@@ -3131,6 +3227,12 @@
             "value" : "Skärmavbilder"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ภาพหน้าจอ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3312,6 +3414,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "<"

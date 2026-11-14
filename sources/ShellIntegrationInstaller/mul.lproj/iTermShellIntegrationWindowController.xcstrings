@@ -155,6 +155,12 @@
             "value" : "Hämtar den senaste versionen. Kör curl | bash"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ดาวน์โหลดเวอร์ชันล่าสุด เรียกใช้ curl | bash"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -339,6 +345,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fortsätt"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ดำเนินการต่อ"
           }
         },
         "tr" : {
@@ -527,6 +539,12 @@
             "value" : "OK"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตกลง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -711,6 +729,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avbryt"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ยกเลิก"
           }
         },
         "tr" : {
@@ -899,6 +923,12 @@
             "value" : "1. Ta reda på vilket skal du använder.\n2. Lägg till skriptfiler i din hemkatalog.\n3. Installera hjälpskript.\n4. Ändra skalets startskript."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. ค้นหาว่าคุณใช้เชลล์ใด\n2. เพิ่มไฟล์สคริปต์ภายใต้ไดเรกทอรีเริ่มต้นของคุณ\n3. ติดตั้งสคริปต์ยูทิลิตี\n4. แก้ไขสคริปต์เริ่มต้นของเชลล์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1083,6 +1113,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tillbaka"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้อนกลับ"
           }
         },
         "tr" : {
@@ -1271,6 +1307,12 @@
             "value" : "Hjälpskripten kan bland annat hämta filer och visa bilder i texten. "
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ยูทิลิตีประกอบด้วยสคริปต์สำหรับดาวน์โหลดไฟล์ แสดงภาพในบรรทัด และอื่นๆ "
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1455,6 +1497,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tillbaka"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้อนกลับ"
           }
         },
         "tr" : {
@@ -1643,6 +1691,12 @@
             "value" : "Fortsätt"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ดำเนินการต่อ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1827,6 +1881,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avbryt"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ยกเลิก"
           }
         },
         "tr" : {
@@ -2015,6 +2075,12 @@
             "value" : "Hoppa över"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ข้าม"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2199,6 +2265,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avbryt"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ยกเลิก"
           }
         },
         "tr" : {
@@ -2387,6 +2459,12 @@
             "value" : "Förhandsvisa kommando"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงตัวอย่างคำสั่ง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2571,6 +2649,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Installation utan internet"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การติดตั้งโดยไม่ใช้อินเทอร์เน็ต"
           }
         },
         "tr" : {
@@ -2759,6 +2843,12 @@
             "value" : "Hämta och kör installationsprogrammet"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ดาวน์โหลดและเรียกใช้ตัวติดตั้ง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2943,6 +3033,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Installera även iTerm2-verktyg"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ติดตั้งยูทิลิตีของ iTerm2 ด้วย"
           }
         },
         "tr" : {
@@ -3131,6 +3227,12 @@
             "value" : "Guidad manuell installation. Ingen hämtning behövs."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การติดตั้งด้วยตนเองแบบมีคำแนะนำ ไม่ต้องดาวน์โหลด"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3315,6 +3417,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Förhandsvisa kommando"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงตัวอย่างคำสั่ง"
           }
         },
         "tr" : {
@@ -3503,6 +3611,12 @@
             "value" : "Fortsätt"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ดำเนินการต่อ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3684,6 +3798,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🎉"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🎉"
@@ -3875,6 +3995,12 @@
             "value" : "Förhandsvisa kommando"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงตัวอย่างคำสั่ง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4059,6 +4185,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tillbaka"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ย้อนกลับ"
           }
         },
         "tr" : {
@@ -4247,6 +4379,12 @@
             "value" : "Hur vill du installera skalintegrering?\n\nUnder processen ändras skalets startskript. Installationsprogrammet skriver kommandon i terminalfönstret åt dig."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คุณต้องการติดตั้งการผสานรวมเชลล์อย่างไร\n\nในขั้นตอนนี้ สคริปต์เริ่มต้นของเชลล์จะถูกแก้ไข ตัวติดตั้งนี้จะป้อนคำสั่งในหน้าต่างเทอร์มินัลให้คุณ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4431,6 +4569,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Förhandsvisa kommando"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงตัวอย่างคำสั่ง"
           }
         },
         "tr" : {
@@ -4619,6 +4763,12 @@
             "value" : "Installationen är klar!"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ติดตั้งเสร็จสมบูรณ์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4803,6 +4953,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Följande kommando kommer att köras:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การดำเนินการนี้จะเรียกใช้คำสั่งต่อไปนี้:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
         "tr" : {
@@ -4991,6 +5147,12 @@
             "value" : "Skapa en ny flik för att prova.\n\nFör bästa resultat, installera skalintegrering på alla värdar du ansluter till med ssh."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สร้างแถบใหม่เพื่อลองใช้งาน\n\nเพื่อผลลัพธ์ที่ดีที่สุด ให้ติดตั้งการผสานรวมเชลล์บนทุกโฮสต์ที่คุณเข้าสู่ระบบด้วย ssh"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5175,6 +5337,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Skalintegrering består av skript som hjälper ditt skal att kommunicera med iTerm2 så att det kan hålla reda på de kommandon du kör, din aktuella katalog och annat tillstånd. "
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การผสานรวมเชลล์ประกอบด้วยสคริปต์ที่ช่วยให้เชลล์ของคุณสื่อสารกับ iTerm2 เพื่อให้ติดตามคำสั่งที่คุณเรียกใช้ ไดเรกทอรีปัจจุบัน และสถานะอื่นๆ ได้ "
           }
         },
         "tr" : {
@@ -5363,6 +5531,12 @@
             "value" : "Installera skalintegrering"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ติดตั้งการผสานรวมเชลล์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5547,6 +5721,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avbryt"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ยกเลิก"
           }
         },
         "tr" : {

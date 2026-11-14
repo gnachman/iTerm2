@@ -155,6 +155,12 @@
             "value" : "AI-komplettering aktiverad: all text skickas till AI"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดใช้การเติมข้อความอัตโนมัติด้วย AI: ข้อความทั้งหมดจะถูกส่งไปยัง AI"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -339,6 +345,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Beskriver hur du använder kommandoredigeraren."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "อธิบายวิธีใช้ตัวเขียนคำสั่ง"
           }
         },
         "tr" : {
@@ -527,6 +539,12 @@
             "value" : "Tryck på ⇧↩ för att skicka."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กด ⇧↩ เพื่อส่ง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -708,6 +726,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI"

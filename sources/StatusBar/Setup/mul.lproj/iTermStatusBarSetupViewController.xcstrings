@@ -155,6 +155,12 @@
             "value" : "Dra en komponent från menyn till Aktiva komponenter för att lägga till den i statusfältet."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ลากส่วนประกอบจากเมนูไปยังส่วนประกอบที่ใช้งานอยู่เพื่อเพิ่มลงในแถบสถานะ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -339,6 +345,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Föredra tät packning framför stabil positionering"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ให้ความสำคัญกับการจัดเรียงแบบกระชับมากกว่าตำแหน่งที่คงที่"
           }
         },
         "tr" : {
@@ -527,6 +539,12 @@
             "value" : "OK"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตกลง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -711,6 +729,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aktiva komponenter"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ส่วนประกอบที่ใช้งานอยู่"
           }
         },
         "tr" : {
@@ -899,6 +923,12 @@
             "value" : "Avaktiverad"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ปิดใช้งาน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1083,6 +1113,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ta bort komponenter med tomma värden"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เอาส่วนประกอบที่มีค่าว่างเปล่าออก"
           }
         },
         "tr" : {
@@ -1271,6 +1307,12 @@
             "value" : "Rita en avgränsare mellan statusfältet och terminalen"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "วาดตัวคั่นระหว่างแถบสถานะและเทอร์มินัล"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1455,6 +1497,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Automatisk"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "อัตโนมัติ"
           }
         },
         "tr" : {
@@ -1643,6 +1691,12 @@
             "value" : "Meny för statusfältskomponenter"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เมนูส่วนประกอบแถบสถานะ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1827,6 +1881,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avancerat…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ขั้นสูง…"
           }
         },
         "tr" : {
@@ -2015,6 +2075,12 @@
             "value" : "Algoritmen för tät packning gör att fler statusfältskomponenter syns samtidigt, men de tenderar att hoppa runt mer."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "อัลกอริทึมการจัดเรียงแบบกระชับทำให้เห็นส่วนประกอบแถบสถานะได้พร้อมกันมากขึ้น แต่มักจะเปลี่ยนตำแหน่งบ่อยกว่า"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2199,6 +2265,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "🌈 Automatisk regnbåge:"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌈 สายรุ้งอัตโนมัติ:"
           }
         },
         "tr" : {
@@ -2387,6 +2459,12 @@
             "value" : "Typsnittsnamnet visas här"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ชื่อแบบอักษรอยู่ที่นี่"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2571,6 +2649,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mörka färger"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สีเข้ม"
           }
         },
         "tr" : {
@@ -2759,6 +2843,12 @@
             "value" : "Ändra"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปลี่ยน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2943,6 +3033,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Förvald textfärg:"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สีข้อความเริ่มต้น:"
           }
         },
         "tr" : {
@@ -3131,6 +3227,12 @@
             "value" : "Konfigurera komponent"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กำหนดค่าส่วนประกอบ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3315,6 +3417,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Algoritmen för tät packning gör att fler statusfältskomponenter syns samtidigt, men de tenderar att hoppa runt mer."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "อัลกอริทึมการจัดเรียงแบบกระชับทำให้เห็นส่วนประกอบแถบสถานะได้พร้อมกันมากขึ้น แต่มักจะเปลี่ยนตำแหน่งบ่อยกว่า"
           }
         },
         "tr" : {
@@ -3503,6 +3611,12 @@
             "value" : "Avgränsarfärg:"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สีตัวคั่น:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3687,6 +3801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avbryt"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ยกเลิก"
           }
         },
         "tr" : {
@@ -3875,6 +3995,12 @@
             "value" : "Ljusa färger"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สีอ่อน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4059,6 +4185,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Typsnitt:"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แบบอักษร:"
           }
         },
         "tr" : {
@@ -4247,6 +4379,12 @@
             "value" : "Bakgrundsfärg:"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สีพื้นหลัง:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4433,6 +4571,12 @@
             "value" : "OK"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตกลง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4617,6 +4761,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ritar en tunn linje mellan statusfältet och terminalinnehållet."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "วาดเส้นบางๆ ระหว่างแถบสถานะและเนื้อหาของเทอร์มินัล"
           }
         },
         "tr" : {

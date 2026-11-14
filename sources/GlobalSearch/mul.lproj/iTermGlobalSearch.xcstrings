@@ -155,6 +155,12 @@
             "value" : "RUBRIKCELL"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เซลล์ส่วนหัว"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -339,6 +345,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sök globalt"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ค้นหาทุกที่"
           }
         },
         "tr" : {
@@ -527,6 +539,12 @@
             "value" : "Delsträng, skiftlägeskänslig"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สตริงย่อยแบบยึดตามตัวพิมพ์ใหญ่-เล็ก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -711,6 +729,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delsträng, automatiskt"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สตริงย่อยแบบอัตโนมัติ"
           }
         },
         "tr" : {
@@ -899,6 +923,12 @@
             "value" : "Regex, ignorera skiftläge"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex แบบไม่ยึดตามตัวพิมพ์ใหญ่-เล็ก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1083,6 +1113,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sök"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ค้นหา"
           }
         },
         "tr" : {
@@ -1271,6 +1307,12 @@
             "value" : "Regex, skiftlägeskänslig"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex แบบยึดตามตัวพิมพ์ใหญ่-เล็ก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1455,6 +1497,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delsträng, ignorera skiftläge"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สตริงย่อยแบบไม่ยึดตามตัวพิมพ์ใหญ่-เล็ก"
           }
         },
         "tr" : {

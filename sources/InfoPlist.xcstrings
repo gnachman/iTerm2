@@ -168,6 +168,12 @@
             "value" : "iTerm2"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -352,6 +358,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ett program i iTerm2 vill använda AppleScript."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แอปพลิเคชันใน iTerm2 ต้องการใช้ AppleScript"
           }
         },
         "tr" : {
@@ -540,6 +552,12 @@
             "value" : "Ett program i iTerm2 vill använda Bluetooth."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แอปพลิเคชันใน iTerm2 ต้องการใช้ Bluetooth"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -724,6 +742,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ett program i iTerm2 vill använda data från Kalender."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แอปพลิเคชันใน iTerm2 ต้องการใช้ข้อมูลปฏิทิน"
           }
         },
         "tr" : {
@@ -912,6 +936,12 @@
             "value" : "Ett program i iTerm2 vill använda kameran."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แอปพลิเคชันใน iTerm2 ต้องการใช้กล้อง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1098,6 +1128,12 @@
             "value" : "Ett program i iTerm2 vill använda dina kontakter."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แอปพลิเคชันใน iTerm2 ต้องการใช้ผู้ติดต่อของคุณ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1279,6 +1315,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPL v2"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPL v2"
@@ -1470,6 +1512,12 @@
             "value" : "Ett program i iTerm2 vill komma åt det lokala nätverket."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แอปพลิเคชันใน iTerm2 ต้องการเข้าถึงเครือข่ายภายใน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1654,6 +1702,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ett program i iTerm2 vill använda din platsinformation, även i bakgrunden."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แอปพลิเคชันใน iTerm2 ต้องการใช้ข้อมูลตำแหน่งที่ตั้งของคุณ แม้ในขณะทำงานอยู่เบื้องหลัง"
           }
         },
         "tr" : {
@@ -1842,6 +1896,12 @@
             "value" : "Ett program i iTerm2 vill använda din platsinformation."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แอปพลิเคชันใน iTerm2 ต้องการใช้ข้อมูลตำแหน่งที่ตั้งของคุณ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2026,6 +2086,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ett program i iTerm2 vill använda din platsinformation när det är aktivt."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แอปพลิเคชันใน iTerm2 ต้องการใช้ข้อมูลตำแหน่งที่ตั้งของคุณขณะที่ใช้งานอยู่"
           }
         },
         "tr" : {
@@ -2214,6 +2280,12 @@
             "value" : "Ett program i iTerm2 vill använda din mikrofon."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แอปพลิเคชันใน iTerm2 ต้องการใช้ไมโครโฟนของคุณ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2398,6 +2470,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ett program i iTerm2 vill använda fotobiblioteket."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แอปพลิเคชันใน iTerm2 ต้องการใช้คลังภาพถ่าย"
           }
         },
         "tr" : {
@@ -2586,6 +2664,12 @@
             "value" : "Ett program i iTerm2 vill använda dina påminnelser."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แอปพลิเคชันใน iTerm2 ต้องการใช้การเตือนความจำของคุณ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2772,6 +2856,12 @@
             "value" : "Ett program i iTerm2 vill använda taligenkänning."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แอปพลิเคชันใน iTerm2 ต้องการใช้การรู้จำเสียงพูด"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2956,6 +3046,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Åtgärden som utförs av ett program i iTerm2 kräver utökad behörighet."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การดำเนินการที่โปรแกรมใน iTerm2 กำลังทำต้องใช้สิทธิ์ระดับสูง"
           }
         },
         "tr" : {

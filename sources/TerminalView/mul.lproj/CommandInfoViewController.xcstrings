@@ -155,6 +155,12 @@
             "value" : "/directory"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -339,6 +345,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kopiera katalog"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คัดลอกไดเรกทอรี"
           }
         },
         "tr" : {
@@ -527,6 +539,12 @@
             "value" : "12 byte"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 ไบต์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -713,6 +731,12 @@
             "value" : "Markera kommandots utdata"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกข้อมูลออกของคำสั่ง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -894,6 +918,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1h 35m"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1h 35m"
@@ -1085,6 +1115,12 @@
             "value" : "Utdata:"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ข้อมูลออก:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1269,6 +1305,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kopierat"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คัดลอกแล้ว"
           }
         },
         "tr" : {
@@ -1457,6 +1499,12 @@
             "value" : "Kopiera kommando till urklipp"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คัดลอกคำสั่งไปยังคลิปบอร์ด"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1641,6 +1689,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Startade %@"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เริ่มเมื่อ %@"
           }
         },
         "tr" : {
@@ -1829,6 +1883,12 @@
             "value" : "Öppna kommando i kommandoredigeraren"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดคำสั่งในตัวเขียนคำสั่ง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2013,6 +2073,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mapp som kan dras"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "โฟลเดอร์ที่ลากได้"
           }
         },
         "tr" : {
@@ -2201,6 +2267,12 @@
             "value" : "kommando"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คำสั่ง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2385,6 +2457,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Skriv kommando till terminalen"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เขียนคำสั่งไปยังเทอร์มินัล"
           }
         },
         "tr" : {
@@ -2573,6 +2651,12 @@
             "value" : "Katalog:"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ไดเรกทอรี:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2757,6 +2841,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Returkod:"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รหัสส่งกลับ:"
           }
         },
         "tr" : {
@@ -2945,6 +3035,12 @@
             "value" : "Skriv katalog till terminalen"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เขียนไดเรกทอรีไปยังเทอร์มินัล"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3129,6 +3225,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Körtid:"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เวลาที่ใช้ทำงาน:"
           }
         },
         "tr" : {
@@ -3317,6 +3419,12 @@
             "value" : "Kopiera kommandots utdata"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คัดลอกข้อมูลออกของคำสั่ง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3501,6 +3609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dela kommando…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แชร์คำสั่ง…"
           }
         },
         "tr" : {
@@ -3689,6 +3803,12 @@
             "value" : "Kommando:"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คำสั่ง:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3870,6 +3990,12 @@
           }
         },
         "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "127"
@@ -4059,6 +4185,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avaktivera visning av kommando utanför skärmen"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ปิดใช้การแสดงคำสั่งที่อยู่นอกหน้าจอ"
           }
         },
         "tr" : {

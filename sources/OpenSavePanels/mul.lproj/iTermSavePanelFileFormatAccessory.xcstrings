@@ -155,6 +155,12 @@
             "value": "Ta med tidsstämplar"
           }
         },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "รวมการประทับเวลา"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -339,6 +345,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Filformat:"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "รูปแบบไฟล์:"
           }
         },
         "tr": {

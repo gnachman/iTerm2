@@ -155,6 +155,12 @@
             "value" : "Vänta lite! Installerar en ny Python-miljö…"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "โปรดรอสักครู่ กำลังติดตั้งสภาพแวดล้อม Python ใหม่…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",

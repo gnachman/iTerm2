@@ -155,6 +155,12 @@
             "value" : "OK"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตกลง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -339,6 +345,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avaktivera GPU-renderaren i lågeffektläge"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ปิดใช้ตัวเรนเดอร์ GPU ในโหมดประหยัดพลังงาน"
           }
         },
         "tr" : {
@@ -527,6 +539,12 @@
             "value" : "Föredra integrerad framför separat GPU"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ใช้ GPU แบบรวมในตัวมากกว่า GPU แยก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -713,6 +731,12 @@
             "value" : "Avaktivera GPU-renderaren när strömmen kopplas från"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ปิดใช้ตัวเรนเดอร์ GPU เมื่อไม่ได้เชื่อมต่อกับแหล่งจ่ายไฟ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -897,6 +921,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avbryt"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ยกเลิก"
           }
         },
         "tr" : {
