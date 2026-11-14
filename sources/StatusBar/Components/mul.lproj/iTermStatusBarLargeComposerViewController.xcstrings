@@ -23,6 +23,12 @@
             "value" : "KI-Vervollständigung aktiviert: Der gesamte Text wird an die KI gesendet"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Συμπλήρωση με AI ενεργοποιημένη: όλο το κείμενο αποστέλλεται στο AI"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -177,6 +183,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Beschreibt, wie der Composer verwendet wird."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Περιγράφει πώς να χρησιμοποιήσετε τον συντάκτη εντολών."
           }
         },
         "en" : {
@@ -335,6 +347,12 @@
             "value" : "Zum Senden ⇧↩ drücken."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πατήστε ⇧↩ για αποστολή."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -489,6 +507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "KI"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
           }
         },
         "en" : {

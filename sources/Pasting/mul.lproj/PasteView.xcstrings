@@ -23,6 +23,12 @@
             "value": "Wird eingefügt…"
           }
         },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Επικόλληση…"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",
@@ -177,6 +183,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Abbrechen"
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ακύρωση"
           }
         },
         "en": {

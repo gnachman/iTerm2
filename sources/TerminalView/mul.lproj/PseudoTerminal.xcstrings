@@ -23,6 +23,12 @@
             "value" : "Fehler dieses Befehls stillschweigend ignorieren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αθόρυβη αγνόηση σφαλμάτων αυτής της εντολής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -179,6 +185,12 @@
             "value" : "Auszuführender Coprocess-Befehl:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εντολή συνδιεργασίας προς εκτέλεση:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -330,6 +342,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -491,6 +509,12 @@
             "value" : "Abbrechen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ακύρωση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -645,6 +669,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Befehl eingeben"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εισαγωγή εντολής"
           }
         },
         "en" : {

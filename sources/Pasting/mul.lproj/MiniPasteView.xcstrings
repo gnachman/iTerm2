@@ -23,6 +23,12 @@
             "value": "Wird eingefügt…"
           }
         },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Επικόλληση…"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",

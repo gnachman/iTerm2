@@ -23,6 +23,12 @@
             "value" : "%"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -174,6 +180,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pt"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "pt"
@@ -335,6 +347,12 @@
             "value" : "Maximale Breite:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μέγιστο πλάτος:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -489,6 +507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oberer Rand:"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πάνω περιθώριο:"
           }
         },
         "en" : {
@@ -647,6 +671,12 @@
             "value" : "Rechter Rand:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Δεξί περιθώριο:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -798,6 +828,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%"
@@ -959,6 +995,12 @@
             "value" : "OK"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1110,6 +1152,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pt"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "pt"
@@ -1271,6 +1319,12 @@
             "value" : "Maximale Höhe:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μέγιστο ύψος:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1425,6 +1479,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abbrechen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ακύρωση"
           }
         },
         "en" : {

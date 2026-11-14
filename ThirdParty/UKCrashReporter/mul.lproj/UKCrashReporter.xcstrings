@@ -23,6 +23,12 @@
             "value" : "Beschreibung"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Περιγραφή"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -177,6 +183,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Absturzprotokoll"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αρχείο καταγραφής κατάρρευσης"
           }
         },
         "en" : {
@@ -335,6 +347,12 @@
             "value" : "Absturzbericht"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αναφορά κατάρρευσης"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -489,6 +507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Es sieht so aus, als sei {APPNAME} beim letzten Gebrauch abgestürzt. Möchten Sie ein Absturzprotokoll an die Entwickler senden?\n\nAbsturzprotokolle von Apple werden nicht an andere Entwickler gesendet, daher ist dies die einzige Möglichkeit für die Entwickler von {APPNAME}, von diesem Absturz zu erfahren und ihn zu beheben."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Φαίνεται ότι το {APPNAME} κατέρρευσε την τελευταία φορά που χρησιμοποιήθηκε. Θέλετε να στείλετε ένα αρχείο καταγραφής κατάρρευσης στους προγραμματιστές;\n\nΤα αρχεία καταγραφής κατάρρευσης της Apple δεν αποστέλλονται σε άλλους προγραμματιστές, επομένως αυτός είναι ο μόνος τρόπος για να μάθουν οι προγραμματιστές του {APPNAME} για αυτή την κατάρρευση και να τη διορθώσουν."
           }
         },
         "en" : {
@@ -647,6 +671,12 @@
             "value" : "Sie können alle Informationen löschen, die Sie nicht übermitteln möchten. Dies erschwert jedoch die Fehlersuche. Standardmäßig werden das Absturzprotokoll sowie Angaben zu Ihrem Mac und Ihren Einstellungen übermittelt."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μπορείτε να διαγράψετε οποιαδήποτε πληροφορία δεν θέλετε να αποσταλεί, αλλά αυτό θα δυσκολέψει τον εντοπισμό του σφάλματος. Από προεπιλογή, αποστέλλονται το αρχείο καταγραφής κατάρρευσης, το μοντέλο Mac που χρησιμοποιείτε και οι ρυθμίσεις σας."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -801,6 +831,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Senden"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αποστολή"
           }
         },
         "en" : {
@@ -959,6 +995,12 @@
             "value" : "Später erinnern"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Υπενθύμιση αργότερα"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1113,6 +1155,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verwerfen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Απόρριψη"
           }
         },
         "en" : {

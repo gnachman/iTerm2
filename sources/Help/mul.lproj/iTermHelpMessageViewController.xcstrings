@@ -23,6 +23,12 @@
             "value": "Beschriftung"
           }
         },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ετικέτα"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",

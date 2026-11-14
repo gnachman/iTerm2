@@ -23,6 +23,12 @@
             "value" : "Ziehen Sie eine Komponente aus dem Menü zu „Aktive Komponenten“, um sie zur Statusleiste hinzuzufügen."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Σύρετε ένα στοιχείο από το μενού στα «Ενεργά στοιχεία» για να το προσθέσετε στη γραμμή κατάστασης."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -179,6 +185,12 @@
             "value" : "Enge Anordnung gegenüber stabiler Positionierung bevorzugen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προτίμηση συμπαγούς διάταξης έναντι σταθερής θέσης"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -330,6 +342,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -491,6 +509,12 @@
             "value" : "Aktive Komponenten"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ενεργά στοιχεία"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -645,6 +669,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Deaktiviert"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Απενεργοποιημένο"
           }
         },
         "en" : {
@@ -803,6 +833,12 @@
             "value" : "Komponenten mit leeren Werten entfernen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αφαίρεση στοιχείων με κενές τιμές"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -957,6 +993,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Trennlinie zwischen Statusleiste und Terminal zeichnen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Σχεδίαση διαχωριστικού μεταξύ γραμμής κατάστασης και τερματικού"
           }
         },
         "en" : {
@@ -1115,6 +1157,12 @@
             "value" : "Automatisch"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αυτόματο"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1269,6 +1317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Menü der Statusleistenkomponenten"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μενού στοιχείων γραμμής κατάστασης"
           }
         },
         "en" : {
@@ -1427,6 +1481,12 @@
             "value" : "Erweitert…"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προηγμένα…"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1581,6 +1641,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Der Algorithmus für enge Anordnung ermöglicht es, mehr Statusleistenkomponenten gleichzeitig anzuzeigen, allerdings springen sie dabei stärker hin und her."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ο αλγόριθμος συμπαγούς διάταξης επιτρέπει να είναι ορατά περισσότερα στοιχεία της γραμμής κατάστασης ταυτόχρονα, αλλά τείνουν να αλλάζουν θέση συχνότερα."
           }
         },
         "en" : {
@@ -1739,6 +1805,12 @@
             "value" : "🌈 Auto-Regenbogen:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌈 Αυτόματο ουράνιο τόξο:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1893,6 +1965,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hier steht der Schriftname"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το όνομα της γραμματοσειράς μπαίνει εδώ"
           }
         },
         "en" : {
@@ -2051,6 +2129,12 @@
             "value" : "Dunkle Farben"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Σκούρα χρώματα"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2205,6 +2289,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ändern"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αλλαγή"
           }
         },
         "en" : {
@@ -2363,6 +2453,12 @@
             "value" : "Standardtextfarbe:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προεπιλεγμένο χρώμα κειμένου:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2517,6 +2613,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Komponente konfigurieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Διαμόρφωση στοιχείου"
           }
         },
         "en" : {
@@ -2675,6 +2777,12 @@
             "value" : "Der Algorithmus für enge Anordnung ermöglicht es, mehr Statusleistenkomponenten gleichzeitig anzuzeigen, allerdings springen sie dabei stärker hin und her."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ο αλγόριθμος συμπαγούς διάταξης επιτρέπει να είναι ορατά περισσότερα στοιχεία της γραμμής κατάστασης ταυτόχρονα, αλλά τείνουν να αλλάζουν θέση συχνότερα."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2829,6 +2937,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Trennlinienfarbe:"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Χρώμα διαχωριστικού:"
           }
         },
         "en" : {
@@ -2987,6 +3101,12 @@
             "value" : "Abbrechen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ακύρωση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -3141,6 +3261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Helle Farben"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ανοιχτά χρώματα"
           }
         },
         "en" : {
@@ -3299,6 +3425,12 @@
             "value" : "Schriftart:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Γραμματοσειρά:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -3455,6 +3587,12 @@
             "value" : "Hintergrundfarbe:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Χρώμα φόντου:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -3606,6 +3744,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -3765,6 +3909,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zeichnet eine dünne Linie zwischen der Statusleiste und dem Terminalinhalt."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Σχεδιάζει μια λεπτή γραμμή μεταξύ της γραμμής κατάστασης και του περιεχομένου του τερματικού."
           }
         },
         "en" : {

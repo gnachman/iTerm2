@@ -23,6 +23,12 @@
             "value" : "OK"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -177,6 +183,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPU-Renderer im Energiesparmodus deaktivieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Απενεργοποίηση του μηχανισμού απόδοσης GPU σε λειτουργία χαμηλής κατανάλωσης"
           }
         },
         "en" : {
@@ -335,6 +347,12 @@
             "value" : "Integrierte GPU der dedizierten GPU vorziehen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προτίμηση ενσωματωμένης GPU έναντι ξεχωριστής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -491,6 +509,12 @@
             "value" : "GPU-Renderer deaktivieren, wenn nicht an Stromversorgung angeschlossen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Απενεργοποίηση του μηχανισμού απόδοσης GPU όταν αποσυνδεθεί το ρεύμα"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -645,6 +669,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abbrechen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ακύρωση"
           }
         },
         "en" : {

@@ -23,6 +23,12 @@
             "value": "Zeitstempel einschließen"
           }
         },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Συμπερίληψη χρονικών σημάνσεων"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",
@@ -177,6 +183,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dateiformat:"
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Μορφή αρχείου:"
           }
         },
         "en": {

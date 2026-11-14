@@ -23,6 +23,12 @@
             "value" : "Pfad"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Διαδρομή"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -177,6 +183,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Im Finder anzeigen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εμφάνιση"
           }
         },
         "en" : {
@@ -335,6 +347,12 @@
             "value" : "Signatur"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Υπογραφή"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -489,6 +507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Skript-Inspektor"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιθεωρητής σκριπτ"
           }
         },
         "en" : {
@@ -647,6 +671,12 @@
             "value" : "Sitzungen, Tabs und Fenster"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Συνεδρίες, καρτέλες και παράθυρα"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -801,6 +831,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Variablen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μεταβλητές"
           }
         },
         "en" : {
@@ -959,6 +995,12 @@
             "value" : "Rolle"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ρόλος"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1113,6 +1155,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pfad kopieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αντιγραφή διαδρομής"
           }
         },
         "en" : {
@@ -1271,6 +1319,12 @@
             "value" : "Registrierte Funktionen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Καταχωρισμένες συναρτήσεις"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1425,6 +1479,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wert"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Τιμή"
           }
         },
         "en" : {
@@ -1583,6 +1643,12 @@
             "value" : "ID kopieren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αντιγραφή ID"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1739,6 +1805,12 @@
             "value" : "Objektname (ID)"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Όνομα αντικειμένου (ID)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1890,6 +1962,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⨁"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⨁"
@@ -2051,6 +2129,12 @@
             "value" : "Skript"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Σκριπτ"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2205,6 +2289,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wert kopieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αντιγραφή τιμής"
           }
         },
         "en" : {

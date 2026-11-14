@@ -23,6 +23,12 @@
             "value" : "Verzeichnis der vorherigen Sitzung wiederverwenden"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επαναχρησιμοποίηση του καταλόγου της προηγούμενης συνεδρίας"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -177,6 +183,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Home-Verzeichnis"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Φάκελος αφετηρίας"
           }
         },
         "en" : {
@@ -335,6 +347,12 @@
             "value" : "Arbeitsverzeichnis für neue Tabs"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κατάλογος εργασίας για νέες καρτέλες"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -489,6 +507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Radio"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κουμπί επιλογής"
           }
         },
         "en" : {
@@ -647,6 +671,12 @@
             "value" : "Arbeitsverzeichnis für neue Fenster"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κατάλογος εργασίας για νέα παράθυρα"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -801,6 +831,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verzeichnis der vorherigen Sitzung wiederverwenden"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επαναχρησιμοποίηση του καταλόγου της προηγούμενης συνεδρίας"
           }
         },
         "en" : {
@@ -959,6 +995,12 @@
             "value" : "Radio"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κουμπί επιλογής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1113,6 +1155,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verzeichnis der vorherigen Sitzung wiederverwenden"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επαναχρησιμοποίηση του καταλόγου της προηγούμενης συνεδρίας"
           }
         },
         "en" : {
@@ -1271,6 +1319,12 @@
             "value" : "Verzeichnis:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κατάλογος:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1425,6 +1479,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arbeitsverzeichnis für neue geteilte Bereiche"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κατάλογος εργασίας για νέα διαιρεμένα πλαίσια"
           }
         },
         "en" : {
@@ -1583,6 +1643,12 @@
             "value" : "Erweiterte Einstellungen für das Arbeitsverzeichnis"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προηγμένες ρυθμίσεις καταλόγου εργασίας"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1737,6 +1803,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verzeichnis:"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κατάλογος:"
           }
         },
         "en" : {
@@ -1895,6 +1967,12 @@
             "value" : "Verzeichnis:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κατάλογος:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2049,6 +2127,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Radio"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κουμπί επιλογής"
           }
         },
         "en" : {
@@ -2207,6 +2291,12 @@
             "value" : "Home-Verzeichnis"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Φάκελος αφετηρίας"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2363,6 +2453,12 @@
             "value" : "Home-Verzeichnis"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Φάκελος αφετηρίας"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2514,6 +2610,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"

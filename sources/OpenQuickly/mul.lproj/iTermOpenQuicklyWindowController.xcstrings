@@ -23,6 +23,12 @@
             "value" : "Schnell öffnen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Γρήγορο άνοιγμα"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -179,6 +185,12 @@
             "value" : "Detail"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Λεπτομέρειες"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -333,6 +345,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nach Sitzungen, Profilen oder Anordnungen suchen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αναζήτηση συνεδριών, προφίλ ή διατάξεων"
           }
         },
         "en" : {

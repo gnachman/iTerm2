@@ -23,6 +23,12 @@
             "value" : "⌥ Option"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Option"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -177,6 +183,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hotkey-Fenster anheften (bleibt geöffnet, wenn es den Tastaturfokus verliert)"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Καρφίτσωμα παραθύρου πλήκτρου άμεσης πρόσβασης (παραμένει ανοιχτό όταν χάνεται η εστίαση πληκτρολογίου)"
           }
         },
         "en" : {
@@ -335,6 +347,12 @@
             "value" : "Hotkey:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πλήκτρο άμεσης πρόσβασης:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -489,6 +507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hinweis: Das Fenster wird nur dann erneut geöffnet, wenn es geschlossen wurde, weil eine andere App aktiv wurde."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Σημείωση: το παράθυρο ανοίγει ξανά μόνο αν είχε κλείσει επειδή ενεργοποιήθηκε άλλη εφαρμογή."
           }
         },
         "en" : {
@@ -647,6 +671,12 @@
             "value" : "Weitere Hotkeys"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πρόσθετα πλήκτρα άμεσης πρόσβασης"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -801,6 +831,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wenn Sie den diesem Profil zugewiesenen Hotkey drücken, wird ein dediziertes Fenster ein- oder ausgeblendet. Jedes Profil mit einem Hotkey steuert sein eigenes Hotkey-Fenster."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Όταν πατάτε το πλήκτρο άμεσης πρόσβασης που έχει αντιστοιχιστεί σε αυτό το προφίλ, ένα ειδικό παράθυρο θα εμφανίζεται ή θα αποκρύπτεται. Κάθε προφίλ με πλήκτρο άμεσης πρόσβασης ελέγχει το δικό του παράθυρο πλήκτρου άμεσης πρόσβασης."
           }
         },
         "en" : {
@@ -959,6 +995,12 @@
             "value" : "Nichts Besonderes tun"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Καμία ειδική ενέργεια"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1110,6 +1152,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -1271,6 +1319,12 @@
             "value" : "Dieses Hotkey-Fenster anzeigen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εμφάνιση αυτού του παραθύρου πλήκτρου άμεσης πρόσβασης"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1425,6 +1479,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hotkey-Fenster-Einstellungen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ρυθμίσεις παραθύρου πλήκτρου άμεσης πρόσβασης"
           }
         },
         "en" : {
@@ -1583,6 +1643,12 @@
             "value" : "⌘ Befehl"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Command"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1737,6 +1803,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️ Ein anderes Profil verwendet diese Tastenkombination"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Άλλο προφίλ χρησιμοποιεί αυτή τη συντόμευση"
           }
         },
         "en" : {
@@ -1895,6 +1967,12 @@
             "value" : "⇧ Umschalt"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Shift"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2049,6 +2127,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Taste für doppeltes Drücken:"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πλήκτρο διπλού πατήματος:"
           }
         },
         "en" : {
@@ -2207,6 +2291,12 @@
             "value" : "Bei erneuter Aktivierung der App automatisch wieder öffnen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αυτόματο άνοιγμα ξανά κατά την επανενεργοποίηση της εφαρμογής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2361,6 +2451,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️ Ein anderes Profil verwendet diesen Doppeldruck"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Άλλο προφίλ χρησιμοποιεί αυτό το διπλό πάτημα"
           }
         },
         "en" : {
@@ -2519,6 +2615,12 @@
             "value" : "Dieses Hotkey-Fenster anzeigen, wenn kein anderes Fenster geöffnet ist"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εμφάνιση αυτού του παραθύρου πλήκτρου άμεσης πρόσβασης αν δεν είναι ανοιχτό άλλο παράθυρο"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2673,6 +2775,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Schwebende Fenster überlagern andere Fenster und das Dock sowie Vollbildfenster anderer Apps (wenn für den Schreibtisch des Hotkey-Fensters „Alle Schreibtische“ eingestellt ist)."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Τα αιωρούμενα παράθυρα επικαλύπτουν άλλα παράθυρα, το Dock και τα παράθυρα πλήρους οθόνης άλλων εφαρμογών (αν το γραφείο εργασίας του παραθύρου πλήκτρου άμεσης πρόσβασης έχει οριστεί σε «Όλα τα γραφεία εργασίας»)."
           }
         },
         "en" : {
@@ -2831,6 +2939,12 @@
             "value" : "Abbrechen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ακύρωση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2985,6 +3099,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Beim Klicken auf das Dock-Symbol:"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Με κλικ στο εικονίδιο του Dock:"
           }
         },
         "en" : {
@@ -3143,6 +3263,12 @@
             "value" : "Ein- und Ausblenden animieren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κίνηση κατά την εμφάνιση και την απόκρυψη"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -3294,6 +3420,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -3455,6 +3587,12 @@
             "value" : "OK"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -3611,6 +3749,12 @@
             "value" : "Schwebendes Fenster"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αιωρούμενο παράθυρο"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -3762,6 +3906,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Control"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "^ Control"
@@ -3921,6 +4071,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Weitere Hotkeys…"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πρόσθετα πλήκτρα άμεσης πρόσβασης…"
           }
         },
         "en" : {

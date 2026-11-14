@@ -23,6 +23,12 @@
             "value": "Prüfen"
           }
         },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Επιλογή"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",

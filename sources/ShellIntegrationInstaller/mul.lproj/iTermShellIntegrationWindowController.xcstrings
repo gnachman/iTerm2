@@ -23,6 +23,12 @@
             "value" : "Lädt die neueste Version herunter. Führt curl | bash aus"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κάνει λήψη της τελευταίας έκδοσης. Εκτελεί curl | bash"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -179,6 +185,12 @@
             "value" : "Fortfahren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Συνέχεια"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -330,6 +342,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -491,6 +509,12 @@
             "value" : "Abbrechen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ακύρωση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -645,6 +669,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1. Ermitteln, welche Shell Sie verwenden.\n2. Skriptdateien in Ihrem Home-Verzeichnis hinzufügen.\n3. Hilfsskripte installieren.\n4. Die Startskripte Ihrer Shell ändern."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. Εντοπισμός του κελύφους που χρησιμοποιείτε.\n2. Προσθήκη αρχείων σκριπτ στον φάκελο αφετηρίας σας.\n3. Εγκατάσταση σκριπτ βοηθητικών προγραμμάτων.\n4. Τροποποίηση των σκριπτ εκκίνησης του κελύφους σας."
           }
         },
         "en" : {
@@ -803,6 +833,12 @@
             "value" : "Zurück"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πίσω"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -957,6 +993,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zu den Dienstprogrammen gehören Skripte zum Herunterladen von Dateien, zur Inline-Anzeige von Bildern und mehr. "
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Τα βοηθητικά προγράμματα περιλαμβάνουν σκριπτ για λήψη αρχείων, εμφάνιση εικόνων ενσωματωμένα και άλλα. "
           }
         },
         "en" : {
@@ -1115,6 +1157,12 @@
             "value" : "Zurück"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πίσω"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1269,6 +1317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fortfahren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Συνέχεια"
           }
         },
         "en" : {
@@ -1427,6 +1481,12 @@
             "value" : "Abbrechen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ακύρωση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1581,6 +1641,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Überspringen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Παράλειψη"
           }
         },
         "en" : {
@@ -1739,6 +1805,12 @@
             "value" : "Abbrechen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ακύρωση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1893,6 +1965,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Befehlsvorschau"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προεπισκόπηση εντολής"
           }
         },
         "en" : {
@@ -2051,6 +2129,12 @@
             "value" : "Installation ohne Internet"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εγκατάσταση χωρίς διαδίκτυο"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2205,6 +2289,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Installationsprogramm herunterladen und ausführen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Λήψη και εκτέλεση προγράμματος εγκατάστασης"
           }
         },
         "en" : {
@@ -2363,6 +2453,12 @@
             "value" : "iTerm2-Dienstprogramme ebenfalls installieren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εγκατάσταση και των βοηθητικών προγραμμάτων του iTerm2"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2517,6 +2613,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geführte manuelle Installation. Kein Download erforderlich."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Χειροκίνητη εγκατάσταση με οδηγίες. Χωρίς λήψη."
           }
         },
         "en" : {
@@ -2675,6 +2777,12 @@
             "value" : "Befehlsvorschau"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προεπισκόπηση εντολής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2831,6 +2939,12 @@
             "value" : "Fortfahren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Συνέχεια"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2982,6 +3096,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🎉"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🎉"
@@ -3143,6 +3263,12 @@
             "value" : "Befehlsvorschau"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προεπισκόπηση εντολής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -3297,6 +3423,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zurück"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πίσω"
           }
         },
         "en" : {
@@ -3455,6 +3587,12 @@
             "value" : "Wie möchten Sie die Shell-Integration installieren?\n\nBei diesem Vorgang werden die Startskripte Ihrer Shell geändert. Dieses Installationsprogramm gibt die Befehle für Sie im Terminalfenster ein."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πώς θέλετε να εγκαταστήσετε την ενσωμάτωση κελύφους;\n\nΣε αυτή τη διαδικασία θα τροποποιηθούν τα σκριπτ εκκίνησης του κελύφους σας. Αυτό το πρόγραμμα εγκατάστασης θα πληκτρολογήσει εντολές στο παράθυρο του τερματικού για λογαριασμό σας."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -3609,6 +3747,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Befehlsvorschau"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προεπισκόπηση εντολής"
           }
         },
         "en" : {
@@ -3767,6 +3911,12 @@
             "value" : "Installation abgeschlossen!"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Η εγκατάσταση ολοκληρώθηκε!"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -3921,6 +4071,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dies führt den folgenden Befehl aus:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Θα εκτελεστεί η ακόλουθη εντολή:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
         "en" : {
@@ -4079,6 +4235,12 @@
             "value" : "Erstellen Sie einen neuen Tab, um es auszuprobieren.\n\nFür beste Ergebnisse installieren Sie die Shell-Integration auf allen Hosts, mit denen Sie sich per SSH verbinden."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Δημιουργήστε μια νέα καρτέλα για να το δοκιμάσετε.\n\nΓια καλύτερα αποτελέσματα, εγκαταστήστε την ενσωμάτωση κελύφους σε όλους τους υπολογιστές υπηρεσίας στους οποίους συνδέεστε μέσω ssh."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -4233,6 +4395,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die Shell-Integration besteht aus Skripten, die Ihrer Shell helfen, mit iTerm2 zu kommunizieren, damit die ausgeführten Befehle, Ihr aktuelles Verzeichnis und weitere Zustände nachverfolgt werden können. "
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Η ενσωμάτωση κελύφους αποτελείται από σκριπτ που βοηθούν το κέλυφός σας να επικοινωνεί με το iTerm2, ώστε να μπορεί να παρακολουθεί τις εντολές που εκτελείτε, τον τρέχοντα κατάλογό σας και άλλες καταστάσεις. "
           }
         },
         "en" : {
@@ -4391,6 +4559,12 @@
             "value" : "Shell-Integration installieren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εγκατάσταση ενσωμάτωσης κελύφους"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -4545,6 +4719,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abbrechen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ακύρωση"
           }
         },
         "en" : {

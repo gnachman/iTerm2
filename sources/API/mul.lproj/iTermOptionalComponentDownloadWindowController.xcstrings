@@ -23,6 +23,12 @@
             "value": "Python-Laufzeit-Installer"
           }
         },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Εγκατάσταση περιβάλλοντος εκτέλεσης Python"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",
@@ -179,6 +185,12 @@
             "value": "Abbrechen"
           }
         },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ακύρωση"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",
@@ -333,6 +345,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Optionale Komponenten werden heruntergeladen…"
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Λήψη προαιρετικών στοιχείων…"
           }
         },
         "en": {

@@ -23,6 +23,12 @@
             "value" : "Element 2"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Στοιχείο 2"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -177,6 +183,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dieses Skript muss auf eine „vollständige Umgebung“ aktualisiert werden, um Abhängigkeiten hinzuzufügen. Dabei wird eine Kopie der Python-Laufzeitumgebung erstellt, es wird jedoch kein zusätzlicher Speicherplatz benötigt."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αυτό το σκριπτ πρέπει να αναβαθμιστεί σε «πλήρες περιβάλλον» για να προστεθούν εξαρτήσεις. Έτσι δημιουργείται ένα αντίγραφο του περιβάλλοντος εκτέλεσης της Python, αλλά δεν θα χρησιμοποιηθεί επιπλέον χώρος στον δίσκο."
           }
         },
         "en" : {
@@ -335,6 +347,12 @@
             "value" : "Python-Version:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Έκδοση Python:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -489,6 +507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Entfernen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αφαίρεση"
           }
         },
         "en" : {
@@ -647,6 +671,12 @@
             "value" : "Element 3"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Στοιχείο 3"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -801,6 +831,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Upgrade"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αναβάθμιση"
           }
         },
         "en" : {
@@ -959,6 +995,12 @@
             "value" : "Skript:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Σκριπτ:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1113,6 +1155,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Skript-Abhängigkeitseditor"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επεξεργασία εξαρτήσεων σκριπτ"
           }
         },
         "en" : {
@@ -1271,6 +1319,12 @@
             "value" : "Element 1"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Στοιχείο 1"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1425,6 +1479,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Paketname"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Όνομα πακέτου"
           }
         },
         "en" : {
@@ -1583,6 +1643,12 @@
             "value" : "Element 2"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Στοιχείο 2"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1737,6 +1803,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Element 3"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Στοιχείο 3"
           }
         },
         "en" : {
@@ -1895,6 +1967,12 @@
             "value" : "Nach Update suchen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Έλεγχος για ενημέρωση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2049,6 +2127,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Installierte Version"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εγκατεστημένη έκδοση"
           }
         },
         "en" : {
@@ -2207,6 +2291,12 @@
             "value" : "Element 1"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Στοιχείο 1"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2358,6 +2448,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -2517,6 +2613,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hinzufügen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προσθήκη"
           }
         },
         "en" : {

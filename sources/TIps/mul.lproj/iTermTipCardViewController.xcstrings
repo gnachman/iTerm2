@@ -23,6 +23,12 @@
             "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
           }
         },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",
@@ -177,6 +183,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Shell-Integration"
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ενσωμάτωση κελύφους"
           }
         },
         "en": {

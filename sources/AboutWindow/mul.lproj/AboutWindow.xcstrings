@@ -23,6 +23,12 @@
             "value": "iTerm2"
           }
         },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iTerm2"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",
@@ -177,6 +183,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Von George Nachman und Mitwirkenden"
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Από τον George Nachman και συνεισφέροντες"
           }
         },
         "en": {

@@ -23,6 +23,12 @@
             "value": "Exportieren…"
           }
         },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Εξαγωγή…"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",
@@ -177,6 +183,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Jetzt"
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Τώρα"
           }
         },
         "en": {
@@ -335,6 +347,12 @@
             "value": "Sofortwiedergabe-Steuerung"
           }
         },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Έλεγχος άμεσης επανάληψης"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",
@@ -489,6 +507,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Abbrechen"
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ακύρωση"
           }
         },
         "en": {
@@ -647,6 +671,12 @@
             "value": "Live-Ansicht"
           }
         },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ζωντανή προβολή"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",
@@ -801,6 +831,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Zeit"
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ώρα"
           }
         },
         "en": {

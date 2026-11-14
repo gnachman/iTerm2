@@ -23,6 +23,12 @@
             "value" : "/Verzeichnis"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -177,6 +183,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verzeichnis kopieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αντιγραφή καταλόγου"
           }
         },
         "en" : {
@@ -335,6 +347,12 @@
             "value" : "12 Bytes"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 byte"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -489,6 +507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ausgabe des Befehls auswählen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή της εξόδου της εντολής"
           }
         },
         "en" : {
@@ -647,6 +671,12 @@
             "value" : "1 Std. 35 Min."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1h 35m"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -801,6 +831,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ausgabe:"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Έξοδος:"
           }
         },
         "en" : {
@@ -959,6 +995,12 @@
             "value" : "Kopiert"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αντιγράφηκε"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1113,6 +1155,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Befehl in die Zwischenablage kopieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αντιγραφή εντολής στο πρόχειρο"
           }
         },
         "en" : {
@@ -1271,6 +1319,12 @@
             "value" : "Gestartet um %@"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Έναρξη: %@"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1425,6 +1479,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Befehl im Composer öffnen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Άνοιγμα εντολής στον συντάκτη εντολών"
           }
         },
         "en" : {
@@ -1583,6 +1643,12 @@
             "value" : "Ziehbarer Ordner"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Φάκελος με δυνατότητα μεταφοράς"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1737,6 +1803,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Befehl"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "εντολή"
           }
         },
         "en" : {
@@ -1895,6 +1967,12 @@
             "value" : "Befehl ins Terminal schreiben"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εγγραφή εντολής στο τερματικό"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2049,6 +2127,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verzeichnis:"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κατάλογος:"
           }
         },
         "en" : {
@@ -2207,6 +2291,12 @@
             "value" : "Rückgabecode:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κωδικός επιστροφής:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2361,6 +2451,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verzeichnis ins Terminal schreiben"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εγγραφή καταλόγου στο τερματικό"
           }
         },
         "en" : {
@@ -2519,6 +2615,12 @@
             "value" : "Laufzeit:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Χρόνος εκτέλεσης:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2673,6 +2775,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ausgabe des Befehls kopieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αντιγραφή της εξόδου της εντολής"
           }
         },
         "en" : {
@@ -2831,6 +2939,12 @@
             "value" : "Befehl teilen…"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κοινοποίηση εντολής…"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2987,6 +3101,12 @@
             "value" : "Befehl:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εντολή:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -3138,6 +3258,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "127"
@@ -3297,6 +3423,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Anzeige von Befehlen außerhalb des Bildschirms deaktivieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Απενεργοποίηση εμφάνισης εντολής εκτός οθόνης"
           }
         },
         "en" : {

@@ -23,6 +23,12 @@
             "value" : "Erfordert Shell-Integration zur Erkennung der Eingabeaufforderung"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Απαιτεί ενσωμάτωση κελύφους για τον εντοπισμό της γραμμής προτροπής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -177,6 +183,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Diese Option wird aktiviert, wenn die laufende Anwendung eine Escape-Sequenz gesendet hat, um den „Bracketed Paste Mode“ einzuschalten. Die eingefügte Zeichenfolge wird durch Escape-Sequenzen „geklammert“, die anzeigen, dass der enthaltene Text aus einem Einfügevorgang stammt."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ενεργοποιείται όταν η εφαρμογή που εκτελείται έχει στείλει κωδικό διαφυγής για ενεργοποίηση της «παρενθετικής επικόλλησης». Η συμβολοσειρά που επικολλάται θα «περικλείεται» σε κωδικούς διαφυγής που δείχνουν ότι το κείμενο προέρχεται από επικόλληση."
           }
         },
         "en" : {
@@ -335,6 +347,12 @@
             "value" : "Tabs mit ^V maskieren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Διαφυγή tab με ^V"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -489,6 +507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mit Tabs einfügen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επικόλληση με tab"
           }
         },
         "en" : {
@@ -647,6 +671,12 @@
             "value" : "Ersetzen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αντικατάσταση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -801,6 +831,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unicode-Interpunktion konvertieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετατροπή σημείων στίξης Unicode"
           }
         },
         "en" : {
@@ -959,6 +995,12 @@
             "value" : "Berücksichtigt vim-Escape-Sequenzen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Σέβεται διαφυγές του vim"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1110,6 +1152,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 ms"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 ms"
@@ -1271,6 +1319,12 @@
             "value" : "Wandelt verschiedene Formen von Anführungszeichen und Gedankenstrichen in ihre ASCII-Entsprechungen um."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετατρέπει διάφορες μορφές εισαγωγικών και παύλων στα αντίστοιχα ASCII."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1425,6 +1479,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tabs in Leerzeichen umwandeln:"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετατροπή tab σε κενά:"
           }
         },
         "en" : {
@@ -1583,6 +1643,12 @@
             "value" : "Sowohl DOS- als auch UNIX-Zeilenumbrüche werden im Allgemeinen nicht als Eingabe verwendet. CR ist der Standard."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Οι αλλαγές γραμμής DOS και UNIX δεν χρησιμοποιούνται συνήθως ως είσοδος. Το CR είναι το πρότυπο."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1737,6 +1803,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shell-Zeichen mit \\ maskieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Διαφυγή χαρακτήρων κελύφους με \\"
           }
         },
         "en" : {
@@ -1895,6 +1967,12 @@
             "value" : "Blockgröße:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μέγεθος τμήματος:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2049,6 +2127,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ersetzung"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αντικατάσταση"
           }
         },
         "en" : {
@@ -2207,6 +2291,12 @@
             "value" : "Sowohl DOS- als auch UNIX-Zeilenumbrüche werden im Allgemeinen nicht als Eingabe verwendet. CR ist der Standard."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Οι αλλαγές γραμμής DOS και UNIX δεν χρησιμοποιούνται συνήθως ως είσοδος. Το CR είναι το πρότυπο."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2361,6 +2451,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tabulator, Zeilenvorschub, Seitenvorschub und Wagenrücklauf sind die einzigen „sicheren“ Steuerzeichen."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Τα tab, line feed, form feed και carriage return είναι οι μόνοι «ασφαλείς» κωδικοί ελέγχου."
           }
         },
         "en" : {
@@ -2519,6 +2615,12 @@
             "value" : "Transformationen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετασχηματισμοί"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2675,6 +2777,12 @@
             "value" : "ICU-Syntax für reguläre Ausdrücke"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Σύνταξη κανονικών παραστάσεων ICU"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2826,6 +2934,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100 ms"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "100 ms"
@@ -2987,6 +3101,12 @@
             "value" : "1 kB"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 kB"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -3141,6 +3261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "mit"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "με"
           }
         },
         "en" : {
@@ -3299,6 +3425,12 @@
             "value" : "Geschwindigkeit"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ταχύτητα"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -3453,6 +3585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unsichere Steuerzeichen entfernen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αφαίρεση μη ασφαλών κωδικών ελέγχου"
           }
         },
         "en" : {
@@ -3611,6 +3749,12 @@
             "value" : "Vor dem Einfügen jeder Zeile auf die Shell-Eingabeaufforderung warten"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αναμονή για τη γραμμή προτροπής πριν από την επικόλληση κάθε γραμμής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -3765,6 +3909,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Blockpause:"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Καθυστέρηση:"
           }
         },
         "en" : {
@@ -3923,6 +4073,12 @@
             "value" : "1 Byte"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 byte"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -4079,6 +4235,12 @@
             "value" : "Regulärer Ausdruck"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -4230,6 +4392,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1,2 kB"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1,2 kB"
@@ -4391,6 +4559,12 @@
             "value" : "150 ms"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "150 ms"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -4542,6 +4716,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "100"
@@ -4703,6 +4883,12 @@
             "value" : "Radio"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κουμπί επιλογής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -4857,6 +5043,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zeilenumbrüche entfernen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αφαίρεση αλλαγών γραμμής"
           }
         },
         "en" : {
@@ -5015,6 +5207,12 @@
             "value" : "$1, $2 usw. für Erfassungsgruppen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ομάδες: $1, $2 κ.λπ."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -5171,6 +5369,12 @@
             "value" : "Bracketed Paste Mode"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Παρενθετική επικόλληση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -5322,6 +5526,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 MB"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 MB"
@@ -5483,6 +5693,12 @@
             "value" : "CRLF und LF in CR umwandeln"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετατροπή CRLF και LF σε CR"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -5639,6 +5855,12 @@
             "value" : "Base64-kodieren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κωδικοποίηση Base 64"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -5793,6 +6015,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "10 s"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10 δευτ."
           }
         },
         "en" : {

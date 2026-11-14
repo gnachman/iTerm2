@@ -125,6 +125,12 @@
             "value" : "Stav"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κατάσταση"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -281,6 +287,12 @@
             "value" : "Importuje se…"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εισαγωγή…"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -435,6 +447,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Importují se nastavení a data…"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εισαγωγή ρυθμίσεων και δεδομένων…"
           }
         },
         "hr" : {

@@ -19,9 +19,10 @@ New Features:
   Traditional Chinese, Italian, Turkish, Polish,
   Vietnamese, Dutch, Swedish, Danish, Norwegian
   Bokmål, Finnish, Czech, Slovak, Slovenian,
-  Croatian, Hungarian, and Romanian. They are used
-  when one of them is your preferred language in
-  System Settings > General > Language & Region.
+  Croatian, Hungarian, Romanian, and Greek. They
+  are used when one of them is your preferred
+  language in System Settings > General >
+  Language & Region.
 - iTerm2 > Suppressed Alerts lists most alerts
   and announcements at the top of a session that
   are no longer shown because you chose “Never,”

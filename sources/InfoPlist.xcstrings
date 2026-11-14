@@ -36,6 +36,12 @@
             "value" : "iTerm2"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -190,6 +196,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eine Anwendung in iTerm2 möchte AppleScript verwenden."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μια εφαρμογή στο iTerm2 θέλει να χρησιμοποιήσει το AppleScript."
           }
         },
         "en" : {
@@ -348,6 +360,12 @@
             "value" : "Eine Anwendung in iTerm2 möchte Bluetooth verwenden."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μια εφαρμογή στο iTerm2 θέλει να χρησιμοποιήσει το Bluetooth."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -502,6 +520,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eine Anwendung in iTerm2 möchte auf Kalenderdaten zugreifen."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μια εφαρμογή στο iTerm2 θέλει να χρησιμοποιήσει δεδομένα του Ημερολογίου."
           }
         },
         "en" : {
@@ -660,6 +684,12 @@
             "value" : "Eine Anwendung in iTerm2 möchte die Kamera verwenden."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μια εφαρμογή στο iTerm2 θέλει να χρησιμοποιήσει την κάμερα."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -816,6 +846,12 @@
             "value" : "Eine Anwendung in iTerm2 möchte auf Ihre Kontakte zugreifen."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μια εφαρμογή στο iTerm2 θέλει να χρησιμοποιήσει τις επαφές σας."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -967,6 +1003,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPL v2"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPL v2"
@@ -1128,6 +1170,12 @@
             "value" : "Eine Anwendung in iTerm2 möchte auf das lokale Netzwerk zugreifen."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μια εφαρμογή στο iTerm2 θέλει να αποκτήσει πρόσβαση στο τοπικό δίκτυο."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1282,6 +1330,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eine Anwendung in iTerm2 möchte Ihre Standortinformationen verwenden, auch im Hintergrund."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μια εφαρμογή στο iTerm2 θέλει να χρησιμοποιήσει πληροφορίες για την τοποθεσία σας, ακόμη και στο παρασκήνιο."
           }
         },
         "en" : {
@@ -1440,6 +1494,12 @@
             "value" : "Eine Anwendung in iTerm2 möchte Ihre Standortinformationen verwenden."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μια εφαρμογή στο iTerm2 θέλει να χρησιμοποιήσει πληροφορίες για την τοποθεσία σας."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1594,6 +1654,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eine Anwendung in iTerm2 möchte Ihre Standortinformationen verwenden, während sie aktiv ist."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μια εφαρμογή στο iTerm2 θέλει να χρησιμοποιήσει πληροφορίες για την τοποθεσία σας όσο είναι ενεργή."
           }
         },
         "en" : {
@@ -1752,6 +1818,12 @@
             "value" : "Eine Anwendung in iTerm2 möchte Ihr Mikrofon verwenden."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μια εφαρμογή στο iTerm2 θέλει να χρησιμοποιήσει το μικρόφωνό σας."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1906,6 +1978,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eine Anwendung in iTerm2 möchte auf die Fotomediathek zugreifen."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μια εφαρμογή στο iTerm2 θέλει να χρησιμοποιήσει τη βιβλιοθήκη φωτογραφιών."
           }
         },
         "en" : {
@@ -2064,6 +2142,12 @@
             "value" : "Eine Anwendung in iTerm2 möchte auf Ihre Erinnerungen zugreifen."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μια εφαρμογή στο iTerm2 θέλει να χρησιμοποιήσει τις υπενθυμίσεις σας."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2220,6 +2304,12 @@
             "value" : "Eine Anwendung in iTerm2 möchte die Spracherkennung verwenden."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μια εφαρμογή στο iTerm2 θέλει να χρησιμοποιήσει την αναγνώριση ομιλίας."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2374,6 +2464,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Der von einem Programm in iTerm2 ausgeführte Vorgang erfordert erweiterte Berechtigungen."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Η λειτουργία που εκτελείται από ένα πρόγραμμα στο iTerm2 απαιτεί αυξημένη άδεια."
           }
         },
         "en" : {

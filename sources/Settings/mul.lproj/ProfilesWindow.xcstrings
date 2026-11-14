@@ -23,6 +23,12 @@
             "value" : "Profile"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προφίλ"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -177,6 +183,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Profile bearbeiten…"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επεξεργασία προφίλ…"
           }
         },
         "en" : {
@@ -335,6 +347,12 @@
             "value" : "Neuer Tab"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Νέα καρτέλα"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -489,6 +507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Neues Fenster"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Νέο παράθυρο"
           }
         },
         "en" : {
@@ -647,6 +671,12 @@
             "value" : "Dieses Fenster nach dem Öffnen eines Profils schließen."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κλείσιμο αυτού του παραθύρου μετά το άνοιγμα προφίλ."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -801,6 +831,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Neue Tabs in neuem Fenster"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Καρτέλες σε νέο παράθυρο"
           }
         },
         "en" : {
@@ -1041,6 +1077,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tags >"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ετικ. ›"
           }
         },
         "en" : {
@@ -1299,6 +1341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nové plovoucí podokno"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Νέο αιωρούμενο πλαίσιο"
           }
         },
         "hr" : {

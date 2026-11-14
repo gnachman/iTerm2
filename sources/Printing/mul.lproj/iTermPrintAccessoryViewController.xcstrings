@@ -23,6 +23,12 @@
             "value": "Schwarz-Weiß"
           }
         },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ασπρόμαυρο"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",

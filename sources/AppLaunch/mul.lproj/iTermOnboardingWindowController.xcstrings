@@ -23,6 +23,12 @@
             "value" : "Verwenden Sie iTerm2, wenn Sie nicht an Ihrem Mac sind. Sie können es per KI-Chat steuern, Sitzungsinhalte einsehen und Push-Benachrichtigungen erhalten. Ende-zu-Ende-Verschlüsselung schützt Ihre Daten. <a href=\"iterm2whatsnew:companion\">Jetzt ausprobieren!</a>"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Χρησιμοποιήστε το iTerm2 ακόμη και όταν βρίσκεστε μακριά από το Mac σας. Μπορείτε να το ελέγχετε μέσω της συνομιλίας AI, να βλέπετε το περιεχόμενο των συνεδριών και να λαμβάνετε ειδοποιήσεις push. Η κρυπτογράφηση από άκρο σε άκρο διατηρεί τα δεδομένα σας ασφαλή. <a href=\"iterm2whatsnew:companion\">Δοκιμάστε το τώρα!</a>"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -174,6 +180,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -335,6 +347,12 @@
             "value" : "Ein neuer KI-Chat-Modus, Orchestrierung, lässt die KI die Regie für Sie übernehmen. Sie kann Fenster erstellen, auf den Abschluss von Aufgaben warten (auch in interaktiven Anwendungen), und die neue automatische Sicherheitsprüfung erspart es Ihnen, auf fast alle Berechtigungsanfragen reagieren zu müssen. <a href=\"iterm2whatsnew:orchestration\">Jetzt ausprobieren!</a>"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μια νέα λειτουργία συνομιλίας AI, η Ενορχήστρωση, αφήνει την AI να τα αναλάβει όλα για εσάς. Μπορεί να δημιουργεί παράθυρα, να περιμένει την ολοκλήρωση εργασιών (ακόμη και σε διαδραστικές εφαρμογές), και ο νέος αυτόματος έλεγχος ασφάλειας σας απαλλάσσει από την ανάγκη να απαντάτε σχεδόν σε όλα τα αιτήματα άδειας. <a href=\"iterm2whatsnew:orchestration\">Δοκιμάστε το τώρα!</a>"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -486,6 +504,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -647,6 +671,12 @@
             "value" : "Die neue Funktion Screenshots vereinfacht das Erstellen einer PNG-Datei Ihres Terminal-Inhalts. Sie unterstützt Schwärzungen und Hervorhebungen. Verwenden Sie <a href=\"iterm2whatsnew:screenshot\">Sitzung > Screenshot erstellen</a>, um sie zu aktivieren."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Η νέα δυνατότητα Στιγμιότυπα οθόνης απλοποιεί τη δημιουργία ενός PNG από το περιεχόμενο του τερματικού σας. Υποστηρίζει απαλείψεις και επισημάνσεις. Χρησιμοποιήστε το <a href=\"iterm2whatsnew:screenshot\">Συνεδρία > Λήψη στιγμιότυπου οθόνης</a> για να την ενεργοποιήσετε."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -803,6 +833,12 @@
             "value" : "Neuigkeiten in Version 3.7"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Τι νέο υπάρχει στην έκδοση 3.7"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -954,6 +990,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ">"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : ">"
@@ -1115,6 +1157,12 @@
             "value" : "●"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1269,6 +1317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code-Integration"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ενσωμάτωση του Claude Code"
           }
         },
         "en" : {
@@ -1427,6 +1481,12 @@
             "value" : "Um den Umgang mit einer großen Anzahl von Tabs zu erleichtern, können Sie Tabs jetzt zu einklappbaren Gruppen zusammenfassen. Außerdem lässt sich die Tableiste jetzt scrollen, statt ein Überlaufmenü anzuzeigen."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Για να διαχειρίζεστε πιο εύκολα μεγάλο αριθμό καρτελών, μπορείτε πλέον να συνδυάζετε καρτέλες σε ομάδες που συμπτύσσονται. Επίσης, η γραμμή καρτελών πλέον κυλά αντί να εμφανίζει μενού υπερχείλισης."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1578,6 +1638,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -1739,6 +1805,12 @@
             "value" : "Die Claude Code-Integration organisiert mehrere zusammengehörige Sitzungen, etwa für Code-Reviews und das Lesen von Diffs, in einer anpassbaren Oberfläche. Außerdem zeigt sie Claudes Status an, sodass Sie leicht Instanzen finden können, die auf Ihre Aufmerksamkeit warten. <a href=\"iterm2whatsnew:claudecode\">Jetzt ausprobieren!</a>"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Η ενσωμάτωση του Claude Code οργανώνει πολλαπλές σχετικές συνεδρίες, όπως ο έλεγχος κώδικα και η ανάγνωση των diff, σε μια προσαρμόσιμη διεπαφή. Εμφανίζει επίσης την κατάσταση του Claude, ώστε να βρίσκετε εύκολα τις παρουσίες που περιμένουν την προσοχή σας. <a href=\"iterm2whatsnew:claudecode\">Δοκιμάστε το τώρα!</a>"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1895,6 +1967,12 @@
             "value" : "Companion-iPhone-App"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Συνοδευτική εφαρμογή για iPhone"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2046,6 +2124,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -2207,6 +2291,12 @@
             "value" : "Orchestrierung"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ενορχήστρωση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2361,6 +2451,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tab-Gruppen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ομάδες καρτελών"
           }
         },
         "en" : {
@@ -2519,6 +2615,12 @@
             "value" : "Screenshots"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Στιγμιότυπα οθόνης"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2670,6 +2772,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "<"

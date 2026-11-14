@@ -23,6 +23,12 @@
             "value" : "Ein einfaches Skript, das außer der iterm2-Bibliothek keine weiteren Abhängigkeiten hat."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ένα απλό σκριπτ που δεν έχει εξαρτήσεις πέρα από τη βιβλιοθήκη iterm2."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -174,6 +180,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😈"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😈"
@@ -335,6 +347,12 @@
             "value" : "Standard"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Βασικό"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -486,6 +504,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😊"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😊"
@@ -647,6 +671,12 @@
             "value" : "Lang laufender Daemon"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Δαίμονας μακράς εκτέλεσης"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -801,6 +831,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Einfach"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Απλό"
           }
         },
         "en" : {
@@ -959,6 +995,12 @@
             "value" : "Abbrechen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ακύρωση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1113,6 +1155,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wählen Sie diese Vorlage für ein einfaches Skript, das Aktionen ausführt und sich dann beendet."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλέξτε αυτό το πρότυπο για ένα απλό σκριπτ που εκτελεί ενέργειες και τερματίζεται."
           }
         },
         "en" : {
@@ -1271,6 +1319,12 @@
             "value" : "Ein Skript, das von PyPI-Paketen abhängt, die über die iterm2-Bibliothek hinausgehen. Für dieses Skript wird eine private pyenv erstellt."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ένα σκριπτ που εξαρτάται από πακέτα PyPI εκτός από τη βιβλιοθήκη iterm2. Θα δημιουργηθεί ένα ιδιωτικό pyenv για αυτό το σκριπτ."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1422,6 +1476,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔗"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🔗"
@@ -1583,6 +1643,12 @@
             "value" : "Wählen Sie eine Skriptvorlage:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλέξτε ένα πρότυπο σκριπτ:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1737,6 +1803,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vollständige Umgebung"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πλήρες περιβάλλον"
           }
         },
         "en" : {
@@ -1895,6 +1967,12 @@
             "value" : "Wählen Sie diese Vorlage für ein Skript, das dauerhaft läuft und auf Benachrichtigungen reagiert."
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλέξτε αυτό το πρότυπο για ένα σκριπτ που παραμένει σε εκτέλεση και ανταποκρίνεται σε γνωστοποιήσεις."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2046,6 +2124,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛠️"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🛠️"
@@ -2205,6 +2289,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wählen Sie eine Python-Umgebung:"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλέξτε ένα περιβάλλον Python:"
           }
         },
         "en" : {

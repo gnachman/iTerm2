@@ -23,6 +23,12 @@
             "value" : "Einen Moment! Neue Python-Umgebung wird installiert…"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Περιμένετε λίγο! Εγκατάσταση νέου περιβάλλοντος Python…"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",

@@ -23,6 +23,12 @@
             "value" : "Voreinstellungen…"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προκαθορισμένες ρυθμίσεις…"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -177,6 +183,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touch-Bar-Element hinzufügen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προσθήκη στοιχείου Touch Bar"
           }
         },
         "en" : {
@@ -335,6 +347,12 @@
             "value" : "Aktion"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ενέργεια"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -489,6 +507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touch-Bar-Abhilfen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετριασμοί για το Touch Bar"
           }
         },
         "en" : {
@@ -647,6 +671,12 @@
             "value" : "Visuelle Esc-Tasten-Anzeige"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Οπτική ένδειξη του πλήκτρου esc"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -801,6 +831,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tastenkombination"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Συνδυασμός πλήκτρων"
           }
         },
         "en" : {
@@ -959,6 +995,12 @@
             "value" : "Haptisches Feedback beim Drücken von Esc"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Απτική ανάδραση κατά το πάτημα του esc"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1110,6 +1152,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -1269,6 +1317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tastenklick für die Esc-Taste"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ήχος κλικ για το πλήκτρο esc"
           }
         },
         "en" : {

@@ -23,6 +23,12 @@
             "value" : "Verkleinern"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Σμίκρυνση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -177,6 +183,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Python-Laufzeitumgebung installieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εγκατάσταση περιβάλλοντος εκτέλεσης Python"
           }
         },
         "en" : {
@@ -335,6 +347,12 @@
             "value" : "Tab verschieben"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση καρτέλας"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -489,6 +507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sitzung duplizieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Δημιουργία διπλότυπου συνεδρίας"
           }
         },
         "en" : {
@@ -647,6 +671,12 @@
             "value" : "Ort öffnen…"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Άνοιγμα τοποθεσίας…"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -801,6 +831,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Höhe erhöhen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αύξηση ύψους"
           }
         },
         "en" : {
@@ -959,6 +995,12 @@
             "value" : "Tab verschieben"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση καρτέλας"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1113,6 +1155,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fokus-Berichterstattung"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αναφορά εστίασης"
           }
         },
         "en" : {
@@ -1271,6 +1319,12 @@
             "value" : "Normal"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κανονικό"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1425,6 +1479,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Trennlinie nach oben verschieben"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση διαχωριστικού προς τα πάνω"
           }
         },
         "en" : {
@@ -1583,6 +1643,12 @@
             "value" : "Durch Base64-dekodierten Wert ersetzen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αντικατάσταση με τιμή αποκωδικοποιημένη από Base 64"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1737,6 +1803,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sitzung"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Συνεδρία"
           }
         },
         "en" : {
@@ -1895,6 +1967,12 @@
             "value" : "Sitzung in geteilten Bereich verschieben"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση συνεδρίας σε διαιρεμένο πλαίσιο"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2049,6 +2127,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Passwort-Manager"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Διαχείριση συνθηματικών"
           }
         },
         "en" : {
@@ -2207,6 +2291,12 @@
             "value" : "Element 1"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Στοιχείο 1"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2361,6 +2451,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zentriert"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Στο κέντρο"
           }
         },
         "en" : {
@@ -2519,6 +2615,12 @@
             "value" : "Auswahl ersetzen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αντικατάσταση επιλογής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2673,6 +2775,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Links auf dem Bildschirm"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αριστερά της οθόνης"
           }
         },
         "en" : {
@@ -2831,6 +2939,12 @@
             "value" : "Anwendungscursor"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Δρομέας εφαρμογής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2985,6 +3099,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Anordnungen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Διατάξεις"
           }
         },
         "en" : {
@@ -3143,6 +3263,12 @@
             "value" : "Ausgewählte Zeilen einklappen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Σύμπτυξη επιλεγμένων γραμμών"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -3297,6 +3423,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zuletzt verwendete Verzeichnisse öffnen…"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Άνοιγμα πρόσφατων καταλόγων…"
           }
         },
         "en" : {
@@ -3455,6 +3587,12 @@
             "value" : "Vollbild"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πλήρης οθόνη"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -3609,6 +3747,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Benannte Marke setzen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ορισμός επώνυμου σημαδιού"
           }
         },
         "en" : {
@@ -3767,6 +3911,12 @@
             "value" : "Aktionen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ενέργειες"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -3921,6 +4071,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPU-Frame erfassen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Λήψη καρέ GPU"
           }
         },
         "en" : {
@@ -4079,6 +4235,12 @@
             "value" : "Marken und Anmerkungen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Σημάδια και επισημειώσεις"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -4233,6 +4395,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Volle Höhe, links auf dem Bildschirm"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πλήρες ύψος αριστερά της οθόνης"
           }
         },
         "en" : {
@@ -4391,6 +4559,12 @@
             "value" : "Fenster duplizieren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Δημιουργία διπλότυπου παραθύρου"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -4545,6 +4719,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Automatische Befehlsvervollständigung"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αυτόματη συμπλήρωση εντολών"
           }
         },
         "en" : {
@@ -4703,6 +4883,12 @@
             "value" : "Fensterstil"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Στιλ παραθύρου"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -4857,6 +5043,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verfügbarkeit des GPU-Renderers"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Διαθεσιμότητα μηχανισμού απόδοσης GPU"
           }
         },
         "en" : {
@@ -5015,6 +5207,12 @@
             "value" : "Fenster"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Παράθυρο"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -5169,6 +5367,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Minimieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ελαχιστοποίηση"
           }
         },
         "en" : {
@@ -5327,6 +5531,12 @@
             "value" : "Fenster"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Παράθυρο"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -5478,6 +5688,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2"
@@ -5639,6 +5855,12 @@
             "value" : "iTerm2"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -5793,6 +6015,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Profil in Anordnung ändern…"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αλλαγή προφίλ στη διάταξη…"
           }
         },
         "en" : {
@@ -5951,6 +6179,12 @@
             "value" : "Shell"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κέλυφος"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -6105,6 +6339,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Standardbreite festlegen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ορισμός προεπιλεγμένου πλάτους"
           }
         },
         "en" : {
@@ -6263,6 +6503,12 @@
             "value" : "Shell"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κέλυφος"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -6417,6 +6663,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hilfe"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Βοήθεια"
           }
         },
         "en" : {
@@ -6575,6 +6827,12 @@
             "value" : "Hilfe"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Βοήθεια"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -6729,6 +6987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2-Hilfe"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Βοήθεια iTerm2"
           }
         },
         "en" : {
@@ -6887,6 +7151,12 @@
             "value" : "Einstellungen…"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ρυθμίσεις…"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -7041,6 +7311,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dienste"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Υπηρεσίες"
           }
         },
         "en" : {
@@ -7199,6 +7475,12 @@
             "value" : "Dienste"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Υπηρεσίες"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -7353,6 +7635,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 ausblenden"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Απόκρυψη iTerm2"
           }
         },
         "en" : {
@@ -7511,6 +7799,12 @@
             "value" : "iTerm2 beenden"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Τερματισμός iTerm2"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -7665,6 +7959,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Andere ausblenden"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Απόκρυψη άλλων"
           }
         },
         "en" : {
@@ -7823,6 +8123,12 @@
             "value" : "Alle einblenden"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εμφάνιση όλων"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -7977,6 +8283,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ausschneiden"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αποκοπή"
           }
         },
         "en" : {
@@ -8135,6 +8447,12 @@
             "value" : "Bearbeiten"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επεξεργασία"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -8289,6 +8607,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bearbeiten"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επεξεργασία"
           }
         },
         "en" : {
@@ -8447,6 +8771,12 @@
             "value" : "Alles auswählen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή όλων"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -8601,6 +8931,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Einsetzen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επικόλληση"
           }
         },
         "en" : {
@@ -8759,6 +9095,12 @@
             "value" : "Puffer leeren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εκκαθάριση ενδιάμεσης μνήμης"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -8913,6 +9255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Protokoll"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Καταγραφή"
           }
         },
         "en" : {
@@ -9071,6 +9419,12 @@
             "value" : "Protokoll"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Καταγραφή"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -9225,6 +9579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Über iTerm2"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πληροφορίες για το iTerm2"
           }
         },
         "en" : {
@@ -9383,6 +9743,12 @@
             "value" : "Profile"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προφίλ"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -9537,6 +9903,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Profile"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προφίλ"
           }
         },
         "en" : {
@@ -9695,6 +10067,12 @@
             "value" : "Terminalfenster schließen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κλείσιμο παραθύρου Τερματικού"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -9849,6 +10227,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alle Bereiche im Tab schließen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κλείσιμο όλων των πλαισίων στην καρτέλα"
           }
         },
         "en" : {
@@ -10007,6 +10391,12 @@
             "value" : "Papierformat…"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Διαμόρφωση σελίδας…"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -10161,6 +10551,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ausgewählten Text speichern…"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αποθήκευση επιλεγμένου κειμένου…"
           }
         },
         "en" : {
@@ -10319,6 +10715,12 @@
             "value" : "Scrollback-Puffer leeren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εκκαθάριση ενδιάμεσης μνήμης κύλισης"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -10473,6 +10875,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Auswahl für Suche verwenden"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Χρήση επιλογής για εύρεση"
           }
         },
         "en" : {
@@ -10631,6 +11039,12 @@
             "value" : "Suchen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εύρεση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -10785,6 +11199,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Suchen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εύρεση"
           }
         },
         "en" : {
@@ -10943,6 +11363,12 @@
             "value" : "Weitersuchen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εύρεση επόμενου"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -11097,6 +11523,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vorheriges suchen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εύρεση προηγούμενου"
           }
         },
         "en" : {
@@ -11255,6 +11687,12 @@
             "value" : "Zur Auswahl springen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετάβαση στην επιλογή"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -11409,6 +11847,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Darstellung"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προβολή"
           }
         },
         "en" : {
@@ -11567,6 +12011,12 @@
             "value" : "Darstellung"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προβολή"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -11721,6 +12171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Text vergrößern"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μεγέθυνση κειμένου"
           }
         },
         "en" : {
@@ -11879,6 +12335,12 @@
             "value" : "Text verkleinern"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Σμίκρυνση κειμένου"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -12033,6 +12495,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Drucken"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εκτύπωση"
           }
         },
         "en" : {
@@ -12191,6 +12659,12 @@
             "value" : "Bildschirm"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Οθόνη"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -12345,6 +12819,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Drucken"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εκτύπωση"
           }
         },
         "en" : {
@@ -12503,6 +12983,12 @@
             "value" : "Auswahl"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -12657,6 +13143,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Puffer"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ενδιάμεση μνήμη"
           }
         },
         "en" : {
@@ -12815,6 +13307,12 @@
             "value" : "Vorherigen Tab auswählen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή προηγούμενης καρτέλας"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -12969,6 +13467,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nächsten Tab auswählen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή επόμενης καρτέλας"
           }
         },
         "en" : {
@@ -13127,6 +13631,12 @@
             "value" : "Tab auswählen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή καρτέλας"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -13281,6 +13791,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tab auswählen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή καρτέλας"
           }
         },
         "en" : {
@@ -13439,6 +13955,12 @@
             "value" : "Neuer Tab"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Νέα καρτέλα"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -13593,6 +14115,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Neues Fenster"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Νέο παράθυρο"
           }
         },
         "en" : {
@@ -13751,6 +14279,12 @@
             "value" : "Wahltaste für neues Fenster drücken"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πατήστε Option για νέο παράθυρο"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -13905,6 +14439,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "In neuem Fenster öffnen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Άνοιγμα σε νέο παράθυρο"
           }
         },
         "en" : {
@@ -14063,6 +14603,12 @@
             "value" : "Nach Updates suchen…"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Έλεγχος για ενημερώσεις…"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -14217,6 +14763,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zoomen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ζουμ"
           }
         },
         "en" : {
@@ -14375,6 +14927,12 @@
             "value" : "Zurücksetzen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επαναφορά"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -14529,6 +15087,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vollbildmodus umschalten"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εναλλαγή πλήρους οθόνης"
           }
         },
         "en" : {
@@ -14687,6 +15251,12 @@
             "value" : "Debug-Protokollierung umschalten"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εναλλαγή καταγραφής εκσφαλμάτωσης"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -14841,6 +15411,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Profile öffnen…"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Άνοιγμα προφίλ…"
           }
         },
         "en" : {
@@ -14999,6 +15575,12 @@
             "value" : "Sitzung bearbeiten…"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επεξεργασία συνεδρίας…"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -15153,6 +15735,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instant Replay starten"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Έναρξη άμεσης επανάληψης"
           }
         },
         "en" : {
@@ -15311,6 +15899,12 @@
             "value" : "Widerrufen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αναίρεση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -15465,6 +16059,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wiederholen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επανάληψη"
           }
         },
         "en" : {
@@ -15623,6 +16223,12 @@
             "value" : "Einfügeverlauf öffnen…"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Άνοιγμα ιστορικού επικόλλησης…"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -15777,6 +16383,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Automatische Vervollständigung öffnen…"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Άνοιγμα αυτόματης συμπλήρωσης…"
           }
         },
         "en" : {
@@ -15935,6 +16547,12 @@
             "value" : "Spezielles Einfügen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ειδική επικόλληση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -16089,6 +16707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Spezielles Einfügen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ειδική επικόλληση"
           }
         },
         "en" : {
@@ -16247,6 +16871,12 @@
             "value" : "Auswahl einfügen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επικόλληση επιλογής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -16401,6 +17031,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Langsam einfügen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αργή επικόλληση"
           }
         },
         "en" : {
@@ -16559,6 +17195,12 @@
             "value" : "Sichere Tastatureingabe"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ασφαλής εισαγωγή από πληκτρολόγιο"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -16713,6 +17355,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fenster horizontal anordnen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Οριζόντια τακτοποίηση παραθύρων"
           }
         },
         "en" : {
@@ -16871,6 +17519,12 @@
             "value" : "Schließen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κλείσιμο"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -17025,6 +17679,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vertikal mit aktuellem Profil teilen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κάθετη διαίρεση με το τρέχον προφίλ"
           }
         },
         "en" : {
@@ -17183,6 +17843,12 @@
             "value" : "Horizontal mit aktuellem Profil teilen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Οριζόντια διαίρεση με το τρέχον προφίλ"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -17337,6 +18003,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fensteranordnung speichern"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αποθήκευση διάταξης παραθύρων"
           }
         },
         "en" : {
@@ -17495,6 +18167,12 @@
             "value" : "Geteilten Bereich auswählen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή διαιρεμένου πλαισίου"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -17649,6 +18327,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geteilten Bereich auswählen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή διαιρεμένου πλαισίου"
           }
         },
         "en" : {
@@ -17807,6 +18491,12 @@
             "value" : "Bereich darüber auswählen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή πλαισίου από πάνω"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -17961,6 +18651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bereich darunter auswählen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή πλαισίου από κάτω"
           }
         },
         "en" : {
@@ -18119,6 +18815,12 @@
             "value" : "Bereich links auswählen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή πλαισίου από αριστερά"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -18273,6 +18975,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bereich rechts auswählen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή πλαισίου από δεξιά"
           }
         },
         "en" : {
@@ -18431,6 +19139,12 @@
             "value" : "Transparenz verwenden"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Χρήση διαφάνειας"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -18585,6 +19299,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aktiven Bereich maximieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μεγιστοποίηση ενεργού πλαισίου"
           }
         },
         "en" : {
@@ -18743,6 +19463,12 @@
             "value" : "Element 3"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Στοιχείο 3"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -18897,6 +19623,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Element 2"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Στοιχείο 2"
           }
         },
         "en" : {
@@ -19055,6 +19787,12 @@
             "value" : "Element 1"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Στοιχείο 1"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -19209,6 +19947,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Markierung setzen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ορισμός σημαδιού"
           }
         },
         "en" : {
@@ -19367,6 +20111,12 @@
             "value" : "Zu Markierung springen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετάβαση στο σημάδι"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -19521,6 +20271,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nächster Bereich"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επόμενο πλαίσιο"
           }
         },
         "en" : {
@@ -19679,6 +20435,12 @@
             "value" : "Vorheriger Bereich"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προηγούμενο πλαίσιο"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -19833,6 +20595,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tabs im Vollbildmodus anzeigen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εμφάνιση καρτελών σε πλήρη οθόνη"
           }
         },
         "en" : {
@@ -19991,6 +20759,12 @@
             "value" : "Eingabe-Broadcasting"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετάδοση εισόδου"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -20145,6 +20919,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eingabe-Broadcasting"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετάδοση εισόδου"
           }
         },
         "en" : {
@@ -20303,6 +21083,12 @@
             "value" : "Eingabe an alle Bereiche in allen Tabs übertragen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετάδοση εισόδου σε όλα τα πλαίσια σε όλες τις καρτέλες"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -20457,6 +21243,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eingabe an alle Bereiche im aktuellen Tab übertragen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετάδοση εισόδου σε όλα τα πλαίσια της τρέχουσας καρτέλας"
           }
         },
         "en" : {
@@ -20615,6 +21407,12 @@
             "value" : "Eingabe nur an aktuelle Sitzung senden"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αποστολή εισόδου μόνο στην τρέχουσα συνεδρία"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -20769,6 +21567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fensteranordnung wiederherstellen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επαναφορά διάταξης παραθύρων"
           }
         },
         "en" : {
@@ -20927,6 +21731,12 @@
             "value" : "Fensteranordnung wiederherstellen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επαναφορά διάταξης παραθύρων"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -21081,6 +21891,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cursor finden"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εύρεση δρομέα"
           }
         },
         "en" : {
@@ -21239,6 +22055,12 @@
             "value" : "Horizontal teilen…"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Οριζόντια διαίρεση…"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -21393,6 +22215,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vertikal teilen…"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κάθετη διαίρεση…"
           }
         },
         "en" : {
@@ -21551,6 +22379,12 @@
             "value" : "Werkzeuggürtel"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εργαλειοθήκη"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -21705,6 +22539,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Werkzeuggürtel"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εργαλειοθήκη"
           }
         },
         "en" : {
@@ -21863,6 +22703,12 @@
             "value" : "Werkzeuggürtel anzeigen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εμφάνιση εργαλειοθήκης"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -22017,6 +22863,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Neuer Tab mit aktuellem Profil"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Νέα καρτέλα με το τρέχον προφίλ"
           }
         },
         "en" : {
@@ -22175,6 +23027,12 @@
             "value" : "Coprocess ausführen…"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εκτέλεση συνδιεργασίας…"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -22329,6 +23187,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Coprocess stoppen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Διακοπή συνδιεργασίας"
           }
         },
         "en" : {
@@ -22487,6 +23351,12 @@
             "value" : "Kopieren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αντιγραφή"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -22641,6 +23511,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tab in neues Fenster verschieben"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση καρτέλας σε νέο παράθυρο"
           }
         },
         "en" : {
@@ -22799,6 +23675,12 @@
             "value" : "Tab nach rechts verschieben"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση καρτέλας δεξιά"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -22955,6 +23837,12 @@
             "value" : "Hintergrundmusteranzeige anzeigen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εμφάνιση ένδειξης μοτίβου φόντου"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -23106,6 +23994,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "tmux"
@@ -23267,6 +24161,12 @@
             "value" : "tmux"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -23421,6 +24321,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Neuer Tmux-Tab"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Νέα καρτέλα tmux"
           }
         },
         "en" : {
@@ -23579,6 +24485,12 @@
             "value" : "Neues Tmux-Fenster"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Νέο παράθυρο tmux"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -23733,6 +24645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Trennen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αποσύνδεση"
           }
         },
         "en" : {
@@ -23891,6 +24809,12 @@
             "value" : "Dashboard"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πίνακας ελέγχου"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -24045,6 +24969,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Text auf normale Größe setzen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κανονικό μέγεθος κειμένου"
           }
         },
         "en" : {
@@ -24203,6 +25133,12 @@
             "value" : "Text- und Sitzungsgröße wiederherstellen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επαναφορά μεγέθους κειμένου και συνεδρίας"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -24357,6 +25293,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 als Standardterminal festlegen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ορισμός του iTerm2 ως προεπιλεγμένου τερματικού"
           }
         },
         "en" : {
@@ -24515,6 +25457,12 @@
             "value" : "Terminal als Standardterminal festlegen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ορισμός του Τερματικού ως προεπιλεγμένου τερματικού"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -24669,6 +25617,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eingabe-Broadcasting zur aktuellen Sitzung umschalten"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εναλλαγή μετάδοσης εισόδου στην τρέχουσα συνεδρία"
           }
         },
         "en" : {
@@ -24827,6 +25781,12 @@
             "value" : "Schneller einfügen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ταχύτερη επικόλληση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -24981,6 +25941,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Langsamer einfügen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Βραδύτερη επικόλληση"
           }
         },
         "en" : {
@@ -25139,6 +26105,12 @@
             "value" : "Langsames Einfügen beschleunigen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αργή επικόλληση, ταχύτερα"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -25293,6 +26265,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Langsames Einfügen verlangsamen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αργή επικόλληση, βραδύτερα"
           }
         },
         "en" : {
@@ -25451,6 +26429,12 @@
             "value" : "Zeichensatz zurücksetzen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επαναφορά συνόλου χαρακτήρων"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -25607,6 +26591,12 @@
             "value" : "Archive"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αρχεία"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -25758,6 +26748,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT400"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT400"
@@ -25919,6 +26915,12 @@
             "value" : "Auswahl kommentieren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επισημείωση επιλογής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -26073,6 +27075,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Auf Auswahl zoomen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μεγέθυνση στην επιλογή"
           }
         },
         "en" : {
@@ -26231,6 +27239,12 @@
             "value" : "Trennlinie nach links verschieben"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση διαχωριστικού προς τα αριστερά"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -26385,6 +27399,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alle deaktivieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Απενεργοποίηση όλων"
           }
         },
         "en" : {
@@ -26543,6 +27563,12 @@
             "value" : "Sitzung verschieben"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση συνεδρίας"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -26697,6 +27723,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Composer anzeigen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εμφάνιση συντάκτη εντολών"
           }
         },
         "en" : {
@@ -26855,6 +27887,12 @@
             "value" : "Trennung erzwingen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αναγκαστική αποσύνδεση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -27009,6 +28047,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Benannte Markierungen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επώνυμα σημάδια"
           }
         },
         "en" : {
@@ -27167,6 +28211,12 @@
             "value" : "Suchen…"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εύρεση…"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -27321,6 +28371,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aufzeichnung exportieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εξαγωγή εγγραφής"
           }
         },
         "en" : {
@@ -27479,6 +28535,12 @@
             "value" : "Keine Titelleiste"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Χωρίς γραμμή τίτλου"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -27630,6 +28692,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT500"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT500"
@@ -27791,6 +28859,12 @@
             "value" : "Clippings anzeigen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εμφάνιση αποκομμάτων"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -27945,6 +29019,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Companion-Geräteeinstellungen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ρυθμίσεις συνοδευτικής συσκευής"
           }
         },
         "en" : {
@@ -28103,6 +29183,12 @@
             "value" : "Kopiermodus"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Λειτουργία αντιγραφής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -28257,6 +29343,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sitzung verschieben"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση συνεδρίας"
           }
         },
         "en" : {
@@ -28415,6 +29507,12 @@
             "value" : "Tab"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Καρτέλα"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -28569,6 +29667,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bis zum Anfang der Auswahl löschen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εκκαθάριση έως την αρχή της επιλογής"
           }
         },
         "en" : {
@@ -28727,6 +29831,12 @@
             "value" : "Leistungsstatistiken kopieren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αντιγραφή στατιστικών απόδοσης"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -28881,6 +29991,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Skripte"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Σκριπτ"
           }
         },
         "en" : {
@@ -29039,6 +30155,12 @@
             "value" : "Aktuelles Fenster als Anordnung speichern"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αποθήκευση τρέχοντος παραθύρου ως διάταξης"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -29193,6 +30315,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Trigger"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εναύσματα"
           }
         },
         "en" : {
@@ -29351,6 +30479,12 @@
             "value" : "Cursor-Führungslinie anzeigen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εμφάνιση οδηγού δρομέα"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -29505,6 +30639,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Größe sperren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κλείδωμα μεγέθους"
           }
         },
         "en" : {
@@ -29663,6 +30803,12 @@
             "value" : "In Datei protokollieren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Καταγραφή σε αρχείο"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -29819,6 +30965,12 @@
             "value" : "Exportieren…"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εξαγωγή…"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -29970,6 +31122,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Web"
@@ -30131,6 +31289,12 @@
             "value" : "Zugehörigen Text melden"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αναφορά συσχετισμένου κειμένου"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -30285,6 +31449,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Neues Python-Skript"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Νέο σκριπτ Python"
           }
         },
         "en" : {
@@ -30443,6 +31613,12 @@
             "value" : "Open-Source-Lizenzen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Άδειες λογισμικού ανοικτού κώδικα"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -30597,6 +31773,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instant Replay löschen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εκκαθάριση άμεσης επανάληψης"
           }
         },
         "en" : {
@@ -30755,6 +31937,12 @@
             "value" : "Höhe verringern"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μείωση ύψους"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -30909,6 +32097,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Skripte"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Σκριπτ"
           }
         },
         "en" : {
@@ -31067,6 +32261,12 @@
             "value" : "Skripte im Finder anzeigen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εμφάνιση σκριπτ στο Finder"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -31221,6 +32421,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Inhalt speichern…"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αποθήκευση περιεχομένου…"
           }
         },
         "en" : {
@@ -31379,6 +32585,12 @@
             "value" : "Alle nach vorne bringen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μεταφορά όλων σε πρώτο πλάνο"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -31533,6 +32745,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alle einklappen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Σύμπτυξη όλων"
           }
         },
         "en" : {
@@ -31691,6 +32909,12 @@
             "value" : "Archive"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αρχεία"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -31845,6 +33069,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fensteranordnung als Tabs wiederherstellen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επαναφορά διάταξης παραθύρων ως καρτελών"
           }
         },
         "en" : {
@@ -32003,6 +33233,12 @@
             "value" : "Anmerkung am Cursor hinzufügen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προσθήκη επισημείωσης στον δρομέα"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -32157,6 +33393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Transparenz für aktives Fenster deaktivieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Απενεργοποίηση διαφάνειας για το ενεργό παράθυρο"
           }
         },
         "en" : {
@@ -32315,6 +33557,12 @@
             "value" : "Bracketed Paste"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Παρενθετική επικόλληση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -32469,6 +33717,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Durch formatiertes JSON ersetzen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αντικατάσταση με μορφοποιημένο JSON"
           }
         },
         "en" : {
@@ -32729,6 +33983,12 @@
             "value" : "Převést do popředí"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μεταφορά σε πρώτο πλάνο"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32883,6 +34143,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ukotvit plovoucí podokno"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προσάρτηση αιωρούμενου πλαισίου"
           }
         },
         "hr" : {
@@ -33041,6 +34307,12 @@
             "value" : "Skrýt plovoucí podokna"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Απόκρυψη αιωρούμενων πλαισίων"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33195,6 +34467,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Přesunout plovoucí podokno dolů"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση αιωρούμενου πλαισίου προς τα κάτω"
           }
         },
         "hr" : {
@@ -33353,6 +34631,12 @@
             "value" : "Přesunout plovoucí podokno doleva"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση αιωρούμενου πλαισίου προς τα αριστερά"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33507,6 +34791,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Přesunout plovoucí podokno doprava"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση αιωρούμενου πλαισίου προς τα δεξιά"
           }
         },
         "hr" : {
@@ -33665,6 +34955,12 @@
             "value" : "Přesunout plovoucí podokno nahoru"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση αιωρούμενου πλαισίου προς τα πάνω"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33819,6 +35115,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nové plovoucí podokno s aktuálním profilem"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Νέο αιωρούμενο πλαίσιο με το τρέχον προφίλ"
           }
         },
         "hr" : {
@@ -33977,6 +35279,12 @@
             "value" : "Plovoucí podokna"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αιωρούμενα πλαίσια"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34131,6 +35439,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Plovoucí podokna"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αιωρούμενα πλαίσια"
           }
         },
         "hr" : {
@@ -34289,6 +35603,12 @@
             "value" : "Převést do pozadí"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μεταφορά στο παρασκήνιο"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34341,6 +35661,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tipp des Tages anzeigen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εμφάνιση συμβουλής της ημέρας"
           }
         },
         "en" : {
@@ -34499,6 +35825,12 @@
             "value" : "Nächste Anmerkung"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επόμενη επισημείωση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -34650,6 +35982,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cockpit"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cockpit"
@@ -34811,6 +36149,12 @@
             "value" : "Sitzung in Tab verschieben"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση συνεδρίας σε καρτέλα"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -34965,6 +36309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unten am Bildschirm"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κάτω μέρος της οθόνης"
           }
         },
         "en" : {
@@ -35123,6 +36473,12 @@
             "value" : "Beim Einfügen fragen, ob Tabs in Leerzeichen umgewandelt werden sollen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ερώτηση για μετατροπή tab σε κενά κατά την επικόλληση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -35277,6 +36633,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Warnungen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ειδοποιήσεις"
           }
         },
         "en" : {
@@ -35435,6 +36797,12 @@
             "value" : "Mit Steuersequenzen kopieren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αντιγραφή με ακολουθίες ελέγχου"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -35589,6 +36957,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fenstergröße ändern"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αλλαγή μεγέθους παραθύρου"
           }
         },
         "en" : {
@@ -35747,6 +37121,12 @@
             "value" : "Zurücksetzen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επαναφορά"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -35901,6 +37281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tab duplizieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Δημιουργία διπλότυπου καρτέλας"
           }
         },
         "en" : {
@@ -36059,6 +37445,12 @@
             "value" : "Seite neu laden"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επαναφόρτωση σελίδας"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -36213,6 +37605,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sitzung in Fenster verschieben"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση συνεδρίας σε παράθυρο"
           }
         },
         "en" : {
@@ -36371,6 +37769,12 @@
             "value" : "Alle Tasten als Escape-Codes melden"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αναφορά όλων των πλήκτρων ως ακολουθιών διαφυγής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -36525,6 +37929,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Modus für unverarbeitete Tastenmeldungen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Λειτουργία αναφοράς ακατέργαστων πλήκτρων"
           }
         },
         "en" : {
@@ -36683,6 +38093,12 @@
             "value" : "Importieren…"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εισαγωγή…"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -36837,6 +38253,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vor mehrzeiligem Einfügen warnen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προειδοποίηση πριν από επικόλληση πολλών γραμμών"
           }
         },
         "en" : {
@@ -36995,6 +38417,12 @@
             "value" : "Inline-Chat anzeigen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εμφάνιση ενσωματωμένης συνομιλίας"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -37151,6 +38579,12 @@
             "value" : "Puffereingabe umschalten"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εναλλαγή εισόδου ενδιάμεσης μνήμης"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -37305,6 +38739,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remote-Host darf iTerm2 steuern"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ο απομακρυσμένος υπολογιστής υπηρεσίας μπορεί να ελέγχει το iTerm2"
           }
         },
         "en" : {
@@ -37565,6 +39005,12 @@
             "value" : "Zkontrolovat zkracování ovládacích prvků nastavení"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Έλεγχος περικοπής στοιχείων ελέγχου ρυθμίσεων"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37617,6 +39063,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Trigger"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εναύσματα"
           }
         },
         "en" : {
@@ -37775,6 +39227,12 @@
             "value" : "Auswahl berücksichtigt weiche Grenzen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Η επιλογή σέβεται τα μαλακά όρια"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -37929,6 +39387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arbeitsgruppe verlassen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Έξοδος από ομάδα εργασίας"
           }
         },
         "en" : {
@@ -38087,6 +39551,12 @@
             "value" : "Ausgabe des letzten Befehls auswählen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή εξόδου της τελευταίας εντολής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -38241,6 +39711,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sitzung neu starten"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επανεκκίνηση συνεδρίας"
           }
         },
         "en" : {
@@ -38399,6 +39875,12 @@
             "value" : "Python-REPL öffnen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Άνοιγμα Python REPL"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -38553,6 +40035,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oben am Bildschirm"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πάνω μέρος της οθόνης"
           }
         },
         "en" : {
@@ -38711,6 +40199,12 @@
             "value" : "Alle Fenster zusammenführen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Συγχώνευση όλων των παραθύρων"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -38865,6 +40359,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hotkey-Fenster anheften"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Καρφίτσωμα παραθύρου πλήκτρου άμεσης πρόσβασης"
           }
         },
         "en" : {
@@ -39023,6 +40523,12 @@
             "value" : "modifyOtherKeys-Modus 2"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys, λειτουργία 2"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -39177,6 +40683,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Schnell öffnen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Γρήγορο άνοιγμα"
           }
         },
         "en" : {
@@ -39335,6 +40847,12 @@
             "value" : "Verwalten"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Διαχείριση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -39489,6 +41007,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escapecodes eindeutig machen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αποσαφήνιση Esc"
           }
         },
         "en" : {
@@ -39647,6 +41171,12 @@
             "value" : "Ergebnis zum Öffnen auswählen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή αποτελέσματος για άνοιγμα"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -39801,6 +41331,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Warnung vor mehrzeiligem Einfügen auf Shell-Eingabeaufforderung beschränken"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Περιορισμός προειδοποίησης επικόλλησης πολλών γραμμών στη γραμμή προτροπής"
           }
         },
         "en" : {
@@ -39959,6 +41495,12 @@
             "value" : "Trigger in interaktiven Apps aktivieren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ενεργοποίηση εναυσμάτων σε διαδραστικές εφαρμογές"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -40113,6 +41655,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Element 2"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Στοιχείο 2"
           }
         },
         "en" : {
@@ -40271,6 +41819,12 @@
             "value" : "Maus-Reporting"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αναφορά ποντικιού"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -40425,6 +41979,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Marken und Anmerkungen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Σημάδια και επισημειώσεις"
           }
         },
         "en" : {
@@ -40583,6 +42143,12 @@
             "value" : "Layout sperren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κλείδωμα διάταξης"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -40737,6 +42303,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Position sperren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κλείδωμα θέσης"
           }
         },
         "en" : {
@@ -40895,6 +42467,12 @@
             "value" : "Neues Fenster mit aktuellem Profil"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Νέο παράθυρο με το τρέχον προφίλ"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -41049,6 +42627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sitzung verbergen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Θάψιμο συνεδρίας"
           }
         },
         "en" : {
@@ -41207,6 +42791,12 @@
             "value" : "Modales Warnfenster anzeigen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εμφάνιση τροπικού παραθύρου ειδοποίησης"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -41361,6 +42951,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alle aktivieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ενεργοποίηση όλων"
           }
         },
         "en" : {
@@ -41519,6 +43115,12 @@
             "value" : "Nächste Markierung"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επόμενο σημάδι"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -41673,6 +43275,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fenster anordnen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Τακτοποίηση παραθύρων"
           }
         },
         "en" : {
@@ -41831,6 +43439,12 @@
             "value" : "Alle Treffer der intelligenten Auswahl finden"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εύρεση όλων των αντιστοιχιών έξυπνης επιλογής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -41985,6 +43599,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ton abspielen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αναπαραγωγή ήχου"
           }
         },
         "en" : {
@@ -42143,6 +43763,12 @@
             "value" : "Befehlsverlauf öffnen…"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Άνοιγμα ιστορικού εντολών…"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -42297,6 +43923,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mit Formatierung kopieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αντιγραφή με στιλ"
           }
         },
         "en" : {
@@ -42455,6 +44087,12 @@
             "value" : "Alternativer Bildschirm"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εναλλακτική οθόνη"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -42611,6 +44249,12 @@
             "value" : "Rechts am Bildschirm, volle Höhe"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πλήρες ύψος δεξιά της οθόνης"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -42762,6 +44406,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -42923,6 +44573,12 @@
             "value" : "Standardmodus für Tastenmeldungen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Λειτουργία αναφοράς τυπικών πλήκτρων"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -43077,6 +44733,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Größe des geteilten Bereichs ändern"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αλλαγή μεγέθους διαιρεμένου πλαισίου"
           }
         },
         "en" : {
@@ -43235,6 +44897,12 @@
             "value" : "Warnungen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ειδοποιήσεις"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -43389,6 +45057,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bei Statusänderung benachrichtigen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Γνωστοποίηση σε αλλαγή κατάστασης"
           }
         },
         "en" : {
@@ -43547,6 +45221,12 @@
             "value" : "Nächste Tab-Gruppe auswählen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή επόμενης ομάδας καρτελών"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -43701,6 +45381,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude-Code-Integration deinstallieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Απεγκατάσταση ενσωμάτωσης Claude Code"
           }
         },
         "en" : {
@@ -43859,6 +45545,12 @@
             "value" : "Tab-Titel bearbeiten"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επεξεργασία τίτλου καρτέλας"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -44013,6 +45705,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Anordnungen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Διατάξεις"
           }
         },
         "en" : {
@@ -44171,6 +45869,12 @@
             "value" : "Vorheriger Peer"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προηγούμενο μέλος"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -44325,6 +46029,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alternative Tasten melden"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αναφορά εναλλακτικών πλήκτρων"
           }
         },
         "en" : {
@@ -44483,6 +46193,12 @@
             "value" : "Geteilter Bereich"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Διαιρεμένο πλαίσιο"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -44637,6 +46353,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Terminalstatus"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κατάσταση τερματικού"
           }
         },
         "en" : {
@@ -44795,6 +46517,12 @@
             "value" : "Schließen rückgängig machen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αναίρεση κλεισίματος"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -44949,6 +46677,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "KI-Chats"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Συνομιλίες AI"
           }
         },
         "en" : {
@@ -45107,6 +46841,12 @@
             "value" : "Vorwärts"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μπροστά"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -45261,6 +47001,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Breite des geteilten Bereichs sperren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κλείδωμα πλάτους διαιρεμένου πλαισίου"
           }
         },
         "en" : {
@@ -45419,6 +47165,12 @@
             "value" : "Arbeitsgruppen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ομάδες εργασίας"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -45573,6 +47325,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Archiv der aktuellen Sitzung speichern…"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αποθήκευση αρχείου της τρέχουσας συνεδρίας…"
           }
         },
         "en" : {
@@ -45731,6 +47489,12 @@
             "value" : "Auswahl ersetzen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αντικατάσταση επιλογής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -45882,6 +47646,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT300"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT300"
@@ -46043,6 +47813,12 @@
             "value" : "Anmerkungen anzeigen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εμφάνιση επισημειώσεων"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -46194,6 +47970,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -46355,6 +48137,12 @@
             "value" : "Verwalten"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Διαχείριση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -46509,6 +48297,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Element 3"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Στοιχείο 3"
           }
         },
         "en" : {
@@ -46667,6 +48461,12 @@
             "value" : "Vorherige Tab-Gruppe auswählen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή προηγούμενης ομάδας καρτελών"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -46821,6 +48621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vergrabene Sitzungen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Θαμμένες συνεδρίες"
           }
         },
         "en" : {
@@ -46979,6 +48785,12 @@
             "value" : "Vorherige Anmerkung"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προηγούμενη επισημείωση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -47133,6 +48945,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bei Markierungen in Sitzungen außerhalb des Bildschirms alarmieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ειδοποίηση για σημάδια σε συνεδρίες εκτός οθόνης"
           }
         },
         "en" : {
@@ -47393,6 +49211,12 @@
             "value" : "Na střed, bez záhlaví"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Στο κέντρο, χωρίς γραμμή τίτλου"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47445,6 +49269,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code-Integration installieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εγκατάσταση ενσωμάτωσης Claude Code"
           }
         },
         "en" : {
@@ -47603,6 +49433,12 @@
             "value" : "Benachrichtigung senden"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Δημοσίευση γνωστοποίησης"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -47757,6 +49593,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aktuelle Sitzung ist Broadcast-Quelle"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Η τρέχουσα συνεδρία είναι η πηγή μετάδοσης"
           }
         },
         "en" : {
@@ -47915,6 +49757,12 @@
             "value" : "Bei nächster Markierung alarmieren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ειδοποίηση στο επόμενο σημάδι"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -48069,6 +49917,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Breite erhöhen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αύξηση πλάτους"
           }
         },
         "en" : {
@@ -48227,6 +50081,12 @@
             "value" : "CSI-u-Modus"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Λειτουργία CSI u"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -48381,6 +50241,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Trennlinie nach unten verschieben"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση διαχωριστικού προς τα κάτω"
           }
         },
         "en" : {
@@ -48539,6 +50405,12 @@
             "value" : "Größe des geteilten Bereichs ändern"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αλλαγή μεγέθους διαιρεμένου πλαισίου"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -48693,6 +50565,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code-Integration erneut installieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επανεγκατάσταση ενσωμάτωσης Claude Code"
           }
         },
         "en" : {
@@ -48851,6 +50729,12 @@
             "value" : "Shell-Integration installieren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εγκατάσταση ενσωμάτωσης κελύφους"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -49005,6 +50889,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Filter"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Φιλτράρισμα"
           }
         },
         "en" : {
@@ -49163,6 +51053,12 @@
             "value" : "Trigger bearbeiten"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επεξεργασία εναυσμάτων"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -49317,6 +51213,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bereich pausieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Παύση πλαισίου"
           }
         },
         "en" : {
@@ -49475,6 +51377,12 @@
             "value" : "Rückblickende Debug-Protokolle speichern"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αποθήκευση αναδρομικών αρχείων καταγραφής εκσφαλμάτωσης"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -49629,6 +51537,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Schnipsel"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αποσπάσματα"
           }
         },
         "en" : {
@@ -49787,6 +51701,12 @@
             "value" : "Aktuellen Befehl auswählen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή τρέχουσας εντολής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -49941,6 +51861,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bildschirmfoto erstellen…"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Λήψη στιγμιότυπου οθόνης…"
           }
         },
         "en" : {
@@ -50099,6 +52025,12 @@
             "value" : "Auswahl nativ darstellen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εγγενής απόδοση επιλογής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -50253,6 +52185,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sitzungsnotiz anzeigen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εμφάνιση σημείωσης συνεδρίας"
           }
         },
         "en" : {
@@ -50411,6 +52349,12 @@
             "value" : "Schnipsel"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αποσπάσματα"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -50565,6 +52509,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fenstertitel bearbeiten"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επεξεργασία τίτλου παραθύρου"
           }
         },
         "en" : {
@@ -50723,6 +52673,12 @@
             "value" : "Unterdrückte Warnungen…"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αποκρυμμένες ειδοποιήσεις…"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -50877,6 +52833,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vorherige Markierung"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προηγούμενο σημάδι"
           }
         },
         "en" : {
@@ -51035,6 +52997,12 @@
             "value" : "Bereits heruntergeladene Python-Laufzeitumgebung installieren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εγκατάσταση ήδη ληφθέντος περιβάλλοντος εκτέλεσης Python"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -51189,6 +53157,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Trennlinie nach rechts verschieben"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση διαχωριστικού προς τα δεξιά"
           }
         },
         "en" : {
@@ -51347,6 +53321,12 @@
             "value" : "Tab"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Καρτέλα"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -51501,6 +53481,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dateien herunterladen…"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Λήψη αρχείων…"
           }
         },
         "en" : {
@@ -51659,6 +53645,12 @@
             "value" : "Tab nach links verschieben"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση καρτέλας αριστερά"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -51813,6 +53805,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tab zu neuer Gruppe hinzufügen…"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προσθήκη καρτέλας σε νέα ομάδα…"
           }
         },
         "en" : {
@@ -51971,6 +53969,12 @@
             "value" : "Symbolleiste anzeigen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εμφάνιση γραμμής εργαλείων"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -52125,6 +54129,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tab aus Gruppe entfernen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αφαίρεση καρτέλας από την ομάδα"
           }
         },
         "en" : {
@@ -52283,6 +54293,12 @@
             "value" : "Auto-Composer"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αυτόματος συντάκτης εντολών"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -52437,6 +54453,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "KI-Chat öffnen…"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Άνοιγμα συνομιλίας AI…"
           }
         },
         "en" : {
@@ -52595,6 +54617,12 @@
             "value" : "Zeitstempel anzeigen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εμφάνιση χρονικών σημάνσεων"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -52749,6 +54777,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Erweitertes Einfügen…"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προηγμένη επικόλληση…"
           }
         },
         "en" : {
@@ -52907,6 +54941,12 @@
             "value" : "Fenster anordnen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Τακτοποίηση παραθύρων"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -53061,6 +55101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Emulationsstufe"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επίπεδο εξομοίωσης"
           }
         },
         "en" : {
@@ -53219,6 +55265,12 @@
             "value" : "Treffer auswählen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή αντιστοιχιών"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -53373,6 +55425,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Auswahl öffnen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Άνοιγμα επιλογής"
           }
         },
         "en" : {
@@ -53531,6 +55589,12 @@
             "value" : "Verlauf"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ιστορικό"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -53685,6 +55749,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Archiv wiederherstellen…"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επαναφορά αρχείου…"
           }
         },
         "en" : {
@@ -53843,6 +55913,12 @@
             "value" : "Fensterstil"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Στιλ παραθύρου"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -53997,6 +56073,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Volle Breite, unten am Bildschirm"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πλήρες πλάτος στο κάτω μέρος της οθόνης"
           }
         },
         "en" : {
@@ -54155,6 +56237,12 @@
             "value" : "Literale Steuerzeichen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κυριολεκτικοί χαρακτήρες ελέγχου"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -54309,6 +56397,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Suche löschen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εκκαθάριση εύρεσης"
           }
         },
         "en" : {
@@ -54467,6 +56561,12 @@
             "value" : "Ausgabe mit KI erklären"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επεξήγηση εξόδου με AI"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -54621,6 +56721,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Emulationsstufe"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επίπεδο εξομοίωσης"
           }
         },
         "en" : {
@@ -54779,6 +56885,12 @@
             "value" : "URLs suchen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εύρεση URL"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -54933,6 +57045,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Durch formatiertes JSON ersetzen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αντικατάσταση με μορφοποιημένο JSON"
           }
         },
         "en" : {
@@ -55091,6 +57209,12 @@
             "value" : "Aktionen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ενέργειες"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -55245,6 +57369,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Größenänderungen aktualisieren Profil"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Οι αλλαγές μεγέθους ενημερώνουν το προφίλ"
           }
         },
         "en" : {
@@ -55403,6 +57533,12 @@
             "value" : "Zuletzt verwendete Profile aus Dock-Menü entfernen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αφαίρεση πρόσφατων προφίλ από το μενού του Dock"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -55557,6 +57693,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vergrabene Sitzungen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Θαμμένες συνεδρίες"
           }
         },
         "en" : {
@@ -55715,6 +57857,12 @@
             "value" : "Abhängigkeiten verwalten…"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Διαχείριση εξαρτήσεων…"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -55869,6 +58017,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zurück"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πίσω"
           }
         },
         "en" : {
@@ -56027,6 +58181,12 @@
             "value" : "Arbeitsgruppen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ομάδες εργασίας"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -56181,6 +58341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Anordnung aus Datei laden…"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Φόρτωση διάταξης από αρχείο…"
           }
         },
         "en" : {
@@ -56339,6 +58505,12 @@
             "value" : "Tastenkürzel für Kopiermodus"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Συντομεύσεις λειτουργίας αντιγραφής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -56493,6 +58665,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bereich teilen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Διαιρεμένο πλαίσιο"
           }
         },
         "en" : {
@@ -56651,6 +58829,12 @@
             "value" : "Fenstergröße ändern"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αλλαγή μεγέθους παραθύρου"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -56805,6 +58989,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alle Ereignistypen melden"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αναφορά όλων των τύπων συμβάντων"
           }
         },
         "en" : {
@@ -56963,6 +59153,12 @@
             "value" : "Trigger hinzufügen…"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προσθήκη εναύσματος…"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -57114,6 +59310,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Web"
@@ -57275,6 +59477,12 @@
             "value" : "modifyOtherKeys-Modus 1"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys, λειτουργία 1"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -57429,6 +59637,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Breite verringern"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μείωση πλάτους"
           }
         },
         "en" : {
@@ -57587,6 +59801,12 @@
             "value" : "Rechts am Bildschirm"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Δεξιά της οθόνης"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -57741,6 +59961,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Datei Base64-kodiert einfügen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επικόλληση αρχείου κωδικοποιημένου σε Base64"
           }
         },
         "en" : {
@@ -57899,6 +60125,12 @@
             "value" : "Bis zur letzten Markierung löschen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εκκαθάριση έως το τελευταίο σημάδι"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -58053,6 +60285,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geteilte Bereiche gleichmäßig anordnen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ομοιόμορφη διευθέτηση διαιρεμένων πλαισίων"
           }
         },
         "en" : {
@@ -58211,6 +60449,12 @@
             "value" : "Aufnahme importieren"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εισαγωγή εγγραφής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -58365,6 +60609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Anwendungstastenfeld"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αριθμητικό πληκτρολόγιο εφαρμογής"
           }
         },
         "en" : {
@@ -58523,6 +60773,12 @@
             "value" : "Volle Breite, oben am Bildschirm"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πλήρες πλάτος στο πάνω μέρος της οθόνης"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -58674,6 +60930,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT100"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT100"
@@ -58835,6 +61097,12 @@
             "value" : "VT200"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT200"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -58989,6 +61257,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verbindung trennen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αποσύνδεση"
           }
         },
         "en" : {
@@ -59147,6 +61421,12 @@
             "value" : "Vor dem Einfügen einer Zeile mit abschließendem Zeilenumbruch an der Shell-Eingabeaufforderung warnen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προειδοποίηση πριν από επικόλληση μίας γραμμής που τελειώνει σε νέα γραμμή στη γραμμή προτροπής"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -59301,6 +61581,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Global suchen…"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Καθολική εύρεση…"
           }
         },
         "en" : {
@@ -59459,6 +61745,12 @@
             "value" : "Maximiert"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μεγιστοποιημένο"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -59613,6 +61905,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Konsole"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κονσόλα"
           }
         },
         "en" : {
@@ -59771,6 +62069,12 @@
             "value" : "Neuer Tab neben aktuellem Tab"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Νέα καρτέλα δίπλα στην τρέχουσα καρτέλα"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -59925,6 +62229,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fensteranordnung als Tabs wiederherstellen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επαναφορά διάταξης παραθύρων ως καρτελών"
           }
         },
         "en" : {
@@ -60083,6 +62393,12 @@
             "value" : "Durch Base64-kodierten Wert ersetzen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αντικατάσταση με τιμή κωδικοποιημένη σε Base 64"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -60237,6 +62553,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Künstliche Intelligenz aktivieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ενεργοποίηση τεχνητής νοημοσύνης"
           }
         },
         "en" : {
@@ -60395,6 +62717,12 @@
             "value" : "Sitzung"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Συνεδρία"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -60551,6 +62879,12 @@
             "value" : "Benannte Markierungen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επώνυμα σημάδια"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -60705,6 +63039,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nächster Peer"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επόμενο μέλος"
           }
         },
         "en" : {

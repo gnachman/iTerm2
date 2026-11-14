@@ -23,6 +23,12 @@
             "value": "Tab-Größe in Leerzeichen:"
           }
         },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Μέγεθος tab σε κενά:"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",
@@ -174,6 +180,12 @@
           }
         },
         "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "el": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

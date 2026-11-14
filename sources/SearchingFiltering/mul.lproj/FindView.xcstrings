@@ -23,6 +23,12 @@
             "value": "Teilzeichenfolge (intelligente Groß-/Kleinschreibung)"
           }
         },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Υποσυμβολοσειρά με έξυπνη διάκριση πεζών-κεφαλαίων"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",
@@ -177,6 +183,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Suchverlauf löschen"
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Διαγραφή ιστορικού αναζήτησης"
           }
         },
         "en": {
@@ -335,6 +347,12 @@
             "value": "Teilzeichenfolge (Groß-/Kleinschreibung ignorieren)"
           }
         },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Υποσυμβολοσειρά χωρίς διάκριση πεζών-κεφαλαίων"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",
@@ -489,6 +507,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Regulärer Ausdruck (Groß-/Kleinschreibung ignorieren)"
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Κανονική παράσταση χωρίς διάκριση πεζών-κεφαλαίων"
           }
         },
         "en": {
@@ -647,6 +671,12 @@
             "value": "Teilzeichenfolge (Groß-/Kleinschreibung beachten)"
           }
         },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Υποσυμβολοσειρά με διάκριση πεζών-κεφαλαίων"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",
@@ -801,6 +831,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Regulärer Ausdruck (Groß-/Kleinschreibung beachten)"
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Κανονική παράσταση με διάκριση πεζών-κεφαλαίων"
           }
         },
         "en": {

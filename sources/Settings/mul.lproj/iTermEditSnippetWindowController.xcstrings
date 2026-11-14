@@ -23,6 +23,12 @@
             "value" : "Wert:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Τιμή:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -177,6 +183,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Snippet bearbeiten"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επεξεργασία αποσπάσματος"
           }
         },
         "en" : {
@@ -335,6 +347,12 @@
             "value" : "Titel:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Τίτλος:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -489,6 +507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nicht maskierter literaler Text"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κυριολεκτικό κείμενο χωρίς διαφυγή"
           }
         },
         "en" : {
@@ -647,6 +671,12 @@
             "value" : "Verwenden Sie „/“ in Tag-Namen, um im Menü „Bearbeiten“ > „Snippets“ Ordner zu erstellen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Χρησιμοποιήστε / στα ονόματα ετικετών για να δημιουργήσετε φακέλους στο μενού Επεξεργασία > Αποσπάσματα"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -803,6 +833,12 @@
             "value" : "Abbrechen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ακύρωση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -954,6 +990,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -1115,6 +1157,12 @@
             "value" : "Escaping für Abwärtskompatibilität"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Διαφυγή για συμβατότητα με προηγούμενες εκδόσεις"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1271,6 +1319,12 @@
             "value" : "Tags:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ετικέτες:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1425,6 +1479,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Backslash-Escaping im C-Stil"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Διαφυγή με ανάστροφη κάθετο τύπου C"
           }
         },
         "en" : {

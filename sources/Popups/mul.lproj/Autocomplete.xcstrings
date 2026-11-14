@@ -23,6 +23,12 @@
             "value" : "Autovervollständigung"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αυτόματη συμπλήρωση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",

@@ -23,6 +23,12 @@
             "value" : "Nach Marke bewegen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση ανά σημάδι"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -177,6 +183,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tastenkombination festlegen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ορισμός συντόμευσης πληκτρολογίου"
           }
         },
         "en" : {
@@ -335,6 +347,12 @@
             "value" : "Abbrechen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ακύρωση"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -489,6 +507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Farbvoreinstellung:"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προκαθορισμένος χρωματικός συνδυασμός:"
           }
         },
         "en" : {
@@ -647,6 +671,12 @@
             "value" : "Aktion:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ενέργεια:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -801,6 +831,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "In der Touch Bar anzuzeigende Bezeichnung"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ετικέτα για εμφάνιση στο Touch Bar"
           }
         },
         "en" : {
@@ -959,6 +995,12 @@
             "value" : "Nach Zeichen bewegen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση ανά χαρακτήρα"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1113,6 +1155,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "z. B. 0x7f"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "π.χ.: 0x7f"
           }
         },
         "en" : {
@@ -1271,6 +1319,12 @@
             "value" : "Profil:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προφίλ:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1425,6 +1479,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nach Wort bewegen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση ανά λέξη"
           }
         },
         "en" : {
@@ -1583,6 +1643,12 @@
             "value" : "Hier steht die Fehlermeldung"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το μήνυμα σφάλματος μπαίνει εδώ"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1739,6 +1805,12 @@
             "value" : "Aktion:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ενέργεια:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1890,6 +1962,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esc+"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Esc+"
@@ -2051,6 +2129,12 @@
             "value" : "Tastenkombination:"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Συντόμευση πληκτρολογίου:"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2207,6 +2291,12 @@
             "value" : "Nach Zeile bewegen"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μετακίνηση ανά γραμμή"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -2358,6 +2448,12 @@
           }
         },
         "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"

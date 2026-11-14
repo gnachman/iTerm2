@@ -23,6 +23,12 @@
             "value" : "KOPFZELLE"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ΚΕΛΙ ΕΠΙΚΕΦΑΛΙΔΑΣ"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -177,6 +183,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Global suchen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Καθολική εύρεση"
           }
         },
         "en" : {
@@ -335,6 +347,12 @@
             "value" : "Teilzeichenfolge (Groß-/Kleinschreibung beachten)"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Υποσυμβολοσειρά: με διάκριση πεζών-κεφαλαίων"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -489,6 +507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Teilzeichenfolge (Automatisch)"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Υποσυμβολοσειρά: αυτόματα"
           }
         },
         "en" : {
@@ -647,6 +671,12 @@
             "value" : "Regex (Groß-/Kleinschreibung ignorieren)"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κανονική παράσταση: χωρίς διάκριση πεζών-κεφαλαίων"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -801,6 +831,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Suchen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εύρεση"
           }
         },
         "en" : {
@@ -959,6 +995,12 @@
             "value" : "Regex (Groß-/Kleinschreibung beachten)"
           }
         },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κανονική παράσταση: με διάκριση πεζών-κεφαλαίων"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1113,6 +1155,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Teilzeichenfolge (Groß-/Kleinschreibung ignorieren)"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Υποσυμβολοσειρά: χωρίς διάκριση πεζών-κεφαλαίων"
           }
         },
         "en" : {
