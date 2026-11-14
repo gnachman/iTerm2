@@ -185,6 +185,12 @@
             "value" : "Mục 1"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "项目1"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -381,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mục 2"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "项目2"
           }
         },
         "zh-Hans" : {
@@ -581,6 +593,12 @@
             "value" : "Mục 3"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "项目3"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -777,6 +795,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lệnh"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "命令"
           }
         },
         "zh-Hans" : {

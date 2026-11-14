@@ -130,7 +130,7 @@
 }
 
 - (void)testUtilitiesFitInEveryLanguage {
-    for (NSString *language in @[ @"en", @"ca", @"cs", @"da", @"de", @"el", @"es", @"fi", @"fr", @"hi", @"hr", @"hu", @"id", @"it", @"ja", @"ms", @"nb", @"nl", @"pl", @"pt-BR", @"ro", @"ru", @"sk", @"sl", @"sv", @"th", @"tr", @"uk", @"vi", @"zh-Hans", @"zh-Hant" ]) {
+    for (NSString *language in @[ @"en", @"ca", @"cs", @"da", @"de", @"el", @"es", @"fi", @"fr", @"hi", @"hr", @"hu", @"id", @"it", @"ja", @"ms", @"nb", @"nl", @"pl", @"pt-BR", @"ro", @"ru", @"sk", @"sl", @"sv", @"th", @"tr", @"uk", @"vi", @"yue-Hans", @"zh-Hans", @"zh-Hant" ]) {
         [self checkLanguage:language];
     }
 }

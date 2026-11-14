@@ -185,6 +185,12 @@
             "value" : "Lặng lẽ bỏ qua lỗi từ lệnh này"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "静默忽略此命令的错误"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -381,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lệnh tiến trình đồng hành cần chạy:"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要运行的协同进程命令："
           }
         },
         "zh-Hans" : {
@@ -581,6 +593,12 @@
             "value" : "OK"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -779,6 +797,12 @@
             "value" : "Hủy"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -975,6 +999,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nhập lệnh"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输入命令"
           }
         },
         "zh-Hans" : {

@@ -185,6 +185,12 @@
             "value" : "Kéo một thành phần từ menu vào Thành phần đang hoạt động để thêm vào thanh trạng thái của bạn."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将组件从菜单拖到“活跃组件”中，即可将其添加到状态栏。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -381,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ưu tiên xếp sát hơn vị trí ổn định"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "优先紧凑排列而非位置稳定"
           }
         },
         "zh-Hans" : {
@@ -581,6 +593,12 @@
             "value" : "OK"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -777,6 +795,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Thành phần đang hoạt động"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "活跃组件"
           }
         },
         "zh-Hans" : {
@@ -977,6 +1001,12 @@
             "value" : "Đã tắt"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已停用"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1173,6 +1203,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Xóa các thành phần có giá trị rỗng"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除值为空的组件"
           }
         },
         "zh-Hans" : {
@@ -1373,6 +1409,12 @@
             "value" : "Vẽ đường phân cách giữa thanh trạng thái và terminal"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在状态栏和终端之间绘制分隔线"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1569,6 +1611,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tự động"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动"
           }
         },
         "zh-Hans" : {
@@ -1769,6 +1817,12 @@
             "value" : "Menu thành phần thanh trạng thái"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "状态栏组件菜单"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1965,6 +2019,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nâng cao…"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "高级…"
           }
         },
         "zh-Hans" : {
@@ -2165,6 +2225,12 @@
             "value" : "Thuật toán xếp sát cho phép hiển thị nhiều thành phần thanh trạng thái hơn cùng lúc nhưng chúng dễ nhảy vị trí hơn."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "紧凑排列算法可让更多状态栏组件同时可见，但它们的位置往往会更频繁地跳动。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2361,6 +2427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "🌈 Cầu vồng tự động:"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌈 自动彩虹："
           }
         },
         "zh-Hans" : {
@@ -2561,6 +2633,12 @@
             "value" : "Tên phông chữ hiển thị ở đây"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字体名称显示在此处"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2757,6 +2835,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Màu tối"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "深色颜色"
           }
         },
         "zh-Hans" : {
@@ -2957,6 +3041,12 @@
             "value" : "Thay đổi"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3153,6 +3243,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Màu văn bản mặc định:"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "默认文本颜色："
           }
         },
         "zh-Hans" : {
@@ -3353,6 +3449,12 @@
             "value" : "Định cấu hình thành phần"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "配置组件"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3549,6 +3651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Thuật toán xếp sát cho phép hiển thị nhiều thành phần thanh trạng thái hơn cùng lúc nhưng chúng dễ nhảy vị trí hơn."
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "紧凑排列算法可让更多状态栏组件同时可见，但它们的位置往往会更频繁地跳动。"
           }
         },
         "zh-Hans" : {
@@ -3749,6 +3857,12 @@
             "value" : "Màu đường phân cách:"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分隔线颜色："
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3945,6 +4059,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hủy"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
           }
         },
         "zh-Hans" : {
@@ -4145,6 +4265,12 @@
             "value" : "Màu sáng"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "浅色颜色"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4341,6 +4467,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Phông chữ:"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字体："
           }
         },
         "zh-Hans" : {
@@ -4541,6 +4673,12 @@
             "value" : "Màu nền:"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "背景颜色："
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4739,6 +4877,12 @@
             "value" : "OK"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4935,6 +5079,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vẽ một đường mảnh giữa thanh trạng thái và nội dung terminal."
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在状态栏和终端内容之间绘制一条细线。"
           }
         },
         "zh-Hans" : {

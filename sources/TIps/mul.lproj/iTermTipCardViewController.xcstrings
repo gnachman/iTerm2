@@ -185,6 +185,12 @@
             "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
           }
         },
+        "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -381,6 +387,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tích hợp shell"
+          }
+        },
+        "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shell集成"
           }
         },
         "zh-Hans": {

@@ -185,6 +185,12 @@
             "value" : "Một tập lệnh đơn giản không có phụ thuộc nào ngoài thư viện iterm2."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一个简单的脚本，除iterm2库外没有任何其他依赖项。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -378,6 +384,12 @@
           }
         },
         "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😈"
+          }
+        },
+        "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😈"
@@ -581,6 +593,12 @@
             "value" : "Cơ bản"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "基本"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -774,6 +792,12 @@
           }
         },
         "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😊"
+          }
+        },
+        "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😊"
@@ -977,6 +1001,12 @@
             "value" : "Daemon chạy lâu dài"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "长期运行的守护进程"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1173,6 +1203,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Đơn giản"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "简单"
           }
         },
         "zh-Hans" : {
@@ -1373,6 +1409,12 @@
             "value" : "Hủy"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1569,6 +1611,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chọn mẫu này cho tập lệnh đơn giản thực hiện các tác vụ rồi kết thúc."
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择此模板可创建执行操作后即终止的简单脚本。"
           }
         },
         "zh-Hans" : {
@@ -1769,6 +1817,12 @@
             "value" : "Một tập lệnh phụ thuộc vào các gói PyPI khác ngoài thư viện iterm2. Một pyenv riêng sẽ được tạo cho tập lệnh này."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一个依赖iterm2库以外的PyPI包的脚本。将为此脚本创建专用的pyenv。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1962,6 +2016,12 @@
           }
         },
         "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔗"
+          }
+        },
+        "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🔗"
@@ -2165,6 +2225,12 @@
             "value" : "Chọn mẫu tập lệnh:"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择脚本模板："
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2361,6 +2427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Môi trường đầy đủ"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完整环境"
           }
         },
         "zh-Hans" : {
@@ -2561,6 +2633,12 @@
             "value" : "Chọn mẫu này cho tập lệnh luôn chạy và phản hồi các thông báo."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择此模板可创建持续运行并响应通知的脚本。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2754,6 +2832,12 @@
           }
         },
         "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛠️"
+          }
+        },
+        "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🛠️"
@@ -2955,6 +3039,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chọn môi trường Python:"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择Python环境："
           }
         },
         "zh-Hans" : {

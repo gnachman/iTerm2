@@ -185,6 +185,12 @@
             "value" : "Bảng điều khiển tmux"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux仪表板"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -381,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Phiên"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会话"
           }
         },
         "zh-Hans" : {
@@ -581,6 +593,12 @@
             "value" : "Gắn"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "附加"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -777,6 +795,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tìm cửa sổ"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索窗口"
           }
         },
         "zh-Hans" : {
@@ -977,6 +1001,12 @@
             "value" : "Cửa sổ"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "窗口"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1173,6 +1203,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mở trong cửa sổ"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在窗口中打开"
           }
         },
         "zh-Hans" : {
@@ -1373,6 +1409,12 @@
             "value" : "Ẩn"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐藏"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1569,6 +1611,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mở trong cửa sổ"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在窗口中打开"
           }
         },
         "zh-Hans" : {
@@ -1769,6 +1817,12 @@
             "value" : "Mở trong tab"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在标签页中打开"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1965,6 +2019,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tách"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分离"
           }
         },
         "zh-Hans" : {
@@ -2165,6 +2225,12 @@
             "value" : "Mở bảng điều khiển khi gắn nếu có cửa sổ bị ẩn"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "附加时如有隐藏的窗口，则打开仪表板"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2361,6 +2427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Không mở cửa sổ khi gắn nếu có ít nhất số cửa sổ này:"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果至少有这么多个窗口，附加时不打开窗口："
           }
         },
         "zh-Hans" : {

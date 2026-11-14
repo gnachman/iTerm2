@@ -185,6 +185,12 @@
             "value" : "mm:ss"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mm:ss"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -381,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx dòng, xxx byte."
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx行，xxx字节。"
           }
         },
         "zh-Hans" : {
@@ -581,6 +593,12 @@
             "value" : "Dán"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "粘贴"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -779,6 +797,12 @@
             "value" : "Hủy"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -975,6 +999,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Thời lượng tối thiểu:"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最短时长："
           }
         },
         "zh-Hans" : {

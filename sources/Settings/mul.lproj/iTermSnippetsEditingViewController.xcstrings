@@ -185,6 +185,12 @@
             "value" : "Sửa"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -383,6 +389,12 @@
             "value" : "Tiêu đề"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "标题"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -579,6 +591,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Văn bản"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文本"
           }
         },
         "zh-Hans" : {

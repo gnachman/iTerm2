@@ -185,6 +185,12 @@
             "value" : "Hồ sơ"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "描述文件"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -381,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sửa hồ sơ…"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑描述文件…"
           }
         },
         "zh-Hans" : {
@@ -581,6 +593,12 @@
             "value" : "Tab mới"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新建标签页"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -777,6 +795,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cửa sổ mới"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新建窗口"
           }
         },
         "zh-Hans" : {
@@ -977,6 +1001,12 @@
             "value" : "Đóng cửa sổ này sau khi mở hồ sơ."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开描述文件后关闭此窗口。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1173,6 +1203,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tab mới trong cửa sổ mới"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新窗口中的新标签页"
           }
         },
         "zh-Hans" : {
@@ -1457,6 +1493,12 @@
             "value" : "Thẻ >"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "标签 >"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1665,6 +1707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nova subfinestra flotant"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新建浮动窗格"
           }
         }
       }

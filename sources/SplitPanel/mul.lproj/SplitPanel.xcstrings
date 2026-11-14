@@ -185,6 +185,12 @@
             "value" : "Chia khung hiện tại theo XXX"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "XXX拆分当前窗格"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -383,6 +389,12 @@
             "value" : "Hủy"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -579,6 +591,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chia"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拆分"
           }
         },
         "zh-Hans" : {

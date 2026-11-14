@@ -198,6 +198,12 @@
             "value" : "iTerm2"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -394,6 +400,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Một ứng dụng trong iTerm2 muốn dùng AppleScript."
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2中的某个App想要使用AppleScript。"
           }
         },
         "zh-Hans" : {
@@ -594,6 +606,12 @@
             "value" : "Một ứng dụng trong iTerm2 muốn dùng Bluetooth."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2中的某个App想要使用蓝牙。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -790,6 +808,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Một ứng dụng trong iTerm2 muốn dùng dữ liệu Lịch."
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2中的某个App想要使用“日历”数据。"
           }
         },
         "zh-Hans" : {
@@ -990,6 +1014,12 @@
             "value" : "Một ứng dụng trong iTerm2 muốn dùng camera."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2中的某个App想要使用摄像头。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1188,6 +1218,12 @@
             "value" : "Một ứng dụng trong iTerm2 muốn dùng danh bạ của bạn."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2中的某个App想要使用你的通讯录。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1381,6 +1417,12 @@
           }
         },
         "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPL v2"
+          }
+        },
+        "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPL v2"
@@ -1584,6 +1626,12 @@
             "value" : "Một ứng dụng trong iTerm2 muốn truy cập mạng cục bộ."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2中的某个App想要访问本地网络。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1780,6 +1828,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Một ứng dụng trong iTerm2 muốn dùng thông tin vị trí của bạn, kể cả khi chạy nền."
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2中的某个App想要使用你的位置信息，即使在后台也是如此。"
           }
         },
         "zh-Hans" : {
@@ -1980,6 +2034,12 @@
             "value" : "Một ứng dụng trong iTerm2 muốn dùng thông tin vị trí của bạn."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2中的某个App想要使用你的位置信息。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2176,6 +2236,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Một ứng dụng trong iTerm2 muốn dùng thông tin vị trí của bạn khi đang hoạt động."
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2中的某个App想要在使用期间使用你的位置信息。"
           }
         },
         "zh-Hans" : {
@@ -2376,6 +2442,12 @@
             "value" : "Một ứng dụng trong iTerm2 muốn dùng micro của bạn."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2中的某个App想要使用你的麦克风。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2572,6 +2644,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Một ứng dụng trong iTerm2 muốn dùng thư viện ảnh."
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2中的某个App想要使用照片图库。"
           }
         },
         "zh-Hans" : {
@@ -2772,6 +2850,12 @@
             "value" : "Một ứng dụng trong iTerm2 muốn dùng lời nhắc của bạn."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2中的某个App想要使用你的提醒事项。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2970,6 +3054,12 @@
             "value" : "Một ứng dụng trong iTerm2 muốn dùng tính năng nhận dạng giọng nói."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2中的某个App想要使用语音识别。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3166,6 +3256,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Thao tác đang được một chương trình trong iTerm2 thực hiện yêu cầu quyền nâng cao."
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2中的程序正在执行的操作需要提升权限。"
           }
         },
         "zh-Hans" : {

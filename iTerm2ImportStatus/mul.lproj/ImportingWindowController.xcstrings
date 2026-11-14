@@ -196,6 +196,12 @@
             "state" : "translated",
             "value" : "Estat"
           }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "状态"
+          }
         }
       }
     },
@@ -394,6 +400,12 @@
             "state" : "translated",
             "value" : "Important…"
           }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在导入…"
+          }
         }
       }
     },
@@ -591,6 +603,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Important la configuració i les dades…"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在导入设置和数据…"
           }
         }
       }

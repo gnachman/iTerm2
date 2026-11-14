@@ -185,6 +185,12 @@
             "value" : "Đã bật hoàn thành bằng AI: toàn bộ văn bản được gửi đến AI"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已启用AI补全：所有文本都会发送给AI"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -381,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mô tả cách dùng trình soạn lệnh."
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "介绍如何使用编写器。"
           }
         },
         "zh-Hans" : {
@@ -581,6 +593,12 @@
             "value" : "Nhấn ⇧↩ để gửi."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按 ⇧↩ 发送。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -774,6 +792,12 @@
           }
         },
         "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
+          }
+        },
+        "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI"

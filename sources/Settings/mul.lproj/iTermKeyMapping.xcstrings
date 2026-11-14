@@ -185,6 +185,12 @@
             "value" : "Cài đặt sẵn…"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预设…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -381,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Thêm mục Touch Bar"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加触控栏项目"
           }
         },
         "zh-Hans" : {
@@ -581,6 +593,12 @@
             "value" : "Tác vụ"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "操作"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -777,6 +795,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Giảm thiểu Touch Bar"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "触控栏缓解措施"
           }
         },
         "zh-Hans" : {
@@ -977,6 +1001,12 @@
             "value" : "Chỉ báo trực quan cho phím esc"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "esc键视觉指示器"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1173,6 +1203,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tổ hợp phím"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "组合键"
           }
         },
         "zh-Hans" : {
@@ -1373,6 +1409,12 @@
             "value" : "Phản hồi xúc giác khi nhấn esc"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按下esc时提供触感反馈"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1571,6 +1613,12 @@
             "value" : "OK"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1767,6 +1815,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tiếng bấm cho phím esc"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "esc键按键点按声"
           }
         },
         "zh-Hans" : {

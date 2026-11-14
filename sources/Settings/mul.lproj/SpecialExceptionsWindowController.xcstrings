@@ -185,6 +185,12 @@
             "value" : "Cài đặt gói Nerd Font…"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安装Nerd Font捆绑包…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -383,6 +389,12 @@
             "value" : "Sửa ngoại lệ đặc biệt"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑特殊例外"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -576,6 +588,12 @@
           }
         },
         "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -779,6 +797,12 @@
             "value" : "Ngoại lệ đặc biệt ghi đè phông chữ cho các dải hoặc hệ chữ Unicode cụ thể."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "特殊例外会针对特定的Unicode范围或文字覆盖字体。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -972,6 +996,12 @@
           }
         },
         "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -1175,6 +1205,12 @@
             "value" : "OK"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1371,6 +1407,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Của phông chữ:"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用字体："
           }
         },
         "zh-Hans" : {
@@ -1571,6 +1613,12 @@
             "value" : "Cho các ký tự bắt đầu từ"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "适用于从以下位置开始的字符"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1767,6 +1815,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Thêm cài đặt sẵn…"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加预设…"
           }
         },
         "zh-Hans" : {
@@ -1967,6 +2021,12 @@
             "value" : "Hủy"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2163,6 +2223,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "đến"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "至"
           }
         },
         "zh-Hans" : {
@@ -2363,6 +2429,12 @@
             "value" : "Quản lý ngoại lệ đặc biệt"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "管理特殊例外"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2559,6 +2631,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
           }
         },
         "zh-Hans" : {
@@ -2759,6 +2837,12 @@
             "value" : "Dùng điểm mã"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用码位"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2957,6 +3041,12 @@
             "value" : "Hủy"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3150,6 +3240,12 @@
           }
         },
         "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"

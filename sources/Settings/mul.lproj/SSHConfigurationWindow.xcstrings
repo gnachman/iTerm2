@@ -185,6 +185,12 @@
             "value" : "Đường dẫn đến SSH:"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH路径："
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -381,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tệp cần sao chép sang máy chủ từ xa:"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要拷贝到远程主机的文件："
           }
         },
         "zh-Hans" : {
@@ -581,6 +593,12 @@
             "value" : "Đích"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目标位置"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -779,6 +797,12 @@
             "value" : "OK"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -972,6 +996,12 @@
           }
         },
         "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/usr/bin/ssh"
+          }
+        },
+        "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "/usr/bin/ssh"
@@ -1175,6 +1205,12 @@
             "value" : "Duyệt"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "浏览"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1371,6 +1407,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hủy"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
           }
         },
         "zh-Hans" : {
@@ -1571,6 +1613,12 @@
             "value" : "Tệp hoặc thư mục"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件或文件夹"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1769,6 +1817,12 @@
             "value" : "Tích hợp SSH"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH集成"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1965,6 +2019,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Biến môi trường cần sao chép sang máy chủ từ xa:"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要拷贝到远程主机的环境变量："
           }
         },
         "zh-Hans" : {

@@ -185,6 +185,12 @@
             "value" : "Xóa lịch sử tìm kiếm"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除搜索历史记录"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -381,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chuỗi con, phân biệt chữ hoa/thường"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "区分大小写的子字符串"
           }
         },
         "zh-Hans" : {
@@ -581,6 +593,12 @@
             "value" : "Chuỗi con, không phân biệt chữ hoa/thường"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不区分大小写的子字符串"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -777,6 +795,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tìm kiếm"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索"
           }
         },
         "zh-Hans" : {
@@ -977,6 +1001,12 @@
             "value" : "Regex, phân biệt chữ hoa/thường"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "区分大小写的正则表达式"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1175,6 +1205,12 @@
             "value" : "Chuỗi con, chữ hoa/thường thông minh"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "智能大小写子字符串"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1371,6 +1407,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Regex, không phân biệt chữ hoa/thường"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不区分大小写的正则表达式"
           }
         },
         "zh-Hans" : {

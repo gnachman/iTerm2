@@ -185,6 +185,12 @@
             "value" : "Tự động hoàn tất"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动补全"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",

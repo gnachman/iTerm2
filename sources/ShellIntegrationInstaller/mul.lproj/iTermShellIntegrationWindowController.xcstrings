@@ -185,6 +185,12 @@
             "value" : "Tải về phiên bản mới nhất. Chạy curl | bash"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下载最新版本。运行 curl | bash"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -381,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tiếp tục"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "继续"
           }
         },
         "zh-Hans" : {
@@ -581,6 +593,12 @@
             "value" : "OK"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -777,6 +795,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hủy"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
           }
         },
         "zh-Hans" : {
@@ -977,6 +1001,12 @@
             "value" : "1. Tìm hiểu bạn dùng shell nào.\n2. Thêm các tệp tập lệnh vào thư mục chính của bạn.\n3. Cài đặt các tập lệnh tiện ích.\n4. Sửa đổi các tập lệnh khởi động của shell."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. 查找你使用的shell。\n2. 在个人目录下添加脚本文件。\n3. 安装实用工具脚本。\n4. 修改你的shell启动脚本。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1173,6 +1203,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quay lại"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返回"
           }
         },
         "zh-Hans" : {
@@ -1373,6 +1409,12 @@
             "value" : "Các tiện ích gồm tập lệnh để tải tệp về, hiển thị ảnh trực tiếp trong terminal, và nhiều hơn nữa. "
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "实用工具包括用于下载文件、内嵌显示图像等的脚本。 "
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1569,6 +1611,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quay lại"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返回"
           }
         },
         "zh-Hans" : {
@@ -1769,6 +1817,12 @@
             "value" : "Tiếp tục"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "继续"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1965,6 +2019,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hủy"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
           }
         },
         "zh-Hans" : {
@@ -2165,6 +2225,12 @@
             "value" : "Bỏ qua"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跳过"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2361,6 +2427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hủy"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
           }
         },
         "zh-Hans" : {
@@ -2561,6 +2633,12 @@
             "value" : "Xem trước lệnh"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览命令"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2757,6 +2835,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cài đặt không cần internet"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "离线安装"
           }
         },
         "zh-Hans" : {
@@ -2957,6 +3041,12 @@
             "value" : "Tải về và chạy trình cài đặt"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下载并运行安装器"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3153,6 +3243,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cài đặt cả các tiện ích iTerm2"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同时安装iTerm2实用工具"
           }
         },
         "zh-Hans" : {
@@ -3353,6 +3449,12 @@
             "value" : "Cài đặt thủ công có hướng dẫn. Không cần tải về."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "引导式手动安装。无需下载。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3549,6 +3651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Xem trước lệnh"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览命令"
           }
         },
         "zh-Hans" : {
@@ -3749,6 +3857,12 @@
             "value" : "Tiếp tục"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "继续"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3942,6 +4056,12 @@
           }
         },
         "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🎉"
+          }
+        },
+        "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🎉"
@@ -4145,6 +4265,12 @@
             "value" : "Xem trước lệnh"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览命令"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4341,6 +4467,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quay lại"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返回"
           }
         },
         "zh-Hans" : {
@@ -4541,6 +4673,12 @@
             "value" : "Bạn muốn cài đặt tích hợp shell bằng cách nào?\n\nTrong quá trình này, các tập lệnh khởi động của shell sẽ bị sửa đổi. Trình cài đặt sẽ nhập lệnh vào cửa sổ terminal giúp bạn."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你想如何安装Shell集成？\n\n此过程会修改你的shell启动脚本。安装器会替你在终端窗口中输入命令。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4737,6 +4875,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Xem trước lệnh"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览命令"
           }
         },
         "zh-Hans" : {
@@ -4937,6 +5081,12 @@
             "value" : "Đã cài đặt xong!"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安装完成！"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5133,6 +5283,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Thao tác này sẽ chạy lệnh sau:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这将运行以下命令：\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
         "zh-Hans" : {
@@ -5333,6 +5489,12 @@
             "value" : "Tạo một tab mới để dùng thử.\n\nĐể có kết quả tốt nhất, hãy cài đặt tích hợp shell trên mọi máy chủ mà bạn ssh vào."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新建一个标签页来试用。\n\n为获得最佳效果，请在所有通过ssh登录的主机上安装Shell集成。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5529,6 +5691,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tích hợp shell gồm các tập lệnh giúp shell của bạn giao tiếp với iTerm2 để iTerm2 có thể theo dõi các lệnh bạn đang chạy, thư mục hiện tại và các trạng thái khác. "
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shell集成由一组脚本组成，可帮助你的shell与iTerm2通信，使其能够跟踪你运行的命令、当前目录和其他状态。 "
           }
         },
         "zh-Hans" : {
@@ -5729,6 +5897,12 @@
             "value" : "Cài đặt tích hợp shell"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安装Shell集成"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5925,6 +6099,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hủy"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
           }
         },
         "zh-Hans" : {

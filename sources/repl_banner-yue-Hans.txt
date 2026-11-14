@@ -1,0 +1,11 @@
+[1m欢迎使用iTerm2 Python REPL！[m
+
+呢个系一个交互式Python解释器，你可以喺度试验脚本。同标准Python解释器唔同，你可以喺async函数以外使用“await”。试下呢个示例脚本
+：
+
+import iterm2
+connection=await iterm2.Connection.async_create()
+await iterm2.Window.async_create(connection)
+
+]8;;https://iterm2.com/python-api⌘-点按呢度睇iTerm2 Python API文档]8;;
+

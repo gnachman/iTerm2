@@ -185,6 +185,12 @@
             "value": "Bao gồm dấu thời gian"
           }
         },
+        "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "包含时间戳"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -381,6 +387,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Định dạng tệp:"
+          }
+        },
+        "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件格式："
           }
         },
         "zh-Hans": {

@@ -185,6 +185,12 @@
             "value" : "Mở nhanh"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "快速打开"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -383,6 +389,12 @@
             "value" : "Chi tiết"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "详细信息"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -579,6 +591,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tìm phiên, hồ sơ hoặc bố cục"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索会话、描述文件或布局"
           }
         },
         "zh-Hans" : {

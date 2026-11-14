@@ -185,6 +185,12 @@
             "value" : "⌥ Option"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Option"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -381,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ghim cửa sổ phím nóng (vẫn mở khi mất tiêu điểm bàn phím)"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "固定热键窗口（键盘焦点移走后仍保持打开）"
           }
         },
         "zh-Hans" : {
@@ -581,6 +593,12 @@
             "value" : "Phím nóng:"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "热键："
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -777,6 +795,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lưu ý: cửa sổ chỉ được mở lại nếu nó bị đóng do một ứng dụng khác trở thành ứng dụng đang hoạt động."
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "注意：仅当窗口因其他App变为活跃状态而关闭时，才会重新打开。"
           }
         },
         "zh-Hans" : {
@@ -977,6 +1001,12 @@
             "value" : "Phím nóng bổ sung"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他热键"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1173,6 +1203,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Khi bạn nhấn phím nóng gán cho hồ sơ này, một cửa sổ riêng sẽ hiển thị hoặc ẩn. Mỗi hồ sơ có phím nóng điều khiển cửa sổ phím nóng của riêng nó."
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按下绑定到此描述文件的热键时，将显示或隐藏一个专用窗口。每个设有热键的描述文件各自控制自己的热键窗口。"
           }
         },
         "zh-Hans" : {
@@ -1373,6 +1409,12 @@
             "value" : "Không làm gì đặc biệt"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不做任何特殊处理"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1566,6 +1608,12 @@
           }
         },
         "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -1769,6 +1817,12 @@
             "value" : "Hiển thị cửa sổ phím nóng này"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示此热键窗口"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1967,6 +2021,12 @@
             "value" : "Cài đặt cửa sổ phím nóng"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "热键窗口设置"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2160,6 +2220,12 @@
           }
         },
         "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Command"
+          }
+        },
+        "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⌘ Command"
@@ -2363,6 +2429,12 @@
             "value" : "⚠️ Hồ sơ khác đang dùng phím tắt này"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ 另一个描述文件使用了此快捷键"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2556,6 +2628,12 @@
           }
         },
         "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Shift"
+          }
+        },
+        "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⇧ Shift"
@@ -2759,6 +2837,12 @@
             "value" : "Phím chạm hai lần:"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "连按两下键："
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2955,6 +3039,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tự động mở lại khi kích hoạt lại ứng dụng"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App重新激活时自动重新打开"
           }
         },
         "zh-Hans" : {
@@ -3155,6 +3245,12 @@
             "value" : "⚠️ Hồ sơ khác đang dùng thao tác chạm hai lần này"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ 另一个描述文件使用了此连按两下操作"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3351,6 +3447,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hiển thị cửa sổ phím nóng này nếu không có cửa sổ nào khác đang mở"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有其他窗口打开时显示此热键窗口"
           }
         },
         "zh-Hans" : {
@@ -3551,6 +3653,12 @@
             "value" : "Cửa sổ nổi nằm đè lên các cửa sổ khác, Dock và cửa sổ toàn màn hình của ứng dụng khác (nếu không gian của cửa sổ phím nóng được đặt là Tất cả không gian)."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "浮动窗口会覆盖其他窗口、程序坞以及其他App的全屏幕窗口（如果热键窗口的空间设为“所有空间”）。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3747,6 +3855,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hủy"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
           }
         },
         "zh-Hans" : {
@@ -3947,6 +4061,12 @@
             "value" : "Khi bấm biểu tượng Dock:"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点按程序坞图标时："
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4143,6 +4263,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tạo hiệu ứng khi hiển thị và ẩn"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示和隐藏时使用动画"
           }
         },
         "zh-Hans" : {
@@ -4343,6 +4469,12 @@
             "value" : "OK"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4539,6 +4671,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
           }
         },
         "zh-Hans" : {
@@ -4739,6 +4877,12 @@
             "value" : "Cửa sổ nổi"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "浮动窗口"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4932,6 +5076,12 @@
           }
         },
         "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Control"
+          }
+        },
+        "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "^ Control"
@@ -5133,6 +5283,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Phím nóng bổ sung…"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他热键…"
           }
         },
         "zh-Hans" : {

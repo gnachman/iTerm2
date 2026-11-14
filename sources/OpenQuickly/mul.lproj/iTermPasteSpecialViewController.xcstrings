@@ -185,6 +185,12 @@
             "value" : "Cần tích hợp shell để phát hiện dấu nhắc"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提示符检测需要Shell集成"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -381,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tùy chọn này được bật khi ứng dụng đang chạy đã gửi mã thoát để bật “chế độ dán có đánh dấu”. Chuỗi được dán sẽ được “đánh dấu” bằng các mã thoát cho biết văn bản bên trong đến từ thao tác dán."
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当正在运行的App发送转义码以打开“括号粘贴模式”时启用此项。粘贴的字符串将由转义码“括起”，表示其中的文本来自粘贴操作。"
           }
         },
         "zh-Hans" : {
@@ -581,6 +593,12 @@
             "value" : "Thoát tab bằng ^V"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用^V转义制表符"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -777,6 +795,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dán kèm tab"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留制表符粘贴"
           }
         },
         "zh-Hans" : {
@@ -977,6 +1001,12 @@
             "value" : "Thay thế"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "替换"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1173,6 +1203,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chuyển dấu câu Unicode"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转换Unicode标点符号"
           }
         },
         "zh-Hans" : {
@@ -1373,6 +1409,12 @@
             "value" : "Tôn trọng chuỗi thoát của vim"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "遵循vim转义序列"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1566,6 +1608,12 @@
           }
         },
         "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 ms"
+          }
+        },
+        "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 ms"
@@ -1769,6 +1817,12 @@
             "value" : "Chuyển nhiều dạng dấu ngoặc kép và dấu gạch ngang sang ký tự ASCII tương đương."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将各种形式的引号和破折号转换为对应的ASCII字符。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1965,6 +2019,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chuyển tab thành dấu cách:"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将制表符转换为空格："
           }
         },
         "zh-Hans" : {
@@ -2165,6 +2225,12 @@
             "value" : "Ký tự xuống dòng kiểu DOS và UNIX thường không dùng làm đầu vào. CR là chuẩn."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DOS和UNIX换行符通常不用于输入。标准为CR。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2361,6 +2427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Thoát ký tự shell bằng \\"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用\\转义shell字符"
           }
         },
         "zh-Hans" : {
@@ -2561,6 +2633,12 @@
             "value" : "Kích thước đoạn:"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "块大小："
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2757,6 +2835,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chuỗi thay thế"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "替换内容"
           }
         },
         "zh-Hans" : {
@@ -2957,6 +3041,12 @@
             "value" : "Ký tự xuống dòng kiểu DOS và UNIX thường không dùng làm đầu vào. CR là chuẩn."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DOS和UNIX换行符通常不用于输入。标准为CR。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3153,6 +3243,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tab, line feed, form feed và carriage return là các mã điều khiển “an toàn” duy nhất."
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "制表符、换行符、换页符和回车符是仅有的“安全”控制码。"
           }
         },
         "zh-Hans" : {
@@ -3353,6 +3449,12 @@
             "value" : "Biến đổi"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转换"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3551,6 +3653,12 @@
             "value" : "Cú pháp biểu thức chính quy ICU"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICU正则表达式语法"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3744,6 +3852,12 @@
           }
         },
         "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100 ms"
+          }
+        },
+        "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "100 ms"
@@ -3947,6 +4061,12 @@
             "value" : "1 kB"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 kB"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4143,6 +4263,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "bằng"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "为"
           }
         },
         "zh-Hans" : {
@@ -4343,6 +4469,12 @@
             "value" : "Tốc độ"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "速度"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4539,6 +4671,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Xóa mã điều khiển không an toàn"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除不安全的控制码"
           }
         },
         "zh-Hans" : {
@@ -4739,6 +4877,12 @@
             "value" : "Chờ dấu nhắc shell trước khi dán từng dòng"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "粘贴每一行之前等待shell提示符"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4935,6 +5079,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Độ trễ đoạn:"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "块间延迟："
           }
         },
         "zh-Hans" : {
@@ -5135,6 +5285,12 @@
             "value" : "1 byte"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1字节"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5331,6 +5487,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Biểu thức chính quy"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正则表达式"
           }
         },
         "zh-Hans" : {
@@ -5531,6 +5693,12 @@
             "value" : "1,2 kB"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1.2 kB"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5724,6 +5892,12 @@
           }
         },
         "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "150 ms"
+          }
+        },
+        "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "150 ms"
@@ -5927,6 +6101,12 @@
             "value" : "100"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6123,6 +6303,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nút chọn"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "单选按钮"
           }
         },
         "zh-Hans" : {
@@ -6323,6 +6509,12 @@
             "value" : "Xóa ký tự xuống dòng"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除换行符"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6519,6 +6711,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dùng $1, $2, v.v. cho nhóm bắt"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "对捕获组使用$1、$2等"
           }
         },
         "zh-Hans" : {
@@ -6719,6 +6917,12 @@
             "value" : "Chế độ dán có đánh dấu"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "括号粘贴模式"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6912,6 +7116,12 @@
           }
         },
         "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 MB"
+          }
+        },
+        "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 MB"
@@ -7115,6 +7325,12 @@
             "value" : "Chuyển CRLF và LF thành CR"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将CRLF和LF转换为CR"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7313,6 +7529,12 @@
             "value" : "Mã hóa Base 64"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Base 64编码"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7509,6 +7731,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "10 giây"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10秒"
           }
         },
         "zh-Hans" : {

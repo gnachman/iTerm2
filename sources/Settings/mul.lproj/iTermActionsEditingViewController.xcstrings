@@ -185,6 +185,12 @@
             "value" : "Tác vụ"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "操作"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -423,6 +429,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tiêu đề"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "标题"
           }
         },
         "zh-Hans" : {

@@ -185,6 +185,12 @@
             "value": "Kích thước tab tính bằng dấu cách:"
           }
         },
+        "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "制表符大小（空格数）："
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -378,6 +384,12 @@
           }
         },
         "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "yue-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

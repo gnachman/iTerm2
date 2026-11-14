@@ -185,6 +185,12 @@
             "value" : "Vui lòng chờ! Đang cài đặt môi trường Python mới…"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请稍候！正在安装新的Python环境…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",

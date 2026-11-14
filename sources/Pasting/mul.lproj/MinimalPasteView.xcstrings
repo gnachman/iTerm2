@@ -185,6 +185,12 @@
             "value": "Đang dán…"
           }
         },
+        "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在粘贴…"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",

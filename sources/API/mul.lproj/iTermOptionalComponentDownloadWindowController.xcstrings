@@ -185,6 +185,12 @@
             "value": "Trình cài đặt môi trường chạy Python"
           }
         },
+        "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Python运行时环境安装器"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -383,6 +389,12 @@
             "value": "Hủy"
           }
         },
+        "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -579,6 +591,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Đang tải về các thành phần tùy chọn…"
+          }
+        },
+        "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在下载可选组件…"
           }
         },
         "zh-Hans": {

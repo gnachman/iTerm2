@@ -185,6 +185,12 @@
             "value": "Nhập giá trị cho "
           }
         },
+        "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "输入以下项的值： "
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -381,6 +387,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "OK"
+          }
+        },
+        "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "好"
           }
         },
         "zh-Hans": {
@@ -581,6 +593,12 @@
             "value": "Tham số phiên"
           }
         },
+        "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "会话参数"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -779,6 +797,12 @@
             "value": "Hủy"
           }
         },
+        "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -975,6 +999,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tên"
+          }
+        },
+        "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "名称"
           }
         },
         "zh-Hans": {

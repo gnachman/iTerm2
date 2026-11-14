@@ -185,6 +185,12 @@
             "value": "Xuất…"
           }
         },
+        "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导出…"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -381,6 +387,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bây giờ"
+          }
+        },
+        "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "现在"
           }
         },
         "zh-Hans": {
@@ -581,6 +593,12 @@
             "value": "Điều khiển phát lại tức thì"
           }
         },
+        "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "即时回放控制"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -777,6 +795,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hủy"
+          }
+        },
+        "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消"
           }
         },
         "zh-Hans": {
@@ -977,6 +1001,12 @@
             "value": "Xem trực tiếp"
           }
         },
+        "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "实时视图"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -1173,6 +1203,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Thời gian"
+          }
+        },
+        "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "时间"
           }
         },
         "zh-Hans": {

@@ -102,7 +102,7 @@
 }
 
 - (void)testTranslatedTitlesFit {
-    for (NSString *language in @[ @"ca", @"cs", @"da", @"de", @"el", @"es", @"fi", @"fr", @"hi", @"hr", @"hu", @"id", @"it", @"ja", @"ms", @"nb", @"nl", @"pl", @"pt-BR", @"ro", @"ru", @"sk", @"sl", @"sv", @"th", @"tr", @"uk", @"vi", @"zh-Hans", @"zh-Hant" ]) {
+    for (NSString *language in @[ @"ca", @"cs", @"da", @"de", @"el", @"es", @"fi", @"fr", @"hi", @"hr", @"hu", @"id", @"it", @"ja", @"ms", @"nb", @"nl", @"pl", @"pt-BR", @"ro", @"ru", @"sk", @"sl", @"sv", @"th", @"tr", @"uk", @"vi", @"yue-Hans", @"zh-Hans", @"zh-Hant" ]) {
         NSDictionary<NSString *, NSString *> *strings = [self stringsForLanguage:language];
         id<ManualAIModelEditorTranslationLayoutForTesting> editor = [self newEditor];
         NSView *content = editor.window.contentView;
@@ -153,7 +153,7 @@
 // Fetching…), so it has to fit the widest of them. The Model field beside it
 // gives up the room, and the button stays flush with the fields below.
 - (void)testFetchModelsButtonFitsEveryTitle {
-    for (NSString *language in @[ @"ca", @"cs", @"da", @"de", @"el", @"es", @"fi", @"fr", @"hi", @"hr", @"hu", @"id", @"it", @"ja", @"ms", @"nb", @"nl", @"pl", @"pt-BR", @"ro", @"ru", @"sk", @"sl", @"sv", @"th", @"tr", @"uk", @"vi", @"zh-Hans", @"zh-Hant" ]) {
+    for (NSString *language in @[ @"ca", @"cs", @"da", @"de", @"el", @"es", @"fi", @"fr", @"hi", @"hr", @"hu", @"id", @"it", @"ja", @"ms", @"nb", @"nl", @"pl", @"pt-BR", @"ro", @"ru", @"sk", @"sl", @"sv", @"th", @"tr", @"uk", @"vi", @"yue-Hans", @"zh-Hans", @"zh-Hant" ]) {
         NSDictionary<NSString *, NSString *> *strings = [self stringsForLanguage:language];
         NSMutableArray<NSString *> *titles = [NSMutableArray array];
         for (NSString *key in @[ @"AIModelEditor.FetchModels", @"AIModelEditor.RefreshModels", @"AIModelEditor.FetchingProgress" ]) {

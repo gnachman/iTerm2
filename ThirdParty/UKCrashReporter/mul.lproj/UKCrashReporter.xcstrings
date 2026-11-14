@@ -185,6 +185,12 @@
             "value" : "Mô tả"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "说明"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -381,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nhật ký sự cố"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "崩溃日志"
           }
         },
         "zh-Hans" : {
@@ -581,6 +593,12 @@
             "value" : "Trình báo cáo sự cố"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "崩溃报告程序"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -777,6 +795,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Có vẻ như {APPNAME} đã gặp sự cố trong lần sử dụng gần nhất. Bạn có muốn gửi nhật ký sự cố cho các nhà phát triển không?\n\nNhật ký sự cố của Apple không được gửi cho các nhà phát triển khác, vì vậy đây là cách duy nhất để các nhà phát triển {APPNAME} biết và khắc phục sự cố này."
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "{APPNAME}上次使用时似乎发生了崩溃。要向开发者发送崩溃日志吗？\n\nApple的崩溃日志不会发送给其他开发者，因此这是{APPNAME}开发者了解并修复此崩溃的唯一途径。"
           }
         },
         "zh-Hans" : {
@@ -977,6 +1001,12 @@
             "value" : "Bạn có thể xóa bất kỳ thông tin nào bạn không muốn gửi đi, nhưng điều này sẽ khiến việc phát hiện lỗi khó hơn. Theo mặc định, nhật ký sự cố cùng với mẫu Mac bạn đang dùng và các cài đặt của bạn sẽ được gửi đi."
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你可以删除任何不想发送的信息，但这会让查找错误变得更困难。默认情况下，会发送崩溃日志、你所用的Mac机型以及你的设置。"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1173,6 +1203,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gửi"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发送"
           }
         },
         "zh-Hans" : {
@@ -1373,6 +1409,12 @@
             "value" : "Nhắc tôi sau"
           }
         },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "稍后提醒我"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1569,6 +1611,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bỏ"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放弃"
           }
         },
         "zh-Hans" : {

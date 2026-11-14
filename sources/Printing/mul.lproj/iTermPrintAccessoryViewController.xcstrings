@@ -185,6 +185,12 @@
             "value": "Đen trắng"
           }
         },
+        "yue-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "黑白"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
