@@ -65,6 +65,12 @@
             "value": "Include timestamps"
           }
         },
+        "en-PH": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Include timestamps"
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
@@ -312,6 +318,12 @@
           }
         },
         "en-IN": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Format:"
+          }
+        },
+        "en-PH": {
           "stringUnit": {
             "state": "translated",
             "value": "File Format:"

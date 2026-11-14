@@ -65,6 +65,12 @@
             "value" : "HEADER CELL"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HEADER CELL"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -312,6 +318,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find Globally"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Find Globally"
@@ -569,6 +581,12 @@
             "value" : "Substring — Case Sensitive"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substring — Case Sensitive"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -816,6 +834,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substring — Automatic"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Substring — Automatic"
@@ -1073,6 +1097,12 @@
             "value" : "Regex — Case Insensitive"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex — Case Insensitive"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1320,6 +1350,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Find"
@@ -1577,6 +1613,12 @@
             "value" : "Regex — Case Sensitive"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex — Case Sensitive"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1824,6 +1866,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substring — Case Insensitive"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Substring — Case Insensitive"

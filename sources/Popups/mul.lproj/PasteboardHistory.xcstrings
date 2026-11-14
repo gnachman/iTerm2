@@ -65,6 +65,12 @@
             "value" : "Time"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -312,6 +318,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Value"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Value"

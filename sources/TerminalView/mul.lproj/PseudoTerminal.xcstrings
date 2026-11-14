@@ -65,6 +65,12 @@
             "value" : "Silently ignore errors from this command"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Silently ignore errors from this command"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -312,6 +318,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coprocess command to run:"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Coprocess command to run:"
@@ -569,6 +581,12 @@
             "value" : "OK"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -821,6 +839,12 @@
             "value" : "Cancel"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1068,6 +1092,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter Command"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enter Command"

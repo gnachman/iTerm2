@@ -65,6 +65,12 @@
             "value": "Check"
           }
         },
+        "en-PH": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check"
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",

@@ -65,6 +65,12 @@
             "value" : "Erase Search History"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erase Search History"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -312,6 +318,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Case-Sensitive Substring"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Case-Sensitive Substring"
@@ -569,6 +581,12 @@
             "value" : "Case-Insensitive Substring"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Case-Insensitive Substring"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -816,6 +834,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Search"
@@ -1073,6 +1097,12 @@
             "value" : "Case-Sensitive Regex"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Case-Sensitive Regex"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1325,6 +1355,12 @@
             "value" : "Smart Case Substring"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smart Case Substring"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1572,6 +1608,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Case-Insensitive Regex"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Case-Insensitive Regex"

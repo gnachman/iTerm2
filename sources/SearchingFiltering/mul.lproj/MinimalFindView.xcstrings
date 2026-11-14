@@ -65,6 +65,12 @@
             "value" : "Filter"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -312,6 +318,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Case-Insensitive Substring"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Case-Insensitive Substring"
@@ -569,6 +581,12 @@
             "value" : "Smart Case Substring"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smart Case Substring"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -816,6 +834,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Case-Sensitive Substring"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Case-Sensitive Substring"
@@ -1073,6 +1097,12 @@
             "value" : "Case-Insensitive Regex"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Case-Insensitive Regex"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1320,6 +1350,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erase Search History"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Erase Search History"
@@ -1577,6 +1613,12 @@
             "value" : "Searching only selected command"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Searching only selected command"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1824,6 +1866,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Case-Insensitive Regex"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Case-Insensitive Regex"
@@ -2081,6 +2129,12 @@
             "value" : "Filter"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2328,6 +2382,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Case-Sensitive Substring"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Case-Sensitive Substring"
@@ -2585,6 +2645,12 @@
             "value" : "Case-Sensitive Regex"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Case-Sensitive Regex"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2832,6 +2898,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smart Case Substring"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Smart Case Substring"
@@ -3089,6 +3161,12 @@
             "value" : "Case-Insensitive Substring"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Case-Insensitive Substring"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3336,6 +3414,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Case-Sensitive Regex"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Case-Sensitive Regex"

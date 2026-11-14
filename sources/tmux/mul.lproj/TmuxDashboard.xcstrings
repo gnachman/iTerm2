@@ -65,6 +65,12 @@
             "value" : "tmux Dashboard"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux Dashboard"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -312,6 +318,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Session"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Session"
@@ -569,6 +581,12 @@
             "value" : "Attach"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attach"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -816,6 +834,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search Windows"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Search Windows"
@@ -1073,6 +1097,12 @@
             "value" : "Window"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Window"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1320,6 +1350,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open in Windows"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Open in Windows"
@@ -1577,6 +1613,12 @@
             "value" : "Hide"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1824,6 +1866,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open in Windows"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Open in Windows"
@@ -2081,6 +2129,12 @@
             "value" : "Open in Tabs"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open in Tabs"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2328,6 +2382,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detach"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Detach"
@@ -2585,6 +2645,12 @@
             "value" : "Open dashboard when attaching if there are hidden windows"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open dashboard when attaching if there are hidden windows"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2832,6 +2898,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don’t open windows when attaching if there are at least this many windows:"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Don’t open windows when attaching if there are at least this many windows:"

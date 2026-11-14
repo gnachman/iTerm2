@@ -24,10 +24,10 @@ New Features:
   Cantonese, British English, Australian English,
   Canadian English, Indian English, Canadian
   French, Latin American Spanish, Traditional
-  Chinese (Hong Kong), and European Portuguese.
-  They are used when one of them is your preferred
-  language in System Settings > General >
-  Language & Region.
+  Chinese (Hong Kong), European Portuguese, and
+  Philippine English. They are used when one of
+  them is your preferred language in System
+  Settings > General > Language & Region.
 - iTerm2 > Suppressed Alerts lists most alerts
   and announcements at the top of a session that
   are no longer shown because you chose “Never,”

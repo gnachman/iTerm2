@@ -65,6 +65,12 @@
             "value": "iTerm2"
           }
         },
+        "en-PH": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iTerm2"
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
@@ -312,6 +318,12 @@
           }
         },
         "en-IN": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "By George Nachman and Contributors"
+          }
+        },
+        "en-PH": {
           "stringUnit": {
             "state": "translated",
             "value": "By George Nachman and Contributors"

@@ -65,6 +65,12 @@
             "value": "Tab size in spaces:"
           }
         },
+        "en-PH": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tab size in spaces:"
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
@@ -312,6 +318,12 @@
           }
         },
         "en-IN": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "en-PH": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

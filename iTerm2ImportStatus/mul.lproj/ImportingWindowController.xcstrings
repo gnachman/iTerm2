@@ -221,6 +221,12 @@
             "value" : "Status"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
+        },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
@@ -473,6 +479,12 @@
             "value" : "Importing…"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importing…"
+          }
+        },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
@@ -720,6 +732,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importing settings and data…"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Importing settings and data…"

@@ -65,6 +65,12 @@
             "value" : "Split current pane XXXally"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Split current pane XXXally"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -317,6 +323,12 @@
             "value" : "Cancel"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -564,6 +576,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Split"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Split"

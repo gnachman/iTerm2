@@ -65,6 +65,12 @@
             "value" : "Set Up Artificial Intelligence"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set Up Artificial Intelligence"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -312,6 +318,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You may be charged by your AI provider for each token sent or received."
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "You may be charged by your AI provider for each token sent or received."
@@ -569,6 +581,12 @@
             "value" : "Enter API Key Here"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter API Key Here"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -821,6 +839,12 @@
             "value" : "Cancel"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1068,6 +1092,12 @@
           }
         },
         "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"

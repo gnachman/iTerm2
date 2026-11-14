@@ -65,6 +65,12 @@
             "value": "Black and white"
           }
         },
+        "en-PH": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Black and white"
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",

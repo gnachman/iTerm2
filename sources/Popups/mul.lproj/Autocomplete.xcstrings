@@ -65,6 +65,12 @@
             "value" : "Autocomplete"
           }
         },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autocomplete"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
