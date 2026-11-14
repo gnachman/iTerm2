@@ -83,6 +83,12 @@
             "value" : "Tous"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -306,6 +312,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En cours"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "En cours"
@@ -539,6 +551,12 @@
             "value" : "Démarré"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Démarré"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -762,6 +780,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Défiler vers le bas à chaque mise à jour"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Défiler vers le bas à chaque mise à jour"
@@ -995,6 +1019,12 @@
             "value" : "Appels"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appels"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1218,6 +1248,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Console de scripts"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Console de scripts"
@@ -1451,6 +1487,12 @@
             "value" : "Filtrer"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrer"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1679,6 +1721,12 @@
             "value" : "Nom"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nom"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1902,6 +1950,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Journaux"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Journaux"

@@ -83,6 +83,12 @@
             "value" : "Patientez ! Installation d’un nouvel environnement Python…"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Patientez! Installation d’un nouvel environnement Python…"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",

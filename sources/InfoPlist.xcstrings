@@ -96,6 +96,12 @@
             "value" : "iTerm2"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -319,6 +325,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser AppleScript."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Une application dans iTerm2 souhaite utiliser AppleScript."
@@ -552,6 +564,12 @@
             "value" : "Une application dans iTerm2 souhaite utiliser le Bluetooth."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser le Bluetooth."
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -775,6 +793,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser les données de Calendrier."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Une application dans iTerm2 souhaite utiliser les données de Calendrier."
@@ -1008,6 +1032,12 @@
             "value" : "Une application dans iTerm2 souhaite utiliser la caméra."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser la caméra."
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1231,6 +1261,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser vos contacts."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Une application dans iTerm2 souhaite utiliser vos contacts."
@@ -1464,6 +1500,12 @@
             "value" : "GPL v2"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPL v2"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1687,6 +1729,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite accéder au réseau local."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Une application dans iTerm2 souhaite accéder au réseau local."
@@ -1920,6 +1968,12 @@
             "value" : "Une application dans iTerm2 souhaite utiliser vos informations de localisation, même en arrière-plan."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser vos informations de localisation, même en arrière-plan."
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2143,6 +2197,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser vos informations de localisation."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Une application dans iTerm2 souhaite utiliser vos informations de localisation."
@@ -2376,6 +2436,12 @@
             "value" : "Une application dans iTerm2 souhaite utiliser vos informations de localisation lorsqu’elle est active."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser vos informations de localisation lorsqu’elle est active."
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2599,6 +2665,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser votre microphone."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Une application dans iTerm2 souhaite utiliser votre microphone."
@@ -2832,6 +2904,12 @@
             "value" : "Une application dans iTerm2 souhaite utiliser la photothèque."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser la photothèque."
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3055,6 +3133,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser vos rappels."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Une application dans iTerm2 souhaite utiliser vos rappels."
@@ -3288,6 +3372,12 @@
             "value" : "Une application dans iTerm2 souhaite utiliser la reconnaissance vocale."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une application dans iTerm2 souhaite utiliser la reconnaissance vocale."
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3511,6 +3601,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’opération effectuée par un programme dans iTerm2 nécessite des autorisations élevées."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "L’opération effectuée par un programme dans iTerm2 nécessite des autorisations élevées."

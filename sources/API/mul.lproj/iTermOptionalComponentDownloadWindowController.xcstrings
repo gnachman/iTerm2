@@ -83,6 +83,12 @@
             "value": "Programme d’installation de l’environnement d’exécution Python"
           }
         },
+        "fr-CA": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Programme d’installation de l’environnement d’exécution Python"
+          }
+        },
         "hi": {
           "stringUnit": {
             "state": "translated",
@@ -311,6 +317,12 @@
             "value": "Annuler"
           }
         },
+        "fr-CA": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annuler"
+          }
+        },
         "hi": {
           "stringUnit": {
             "state": "translated",
@@ -534,6 +546,12 @@
           }
         },
         "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Téléchargement des composants facultatifs…"
+          }
+        },
+        "fr-CA": {
           "stringUnit": {
             "state": "translated",
             "value": "Téléchargement des composants facultatifs…"

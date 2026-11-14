@@ -83,6 +83,12 @@
             "value" : "Ouverture rapide"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouverture rapide"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -311,6 +317,12 @@
             "value" : "Détail"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détail"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -534,6 +546,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher des sessions, profils ou dispositions"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechercher des sessions, profils ou dispositions"

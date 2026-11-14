@@ -83,6 +83,12 @@
             "value" : "Complétion automatique"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Complétion automatique"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",

@@ -83,6 +83,12 @@
             "value" : "Description"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Description"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -306,6 +312,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Journal de plantage"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Journal de plantage"
@@ -539,6 +551,12 @@
             "value" : "Rapport de plantage"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rapport de plantage"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -767,6 +785,12 @@
             "value" : "Il semble que {APPNAME} ait planté lors de sa dernière utilisation. Voulez-vous envoyer un journal de plantage aux développeurs ?\n\nLes journaux de plantage d’Apple ne sont pas transmis aux autres développeurs. C’est donc le seul moyen pour les développeurs de {APPNAME} de découvrir et de corriger ce plantage."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il semble que {APPNAME} ait planté lors de sa dernière utilisation. Voulez-vous envoyer un journal de plantage aux développeurs?\n\nLes journaux de plantage d’Apple ne sont pas transmis aux autres développeurs. C’est donc le seul moyen pour les développeurs de {APPNAME} de découvrir et de corriger ce plantage."
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -990,6 +1014,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous pouvez supprimer toute information que vous ne souhaitez pas transmettre, mais cela rendra la détection du bug plus difficile. Par défaut, le journal de plantage, le modèle de Mac que vous utilisez et vos réglages sont transmis."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vous pouvez supprimer toute information que vous ne souhaitez pas transmettre, mais cela rendra la détection du bug plus difficile. Par défaut, le journal de plantage, le modèle de Mac que vous utilisez et vos réglages sont transmis."
@@ -1223,6 +1253,12 @@
             "value" : "Envoyer"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoyer"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1451,6 +1487,12 @@
             "value" : "Me le rappeler plus tard"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Me le rappeler plus tard"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1674,6 +1716,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorer"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ignorer"

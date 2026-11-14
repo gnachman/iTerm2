@@ -83,6 +83,12 @@
             "value" : "mm:ss"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mm:ss"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -306,6 +312,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx lignes, xxx octets."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx lignes, xxx octets."
@@ -539,6 +551,12 @@
             "value" : "Coller"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coller"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -767,6 +785,12 @@
             "value" : "Annuler"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -990,6 +1014,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durée minimale :"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Durée minimale :"

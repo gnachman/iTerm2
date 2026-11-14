@@ -83,6 +83,12 @@
             "value" : "Complétion IA activée : tout le texte est envoyé à l’IA"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Complétion IA activée : tout le texte est envoyé à l’IA"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -306,6 +312,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Décrit comment utiliser le compositeur."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Décrit comment utiliser le compositeur."
@@ -539,6 +551,12 @@
             "value" : "Appuyez sur ⇧↩ pour envoyer."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez sur ⇧↩ pour envoyer."
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -762,6 +780,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IA"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "IA"

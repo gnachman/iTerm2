@@ -12,7 +12,7 @@ import AppKit
 import XCTest
 
 final class MenuBarIconSettingsLocalizationTests: XCTestCase {
-    private let languages = ["ca", "cs", "da", "de", "el", "en-AU", "en-CA", "en-GB", "en-IN", "es", "fi", "fr", "hi", "hr", "hu", "id", "it", "ja", "ms", "nb", "nl", "pl", "pt-BR", "ro", "ru", "sk", "sl", "sv", "th", "tr", "uk", "vi", "yue-Hans", "zh-Hans", "zh-Hant"]
+    private let languages = ["ca", "cs", "da", "de", "el", "en-AU", "en-CA", "en-GB", "en-IN", "es", "fi", "fr", "fr-CA", "hi", "hr", "hu", "id", "it", "ja", "ms", "nb", "nl", "pl", "pt-BR", "ro", "ru", "sk", "sl", "sv", "th", "tr", "uk", "vi", "yue-Hans", "zh-Hans", "zh-Hant"]
 
     private func strings(_ relativePath: String) throws -> [String: Any] {
         let root = URL(fileURLWithPath: #filePath)

@@ -83,6 +83,12 @@
             "value" : "Nécessite l’intégration du shell pour détecter l’invite"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nécessite l’intégration de la coque logicielle pour détecter l’invite"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -306,6 +312,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activé quand l’app en cours d’exécution a envoyé un code d’échappement activant le « mode de collage délimité ». La chaîne collée sera « délimitée » par des codes d’échappement indiquant que le texte provient d’une opération de collage."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Activé quand l’app en cours d’exécution a envoyé un code d’échappement activant le « mode de collage délimité ». La chaîne collée sera « délimitée » par des codes d’échappement indiquant que le texte provient d’une opération de collage."
@@ -539,6 +551,12 @@
             "value" : "Échapper les tabulations avec ^V"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échapper les tabulations avec ^V"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -762,6 +780,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coller avec les tabulations"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Coller avec les tabulations"
@@ -995,6 +1019,12 @@
             "value" : "Remplacer"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplacer"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1218,6 +1248,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Convertir la ponctuation Unicode"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Convertir la ponctuation Unicode"
@@ -1451,6 +1487,12 @@
             "value" : "Respecte les échappements de vim"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respecte les échappements de vim"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1674,6 +1716,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 ms"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 ms"
@@ -1907,6 +1955,12 @@
             "value" : "Convertit diverses formes de guillemets et de tirets en leurs équivalents ASCII."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Convertit diverses formes de guillemets et de tirets en leurs équivalents ASCII."
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2130,6 +2184,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabulations en espaces :"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tabulations en espaces :"
@@ -2363,6 +2423,12 @@
             "value" : "Les retours à la ligne DOS et UNIX ne sont généralement pas utilisés en entrée. CR est la norme."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les retours à la ligne DOS et UNIX ne sont généralement pas utilisés en entrée. CR est la norme."
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2591,6 +2657,12 @@
             "value" : "Échapper pour le shell avec \\"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échapper pour la coque logicielle avec \\"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2814,6 +2886,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taille du bloc :"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Taille du bloc :"
@@ -3047,6 +3125,12 @@
             "value" : "Substitution"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substitution"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3270,6 +3354,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les retours à la ligne DOS et UNIX ne sont généralement pas utilisés en entrée. CR est la norme."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Les retours à la ligne DOS et UNIX ne sont généralement pas utilisés en entrée. CR est la norme."
@@ -3503,6 +3593,12 @@
             "value" : "La tabulation, le saut de ligne, le saut de page et le retour chariot sont les seuls codes de contrôle « sûrs »."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La tabulation, le saut de ligne, le saut de page et le retour chariot sont les seuls codes de contrôle « sûrs »."
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3726,6 +3822,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transformations"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Transformations"
@@ -3959,6 +4061,12 @@
             "value" : "Syntaxe d’expression régulière ICU"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syntaxe d’expression régulière ICU"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4182,6 +4290,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100 ms"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "100 ms"
@@ -4415,6 +4529,12 @@
             "value" : "1 ko"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 ko"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4638,6 +4758,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "par"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "par"
@@ -4871,6 +4997,12 @@
             "value" : "Vitesse"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vitesse"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5094,6 +5226,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrer les codes de contrôle"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Filtrer les codes de contrôle"
@@ -5327,6 +5465,12 @@
             "value" : "Attendre l’invite du shell avant de coller chaque ligne"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attendre l’invite de la coque logicielle avant de coller chaque ligne"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5550,6 +5694,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Délai entre blocs :"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Délai entre blocs :"
@@ -5783,6 +5933,12 @@
             "value" : "1 octet"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 octet"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6006,6 +6162,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expression régulière"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Expression régulière"
@@ -6239,6 +6401,12 @@
             "value" : "1,2 ko"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1,2 ko"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6462,6 +6630,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "150 ms"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "150 ms"
@@ -6695,6 +6869,12 @@
             "value" : "100"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6918,6 +7098,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Radio"
@@ -7151,6 +7337,12 @@
             "value" : "Supprimer les retours à la ligne"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer les retours à la ligne"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7374,6 +7566,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Groupes de capture : $1, $2, etc."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Groupes de capture : $1, $2, etc."
@@ -7607,6 +7805,12 @@
             "value" : "Mode de collage délimité"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode de collage délimité"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7830,6 +8034,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 Mo"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 Mo"
@@ -8063,6 +8273,12 @@
             "value" : "Convertir CRLF et LF en CR"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Convertir CRLF et LF en CR"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8291,6 +8507,12 @@
             "value" : "Encoder en Base 64"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encoder en Base 64"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8514,6 +8736,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10 s"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "10 s"

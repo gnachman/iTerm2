@@ -83,6 +83,12 @@
             "value": "Taille de la tabulation en espaces :"
           }
         },
+        "fr-CA": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taille de la tabulation en espaces :"
+          }
+        },
         "hi": {
           "stringUnit": {
             "state": "translated",
@@ -306,6 +312,12 @@
           }
         },
         "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "fr-CA": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

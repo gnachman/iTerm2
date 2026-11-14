@@ -83,6 +83,12 @@
             "value" : "Modifier"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -311,6 +317,12 @@
             "value" : "Titre"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titre"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -534,6 +546,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texte"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Texte"

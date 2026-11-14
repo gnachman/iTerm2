@@ -83,6 +83,12 @@
             "value" : "Réutiliser le répertoire de la session précédente"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réutiliser le répertoire de la session précédente"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -306,6 +312,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répertoire de départ"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Répertoire de départ"
@@ -539,6 +551,12 @@
             "value" : "Répertoire de travail des nouveaux onglets"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répertoire de travail des nouveaux onglets"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -762,6 +780,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Radio"
@@ -995,6 +1019,12 @@
             "value" : "Répertoire de travail des nouvelles fenêtres"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répertoire de travail des nouvelles fenêtres"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1218,6 +1248,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réutiliser le répertoire de la session précédente"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Réutiliser le répertoire de la session précédente"
@@ -1451,6 +1487,12 @@
             "value" : "Radio"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1674,6 +1716,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réutiliser le répertoire de la session précédente"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Réutiliser le répertoire de la session précédente"
@@ -1907,6 +1955,12 @@
             "value" : "Répertoire :"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répertoire :"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2130,6 +2184,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répertoire de travail des nouveaux volets scindés"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Répertoire de travail des nouveaux volets scindés"
@@ -2363,6 +2423,12 @@
             "value" : "Réglages avancés du répertoire de travail"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages avancés du répertoire de travail"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2586,6 +2652,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répertoire :"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Répertoire :"
@@ -2819,6 +2891,12 @@
             "value" : "Répertoire :"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répertoire :"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3042,6 +3120,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Radio"
@@ -3275,6 +3359,12 @@
             "value" : "Répertoire de départ"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répertoire de départ"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3503,6 +3593,12 @@
             "value" : "Répertoire de départ"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répertoire de départ"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3726,6 +3822,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"

@@ -83,6 +83,12 @@
             "value": "Inclure les horodatages"
           }
         },
+        "fr-CA": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inclure les horodatages"
+          }
+        },
         "hi": {
           "stringUnit": {
             "state": "translated",
@@ -306,6 +312,12 @@
           }
         },
         "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Format de fichier :"
+          }
+        },
+        "fr-CA": {
           "stringUnit": {
             "state": "translated",
             "value": "Format de fichier :"

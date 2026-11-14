@@ -83,6 +83,12 @@
             "value": "Libellé"
           }
         },
+        "fr-CA": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Libellé"
+          }
+        },
         "hi": {
           "stringUnit": {
             "state": "translated",

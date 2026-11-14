@@ -83,6 +83,12 @@
             "value": "Cocher"
           }
         },
+        "fr-CA": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cocher"
+          }
+        },
         "hi": {
           "stringUnit": {
             "state": "translated",

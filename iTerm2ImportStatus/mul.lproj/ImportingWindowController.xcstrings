@@ -221,6 +221,12 @@
             "value" : "Status"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "État"
+          }
+        },
         "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -449,6 +455,12 @@
             "value" : "Importing…"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importation…"
+          }
+        },
         "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -675,6 +687,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Importing settings and data…"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importation des réglages et des données…"
           }
         },
         "yue-Hans" : {

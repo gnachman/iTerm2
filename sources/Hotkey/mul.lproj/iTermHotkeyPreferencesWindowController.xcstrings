@@ -83,6 +83,12 @@
             "value" : "⌥ Option"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Option"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -306,6 +312,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Épingler la fenêtre à raccourci global (reste ouverte quand le clavier perd le focus)"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Épingler la fenêtre à raccourci global (reste ouverte quand le clavier perd le focus)"
@@ -539,6 +551,12 @@
             "value" : "Raccourci global :"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raccourci global :"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -762,6 +780,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remarque : la fenêtre n’est rouverte que si elle a été fermée parce qu’une autre app est devenue active."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remarque : la fenêtre n’est rouverte que si elle a été fermée parce qu’une autre app est devenue active."
@@ -995,6 +1019,12 @@
             "value" : "Raccourcis globaux supplémentaires"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raccourcis globaux supplémentaires"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1218,6 +1248,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quand vous appuyez sur le raccourci global associé à ce profil, une fenêtre dédiée s’affiche ou se masque. Chaque profil doté d’un raccourci global contrôle sa propre fenêtre à raccourci global."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quand vous appuyez sur le raccourci global associé à ce profil, une fenêtre dédiée s’affiche ou se masque. Chaque profil doté d’un raccourci global contrôle sa propre fenêtre à raccourci global."
@@ -1451,6 +1487,12 @@
             "value" : "Ne rien faire de particulier"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne rien faire de particulier"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1674,6 +1716,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -1907,6 +1955,12 @@
             "value" : "Afficher cette fenêtre à raccourci global"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher cette fenêtre à raccourci global"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2130,6 +2184,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages de la fenêtre à raccourci global"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Réglages de la fenêtre à raccourci global"
@@ -2363,6 +2423,12 @@
             "value" : "⌘ Commande"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Commande"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2586,6 +2652,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Un autre profil utilise ce raccourci"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️ Un autre profil utilise ce raccourci"
@@ -2819,6 +2891,12 @@
             "value" : "⇧ Maj"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Maj"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3042,6 +3120,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touche de double appui :"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touche de double appui :"
@@ -3275,6 +3359,12 @@
             "value" : "Rouvrir automatiquement à la réactivation de l’app"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rouvrir automatiquement à la réactivation de l’app"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3498,6 +3588,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Un autre profil utilise ce double appui"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️ Un autre profil utilise ce double appui"
@@ -3731,6 +3827,12 @@
             "value" : "Afficher cette fenêtre à raccourci global si aucune autre fenêtre n’est ouverte"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher cette fenêtre à raccourci global si aucune autre fenêtre n’est ouverte"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3954,6 +4056,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les fenêtres flottantes recouvrent les autres fenêtres, le Dock et les fenêtres en plein écran des autres apps (si l’espace de la fenêtre à raccourci global est réglé sur Tous les espaces)."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Les fenêtres flottantes recouvrent les autres fenêtres, le Dock et les fenêtres en plein écran des autres apps (si l’espace de la fenêtre à raccourci global est réglé sur Tous les espaces)."
@@ -4187,6 +4295,12 @@
             "value" : "Annuler"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4410,6 +4524,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au clic sur l’icône du Dock :"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Au clic sur l’icône du Dock :"
@@ -4643,6 +4763,12 @@
             "value" : "Animer l’affichage et le masquage"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animer l’affichage et le masquage"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4866,6 +4992,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -5099,6 +5231,12 @@
             "value" : "OK"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5322,6 +5460,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fenêtre flottante"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fenêtre flottante"
@@ -5555,6 +5699,12 @@
             "value" : "^ Contrôle"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Contrôle"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5778,6 +5928,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raccourcis globaux supplémentaires…"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Raccourcis globaux supplémentaires…"

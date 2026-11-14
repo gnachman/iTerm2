@@ -83,6 +83,12 @@
             "value": "Collage en cours…"
           }
         },
+        "fr-CA": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collage en cours…"
+          }
+        },
         "hi": {
           "stringUnit": {
             "state": "translated",
@@ -306,6 +312,12 @@
           }
         },
         "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annuler"
+          }
+        },
+        "fr-CA": {
           "stringUnit": {
             "state": "translated",
             "value": "Annuler"
