@@ -59,6 +59,12 @@
             "value" : "Item 2"
           }
         },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 2"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -276,6 +282,12 @@
           }
         },
         "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This script must be upgraded to a “full environment“ to add dependencies. Doing so makes a copy of the Python runtime but will not use any additional disk space."
+          }
+        },
+        "en-IN" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "This script must be upgraded to a “full environment“ to add dependencies. Doing so makes a copy of the Python runtime but will not use any additional disk space."
@@ -503,6 +515,12 @@
             "value" : "Python Version:"
           }
         },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Python Version:"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -720,6 +738,12 @@
           }
         },
         "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove"
+          }
+        },
+        "en-IN" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remove"
@@ -947,6 +971,12 @@
             "value" : "Item 3"
           }
         },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 3"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1164,6 +1194,12 @@
           }
         },
         "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upgrade"
+          }
+        },
+        "en-IN" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Upgrade"
@@ -1391,6 +1427,12 @@
             "value" : "Script:"
           }
         },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Script:"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1608,6 +1650,12 @@
           }
         },
         "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Script Dependency Editor"
+          }
+        },
+        "en-IN" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Script Dependency Editor"
@@ -1835,6 +1883,12 @@
             "value" : "Item 1"
           }
         },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 1"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2052,6 +2106,12 @@
           }
         },
         "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Package Name"
+          }
+        },
+        "en-IN" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Package Name"
@@ -2279,6 +2339,12 @@
             "value" : "Item 2"
           }
         },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 2"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2496,6 +2562,12 @@
           }
         },
         "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 3"
+          }
+        },
+        "en-IN" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 3"
@@ -2723,6 +2795,12 @@
             "value" : "Check for Update"
           }
         },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check for Update"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2940,6 +3018,12 @@
           }
         },
         "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installed Version"
+          }
+        },
+        "en-IN" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Installed Version"
@@ -3167,6 +3251,12 @@
             "value" : "Item 1"
           }
         },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 1"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3389,6 +3479,12 @@
             "value" : "OK"
           }
         },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3606,6 +3702,12 @@
           }
         },
         "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add"
+          }
+        },
+        "en-IN" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Add"

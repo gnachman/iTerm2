@@ -59,6 +59,12 @@
             "value" : "Description"
           }
         },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Description"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -276,6 +282,12 @@
           }
         },
         "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crash Log"
+          }
+        },
+        "en-IN" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Crash Log"
@@ -503,6 +515,12 @@
             "value" : "Crash Reporter"
           }
         },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crash Reporter"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -720,6 +738,12 @@
           }
         },
         "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It appears that {APPNAME} crashed the last time it was used. Do you want to send a crash log to the developers?\n\nCrash logs from Apple are not sent to other developers, so this is the only way the developers of {APPNAME} can find out about and fix this crash."
+          }
+        },
+        "en-IN" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "It appears that {APPNAME} crashed the last time it was used. Do you want to send a crash log to the developers?\n\nCrash logs from Apple are not sent to other developers, so this is the only way the developers of {APPNAME} can find out about and fix this crash."
@@ -947,6 +971,12 @@
             "value" : "You can delete any information you do not want transmitted, but this will make it more difficult to detect the bug. By default, the crash log as well as what Mac you are using and your settings are transmitted."
           }
         },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can delete any information you do not want transmitted, but this will make it more difficult to detect the bug. By default, the crash log as well as what Mac you are using and your settings are transmitted."
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1164,6 +1194,12 @@
           }
         },
         "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send"
+          }
+        },
+        "en-IN" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Send"
@@ -1391,6 +1427,12 @@
             "value" : "Remind Me Later"
           }
         },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remind Me Later"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1608,6 +1650,12 @@
           }
         },
         "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discard"
+          }
+        },
+        "en-IN" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Discard"

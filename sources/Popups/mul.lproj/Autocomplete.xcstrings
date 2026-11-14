@@ -59,6 +59,12 @@
             "value" : "Autocomplete"
           }
         },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autocomplete"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",

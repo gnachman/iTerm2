@@ -59,6 +59,12 @@
             "value" : "Use interpolated strings for parameters"
           }
         },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use interpolated strings for parameters"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -276,6 +282,12 @@
           }
         },
         "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy to Profile"
+          }
+        },
+        "en-IN" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copy to Profile"
@@ -503,6 +515,12 @@
             "value" : "Close"
           }
         },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -720,6 +738,12 @@
           }
         },
         "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Triggers"
+          }
+        },
+        "en-IN" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Triggers"
@@ -947,6 +971,12 @@
             "value" : "Regular Expression"
           }
         },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regular Expression"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1164,6 +1194,12 @@
           }
         },
         "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select one trigger to view or edit"
+          }
+        },
+        "en-IN" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Select one trigger to view or edit"

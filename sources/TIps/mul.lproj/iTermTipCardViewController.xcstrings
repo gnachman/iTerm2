@@ -59,6 +59,12 @@
             "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
           }
         },
+        "en-IN": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
@@ -276,6 +282,12 @@
           }
         },
         "en-GB": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shell Integration"
+          }
+        },
+        "en-IN": {
           "stringUnit": {
             "state": "translated",
             "value": "Shell Integration"

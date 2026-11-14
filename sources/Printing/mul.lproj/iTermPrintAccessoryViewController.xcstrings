@@ -59,6 +59,12 @@
             "value": "Black and white"
           }
         },
+        "en-IN": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Black and white"
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",

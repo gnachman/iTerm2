@@ -17326,6 +17326,7 @@
 				"en-GB",
 				"en-AU",
 				"en-CA",
+				"en-IN",
 				en,
 				Base,
 			);

@@ -59,6 +59,12 @@
             "value" : "OK"
           }
         },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -276,6 +282,12 @@
           }
         },
         "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disable GPU renderer in low power mode"
+          }
+        },
+        "en-IN" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Disable GPU renderer in low power mode"
@@ -503,6 +515,12 @@
             "value" : "Prefer integrated to discrete GPU"
           }
         },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prefer integrated to discrete GPU"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -725,6 +743,12 @@
             "value" : "Disable GPU renderer when disconnected from power"
           }
         },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disable GPU renderer when disconnected from power"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -942,6 +966,12 @@
           }
         },
         "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        },
+        "en-IN" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancel"

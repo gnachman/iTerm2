@@ -59,6 +59,12 @@
             "value": "Python Runtime Installer"
           }
         },
+        "en-IN": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Python Runtime Installer"
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
@@ -281,6 +287,12 @@
             "value": "Cancel"
           }
         },
+        "en-IN": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
@@ -498,6 +510,12 @@
           }
         },
         "en-GB": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Downloading optional components…"
+          }
+        },
+        "en-IN": {
           "stringUnit": {
             "state": "translated",
             "value": "Downloading optional components…"

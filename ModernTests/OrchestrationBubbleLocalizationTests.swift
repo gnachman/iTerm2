@@ -27,7 +27,7 @@ final class OrchestrationBubbleLocalizationTests: XCTestCase {
                     "OrchestrationTool.TimerLaterWithNote"]
         for key in keys {
             let localizations = (strings[key] as? [String: Any])?["localizations"] as? [String: Any]
-            for language in ["ca", "cs", "da", "de", "el", "en-AU", "en-CA", "en-GB", "es", "fi", "fr", "hi", "hr", "hu", "id", "it", "ja", "ms", "nb", "nl", "pl", "pt-BR", "ro", "ru", "sk", "sl", "sv", "th", "tr", "uk", "vi", "yue-Hans", "zh-Hans", "zh-Hant"] {
+            for language in ["ca", "cs", "da", "de", "el", "en-AU", "en-CA", "en-GB", "en-IN", "es", "fi", "fr", "hi", "hr", "hu", "id", "it", "ja", "ms", "nb", "nl", "pl", "pt-BR", "ro", "ru", "sk", "sl", "sv", "th", "tr", "uk", "vi", "yue-Hans", "zh-Hans", "zh-Hant"] {
                 let unit = (localizations?[language] as? [String: Any])?["stringUnit"] as? [String: Any]
                 XCTAssertEqual(unit?["state"] as? String, "translated", "\(key) \(language)")
             }
@@ -47,7 +47,7 @@ final class OrchestrationBubbleLocalizationTests: XCTestCase {
         XCTAssertGreaterThan(keys.count, 25)
         for key in keys {
             let localizations = (strings[key] as? [String: Any])?["localizations"] as? [String: Any]
-            for language in ["ca", "cs", "da", "de", "el", "en-AU", "en-CA", "en-GB", "es", "fi", "fr", "hi", "hr", "hu", "id", "it", "ja", "ms", "nb", "nl", "pl", "pt-BR", "ro", "ru", "sk", "sl", "sv", "th", "tr", "uk", "vi", "yue-Hans", "zh-Hans", "zh-Hant"] {
+            for language in ["ca", "cs", "da", "de", "el", "en-AU", "en-CA", "en-GB", "en-IN", "es", "fi", "fr", "hi", "hr", "hu", "id", "it", "ja", "ms", "nb", "nl", "pl", "pt-BR", "ro", "ru", "sk", "sl", "sv", "th", "tr", "uk", "vi", "yue-Hans", "zh-Hans", "zh-Hant"] {
                 let unit = (localizations?[language] as? [String: Any])?["stringUnit"] as? [String: Any]
                 XCTAssertEqual(unit?["state"] as? String, "translated", "\(key) \(language)")
             }

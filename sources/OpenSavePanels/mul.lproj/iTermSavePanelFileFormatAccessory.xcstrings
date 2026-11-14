@@ -59,6 +59,12 @@
             "value": "Include timestamps"
           }
         },
+        "en-IN": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Include timestamps"
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
@@ -276,6 +282,12 @@
           }
         },
         "en-GB": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Format:"
+          }
+        },
+        "en-IN": {
           "stringUnit": {
             "state": "translated",
             "value": "File Format:"
