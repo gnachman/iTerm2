@@ -65,6 +65,12 @@
             "value" : "A parancs hibáinak csendes mellőzése"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abaikan kesalahan dari perintah ini secara senyap"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -233,6 +239,12 @@
             "value" : "Futtatandó társfolyamat-parancs:"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perintah koproses yang dijalankan:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -396,6 +408,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -569,6 +587,12 @@
             "value" : "Mégsem"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batalkan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +759,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parancs megadása"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masukkan Perintah"
           }
         },
         "it" : {

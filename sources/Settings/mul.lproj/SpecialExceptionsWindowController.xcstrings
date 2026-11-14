@@ -65,6 +65,12 @@
             "value" : "Nerd Font-csomag telepítése…"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instal Paket Nerd Font…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -233,6 +239,12 @@
             "value" : "Különleges kivétel szerkesztése"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Pengecualian Khusus"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -396,6 +408,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -569,6 +587,12 @@
             "value" : "A különleges kivételek felülbírálják a betűtípusokat adott Unicode-tartományokhoz vagy írásrendszerekhez."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pengecualian Khusus menimpa font untuk rentang atau skrip Unicode tertentu."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -732,6 +756,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -905,6 +935,12 @@
             "value" : "OK"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1071,6 +1107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Betűtípus:"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dari Font:"
           }
         },
         "it" : {
@@ -1241,6 +1283,12 @@
             "value" : "Az ettől kezdődő karakterekhez:"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Untuk karakter mulai dari"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1407,6 +1455,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Előbeállítás hozzáadása…"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tambah Preset…"
           }
         },
         "it" : {
@@ -1577,6 +1631,12 @@
             "value" : "Mégsem"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batalkan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1743,6 +1803,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "eddig:"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hingga"
           }
         },
         "it" : {
@@ -1913,6 +1979,12 @@
             "value" : "Különleges kivételek kezelése"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kelola Pengecualian Khusus"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2076,6 +2148,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -2249,6 +2327,12 @@
             "value" : "Kódpontok használata"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gunakan Titik Kode"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2417,6 +2501,12 @@
             "value" : "Mégsem"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batalkan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2580,6 +2670,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"

@@ -65,6 +65,12 @@
             "value" : "Szűrés"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Részkarakterlánc, kis- és nagybetűk megkülönböztetése nélkül"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substring Abaikan Huruf Besar/Kecil"
           }
         },
         "it" : {
@@ -401,6 +413,12 @@
             "value" : "Részkarakterlánc, intelligens kis- és nagybetűkezelés"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substring Huruf Besar/Kecil Pintar"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -567,6 +585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Részkarakterlánc, kis- és nagybetűk megkülönböztetésével"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substring Peka Huruf Besar/Kecil"
           }
         },
         "it" : {
@@ -737,6 +761,12 @@
             "value" : "Reguláris kifejezés, kis- és nagybetűk megkülönböztetése nélkül"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex Abaikan Huruf Besar/Kecil"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -903,6 +933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Keresési előzmények törlése"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hapus Riwayat Pencarian"
           }
         },
         "it" : {
@@ -1073,6 +1109,12 @@
             "value" : "Keresés csak a kijelölt parancsban"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hanya mencari di perintah yang dipilih"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1239,6 +1281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reguláris kifejezés, kis- és nagybetűk megkülönböztetése nélkül"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex Abaikan Huruf Besar/Kecil"
           }
         },
         "it" : {
@@ -1409,6 +1457,12 @@
             "value" : "Szűrés"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1575,6 +1629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Részkarakterlánc, kis- és nagybetűk megkülönböztetésével"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substring Peka Huruf Besar/Kecil"
           }
         },
         "it" : {
@@ -1745,6 +1805,12 @@
             "value" : "Reguláris kifejezés, kis- és nagybetűk megkülönböztetésével"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex Peka Huruf Besar/Kecil"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1911,6 +1977,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Részkarakterlánc, intelligens kis- és nagybetűkezelés"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substring Huruf Besar/Kecil Pintar"
           }
         },
         "it" : {
@@ -2081,6 +2153,12 @@
             "value" : "Részkarakterlánc, kis- és nagybetűk megkülönböztetése nélkül"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substring Abaikan Huruf Besar/Kecil"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2247,6 +2325,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reguláris kifejezés, kis- és nagybetűk megkülönböztetésével"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex Peka Huruf Besar/Kecil"
           }
         },
         "it" : {

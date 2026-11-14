@@ -65,6 +65,12 @@
             "value" : "Gyors megnyitás"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka Dengan Cepat"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -233,6 +239,12 @@
             "value" : "Részletek"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detail"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -399,6 +411,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Munkamenetek, profilok vagy elrendezések keresése"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cari sesi, profil, atau susunan"
           }
         },
         "it" : {

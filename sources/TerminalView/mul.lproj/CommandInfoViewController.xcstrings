@@ -65,6 +65,12 @@
             "value" : "/directory"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Könyvtár másolása"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salin direktori"
           }
         },
         "it" : {
@@ -401,6 +413,12 @@
             "value" : "12 bájt"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 bita"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -567,6 +585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "A parancs kimenetének kijelölése"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih output perintah"
           }
         },
         "it" : {
@@ -737,6 +761,12 @@
             "value" : "1 ó 35 p"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1j 35m"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -903,6 +933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kimenet:"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Output:"
           }
         },
         "it" : {
@@ -1073,6 +1109,12 @@
             "value" : "Másolva"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disalin"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1239,6 +1281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parancs másolása a vágólapra"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salin perintah ke papan klip"
           }
         },
         "it" : {
@@ -1409,6 +1457,12 @@
             "value" : "Indítva: %@"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dimulai pada %@"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1575,6 +1629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parancs megnyitása a Parancsszerkesztőben"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka perintah di Penyusun Perintah"
           }
         },
         "it" : {
@@ -1745,6 +1805,12 @@
             "value" : "Húzható mappa"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folder yang Dapat Diseret"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1911,6 +1977,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "parancs"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "perintah"
           }
         },
         "it" : {
@@ -2081,6 +2153,12 @@
             "value" : "Parancs írása a terminálba"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tulis perintah ke terminal"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2247,6 +2325,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Könyvtár:"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Direktori:"
           }
         },
         "it" : {
@@ -2417,6 +2501,12 @@
             "value" : "Visszatérési kód:"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kode Pengembalian:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2583,6 +2673,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Könyvtár írása a terminálba"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tulis direktori ke terminal"
           }
         },
         "it" : {
@@ -2753,6 +2849,12 @@
             "value" : "Futási idő:"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waktu Berjalan:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2919,6 +3021,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "A parancs kimenetének másolása"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salin output perintah"
           }
         },
         "it" : {
@@ -3089,6 +3197,12 @@
             "value" : "Parancs megosztása…"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bagikan perintah…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3257,6 +3371,12 @@
             "value" : "Parancs:"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perintah:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3420,6 +3540,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "127"
@@ -3591,6 +3717,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Képernyőn kívüli parancs megjelenítésének letiltása"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nonaktifkan tampilan perintah di luar layar"
           }
         },
         "it" : {

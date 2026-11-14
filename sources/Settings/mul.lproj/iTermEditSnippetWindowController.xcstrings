@@ -65,6 +65,12 @@
             "value" : "Érték:"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nilai:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kódrészlet szerkesztése"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Cuplikan"
           }
         },
         "it" : {
@@ -401,6 +413,12 @@
             "value" : "Cím:"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Judul:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -567,6 +585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escape nélküli szó szerinti szöveg"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teks Literal Tanpa Escape"
           }
         },
         "it" : {
@@ -737,6 +761,12 @@
             "value" : "A címkenevekben a / jellel mappákat hozhat létre a Szerkesztés > Kódrészletek menüben"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gunakan / pada nama label untuk membuat folder di menu Edit > Cuplikan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -905,6 +935,12 @@
             "value" : "Mégsem"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batalkan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1068,6 +1104,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -1241,6 +1283,12 @@
             "value" : "Visszamenőleges kompatibilitású escape-elés"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escape Kompatibilitas Mundur"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1409,6 +1457,12 @@
             "value" : "Címkék:"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Label:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1575,6 +1629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "C-stílusú visszaper jeles escape-elés"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escape Garis Miring Terbalik Gaya C"
           }
         },
         "it" : {

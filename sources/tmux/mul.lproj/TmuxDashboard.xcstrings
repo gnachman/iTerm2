@@ -65,6 +65,12 @@
             "value" : "tmux-irányítópult"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dasbor tmux"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Munkamenet"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesi"
           }
         },
         "it" : {
@@ -401,6 +413,12 @@
             "value" : "Csatlakozás"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sambungkan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -567,6 +585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ablakok keresése"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cari Jendela"
           }
         },
         "it" : {
@@ -737,6 +761,12 @@
             "value" : "Ablak"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jendela"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -903,6 +933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Megnyitás ablakokban"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka di Jendela"
           }
         },
         "it" : {
@@ -1073,6 +1109,12 @@
             "value" : "Elrejtés"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sembunyikan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1239,6 +1281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Megnyitás ablakokban"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka di Jendela"
           }
         },
         "it" : {
@@ -1409,6 +1457,12 @@
             "value" : "Megnyitás lapokon"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka di Tab"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1575,6 +1629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Leválasztás"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Putuskan"
           }
         },
         "it" : {
@@ -1745,6 +1805,12 @@
             "value" : "Az irányítópult megnyitása csatlakozáskor, ha vannak rejtett ablakok"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka dasbor saat menyambungkan jika ada jendela tersembunyi"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1911,6 +1977,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ne nyisson ablakokat csatlakozáskor, ha legalább ennyi ablak van:"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jangan buka jendela saat menyambungkan jika ada setidaknya sejumlah jendela ini:"
           }
         },
         "it" : {

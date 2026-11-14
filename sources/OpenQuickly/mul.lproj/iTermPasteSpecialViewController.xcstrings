@@ -65,6 +65,12 @@
             "value" : "A prompt észleléséhez Shellintegráció szükséges"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Memerlukan Integrasi Shell untuk deteksi prompt"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ez akkor engedélyezett, ha a futó alkalmazás escape-kódot küldött a „zárójeles beillesztési mód” bekapcsolásához. A beillesztett karakterláncot escape-kódok „zárójelezik”, jelezve, hogy a bennük lévő szöveg beillesztésből származik."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ini aktif saat app yang berjalan telah mengirim kode escape untuk menyalakan “mode tempel berkurung”. String yang ditempel akan “dikurung” oleh kode escape yang menandakan bahwa teks di dalamnya berasal dari operasi tempel."
           }
         },
         "it" : {
@@ -401,6 +413,12 @@
             "value" : "Tabulátorok escape-elése ^V-vel"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escape tab dengan ^V"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -567,6 +585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Beillesztés tabulátorokkal"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempel dengan tab"
           }
         },
         "it" : {
@@ -737,6 +761,12 @@
             "value" : "Csere"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ganti"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -903,6 +933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unicode írásjelek átalakítása"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konversi tanda baca Unicode"
           }
         },
         "it" : {
@@ -1073,6 +1109,12 @@
             "value" : "Kezeli a vim escape-szekvenciákat"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menghormati urutan escape vim"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1236,6 +1278,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 ms"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 ms"
@@ -1409,6 +1457,12 @@
             "value" : "Az idézőjelek és gondolatjelek különféle formáit az ASCII-megfelelőjükre alakítja."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mengonversi berbagai bentuk tanda kutip dan tanda hubung menjadi padanan ASCII-nya."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1575,6 +1629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tabulátorok szóközökre cserélése:"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konversi tab menjadi spasi:"
           }
         },
         "it" : {
@@ -1745,6 +1805,12 @@
             "value" : "A DOS és a UNIX újsor általában nem használatos bemenetként. A CR a szabványos."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Baris baru DOS maupun UNIX umumnya tidak digunakan sebagai input. CR adalah standarnya."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1911,6 +1977,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "A shell karaktereinek escape-elése \\ jellel"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escape karakter shell dengan \\"
           }
         },
         "it" : {
@@ -2081,6 +2153,12 @@
             "value" : "Darabméret:"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ukuran Potongan:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2247,6 +2325,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Csere"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pengganti"
           }
         },
         "it" : {
@@ -2417,6 +2501,12 @@
             "value" : "A DOS és a UNIX újsor általában nem használatos bemenetként. A CR a szabványos."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Baris baru DOS maupun UNIX umumnya tidak digunakan sebagai input. CR adalah standarnya."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2583,6 +2673,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "A tabulátor, a soremelés, a lapdobás és a kocsivissza az egyetlen „biztonságos” vezérlőkód."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab, line feed, form feed, dan carriage return adalah satu-satunya kode kontrol yang “aman”."
           }
         },
         "it" : {
@@ -2753,6 +2849,12 @@
             "value" : "Átalakítások"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transformasi"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2921,6 +3023,12 @@
             "value" : "ICU reguláris kifejezések szintaxisa"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sintaks ekspresi reguler ICU"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3084,6 +3192,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100 ms"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "100 ms"
@@ -3257,6 +3371,12 @@
             "value" : "1 kB"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 kB"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3423,6 +3543,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "erre:"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dengan"
           }
         },
         "it" : {
@@ -3593,6 +3719,12 @@
             "value" : "Sebesség"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kecepatan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3759,6 +3891,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nem biztonságos vezérlőkódok eltávolítása"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hapus kode kontrol yang tidak aman"
           }
         },
         "it" : {
@@ -3929,6 +4067,12 @@
             "value" : "Várakozás a shell promptra minden sor beillesztése előtt"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tunggu prompt shell sebelum menempel setiap baris"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4095,6 +4239,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Késleltetés:"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeda:"
           }
         },
         "it" : {
@@ -4265,6 +4415,12 @@
             "value" : "1 bájt"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 bita"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4433,6 +4589,12 @@
             "value" : "Reguláris kifejezés"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4596,6 +4758,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1,2 kB"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1,2 kB"
@@ -4769,6 +4937,12 @@
             "value" : "150 ms"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "150 ms"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4932,6 +5106,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "100"
@@ -5105,6 +5285,12 @@
             "value" : "Választógomb"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5271,6 +5457,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Újsorok eltávolítása"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hapus baris baru"
           }
         },
         "it" : {
@@ -5441,6 +5633,12 @@
             "value" : "Csoportok: $1, $2 stb."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grup: $1, $2, dst."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5609,6 +5807,12 @@
             "value" : "Zárójeles beillesztési mód"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode tempel berkurung"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5772,6 +5976,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 MB"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 MB"
@@ -5945,6 +6155,12 @@
             "value" : "CRLF és LF átalakítása CR-re"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konversi CRLF dan LF menjadi CR"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6113,6 +6329,12 @@
             "value" : "Base 64 kódolás"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enkode Base-64"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6279,6 +6501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "10 mp"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10 dtk"
           }
         },
         "it" : {

@@ -65,6 +65,12 @@
             "value": "Időbélyegek belefoglalása"
           }
         },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sertakan stempel waktu"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -231,6 +237,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fájlformátum:"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Format File:"
           }
         },
         "it": {

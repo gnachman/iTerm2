@@ -65,6 +65,12 @@
             "value" : "AI-kiegészítés engedélyezve: az összes szöveg az AI-nak kerül elküldésre"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pelengkapan AI diaktifkan: semua teks dikirim ke AI"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Leírja, hogyan kell használni a parancsszerkesztőt."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menjelaskan cara menggunakan Penyusun Perintah."
           }
         },
         "it" : {
@@ -401,6 +413,12 @@
             "value" : "Küldéshez nyomja meg a ⇧↩ billentyűkombinációt."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tekan ⇧↩ untuk mengirim."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -564,6 +582,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI"

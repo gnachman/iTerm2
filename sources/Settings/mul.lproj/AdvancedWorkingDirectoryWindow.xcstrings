@@ -65,6 +65,12 @@
             "value" : "Az előző munkamenet könyvtárának újrahasználata"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gunakan ulang direktori sesi sebelumnya"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Saját könyvtár"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Direktori utama"
           }
         },
         "it" : {
@@ -401,6 +413,12 @@
             "value" : "Munkakönyvtár új lapokhoz"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Direktori Kerja untuk Tab Baru"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -567,6 +585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Választógomb"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
           }
         },
         "it" : {
@@ -737,6 +761,12 @@
             "value" : "Munkakönyvtár új ablakokhoz"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Direktori Kerja untuk Jendela Baru"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -903,6 +933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Az előző munkamenet könyvtárának újrahasználata"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gunakan ulang direktori sesi sebelumnya"
           }
         },
         "it" : {
@@ -1073,6 +1109,12 @@
             "value" : "Választógomb"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1239,6 +1281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Az előző munkamenet könyvtárának újrahasználata"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gunakan ulang direktori sesi sebelumnya"
           }
         },
         "it" : {
@@ -1409,6 +1457,12 @@
             "value" : "Könyvtár:"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Direktori:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1575,6 +1629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Munkakönyvtár új osztott panelekhez"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Direktori Kerja untuk Panel Terbagi Baru"
           }
         },
         "it" : {
@@ -1745,6 +1805,12 @@
             "value" : "Munkakönyvtár haladó beállításai"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pengaturan Lanjutan Direktori Kerja"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1911,6 +1977,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Könyvtár:"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Direktori:"
           }
         },
         "it" : {
@@ -2081,6 +2153,12 @@
             "value" : "Könyvtár:"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Direktori:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2247,6 +2325,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Választógomb"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
           }
         },
         "it" : {
@@ -2417,6 +2501,12 @@
             "value" : "Saját könyvtár"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Direktori utama"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2585,6 +2675,12 @@
             "value" : "Saját könyvtár"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Direktori utama"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2748,6 +2844,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"

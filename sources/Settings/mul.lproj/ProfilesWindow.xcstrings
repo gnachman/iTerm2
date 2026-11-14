@@ -65,6 +65,12 @@
             "value" : "Profilok"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Profilok szerkesztése…"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Profil…"
           }
         },
         "it" : {
@@ -401,6 +413,12 @@
             "value" : "Új lap"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab Baru"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -567,6 +585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Új ablak"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jendela Baru"
           }
         },
         "it" : {
@@ -737,6 +761,12 @@
             "value" : "Ablak bezárása profil megnyitása után."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutup jendela ini setelah membuka profil."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -903,6 +933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Új lapok új ablakban"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab Baru di Jendela Baru"
           }
         },
         "it" : {
@@ -1157,6 +1193,12 @@
             "value" : "Címk. ›"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Label >"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1401,6 +1443,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Új lebegő panel"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panel Mengambang Baru"
           }
         },
         "ro" : {

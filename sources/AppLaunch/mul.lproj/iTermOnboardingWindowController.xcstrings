@@ -65,6 +65,12 @@
             "value" : "Használja az iTerm2-t akkor is, amikor nincs a Mac közelében. Vezérelheti AI-csevegéssel, megtekintheti a munkamenetek tartalmát, és push értesítéseket kaphat. A végpontok közötti titkosítás biztonságban tartja az adatait. <a href=\"iterm2whatsnew:companion\">Próbálja ki most!</a>"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gunakan iTerm2 saat Anda jauh dari Mac. Anda dapat mengendalikannya melalui obrolan AI, melihat konten sesi, dan menerima notifikasi push. Enkripsi ujung ke ujung menjaga data Anda tetap aman. <a href=\"iterm2whatsnew:companion\">Coba sekarang!</a>"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -228,6 +234,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -401,6 +413,12 @@
             "value" : "Az AI-csevegés új módja, a Vezénylés, az AI-ra bízza az irányítást. Ablakokat hozhat létre, megvárhatja a feladatok befejezését (interaktív alkalmazásokban is), az új automatikus biztonsági ellenőrző pedig megkíméli Önt attól, hogy szinte minden engedélykérésre válaszolnia kelljen. <a href=\"iterm2whatsnew:orchestration\">Próbálja ki most!</a>"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode obrolan AI baru, Orkestrasi, membiarkan AI menjalankan semuanya untuk Anda. AI dapat membuat jendela, menunggu tugas selesai (bahkan di app interaktif), dan pemeriksa keamanan otomatis yang baru membebaskan Anda dari keharusan menanggapi hampir semua permintaan izin. <a href=\"iterm2whatsnew:orchestration\">Coba sekarang!</a>"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -564,6 +582,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -737,6 +761,12 @@
             "value" : "Az új Képernyőképek funkció leegyszerűsíti a terminál tartalmáról készített PNG létrehozását. Támogatja a kitakarásokat és a kiemeléseket. Az aktiváláshoz használja a <a href=\"iterm2whatsnew:screenshot\">Munkamenet > Képernyőkép készítése</a> parancsot."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fitur Tangkapan Layar yang baru menyederhanakan pembuatan PNG dari konten terminal Anda. Fitur ini mendukung penyamaran dan sorotan. Gunakan <a href=\"iterm2whatsnew:screenshot\">Sesi > Buat Tangkapan Layar</a> untuk mengaktifkannya."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -905,6 +935,12 @@
             "value" : "A 3.7-es verzió újdonságai"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yang Baru di Versi 3.7"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1068,6 +1104,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ">"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : ">"
@@ -1241,6 +1283,12 @@
             "value" : "●"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1407,6 +1455,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code-integráció"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integrasi Claude Code"
           }
         },
         "it" : {
@@ -1577,6 +1631,12 @@
             "value" : "A lapok nagy számának kezeléséhez a lapokat mostantól összecsukható csoportokba vonhatja. A lapsor ezentúl görget a túlcsorduló lapok menüjének megjelenítése helyett."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Untuk membantu mengelola banyak tab, Anda kini dapat menggabungkan tab ke dalam grup yang dapat diciutkan. Bar tab kini juga dapat digulir, bukan menampilkan menu luapan."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1740,6 +1800,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -1913,6 +1979,12 @@
             "value" : "A Claude Code-integráció több kapcsolódó munkamenetet (például a kódáttekintést és a diffek olvasását) egy testreszabható felületen rendez. A Claude állapotát is megjeleníti, így könnyen megtalálhatja azokat a példányokat, amelyek az Ön figyelmére várnak. <a href=\"iterm2whatsnew:claudecode\">Próbálja ki most!</a>"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integrasi Claude Code mengatur beberapa sesi terkait (seperti tinjauan kode dan pembacaan diff) ke dalam UI yang dapat disesuaikan. Integrasi ini juga menampilkan status Claude sehingga Anda dapat dengan mudah menemukan instans yang menunggu perhatian Anda. <a href=\"iterm2whatsnew:claudecode\">Coba sekarang!</a>"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2081,6 +2153,12 @@
             "value" : "iPhone-os társalkalmazás"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App iPhone Pendamping"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2244,6 +2322,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -2417,6 +2501,12 @@
             "value" : "Vezénylés"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orkestrasi"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2583,6 +2673,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lapcsoportok"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grup Tab"
           }
         },
         "it" : {
@@ -2753,6 +2849,12 @@
             "value" : "Képernyőképek"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tangkapan Layar"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2916,6 +3018,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "<"

@@ -65,6 +65,12 @@
             "value" : "2. elem"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 2"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ezt a szkriptet a „Teljes környezet” módra kell frissíteni a függőségek hozzáadásához. Ez lemásolja a Python futtatókörnyezetet, de nem használ további lemezterületet."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrip ini harus ditingkatkan ke “lingkungan penuh” untuk menambahkan dependensi. Ini membuat salinan runtime Python tetapi tidak akan menggunakan ruang disk tambahan."
           }
         },
         "it" : {
@@ -401,6 +413,12 @@
             "value" : "Python-verzió:"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versi Python:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -567,6 +585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eltávolítás"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hapus"
           }
         },
         "it" : {
@@ -737,6 +761,12 @@
             "value" : "3. elem"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 3"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -903,6 +933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Frissítés"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tingkatkan"
           }
         },
         "it" : {
@@ -1073,6 +1109,12 @@
             "value" : "Szkript:"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrip:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1239,6 +1281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Szkriptfüggőség-szerkesztő"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editor Dependensi Skrip"
           }
         },
         "it" : {
@@ -1409,6 +1457,12 @@
             "value" : "1. elem"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 1"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1575,6 +1629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Csomag neve"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nama Paket"
           }
         },
         "it" : {
@@ -1745,6 +1805,12 @@
             "value" : "2. elem"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 2"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1911,6 +1977,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "3. elem"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 3"
           }
         },
         "it" : {
@@ -2081,6 +2153,12 @@
             "value" : "Frissítés keresése"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Periksa Pembaruan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2247,6 +2325,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Telepített verzió"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versi Terinstal"
           }
         },
         "it" : {
@@ -2417,6 +2501,12 @@
             "value" : "1. elem"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Item 1"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2580,6 +2670,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -2751,6 +2847,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hozzáadás"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tambah"
           }
         },
         "it" : {

@@ -65,6 +65,12 @@
             "value" : "Automatikus kiegészítés"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lengkapi Otomatis"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",

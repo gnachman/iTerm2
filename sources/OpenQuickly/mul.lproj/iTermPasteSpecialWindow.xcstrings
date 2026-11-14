@@ -65,6 +65,12 @@
             "value" : "mm:ss"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mm:ss"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx sor, xxx bájt."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx baris, xxx bita."
           }
         },
         "it" : {
@@ -401,6 +413,12 @@
             "value" : "Beillesztés"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempel"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -569,6 +587,12 @@
             "value" : "Mégsem"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batalkan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +759,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Minimális időtartam:"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durasi minimum:"
           }
         },
         "it" : {

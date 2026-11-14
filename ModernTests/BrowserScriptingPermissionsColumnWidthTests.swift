@@ -36,7 +36,7 @@ final class BrowserScriptingPermissionsColumnWidthTests: XCTestCase {
     }
 
     func testColumnsFitEveryLanguage() {
-        for language in ["cs", "da", "de", "el", "es", "fi", "fr", "hr", "hu", "it", "ja", "nb", "nl", "pl", "pt-BR", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "vi", "zh-Hans", "zh-Hant"] {
+        for language in ["cs", "da", "de", "el", "es", "fi", "fr", "hr", "hu", "id", "it", "ja", "nb", "nl", "pl", "pt-BR", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "vi", "zh-Hans", "zh-Hant"] {
             let table = strings(language)
             guard let permissionTitle = table["BrowserScriptingPermissions.PermissionColumn"],
                   let allowedTitle = table["BrowserScriptingPermissions.AllowedColumn"],

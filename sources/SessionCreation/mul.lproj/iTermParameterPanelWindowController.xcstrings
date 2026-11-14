@@ -65,6 +65,12 @@
             "value": "Adja meg a következő értékét: "
           }
         },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masukkan nilai untuk "
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -228,6 +234,12 @@
           }
         },
         "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        },
+        "id": {
           "stringUnit": {
             "state": "translated",
             "value": "OK"
@@ -401,6 +413,12 @@
             "value": "Munkamenet-paraméter"
           }
         },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parameter Sesi"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -569,6 +587,12 @@
             "value": "Mégsem"
           }
         },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Batalkan"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -735,6 +759,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Név"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nama"
           }
         },
         "it": {

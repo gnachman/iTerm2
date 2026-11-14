@@ -65,6 +65,12 @@
             "value" : "OK"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPU-renderelő letiltása alacsony fogyasztású módban"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nonaktifkan perender GPU dalam mode daya rendah"
           }
         },
         "it" : {
@@ -401,6 +413,12 @@
             "value" : "Az integrált GPU előnyben részesítése a különállóval szemben"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utamakan GPU terintegrasi daripada GPU terpisah"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -569,6 +587,12 @@
             "value" : "GPU-renderelő letiltása, ha a gép nincs hálózatra csatlakoztatva"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nonaktifkan perender GPU saat daya dicabut"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +759,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mégsem"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batalkan"
           }
         },
         "it" : {

@@ -65,6 +65,12 @@
             "value" : "Előbeállítások…"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preset…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touch Bar-elem hozzáadása"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tambah Item Touch Bar"
           }
         },
         "it" : {
@@ -401,6 +413,12 @@
             "value" : "Művelet"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tindakan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -567,6 +585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touch Bar-kerülőmegoldások"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mitigasi Touch Bar"
           }
         },
         "it" : {
@@ -737,6 +761,12 @@
             "value" : "Az esc billentyű vizuális jelzője"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indikator visual tombol esc"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -903,6 +933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Billentyűkombináció"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kombinasi Tombol"
           }
         },
         "it" : {
@@ -1073,6 +1109,12 @@
             "value" : "Haptikus visszajelzés az esc lenyomásakor"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Umpan balik haptik saat menekan esc"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1236,6 +1278,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -1407,6 +1455,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Billentyűkattanás az esc billentyűhöz"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bunyi klik untuk tombol esc"
           }
         },
         "it" : {

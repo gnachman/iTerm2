@@ -65,6 +65,12 @@
             "value" : "Egy pillanat! Új Python-környezet telepítése…"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mohon tunggu! Menginstal lingkungan Python baru…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",

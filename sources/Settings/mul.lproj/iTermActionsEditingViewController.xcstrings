@@ -65,6 +65,12 @@
             "value" : "Művelet"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tindakan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -273,6 +279,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cím"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Judul"
           }
         },
         "it" : {

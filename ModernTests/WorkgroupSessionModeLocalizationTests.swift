@@ -11,7 +11,7 @@ import XCTest
 @testable import iTerm2SharedARC
 
 final class WorkgroupSessionModeLocalizationTests: XCTestCase {
-    private let languages = ["cs", "da", "de", "el", "es", "fi", "fr", "hr", "hu", "it", "ja", "nb", "nl", "pl", "pt-BR", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "vi", "zh-Hans", "zh-Hant"]
+    private let languages = ["cs", "da", "de", "el", "es", "fi", "fr", "hr", "hu", "id", "it", "ja", "nb", "nl", "pl", "pt-BR", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "vi", "zh-Hans", "zh-Hant"]
 
     private func strings(_ relativePath: String) throws -> [String: Any] {
         let root = URL(fileURLWithPath: #filePath)

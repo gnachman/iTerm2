@@ -65,6 +65,12 @@
             "value" : "Letölti a legújabb verziót. A curl | bash parancsot futtatja"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mengunduh versi terbaru. Menjalankan curl | bash"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -233,6 +239,12 @@
             "value" : "Folytatás"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lanjutkan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -396,6 +408,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -569,6 +587,12 @@
             "value" : "Mégsem"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batalkan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +759,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1. A használt shell felderítése.\n2. Szkriptfájlok hozzáadása a saját könyvtárhoz.\n3. Segédszkriptek telepítése.\n4. A shell indítószkriptjeinek módosítása."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. Mengetahui shell yang Anda gunakan.\n2. Menambahkan file skrip di direktori utama Anda.\n3. Memasang skrip utilitas.\n4. Memodifikasi skrip startup shell Anda."
           }
         },
         "it" : {
@@ -905,6 +935,12 @@
             "value" : "Vissza"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kembali"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1071,6 +1107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "A segédprogramok között vannak szkriptek fájlok letöltéséhez, képek soron belüli megjelenítéséhez és egyebekhez. "
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilitas mencakup skrip untuk mengunduh file, menampilkan gambar sebaris, dan lainnya. "
           }
         },
         "it" : {
@@ -1241,6 +1283,12 @@
             "value" : "Vissza"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kembali"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1407,6 +1455,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Folytatás"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lanjutkan"
           }
         },
         "it" : {
@@ -1577,6 +1631,12 @@
             "value" : "Mégsem"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batalkan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1743,6 +1803,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kihagyás"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lewati"
           }
         },
         "it" : {
@@ -1913,6 +1979,12 @@
             "value" : "Mégsem"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batalkan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2079,6 +2151,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parancs előnézete"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pratinjau Perintah"
           }
         },
         "it" : {
@@ -2249,6 +2327,12 @@
             "value" : "Internet nélküli telepítés"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalasi Tanpa Internet"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2415,6 +2499,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Telepítő letöltése és futtatása"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unduh dan Jalankan Penginstal"
           }
         },
         "it" : {
@@ -2585,6 +2675,12 @@
             "value" : "Az iTerm2 segédprogramjainak telepítése is"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instal juga Utilitas iTerm2"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2751,6 +2847,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vezetett manuális telepítés. Letöltés nem szükséges."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalasi manual terpandu. Tidak perlu mengunduh."
           }
         },
         "it" : {
@@ -2921,6 +3023,12 @@
             "value" : "Parancs előnézete"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pratinjau Perintah"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3089,6 +3197,12 @@
             "value" : "Folytatás"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lanjutkan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3252,6 +3366,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🎉"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🎉"
@@ -3425,6 +3545,12 @@
             "value" : "Parancs előnézete"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pratinjau Perintah"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3591,6 +3717,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vissza"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kembali"
           }
         },
         "it" : {
@@ -3761,6 +3893,12 @@
             "value" : "Hogyan szeretné telepíteni a shellintegrációt?\n\nA folyamat során a shell indítószkriptjei módosulnak. A telepítő a parancsokat Ön helyett beírja a terminálablakba."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bagaimana Anda ingin memasang Integrasi Shell?\n\nDalam proses ini, skrip startup shell Anda akan dimodifikasi. Penginstal ini akan memasukkan perintah di jendela terminal untuk Anda."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3927,6 +4065,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parancs előnézete"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pratinjau Perintah"
           }
         },
         "it" : {
@@ -4097,6 +4241,12 @@
             "value" : "A telepítés befejeződött!"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalasi selesai!"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4263,6 +4413,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ez a következő parancsot fogja futtatni:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ini akan menjalankan perintah berikut:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
         "it" : {
@@ -4433,6 +4589,12 @@
             "value" : "Hozzon létre egy új lapot a kipróbáláshoz.\n\nA legjobb eredményhez telepítse a shellintegrációt minden hosztra, amelyre ssh-val bejelentkezik."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buat tab baru untuk mencobanya.\n\nUntuk hasil terbaik, pasang integrasi shell di semua host yang Anda akses melalui ssh."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4599,6 +4761,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "A shellintegráció olyan szkriptekből áll, amelyek segítik a shellt az iTerm2-vel való kommunikációban, hogy az nyomon követhesse a futtatott parancsokat, az aktuális könyvtárat és egyéb állapotot. "
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integrasi Shell terdiri dari skrip yang membantu shell Anda berkomunikasi dengan iTerm2 sehingga dapat melacak perintah yang Anda jalankan, direktori Anda saat ini, dan status lainnya. "
           }
         },
         "it" : {
@@ -4769,6 +4937,12 @@
             "value" : "Shellintegráció telepítése"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instal Integrasi Shell"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4935,6 +5109,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mégsem"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batalkan"
           }
         },
         "it" : {

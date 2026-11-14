@@ -65,6 +65,12 @@
             "value" : "Útvonal"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jalur"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Megjelenítés"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tampilkan"
           }
         },
         "it" : {
@@ -401,6 +413,12 @@
             "value" : "Szignatúra"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tanda Tangan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -567,6 +585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Szkriptelési vizsgáló"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inspektur Skrip"
           }
         },
         "it" : {
@@ -737,6 +761,12 @@
             "value" : "Munkamenetek, lapok és ablakok"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesi, Tab, dan Jendela"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -903,6 +933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Változók"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variabel"
           }
         },
         "it" : {
@@ -1073,6 +1109,12 @@
             "value" : "Szerep"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peran"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1239,6 +1281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Útvonal másolása"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salin Jalur"
           }
         },
         "it" : {
@@ -1409,6 +1457,12 @@
             "value" : "Regisztrált függvények"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fungsi Terdaftar"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1575,6 +1629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Érték"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nilai"
           }
         },
         "it" : {
@@ -1745,6 +1805,12 @@
             "value" : "Azonosító másolása"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salin ID"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1913,6 +1979,12 @@
             "value" : "Objektum neve (azonosító)"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nama Objek (ID)"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2076,6 +2148,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⨁"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⨁"
@@ -2249,6 +2327,12 @@
             "value" : "Szkript"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrip"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2415,6 +2499,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Érték másolása"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salin Nilai"
           }
         },
         "it" : {

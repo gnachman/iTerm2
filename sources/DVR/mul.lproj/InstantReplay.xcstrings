@@ -65,6 +65,12 @@
             "value": "Exportálás…"
           }
         },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ekspor…"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -231,6 +237,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Most"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sekarang"
           }
         },
         "it": {
@@ -401,6 +413,12 @@
             "value": "Azonnali visszajátszás vezérlése"
           }
         },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kontrol Putar Ulang Instan"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -567,6 +585,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mégsem"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Batalkan"
           }
         },
         "it": {
@@ -737,6 +761,12 @@
             "value": "Élő nézet"
           }
         },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tampilan Langsung"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -903,6 +933,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Idő"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waktu"
           }
         },
         "it": {

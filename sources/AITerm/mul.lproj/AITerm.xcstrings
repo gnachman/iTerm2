@@ -65,6 +65,12 @@
             "value" : "Mesterséges intelligencia beállítása"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siapkan Kecerdasan Buatan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Az AI-szolgáltató díjat számíthat fel minden elküldött vagy fogadott tokenért."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Penyedia AI Anda mungkin menagih biaya untuk setiap token yang dikirim atau diterima."
           }
         },
         "it" : {
@@ -401,6 +413,12 @@
             "value" : "Adja meg ide az API-kulcsot"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masukkan Kunci API di Sini"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -569,6 +587,12 @@
             "value" : "Mégsem"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batalkan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -732,6 +756,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"

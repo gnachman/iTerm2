@@ -65,6 +65,12 @@
             "value" : "Leírás"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deskripsi"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Összeomlási napló"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log Crash"
           }
         },
         "it" : {
@@ -401,6 +413,12 @@
             "value" : "Összeomlás-jelentő"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pelapor Crash"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -567,6 +585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Úgy tűnik, a(z) {APPNAME} összeomlott a legutóbbi használatkor. Szeretne összeomlási naplót küldeni a fejlesztőknek?\n\nAz Apple összeomlási naplóit nem kapják meg más fejlesztők, ezért a(z) {APPNAME} fejlesztői csak így értesülhetnek erről az összeomlásról, és csak így tudják kijavítani."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sepertinya {APPNAME} mengalami crash saat terakhir digunakan. Apakah Anda ingin mengirim log crash ke pengembang?\n\nLog crash dari Apple tidak dikirim ke pengembang lain, jadi ini satu-satunya cara bagi pengembang {APPNAME} untuk mengetahui dan memperbaiki crash ini."
           }
         },
         "it" : {
@@ -737,6 +761,12 @@
             "value" : "Törölhet minden olyan információt, amelyet nem szeretne elküldeni, de ez megnehezíti a hiba felderítését. Alapértelmezés szerint az összeomlási napló, az Ön által használt Mac típusa és a beállításai kerülnek elküldésre."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anda dapat menghapus informasi apa pun yang tidak ingin dikirim, tetapi ini akan mempersulit pendeteksian bug. Secara default, log crash beserta Mac yang Anda gunakan dan pengaturan Anda dikirim."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -903,6 +933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Küldés"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kirim"
           }
         },
         "it" : {
@@ -1073,6 +1109,12 @@
             "value" : "Emlékeztessen később"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingatkan Saya Nanti"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1239,6 +1281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Elvetés"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buang"
           }
         },
         "it" : {

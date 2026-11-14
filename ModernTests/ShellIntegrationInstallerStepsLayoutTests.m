@@ -139,7 +139,7 @@
 }
 
 - (void)testStepsFitInEveryLanguage {
-    for (NSString *language in @[ @"cs", @"da", @"de", @"el", @"es", @"fi", @"fr", @"hr", @"hu", @"it", @"ja", @"nb", @"nl", @"pl", @"pt-BR", @"ro", @"ru", @"sk", @"sl", @"sv", @"tr", @"uk", @"vi", @"zh-Hans", @"zh-Hant" ]) {
+    for (NSString *language in @[ @"cs", @"da", @"de", @"el", @"es", @"fi", @"fr", @"hr", @"hu", @"id", @"it", @"ja", @"nb", @"nl", @"pl", @"pt-BR", @"ro", @"ru", @"sk", @"sl", @"sv", @"tr", @"uk", @"vi", @"zh-Hans", @"zh-Hant" ]) {
         for (NSArray<NSString *> *lines in [self scenariosForLanguage:language]) {
             NSViewController<ShellIntegrationStepsLayoutForTesting> *vc = [self loadViewController];
             XCTAssertTrue([vc respondsToSelector:@selector(sizeStepListToFit)], @"The steps don't grow to fit");

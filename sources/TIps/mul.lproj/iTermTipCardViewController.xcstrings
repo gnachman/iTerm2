@@ -65,6 +65,12 @@
             "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
           }
         },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -231,6 +237,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Shellintegráció"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integrasi Shell"
           }
         },
         "it": {

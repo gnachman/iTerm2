@@ -65,6 +65,12 @@
             "value" : "⌥ Option"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Option"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gyorsbillentyűs ablak kitűzése (megmarad, ha a billentyűzetfókusz elvész)"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pin jendela tombol pintas (tetap terbuka saat fokus papan ketik hilang)"
           }
         },
         "it" : {
@@ -401,6 +413,12 @@
             "value" : "Gyorsbillentyű:"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tombol pintas:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -567,6 +585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Megjegyzés: az ablak csak akkor nyílik meg újra, ha azért záródott be, mert egy másik alkalmazás vált aktívvá."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Catatan: jendela hanya dibuka kembali jika ditutup karena app lain menjadi aktif."
           }
         },
         "it" : {
@@ -737,6 +761,12 @@
             "value" : "További gyorsbillentyűk"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tombol Pintas Tambahan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -903,6 +933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "A profilhoz rendelt gyorsbillentyű lenyomásakor egy dedikált ablak jelenik meg vagy rejtőzik el. Minden gyorsbillentyűvel rendelkező profil a saját gyorsbillentyűs ablakát vezérli."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saat Anda menekan tombol pintas yang terikat ke profil ini, jendela khusus akan ditampilkan atau disembunyikan. Setiap profil dengan tombol pintas mengendalikan Jendela Tombol Pintasnya sendiri."
           }
         },
         "it" : {
@@ -1073,6 +1109,12 @@
             "value" : "Ne történjen semmi különleges"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jangan lakukan apa pun"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1236,6 +1278,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -1409,6 +1457,12 @@
             "value" : "Gyorsbillentyűs ablak megjelenítése"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tampilkan Jendela Tombol Pintas Ini"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1577,6 +1631,12 @@
             "value" : "Gyorsbillentyűs ablak beállításai"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pengaturan Jendela Tombol Pintas"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1740,6 +1800,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Command"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⌘ Command"
@@ -1913,6 +1979,12 @@
             "value" : "⚠️ Egy másik profil is ezt a billentyűparancsot használja"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Profil lain menggunakan pintasan ini"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2076,6 +2148,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Shift"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⇧ Shift"
@@ -2249,6 +2327,12 @@
             "value" : "Dupla koppintású billentyű:"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tombol ketuk dua kali:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2415,6 +2499,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Automatikus újranyitás az alkalmazás újraaktiválásakor"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka kembali otomatis saat app diaktifkan kembali"
           }
         },
         "it" : {
@@ -2585,6 +2675,12 @@
             "value" : "⚠️ Egy másik profil is ezt a dupla koppintást használja"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Profil lain menggunakan ketukan dua kali ini"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2751,6 +2847,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gyorsbillentyűs ablak megjelenítése, ha nincs más ablak megnyitva"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tampilkan Jendela Tombol Pintas ini jika tidak ada jendela lain yang terbuka"
           }
         },
         "it" : {
@@ -2921,6 +3023,12 @@
             "value" : "A lebegő ablakok átfedik a többi ablakot, a Dockot és más alkalmazások teljes képernyős ablakait (ha a gyorsbillentyűs ablak Spaces-íróasztala az összes Spaces-íróasztalra van állítva)."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jendela mengambang menimpa jendela lain, Dock, dan jendela Layar Penuh app lain (jika Space Jendela Tombol Pintas diatur ke Semua Spaces)."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3087,6 +3195,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mégsem"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batalkan"
           }
         },
         "it" : {
@@ -3257,6 +3371,12 @@
             "value" : "A Dock-ikonra kattintáskor:"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saat ikon Dock diklik:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3425,6 +3545,12 @@
             "value" : "Animáció megjelenítéskor és elrejtéskor"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animasikan saat menampilkan dan menyembunyikan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3588,6 +3714,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -3761,6 +3893,12 @@
             "value" : "OK"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3929,6 +4067,12 @@
             "value" : "Lebegő ablak"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jendela mengambang"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4092,6 +4236,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Control"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "^ Control"
@@ -4263,6 +4413,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "További gyorsbillentyűk…"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tombol Pintas Tambahan…"
           }
         },
         "it" : {

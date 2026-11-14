@@ -65,6 +65,12 @@
             "value" : "Szerkesztés"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -233,6 +239,12 @@
             "value" : "Cím"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Judul"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -399,6 +411,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Szöveg"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teks"
           }
         },
         "it" : {

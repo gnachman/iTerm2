@@ -65,6 +65,12 @@
             "value" : "Interpolált karakterláncok használata a paraméterekhez"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gunakan string terinterpolasi untuk parameter"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Másolás a profilba"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salin ke Profil"
           }
         },
         "it" : {
@@ -401,6 +413,12 @@
             "value" : "Bezárás"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutup"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -567,6 +585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eseményindítók"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pemicu"
           }
         },
         "it" : {
@@ -737,6 +761,12 @@
             "value" : "Reguláris kifejezés"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekspresi Reguler"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -903,6 +933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "A megtekintéshez vagy szerkesztéshez válasszon ki egy eseményindítót"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih satu pemicu untuk melihat atau mengedit"
           }
         },
         "it" : {

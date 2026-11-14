@@ -65,6 +65,12 @@
             "value" : "Húzzon egy összetevőt a menüből az Aktív összetevők közé, hogy hozzáadja az állapotsorhoz."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seret komponen dari menu ke Komponen Aktif untuk menambahkannya ke bar status Anda."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -233,6 +239,12 @@
             "value" : "A tömör elrendezés előnyben részesítése a stabil pozícióval szemben"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utamakan pengemasan rapat daripada posisi stabil"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -396,6 +408,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -569,6 +587,12 @@
             "value" : "Aktív összetevők"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Komponen Aktif"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +759,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Letiltva"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dinonaktifkan"
           }
         },
         "it" : {
@@ -905,6 +935,12 @@
             "value" : "Üres értékű összetevők eltávolítása"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hapus komponen dengan nilai kosong"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1071,6 +1107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Elválasztó rajzolása az állapotsor és a terminál között"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gambar pemisah antara bar status dan terminal"
           }
         },
         "it" : {
@@ -1241,6 +1283,12 @@
             "value" : "Automatikus"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otomatis"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1407,6 +1455,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Állapotsor-összetevők menüje"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menu Komponen Bar Status"
           }
         },
         "it" : {
@@ -1577,6 +1631,12 @@
             "value" : "Haladó…"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lanjutan…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1743,6 +1803,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "A tömör elrendezési algoritmus több állapotsor-összetevőt tesz egyszerre láthatóvá, de azok hajlamosabbak ugrálni."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algoritma pengemasan rapat memungkinkan lebih banyak komponen bar status terlihat sekaligus, tetapi cenderung lebih sering berpindah posisi."
           }
         },
         "it" : {
@@ -1913,6 +1979,12 @@
             "value" : "🌈 Automatikus szivárvány:"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌈 Pelangi Otomatis:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2079,6 +2151,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ide kerül a betűtípus neve"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nama font ada di sini"
           }
         },
         "it" : {
@@ -2249,6 +2327,12 @@
             "value" : "Sötét színek"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warna Gelap"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2415,6 +2499,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Módosítás"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ubah"
           }
         },
         "it" : {
@@ -2585,6 +2675,12 @@
             "value" : "Alapértelmezett szövegszín:"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warna Teks Default:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2751,6 +2847,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Összetevő beállítása"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konfigurasi Komponen"
           }
         },
         "it" : {
@@ -2921,6 +3023,12 @@
             "value" : "A tömör elrendezési algoritmus több állapotsor-összetevőt tesz egyszerre láthatóvá, de azok hajlamosabbak ugrálni."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algoritma pengemasan rapat memungkinkan lebih banyak komponen bar status terlihat sekaligus, tetapi cenderung lebih sering berpindah posisi."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3087,6 +3195,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Elválasztó színe:"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warna Pemisah:"
           }
         },
         "it" : {
@@ -3257,6 +3371,12 @@
             "value" : "Mégsem"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batalkan"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3423,6 +3543,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Világos színek"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warna Terang"
           }
         },
         "it" : {
@@ -3593,6 +3719,12 @@
             "value" : "Betűtípus:"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Font:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3761,6 +3893,12 @@
             "value" : "Háttérszín:"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warna Latar Belakang:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3924,6 +4062,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -4095,6 +4239,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vékony vonalat rajzol az állapotsor és a terminál tartalma közé."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menggambar garis tipis antara bar status dan konten terminal."
           }
         },
         "it" : {

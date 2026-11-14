@@ -78,6 +78,12 @@
             "value" : "iTerm2"
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -244,6 +250,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Az iTerm2-ben futó egyik alkalmazás az AppleScriptet szeretné használni."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikasi di iTerm2 ingin menggunakan AppleScript."
           }
         },
         "it" : {
@@ -414,6 +426,12 @@
             "value" : "Az iTerm2-ben futó egyik alkalmazás a Bluetooth-t szeretné használni."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikasi di iTerm2 ingin menggunakan Bluetooth."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -580,6 +598,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Az iTerm2-ben futó egyik alkalmazás a Naptár adatait szeretné használni."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikasi di iTerm2 ingin menggunakan data Kalender."
           }
         },
         "it" : {
@@ -750,6 +774,12 @@
             "value" : "Az iTerm2-ben futó egyik alkalmazás a kamerát szeretné használni."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikasi di iTerm2 ingin menggunakan kamera."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -918,6 +948,12 @@
             "value" : "Az iTerm2-ben futó egyik alkalmazás a névjegyeit szeretné használni."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikasi di iTerm2 ingin menggunakan kontak Anda."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1081,6 +1117,12 @@
           }
         },
         "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPL v2"
+          }
+        },
+        "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPL v2"
@@ -1254,6 +1296,12 @@
             "value" : "Az iTerm2-ben futó egyik alkalmazás hozzá szeretne férni a helyi hálózathoz."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikasi di iTerm2 ingin mengakses jaringan lokal."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1420,6 +1468,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Az iTerm2-ben futó egyik alkalmazás a helyadatait szeretné használni, a háttérben is."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikasi di iTerm2 ingin menggunakan informasi lokasi Anda, bahkan di latar belakang."
           }
         },
         "it" : {
@@ -1590,6 +1644,12 @@
             "value" : "Az iTerm2-ben futó egyik alkalmazás a helyadatait szeretné használni."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikasi di iTerm2 ingin menggunakan informasi lokasi Anda."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1756,6 +1816,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Az iTerm2-ben futó egyik alkalmazás a helyadatait szeretné használni, amíg aktív."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikasi di iTerm2 ingin menggunakan informasi lokasi Anda saat aktif."
           }
         },
         "it" : {
@@ -1926,6 +1992,12 @@
             "value" : "Az iTerm2-ben futó egyik alkalmazás a mikrofonját szeretné használni."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikasi di iTerm2 ingin menggunakan mikrofon Anda."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2092,6 +2164,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Az iTerm2-ben futó egyik alkalmazás a fotókönyvtárat szeretné használni."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikasi di iTerm2 ingin menggunakan pustaka foto."
           }
         },
         "it" : {
@@ -2262,6 +2340,12 @@
             "value" : "Az iTerm2-ben futó egyik alkalmazás az emlékeztetőit szeretné használni."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikasi di iTerm2 ingin menggunakan pengingat Anda."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2430,6 +2514,12 @@
             "value" : "Az iTerm2-ben futó egyik alkalmazás a beszédfelismerést szeretné használni."
           }
         },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikasi di iTerm2 ingin menggunakan pengenalan ucapan."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2596,6 +2686,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Az iTerm2-ben egy program által végrehajtott művelethez emelt szintű engedély szükséges."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Operasi yang dilakukan oleh program di iTerm2 memerlukan izin yang lebih tinggi."
           }
         },
         "it" : {
