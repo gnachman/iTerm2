@@ -53,6 +53,12 @@
             "value" : "Télécharge la dernière version. Exécute curl | bash"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "नवीनतम संस्करण डाउनलोड करता है। curl | bash चलाता है"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Continuer"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "जारी रखें"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "OK"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ठीक"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Annuler"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रद्द करें"
           }
         },
         "hr" : {
@@ -773,6 +797,12 @@
             "value" : "1. Détecter le shell que vous utilisez.\n2. Ajouter des fichiers de script dans votre répertoire de départ.\n3. Installer des scripts utilitaires.\n4. Modifier les scripts de démarrage de votre shell."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. पता लगाना कि आप कौन सा शेल उपयोग करते हैं।\n2. आपकी होम डाइरेक्टरी में स्क्रिप्ट फ़ाइलें जोड़ना।\n3. यूटिलिटी स्क्रिप्ट इंस्टॉल करना।\n4. आपके शेल की स्टार्टअप स्क्रिप्ट बदलना।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Retour"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पीछे जाएँ"
           }
         },
         "hr" : {
@@ -1133,6 +1169,12 @@
             "value" : "Les utilitaires comprennent des scripts pour télécharger des fichiers, afficher des images en ligne, et plus encore. "
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "यूटिलिटी में फ़ाइलें डाउनलोड करने, इमेज इनलाइन दिखाने और अन्य कामों की स्क्रिप्ट शामिल हैं। "
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1311,6 +1353,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Retour"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पीछे जाएँ"
           }
         },
         "hr" : {
@@ -1493,6 +1541,12 @@
             "value" : "Continuer"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "जारी रखें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1671,6 +1725,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Annuler"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रद्द करें"
           }
         },
         "hr" : {
@@ -1853,6 +1913,12 @@
             "value" : "Passer"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "छोड़ें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2031,6 +2097,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Annuler"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रद्द करें"
           }
         },
         "hr" : {
@@ -2213,6 +2285,12 @@
             "value" : "Aperçu de la commande"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कमांड का प्रीव्यू"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2391,6 +2469,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Installation sans Internet"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इंटरनेट-मुक्त इंस्टॉल"
           }
         },
         "hr" : {
@@ -2573,6 +2657,12 @@
             "value" : "Télécharger et exécuter le programme d’installation"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इंस्टॉलर डाउनलोड करें और चलाएँ"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2751,6 +2841,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Installer aussi les utilitaires d’iTerm2"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 यूटिलिटी भी इंस्टॉल करें"
           }
         },
         "hr" : {
@@ -2933,6 +3029,12 @@
             "value" : "Installation manuelle guidée. Aucun téléchargement requis."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "निर्देशित मैन्युअल इंस्टॉलेशन। डाउनलोड की ज़रूरत नहीं।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3111,6 +3213,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aperçu de la commande"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कमांड का प्रीव्यू"
           }
         },
         "hr" : {
@@ -3293,6 +3401,12 @@
             "value" : "Continuer"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "जारी रखें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3468,6 +3582,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🎉"
+          }
+        },
+        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🎉"
@@ -3653,6 +3773,12 @@
             "value" : "Aperçu de la commande"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कमांड का प्रीव्यू"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3831,6 +3957,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Retour"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पीछे जाएँ"
           }
         },
         "hr" : {
@@ -4013,6 +4145,12 @@
             "value" : "Comment souhaitez-vous installer l’intégration du shell ?\n\nDans ce processus, les scripts de démarrage de votre shell seront modifiés. Ce programme d’installation saisira des commandes dans la fenêtre du terminal à votre place."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आप शेल इंटीग्रेशन कैसे इंस्टॉल करना चाहेंगे?\n\nइस प्रक्रिया में आपके शेल की स्टार्टअप स्क्रिप्ट बदली जाएँगी। यह इंस्टॉलर आपके लिए टर्मिनल विंडो में कमांड दर्ज करेगा।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4191,6 +4329,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aperçu de la commande"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कमांड का प्रीव्यू"
           }
         },
         "hr" : {
@@ -4373,6 +4517,12 @@
             "value" : "Installation terminée !"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इंस्टॉलेशन पूरा हुआ!"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4551,6 +4701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cela exécutera la commande suivante :\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "यह निम्नलिखित कमांड चलाएगा :\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
         "hr" : {
@@ -4733,6 +4889,12 @@
             "value" : "Créez un nouvel onglet pour l’essayer.\n\nPour de meilleurs résultats, installez l’intégration du shell sur tous les hôtes auxquels vous vous connectez en ssh."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इसे आज़माने के लिए नया टैब बनाएँ।\n\nसबसे अच्छे परिणामों के लिए, उन सभी होस्ट पर शेल इंटीग्रेशन इंस्टॉल करें जिन पर आप ssh से जाते हैं।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4911,6 +5073,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "L’intégration du shell se compose de scripts qui aident votre shell à communiquer avec iTerm2 afin qu’il puisse suivre les commandes que vous exécutez, votre répertoire actuel et d’autres états. "
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "शेल इंटीग्रेशन ऐसी स्क्रिप्ट का समूह है जो आपके शेल को iTerm2 से संवाद करने में मदद करती हैं, ताकि वह आपकी चलाई कमांड, आपकी वर्तमान डाइरेक्टरी और अन्य स्थिति ट्रैक कर सके। "
           }
         },
         "hr" : {
@@ -5093,6 +5261,12 @@
             "value" : "Installer l’intégration du shell"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "शेल इंटीग्रेशन इंस्टॉल करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5271,6 +5445,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Annuler"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रद्द करें"
           }
         },
         "hr" : {

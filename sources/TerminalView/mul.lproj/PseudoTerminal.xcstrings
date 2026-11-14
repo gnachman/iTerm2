@@ -53,6 +53,12 @@
             "value" : "Ignorer silencieusement les erreurs de cette commande"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इस कमांड के एरर चुपचाप नज़रअंदाज़ करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Commande de coprocessus à exécuter :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "चलाई जाने वाली को-प्रोसेस कमांड :"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "OK"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ठीक"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -593,6 +611,12 @@
             "value" : "Annuler"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रद्द करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -771,6 +795,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Saisir une commande"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कमांड दर्ज करें"
           }
         },
         "hr" : {

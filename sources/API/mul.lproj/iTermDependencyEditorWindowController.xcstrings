@@ -53,6 +53,12 @@
             "value" : "Élément 2"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आइटम 2"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ce script doit être converti en « environnement complet » pour pouvoir ajouter des dépendances. Cela crée une copie de l’environnement d’exécution Python, sans utiliser d’espace disque supplémentaire."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "डिपेंडेंसी जोड़ने के लिए इस स्क्रिप्ट को “पूर्ण एनवायरन्मेंट” में अपग्रेड करना होगा। ऐसा करने से Python रनटाइम की एक कॉपी बनती है, लेकिन डिस्क पर अतिरिक्त जगह नहीं लगेगी।"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "Version de Python :"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Python संस्करण :"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Supprimer"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "हटाएँ"
           }
         },
         "hr" : {
@@ -773,6 +797,12 @@
             "value" : "Élément 3"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आइटम 3"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mettre à niveau"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अपग्रेड करें"
           }
         },
         "hr" : {
@@ -1133,6 +1169,12 @@
             "value" : "Script :"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्क्रिप्ट :"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1311,6 +1353,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Éditeur des dépendances du script"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्क्रिप्ट डिपेंडेंसी एडिटर"
           }
         },
         "hr" : {
@@ -1493,6 +1541,12 @@
             "value" : "Élément 1"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आइटम 1"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1671,6 +1725,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nom du paquet"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पैकेज का नाम"
           }
         },
         "hr" : {
@@ -1853,6 +1913,12 @@
             "value" : "Élément 2"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आइटम 2"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2031,6 +2097,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Élément 3"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आइटम 3"
           }
         },
         "hr" : {
@@ -2213,6 +2285,12 @@
             "value" : "Rechercher une mise à jour"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अपडेट जाँचें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2391,6 +2469,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Version installée"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इंस्टॉल किया गया संस्करण"
           }
         },
         "hr" : {
@@ -2573,6 +2657,12 @@
             "value" : "Élément 1"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आइटम 1"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2753,6 +2843,12 @@
             "value" : "OK"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ठीक"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2931,6 +3027,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajouter"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "जोड़ें"
           }
         },
         "hr" : {

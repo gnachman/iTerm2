@@ -53,6 +53,12 @@
             "value" : "Un script simple qui n’a aucune dépendance en dehors de la bibliothèque iterm2."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "एक सरल स्क्रिप्ट जिसकी iterm2 लाइब्रेरी के अलावा कोई डिपेंडेंसी नहीं है।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -228,6 +234,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😈"
+          }
+        },
+        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😈"
@@ -413,6 +425,12 @@
             "value" : "De base"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "बेसिक"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -588,6 +606,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😊"
+          }
+        },
+        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😊"
@@ -773,6 +797,12 @@
             "value" : "Démon de longue durée"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "लंबे समय तक चलने वाला डीमन"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Simple"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सरल"
           }
         },
         "hr" : {
@@ -1133,6 +1169,12 @@
             "value" : "Annuler"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रद्द करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1311,6 +1353,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Choisissez ce modèle pour un script simple qui effectue des actions puis se termine."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ऐसी सरल स्क्रिप्ट के लिए यह टेम्पलेट चुनें जो क्रियाएँ करके समाप्त हो जाती है।"
           }
         },
         "hr" : {
@@ -1493,6 +1541,12 @@
             "value" : "Un script qui dépend de paquets PyPI autres que la bibliothèque iterm2. Un pyenv privé sera créé pour ce script."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ऐसी स्क्रिप्ट जो iterm2 लाइब्रेरी के अलावा PyPI पैकेज पर निर्भर करती है। इस स्क्रिप्ट के लिए एक निजी pyenv बनाया जाएगा।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1668,6 +1722,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔗"
+          }
+        },
+        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🔗"
@@ -1853,6 +1913,12 @@
             "value" : "Choisissez un modèle de script :"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्क्रिप्ट टेम्पलेट चुनें :"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2031,6 +2097,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Environnement complet"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पूर्ण एनवायरन्मेंट"
           }
         },
         "hr" : {
@@ -2213,6 +2285,12 @@
             "value" : "Choisissez ce modèle pour un script qui reste actif et répond aux notifications."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ऐसी स्क्रिप्ट के लिए यह टेम्पलेट चुनें जो चलती रहती है और सूचनाओं का जवाब देती है।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2388,6 +2466,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛠️"
+          }
+        },
+        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🛠️"
@@ -2571,6 +2655,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Choisissez un environnement Python :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Python एनवायरन्मेंट चुनें :"
           }
         },
         "hr" : {

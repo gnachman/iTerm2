@@ -53,6 +53,12 @@
             "value" : "Tableau de bord tmux"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux डैशबोर्ड"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Session"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सत्र"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "Attacher"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अटैच करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechercher des fenêtres"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "विंडो खोजें"
           }
         },
         "hr" : {
@@ -773,6 +797,12 @@
             "value" : "Fenêtre"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "विंडो"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir dans des fenêtres"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "विंडो में खोलें"
           }
         },
         "hr" : {
@@ -1133,6 +1169,12 @@
             "value" : "Masquer"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "छिपाएँ"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1311,6 +1353,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir dans des fenêtres"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "विंडो में खोलें"
           }
         },
         "hr" : {
@@ -1493,6 +1541,12 @@
             "value" : "Ouvrir dans des onglets"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "टैब में खोलें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1671,6 +1725,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Détacher"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "डिटैच करें"
           }
         },
         "hr" : {
@@ -1853,6 +1913,12 @@
             "value" : "Ouvrir le tableau de bord à l’attachement s’il y a des fenêtres masquées"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "छिपी विंडो होने पर अटैच करते समय डैशबोर्ड खोलें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2031,6 +2097,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ne pas ouvrir de fenêtres à l’attachement s’il y en a au moins ce nombre :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अगर कम से कम इतनी विंडो हों तो अटैच करते समय विंडो न खोलें :"
           }
         },
         "hr" : {

@@ -53,6 +53,12 @@
             "value" : "Scinder le volet actuel XXXalement"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "वर्तमान पेन को XXX रूप से स्प्लिट करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -233,6 +239,12 @@
             "value" : "Annuler"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रद्द करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -411,6 +423,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Scinder"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्प्लिट करें"
           }
         },
         "hr" : {

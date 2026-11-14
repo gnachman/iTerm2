@@ -53,6 +53,12 @@
             "value" : "⌥ Option"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ ऑप्शन"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Épingler la fenêtre à raccourci global (reste ouverte quand le clavier perd le focus)"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "हॉटकी विंडो पिन करें (कीबोर्ड फ़ोकस हटने पर भी खुली रहती है)"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "Raccourci global :"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "हॉटकी :"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remarque : la fenêtre n’est rouverte que si elle a été fermée parce qu’une autre app est devenue active."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "नोट : विंडो तभी फिर से खुलती है जब उसे किसी अन्य ऐप के सक्रिय होने के कारण बंद किया गया हो।"
           }
         },
         "hr" : {
@@ -773,6 +797,12 @@
             "value" : "Raccourcis globaux supplémentaires"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अतिरिक्त हॉटकी"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quand vous appuyez sur le raccourci global associé à ce profil, une fenêtre dédiée s’affiche ou se masque. Chaque profil doté d’un raccourci global contrôle sa propre fenêtre à raccourci global."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इस प्रोफ़ाइल से जुड़ी हॉटकी दबाने पर एक समर्पित विंडो दिखेगी या छिप जाएगी। हॉटकी वाला हर प्रोफ़ाइल अपनी हॉटकी विंडो को नियंत्रित करता है।"
           }
         },
         "hr" : {
@@ -1133,6 +1169,12 @@
             "value" : "Ne rien faire de particulier"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कुछ विशेष न करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1308,6 +1350,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -1493,6 +1541,12 @@
             "value" : "Afficher cette fenêtre à raccourci global"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "यह हॉटकी विंडो दिखाएँ"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1671,6 +1725,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Réglages de la fenêtre à raccourci global"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "हॉटकी विंडो सेटिंग"
           }
         },
         "hr" : {
@@ -1853,6 +1913,12 @@
             "value" : "⌘ Commande"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ कमांड"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2031,6 +2097,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️ Un autre profil utilise ce raccourci"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ कोई अन्य प्रोफ़ाइल यह शॉर्टकट उपयोग करता है"
           }
         },
         "hr" : {
@@ -2213,6 +2285,12 @@
             "value" : "⇧ Maj"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ शिफ़्ट"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2391,6 +2469,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touche de double appui :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "डबल-टैप की :"
           }
         },
         "hr" : {
@@ -2573,6 +2657,12 @@
             "value" : "Rouvrir automatiquement à la réactivation de l’app"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ऐप फिर से सक्रिय होने पर अपने आप फिर खोलें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2751,6 +2841,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️ Un autre profil utilise ce double appui"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ कोई अन्य प्रोफ़ाइल यह डबल-टैप उपयोग करता है"
           }
         },
         "hr" : {
@@ -2933,6 +3029,12 @@
             "value" : "Afficher cette fenêtre à raccourci global si aucune autre fenêtre n’est ouverte"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कोई अन्य विंडो खुली न होने पर यह हॉटकी विंडो दिखाएँ"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3111,6 +3213,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Les fenêtres flottantes recouvrent les autres fenêtres, le Dock et les fenêtres en plein écran des autres apps (si l’espace de la fenêtre à raccourci global est réglé sur Tous les espaces)."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "फ़्लोटिंग विंडो अन्य विंडो, Dock और अन्य ऐप्लिकेशन की फ़ुल स्क्रीन विंडो के ऊपर दिखती हैं (यदि हॉटकी विंडो का स्पेस “सभी स्पेस” पर सेट हो)।"
           }
         },
         "hr" : {
@@ -3293,6 +3401,12 @@
             "value" : "Annuler"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रद्द करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3471,6 +3585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Au clic sur l’icône du Dock :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dock आइकॉन पर क्लिक करने पर :"
           }
         },
         "hr" : {
@@ -3653,6 +3773,12 @@
             "value" : "Animer l’affichage et le masquage"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "दिखाने और छिपाने को एनिमेट करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3831,6 +3957,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ठीक"
           }
         },
         "hr" : {
@@ -4013,6 +4145,12 @@
             "value" : "OK"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ठीक"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4191,6 +4329,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fenêtre flottante"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "फ़्लोटिंग विंडो"
           }
         },
         "hr" : {
@@ -4373,6 +4517,12 @@
             "value" : "^ Contrôle"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ कंट्रोल"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4551,6 +4701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Raccourcis globaux supplémentaires…"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अतिरिक्त हॉटकी…"
           }
         },
         "hr" : {

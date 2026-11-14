@@ -131,6 +131,12 @@
             "value" : "Κατάσταση"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्टेटस"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -311,6 +317,12 @@
             "value" : "Εισαγωγή…"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इंपोर्ट हो रहा है…"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -489,6 +501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Εισαγωγή ρυθμίσεων και δεδομένων…"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सेटिंग और डेटा इंपोर्ट हो रहे हैं…"
           }
         },
         "hr" : {

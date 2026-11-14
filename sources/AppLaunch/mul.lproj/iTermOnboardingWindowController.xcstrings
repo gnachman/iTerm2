@@ -53,6 +53,12 @@
             "value" : "Utilisez iTerm2 même loin de votre Mac. Vous pouvez le contrôler via le chat IA, consulter le contenu des sessions et recevoir des notifications push. Le chiffrement de bout en bout protège vos données. <a href=\"iterm2whatsnew:companion\">Essayez-le maintenant !</a>"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अपने Mac से दूर रहते हुए भी iTerm2 का उपयोग करें। आप AI चैट से इसे नियंत्रित कर सकते हैं, सत्र की सामग्री देख सकते हैं और पुश सूचनाएँ पा सकते हैं। एंड-टू-एंड एन्क्रिप्शन आपके डेटा को सुरक्षित रखता है। <a href=\"iterm2whatsnew:companion\">अभी आज़माएँ!</a>"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -228,6 +234,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -413,6 +425,12 @@
             "value" : "Un nouveau mode de chat IA, l’orchestration, laisse l’IA diriger les opérations à votre place. Elle peut créer des fenêtres, attendre la fin de tâches (même dans des apps interactives), et le nouveau vérificateur de sécurité automatique vous évite de répondre à presque toutes les demandes d’autorisation. <a href=\"iterm2whatsnew:orchestration\">Essayez-la maintenant !</a>"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI चैट का नया मोड, ऑर्केस्ट्रेशन, AI को आपकी जगह सब सँभालने देता है। यह विंडो बना सकता है, कार्यों के पूरा होने की प्रतीक्षा कर सकता है (इंटरैक्टिव ऐप्लिकेशन में भी), और नया स्वचालित सुरक्षा जाँचकर्ता लगभग सभी अनुमति प्रॉम्प्ट का जवाब देने की आपकी ज़रूरत खत्म कर देता है। <a href=\"iterm2whatsnew:orchestration\">अभी आज़माएँ!</a>"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -588,6 +606,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -773,6 +797,12 @@
             "value" : "La nouvelle fonctionnalité Captures d’écran simplifie la création d’un PNG du contenu de votre terminal. Elle prend en charge le caviardage et la mise en évidence. Utilisez <a href=\"iterm2whatsnew:screenshot\">Session > Capturer l’écran</a> pour l’activer."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "नई स्क्रीनशॉट सुविधा आपके टर्मिनल की सामग्री का PNG बनाना आसान करती है। यह रिडैक्शन और हाइलाइट का समर्थन करती है। इसे सक्रिय करने के लिए <a href=\"iterm2whatsnew:screenshot\">सत्र > स्क्रीनशॉट लें</a> का उपयोग करें।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -953,6 +983,12 @@
             "value" : "Nouveautés de la version 3.7"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "संस्करण 3.7 में नया क्या है"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1128,6 +1164,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ">"
+          }
+        },
+        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : ">"
@@ -1313,6 +1355,12 @@
             "value" : "●"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1491,6 +1539,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Intégration de Claude Code"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code इंटीग्रेशन"
           }
         },
         "hr" : {
@@ -1673,6 +1727,12 @@
             "value" : "Pour mieux gérer un grand nombre d’onglets, vous pouvez désormais les regrouper en groupes repliables. La barre d’onglets défile maintenant au lieu d’afficher un menu de débordement."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "बहुत सारे टैब सँभालने में मदद के लिए अब आप टैब को संक्षिप्त किए जा सकने वाले समूह में जोड़ सकते हैं। साथ ही, टैब बार अब ओवरफ़्लो मेन्यू दिखाने के बजाय स्क्रोल होता है।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1848,6 +1908,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -2033,6 +2099,12 @@
             "value" : "L’intégration de Claude Code organise plusieurs sessions liées (comme la revue de code et la lecture des diffs) dans une interface personnalisable. Elle expose aussi l’état de Claude pour que vous trouviez facilement les instances qui attendent votre attention. <a href=\"iterm2whatsnew:claudecode\">Essayez-la maintenant !</a>"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code इंटीग्रेशन कोड रिव्यू और diff पढ़ने जैसे कई संबंधित सत्रों को एक अनुकूलन-योग्य UI में व्यवस्थित करता है। यह Claude का स्टेटस भी दिखाता है ताकि आप आसानी से वे इंस्टेंस ढूँढ सकें जो आपके ध्यान की प्रतीक्षा में रुके हैं। <a href=\"iterm2whatsnew:claudecode\">अभी आज़माएँ!</a>"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2213,6 +2285,12 @@
             "value" : "App compagnon pour iPhone"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सहयोगी iPhone ऐप"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2388,6 +2466,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -2573,6 +2657,12 @@
             "value" : "Orchestration"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ऑर्केस्ट्रेशन"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2751,6 +2841,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Groupes d’onglets"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "टैब समूह"
           }
         },
         "hr" : {
@@ -2933,6 +3029,12 @@
             "value" : "Captures d’écran"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्क्रीनशॉट"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3108,6 +3210,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<"
+          }
+        },
+        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "<"

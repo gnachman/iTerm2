@@ -53,6 +53,12 @@
             "value" : "Action"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "क्रिया"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -273,6 +279,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Titre"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "शीर्षक"
           }
         },
         "hr" : {

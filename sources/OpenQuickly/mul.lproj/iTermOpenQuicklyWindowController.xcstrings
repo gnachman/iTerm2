@@ -53,6 +53,12 @@
             "value" : "Ouverture rapide"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "तेज़ी से खोलें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -233,6 +239,12 @@
             "value" : "Détail"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "विवरण"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -411,6 +423,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechercher des sessions, profils ou dispositions"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सत्र, प्रोफ़ाइल या व्यवस्थापन खोजें"
           }
         },
         "hr" : {

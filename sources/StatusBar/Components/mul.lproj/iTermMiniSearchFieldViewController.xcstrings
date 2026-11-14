@@ -53,6 +53,12 @@
             "value" : "Effacer l’historique de recherche"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "खोज हिस्ट्री मिटाएँ"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sous-chaîne sensible à la casse"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "केस-संवेदी सबस्ट्रिंग"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "Sous-chaîne insensible à la casse"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "केस-असंवेदी सबस्ट्रिंग"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechercher"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "खोजें"
           }
         },
         "hr" : {
@@ -773,6 +797,12 @@
             "value" : "Regex sensible à la casse"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "केस-संवेदी रेगुलर एक्सप्रेशन"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -953,6 +983,12 @@
             "value" : "Sous-chaîne à casse intelligente"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्मार्ट केस सबस्ट्रिंग"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1131,6 +1167,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Regex insensible à la casse"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "केस-असंवेदी रेगुलर एक्सप्रेशन"
           }
         },
         "hr" : {

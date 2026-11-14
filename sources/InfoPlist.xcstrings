@@ -66,6 +66,12 @@
             "value" : "iTerm2"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -244,6 +250,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Une application dans iTerm2 souhaite utiliser AppleScript."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 में कोई ऐप्लिकेशन AppleScript का उपयोग करना चाहता है।"
           }
         },
         "hr" : {
@@ -426,6 +438,12 @@
             "value" : "Une application dans iTerm2 souhaite utiliser le Bluetooth."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 में कोई ऐप्लिकेशन Bluetooth का उपयोग करना चाहता है।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -604,6 +622,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Une application dans iTerm2 souhaite utiliser les données de Calendrier."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 में कोई ऐप्लिकेशन कैलेंडर डेटा का उपयोग करना चाहता है।"
           }
         },
         "hr" : {
@@ -786,6 +810,12 @@
             "value" : "Une application dans iTerm2 souhaite utiliser la caméra."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 में कोई ऐप्लिकेशन कैमरे का उपयोग करना चाहता है।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -966,6 +996,12 @@
             "value" : "Une application dans iTerm2 souhaite utiliser vos contacts."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 में कोई ऐप्लिकेशन आपके संपर्कों का उपयोग करना चाहता है।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1141,6 +1177,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPL v2"
+          }
+        },
+        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPL v2"
@@ -1326,6 +1368,12 @@
             "value" : "Une application dans iTerm2 souhaite accéder au réseau local."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 में कोई ऐप्लिकेशन लोकल नेटवर्क ऐक्सेस करना चाहता है।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1504,6 +1552,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Une application dans iTerm2 souhaite utiliser vos informations de localisation, même en arrière-plan."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 में कोई ऐप्लिकेशन बैकग्राउंड में भी आपकी स्थान जानकारी का उपयोग करना चाहता है।"
           }
         },
         "hr" : {
@@ -1686,6 +1740,12 @@
             "value" : "Une application dans iTerm2 souhaite utiliser vos informations de localisation."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 में कोई ऐप्लिकेशन आपकी स्थान जानकारी का उपयोग करना चाहता है।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1864,6 +1924,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Une application dans iTerm2 souhaite utiliser vos informations de localisation lorsqu’elle est active."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 में कोई ऐप्लिकेशन सक्रिय रहने के दौरान आपकी स्थान जानकारी का उपयोग करना चाहता है।"
           }
         },
         "hr" : {
@@ -2046,6 +2112,12 @@
             "value" : "Une application dans iTerm2 souhaite utiliser votre microphone."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 में कोई ऐप्लिकेशन आपके माइक्रोफ़ोन का उपयोग करना चाहता है।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2224,6 +2296,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Une application dans iTerm2 souhaite utiliser la photothèque."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 में कोई ऐप्लिकेशन फ़ोटो लाइब्रेरी का उपयोग करना चाहता है।"
           }
         },
         "hr" : {
@@ -2406,6 +2484,12 @@
             "value" : "Une application dans iTerm2 souhaite utiliser vos rappels."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 में कोई ऐप्लिकेशन आपके रिमाइंडर का उपयोग करना चाहता है।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2586,6 +2670,12 @@
             "value" : "Une application dans iTerm2 souhaite utiliser la reconnaissance vocale."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 में कोई ऐप्लिकेशन स्पीच रिकग्निशन का उपयोग करना चाहता है।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2764,6 +2854,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "L’opération effectuée par un programme dans iTerm2 nécessite des autorisations élevées."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 में किसी प्रोग्राम द्वारा की जा रही कार्रवाई के लिए उच्च अनुमति की आवश्यकता है।"
           }
         },
         "hr" : {

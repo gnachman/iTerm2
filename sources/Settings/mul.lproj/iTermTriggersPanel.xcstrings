@@ -53,6 +53,12 @@
             "value" : "Utiliser des chaînes interpolées pour les paramètres"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पैरामीटर के लिए इंटरपोलेटेड स्ट्रिंग का उपयोग करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier dans le profil"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "प्रोफ़ाइल में कॉपी करें"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "Fermer"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "बंद करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Déclencheurs"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ट्रिगर"
           }
         },
         "hr" : {
@@ -773,6 +797,12 @@
             "value" : "Expression régulière"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रेगुलर एक्सप्रेशन"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sélectionnez un déclencheur pour l’afficher ou le modifier"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "देखने या संपादित करने के लिए एक ट्रिगर चुनें"
           }
         },
         "hr" : {

@@ -53,6 +53,12 @@
             "value" : "Description"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "विवरण"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Journal de plantage"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "क्रैश लॉग"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "Rapport de plantage"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "क्रैश रिपोर्टर"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Il semble que {APPNAME} ait planté lors de sa dernière utilisation. Voulez-vous envoyer un journal de plantage aux développeurs ?\n\nLes journaux de plantage d’Apple ne sont pas transmis aux autres développeurs. C’est donc le seul moyen pour les développeurs de {APPNAME} de découvrir et de corriger ce plantage."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ऐसा लगता है कि पिछली बार उपयोग करते समय {APPNAME} क्रैश हो गया था। क्या आप डेवलपर को क्रैश लॉग भेजना चाहते हैं?\n\nApple के क्रैश लॉग अन्य डेवलपर को नहीं भेजे जाते, इसलिए {APPNAME} के डेवलपर के पास इस क्रैश के बारे में जानने और इसे ठीक करने का यही एकमात्र तरीका है।"
           }
         },
         "hr" : {
@@ -773,6 +797,12 @@
             "value" : "Vous pouvez supprimer toute information que vous ne souhaitez pas transmettre, mais cela rendra la détection du bug plus difficile. Par défaut, le journal de plantage, le modèle de Mac que vous utilisez et vos réglages sont transmis."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आप ऐसी कोई भी जानकारी हटा सकते हैं जिसे आप भेजना नहीं चाहते, लेकिन इससे बग का पता लगाना कठिन हो जाएगा। डिफ़ॉल्ट रूप से क्रैश लॉग के साथ-साथ यह भी भेजा जाता है कि आप कौन-सा Mac उपयोग कर रहे हैं और आपकी सेटिंग क्या हैं।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Envoyer"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "भेजें"
           }
         },
         "hr" : {
@@ -1133,6 +1169,12 @@
             "value" : "Me le rappeler plus tard"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "बाद में याद दिलाएँ"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1311,6 +1353,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ignorer"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "छोड़ दें"
           }
         },
         "hr" : {

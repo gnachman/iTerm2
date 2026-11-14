@@ -53,6 +53,12 @@
             "value" : "Déplacer par marque"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "मार्क के अनुसार मूव करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Définir le raccourci clavier"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कीबोर्ड शॉर्टकट सेट करें"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "Annuler"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रद्द करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Préréglage de couleurs :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कलर प्रीसेट :"
           }
         },
         "hr" : {
@@ -773,6 +797,12 @@
             "value" : "Action :"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "क्रिया :"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Libellé à afficher dans la Touch Bar"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touch Bar में दिखाने के लिए लेबल"
           }
         },
         "hr" : {
@@ -1133,6 +1169,12 @@
             "value" : "Déplacer par caractère"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कैरेक्टर के अनुसार मूव करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1311,6 +1353,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ex. : 0x7f"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "उदा. 0x7f"
           }
         },
         "hr" : {
@@ -1493,6 +1541,12 @@
             "value" : "Profil :"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "प्रोफ़ाइल :"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1671,6 +1725,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Déplacer par mot"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "शब्द के अनुसार मूव करें"
           }
         },
         "hr" : {
@@ -1853,6 +1913,12 @@
             "value" : "Le message d’erreur apparaît ici"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "एरर संदेश यहाँ आएगा"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2031,6 +2097,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Action :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "क्रिया :"
           }
         },
         "hr" : {
@@ -2213,6 +2285,12 @@
             "value" : "Échap+"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esc+"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2391,6 +2469,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Raccourci clavier :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कीबोर्ड शॉर्टकट :"
           }
         },
         "hr" : {
@@ -2573,6 +2657,12 @@
             "value" : "Déplacer par ligne"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "लाइन के अनुसार मूव करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2751,6 +2841,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ठीक"
           }
         },
         "hr" : {

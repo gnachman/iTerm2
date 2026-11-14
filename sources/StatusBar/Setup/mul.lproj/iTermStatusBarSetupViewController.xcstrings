@@ -53,6 +53,12 @@
             "value" : "Faites glisser un composant du menu vers Composants actifs pour l’ajouter à votre barre d’état."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्टेटस बार में जोड़ने के लिए मेन्यू से किसी कंपोनेंट को सक्रिय कंपोनेंट में ड्रैग करें।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Préférer un agencement compact à un positionnement stable"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्थिर स्थिति की जगह सघन पैकिंग को प्राथमिकता दें"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "OK"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ठीक"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Composants actifs"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सक्रिय कंपोनेंट"
           }
         },
         "hr" : {
@@ -773,6 +797,12 @@
             "value" : "Désactivé"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अक्षम"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Supprimer les composants dont la valeur est vide"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "खाली मान वाले कंपोनेंट हटाएँ"
           }
         },
         "hr" : {
@@ -1133,6 +1169,12 @@
             "value" : "Dessiner un séparateur entre la barre d’état et le terminal"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्टेटस बार और टर्मिनल के बीच विभाजक बनाएँ"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1311,6 +1353,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Automatique"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्वचालित"
           }
         },
         "hr" : {
@@ -1493,6 +1541,12 @@
             "value" : "Menu des composants de la barre d’état"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्टेटस बार कंपोनेंट मेन्यू"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1671,6 +1725,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avancé…"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "एडवांस…"
           }
         },
         "hr" : {
@@ -1853,6 +1913,12 @@
             "value" : "L’agencement compact permet d’afficher davantage de composants de la barre d’état à la fois, mais ils ont tendance à bouger davantage."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सघन पैकिंग एल्गोरिदम एक समय में ज़्यादा स्टेटस बार कंपोनेंट दिखने देता है, लेकिन वे अधिक इधर-उधर होते रहते हैं।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2031,6 +2097,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "🌈 Arc-en-ciel auto :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌈 ऑटो-रेनबो :"
           }
         },
         "hr" : {
@@ -2213,6 +2285,12 @@
             "value" : "Le nom de la police va ici"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "फ़ॉन्ट का नाम यहाँ आएगा"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2391,6 +2469,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Couleurs sombres"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "गहरे रंग"
           }
         },
         "hr" : {
@@ -2573,6 +2657,12 @@
             "value" : "Modifier"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "बदलें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2751,6 +2841,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Couleur de texte par défaut :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "डिफ़ॉल्ट टेक्स्ट का रंग :"
           }
         },
         "hr" : {
@@ -2933,6 +3029,12 @@
             "value" : "Configurer le composant"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कंपोनेंट कॉन्फ़िगर करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3111,6 +3213,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "L’agencement compact permet d’afficher davantage de composants de la barre d’état à la fois, mais ils ont tendance à bouger davantage."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सघन पैकिंग एल्गोरिदम एक समय में ज़्यादा स्टेटस बार कंपोनेंट दिखने देता है, लेकिन वे अधिक इधर-उधर होते रहते हैं।"
           }
         },
         "hr" : {
@@ -3293,6 +3401,12 @@
             "value" : "Couleur du séparateur :"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "विभाजक का रंग :"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3471,6 +3585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Annuler"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रद्द करें"
           }
         },
         "hr" : {
@@ -3653,6 +3773,12 @@
             "value" : "Couleurs claires"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "हल्के रंग"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3831,6 +3957,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Police :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "फ़ॉन्ट :"
           }
         },
         "hr" : {
@@ -4013,6 +4145,12 @@
             "value" : "Couleur d’arrière-plan :"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "बैकग्राउंड रंग :"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4193,6 +4331,12 @@
             "value" : "OK"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ठीक"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4371,6 +4515,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dessine une ligne fine entre la barre d’état et le contenu du terminal."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्टेटस बार और टर्मिनल सामग्री के बीच एक पतली रेखा खींचता है।"
           }
         },
         "hr" : {

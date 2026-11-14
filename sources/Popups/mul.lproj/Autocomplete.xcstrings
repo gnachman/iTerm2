@@ -53,6 +53,12 @@
             "value" : "Complétion automatique"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ऑटो-कंप्लीट"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",

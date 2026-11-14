@@ -53,6 +53,12 @@
             "value": "Noir et blanc"
           }
         },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "श्वेत-श्याम"
+          }
+        },
         "hr": {
           "stringUnit": {
             "state": "translated",

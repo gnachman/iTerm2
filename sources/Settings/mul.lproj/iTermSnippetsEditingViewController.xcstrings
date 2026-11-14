@@ -53,6 +53,12 @@
             "value" : "Modifier"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "संपादित करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -233,6 +239,12 @@
             "value" : "Titre"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "शीर्षक"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -411,6 +423,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Texte"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "टेक्स्ट"
           }
         },
         "hr" : {

@@ -53,6 +53,12 @@
             "value" : "Patientez ! Installation d’un nouvel environnement Python…"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कृपया प्रतीक्षा करें! नया Python एनवायरन्मेंट इंस्टॉल हो रहा है…"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",

@@ -53,6 +53,12 @@
             "value" : "Préréglages…"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "प्रीसेट…"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajouter un élément à la Touch Bar"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touch Bar आइटम जोड़ें"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "Action"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "क्रिया"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Contournements de la Touch Bar"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touch Bar शमन"
           }
         },
         "hr" : {
@@ -773,6 +797,12 @@
             "value" : "Indicateur visuel de la touche échap"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "esc की का विज़ुअल संकेतक"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Combinaison de touches"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "की संयोजन"
           }
         },
         "hr" : {
@@ -1133,6 +1169,12 @@
             "value" : "Retour haptique à l’appui sur échap"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "esc दबाने पर हैप्टिक फ़ीडबैक"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1313,6 +1355,12 @@
             "value" : "OK"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ठीक"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1491,6 +1539,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Clic sonore pour la touche échap"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "esc की के लिए की क्लिक ध्वनि"
           }
         },
         "hr" : {

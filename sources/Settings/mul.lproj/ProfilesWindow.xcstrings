@@ -53,6 +53,12 @@
             "value" : "Profils"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "प्रोफ़ाइल"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Modifier les profils…"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "प्रोफ़ाइल संपादित करें…"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "Nouvel onglet"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "नया टैब"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nouvelle fenêtre"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "नई विंडो"
           }
         },
         "hr" : {
@@ -773,6 +797,12 @@
             "value" : "Fermer cette fenêtre après l’ouverture d’un profil."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "प्रोफ़ाइल खोलने के बाद इस विंडो को बंद करें।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Onglets en nouvelle fenêtre"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "नई विंडो में नए टैब"
           }
         },
         "hr" : {
@@ -1217,6 +1253,12 @@
             "value" : "Tags >"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "टैग >"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1473,6 +1515,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Νέο αιωρούμενο πλαίσιο"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "नया फ़्लोटिंग पेन"
           }
         },
         "hr" : {

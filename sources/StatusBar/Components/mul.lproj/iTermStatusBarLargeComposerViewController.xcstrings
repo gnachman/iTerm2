@@ -53,6 +53,12 @@
             "value" : "Complétion IA activée : tout le texte est envoyé à l’IA"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI कंप्लीशन सक्षम : सारा टेक्स्ट AI को भेजा जाता है"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Décrit comment utiliser le compositeur."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "बताता है कि कंपोज़र का उपयोग कैसे करें।"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "Appuyez sur ⇧↩ pour envoyer."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "भेजने के लिए ⇧↩ दबाएँ।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "IA"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
           }
         },
         "hr" : {

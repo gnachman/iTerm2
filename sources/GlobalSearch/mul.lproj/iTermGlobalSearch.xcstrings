@@ -53,6 +53,12 @@
             "value" : "CELLULE D’EN-TÊTE"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "हेडर सेल"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechercher globalement"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सभी जगह ढूँढें"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "Sous-chaîne : sensible à la casse"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "केस-संवेदी सबस्ट्रिंग"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sous-chaîne : automatique"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सबस्ट्रिंग : स्वचालित"
           }
         },
         "hr" : {
@@ -773,6 +797,12 @@
             "value" : "Regex : insensible à la casse"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "केस-असंवेदी रेगुलर एक्सप्रेशन"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechercher"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ढूँढें"
           }
         },
         "hr" : {
@@ -1133,6 +1169,12 @@
             "value" : "Regex : sensible à la casse"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "केस-संवेदी रेगुलर एक्सप्रेशन"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1311,6 +1353,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sous-chaîne : insensible à la casse"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "केस-असंवेदी सबस्ट्रिंग"
           }
         },
         "hr" : {

@@ -53,6 +53,12 @@
             "value" : "Nécessite l’intégration du shell pour détecter l’invite"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "प्रॉम्प्ट पहचानने के लिए शेल इंटीग्रेशन आवश्यक है"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Activé quand l’app en cours d’exécution a envoyé un code d’échappement activant le « mode de collage délimité ». La chaîne collée sera « délimitée » par des codes d’échappement indiquant que le texte provient d’une opération de collage."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "यह तब सक्षम होता है जब चल रहे ऐप ने “ब्रैकेटेड पेस्ट मोड” चालू करने के लिए एस्केप कोड भेजा हो। पेस्ट किया गया स्ट्रिंग एस्केप कोड से “ब्रैकेट” किया जाएगा, जो बताता है कि भीतर का टेक्स्ट पेस्ट ऑपरेशन से आया है।"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "Échapper les tabulations avec ^V"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "टैब को ^V से एस्केप करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Coller avec les tabulations"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "टैब के साथ पेस्ट करें"
           }
         },
         "hr" : {
@@ -773,6 +797,12 @@
             "value" : "Remplacer"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "बदलें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Convertir la ponctuation Unicode"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unicode विराम चिह्न बदलें"
           }
         },
         "hr" : {
@@ -1133,6 +1169,12 @@
             "value" : "Respecte les échappements de vim"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vim एस्केप सीक्वेंस समर्थित"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1311,6 +1353,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 ms"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 ms"
           }
         },
         "hr" : {
@@ -1493,6 +1541,12 @@
             "value" : "Convertit diverses formes de guillemets et de tirets en leurs équivalents ASCII."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "उद्धरण चिह्नों और डैश के विभिन्न रूपों को उनके ASCII समतुल्य में बदलता है।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1671,6 +1725,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tabulations en espaces :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "टैब को स्पेस में बदलें :"
           }
         },
         "hr" : {
@@ -1853,6 +1913,12 @@
             "value" : "Les retours à la ligne DOS et UNIX ne sont généralement pas utilisés en entrée. CR est la norme."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DOS और UNIX न्यूलाइन आम तौर पर इनपुट के रूप में उपयोग नहीं की जातीं। CR मानक है।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2031,6 +2097,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Échapper pour le shell avec \\"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "शेल कैरेक्टर को \\ से एस्केप करें"
           }
         },
         "hr" : {
@@ -2213,6 +2285,12 @@
             "value" : "Taille du bloc :"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "खंड का आकार :"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2391,6 +2469,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Substitution"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "प्रतिस्थापन"
           }
         },
         "hr" : {
@@ -2573,6 +2657,12 @@
             "value" : "Les retours à la ligne DOS et UNIX ne sont généralement pas utilisés en entrée. CR est la norme."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DOS और UNIX न्यूलाइन आम तौर पर इनपुट के रूप में उपयोग नहीं की जातीं। CR मानक है।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2751,6 +2841,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "La tabulation, le saut de ligne, le saut de page et le retour chariot sont les seuls codes de contrôle « sûrs »."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "टैब, लाइन फ़ीड, फ़ॉर्म फ़ीड और कैरिज रिटर्न ही एकमात्र “सुरक्षित” कंट्रोल कोड हैं।"
           }
         },
         "hr" : {
@@ -2933,6 +3029,12 @@
             "value" : "Transformations"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ट्रांसफ़ॉर्म"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3111,6 +3213,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Syntaxe d’expression régulière ICU"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICU रेगुलर एक्सप्रेशन सिंटैक्स"
           }
         },
         "hr" : {
@@ -3293,6 +3401,12 @@
             "value" : "100 ms"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100 ms"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3471,6 +3585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 ko"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 kB"
           }
         },
         "hr" : {
@@ -3653,6 +3773,12 @@
             "value" : "par"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "से"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3831,6 +3957,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vitesse"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "गति"
           }
         },
         "hr" : {
@@ -4013,6 +4145,12 @@
             "value" : "Filtrer les codes de contrôle"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "असुरक्षित कंट्रोल कोड हटाएँ"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4191,6 +4329,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Attendre l’invite du shell avant de coller chaque ligne"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "हर लाइन पेस्ट करने से पहले शेल प्रॉम्प्ट की प्रतीक्षा करें"
           }
         },
         "hr" : {
@@ -4373,6 +4517,12 @@
             "value" : "Délai entre blocs :"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "विलंब :"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4551,6 +4701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 octet"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 बाइट"
           }
         },
         "hr" : {
@@ -4733,6 +4889,12 @@
             "value" : "Expression régulière"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रेगेक्स"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4911,6 +5073,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1,2 ko"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1.2 kB"
           }
         },
         "hr" : {
@@ -5093,6 +5261,12 @@
             "value" : "150 ms"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "150 ms"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5268,6 +5442,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100"
+          }
+        },
+        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "100"
@@ -5453,6 +5633,12 @@
             "value" : "Radio"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रेडियो"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5631,6 +5817,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Supprimer les retours à la ligne"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "न्यूलाइन हटाएँ"
           }
         },
         "hr" : {
@@ -5813,6 +6005,12 @@
             "value" : "Groupes de capture : $1, $2, etc."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "समूह : $1, $2 आदि"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5991,6 +6189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mode de collage délimité"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ब्रैकेटेड पेस्ट मोड"
           }
         },
         "hr" : {
@@ -6173,6 +6377,12 @@
             "value" : "1 Mo"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 MB"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6351,6 +6561,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Convertir CRLF et LF en CR"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CRLF और LF को CR में बदलें"
           }
         },
         "hr" : {
@@ -6533,6 +6749,12 @@
             "value" : "Encoder en Base 64"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Base-64 एनकोड करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6711,6 +6933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "10 s"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10 सेकंड"
           }
         },
         "hr" : {

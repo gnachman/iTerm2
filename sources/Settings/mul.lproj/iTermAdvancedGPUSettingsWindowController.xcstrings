@@ -53,6 +53,12 @@
             "value" : "OK"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ठीक"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Désactiver le moteur de rendu GPU en mode économie d’énergie"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कम पावर मोड में GPU रेंडरर अक्षम करें"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "Préférer le GPU intégré au GPU dédié"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "डिस्क्रीट GPU की जगह इंटीग्रेटेड GPU को प्राथमिकता दें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -593,6 +611,12 @@
             "value" : "Désactiver le moteur de rendu GPU hors alimentation secteur"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पावर से डिस्कनेक्ट होने पर GPU रेंडरर अक्षम करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -771,6 +795,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Annuler"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रद्द करें"
           }
         },
         "hr" : {

@@ -53,6 +53,12 @@
             "value" : "/répertoire"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier le répertoire"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "डाइरेक्टरी कॉपी करें"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "12 octets"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 बाइट"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sélectionner la sortie de la commande"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कमांड का आउटपुट चुनें"
           }
         },
         "hr" : {
@@ -773,6 +797,12 @@
             "value" : "1 h 35 min"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1h 35m"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sortie :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आउटपुट :"
           }
         },
         "hr" : {
@@ -1133,6 +1169,12 @@
             "value" : "Copié"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कॉपी किया गया"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1311,6 +1353,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier la commande dans le presse-papiers"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कमांड को क्लिपबोर्ड पर कॉपी करें"
           }
         },
         "hr" : {
@@ -1493,6 +1541,12 @@
             "value" : "Démarré à %@"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ पर शुरू हुआ"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1671,6 +1725,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir la commande dans le compositeur"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कमांड को कंपोज़र में खोलें"
           }
         },
         "hr" : {
@@ -1853,6 +1913,12 @@
             "value" : "Dossier déplaçable"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ड्रैग करने योग्य फ़ोल्डर"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2031,6 +2097,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "commande"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कमांड"
           }
         },
         "hr" : {
@@ -2213,6 +2285,12 @@
             "value" : "Écrire la commande dans le terminal"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कमांड को टर्मिनल में लिखें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2391,6 +2469,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Répertoire :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "डाइरेक्टरी :"
           }
         },
         "hr" : {
@@ -2573,6 +2657,12 @@
             "value" : "Code de retour :"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रिटर्न कोड :"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2751,6 +2841,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Écrire le répertoire dans le terminal"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "डाइरेक्टरी को टर्मिनल में लिखें"
           }
         },
         "hr" : {
@@ -2933,6 +3029,12 @@
             "value" : "Durée d’exécution :"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "चलने का समय :"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3111,6 +3213,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier la sortie de la commande"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कमांड का आउटपुट कॉपी करें"
           }
         },
         "hr" : {
@@ -3293,6 +3401,12 @@
             "value" : "Partager la commande…"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कमांड साझा करें…"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3473,6 +3587,12 @@
             "value" : "Commande :"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कमांड :"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3648,6 +3768,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
+        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "127"
@@ -3831,6 +3957,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Désactiver l’affichage de la commande hors écran"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्क्रीन से बाहर की कमांड दिखाना अक्षम करें"
           }
         },
         "hr" : {

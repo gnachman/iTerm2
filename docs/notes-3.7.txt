@@ -20,8 +20,8 @@ New Features:
   Vietnamese, Dutch, Swedish, Danish, Norwegian
   Bokmål, Finnish, Czech, Slovak, Slovenian,
   Croatian, Hungarian, Romanian, Greek, Ukrainian,
-  Indonesian, and Malay. They are used when one of
-  them is your preferred language in System
+  Indonesian, Malay, and Hindi. They are used when
+  one of them is your preferred language in System
   Settings > General > Language & Region.
 - iTerm2 > Suppressed Alerts lists most alerts
   and announcements at the top of a session that

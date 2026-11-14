@@ -53,6 +53,12 @@
             "value" : "Installer le pack Nerd Font…"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nerd Font बंडल इंस्टॉल करें…"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -233,6 +239,12 @@
             "value" : "Modifier l’exception spéciale"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "विशेष अपवाद संपादित करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -408,6 +420,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -593,6 +611,12 @@
             "value" : "Les exceptions spéciales remplacent les polices pour certaines plages ou écritures Unicode."
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "विशेष अपवाद विशिष्ट Unicode श्रेणियों या लिपियों के लिए फ़ॉन्ट को ओवरराइड करते हैं।"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -768,6 +792,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -953,6 +983,12 @@
             "value" : "OK"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ठीक"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1131,6 +1167,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "De la police :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "फ़ॉन्ट :"
           }
         },
         "hr" : {
@@ -1313,6 +1355,12 @@
             "value" : "Pour les caractères à partir de"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इससे शुरू होने वाले कैरेक्टर के लिए"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1491,6 +1539,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajouter un préréglage…"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "प्रीसेट जोड़ें…"
           }
         },
         "hr" : {
@@ -1673,6 +1727,12 @@
             "value" : "Annuler"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रद्द करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1851,6 +1911,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "à"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "से"
           }
         },
         "hr" : {
@@ -2033,6 +2099,12 @@
             "value" : "Gérer les exceptions spéciales"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "विशेष अपवाद प्रबंधित करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2211,6 +2283,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ठीक"
           }
         },
         "hr" : {
@@ -2393,6 +2471,12 @@
             "value" : "Utiliser les points de code"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कोड पॉइंट का उपयोग करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2573,6 +2657,12 @@
             "value" : "Annuler"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रद्द करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2748,6 +2838,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"

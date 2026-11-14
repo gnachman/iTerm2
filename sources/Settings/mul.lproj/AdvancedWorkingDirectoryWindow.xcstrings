@@ -53,6 +53,12 @@
             "value" : "Réutiliser le répertoire de la session précédente"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पिछले सत्र की डाइरेक्टरी का दोबारा उपयोग करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Répertoire de départ"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "होम डाइरेक्टरी"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "Répertoire de travail des nouveaux onglets"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "नए टैब के लिए वर्किंग डाइरेक्टरी"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Radio"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रेडियो"
           }
         },
         "hr" : {
@@ -773,6 +797,12 @@
             "value" : "Répertoire de travail des nouvelles fenêtres"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "नई विंडो के लिए वर्किंग डाइरेक्टरी"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Réutiliser le répertoire de la session précédente"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पिछले सत्र की डाइरेक्टरी का दोबारा उपयोग करें"
           }
         },
         "hr" : {
@@ -1133,6 +1169,12 @@
             "value" : "Radio"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रेडियो"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1311,6 +1353,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Réutiliser le répertoire de la session précédente"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पिछले सत्र की डाइरेक्टरी का दोबारा उपयोग करें"
           }
         },
         "hr" : {
@@ -1493,6 +1541,12 @@
             "value" : "Répertoire :"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "डाइरेक्टरी :"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1671,6 +1725,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Répertoire de travail des nouveaux volets scindés"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "नए स्प्लिट पेन के लिए वर्किंग डाइरेक्टरी"
           }
         },
         "hr" : {
@@ -1853,6 +1913,12 @@
             "value" : "Réglages avancés du répertoire de travail"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "एडवांस वर्किंग डाइरेक्टरी सेटिंग"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2031,6 +2097,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Répertoire :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "डाइरेक्टरी :"
           }
         },
         "hr" : {
@@ -2213,6 +2285,12 @@
             "value" : "Répertoire :"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "डाइरेक्टरी :"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2391,6 +2469,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Radio"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रेडियो"
           }
         },
         "hr" : {
@@ -2573,6 +2657,12 @@
             "value" : "Répertoire de départ"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "होम डाइरेक्टरी"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2753,6 +2843,12 @@
             "value" : "Répertoire de départ"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "होम डाइरेक्टरी"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2931,6 +3027,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ठीक"
           }
         },
         "hr" : {

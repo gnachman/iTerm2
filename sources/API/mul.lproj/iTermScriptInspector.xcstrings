@@ -53,6 +53,12 @@
             "value" : "Chemin"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पथ"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Afficher"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "दिखाएँ"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "Signature"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सिग्नेचर"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Inspecteur de scripts"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्क्रिप्टिंग इंस्पेक्टर"
           }
         },
         "hr" : {
@@ -773,6 +797,12 @@
             "value" : "Sessions, onglets et fenêtres"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सत्र, टैब और विंडो"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Variables"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "वैरिएबल"
           }
         },
         "hr" : {
@@ -1133,6 +1169,12 @@
             "value" : "Rôle"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "भूमिका"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1311,6 +1353,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier le chemin"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पथ कॉपी करें"
           }
         },
         "hr" : {
@@ -1493,6 +1541,12 @@
             "value" : "Fonctions enregistrées"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पंजीकृत फ़ंक्शन"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1671,6 +1725,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Valeur"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "मान"
           }
         },
         "hr" : {
@@ -1853,6 +1913,12 @@
             "value" : "Copier l’ID"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ID कॉपी करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2033,6 +2099,12 @@
             "value" : "Nom de l’objet (ID)"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ऑब्जेक्ट का नाम (ID)"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2208,6 +2280,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⨁"
+          }
+        },
+        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⨁"
@@ -2393,6 +2471,12 @@
             "value" : "Script"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्क्रिप्ट"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2571,6 +2655,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier la valeur"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "मान कॉपी करें"
           }
         },
         "hr" : {

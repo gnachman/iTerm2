@@ -53,6 +53,12 @@
             "value": "Libellé"
           }
         },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "लेबल"
+          }
+        },
         "hr": {
           "stringUnit": {
             "state": "translated",

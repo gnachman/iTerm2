@@ -53,6 +53,12 @@
             "value": "iTerm2"
           }
         },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iTerm2"
+          }
+        },
         "hr": {
           "stringUnit": {
             "state": "translated",
@@ -231,6 +237,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Par George Nachman et les contributeurs"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "George Nachman और योगदानकर्ताओं द्वारा"
           }
         },
         "hr": {

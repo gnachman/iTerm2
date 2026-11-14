@@ -53,6 +53,12 @@
             "value": "Taille de la tabulation en espaces :"
           }
         },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "स्पेस में टैब का आकार :"
+          }
+        },
         "hr": {
           "stringUnit": {
             "state": "translated",
@@ -228,6 +234,12 @@
           }
         },
         "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "hi": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

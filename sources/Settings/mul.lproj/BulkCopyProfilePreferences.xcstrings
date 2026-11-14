@@ -53,6 +53,12 @@
             "value" : "Couleurs"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रंग"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Texte"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "टेक्स्ट"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "Web"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "वेब"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Session"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सत्र"
           }
         },
         "hr" : {
@@ -773,6 +797,12 @@
             "value" : "Avancé"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "एडवांस"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -953,6 +983,12 @@
             "value" : "Fenêtre"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "विंडो"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1128,6 +1164,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx"
+          }
+        },
+        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx"
@@ -1313,6 +1355,12 @@
             "value" : "Terminal"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "टर्मिनल"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1491,6 +1539,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vers ces profils :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इन प्रोफ़ाइल में :"
           }
         },
         "hr" : {
@@ -1673,6 +1727,12 @@
             "value" : "Annuler"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रद्द करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1851,6 +1911,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier les réglages du signet"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "बुकमार्क सेटिंग कॉपी करें"
           }
         },
         "hr" : {
@@ -2033,6 +2099,12 @@
             "value" : "Touches"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कीज़"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2211,6 +2283,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कॉपी"
           }
         },
         "hr" : {

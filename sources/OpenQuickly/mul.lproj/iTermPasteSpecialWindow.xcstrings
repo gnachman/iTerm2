@@ -53,6 +53,12 @@
             "value" : "mm:ss"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mm:ss"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx lignes, xxx octets."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx लाइनें, xxx बाइट।"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "Coller"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पेस्ट"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -593,6 +611,12 @@
             "value" : "Annuler"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रद्द करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -771,6 +795,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Durée minimale :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "न्यूनतम अवधि :"
           }
         },
         "hr" : {

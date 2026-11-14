@@ -1,0 +1,13 @@
+[1miTerm2 Python REPL में आपका स्वागत है![m
+
+यह एक इंटरैक्टिव Python इंटरप्रेटर है, जिसमें आप स्क्रिप्ट के साथ प्रयोग
+कर सकते हैं। सामान्य Python इंटरप्रेटर के विपरीत, आप “await” का उपयोग
+async फ़ंक्शन के बाहर भी कर सकते हैं। आज़माने के लिए यहाँ एक उदाहरण
+स्क्रिप्ट है :
+
+import iterm2
+connection=await iterm2.Connection.async_create()
+await iterm2.Window.async_create(connection)
+
+]8;;https://iterm2.com/python-api⌘-iTerm2 Python API दस्तावेज़ के लिए यहाँ क्लिक करें]8;;
+

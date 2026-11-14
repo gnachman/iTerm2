@@ -53,6 +53,12 @@
             "value": "Inclure les horodatages"
           }
         },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "टाइमस्टैम्प शामिल करें"
+          }
+        },
         "hr": {
           "stringUnit": {
             "state": "translated",
@@ -231,6 +237,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Format de fichier :"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "फ़ाइल फ़ॉर्मैट :"
           }
         },
         "hr": {

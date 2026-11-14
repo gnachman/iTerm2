@@ -53,6 +53,12 @@
             "value": "Saisissez la valeur pour "
           }
         },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मान दर्ज करें : "
+          }
+        },
         "hr": {
           "stringUnit": {
             "state": "translated",
@@ -231,6 +237,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "OK"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ठीक"
           }
         },
         "hr": {
@@ -413,6 +425,12 @@
             "value": "Paramètre de session"
           }
         },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सत्र पैरामीटर"
+          }
+        },
         "hr": {
           "stringUnit": {
             "state": "translated",
@@ -593,6 +611,12 @@
             "value": "Annuler"
           }
         },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "रद्द करें"
+          }
+        },
         "hr": {
           "stringUnit": {
             "state": "translated",
@@ -771,6 +795,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nom"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नाम"
           }
         },
         "hr": {

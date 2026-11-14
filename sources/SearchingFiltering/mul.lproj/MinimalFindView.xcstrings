@@ -53,6 +53,12 @@
             "value" : "Filtrer"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "फ़िल्टर"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sous-chaîne insensible à la casse"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "केस-असंवेदी सबस्ट्रिंग"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "Sous-chaîne à casse intelligente"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्मार्ट केस सबस्ट्रिंग"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sous-chaîne sensible à la casse"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "केस-संवेदी सबस्ट्रिंग"
           }
         },
         "hr" : {
@@ -773,6 +797,12 @@
             "value" : "Regex insensible à la casse"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "केस-असंवेदी रेगुलर एक्सप्रेशन"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -951,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Effacer l’historique de recherche"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "खोज हिस्ट्री मिटाएँ"
           }
         },
         "hr" : {
@@ -1133,6 +1169,12 @@
             "value" : "Recherche dans la commande sélectionnée uniquement"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "केवल चयनित कमांड में खोज रहा है"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1311,6 +1353,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Regex insensible à la casse"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "केस-असंवेदी रेगुलर एक्सप्रेशन"
           }
         },
         "hr" : {
@@ -1493,6 +1541,12 @@
             "value" : "Filtrer"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "फ़िल्टर"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1671,6 +1725,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sous-chaîne sensible à la casse"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "केस-संवेदी सबस्ट्रिंग"
           }
         },
         "hr" : {
@@ -1853,6 +1913,12 @@
             "value" : "Regex sensible à la casse"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "केस-संवेदी रेगुलर एक्सप्रेशन"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2031,6 +2097,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sous-chaîne à casse intelligente"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्मार्ट केस सबस्ट्रिंग"
           }
         },
         "hr" : {
@@ -2213,6 +2285,12 @@
             "value" : "Sous-chaîne insensible à la casse"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "केस-असंवेदी सबस्ट्रिंग"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2391,6 +2469,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Regex sensible à la casse"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "केस-संवेदी रेगुलर एक्सप्रेशन"
           }
         },
         "hr" : {

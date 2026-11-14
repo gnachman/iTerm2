@@ -53,6 +53,12 @@
             "value": "Exporter…"
           }
         },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "एक्सपोर्ट करें…"
+          }
+        },
         "hr": {
           "stringUnit": {
             "state": "translated",
@@ -231,6 +237,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Maintenant"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अभी"
           }
         },
         "hr": {
@@ -413,6 +425,12 @@
             "value": "Contrôle de la relecture instantanée"
           }
         },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इंस्टेंट रीप्ले कंट्रोल"
+          }
+        },
         "hr": {
           "stringUnit": {
             "state": "translated",
@@ -591,6 +609,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Annuler"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "रद्द करें"
           }
         },
         "hr": {
@@ -773,6 +797,12 @@
             "value": "Vue en direct"
           }
         },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "लाइव व्यू"
+          }
+        },
         "hr": {
           "stringUnit": {
             "state": "translated",
@@ -951,6 +981,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Heure"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "समय"
           }
         },
         "hr": {

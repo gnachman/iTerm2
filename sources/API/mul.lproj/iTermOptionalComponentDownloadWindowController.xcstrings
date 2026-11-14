@@ -53,6 +53,12 @@
             "value": "Programme d’installation de l’environnement d’exécution Python"
           }
         },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Python रनटाइम इंस्टॉलर"
+          }
+        },
         "hr": {
           "stringUnit": {
             "state": "translated",
@@ -233,6 +239,12 @@
             "value": "Annuler"
           }
         },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "रद्द करें"
+          }
+        },
         "hr": {
           "stringUnit": {
             "state": "translated",
@@ -411,6 +423,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Téléchargement des composants facultatifs…"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "वैकल्पिक कंपोनेंट डाउनलोड हो रहे हैं…"
           }
         },
         "hr": {

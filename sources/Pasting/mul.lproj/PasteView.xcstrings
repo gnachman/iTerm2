@@ -53,6 +53,12 @@
             "value": "Collage en cours…"
           }
         },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पेस्ट हो रहा है…"
+          }
+        },
         "hr": {
           "stringUnit": {
             "state": "translated",
@@ -231,6 +237,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Annuler"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "रद्द करें"
           }
         },
         "hr": {

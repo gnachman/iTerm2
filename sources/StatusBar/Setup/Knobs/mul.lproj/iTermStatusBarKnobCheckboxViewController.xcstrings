@@ -53,6 +53,12 @@
             "value": "Cocher"
           }
         },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "चुनें"
+          }
+        },
         "hr": {
           "stringUnit": {
             "state": "translated",

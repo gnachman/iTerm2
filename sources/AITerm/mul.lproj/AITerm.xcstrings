@@ -53,6 +53,12 @@
             "value" : "Configurer l’intelligence artificielle"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आर्टिफ़िशियल इंटेलिजेंस सेट अप करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Votre fournisseur d’IA peut vous facturer chaque jeton envoyé ou reçu."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "भेजे या प्राप्त किए गए हर टोकन के लिए आपका AI प्रदाता आपसे शुल्क ले सकता है।"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "Saisissez la clé d’API ici"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "API कुंजी यहाँ दर्ज करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -593,6 +611,12 @@
             "value" : "Annuler"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रद्द करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -771,6 +795,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ठीक"
           }
         },
         "hr" : {

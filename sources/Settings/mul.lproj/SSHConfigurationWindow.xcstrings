@@ -53,6 +53,12 @@
             "value" : "Chemin de SSH :"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH का पथ :"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fichiers à copier sur l’hôte distant :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रिमोट होस्ट पर कॉपी की जाने वाली फ़ाइलें :"
           }
         },
         "hr" : {
@@ -413,6 +425,12 @@
             "value" : "Destination"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "गंतव्य"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -593,6 +611,12 @@
             "value" : "OK"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ठीक"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -768,6 +792,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/usr/bin/ssh"
+          }
+        },
+        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "/usr/bin/ssh"
@@ -953,6 +983,12 @@
             "value" : "Parcourir"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ब्राउज़ करें"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1131,6 +1167,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Annuler"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रद्द करें"
           }
         },
         "hr" : {
@@ -1313,6 +1355,12 @@
             "value" : "Fichier ou dossier"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "फ़ाइल या फ़ोल्डर"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1493,6 +1541,12 @@
             "value" : "Intégration SSH"
           }
         },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH इंटीग्रेशन"
+          }
+        },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1671,6 +1725,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Variables d’environnement à copier sur l’hôte distant :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रिमोट होस्ट पर कॉपी किए जाने वाले एनवायरन्मेंट वैरिएबल :"
           }
         },
         "hr" : {
