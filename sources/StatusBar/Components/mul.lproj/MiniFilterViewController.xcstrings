@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Case-Sensitive Substring\"; ObjectID = \"9a5-fE-FWY\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena que distingeix majúscules i minúscules"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -197,6 +203,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Smart Case Substring\"; ObjectID = \"9vm-lJ-Kqt\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena amb majúscules i minúscules intel·ligents"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -389,6 +401,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Case-Sensitive Regex\"; ObjectID = \"a2M-Nc-Alm\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex que distingeix majúscules i minúscules"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -581,6 +599,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Case-Insensitive Regex\"; ObjectID = \"elJ-Qs-6bJ\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex que no distingeix majúscules i minúscules"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -773,6 +797,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Case-Insensitive Substring\"; ObjectID = \"Gve-ot-1QH\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena que no distingeix majúscules i minúscules"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -965,6 +995,12 @@
       "comment" : "Class = \"NSSearchFieldCell\"; placeholderString = \"Filter\"; ObjectID = \"KgY-y0-6XN\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtra"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",

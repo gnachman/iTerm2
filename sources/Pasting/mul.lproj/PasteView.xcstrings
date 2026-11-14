@@ -5,6 +5,12 @@
       "comment": "Class = \"NSTextFieldCell\"; title = \"Pasting…\"; ObjectID = \"3\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enganxant…"
+          }
+        },
         "cs": {
           "stringUnit": {
             "state": "translated",
@@ -197,6 +203,12 @@
       "comment": "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"451\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel·la"
+          }
+        },
         "cs": {
           "stringUnit": {
             "state": "translated",

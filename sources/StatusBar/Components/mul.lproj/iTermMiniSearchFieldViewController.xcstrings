@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Erase Search History\"; ObjectID = \"4me-Ls-hxI\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esborra l’historial de cerca"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -197,6 +203,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Case-Sensitive Substring\"; ObjectID = \"6Ko-6b-aFL\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena que distingeix majúscules i minúscules"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -389,6 +401,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Case-Insensitive Substring\"; ObjectID = \"adQ-N9-EnU\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena que no distingeix majúscules i minúscules"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -581,6 +599,12 @@
       "comment" : "Class = \"NSSearchFieldCell\"; placeholderString = \"Search\"; ObjectID = \"dfd-7C-O0k\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerca"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -773,6 +797,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Case-Sensitive Regex\"; ObjectID = \"EuT-0X-vc4\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex que distingeix majúscules i minúscules"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -965,6 +995,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Smart Case Substring\"; ObjectID = \"Q6W-kJ-cqr\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena amb majúscules i minúscules intel·ligents"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1157,6 +1193,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Case-Insensitive Regex\"; ObjectID = \"Rw9-Gj-Jr9\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex que no distingeix majúscules i minúscules"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",

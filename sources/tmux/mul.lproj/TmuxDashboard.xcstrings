@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSWindow\"; title = \"tmux Dashboard\"; ObjectID = \"1\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tauler de tmux"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -197,6 +203,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"Session\"; ObjectID = \"8\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessió"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -389,6 +401,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Attach\"; ObjectID = \"29\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connecta"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -581,6 +599,12 @@
       "comment" : "Class = \"NSSearchFieldCell\"; placeholderString = \"Search Windows\"; ObjectID = \"31\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerca finestres"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -773,6 +797,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"Window\"; ObjectID = \"38\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finestra"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -965,6 +995,12 @@
       "comment" : "Class = \"NSMenuItem\"; title = \"Open in Windows\"; ObjectID = \"87\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obre en finestres"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1157,6 +1193,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Hide\"; ObjectID = \"97\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oculta"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1349,6 +1391,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Open in Windows\"; ObjectID = \"98\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obre en finestres"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1541,6 +1589,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Open in Tabs\"; ObjectID = \"99\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obre en pestanyes"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1733,6 +1787,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Detach\"; ObjectID = \"103\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desconnecta"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1925,6 +1985,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Open dashboard when attaching if there are hidden windows\"; ObjectID = \"El0-Wa-qm5\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obre el tauler en connectar si hi ha finestres ocultes"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2117,6 +2183,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Don’t open windows when attaching if there are at least this many windows:\"; ObjectID = \"wIU-qt-nuF\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No obris finestres en connectar si hi ha almenys aquest nombre de finestres:"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",

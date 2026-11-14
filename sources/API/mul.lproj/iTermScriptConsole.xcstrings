@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSSegmentedCell\"; 0bO-7H-4vq.ibShadowedLabels[0] = \"All\"; ObjectID = \"0bO-7H-4vq\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tots"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -197,6 +203,12 @@
       "comment" : "Class = \"NSSegmentedCell\"; 0bO-7H-4vq.ibShadowedLabels[1] = \"Running\"; ObjectID = \"0bO-7H-4vq\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En execució"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -389,6 +401,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"Started\"; ObjectID = \"cfh-qe-s6c\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciat"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -581,6 +599,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Scroll to bottom on update\"; ObjectID = \"Dad-6X-vZQ\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desplaça al final en actualitzar"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -773,6 +797,12 @@
       "comment" : "Class = \"NSTabViewItem\"; label = \"Calls\"; ObjectID = \"eTW-VX-hX3\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crides"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -965,6 +995,12 @@
       "comment" : "Class = \"NSWindow\"; title = \"Script Console\"; ObjectID = \"F0z-JX-Cv5\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consola d’scripts"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1157,6 +1193,12 @@
       "comment" : "Class = \"NSTextFieldCell\"; placeholderString = \"Filter\"; ObjectID = \"hqr-c6-ohx\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtra"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1349,6 +1391,12 @@
       "comment" : "Class = \"NSTableColumn\"; headerCell.title = \"Name\"; ObjectID = \"lw1-Nm-bBu\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nom"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1541,6 +1589,12 @@
       "comment" : "Class = \"NSTabViewItem\"; label = \"Logs\"; ObjectID = \"r7v-l8-Wnw\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registres"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",

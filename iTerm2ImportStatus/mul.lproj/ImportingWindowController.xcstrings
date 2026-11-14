@@ -190,6 +190,12 @@
             "state" : "translated",
             "value" : "Стан"
           }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estat"
+          }
         }
       }
     },
@@ -382,6 +388,12 @@
             "state" : "translated",
             "value" : "Імпортування…"
           }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Important…"
+          }
         }
       }
     },
@@ -573,6 +585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Імпортування параметрів і даних…"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Important la configuració i les dades…"
           }
         }
       }

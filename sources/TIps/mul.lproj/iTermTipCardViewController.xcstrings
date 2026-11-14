@@ -5,6 +5,12 @@
       "comment": "Class = \"NSTextFieldCell\"; title = \"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla\"; ObjectID = \"5Nk-zE-G82\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
+          }
+        },
         "cs": {
           "stringUnit": {
             "state": "translated",
@@ -197,6 +203,12 @@
       "comment": "Class = \"NSTextFieldCell\"; title = \"Shell Integration\"; ObjectID = \"F7A-0l-yly\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integració amb l’intèrpret d’ordres"
+          }
+        },
         "cs": {
           "stringUnit": {
             "state": "translated",

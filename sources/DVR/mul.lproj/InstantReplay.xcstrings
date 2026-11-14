@@ -5,6 +5,12 @@
       "comment": "Class = \"NSButtonCell\"; title = \"Export…\"; ObjectID = \"AWP-wp-FTJ\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporta…"
+          }
+        },
         "cs": {
           "stringUnit": {
             "state": "translated",
@@ -197,6 +203,12 @@
       "comment": "Class = \"NSTextFieldCell\"; title = \"Now\"; ObjectID = \"Hau-2E-Qk8\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ara"
+          }
+        },
         "cs": {
           "stringUnit": {
             "state": "translated",
@@ -389,6 +401,12 @@
       "comment": "Class = \"NSWindow\"; title = \"Instant Replay Control\"; ObjectID = \"UYp-FA-gZP\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Control de la repetició instantània"
+          }
+        },
         "cs": {
           "stringUnit": {
             "state": "translated",
@@ -581,6 +599,12 @@
       "comment": "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"Wj9-c2-bSB\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel·la"
+          }
+        },
         "cs": {
           "stringUnit": {
             "state": "translated",
@@ -773,6 +797,12 @@
       "comment": "Class = \"NSTextFieldCell\"; title = \"Live View\"; ObjectID = \"gh2-Nt-9U7\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vista en directe"
+          }
+        },
         "cs": {
           "stringUnit": {
             "state": "translated",
@@ -965,6 +995,12 @@
       "comment": "Class = \"NSTextFieldCell\"; title = \"Time\"; ObjectID = \"vJo-pj-XsO\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hora"
+          }
+        },
         "cs": {
           "stringUnit": {
             "state": "translated",

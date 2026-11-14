@@ -5,6 +5,12 @@
       "comment": "Class = \"NSButtonCell\"; title = \"Check\"; ObjectID = \"nrf-lr-161\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marca"
+          }
+        },
         "cs": {
           "stringUnit": {
             "state": "translated",

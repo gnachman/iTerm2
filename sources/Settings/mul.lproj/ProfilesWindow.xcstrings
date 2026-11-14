@@ -5,6 +5,12 @@
       "comment" : "Class = \"NSWindow\"; title = \"Profiles\"; ObjectID = \"5\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perfils"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -197,6 +203,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Edit Profiles…\"; ObjectID = \"321\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edita els perfils…"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -389,6 +401,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"New Tab\"; ObjectID = \"328\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nova pestanya"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -581,6 +599,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"New Window\"; ObjectID = \"330\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nova finestra"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -773,6 +797,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Close this window after opening a profile.\"; ObjectID = \"336\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tanca aquesta finestra després d’obrir un perfil."
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -965,6 +995,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"New Tabs in New Window\"; ObjectID = \"340\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pestanyes en finestra nova"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1241,6 +1277,12 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"Tags >\"; ObjectID = \"QXh-S4-dCz\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etiq. ›"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1617,6 +1659,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Нова плавуча панель"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nova subfinestra flotant"
           }
         }
       }

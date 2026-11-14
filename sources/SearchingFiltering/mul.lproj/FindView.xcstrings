@@ -5,6 +5,12 @@
       "comment": "Class = \"NSMenuItem\"; title = \"Smart Case Substring\"; ObjectID = \"16\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subcadena amb majúscules i minúscules intel·ligents"
+          }
+        },
         "cs": {
           "stringUnit": {
             "state": "translated",
@@ -197,6 +203,12 @@
       "comment": "Class = \"NSMenuItem\"; title = \"Erase Search History\"; ObjectID = \"6DZ-ad-yVz\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esborra l’historial de cerca"
+          }
+        },
         "cs": {
           "stringUnit": {
             "state": "translated",
@@ -389,6 +401,12 @@
       "comment": "Class = \"NSMenuItem\"; title = \"Case-Insensitive Substring\"; ObjectID = \"6Px-6a-JTm\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subcadena que no distingeix majúscules i minúscules"
+          }
+        },
         "cs": {
           "stringUnit": {
             "state": "translated",
@@ -581,6 +599,12 @@
       "comment": "Class = \"NSMenuItem\"; title = \"Case-Insensitive Regex\"; ObjectID = \"C2V-dA-zRG\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regex que no distingeix majúscules i minúscules"
+          }
+        },
         "cs": {
           "stringUnit": {
             "state": "translated",
@@ -773,6 +797,12 @@
       "comment": "Class = \"NSMenuItem\"; title = \"Case-Sensitive Substring\"; ObjectID = \"IJN-DB-LJ2\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subcadena que distingeix majúscules i minúscules"
+          }
+        },
         "cs": {
           "stringUnit": {
             "state": "translated",
@@ -965,6 +995,12 @@
       "comment": "Class = \"NSMenuItem\"; title = \"Case-Sensitive Regex\"; ObjectID = \"s1o-x7-jkk\";",
       "extractionState": "extracted_with_value",
       "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regex que distingeix majúscules i minúscules"
+          }
+        },
         "cs": {
           "stringUnit": {
             "state": "translated",

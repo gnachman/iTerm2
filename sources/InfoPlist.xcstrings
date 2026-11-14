@@ -18,6 +18,12 @@
       "comment" : "Bundle name",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -210,6 +216,12 @@
       "comment" : "Privacy - AppleEvents Sending Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una aplicació de l’iTerm2 vol fer servir AppleScript."
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -402,6 +414,12 @@
       "comment" : "Privacy - Bluetooth Always Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una aplicació de l’iTerm2 vol fer servir el Bluetooth."
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -594,6 +612,12 @@
       "comment" : "Privacy - Calendars Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una aplicació de l’iTerm2 vol fer servir les dades del Calendari."
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -786,6 +810,12 @@
       "comment" : "Privacy - Camera Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una aplicació de l’iTerm2 vol fer servir la càmera."
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -978,6 +1008,12 @@
       "comment" : "Privacy - Contacts Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una aplicació de l’iTerm2 vol fer servir els teus contactes."
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1170,6 +1206,12 @@
       "comment" : "Copyright (human-readable)",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPL v2"
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1362,6 +1404,12 @@
       "comment" : "Privacy - Local Network Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una aplicació de l’iTerm2 vol accedir a la xarxa local."
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1554,6 +1602,12 @@
       "comment" : "Privacy - Location Always Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una aplicació de l’iTerm2 vol fer servir la informació de la teva ubicació, fins i tot en segon pla."
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1746,6 +1800,12 @@
       "comment" : "Privacy - Location Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una aplicació de l’iTerm2 vol fer servir la informació de la teva ubicació."
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1938,6 +1998,12 @@
       "comment" : "Privacy - Location When In Use Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una aplicació de l’iTerm2 vol fer servir la informació de la teva ubicació mentre és activa."
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2130,6 +2196,12 @@
       "comment" : "Privacy - Microphone Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una aplicació de l’iTerm2 vol fer servir el teu micròfon."
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2322,6 +2394,12 @@
       "comment" : "Privacy - Photo Library Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una aplicació de l’iTerm2 vol fer servir la fototeca."
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2514,6 +2592,12 @@
       "comment" : "Privacy - Reminders Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una aplicació de l’iTerm2 vol fer servir els teus recordatoris."
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2706,6 +2790,12 @@
       "comment" : "Privacy - Speech Recognition Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una aplicació de l’iTerm2 vol fer servir el reconeixement de veu."
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2898,6 +2988,12 @@
       "comment" : "Privacy - System Administration Usage Description",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’operació que està duent a terme un programa de l’iTerm2 requereix permisos elevats."
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
