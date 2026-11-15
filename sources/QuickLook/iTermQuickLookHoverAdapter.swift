@@ -27,6 +27,8 @@ final class iTermQuickLookHoverHostCallbacks: NSObject {
     // Shows that the link at `url`, last returned by resolveLink, will preview.
     @objc var showCue: ((_ url: URL) -> Void)?
     @objc var clearCue: (() -> Void)?
+    // Where the pointer is now, as an NSPoint value, or nil when it is not over the view.
+    @objc var pointerLocation: (() -> NSValue?)?
 }
 
 // The answer to iTermQuickLookHoverHostCallbacks.lookUpLinkImmediately.
@@ -150,6 +152,10 @@ final class iTermQuickLookHoverAdapter: NSObject, iTermQuickLookHoverControllerD
 
     func hoverControllerClearCue() {
         host.clearCue?()
+    }
+
+    func hoverControllerPointerLocation() -> NSPoint? {
+        return host.pointerLocation?()?.pointValue
     }
 
     func hoverControllerPreviewFrame() -> NSRect? {

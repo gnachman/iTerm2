@@ -1185,8 +1185,25 @@ iTermCommandInfoViewControllerDelegate>
     callbacks.clearCue = ^{
         [weakSelf quickLookHoverClearCue];
     };
+    callbacks.pointerLocation = ^NSValue *{
+        return [weakSelf quickLookHoverPointerLocation];
+    };
     self.quickLookHoverAdapter = [[iTermQuickLookHoverAdapter alloc] initWithHost:callbacks];
     return self.quickLookHoverAdapter;
+}
+
+// Where the pointer is now in this view's coordinates, or nil when it is outside the visible part.
+// Read from the window rather than from the last mouse event, because when output scrolls the view
+// moves under a still pointer.
+- (NSValue *)quickLookHoverPointerLocation {
+    if (!self.window) {
+        return nil;
+    }
+    const NSPoint point = [self convertPoint:[self.window mouseLocationOutsideOfEventStream] fromView:nil];
+    if (!NSPointInRect(point, self.visibleRect)) {
+        return nil;
+    }
+    return [NSValue valueWithPoint:point];
 }
 
 - (BOOL)quickLookHoverWantsMouseMovementEvents {

@@ -112,8 +112,9 @@ iTermURLActionHelperDelegate>
 - (void)quickLookHoverMouseDown;
 - (void)quickLookHoverKeyDown;
 - (void)quickLookHoverScrolled;
-// The content moved under the pointer (overflow, screen scroll, resize), not just redrawn: drops a
-// pending hover cue and open, which may point at a link that is no longer under the pointer.
+// The content may have moved under the pointer (overflow, screen scroll, resize), not just redrawn:
+// keeps a pending hover cue and open while the pointer is still on the cued link and drops them
+// otherwise.
 - (void)quickLookHoverContentShifted;
 // What the view shows changed, so links may have moved: forgets a rejected link and moves the
 // pending cue's URL bar to where its link is now.
