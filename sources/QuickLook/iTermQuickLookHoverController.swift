@@ -75,6 +75,9 @@ class iTermQuickLookHoverController: NSObject {
     private var linkRects = [NSRect]()
     private var autoClose: iTermQuickLookCancellable?
     private var clickedInPreview = false
+    // True while the delegate is opening a preview. Opening may close the preview it replaces, and
+    // a delegate that reports that close through previewClosed() must not reset the new preview.
+    private var openingPreview = false
 
     private var isOpen: Bool {
         return openURL != nil
@@ -151,6 +154,9 @@ class iTermQuickLookHoverController: NSObject {
 
     // The user (or something other than this controller) closed the preview.
     @objc func previewClosed() {
+        guard !openingPreview else {
+            return
+        }
         cancelPendingOpen()
         resetToIdle()
     }
@@ -237,12 +243,18 @@ class iTermQuickLookHoverController: NSObject {
             return
         }
         if url == openURL {
+            // The pointer rests on another occurrence of the open link. Track that occurrence so the
+            // preview does not auto-close while the pointer stays on it.
+            linkRects = rects
+            cancelAutoClose()
             return
         }
         cancelAutoClose()
         openURL = url
         linkRects = rects
         clickedInPreview = false
+        openingPreview = true
         delegate?.hoverControllerOpenPreview(url: url, linkRects: rects, at: point)
+        openingPreview = false
     }
 }

@@ -62,6 +62,8 @@ private final class RecordingDelegate: iTermQuickLookHoverControllerDelegate {
     var opens = [Open]()
     var closeCount = 0
     var previewFrame: NSRect?
+    // Runs inside hoverControllerOpenPreview, after the open is recorded.
+    var onOpen: (() -> Void)?
 
     func hoverControllerResolveLink(at point: NSPoint,
                                     completion: @escaping (URL?, [NSRect]) -> Void) {
@@ -75,6 +77,7 @@ private final class RecordingDelegate: iTermQuickLookHoverControllerDelegate {
 
     func hoverControllerOpenPreview(url: URL, linkRects: [NSRect], at point: NSPoint) {
         opens.append(Open(url: url, linkRects: linkRects, point: point))
+        onOpen?()
     }
 
     func hoverControllerClosePreview() {
@@ -422,12 +425,35 @@ final class QuickLookHoverControllerTests: XCTestCase {
 
     func testSameLinkDoesNotReopen() {
         openPreviewOnA()
-        let secondOccurrence = NSRect(x: 650, y: 650, width: 100, height: 16)
+        let secondOccurrence = NSRect(x: 650, y: 690, width: 100, height: 20)
+        XCTAssertTrue(secondOccurrence.contains(pointNowhere))
         delegate.resolution = (urlA, [rectA, secondOccurrence])
         move(pointNowhere)
+        XCTAssertEqual(scheduler.active.filter { $0.delay == 1.5 }.count, 1)
         scheduler.fire(delay: 0.75)
         XCTAssertEqual(delegate.resolvedPoints.last, pointNowhere)
         XCTAssertEqual(delegate.opens.count, 1)
+        XCTAssertTrue(scheduler.active.isEmpty, "resting on another occurrence of the open link cancels auto-close")
+
+        move(NSPoint(x: 720, y: 700))
+        XCTAssertTrue(scheduler.active.filter { $0.delay == 1.5 }.isEmpty,
+                      "the new occurrence counts as the link, so moving on it does not start auto-close")
+    }
+
+    func testCloseReportedWhileReplacingKeepsNewPreviewOpen() {
+        openPreviewOnA()
+        delegate.onOpen = { [unowned self] in
+            self.controller.previewClosed()
+        }
+        delegate.resolution = (urlB, [rectB])
+        move(pointOnB)
+        scheduler.fire(delay: 0.75)
+        XCTAssertEqual(delegate.opens.count, 2)
+
+        delegate.onOpen = nil
+        move(pointNowhere)
+        XCTAssertEqual(scheduler.active.filter { $0.delay == 1.5 }.count, 1,
+                       "the replacement preview is still open, so leaving it starts auto-close")
     }
 
     func testRestingOutsideOnNonLinkKeepsPreview() {
