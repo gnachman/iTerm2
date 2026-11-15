@@ -1068,6 +1068,7 @@
 		65EE211B60CDAF7B6FC925B2 /* CompanionPushNonceRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1F7DEDB57FDB370787B646 /* CompanionPushNonceRegistry.swift */; };
 		6694FCCBD604D6D56D6649F9 /* iTermUndoCloseArchives.swift in Sources */ = {isa = PBXBuildFile; fileRef = 753287DA1D6ED8E34A191526 /* iTermUndoCloseArchives.swift */; };
 		66ACA31A7AD33D24EE498F7C /* ai-models.json in Resources */ = {isa = PBXBuildFile; fileRef = DF18C01510605DB0C639038F /* ai-models.json */; };
+		672ABEB07B5A825EB2E75CAB /* iTermQuickLookDomainAllowlist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561FAB7268366F871453FFB8 /* iTermQuickLookDomainAllowlist.swift */; };
 		67C35F5A63227428A1D3D6F0 /* TmuxWorkgroupRepair.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8630327624AB2186EAAFB662 /* TmuxWorkgroupRepair.swift */; };
 		67C47D5F2F8DF88F92E26984 /* LLM+Mac.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BF2267B1164F44724EB0853 /* LLM+Mac.swift */; };
 		681A08D192AC9A47766AFAFC /* PTYSession+CodeReviewPromptMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = A910F0C87249E36FDB26F5A4 /* PTYSession+CodeReviewPromptMigration.swift */; };
@@ -9117,6 +9118,7 @@
 		4D1526B5EEFF52435633BD72 /* repl_banner-fr.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-fr.txt"; path = "sources/repl_banner-fr.txt"; sourceTree = "<group>"; };
 		0E76A3A866085A1F919D6219 /* repl_banner-zh-Hant.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-zh-Hant.txt"; path = "sources/repl_banner-zh-Hant.txt"; sourceTree = "<group>"; };
 		558E4A7A09D1C7875371E58C /* repl_banner-it.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-it.txt"; path = "sources/repl_banner-it.txt"; sourceTree = "<group>"; };
+		561FAB7268366F871453FFB8 /* iTermQuickLookDomainAllowlist.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermQuickLookDomainAllowlist.swift; sourceTree = "<group>"; };
 		20A217AA265878F2D1E2339D /* repl_banner-vi.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-vi.txt"; path = "sources/repl_banner-vi.txt"; sourceTree = "<group>"; };
 		9A5845214228257B63545200 /* repl_banner-pl.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-pl.txt"; path = "sources/repl_banner-pl.txt"; sourceTree = "<group>"; };
 		E6512E6DA4F450B6E5AA1021 /* repl_banner-es-US.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-es-US.txt"; path = "sources/repl_banner-es-US.txt"; sourceTree = "<group>"; };
@@ -13373,6 +13375,7 @@
 			children = (
 				1DECF9691BD948CC00E75FEB /* iTermQuickLookController.h */,
 				1DECF96A1BD948CC00E75FEB /* iTermQuickLookController.m */,
+				561FAB7268366F871453FFB8 /* iTermQuickLookDomainAllowlist.swift */,
 			);
 			path = QuickLook;
 			sourceTree = "<group>";
@@ -20794,6 +20797,7 @@
 				DE99387F4738F705DB245E77 /* UILanguageCase.swift in Sources */,
 				A62305DD709AEA800869BF10 /* ClaudeCodeStatusOverlay.swift in Sources */,
 				7F21CC66F413DBE8E2306AF2 /* iTermTabGroupNesting.swift in Sources */,
+				672ABEB07B5A825EB2E75CAB /* iTermQuickLookDomainAllowlist.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
