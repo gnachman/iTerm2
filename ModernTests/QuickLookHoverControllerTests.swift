@@ -118,6 +118,18 @@ private final class RecordingDelegate: iTermQuickLookHoverControllerDelegate {
     func hoverControllerPointerLocation() -> NSPoint? {
         return pointerLocation
     }
+
+    // The content cell at a point: 10-point columns and 16-point lines by default.
+    var cell: (NSPoint) -> iTermQuickLookHoverCell? = { point in
+        iTermQuickLookHoverCell(line: Int64((point.y / 16).rounded(.down)),
+                                column: Int32((point.x / 10).rounded(.down)))
+    }
+    var cellLookups = 0
+
+    func hoverControllerCell(at point: NSPoint) -> iTermQuickLookHoverCell? {
+        cellLookups += 1
+        return cell(point)
+    }
 }
 
 final class QuickLookHoverControllerTests: XCTestCase {
@@ -670,7 +682,6 @@ final class QuickLookHoverControllerTests: XCTestCase {
         controller.cueSettleDelay = 0.1
         move(pointOnA)
         XCTAssertEqual(delegate.cues, [urlA])
-
         controller.contentChanged()
         XCTAssertEqual(delegate.cueClearCount, 0, "a redraw that moved nothing keeps the cue")
 
@@ -682,150 +693,136 @@ final class QuickLookHoverControllerTests: XCTestCase {
         XCTAssertTrue(delegate.resolvedPoints.isEmpty)
     }
 
-    // Streaming output while scrolled back: the view moves, the link stays under the still pointer.
-    func testContentShiftKeepsThePendingOpenWhileTheLinkIsStillUnderThePointer() throws {
+    // Streaming output while scrolled back: lines drop off the top, so the view moves under the
+    // still pointer, but the pointer stays on the same text.
+    func testContentShiftOnTheSameCellKeepsThePendingOpenWithoutALookUp() throws {
         let movedRectA = rectA.offsetBy(dx: 0, dy: -32)
         let movedPoint = NSPoint(x: pointOnA.x, y: pointOnA.y - 32)
-        var linkRect = rectA
-        delegate.immediate = { [urlA] point in
-            linkRect.contains(point) ? .link(urlA, [linkRect]) : .noLink([])
-        }
-        controller.cueSettleDelay = 0.1
-        move(pointOnA)
-        XCTAssertEqual(delegate.cues, [urlA])
-
-        linkRect = movedRectA
-        delegate.pointerLocation = movedPoint
-        controller.contentShifted()
-        XCTAssertEqual(delegate.cueClearCount, 0)
-        XCTAssertEqual(delegate.cues, [urlA, urlA], "the cue moves with its link")
-
-        controller.contentShifted()
-        XCTAssertEqual(delegate.cues.count, 2, "unchanged rects don't re-show the cue")
-
-        scheduler.fire(delay: 0.75)
-        let open = try XCTUnwrap(delegate.opens.first)
-        XCTAssertEqual(delegate.opens.count, 1)
-        XCTAssertEqual(open.url, urlA)
-        XCTAssertEqual(open.linkRects, [movedRectA])
-        XCTAssertEqual(open.point, movedPoint)
-        XCTAssertTrue(delegate.resolvedPoints.isEmpty)
-    }
-
-    func testContentShiftDropsThePendingOpenWhenAnotherLinkIsUnderThePointer() {
-        let rectB = self.rectB
-        let urlB = self.urlB
-        var shifted = false
-        delegate.immediate = { [rectA, urlA] point in
-            if shifted {
-                return .link(urlB, [rectB])
-            }
-            return rectA.contains(point) ? .link(urlA, [rectA]) : .noLink([])
-        }
-        controller.cueSettleDelay = 0.1
-        move(pointOnA)
-        shifted = true
-        delegate.pointerLocation = pointOnB
-        controller.contentShifted()
-        XCTAssertEqual(delegate.cueClearCount, 1)
-        scheduler.fire(delay: 0.75)
-        XCTAssertTrue(delegate.opens.isEmpty, "the cued link scrolled out from under the pointer")
-    }
-
-    func testContentShiftDropsThePendingOpenWhenNoLinkIsUnderThePointer() {
+        delegate.cell = { _ in iTermQuickLookHoverCell(line: 7, column: 2) }
         delegate.immediate = { [rectA, urlA] point in
             rectA.contains(point) ? .link(urlA, [rectA]) : .noLink([])
         }
         controller.cueSettleDelay = 0.1
         move(pointOnA)
-        delegate.pointerLocation = pointNowhere
-        controller.contentShifted()
-        XCTAssertEqual(delegate.cueClearCount, 1)
-        scheduler.fire(delay: 0.75)
-        XCTAssertTrue(delegate.opens.isEmpty)
-    }
-
-    // A link only the asynchronous resolution can find is checked that way, and a pending open
-    // that fires meanwhile waits for the answer.
-    func testContentShiftChecksWithTheResolverAndTheOpenWaitsForIt() throws {
-        showCueOnA()
-        delegate.defersCompletion = true
-        delegate.pointerLocation = pointOnA
-        controller.contentShifted()
-        XCTAssertEqual(delegate.resolvedPoints, [pointOnA, pointOnA])
-        scheduler.fire(delay: 0.75)
-        XCTAssertTrue(delegate.opens.isEmpty, "the open waits for the check")
-
-        let completion = try XCTUnwrap(delegate.deferredCompletions.last)
-        completion(urlA, [rectA])
-        XCTAssertEqual(delegate.opens.count, 1)
-        XCTAssertEqual(delegate.opens.first?.url, urlA)
-        XCTAssertEqual(delegate.cueClearCount, 0)
-    }
-
-    func testContentShiftCheckThatResolvesToAnotherLinkDropsTheWaitingOpen() throws {
-        showCueOnA()
-        delegate.defersCompletion = true
-        delegate.pointerLocation = pointOnA
-        controller.contentShifted()
-        scheduler.fire(delay: 0.75)
-        let completion = try XCTUnwrap(delegate.deferredCompletions.last)
-        completion(urlB, [rectA])
-        XCTAssertTrue(delegate.opens.isEmpty)
-        XCTAssertEqual(delegate.cueClearCount, 1)
-    }
-
-    func testStaleContentShiftCheckIsIgnored() throws {
-        showCueOnA()
-        delegate.defersCompletion = true
-        delegate.pointerLocation = pointOnA
-        controller.contentShifted()
-        let first = try XCTUnwrap(delegate.deferredCompletions.last)
-        controller.contentShifted()
-        let second = try XCTUnwrap(delegate.deferredCompletions.last)
-        first(nil, [])
-        XCTAssertEqual(delegate.cueClearCount, 0, "a newer shift superseded this check")
-        second(urlA, [rectA])
-        scheduler.fire(delay: 0.75)
-        XCTAssertEqual(delegate.opens.count, 1)
-    }
-
-    func testContentShiftCheckSupersededByAPointerMoveIsIgnored() throws {
-        showCueOnA()
-        delegate.defersCompletion = true
-        delegate.pointerLocation = pointOnA
-        controller.contentShifted()
-        let superseded = try XCTUnwrap(delegate.deferredCompletions.last)
-        move(pointOnA)
-        superseded(nil, [])
-        XCTAssertEqual(delegate.cueClearCount, 0)
-        scheduler.fire(delay: 0.75)
-        XCTAssertEqual(delegate.opens.count, 1, "the move's own pending open still fires")
-    }
-
-    // Before anything is cued there is nothing to check: the timers resolve what is under the
-    // pointer, where it is now, when they fire.
-    func testContentShiftBeforeACueRetargetsTheTimersWithoutALookUp() {
-        controller.cueSettleDelay = 0.1
-        move(pointOnA)
+        XCTAssertEqual(delegate.cues, [urlA])
         let lookupsBefore = delegate.immediateLookups.count
-        let moved = NSPoint(x: pointOnA.x, y: pointOnA.y + 4)
-        delegate.pointerLocation = moved
+
+        delegate.pointerLocation = movedPoint
+        controller.contentShifted()
         controller.contentShifted()
         XCTAssertEqual(delegate.immediateLookups.count, lookupsBefore)
         XCTAssertTrue(delegate.resolvedPoints.isEmpty)
+        XCTAssertEqual(delegate.cueClearCount, 0)
+        XCTAssertEqual(delegate.cues, [urlA])
+
+        scheduler.fire(delay: 0.75)
+        let open = try XCTUnwrap(delegate.opens.first)
+        XCTAssertEqual(delegate.opens.count, 1)
+        XCTAssertEqual(open.url, urlA)
+        XCTAssertEqual(open.linkRects, [movedRectA], "the cue's regions move with the view")
+        XCTAssertEqual(open.point, movedPoint)
+        XCTAssertTrue(delegate.resolvedPoints.isEmpty)
+    }
+
+    // A plain-text URL needs the full resolution. Streaming output must not make it resolve again
+    // on every line, which would never finish while lines keep coming.
+    func testContentShiftOnTheSameCellKeepsAResolvedCueWithoutResolvingAgain() throws {
+        delegate.cell = { _ in iTermQuickLookHoverCell(line: 7, column: 2) }
+        showCueOnA()
+        XCTAssertEqual(delegate.resolvedPoints, [pointOnA])
+        let movedPoint = NSPoint(x: pointOnA.x, y: pointOnA.y - 16)
+        delegate.pointerLocation = movedPoint
+        for _ in 0..<5 {
+            controller.contentShifted()
+        }
+        XCTAssertEqual(delegate.resolvedPoints, [pointOnA])
+        scheduler.fire(delay: 0.75)
+        let open = try XCTUnwrap(delegate.opens.first)
+        XCTAssertEqual(open.url, urlA)
+        XCTAssertEqual(open.point, movedPoint)
+        XCTAssertEqual(delegate.resolvedPoints, [pointOnA])
+    }
+
+    // At the bottom while output streams: the text under the still pointer changes, so the pending
+    // hover is dropped and the link now under the pointer starts its own full delay.
+    func testContentShiftToAnotherCellRestartsTheDelayThere() throws {
+        showCueOnA()
+        delegate.resolution = (urlB, [rectB])
+        delegate.pointerLocation = pointOnB
+        controller.contentShifted()
+        XCTAssertEqual(delegate.cueClearCount, 1)
+        XCTAssertTrue(delegate.opens.isEmpty)
+        let openTimers = scheduler.items.filter { $0.delay == 0.75 }
+        XCTAssertEqual(openTimers.count, 2)
+        XCTAssertTrue(openTimers.first?.isCancelled ?? false, "the old link's delay is cancelled")
+        XCTAssertEqual(scheduler.active.map(\.delay).sorted(), [0.1, 0.75], "a fresh delay at the new point")
+
         scheduler.fire(delay: 0.1)
-        XCTAssertEqual(delegate.resolvedPoints, [moved])
+        XCTAssertEqual(delegate.cues, [urlA, urlB])
+        XCTAssertTrue(delegate.opens.isEmpty)
+        scheduler.fire(delay: 0.75)
+        let open = try XCTUnwrap(delegate.opens.first)
+        XCTAssertEqual(delegate.opens.count, 1)
+        XCTAssertEqual(open.url, urlB)
+        XCTAssertEqual(open.point, pointOnB)
+    }
+
+    func testContentShiftToAnotherCellDropsACommandHoverWithoutACue() {
+        configure(mode: .commandHover)
+        move(pointOnA, command: true)
+        delegate.pointerLocation = pointNowhere
+        controller.contentShifted()
+        XCTAssertEqual(scheduler.active.count, 1, "the move is replayed with Command still down")
+        scheduler.fire(delay: 0.75)
+        XCTAssertEqual(delegate.resolvedPoints, [pointNowhere])
+        XCTAssertTrue(delegate.opens.isEmpty, "the link that scrolled away does not open")
+    }
+
+    func testResolutionInFlightIsIgnoredAfterAShiftToAnotherCell() throws {
+        delegate.defersCompletion = true
+        move(pointOnA)
+        scheduler.fire(delay: 0.75)
+        let completion = try XCTUnwrap(delegate.deferredCompletions.last)
+        delegate.pointerLocation = pointNowhere
+        controller.contentShifted()
+        completion(urlA, [rectA])
+        XCTAssertTrue(delegate.opens.isEmpty)
+        XCTAssertTrue(delegate.cues.isEmpty)
+    }
+
+    func testCueResolutionInFlightIsIgnoredAfterAShiftToAnotherCell() throws {
+        controller.cueSettleDelay = 0.1
+        delegate.defersCompletion = true
+        move(pointOnA)
+        scheduler.fire(delay: 0.1)
+        let completion = try XCTUnwrap(delegate.deferredCompletions.last)
+        delegate.pointerLocation = pointNowhere
+        controller.contentShifted()
+        completion(urlA, [rectA])
+        XCTAssertTrue(delegate.cues.isEmpty)
+    }
+
+    func testResolutionInFlightSurvivesAShiftOnTheSameCell() throws {
+        delegate.cell = { _ in iTermQuickLookHoverCell(line: 7, column: 2) }
+        delegate.defersCompletion = true
+        move(pointOnA)
+        scheduler.fire(delay: 0.75)
+        let completion = try XCTUnwrap(delegate.deferredCompletions.last)
+        delegate.pointerLocation = pointOnA
+        controller.contentShifted()
+        completion(urlA, [rectA])
+        XCTAssertEqual(delegate.opens.count, 1)
     }
 
     func testContentShiftWithNothingPendingLooksNothingUp() {
         delegate.pointerLocation = pointOnA
         controller.contentShifted()
         openPreviewOnA()
-        scheduler.fire(delay: 0.75)
+        let cellLookupsBefore = delegate.cellLookups
         let lookupsBefore = delegate.immediateLookups.count
         let resolvesBefore = delegate.resolvedPoints.count
         controller.contentShifted()
+        XCTAssertEqual(delegate.cellLookups, cellLookupsBefore)
         XCTAssertEqual(delegate.immediateLookups.count, lookupsBefore)
         XCTAssertEqual(delegate.resolvedPoints.count, resolvesBefore)
     }
@@ -842,13 +839,16 @@ final class QuickLookHoverControllerTests: XCTestCase {
         XCTAssertEqual(delegate.cues, [urlA])
     }
 
-    func testContentShiftAwayFromAPendingCueKeepsTheOpenPreviewsCue() {
+    func testContentShiftToAnotherCellKeepsTheOpenPreviewsCue() {
         openPreviewWithCueOnA()
-        delegate.pointerLocation = pointOnA
-        delegate.resolution = (nil, [])
+        delegate.resolution = (urlB, [rectB])
+        move(pointOnB)
+        delegate.pointerLocation = pointNowhere
         controller.contentShifted()
         XCTAssertEqual(delegate.cueClearCount, 0)
         XCTAssertEqual(delegate.cues, [urlA])
+        scheduler.fire(delay: 0.75)
+        XCTAssertEqual(delegate.opens.count, 1)
     }
 
     func testFocusLossCancelsAPendingOpenButKeepsTheOpenPreviewsCue() {

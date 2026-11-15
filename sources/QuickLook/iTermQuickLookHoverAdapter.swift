@@ -29,6 +29,9 @@ final class iTermQuickLookHoverHostCallbacks: NSObject {
     @objc var clearCue: (() -> Void)?
     // Where the pointer is now, as an NSPoint value, or nil when it is not over the view.
     @objc var pointerLocation: (() -> NSValue?)?
+    // The content cell at a point, numbered so that it keeps its number while lines scroll off the
+    // top (the line includes the lines dropped so far).
+    @objc var absoluteCell: ((_ point: NSPoint) -> VT100GridAbsCoord)?
 }
 
 // The answer to iTermQuickLookHoverHostCallbacks.lookUpLinkImmediately.
@@ -156,6 +159,13 @@ final class iTermQuickLookHoverAdapter: NSObject, iTermQuickLookHoverControllerD
 
     func hoverControllerPointerLocation() -> NSPoint? {
         return host.pointerLocation?()?.pointValue
+    }
+
+    func hoverControllerCell(at point: NSPoint) -> iTermQuickLookHoverCell? {
+        guard let coord = host.absoluteCell?(point) else {
+            return nil
+        }
+        return iTermQuickLookHoverCell(line: coord.y, column: coord.x)
     }
 
     func hoverControllerPreviewFrame() -> NSRect? {

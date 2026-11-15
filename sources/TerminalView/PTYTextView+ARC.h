@@ -113,9 +113,12 @@ iTermURLActionHelperDelegate>
 - (void)quickLookHoverKeyDown;
 - (void)quickLookHoverScrolled;
 // The content may have moved under the pointer (overflow, screen scroll, resize), not just redrawn:
-// keeps a pending hover cue and open while the pointer is still on the cued link and drops them
-// otherwise.
+// keeps a pending hover cue and open while the pointer is still on the same content cell, and
+// otherwise drops them and treats the pointer as having just moved there.
 - (void)quickLookHoverContentShifted;
+// The content cell at a point, with the lines dropped off the top counted in, so a cell keeps its
+// number while lines scroll off.
+- (VT100GridAbsCoord)quickLookHoverAbsoluteCellAtPoint:(NSPoint)point;
 // What the view shows changed, so links may have moved: forgets a rejected link and moves the
 // pending cue's URL bar to where its link is now.
 - (void)quickLookHoverContentChanged;

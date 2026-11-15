@@ -1188,6 +1188,9 @@ iTermCommandInfoViewControllerDelegate>
     callbacks.pointerLocation = ^NSValue *{
         return [weakSelf quickLookHoverPointerLocation];
     };
+    callbacks.absoluteCell = ^VT100GridAbsCoord(NSPoint point) {
+        return [weakSelf quickLookHoverAbsoluteCellAtPoint:point];
+    };
     self.quickLookHoverAdapter = [[iTermQuickLookHoverAdapter alloc] initWithHost:callbacks];
     return self.quickLookHoverAdapter;
 }
@@ -1204,6 +1207,11 @@ iTermCommandInfoViewControllerDelegate>
         return nil;
     }
     return [NSValue valueWithPoint:point];
+}
+
+- (VT100GridAbsCoord)quickLookHoverAbsoluteCellAtPoint:(NSPoint)point {
+    const VT100GridCoord coord = [self coordForPoint:point allowRightMarginOverflow:NO];
+    return VT100GridAbsCoordFromCoord(coord, [self.dataSource totalScrollbackOverflow]);
 }
 
 - (BOOL)quickLookHoverWantsMouseMovementEvents {

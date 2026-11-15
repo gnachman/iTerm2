@@ -304,6 +304,29 @@ final class PTYTextViewQuickLookHoverImmediateCueTests: XCTestCase {
         XCTAssertFalse(valid.boolValue, "the link scrolled out of the buffer")
     }
 
+    // Scrolled back while output streams into a full scrollback, the view keeps showing the same
+    // text, one line higher in the view for each line dropped off the top. The cell under the
+    // still pointer keeps its number because it counts the dropped lines. (This view has no scroll
+    // view, so points map into the bottom screen; the scrolled-back geometry is manual step 31.)
+    func testAbsoluteCellCountsTheLinesDroppedOffTheTop() {
+        let config = VT100MutableScreenConfiguration()
+        config.unlimitedScrollback = false
+        config.maxScrollbackLines = 10
+        config.isDirty = true
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.setConfig(config)
+        })
+        feed(String(repeating: "\r\n", count: 30))
+        let overflow = screen.totalScrollbackOverflow()
+        XCTAssertGreaterThan(overflow, 0, "precondition: lines scrolled off the top")
+
+        let p = point(4, 12)
+        let relative = textView.coord(for: p, allowRightMarginOverflow: false)
+        let cell = textView.quickLookHoverAbsoluteCell(at: p)
+        XCTAssertEqual(cell.x, relative.x)
+        XCTAssertEqual(cell.y, Int64(relative.y) + overflow)
+    }
+
     func testPlainTextIsNotALinkByDefault() {
         feed("see https://example.com/y here")
 

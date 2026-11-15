@@ -161,13 +161,18 @@ Use Settings > Pointer > Quick Look. Defaults: delay 0.75s, close after 1.5s.
     (Settings > Profiles > Terminal, for example 100 lines), print a link,
     then run `while true; do date; sleep 0.2; done`. Mode Hover, with a long
     hover delay.
-    a. At the bottom: rest on the link and keep the pointer still. Once the
-       output moves the link out from under the pointer, its underline and
-       bottom URL bar go away and no preview of it opens.
+    a. At the bottom: rest on the link and keep the pointer still. Each new
+       line moves different text under the pointer, so its underline and
+       bottom URL bar go away and no preview opens, neither of the link that
+       scrolled away nor of a link that scrolls under the still pointer.
     b. Scrolled back: scroll up so the link stays on screen while the output
        keeps arriving, and rest on it. The underline and URL bar stay, the
        URL bar anchored to the link, and the preview opens after the delay,
        both before and after lines start dropping off the top of the full
        scrollback.
+    c. Repeat a and b with a plain-text URL (print one without OSC 8) and
+       “Also preview web addresses that aren’t hyperlinks” on. Same
+       results: never opens at the bottom, opens after the delay when
+       scrolled back.
     With a hover preview already open, the scrolling leaves its link
     underlined. Press Ctrl-C to stop.

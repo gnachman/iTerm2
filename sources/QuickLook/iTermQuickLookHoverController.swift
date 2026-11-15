@@ -43,6 +43,13 @@ final class iTermQuickLookTimerScheduler: iTermQuickLookScheduling {
     }
 }
 
+// A cell of the terminal's content, numbered so that it keeps its number while lines scroll off
+// the top. Compared to tell whether the text under a still pointer moved.
+struct iTermQuickLookHoverCell: Equatable {
+    let line: Int64
+    let column: Int32
+}
+
 // What the host can tell synchronously, on a pointer move, about the link under a point.
 enum iTermQuickLookHoverImmediateLookup: Equatable {
     // A link that hover may preview, and the regions it occupies.
@@ -77,6 +84,9 @@ protocol iTermQuickLookHoverControllerDelegate: AnyObject {
     // Where the pointer is now, or nil when it is not over the view. Asked after the content moved
     // without a pointer event, when the point of the last move may no longer be where the pointer is.
     func hoverControllerPointerLocation() -> NSPoint?
+    // The content cell at `point`, or nil when unknown. Cheap: asked on each move that starts a
+    // pending open and again when the content moves under the pointer.
+    func hoverControllerCell(at point: NSPoint) -> iTermQuickLookHoverCell?
 }
 
 @objc(iTermQuickLookHoverController)
@@ -110,12 +120,13 @@ class iTermQuickLookHoverController: NSObject {
     // Where the pending open and pending cue resolve the link. Follows the pointer when the content
     // moves under it without a pointer event.
     private var pendingPoint: NSPoint?
-    // Bumped on each content shift, so only the latest shift's check of the pending cue counts.
-    private var shiftGeneration = 0
-    // True while a content shift's check of the pending cue is outstanding. A pending open that
-    // fires meanwhile waits for it, since the cue it would reuse may be stale.
-    private var checkingShiftedCue = false
-    private var openWaitsForShiftCheck = false
+    // The content cell under pendingPoint. When the content moves under a still pointer, the hover
+    // stays pending only if the pointer is still on this cell.
+    private var pendingCell: iTermQuickLookHoverCell?
+    // The inputs of the last pointer move, to replay it when the text under the pointer changes.
+    private var commandDown = false
+    private var optionDown = false
+    private var windowActive = false
 
     private var openURL: URL?
     private var linkRects = [NSRect]()
@@ -150,6 +161,9 @@ class iTermQuickLookHoverController: NSObject {
     // MARK: - Inputs
 
     @objc func pointerMoved(to point: NSPoint, commandDown: Bool, optionDown: Bool, windowActive: Bool) {
+        self.commandDown = commandDown
+        self.optionDown = optionDown
+        self.windowActive = windowActive
         cancelPendingOpen()
         if let cue, !cue.linkRects.contains(where: { $0.contains(point) }) {
             clearPendingCue()
@@ -198,12 +212,15 @@ class iTermQuickLookHoverController: NSObject {
             }
         }
         pendingPoint = point
+        pendingCell = delegate?.hoverControllerCell(at: point)
         pendingOpen = scheduler.schedule(after: delay) { [weak self] in
             self?.resolve()
         }
     }
 
     @objc func modifiersChanged(commandDown: Bool, optionDown: Bool) {
+        self.commandDown = commandDown
+        self.optionDown = optionDown
         if mode == .commandHover && !(commandDown && !optionDown) {
             cancelPendingOpen()
         }
@@ -247,13 +264,15 @@ class iTermQuickLookHoverController: NSObject {
 
     // The content may have moved under the pointer without a pointer event (lines dropped off the
     // top of a full scrollback, the screen scrolled, a resize). This happens on every line of
-    // streaming output, often while the link under the pointer stays put (scrolled back), so the
-    // pending cue and open are kept while the pointer is still on the cued link, with the link's
-    // new regions, and dropped otherwise. The cue of an open preview stays.
+    // streaming output. While the pointer is still on the same content cell (scrolled back, so the
+    // text under it did not move) the pending hover stays. Otherwise the pending open and cue are
+    // dropped, along with any resolution in flight, and the pointer counts as having just moved to
+    // where it is now. The cue of an open preview stays.
     @objc func contentShifted() {
         rejectedLinkRects = []
-        let pendingCueURL = cueBelongsToOpenPreview ? nil : cue?.url
-        guard pendingOpen != nil || pendingCue != nil || pendingCueURL != nil else {
+        let hasPendingCue = cue != nil && !cueBelongsToOpenPreview
+        // pendingPoint outlives the timers while their resolution is in flight.
+        guard pendingPoint != nil || hasPendingCue else {
             return
         }
         guard let point = delegate?.hoverControllerPointerLocation() else {
@@ -261,46 +280,20 @@ class iTermQuickLookHoverController: NSObject {
             clearPendingCue()
             return
         }
-        pendingPoint = point
-        guard let pendingCueURL else {
-            // Nothing is cued yet, so the timers resolve whatever is under the pointer when they fire.
-            return
-        }
-        shiftGeneration += 1
-        checkingShiftedCue = true
-        let expectedGeneration = generation
-        let expectedShiftGeneration = shiftGeneration
-        let completion: (URL?, [NSRect]) -> Void = { [weak self] url, rects in
-            guard let self,
-                  self.generation == expectedGeneration,
-                  self.shiftGeneration == expectedShiftGeneration else {
-                return
+        if let pendingCell, delegate?.hoverControllerCell(at: point) == pendingCell {
+            // The view moved under the still pointer by whole lines, and the link with it.
+            if let pendingPoint {
+                let dy = point.y - pendingPoint.y
+                if dy != 0, hasPendingCue, let cue {
+                    self.cue = (cue.url, cue.linkRects.map { $0.offsetBy(dx: 0, dy: dy) })
+                }
             }
-            self.shiftedCueChecked(expectedURL: pendingCueURL, url: url, linkRects: rects, at: point)
-        }
-        switch delegate?.hoverControllerLookUpLinkImmediately(at: point) ?? .unknown {
-        case let .link(url, rects):
-            completion(url, rects)
-        case .noLink:
-            completion(nil, [])
-        case .unknown:
-            delegate?.hoverControllerResolveLink(at: point, completion: completion)
-        }
-    }
-
-    private func shiftedCueChecked(expectedURL: URL, url: URL?, linkRects rects: [NSRect], at point: NSPoint) {
-        checkingShiftedCue = false
-        guard url == expectedURL, rects.contains(where: { $0.contains(point) }) else {
-            cancelPendingOpen()
-            clearPendingCue()
+            pendingPoint = point
             return
         }
-        // Re-shows the cue only if the link's regions changed.
-        showCueIfWanted(url: expectedURL, linkRects: rects)
-        if openWaitsForShiftCheck {
-            openWaitsForShiftCheck = false
-            resolve()
-        }
+        cancelPendingOpen()
+        clearPendingCue()
+        pointerMoved(to: point, commandDown: commandDown, optionDown: optionDown, windowActive: windowActive)
     }
 
     // The app or window lost focus.
@@ -362,8 +355,7 @@ class iTermQuickLookHoverController: NSObject {
         pendingCue?.cancel()
         pendingCue = nil
         pendingPoint = nil
-        checkingShiftedCue = false
-        openWaitsForShiftCheck = false
+        pendingCell = nil
         generation += 1
     }
 
@@ -435,11 +427,8 @@ class iTermQuickLookHoverController: NSObject {
         guard let point = pendingPoint else {
             return
         }
-        if checkingShiftedCue {
-            openWaitsForShiftCheck = true
-            return
-        }
         if let cue, cue.linkRects.contains(where: { $0.contains(point) }) {
+            resolutionFinished()
             resolved(url: cue.url, linkRects: cue.linkRects, at: point)
             return
         }
@@ -451,8 +440,15 @@ class iTermQuickLookHoverController: NSObject {
             guard let self, self.generation == expectedGeneration else {
                 return
             }
+            self.resolutionFinished()
             self.resolved(url: url, linkRects: rects, at: point)
         }
+    }
+
+    // Nothing is pending any more, so a content shift has nothing to check.
+    private func resolutionFinished() {
+        pendingPoint = nil
+        pendingCell = nil
     }
 
     private func resolveCue() {
