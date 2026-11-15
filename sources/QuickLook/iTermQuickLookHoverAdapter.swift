@@ -49,6 +49,18 @@ final class iTermQuickLookHoverAdapter: NSObject, iTermQuickLookHoverControllerD
         return iTermQuickLookHoverMode(rawValue: Int(iTermPreferences.int(forKey: kPreferenceKeyQuickLookHoverMode))) ?? .off
     }
 
+    // Hover previews only OSC 8 hyperlinks unless the user also wants plain-text URLs found by URL
+    // detection, which often grab neighboring text (such as escape sequences in a command line).
+    // Force press and the context menu are not gated by this.
+    @objc(shouldHoverPreviewURLThatIsOSC8:includesPlainTextURLs:)
+    static func shouldHoverPreview(isOSC8: Bool, includesPlainTextURLs: Bool) -> Bool {
+        return isOSC8 || includesPlainTextURLs
+    }
+
+    @objc static var includesPlainTextURLs: Bool {
+        return iTermPreferences.bool(forKey: kPreferenceKeyQuickLookHoverIncludesPlainTextURLs)
+    }
+
     @objc func reloadPreferences() {
         mode = Self.currentMode
         controller.configure(mode: mode,

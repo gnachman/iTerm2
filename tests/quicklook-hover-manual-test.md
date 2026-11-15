@@ -107,3 +107,14 @@ Use Settings > Pointer > Quick Look. Defaults: delay 0.75s, close after 1.5s.
     Settings > General > Language & Region, for example Germany): the delay
     shows as 0,75; typing 0,5 stores half a second and leaves “Never”
     unchecked; typing 0.5 works too.
+21. Plain-text web addresses, default settings (“Also preview web addresses
+    that aren’t hyperlinks” off): resting on a plain-text URL, and on the
+    `printf '\e]8;;https://linear.app/\e\\Linear home...'` command line itself,
+    opens nothing. Resting on the OSC 8 link that command prints opens it.
+22. Check “Also preview web addresses that aren’t hyperlinks”: resting on a
+    plain-text URL now opens it after the delay. Uncheck it again: it stops,
+    without a restart.
+23. With the checkbox off, force press (or right-click > Quick Look Link) a
+    plain-text URL: it still previews.
+24. The checkbox is disabled while the mode is Off and enabled in Hover and
+    ⌘ + Hover.

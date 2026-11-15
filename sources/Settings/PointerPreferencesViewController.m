@@ -49,6 +49,7 @@ NSString *const kPointerPrefsSemanticHistoryEnabledChangedNotification = @"kPoin
     // Not bound to a key of its own: checked means the close delay is 0 (never close).
     IBOutlet NSButton *_quickLookHoverNeverClose;
     IBOutlet NSTextField *_quickLookHoverDomainAllowlist;
+    IBOutlet NSButton *_quickLookHoverIncludesPlainTextURLs;
     PreferenceInfo *_quickLookHoverAutoCloseDelayInfo;
 }
 
@@ -166,6 +167,14 @@ NSString *const kPointerPrefsSemanticHistoryEnabledChangedNotification = @"kPoin
                            key:kPreferenceKeyQuickLookHoverDomainAllowlist
                    relatedView:nil
                           type:kPreferenceInfoTypeStringTextField];
+    [self setShouldBeEnabled:hoverIsOn
+                     forInfo:info
+                dependencies:@[ kPreferenceKeyQuickLookHoverMode ]];
+
+    info = [self defineControl:_quickLookHoverIncludesPlainTextURLs
+                           key:kPreferenceKeyQuickLookHoverIncludesPlainTextURLs
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
     [self setShouldBeEnabled:hoverIsOn
                      forInfo:info
                 dependencies:@[ kPreferenceKeyQuickLookHoverMode ]];

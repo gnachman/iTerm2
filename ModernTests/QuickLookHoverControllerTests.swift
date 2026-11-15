@@ -564,4 +564,12 @@ final class QuickLookHoverControllerTests: XCTestCase {
         move(pointNowhere)
         XCTAssertEqual(scheduler.items.filter { $0.delay == 1.5 && !$0.isCancelled }.count, 1)
     }
+
+    // Hover previews OSC 8 hyperlinks always, and plain-text URLs only when the user opts in.
+    func testHoverPreviewsOnlyHyperlinksUnlessPlainTextURLsAreIncluded() {
+        XCTAssertTrue(iTermQuickLookHoverAdapter.shouldHoverPreview(isOSC8: true, includesPlainTextURLs: false))
+        XCTAssertTrue(iTermQuickLookHoverAdapter.shouldHoverPreview(isOSC8: true, includesPlainTextURLs: true))
+        XCTAssertFalse(iTermQuickLookHoverAdapter.shouldHoverPreview(isOSC8: false, includesPlainTextURLs: false))
+        XCTAssertTrue(iTermQuickLookHoverAdapter.shouldHoverPreview(isOSC8: false, includesPlainTextURLs: true))
+    }
 }

@@ -62,7 +62,8 @@
                                          @"_focusOnRightOrMiddleClick",
                                          @"_reportHorizontalScrollEvents",
                                          @"_quickLookUsesBrowserEngine",
-                                         @"_quickLookHoverNeverClose" ];
+                                         @"_quickLookHoverNeverClose",
+                                         @"_quickLookHoverIncludesPlainTextURLs" ];
     for (NSString *outlet in checkboxes) {
         NSButton *button = [NSButton checkboxWithTitle:outlet target:nil action:nil];
         [vc setValue:button forKey:outlet];
@@ -96,7 +97,8 @@
     return @[ [vc valueForKey:@"_quickLookHoverDelay"],
               [vc valueForKey:@"_quickLookHoverAutoCloseDelay"],
               [vc valueForKey:@"_quickLookHoverNeverClose"],
-              [vc valueForKey:@"_quickLookHoverDomainAllowlist"] ];
+              [vc valueForKey:@"_quickLookHoverDomainAllowlist"],
+              [vc valueForKey:@"_quickLookHoverIncludesPlainTextURLs"] ];
 }
 
 - (void)testIncludingSubviewsStartsDisabledWhenFocusFollowsMouseIsOff {

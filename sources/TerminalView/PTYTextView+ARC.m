@@ -1285,6 +1285,12 @@ iTermCommandInfoViewControllerDelegate>
             completion(nil, @[]);
             return;
         }
+        if (![iTermQuickLookHoverAdapter shouldHoverPreviewURLThatIsOSC8:action.osc8
+                                                  includesPlainTextURLs:[iTermQuickLookHoverAdapter includesPlainTextURLs]]) {
+            DLog(@"Not previewing %@ on hover: not an OSC 8 hyperlink", action.string);
+            completion(nil, @[]);
+            return;
+        }
         NSURL *url = [strongSelf urlForQuickLookWithURLAction:action withEvent:nil];
         if (!url) {
             completion(nil, @[]);

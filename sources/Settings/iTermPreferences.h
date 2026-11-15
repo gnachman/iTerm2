@@ -366,6 +366,7 @@ extern NSString *const kPreferenceKeyQuickLookHoverMode;  // iTermQuickLookHover
 extern NSString *const kPreferenceKeyQuickLookHoverDelay;  // double, seconds
 extern NSString *const kPreferenceKeyQuickLookHoverAutoCloseDelay;  // double, seconds
 extern NSString *const kPreferenceKeyQuickLookHoverDomainAllowlist;  // string, comma/whitespace separated
+extern NSString *const kPreferenceKeyQuickLookHoverIncludesPlainTextURLs;  // BOOL: hover also previews URLs that aren't OSC 8 hyperlinks
 extern NSString *const kPreferenceKeyControlLeftClickBypassesContextMenu;
 extern NSString *const kPreferenceKeyRightClickClickBypassesContextMenu;
 extern NSString *const kPreferenceKeyOptionClickMovesCursor;

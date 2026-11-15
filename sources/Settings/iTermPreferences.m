@@ -185,6 +185,7 @@ NSString *const kPreferenceKeyQuickLookHoverMode = @"QuickLookHoverMode";
 NSString *const kPreferenceKeyQuickLookHoverDelay = @"QuickLookHoverDelay";
 NSString *const kPreferenceKeyQuickLookHoverAutoCloseDelay = @"QuickLookHoverAutoCloseDelay";
 NSString *const kPreferenceKeyQuickLookHoverDomainAllowlist = @"QuickLookHoverDomainAllowlist";
+NSString *const kPreferenceKeyQuickLookHoverIncludesPlainTextURLs = @"QuickLookHoverIncludesPlainTextURLs";
 NSString *const kPreferenceKeyControlLeftClickBypassesContextMenu = @"PassOnControlClick";
 NSString *const kPreferenceKeyRightClickClickBypassesContextMenu = @"ReportRightClick";
 NSString *const kPreferenceKeyOptionClickMovesCursor = @"OptionClickMovesCursor";
@@ -918,6 +919,7 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
                   kPreferenceKeyQuickLookHoverDelay: @0.75,
                   kPreferenceKeyQuickLookHoverAutoCloseDelay: @1.5,
                   kPreferenceKeyQuickLookHoverDomainAllowlist: @"",
+                  kPreferenceKeyQuickLookHoverIncludesPlainTextURLs: @NO,
                   kPreferenceKeyControlLeftClickBypassesContextMenu: @NO,
                   kPreferenceKeyRightClickClickBypassesContextMenu: @NO,
                   kPreferenceKeyOptionClickMovesCursor: @YES,
