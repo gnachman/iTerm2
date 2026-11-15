@@ -1255,6 +1255,10 @@ iTermCommandInfoViewControllerDelegate>
     [self.quickLookHoverAdapter.controller scrolled];
 }
 
+- (void)quickLookHoverContentShifted {
+    [self.quickLookHoverAdapter.controller contentShifted];
+}
+
 - (void)quickLookHoverContentChanged {
     [self.quickLookHoverAdapter.controller contentChanged];
     [self quickLookHoverUpdateCueURLBar];

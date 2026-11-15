@@ -231,6 +231,15 @@ class iTermQuickLookHoverController: NSObject {
         rejectedLinkRects = []
     }
 
+    // The content moved under the pointer without a pointer event (lines dropped off the top of a
+    // full scrollback, the screen scrolled, a resize), so the pending cue and the pending open may
+    // point at a link that is no longer there. Drop them; the cue of an open preview stays.
+    @objc func contentShifted() {
+        cancelPendingOpen()
+        clearPendingCue()
+        rejectedLinkRects = []
+    }
+
     // The app or window lost focus.
     @objc func deactivated() {
         cancelPendingOpen()

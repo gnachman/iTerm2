@@ -3545,7 +3545,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     // See if any characters are dirty and mark them as needing to be redrawn.
     // Return if anything was found to be blinking.
     __block BOOL foundBlink = NO;
-    __block BOOL contentChanged = (scrollbackOverflow > 0 || frameDidChange || syncResult.haveScrolled);
+    const BOOL contentShifted = (scrollbackOverflow > 0 || frameDidChange || syncResult.haveScrolled);
+    __block BOOL contentChanged = contentShifted;
     [self.dataSource performBlockWithSavedGrid:^(id<PTYTextViewSynchronousUpdateStateReading>  _Nullable state) {
         BOOL foundDirty = NO;
         foundBlink = [self updateDirtyRects:&foundDirty haveScrolled:syncResult.haveScrolled] || [self isCursorBlinking];
@@ -3556,6 +3557,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         }
         [self searchForVisibleBlocks];
     }];
+    if (contentShifted) {
+        [self quickLookHoverContentShifted];
+    }
     if (contentChanged) {
         [self quickLookHoverContentChanged];
     }

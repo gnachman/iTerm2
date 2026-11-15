@@ -157,10 +157,13 @@ Use Settings > Pointer > Quick Look. Defaults: delay 0.75s, close after 1.5s.
     does not come back when you later move the pointer over plain text in the
     first pane. With a hover preview open, switching panes the same way keeps
     the link underlined until the preview closes.
-31. URL bar follows the link while output scrolls: in a profile with a small
+31. Output scrolling drops a pending hover: in a profile with a small
     scrollback (Settings > Profiles > Terminal, for example 100 lines), print
-    a link, then run `while true; do date; sleep 0.2; done`. Mode Hover:
-    while the output scrolls, rest on the link before the preview opens (use
-    a long hover delay). The bottom URL bar stays anchored to the link, moving
-    aside when the link passes under it, and hides once the link scrolls out
-    of the scrollback. Press Ctrl-C to stop.
+    a link, then run `while true; do date; sleep 0.2; done`. Mode Hover, with
+    a long hover delay: rest on the link and keep the pointer still while the
+    output scrolls. The underline and bottom URL bar go away as soon as the
+    output moves the link, and no preview opens for the link that scrolled
+    away, even once lines start dropping off the top of the full scrollback.
+    Moving the pointer onto a link again shows the cue again. With a hover
+    preview already open, the scrolling leaves its link underlined. Press
+    Ctrl-C to stop.

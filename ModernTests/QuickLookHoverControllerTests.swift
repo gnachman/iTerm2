@@ -643,6 +643,7 @@ final class QuickLookHoverControllerTests: XCTestCase {
             { $0.keyDown() },
             { $0.scrolled() },
             { $0.focusLost() },
+            { $0.contentShifted() },
             { $0.deactivated() },
         ]
         for (i, cancel) in cancels.enumerated() {
@@ -653,6 +654,36 @@ final class QuickLookHoverControllerTests: XCTestCase {
             scheduler.fire(delay: 0.75)
             XCTAssertTrue(delegate.opens.isEmpty)
         }
+    }
+
+    func testContentShiftDropsThePendingOpenAndCue() {
+        delegate.immediate = { [rectA, urlA] point in
+            rectA.contains(point) ? .link(urlA, [rectA]) : .noLink([])
+        }
+        controller.cueSettleDelay = 0.1
+        move(pointOnA)
+        XCTAssertEqual(delegate.cues, [urlA])
+
+        controller.contentChanged()
+        XCTAssertEqual(delegate.cueClearCount, 0, "a redraw that moved nothing keeps the cue")
+
+        controller.contentShifted()
+        XCTAssertEqual(delegate.cueClearCount, 1)
+        scheduler.fire(delay: 0.75)
+        XCTAssertTrue(delegate.opens.isEmpty, "the cued link may have scrolled out from under the pointer")
+        XCTAssertTrue(delegate.resolvedPoints.isEmpty)
+    }
+
+    func testContentShiftCancelsAPendingOpenButKeepsTheOpenPreviewsCue() {
+        openPreviewWithCueOnA()
+        move(pointInPreview)
+        delegate.resolution = (urlB, [rectB])
+        move(pointOnB)
+        controller.contentShifted()
+        scheduler.fire(delay: 0.75)
+        XCTAssertEqual(delegate.opens.count, 1, "the pending open on the other link is dropped")
+        XCTAssertEqual(delegate.cueClearCount, 0)
+        XCTAssertEqual(delegate.cues, [urlA])
     }
 
     private func openPreviewWithCueOnA() {
@@ -670,6 +701,7 @@ final class QuickLookHoverControllerTests: XCTestCase {
         controller.keyDown()
         controller.scrolled()
         controller.focusLost()
+        controller.contentShifted()
         XCTAssertEqual(delegate.cueClearCount, 0, "the cue marks the open preview's link until it closes")
         XCTAssertEqual(delegate.cues, [urlA])
     }
@@ -857,6 +889,7 @@ final class QuickLookHoverControllerTests: XCTestCase {
             { $0.keyDown() },
             { $0.mouseDown() },
             { $0.focusLost() },
+            { $0.contentShifted() },
             { $0.deactivated() },
         ]
         let onA2 = NSPoint(x: 30, y: 18)
