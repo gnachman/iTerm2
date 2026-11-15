@@ -117,6 +117,9 @@ iTermURLActionHelperDelegate>
 // Removes the underline because this view or its window lost focus, but keeps the hover cue’s
 // underline while the preview it marks is open: opening that preview can take key briefly.
 - (BOOL)removeUnderlineForFocusChange;
+// This view lost keyboard focus, for example to another split pane: drops a pending hover cue, but
+// not the cue of an open hover preview.
+- (void)quickLookHoverResignedFirstResponder;
 // Puts the hover cue’s underline back if a focus change removed it while its preview is open.
 - (void)quickLookHoverRestoreCueUnderline;
 // Looks up the OSC 8 hyperlink at a point cheaply and records it as the last resolution, so its

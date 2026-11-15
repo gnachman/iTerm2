@@ -151,3 +151,9 @@ Use Settings > Pointer > Quick Look. Defaults: delay 0.75s, close after 1.5s.
     Command Info window there. A link in the command’s output still gets the
     cue and opens. With the advanced setting off, the prompt link behaves like
     any other link.
+30. Split the window into two panes. Mode Hover: rest on a link in the
+    focused pane until the cue shows, then before the preview opens press
+    ⌘] (or ⌘⌥ and an arrow) to focus the other pane. The cue goes away and
+    does not come back when you later move the pointer over plain text in the
+    first pane. With a hover preview open, switching panes the same way keeps
+    the link underlined until the preview closes.

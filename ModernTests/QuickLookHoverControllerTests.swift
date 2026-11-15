@@ -637,11 +637,12 @@ final class QuickLookHoverControllerTests: XCTestCase {
         XCTAssertEqual(delegate.cueClearCount, 1)
     }
 
-    func testCueClearsOnClickKeyScrollAndDeactivation() {
+    func testCueClearsOnClickKeyScrollFocusLossAndDeactivation() {
         let cancels: [(iTermQuickLookHoverController) -> Void] = [
             { $0.mouseDown() },
             { $0.keyDown() },
             { $0.scrolled() },
+            { $0.focusLost() },
             { $0.deactivated() },
         ]
         for (i, cancel) in cancels.enumerated() {
@@ -668,6 +669,7 @@ final class QuickLookHoverControllerTests: XCTestCase {
         controller.mouseDown()
         controller.keyDown()
         controller.scrolled()
+        controller.focusLost()
         XCTAssertEqual(delegate.cueClearCount, 0, "the cue marks the open preview's link until it closes")
         XCTAssertEqual(delegate.cues, [urlA])
     }

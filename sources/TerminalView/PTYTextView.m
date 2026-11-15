@@ -619,6 +619,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     DLog(@"resign first responder: reset numTouches to 0");
     _mouseHandler.numTouches = 0;
     [_mouseHandler didResignFirstResponder];
+    [self quickLookHoverResignedFirstResponder];
     [self removeUnderlineForFocusChange];
     [self placeFindCursorOnAutoHide];
     [_delegate textViewDidResignFirstResponder];

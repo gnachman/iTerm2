@@ -1431,6 +1431,18 @@ iTermCommandInfoViewControllerDelegate>
     return [self removeUnderline];
 }
 
+- (void)quickLookHoverResignedFirstResponder {
+    if ([self quickLookHoverCueBelongsToOpenPreview]) {
+        return;
+    }
+    // A pending cue would otherwise come back on the next underline update in this view.
+    if (self.quickLookHoverAdapter) {
+        [self.quickLookHoverAdapter.controller focusLost];
+    } else {
+        [self quickLookHoverClearCue];
+    }
+}
+
 - (void)quickLookHoverRestoreCueUnderline {
     if (![self quickLookHoverCueBelongsToOpenPreview]) {
         return;

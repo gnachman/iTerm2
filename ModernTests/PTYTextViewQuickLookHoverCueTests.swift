@@ -103,6 +103,25 @@ final class PTYTextViewQuickLookHoverCueTests: XCTestCase {
         assertNoUnderline()
     }
 
+    // Moving focus to another split pane leaves the window key, so only resigning first responder
+    // tells this view. A pending cue must not survive to come back on the next underline update.
+    func testResigningFirstResponderClearsPendingCue() {
+        showCue(previewOpen: false)
+
+        XCTAssertTrue(textView.resignFirstResponder())
+
+        XCTAssertNil(textView.quickLookHoverCueURL, "underline updates put back the underline of a set cue")
+        assertNoUnderline()
+    }
+
+    func testResigningFirstResponderKeepsCueOfOpenPreview() {
+        showCue(previewOpen: true)
+
+        XCTAssertTrue(textView.resignFirstResponder())
+
+        XCTAssertEqual(textView.quickLookHoverCueURL, "https://example.com/")
+    }
+
     func testBecomingFirstResponderRestoresCueWhilePreviewOpen() {
         showCue(previewOpen: true)
         textView.removeUnderline()

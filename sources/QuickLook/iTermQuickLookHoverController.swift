@@ -192,6 +192,17 @@ class iTermQuickLookHoverController: NSObject {
         clearPendingCue()
     }
 
+    // The view lost keyboard focus, for example to another split pane. A pending cue would linger
+    // unseen and come back on the next underline update, so drop it; the cue of an open preview
+    // stays.
+    @objc func focusLost() {
+        guard !openingPreview else {
+            return
+        }
+        cancelPendingOpen()
+        clearPendingCue()
+    }
+
     // The app or window lost focus.
     @objc func deactivated() {
         cancelPendingOpen()
