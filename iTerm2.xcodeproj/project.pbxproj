@@ -1254,6 +1254,7 @@
 		A1F1A091602C6C5597DFE2B6 /* iTermOpenQuicklyHotKeyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629D4C69CD80D78E2E014C6 /* iTermOpenQuicklyHotKeyProvider.swift */; };
 		A2663A4E2BC1C85588A6821A /* iTermTabGroupOrdering.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4EF5664748E7D360CA86213 /* iTermTabGroupOrdering.swift */; };
 		A2E21711A1810B5CFD3A9ECF /* CompanionPixelBufferPool.swift in Sources */ = {isa = PBXBuildFile; fileRef = E989C0EC904E3E213AA6115A /* CompanionPixelBufferPool.swift */; };
+		A3275920513B30BC4D53A3C3 /* iTermQuickLookHoverController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDD8386174BE2C15575D8060 /* iTermQuickLookHoverController.swift */; };
 		A39EE4DF4278D752D3E9CA21 /* iTermJobInfoPopoverViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34C838CC7F84A22E7B7E3385 /* iTermJobInfoPopoverViewController.swift */; };
 		A445EEDC85D346B39596FDC3 /* iTermLayoutCalculator.h in Headers */ = {isa = PBXBuildFile; fileRef = 93EDFB853885460AA504C6B9 /* iTermLayoutCalculator.h */; };
 		A4DA57992DB5D9D843661F94 /* it2-remote in Resources */ = {isa = PBXBuildFile; fileRef = E7CD7C850CA3B436FB0CF26C /* it2-remote */; };
@@ -9114,6 +9115,7 @@
 		DD57633605653C5F00F1905E /* iTerm2.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = iTerm2.plist; sourceTree = "<group>"; };
 		DD87977CEA15B31D5760F6AF /* iTermQuickLookEngineSelector.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermQuickLookEngineSelector.swift; sourceTree = "<group>"; };
 		DD9D1349FBD6A0D5773D908F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SSHConfigurationWindow.xib; sourceTree = "<group>"; };
+		DDD8386174BE2C15575D8060 /* iTermQuickLookHoverController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermQuickLookHoverController.swift; sourceTree = "<group>"; };
 		DDF0FD63062916F70080EF74 /* iTermApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermApplication.h; sourceTree = "<group>"; tabWidth = 4; };
 		DDF0FD64062916F70080EF74 /* iTermApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = iTermApplication.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		DE33CBB56EA96FD0239D8CED /* OrchestratorError.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OrchestratorError.swift; sourceTree = "<group>"; };
@@ -13381,6 +13383,7 @@
 				1DECF96A1BD948CC00E75FEB /* iTermQuickLookController.m */,
 				561FAB7268366F871453FFB8 /* iTermQuickLookDomainAllowlist.swift */,
 				DD87977CEA15B31D5760F6AF /* iTermQuickLookEngineSelector.swift */,
+				DDD8386174BE2C15575D8060 /* iTermQuickLookHoverController.swift */,
 			);
 			path = QuickLook;
 			sourceTree = "<group>";
@@ -20806,6 +20809,7 @@
 				672ABEB07B5A825EB2E75CAB /* iTermQuickLookDomainAllowlist.swift in Sources */,
 				ACB1062ED8C5903FF5E7D361 /* iTermBrowserEngineDefaults.swift in Sources */,
 				D82D468AF6651A19663994A8 /* iTermQuickLookEngineSelector.swift in Sources */,
+				A3275920513B30BC4D53A3C3 /* iTermQuickLookHoverController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
