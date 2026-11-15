@@ -59,17 +59,25 @@ final class QuickLookDomainAllowlistTests: XCTestCase {
         XCTAssertFalse(allowlist.allows(url("https://example.de/")))
     }
 
+    // "." is empty once its trailing dot is removed, so it is dropped as unusable.
     func testUnnormalizableEntryFailsClosed() {
-        let allowlist = iTermQuickLookDomainAllowlist(string: "\u{FFFF}.com")
+        let allowlist = iTermQuickLookDomainAllowlist(string: ".")
         XCTAssertFalse(allowlist.isEmpty)
         XCTAssertFalse(allowlist.allows(url("https://example.com")))
         XCTAssertFalse(allowlist.allows(url("http://example.com")))
     }
 
     func testUnnormalizableEntryDoesNotDropUsableOnes() {
-        let allowlist = iTermQuickLookDomainAllowlist(string: "\u{FFFF}.com, linear.app")
+        let allowlist = iTermQuickLookDomainAllowlist(string: "., linear.app")
         XCTAssertTrue(allowlist.allows(url("https://linear.app/x")))
         XCTAssertFalse(allowlist.allows(url("https://example.com")))
+    }
+
+    // The part before "@" is user info, so the host here is evil.com.
+    func testUserInfoDoesNotSpoofHost() {
+        let allowlist = iTermQuickLookDomainAllowlist(string: "linear.app")
+        XCTAssertFalse(allowlist.allows(url("https://linear.app@evil.com/")))
+        XCTAssertFalse(allowlist.allows(url("https://user:linear.app@evil.com/")))
     }
 
     func testDefaultsAreOff() {

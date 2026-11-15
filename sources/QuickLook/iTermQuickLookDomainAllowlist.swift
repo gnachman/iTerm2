@@ -15,8 +15,9 @@ import Foundation
 }
 
 struct iTermQuickLookDomainAllowlist {
-    // Entries that could be normalized. An entry that cannot be (for example an invalid internationalized
-    // name) is absent here, so it never matches, but it still counts toward isEmpty.
+    // Entries that could be normalized. An entry that cannot be (one that is empty once its trailing
+    // dots are removed, such as ".") is absent here, so it never matches, but it still counts toward
+    // isEmpty.
     private let entries: [String]
     private let suppliedEntryCount: Int
 
