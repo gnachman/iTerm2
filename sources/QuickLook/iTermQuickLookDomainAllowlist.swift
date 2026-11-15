@@ -34,8 +34,16 @@ struct iTermQuickLookDomainAllowlist {
         return suppliedEntryCount == 0
     }
 
+    // True for http and https addresses, the only ones a preview loads or hands on.
+    static func isWebURL(_ url: URL) -> Bool {
+        guard let scheme = url.scheme?.lowercased() else {
+            return false
+        }
+        return scheme == "http" || scheme == "https"
+    }
+
     func allows(_ url: URL) -> Bool {
-        guard let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https" else {
+        guard Self.isWebURL(url) else {
             return false
         }
         if isEmpty {

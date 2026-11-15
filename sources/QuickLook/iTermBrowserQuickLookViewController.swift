@@ -23,9 +23,10 @@ class iTermBrowserQuickLookViewController: NSViewController, WKUIDelegate, WKNav
     // The popover hosting this controller. The close button closes it.
     @objc weak var presentingPopover: NSPopover?
     // Set for previews opened by hovering a link. Until the user clicks into the preview, JavaScript
-    // alert and confirm dialogs are answered without being shown (alert dismissed, confirm declined),
-    // so resting the pointer on a link can’t put up an app-modal dialog.
-    @objc var suppressesJavaScriptDialogsUntilClicked = false
+    // alert and confirm dialogs are answered without being shown (alert dismissed, confirm declined)
+    // and pop-up windows are refused, so resting the pointer on a link can’t put up an app-modal
+    // dialog or a window.
+    @objc var suppressesInterruptionsUntilClicked = false
 
     private let initialURL: URL
     private var popups = [(panel: NSPanel, webView: WKWebView)]()
@@ -34,8 +35,8 @@ class iTermBrowserQuickLookViewController: NSViewController, WKUIDelegate, WKNav
     private var tornDown = false
     private var userClicked = false
 
-    var suppressesJavaScriptDialogs: Bool {
-        return suppressesJavaScriptDialogsUntilClicked && !userClicked
+    var suppressesInterruptions: Bool {
+        return suppressesInterruptionsUntilClicked && !userClicked
     }
 
     @objc(initWithURL:)
@@ -193,11 +194,17 @@ class iTermBrowserQuickLookViewController: NSViewController, WKUIDelegate, WKNav
 
     // MARK: - Actions
 
+    // The page to hand on to a browser. Only a web address is handed on; anything else (about:blank,
+    // or a scheme a page navigated to) falls back to the address the preview opened.
     private var currentURL: URL {
-        if let url = webView.url, url.absoluteString != "about:blank" {
-            return url
+        return Self.urlToHandOn(current: webView.url, initial: initialURL)
+    }
+
+    static func urlToHandOn(current: URL?, initial: URL) -> URL {
+        if let current, iTermQuickLookDomainAllowlist.isWebURL(current) {
+            return current
         }
-        return initialURL
+        return initial
     }
 
     @objc private func closeButtonPressed(_ sender: Any?) {
@@ -253,10 +260,18 @@ class iTermBrowserQuickLookViewController: NSViewController, WKUIDelegate, WKNav
         guard navigationAction.targetFrame == nil else {
             return nil
         }
-        if navigationAction.navigationType == .linkActivated,
-           let url = navigationAction.request.url {
-            // A target=_blank link. Follow it in place rather than opening a window.
-            webView.load(URLRequest(url: url))
+        if suppressesInterruptions {
+            DLog("Not opening a window from a preview the user hasn’t clicked into")
+            return nil
+        }
+        if navigationAction.navigationType == .linkActivated {
+            // A target=_blank link. Follow it in place rather than opening a window, but only to a
+            // web address.
+            if let url = navigationAction.request.url, iTermQuickLookDomainAllowlist.isWebURL(url) {
+                webView.load(URLRequest(url: url))
+            } else {
+                DLog("Not following a target=_blank link to a non-web address")
+            }
             return nil
         }
         // A script opened a window, as OAuth sign-in does. It must be a real web view created with
@@ -275,7 +290,7 @@ class iTermBrowserQuickLookViewController: NSViewController, WKUIDelegate, WKNav
                  runJavaScriptAlertPanelWithMessage message: String,
                  initiatedByFrame frame: WKFrameInfo,
                  completionHandler: @escaping () -> Void) {
-        if suppressesJavaScriptDialogs {
+        if suppressesInterruptions {
             DLog("Not showing a JavaScript alert in a preview the user hasn’t clicked into")
             completionHandler()
             return
@@ -293,7 +308,7 @@ class iTermBrowserQuickLookViewController: NSViewController, WKUIDelegate, WKNav
                  runJavaScriptConfirmPanelWithMessage message: String,
                  initiatedByFrame frame: WKFrameInfo,
                  completionHandler: @escaping (Bool) -> Void) {
-        if suppressesJavaScriptDialogs {
+        if suppressesInterruptions {
             DLog("Declining a JavaScript confirm in a preview the user hasn’t clicked into")
             completionHandler(false)
             return
@@ -309,6 +324,29 @@ class iTermBrowserQuickLookViewController: NSViewController, WKUIDelegate, WKNav
     }
 
     // MARK: - WKNavigationDelegate
+
+    // A preview shows only web pages. A main-frame navigation elsewhere (file:, a custom scheme) is
+    // cancelled. about: stays allowed because tearDown unloads the page with about:blank. Subframes
+    // are left alone: WebKit uses about:srcdoc, data: and blob: for them internally.
+    func webView(_ webView: WKWebView,
+                 decidePolicyFor navigationAction: WKNavigationAction,
+                 decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        decisionHandler(Self.policy(for: navigationAction))
+    }
+
+    static func policy(for navigationAction: WKNavigationAction) -> WKNavigationActionPolicy {
+        if let targetFrame = navigationAction.targetFrame, !targetFrame.isMainFrame {
+            return .allow
+        }
+        guard let url = navigationAction.request.url else {
+            return .cancel
+        }
+        if iTermQuickLookDomainAllowlist.isWebURL(url) || url.scheme?.lowercased() == "about" {
+            return .allow
+        }
+        DLog("Cancelling a preview navigation to a non-web address: \(url.scheme ?? "(none)")")
+        return .cancel
+    }
 
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
         if webView === self.webView, let url = webView.url {

@@ -176,3 +176,16 @@ Use Settings > Pointer > Quick Look. Defaults: delay 0.75s, close after 1.5s.
        scrolled back.
     With a hover preview already open, the scrolling leaves its link
     underlined. Press Ctrl-C to stop.
+32. Pop-ups and non-web addresses, browser engine on. Serve a page that calls
+    `window.open("https://example.com")` on load (for example
+    `printf '<script>window.open("https://example.com")</script>' > /tmp/p.html`
+    and `python3 -m http.server -d /tmp 8000`, then print
+    `http://localhost:8000/p.html` as a link).
+    a. Rest on the link: the preview opens and no pop-up window appears.
+    b. Click into the preview, then start a Google sign-in on a real site
+       (as in 4): its pop-up panel opens and sign-in completes.
+    c. Force press the same link: the pop-up opens on load, as before.
+    d. In a preview, follow a link to a `file:` URL (or one that redirects to
+       a custom scheme such as `zoommtg:`): the preview stays on its page.
+       “Open in iTerm2 Browser” and “Open in <browser>” then open the last
+       web page shown, never the other address.
