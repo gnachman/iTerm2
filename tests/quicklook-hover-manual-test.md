@@ -118,9 +118,13 @@ Use Settings > Pointer > Quick Look. Defaults: delay 0.75s, close after 1.5s.
     plain-text URL: it still previews.
 24. The checkbox is disabled while the mode is Off and enabled in Hover and
     ⌘ + Hover.
-25. Hover cue, mode Hover: rest on an OSC 8 link. Within about 0.1s the link
-    gets the solid underline and its URL shows in the bar at the bottom of the
-    pane, as with Cmd-hover, but the pointer stays the I-beam. When the
+25. Hover cue, mode Hover: move the pointer onto an OSC 8 link. The link gets
+    the solid underline and its URL shows in the bar at the bottom of the pane
+    the instant the pointer enters it, with no pause (as with Cmd-hover), and
+    both go away the instant it leaves; sweep across a line of several links
+    and the underline follows the pointer link by link. The pointer stays the
+    I-beam. With the plain-text checkbox on, plain-text URLs still get the cue
+    only after the pointer rests about 0.1s. When the
     preview opens, the bottom URL bar hides (the preview’s own bar shows the
     URL) and the underline stays for as long as the preview is open, including
     the moment it opens (watch the link as the popover appears: it must not

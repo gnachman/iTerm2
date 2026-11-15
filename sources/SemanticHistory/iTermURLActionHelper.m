@@ -115,6 +115,25 @@
     return canceller;
 }
 
+- (URLAction *)hypertextLinkActionAtCoord:(VT100GridCoord)visualCoord {
+    if (visualCoord.y < 0) {
+        return nil;
+    }
+    if ([self.delegate urlActionHelper:self imageInfoAt:visualCoord]) {
+        // A click opens the image rather than the link.
+        return nil;
+    }
+    iTermTextExtractor *extractor = [self.delegate urlActionHelperNewTextExtractor:self];
+    extractor.supportBidi = [iTermPreferences bidiEnabled];
+    const VT100GridCoord logicalCoord = [extractor logicalCoordForVisualCoord:visualCoord];
+    if ([extractor characterAt:logicalCoord].code == 0) {
+        return nil;
+    }
+    // Divider columns are logical, so pick the window with the logical coord.
+    [extractor restrictToLogicalWindowIncludingCoord:logicalCoord];
+    return [iTermURLActionFactory urlActionForHypertextLinkAtCoord:logicalCoord extractor:extractor];
+}
+
 - (NSURL *)urlForCopyAtCoord:(VT100GridCoord)visualCoord {
     if (visualCoord.y < 0) {
         return nil;

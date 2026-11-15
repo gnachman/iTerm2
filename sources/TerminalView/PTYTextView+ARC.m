@@ -1149,6 +1149,10 @@ iTermCommandInfoViewControllerDelegate>
         }
         [strongSelf quickLookHoverResolveLinkAt:point completion:completion];
     };
+    callbacks.lookUpLinkImmediately = ^iTermQuickLookHoverImmediateLink *(NSPoint point) {
+        return [weakSelf quickLookHoverImmediateLinkAt:point
+                                 includesPlainTextURLs:[iTermQuickLookHoverAdapter includesPlainTextURLs]];
+    };
     callbacks.openPreview = ^BOOL(NSURL *url, NSPoint point) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) {
@@ -1330,6 +1334,34 @@ iTermCommandInfoViewControllerDelegate>
                                                   [strongSelf.dataSource totalScrollbackOverflow]);
         completion(url, [strongSelf rectsForVisualRange:action.visualRange]);
     }];
+}
+
+// Looks up the OSC 8 hyperlink at point (in this view's coordinates) without semantic history,
+// smart selection or filesystem work, so the hover cue can show on the move that enters the link.
+// Returns nil when only -quickLookHoverResolveLinkAt:completion: can tell, which is for plain-text
+// URLs when hover includes them, and a link with a nil URL when nothing there would preview.
+- (iTermQuickLookHoverImmediateLink *)quickLookHoverImmediateLinkAt:(NSPoint)point
+                                             includesPlainTextURLs:(BOOL)includesPlainTextURLs {
+    iTermQuickLookHoverImmediateLink *noLink = [[iTermQuickLookHoverImmediateLink alloc] initWithURL:nil rects:@[]];
+    const VT100GridCoord requestCoord = [self coordForPoint:point allowRightMarginOverflow:YES];
+    const VT100GridCoord coord = [self coordForPoint:point allowRightMarginOverflow:NO];
+    URLAction *action = [_urlActionHelper hypertextLinkActionAtCoord:requestCoord];
+    if (!action) {
+        return includesPlainTextURLs ? nil : noLink;
+    }
+    if (!VT100GridWindowedRangeContainsCoord(action.visualRange, coord)) {
+        return noLink;
+    }
+    NSURL *url = [self urlForQuickLookWithURLAction:action withEvent:nil];
+    if (!url) {
+        return noLink;
+    }
+    self.quickLookHoverResolvedURL = url;
+    self.quickLookHoverResolvedVisualRange = action.visualRange;
+    self.quickLookHoverResolvedUnderlinedRange =
+        VT100GridAbsWindowedRangeFromRelative(action.logicalRange, [self.dataSource totalScrollbackOverflow]);
+    return [[iTermQuickLookHoverImmediateLink alloc] initWithURL:url
+                                                           rects:[self rectsForVisualRange:action.visualRange]];
 }
 
 - (void)quickLookHoverShowCueForURL:(NSURL *)url {

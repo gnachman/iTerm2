@@ -15,6 +15,9 @@ final class iTermQuickLookHoverHostCallbacks: NSObject {
     // Finds the web link under a point. Calls the completion with nil when there is none, and with
     // NSRect values covering the link otherwise.
     @objc var resolveLink: ((_ point: NSPoint, _ completion: @escaping (URL?, [NSValue]) -> Void) -> Void)?
+    // Looks up the link under a point synchronously and cheaply. Returns nil when only resolveLink
+    // can tell, and a link with a nil URL when nothing there would preview.
+    @objc var lookUpLinkImmediately: ((_ point: NSPoint) -> iTermQuickLookHoverImmediateLink?)?
     // Returns NO if the host declined to open a preview.
     @objc var openPreview: ((_ url: URL, _ point: NSPoint) -> Bool)?
     @objc var closePreview: (() -> Void)?
@@ -23,6 +26,22 @@ final class iTermQuickLookHoverHostCallbacks: NSObject {
     // Shows that the link at `url`, last returned by resolveLink, will preview.
     @objc var showCue: ((_ url: URL) -> Void)?
     @objc var clearCue: (() -> Void)?
+}
+
+// The answer to iTermQuickLookHoverHostCallbacks.lookUpLinkImmediately.
+@objc(iTermQuickLookHoverImmediateLink)
+final class iTermQuickLookHoverImmediateLink: NSObject {
+    // nil when nothing at the point would preview.
+    @objc let url: URL?
+    // The regions the link occupies, as NSRect values.
+    @objc let rects: [NSValue]
+
+    @objc(initWithURL:rects:)
+    init(url: URL?, rects: [NSValue]) {
+        self.url = url
+        self.rects = rects
+        super.init()
+    }
 }
 
 @objc(iTermQuickLookHoverAdapter)
@@ -103,6 +122,16 @@ final class iTermQuickLookHoverAdapter: NSObject, iTermQuickLookHoverControllerD
         resolveLink(point) { url, rects in
             completion(url, rects.map { $0.rectValue })
         }
+    }
+
+    func hoverControllerLookUpLinkImmediately(at point: NSPoint) -> iTermQuickLookHoverImmediateLookup {
+        guard let link = host.lookUpLinkImmediately?(point) else {
+            return .unknown
+        }
+        guard let url = link.url else {
+            return .noLink
+        }
+        return .link(url, link.rects.map { $0.rectValue })
     }
 
     func hoverControllerOpenPreview(url: URL, linkRects: [NSRect], at point: NSPoint) -> Bool {

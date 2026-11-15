@@ -43,11 +43,24 @@ final class iTermQuickLookTimerScheduler: iTermQuickLookScheduling {
     }
 }
 
+// What the host can tell synchronously, on a pointer move, about the link under a point.
+enum iTermQuickLookHoverImmediateLookup: Equatable {
+    // A link that hover may preview, and the regions it occupies.
+    case link(URL, [NSRect])
+    // Nothing there would preview, so there is no need to resolve it later.
+    case noLink
+    // Only the full (asynchronous) resolution can tell.
+    case unknown
+}
+
 protocol iTermQuickLookHoverControllerDelegate: AnyObject {
     // Finds the link under `point`. The completion may be called synchronously or later. `url` is nil
     // when there is no link; `linkRects` are the regions the link occupies.
     func hoverControllerResolveLink(at point: NSPoint,
                                     completion: @escaping (_ url: URL?, _ linkRects: [NSRect]) -> Void)
+    // A cheap synchronous look at the link under `point`, done on pointer moves so the cue can show
+    // as soon as the pointer enters a link.
+    func hoverControllerLookUpLinkImmediately(at point: NSPoint) -> iTermQuickLookHoverImmediateLookup
     // Shows a preview for `url`, replacing any preview this controller opened earlier. Returns false
     // if the host declined (for example because the user opened a preview some other way); the
     // controller's earlier preview, if any, is then left as it was.
@@ -71,8 +84,9 @@ class iTermQuickLookHoverController: NSObject {
     private var delay: TimeInterval = 0
     private var autoCloseDelay: TimeInterval = 0
     private var allowlist = iTermQuickLookDomainAllowlist(string: "")
-    // How long the pointer must rest before the link under it is resolved to show the cue. nil
-    // turns the cue off. Only used in Hover mode, and only when shorter than the hover delay.
+    // How long the pointer must rest before the link under it is resolved to show the cue, for links
+    // the delegate can't look up immediately. nil turns the cue off. Only used in Hover mode, and
+    // the settle timer only when shorter than the hover delay.
     var cueSettleDelay: TimeInterval?
 
     // Timer for resolving the link the pointer is resting on. Replaced on every qualifying move.
@@ -133,9 +147,23 @@ class iTermQuickLookHoverController: NSObject {
             clearPendingCue()
             return
         }
-        if cue == nil, let settle = cueSettleDelay, mode == .hover, settle < delay {
-            pendingCue = scheduler.schedule(after: settle) { [weak self] in
-                self?.resolveCue(at: point)
+        // While the pointer stays inside the cue's link there is nothing new to look up.
+        if cue == nil, let settle = cueSettleDelay, mode == .hover {
+            switch delegate?.hoverControllerLookUpLinkImmediately(at: point) ?? .unknown {
+            case let .link(url, rects):
+                guard allowlist.allows(url), rects.contains(where: { $0.contains(point) }) else {
+                    return
+                }
+                // The open timer reuses this, so the link isn't resolved again.
+                showCueIfWanted(url: url, linkRects: rects)
+            case .noLink:
+                return
+            case .unknown:
+                if settle < delay {
+                    pendingCue = scheduler.schedule(after: settle) { [weak self] in
+                        self?.resolveCue(at: point)
+                    }
+                }
             }
         }
         pendingOpen = scheduler.schedule(after: delay) { [weak self] in

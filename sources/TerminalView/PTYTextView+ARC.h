@@ -19,6 +19,7 @@
 @protocol iTermContentNavigationShortcutView;
 @protocol iTermTextDataSource;
 @class iTermProgress;
+@class iTermQuickLookHoverImmediateLink;
 @class iTermBlurredScreenshotSelectionRegion;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -118,6 +119,12 @@ iTermURLActionHelperDelegate>
 - (BOOL)removeUnderlineForFocusChange;
 // Puts the hover cue’s underline back if a focus change removed it while its preview is open.
 - (void)quickLookHoverRestoreCueUnderline;
+// Looks up the OSC 8 hyperlink at a point cheaply and records it as the last resolution, so its
+// cue can show without resolving again. Nil means only the full resolution can tell.
+- (iTermQuickLookHoverImmediateLink * _Nullable)quickLookHoverImmediateLinkAt:(NSPoint)point
+                                             includesPlainTextURLs:(BOOL)includesPlainTextURLs;
+// Shows the hover cue (underline and URL bar) for the last resolved link.
+- (void)quickLookHoverShowCueForURL:(NSURL *)url;
 
 #pragma mark - Copy to Pasteboard
 

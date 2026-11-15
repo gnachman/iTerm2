@@ -77,6 +77,16 @@ private final class RecordingDelegate: iTermQuickLookHoverControllerDelegate {
         }
     }
 
+    // The synchronous lookup's answer for a point. Unknown by default, which leaves the cue to the
+    // settle timer.
+    var immediate: (NSPoint) -> iTermQuickLookHoverImmediateLookup = { _ in .unknown }
+    var immediateLookups = [NSPoint]()
+
+    func hoverControllerLookUpLinkImmediately(at point: NSPoint) -> iTermQuickLookHoverImmediateLookup {
+        immediateLookups.append(point)
+        return immediate(point)
+    }
+
     func hoverControllerOpenPreview(url: URL, linkRects: [NSRect], at point: NSPoint) -> Bool {
         opens.append(Open(url: url, linkRects: linkRects, point: point))
         onOpen?()
@@ -748,5 +758,95 @@ final class QuickLookHoverControllerTests: XCTestCase {
         move(pointNowhere)
         delegate.deferredCompletions.first?(urlA, [rectA])
         XCTAssertTrue(delegate.cues.isEmpty)
+    }
+
+    // MARK: - Immediate cue
+
+    // An OSC 8 hyperlink occupying rectA, with plain text everywhere else.
+    private func useImmediateHyperlinkOnA() {
+        controller.cueSettleDelay = 0.1
+        let rectA = self.rectA
+        let urlA = self.urlA
+        delegate.immediate = { point in
+            rectA.contains(point) ? .link(urlA, [rectA]) : .noLink
+        }
+    }
+
+    func testCueShowsOnTheFirstMoveIntoAHyperlink() {
+        useImmediateHyperlinkOnA()
+        move(pointOnA)
+        XCTAssertEqual(delegate.cues, [urlA], "no timer has fired")
+        XCTAssertEqual(scheduler.active.map(\.delay), [0.75], "no settle timer")
+        XCTAssertTrue(delegate.resolvedPoints.isEmpty)
+
+        scheduler.fire(delay: 0.75)
+        XCTAssertEqual(delegate.opens.map(\.url), [urlA])
+        XCTAssertTrue(delegate.resolvedPoints.isEmpty, "the open reuses the immediate lookup")
+        XCTAssertEqual(delegate.cueClearCount, 0)
+    }
+
+    func testCueClearsOnTheFirstMoveOutOfAHyperlink() {
+        useImmediateHyperlinkOnA()
+        move(pointOnA)
+        move(pointNowhere)
+        XCTAssertEqual(delegate.cueClearCount, 1)
+        XCTAssertTrue(scheduler.active.isEmpty, "nothing to resolve on plain text")
+    }
+
+    func testMovesInsideTheHyperlinkDoNotLookItUpAgain() {
+        useImmediateHyperlinkOnA()
+        move(pointOnA)
+        move(NSPoint(x: 30, y: 18))
+        move(NSPoint(x: 90, y: 20))
+        XCTAssertEqual(delegate.immediateLookups, [pointOnA])
+        XCTAssertEqual(delegate.cues, [urlA])
+        XCTAssertEqual(delegate.cueClearCount, 0)
+    }
+
+    func testNoCueOrResolutionOnPlainText() {
+        useImmediateHyperlinkOnA()
+        move(pointNowhere)
+        XCTAssertTrue(delegate.cues.isEmpty)
+        XCTAssertTrue(scheduler.items.isEmpty)
+        XCTAssertTrue(delegate.resolvedPoints.isEmpty)
+    }
+
+    func testAllowlistGatesTheImmediateCue() {
+        configure(allowlist: "example.org")
+        useImmediateHyperlinkOnA()
+        move(pointOnA)
+        XCTAssertTrue(delegate.cues.isEmpty)
+        XCTAssertTrue(scheduler.items.isEmpty)
+    }
+
+    func testUnknownLinksWaitForTheSettleTimer() {
+        controller.cueSettleDelay = 0.1
+        delegate.immediate = { _ in .unknown }
+        move(pointOnA)
+        XCTAssertTrue(delegate.cues.isEmpty)
+        XCTAssertEqual(scheduler.active.map(\.delay).sorted(), [0.1, 0.75])
+        scheduler.fire(delay: 0.1)
+        XCTAssertEqual(delegate.cues, [urlA])
+    }
+
+    func testNoImmediateLookupOutsideHoverMode() {
+        useImmediateHyperlinkOnA()
+        configure(mode: .commandHover)
+        move(pointOnA, command: true)
+        configure(mode: .off)
+        move(pointOnA)
+        XCTAssertTrue(delegate.immediateLookups.isEmpty)
+        XCTAssertTrue(delegate.cues.isEmpty)
+    }
+
+    func testImmediateCueStaysWhileItsPreviewIsOpen() {
+        useImmediateHyperlinkOnA()
+        move(pointOnA)
+        scheduler.fire(delay: 0.75)
+        move(pointInPreview)
+        move(pointNowhere)
+        XCTAssertEqual(delegate.cueClearCount, 0)
+        controller.previewClosed()
+        XCTAssertEqual(delegate.cueClearCount, 1)
     }
 }
