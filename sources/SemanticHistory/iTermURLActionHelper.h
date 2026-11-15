@@ -91,7 +91,8 @@ launchProfileInCurrentTerminal:(Profile *)profile
 - (NSURL * _Nullable)urlForCopyAtCoord:(VT100GridCoord)coord;
 
 // Synchronously returns the action for the OSC 8 hyperlink under the visual `coord`, covering the
-// whole link, or nil when there is none (or an image is there). It reads only cell attributes, with
+// whole link, or nil when there is none, an image is there, or a shell prompt is there (⌘-click
+// prefers both over the link). It reads only cell attributes and marks, with
 // no semantic history, smart selection or filesystem work, so it is cheap enough for every mouse
 // move. The action has no working directory.
 - (URLAction * _Nullable)hypertextLinkActionAtCoord:(VT100GridCoord)coord;

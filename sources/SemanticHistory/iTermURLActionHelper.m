@@ -131,6 +131,10 @@
     }
     // Divider columns are logical, so pick the window with the logical coord.
     [extractor restrictToLogicalWindowIncludingCoord:logicalCoord];
+    if ([iTermURLActionFactory urlActionForPromptAtCoord:logicalCoord extractor:extractor]) {
+        // A click shows the prompt's command info rather than opening the link.
+        return nil;
+    }
     return [iTermURLActionFactory urlActionForHypertextLinkAtCoord:logicalCoord extractor:extractor];
 }
 

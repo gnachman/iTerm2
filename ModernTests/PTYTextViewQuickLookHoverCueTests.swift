@@ -262,6 +262,27 @@ final class PTYTextViewQuickLookHoverImmediateCueTests: XCTestCase {
         XCTAssertNil(lookUp(8, 0, plainText: true))
     }
 
+    private func osc133(_ body: String) -> String {
+        return "\u{1b}]133;\(body)\u{07}"
+    }
+
+    // ⌘-click on a prompt shows its command info instead of opening a hyperlink in it, so hover
+    // must not cue or preview that hyperlink either.
+    func testHyperlinkInsideAShellPromptIsNotALink() {
+        // The prompt “x lnk ” has the hyperlink in cells 2 through 4; the command “ls” follows it.
+        feed(osc133("A") + "x " + hyperlink("https://example.com/p", "lnk") + " " + osc133("B") +
+             "ls\r\n" + osc133("C") + hyperlink("https://example.com/o", "out") + "\r\n")
+
+        var range = VT100GridWindowedRange()
+        XCTAssertNotNil(screen.commandMark(at: VT100GridCoordMake(3, 0), mustHaveCommand: true, range: &range),
+                        "precondition: the prompt has a command mark: \(screen.compactLineDump())")
+        let link = lookUp(3, 0)
+        XCTAssertNotNil(link, "a definite answer, so nothing is resolved later")
+        XCTAssertNil(link?.url)
+        XCTAssertEqual(lookUp(1, 1)?.url, URL(string: "https://example.com/o"),
+                       "a hyperlink in the command's output is still a link")
+    }
+
     func testHyperlinksThatAreNotWebAddressesAreNotLinks() {
         feed(hyperlink("file:///tmp/z", "file") + " " + hyperlink("mailto:a@example.com", "mail"))
 

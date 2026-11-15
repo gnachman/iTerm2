@@ -391,23 +391,28 @@ static NSString *iTermAnchored(NSString *regex) {
 #pragma mark - Sub-factories
 
 - (URLAction *)urlActionForPrompt {
+    return [iTermURLActionFactory urlActionForPromptAtCoord:self.coord extractor:self.extractor];
+}
+
++ (URLAction *)urlActionForPromptAtCoord:(VT100GridCoord)coord
+                               extractor:(iTermTextExtractor *)extractor {
     if (![iTermAdvancedSettingsModel enableCmdClickPromptForShowCommandInfo]) {
         return nil;
     }
     VT100GridWindowedRange range = { 0 };
-    id<VT100ScreenMarkReading> mark = [self.extractor.dataSource commandMarkAt:self.coord
-                                                               mustHaveCommand:YES
-                                                                         range:&range];
+    id<VT100ScreenMarkReading> mark = [extractor.dataSource commandMarkAt:coord
+                                                          mustHaveCommand:YES
+                                                                    range:&range];
     if (!mark ||
         mark.promptRange.start.x < 0 ||
         !mark.firstLineOfCommand ||
-        !VT100GridWindowedRangeContainsCoord(range, self.coord)) {
+        !VT100GridWindowedRangeContainsCoord(range, coord)) {
         return nil;
     }
     URLAction *action = [URLAction actionToShowCommandInfoForMark:mark
-                                                            coord:self.coord];
+                                                            coord:coord];
     action.logicalRange = range;
-    action.visualRange = [self.extractor visualWindowedRangeForLogical:action.logicalRange];
+    action.visualRange = [extractor visualWindowedRangeForLogical:action.logicalRange];
     return action;
 }
 - (URLAction *)urlActionForHypertextLink {

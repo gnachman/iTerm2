@@ -142,3 +142,12 @@ Use Settings > Pointer > Quick Look. Defaults: delay 0.75s, close after 1.5s.
 28. No cue with mode Off, in ⌘ + Hover without Cmd (Cmd-hover looks as
     before), on plain-text URLs with the plain-text checkbox off, or on links
     outside the domain allowlist.
+29. Hyperlink inside a shell prompt (shell integration on, advanced setting
+    “⌘-click in the prompt shows the Command Info window” on, the default):
+    put an OSC 8 link in the prompt, for example
+    `PS1=$'\e]8;;https://example.com/\e\\link\e]8;;\e\\ %% '` in zsh, and
+    run a command so the prompt has one. Mode Hover: resting on that link
+    shows no underline and opens nothing, matching ⌘-click, which shows the
+    Command Info window there. A link in the command’s output still gets the
+    cue and opens. With the advanced setting off, the prompt link behaves like
+    any other link.
