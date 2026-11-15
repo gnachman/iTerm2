@@ -120,6 +120,11 @@ final class iTermQuickLookClickWatcher: NSObject {
         }
     }
 
+    // A watcher that is dropped without stop() must not leave its event monitor installed.
+    deinit {
+        stop()
+    }
+
     @objc func stop() {
         if let monitor {
             NSEvent.removeMonitor(monitor)
