@@ -5735,7 +5735,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         if ([[aSession textview] isFindingCursor]) {
             [[aSession textview] endFindCursor];
         }
-        [[aSession textview] removeUnderline];
+        [[aSession textview] removeUnderlineForFocusChange];
         [aSession useTransparencyDidChange];
         [aSession.view setNeedsDisplay:YES];
     }

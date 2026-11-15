@@ -123,7 +123,10 @@ Use Settings > Pointer > Quick Look. Defaults: delay 0.75s, close after 1.5s.
     pane, as with Cmd-hover, but the pointer stays the I-beam. When the
     preview opens, the bottom URL bar hides (the preview’s own bar shows the
     URL) and the underline stays for as long as the preview is open, including
-    while the pointer moves into the preview or off the link.
+    the moment it opens (watch the link as the popover appears: it must not
+    flash or lose the underline), while the pointer moves into the preview or
+    off the link, and after clicking into the preview and back into the
+    terminal. Repeat with a page that focuses a text field on load.
 26. Drag-select starting on and across a link with the cue showing, before the
     preview opens: the text selects as usual and the cue goes away on the click.
 27. Before the preview opens, the cue clears when the pointer moves off the

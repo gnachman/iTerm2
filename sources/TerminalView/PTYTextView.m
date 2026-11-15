@@ -619,7 +619,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     DLog(@"resign first responder: reset numTouches to 0");
     _mouseHandler.numTouches = 0;
     [_mouseHandler didResignFirstResponder];
-    [self removeUnderline];
+    [self removeUnderlineForFocusChange];
     [self placeFindCursorOnAutoHide];
     [_delegate textViewDidResignFirstResponder];
     DLog(@"resignFirstResponder %@", self);
@@ -633,6 +633,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 - (BOOL)becomeFirstResponder {
     DLog(@"%@", [NSThread callStackSymbols]);
     [_mouseHandler didBecomeFirstResponder];
+    [self quickLookHoverRestoreCueUnderline];
     [_delegate textViewDidBecomeFirstResponder];
     DLog(@"becomeFirstResponder %@", self);
     DLog(@"%@", [NSThread callStackSymbols]);

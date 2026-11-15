@@ -113,6 +113,11 @@ iTermURLActionHelperDelegate>
 - (void)quickLookHoverScrolled;
 // The app or window lost focus.
 - (void)quickLookHoverDeactivated;
+// Removes the underline because this view or its window lost focus, but keeps the hover cue’s
+// underline while the preview it marks is open: opening that preview can take key briefly.
+- (BOOL)removeUnderlineForFocusChange;
+// Puts the hover cue’s underline back if a focus change removed it while its preview is open.
+- (void)quickLookHoverRestoreCueUnderline;
 
 #pragma mark - Copy to Pasteboard
 

@@ -139,6 +139,10 @@ iTermCommandInfoViewControllerDelegate>
                                              selector:@selector(quickLookHoverWindowDidResignKey:)
                                                  name:NSWindowDidResignKeyNotification
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(quickLookHoverWindowDidBecomeKey:)
+                                                 name:NSWindowDidBecomeKeyNotification
+                                               object:nil];
     __weak __typeof(self) weakSelf = self;
     [iTermPreferenceDidChangeNotification subscribe:self
                                               block:^(iTermPreferenceDidChangeNotification * _Nonnull notification) {
@@ -1075,6 +1079,9 @@ iTermCommandInfoViewControllerDelegate>
         DLog(@"Hover-opened Quick Look took key; giving it back to %@", self.window);
         [self.window makeKeyWindow];
     }
+    // Showing the popover can take key from this window before the popover is recorded as hover
+    // opened, and PseudoTerminal removes underlines when its window resigns key.
+    [self quickLookHoverRestoreCueUnderline];
 }
 
 - (void)closeWebQuickLook {
@@ -1258,6 +1265,13 @@ iTermCommandInfoViewControllerDelegate>
     });
 }
 
+- (void)quickLookHoverWindowDidBecomeKey:(NSNotification *)notification {
+    if (!self.window || notification.object != self.window) {
+        return;
+    }
+    [self quickLookHoverRestoreCueUnderline];
+}
+
 - (void)quickLookHoverCheckWindowDeactivation {
     if (self.window.isKeyWindow || [self webQuickLookOwnsWindow:NSApp.keyWindow]) {
         return;
@@ -1370,6 +1384,28 @@ iTermCommandInfoViewControllerDelegate>
     self.drawingHelper.underlinedRange = self.quickLookHoverCueUnderlinedRange;
     [self requestDelegateRedraw];
     return YES;
+}
+
+// Whether the hover cue marks the link of the open hover-opened preview.
+- (BOOL)quickLookHoverCueBelongsToOpenPreview {
+    return self.quickLookHoverCueURL != nil && [self hasHoverOpenedWebQuickLook];
+}
+
+- (BOOL)removeUnderlineForFocusChange {
+    if ([self quickLookHoverCueBelongsToOpenPreview]) {
+        DLog(@"Focus changed; keeping the hover cue underline for %@", self.quickLookHoverCueURL);
+        return [self removeUnderlineExceptQuickLookHoverCue];
+    }
+    return [self removeUnderline];
+}
+
+- (void)quickLookHoverRestoreCueUnderline {
+    if (![self quickLookHoverCueBelongsToOpenPreview]) {
+        return;
+    }
+    if ([self removeUnderlineExceptQuickLookHoverCue]) {
+        DLog(@"Restored the hover cue underline for %@", self.quickLookHoverCueURL);
+    }
 }
 
 // The rects, in this view's coordinates, that the cells of a visual range cover: one per line.
