@@ -15,7 +15,8 @@ final class iTermQuickLookHoverHostCallbacks: NSObject {
     // Finds the web link under a point. Calls the completion with nil when there is none, and with
     // NSRect values covering the link otherwise.
     @objc var resolveLink: ((_ point: NSPoint, _ completion: @escaping (URL?, [NSValue]) -> Void) -> Void)?
-    @objc var openPreview: ((_ url: URL, _ point: NSPoint) -> Void)?
+    // Returns NO if the host declined to open a preview.
+    @objc var openPreview: ((_ url: URL, _ point: NSPoint) -> Bool)?
     @objc var closePreview: (() -> Void)?
     // The open preview's frame, or NSZeroRect when there is none.
     @objc var previewFrame: (() -> NSRect)?
@@ -84,8 +85,8 @@ final class iTermQuickLookHoverAdapter: NSObject, iTermQuickLookHoverControllerD
         }
     }
 
-    func hoverControllerOpenPreview(url: URL, linkRects: [NSRect], at point: NSPoint) {
-        host.openPreview?(url, point)
+    func hoverControllerOpenPreview(url: URL, linkRects: [NSRect], at point: NSPoint) -> Bool {
+        return host.openPreview?(url, point) ?? false
     }
 
     func hoverControllerClosePreview() {

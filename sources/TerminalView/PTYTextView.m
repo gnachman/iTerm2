@@ -421,7 +421,13 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     [_badgeLabel release];
     [_quickLookController close];
     [_quickLookController release];
-    [_webQuickLookPopover release];
+    if (_webQuickLookPopover) {
+        // Don't rely on popoverDidClose: reaching a view that is going away.
+        _webQuickLookPopover.delegate = nil;
+        [_webQuickLookPopover close];
+        [PTYTextView tearDownWebQuickLookContentOfPopover:_webQuickLookPopover];
+        [_webQuickLookPopover release];
+    }
     [_quickLookHoverAdapter stopWatchingForClicks];
     [_quickLookHoverAdapter release];
     [_contextMenuHelper release];

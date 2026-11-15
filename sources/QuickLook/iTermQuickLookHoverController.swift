@@ -48,8 +48,10 @@ protocol iTermQuickLookHoverControllerDelegate: AnyObject {
     // when there is no link; `linkRects` are the regions the link occupies.
     func hoverControllerResolveLink(at point: NSPoint,
                                     completion: @escaping (_ url: URL?, _ linkRects: [NSRect]) -> Void)
-    // Shows a preview for `url`, replacing any preview this controller opened earlier.
-    func hoverControllerOpenPreview(url: URL, linkRects: [NSRect], at point: NSPoint)
+    // Shows a preview for `url`, replacing any preview this controller opened earlier. Returns false
+    // if the host declined (for example because the user opened a preview some other way); the
+    // controller's earlier preview, if any, is then left as it was.
+    func hoverControllerOpenPreview(url: URL, linkRects: [NSRect], at point: NSPoint) -> Bool
     func hoverControllerClosePreview()
     // The open preview’s frame, or nil when there is none.
     func hoverControllerPreviewFrame() -> NSRect?
@@ -249,12 +251,15 @@ class iTermQuickLookHoverController: NSObject {
             cancelAutoClose()
             return
         }
+        openingPreview = true
+        let opened = delegate?.hoverControllerOpenPreview(url: url, linkRects: rects, at: point) ?? false
+        openingPreview = false
+        guard opened else {
+            return
+        }
         cancelAutoClose()
         openURL = url
         linkRects = rects
         clickedInPreview = false
-        openingPreview = true
-        delegate?.hoverControllerOpenPreview(url: url, linkRects: rects, at: point)
-        openingPreview = false
     }
 }

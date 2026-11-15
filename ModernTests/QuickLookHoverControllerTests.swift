@@ -64,6 +64,8 @@ private final class RecordingDelegate: iTermQuickLookHoverControllerDelegate {
     var previewFrame: NSRect?
     // Runs inside hoverControllerOpenPreview, after the open is recorded.
     var onOpen: (() -> Void)?
+    // When true, hoverControllerOpenPreview records the attempt but declines it.
+    var declinesOpen = false
 
     func hoverControllerResolveLink(at point: NSPoint,
                                     completion: @escaping (URL?, [NSRect]) -> Void) {
@@ -75,9 +77,10 @@ private final class RecordingDelegate: iTermQuickLookHoverControllerDelegate {
         }
     }
 
-    func hoverControllerOpenPreview(url: URL, linkRects: [NSRect], at point: NSPoint) {
+    func hoverControllerOpenPreview(url: URL, linkRects: [NSRect], at point: NSPoint) -> Bool {
         opens.append(Open(url: url, linkRects: linkRects, point: point))
         onOpen?()
+        return !declinesOpen
     }
 
     func hoverControllerClosePreview() {
@@ -454,6 +457,41 @@ final class QuickLookHoverControllerTests: XCTestCase {
         move(pointNowhere)
         XCTAssertEqual(scheduler.active.filter { $0.delay == 1.5 }.count, 1,
                        "the replacement preview is still open, so leaving it starts auto-close")
+    }
+
+    // The host declines while the user has a force-press preview open. Nothing opened, so nothing
+    // may auto-close, and resting on the link again tries again.
+    func testDeclinedOpenLeavesControllerIdle() {
+        delegate.declinesOpen = true
+        move(pointOnA)
+        scheduler.fire(delay: 0.75)
+        XCTAssertEqual(delegate.opens.count, 1)
+
+        move(pointNowhere)
+        XCTAssertTrue(scheduler.active.filter { $0.delay == 1.5 }.isEmpty,
+                      "no hover preview is open, so there is nothing to auto-close")
+        scheduler.fire(delay: 0.75)
+        XCTAssertEqual(delegate.closeCount, 0)
+
+        delegate.declinesOpen = false
+        move(pointOnA)
+        scheduler.fire(delay: 0.75)
+        XCTAssertEqual(delegate.opens.count, 2, "the same link is not treated as already open")
+    }
+
+    func testDeclinedReplacementKeepsEarlierPreview() {
+        openPreviewOnA()
+        delegate.declinesOpen = true
+        delegate.resolution = (urlB, [rectB])
+        move(pointOnB)
+        scheduler.fire(delay: 0.75)
+        XCTAssertEqual(delegate.opens.count, 2)
+
+        move(pointOnA)
+        XCTAssertTrue(scheduler.active.filter { $0.delay == 1.5 }.isEmpty,
+                      "A is still the open preview, so resting on A does not start auto-close")
+        move(pointNowhere)
+        XCTAssertEqual(scheduler.active.filter { $0.delay == 1.5 }.count, 1)
     }
 
     func testRestingOutsideOnNonLinkKeepsPreview() {

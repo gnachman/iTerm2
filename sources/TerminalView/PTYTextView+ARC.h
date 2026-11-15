@@ -101,6 +101,8 @@ iTermURLActionHelperDelegate>
 - (void)closeWebQuickLook;
 // Called when a popover this view is the delegate of has closed.
 - (void)webQuickLookPopoverDidClose:(NSPopover *)popover;
+// Stops the page in a web Quick Look popover and closes its popups. Idempotent; uses only popover.
++ (void)tearDownWebQuickLookContentOfPopover:(NSPopover *)popover;
 
 // Quick Look on hover. These only observe events: they never consume or alter them.
 - (BOOL)quickLookHoverWantsMouseMovementEvents;

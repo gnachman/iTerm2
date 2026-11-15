@@ -1014,10 +1014,42 @@ iTermCommandInfoViewControllerDelegate>
                                                  openedByHover:openedByHover];
             break;
     }
-    self.webQuickLookPopover = popover;
-    self.webQuickLookPopoverOpenedByHover = openedByHover;
+    [self setWebQuickLookPopover:popover openedByHover:openedByHover];
     if (openedByHover) {
         [self prepareHoverOpenedWebQuickLook:popover];
+    }
+}
+
+// Records the open web Quick Look popover (nil when none).
+- (void)setWebQuickLookPopover:(NSPopover *)popover openedByHover:(BOOL)openedByHover {
+    const BOOL hadHoverPreview = [self hasHoverOpenedWebQuickLook];
+    self.webQuickLookPopover = popover;
+    self.webQuickLookPopoverOpenedByHover = (popover != nil && openedByHover);
+    if (hadHoverPreview != [self hasHoverOpenedWebQuickLook]) {
+        // Whether mouse-moved events are wanted depends on this (see
+        // -quickLookHoverWantsMouseMovementEvents), and they depend on the tracking areas.
+        [self.delegate textViewUpdateTrackingAreas];
+    }
+}
+
+- (BOOL)hasHoverOpenedWebQuickLook {
+    return self.webQuickLookPopover != nil && self.webQuickLookPopoverOpenedByHover;
+}
+
+// Whether a preview the user opened deliberately (force press or the context menu) is open. Hover
+// must not replace it.
+- (BOOL)hasDeliberatelyOpenedWebQuickLook {
+    return self.webQuickLookPopover != nil && !self.webQuickLookPopoverOpenedByHover;
+}
+
+// Stops the page in a web Quick Look popover and closes its sign-in popups. Safe to call more than
+// once, and touches nothing but the popover, so it is safe to call from dealloc.
++ (void)tearDownWebQuickLookContentOfPopover:(NSPopover *)popover {
+    NSViewController *viewController = popover.contentViewController;
+    if ([viewController isKindOfClass:[iTermWebViewWrapperViewController class]]) {
+        [(iTermWebViewWrapperViewController *)viewController terminateWebView];
+    } else if ([viewController isKindOfClass:[iTermBrowserQuickLookViewController class]]) {
+        [(iTermBrowserQuickLookViewController *)viewController tearDown];
     }
 }
 
@@ -1049,23 +1081,20 @@ iTermCommandInfoViewControllerDelegate>
         [self.quickLookHoverAdapter stopWatchingForClicks];
     }
     // Forget it first so that popoverDidClose: knows this view closed it.
-    self.webQuickLookPopover = nil;
+    [self setWebQuickLookPopover:nil openedByHover:NO];
     [popover close];
+    // A programmatic close does not promise popoverDidClose:, so tear down here too.
+    [PTYTextView tearDownWebQuickLookContentOfPopover:popover];
 }
 
 - (void)webQuickLookPopoverDidClose:(NSPopover *)popover {
-    NSViewController *viewController = popover.contentViewController;
-    if ([viewController isKindOfClass:[iTermWebViewWrapperViewController class]]) {
-        [(iTermWebViewWrapperViewController *)viewController terminateWebView];
-    } else if ([viewController isKindOfClass:[iTermBrowserQuickLookViewController class]]) {
-        [(iTermBrowserQuickLookViewController *)viewController tearDown];
-    }
+    [PTYTextView tearDownWebQuickLookContentOfPopover:popover];
     if (popover != self.webQuickLookPopover) {
         return;
     }
     DLog(@"Web Quick Look %@ was closed", popover);
     const BOOL openedByHover = self.webQuickLookPopoverOpenedByHover;
-    self.webQuickLookPopover = nil;
+    [self setWebQuickLookPopover:nil openedByHover:NO];
     if (openedByHover) {
         [self.quickLookHoverAdapter stopWatchingForClicks];
         [self.quickLookHoverAdapter.controller previewClosed];
@@ -1107,11 +1136,19 @@ iTermCommandInfoViewControllerDelegate>
         }
         [strongSelf quickLookHoverResolveLinkAt:point completion:completion];
     };
-    callbacks.openPreview = ^(NSURL *url, NSPoint point) {
+    callbacks.openPreview = ^BOOL(NSURL *url, NSPoint point) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return NO;
+        }
+        if ([strongSelf hasDeliberatelyOpenedWebQuickLook]) {
+            DLog(@"Not opening %@ on hover: a force-press or menu preview is open", url);
+            return NO;
+        }
         [strongSelf showWebQuickLookForURL:url
                            atPointInWindow:[strongSelf convertPoint:point toView:nil]
                              openedByHover:YES];
+        return YES;
     };
     callbacks.closePreview = ^{
         __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -1127,8 +1164,12 @@ iTermCommandInfoViewControllerDelegate>
 }
 
 - (BOOL)quickLookHoverWantsMouseMovementEvents {
-    // In ⌘ + Hover mode, holding Cmd already turns on mouse-moved events.
-    return [iTermQuickLookHoverAdapter currentMode] == iTermQuickLookHoverModeHover;
+    if ([iTermQuickLookHoverAdapter currentMode] == iTermQuickLookHoverModeHover) {
+        return YES;
+    }
+    // In ⌘ + Hover mode, holding Cmd already turns on mouse-moved events, but auto-close must also
+    // see the pointer leave after Cmd is released.
+    return [self hasHoverOpenedWebQuickLook];
 }
 
 - (BOOL)quickLookHoverWindowIsActive {
@@ -1137,7 +1178,9 @@ iTermCommandInfoViewControllerDelegate>
 
 - (void)quickLookHoverMouseMoved:(NSEvent *)event {
     iTermQuickLookHoverAdapter *adapter = [self quickLookHoverAdapterCreatingIfNeeded];
-    if (!adapter || event.window != self.window) {
+    if (!adapter || event.window != self.window || [self hasDeliberatelyOpenedWebQuickLook]) {
+        // While a force-press or menu preview is open the controller is idle, and hover must not
+        // replace that preview, so there is nothing to schedule.
         return;
     }
     const NSEventModifierFlags flags = event.it_modifierFlags;
@@ -1156,7 +1199,11 @@ iTermCommandInfoViewControllerDelegate>
     const BOOL commandDown = (flags & NSEventModifierFlagCommand) != 0;
     const BOOL optionDown = (flags & NSEventModifierFlagOption) != 0;
     [adapter.controller modifiersChangedWithCommandDown:commandDown optionDown:optionDown];
-    if (adapter.mode != iTermQuickLookHoverModeCommandHover || !commandDown || optionDown || !self.window) {
+    if (adapter.mode != iTermQuickLookHoverModeCommandHover ||
+        !commandDown ||
+        optionDown ||
+        !self.window ||
+        [self hasDeliberatelyOpenedWebQuickLook]) {
         return;
     }
     // Pressing Cmd while the pointer rests on a link counts as arriving there with Cmd held.
