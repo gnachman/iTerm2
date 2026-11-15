@@ -120,7 +120,7 @@ class iTermQuickLookHoverController: NSObject {
     @objc func pointerMoved(to point: NSPoint, commandDown: Bool, optionDown: Bool, windowActive: Bool) {
         cancelPendingOpen()
         if let cue, !cue.linkRects.contains(where: { $0.contains(point) }) {
-            clearCue()
+            clearPendingCue()
         }
         if isOpen {
             if isInsideLinkOrPreview(point) {
@@ -130,7 +130,7 @@ class iTermQuickLookHoverController: NSObject {
             startAutoCloseIfNeeded()
         }
         guard hoverAllowed(commandDown: commandDown, optionDown: optionDown, windowActive: windowActive) else {
-            clearCue()
+            clearPendingCue()
             return
         }
         if cue == nil, let settle = cueSettleDelay, mode == .hover, settle < delay {
@@ -151,17 +151,17 @@ class iTermQuickLookHoverController: NSObject {
 
     @objc func mouseDown() {
         cancelPendingOpen()
-        clearCue()
+        clearPendingCue()
     }
 
     @objc func keyDown() {
         cancelPendingOpen()
-        clearCue()
+        clearPendingCue()
     }
 
     @objc func scrolled() {
         cancelPendingOpen()
-        clearCue()
+        clearPendingCue()
     }
 
     // The app or window lost focus.
@@ -230,6 +230,20 @@ class iTermQuickLookHoverController: NSObject {
         }
         cue = nil
         delegate?.hoverControllerClearCue()
+    }
+
+    // The cue stays on the link of the preview it opened until that preview closes or is replaced,
+    // so the preview is visibly tied to its link.
+    private var cueBelongsToOpenPreview: Bool {
+        return isOpen && cue?.url == openURL
+    }
+
+    // Clears the cue unless it marks the open preview's link.
+    private func clearPendingCue() {
+        guard !cueBelongsToOpenPreview else {
+            return
+        }
+        clearCue()
     }
 
     private func showCueIfWanted(url: URL, linkRects rects: [NSRect]) {

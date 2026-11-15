@@ -644,28 +644,64 @@ final class QuickLookHoverControllerTests: XCTestCase {
         }
     }
 
-    func testCueClearsWhenThePreviewCloses() {
+    private func openPreviewWithCueOnA() {
         showCueOnA()
         scheduler.fire(delay: 0.75)
+        XCTAssertEqual(delegate.opens.count, 1)
+    }
+
+    func testCueStaysWhileThePreviewIsOpen() {
+        openPreviewWithCueOnA()
+        move(pointInPreview)
+        move(pointNowhere)
+        move(pointOnA, active: false)
+        controller.mouseDown()
+        controller.keyDown()
+        controller.scrolled()
+        XCTAssertEqual(delegate.cueClearCount, 0, "the cue marks the open preview's link until it closes")
+        XCTAssertEqual(delegate.cues, [urlA])
+    }
+
+    func testCueClearsWhenThePreviewCloses() {
+        openPreviewWithCueOnA()
+        move(pointInPreview)
         controller.previewClosed()
         XCTAssertEqual(delegate.cueClearCount, 1)
 
-        delegate.cues = []
-        showCueOnA()
-        scheduler.fire(delay: 0.75)
         move(pointNowhere)
-        XCTAssertEqual(delegate.cueClearCount, 2, "leaving the link clears the cue")
+        XCTAssertEqual(delegate.cueClearCount, 1)
     }
 
     func testCueClearsWhenAutoCloseCloses() {
-        showCueOnA()
-        scheduler.fire(delay: 0.75)
-        // Leaving the link clears the cue; the auto-close that follows must not clear it again.
-        controller.pointerMoved(to: pointInPreview, commandDown: false, optionDown: false, windowActive: true)
-        XCTAssertEqual(delegate.cueClearCount, 1)
-        controller.pointerMoved(to: pointNowhere, commandDown: false, optionDown: false, windowActive: true)
+        openPreviewWithCueOnA()
+        move(pointInPreview)
+        move(pointNowhere)
+        XCTAssertEqual(delegate.cueClearCount, 0)
         scheduler.fire(delay: 1.5)
         XCTAssertEqual(delegate.closeCount, 1)
+        XCTAssertEqual(delegate.cueClearCount, 1)
+    }
+
+    func testCueClearsWhenDeactivatedWhileOpen() {
+        openPreviewWithCueOnA()
+        controller.deactivated()
+        XCTAssertEqual(delegate.closeCount, 1)
+        XCTAssertEqual(delegate.cueClearCount, 1)
+    }
+
+    func testCueMovesToTheLinkThatReplacesThePreview() {
+        openPreviewWithCueOnA()
+        delegate.resolution = (urlB, [rectB])
+        move(pointOnB)
+        XCTAssertEqual(delegate.cueClearCount, 0, "the open preview keeps its cue until replaced")
+        scheduler.fire(delay: 0.75)
+        XCTAssertEqual(delegate.opens.last?.url, urlB)
+        XCTAssertEqual(delegate.cues, [urlA, urlB])
+        XCTAssertEqual(delegate.cueClearCount, 0)
+
+        move(pointNowhere)
+        XCTAssertEqual(delegate.cueClearCount, 0)
+        controller.previewClosed()
         XCTAssertEqual(delegate.cueClearCount, 1)
     }
 

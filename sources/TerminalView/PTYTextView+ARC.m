@@ -778,8 +778,9 @@ iTermCommandInfoViewControllerDelegate>
     if (changed) {
         [self.enclosingScrollView setDocumentCursor:cursor_];
     }
-    if (!hover && self.quickLookHoverCueURL) {
-        // A pending hover preview shows the URL even though the pointer keeps its shape.
+    if (!hover && self.quickLookHoverCueURL && ![self hasHoverOpenedWebQuickLook]) {
+        // A pending hover preview shows the URL even though the pointer keeps its shape. Once the
+        // preview shows, its own address bar has the URL.
         hover = self.quickLookHoverCueURL;
         anchorRange = self.quickLookHoverCueVisualRange;
     }
@@ -1153,6 +1154,7 @@ iTermCommandInfoViewControllerDelegate>
         [strongSelf showWebQuickLookForURL:url
                            atPointInWindow:[strongSelf convertPoint:point toView:nil]
                              openedByHover:YES];
+        [strongSelf quickLookHoverHideCueURLBar];
         return YES;
     };
     callbacks.closePreview = ^{
@@ -1329,6 +1331,10 @@ iTermCommandInfoViewControllerDelegate>
         self.drawingHelper.underlinedRange = self.quickLookHoverCueUnderlinedRange;
         [self requestDelegateRedraw];
     }
+    if ([self hasHoverOpenedWebQuickLook]) {
+        // The open preview’s address bar shows the URL.
+        return;
+    }
     [self.delegate textViewShowHoverURL:self.quickLookHoverCueURL anchor:self.quickLookHoverCueVisualRange];
 }
 
@@ -1341,6 +1347,11 @@ iTermCommandInfoViewControllerDelegate>
     if (VT100GridAbsWindowedRangeEquals(self.drawingHelper.underlinedRange, self.quickLookHoverCueUnderlinedRange)) {
         [self removeUnderline];
     }
+    [self quickLookHoverHideCueURLBar];
+}
+
+// Hides the URL bar the hover cue showed.
+- (void)quickLookHoverHideCueURLBar {
     if (([[iTermApplication sharedApplication] it_modifierFlags] & NSEventModifierFlagCommand) == 0) {
         // With Cmd down the Cmd-hover cue owns the URL bar.
         [self.delegate textViewShowHoverURL:nil

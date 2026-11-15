@@ -120,13 +120,18 @@ Use Settings > Pointer > Quick Look. Defaults: delay 0.75s, close after 1.5s.
     ⌘ + Hover.
 25. Hover cue, mode Hover: rest on an OSC 8 link. Within about 0.1s the link
     gets the solid underline and its URL shows in the bar at the bottom of the
-    pane, as with Cmd-hover, but the pointer stays the I-beam. The cue stays
-    while the preview opens and while the pointer stays on the link.
-26. Drag-select starting on and across a link with the cue showing: the text
-    selects as usual and the cue goes away on the click.
-27. The cue clears when the pointer moves off the link, and when you type,
-    click or scroll, with no leftover underline or URL bar. Escape-closing the
-    preview clears it too.
+    pane, as with Cmd-hover, but the pointer stays the I-beam. When the
+    preview opens, the bottom URL bar hides (the preview’s own bar shows the
+    URL) and the underline stays for as long as the preview is open, including
+    while the pointer moves into the preview or off the link.
+26. Drag-select starting on and across a link with the cue showing, before the
+    preview opens: the text selects as usual and the cue goes away on the click.
+27. Before the preview opens, the cue clears when the pointer moves off the
+    link, and when you type, click or scroll. Once the preview is open, the
+    underline clears when it closes: auto-close, Escape or its close button,
+    clicking elsewhere, or switching apps. Hovering another link until its
+    preview replaces the open one moves the underline to that link. No leftover
+    underline or URL bar in any case.
 28. No cue with mode Off, in ⌘ + Hover without Cmd (Cmd-hover looks as
     before), on plain-text URLs with the plain-text checkbox off, or on links
     outside the domain allowlist.
