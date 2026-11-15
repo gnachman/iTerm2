@@ -29,6 +29,11 @@ Implementation: `sources/QuickLook/` (`iTermBrowserQuickLookViewController`,
    close button. The page loads.
 3. Engine on, plugin not installed: the old popover appears, and Settings shows
    the “plugin not installed” note under the checkbox.
+3a. Fallback: in the debug build, turn off Settings > Advanced “Enable
+    browser-style profiles?” (`browserProfiles`) and restart. With the engine
+    on, force press shows the old popover, and Settings > Pointer says
+    “Enable browser-style profiles” is off instead of “plugin not installed”.
+    Turn it back on afterwards.
 4. Sign in to Linear with Google using a password. The Google window opens as a
    small panel, the second factor completes, the panel closes by itself and the
    popover is signed in.
@@ -83,3 +88,22 @@ Use Settings > Pointer > Quick Look. Defaults: delay 0.75s, close after 1.5s.
     and on.
 15. Changing the mode, delay, close time or allowlist takes effect without a
     restart.
+16. ⌘ + Hover auto-close: open a preview with Cmd held, release Cmd, then move
+    the pointer off the link (staying inside the pane). The popover closes
+    about 1.5s later, the same as in Hover mode.
+17. Force press (or right-click > Quick Look Link) a link, then rest on another
+    link in Hover mode, and in ⌘ + Hover with Cmd held. The force-press preview
+    stays; hover never replaces or auto-closes it. After closing it, hover
+    works again.
+18. Browser engine on: in a hover preview, start a Google sign-in so its panel
+    opens, and play a page with audio (a video). Close the preview each way:
+    hover another link (replace), press Escape, and let it auto-close. Each
+    time the sign-in panel closes with it and the audio stops.
+19. A page that calls `alert()` (and `confirm()`) on load, opened by hover with
+    the browser engine on: no dialog appears, and the terminal keeps focus.
+    Click into the preview and trigger an alert from the page: now it shows.
+    Force press the same page: the dialog shows as before.
+20. Settings > Pointer seconds fields with a comma-decimal region (System
+    Settings > General > Language & Region, for example Germany): the delay
+    shows as 0,75; typing 0,5 stores half a second and leaves “Never”
+    unchecked; typing 0.5 works too.
