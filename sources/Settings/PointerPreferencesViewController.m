@@ -173,28 +173,69 @@ NSString *const kPointerPrefsSemanticHistoryEnabledChangedNotification = @"kPoin
     [self updateQuickLookNeverClose];
 }
 
-// Defines a field holding a number of seconds. Custom get/set blocks are supplied so the
-// non-integer default is not type-checked against kPreferenceInfoTypeDoubleTextField (which
-// otherwise requires whole-number defaults). Negative values are stored as 0.
+static NSNumberFormatter *PointerPreferencesSecondsFormatter(NSLocale *locale) {
+    NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
+    formatter.locale = locale;
+    formatter.numberStyle = NSNumberFormatterDecimalStyle;
+    formatter.usesGroupingSeparator = NO;
+    formatter.maximumFractionDigits = 3;
+    return formatter;
+}
+
++ (NSNumber *)quickLookSecondsFromString:(NSString *)string locale:(NSLocale *)locale {
+    NSString *trimmed = [string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSNumber *number = [PointerPreferencesSecondsFormatter(locale) numberFromString:trimmed];
+    if (number) {
+        return number;
+    }
+    // Accept a period as the decimal separator in every locale.
+    return [PointerPreferencesSecondsFormatter([NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"]) numberFromString:trimmed];
+}
+
++ (NSString *)quickLookStringFromSeconds:(double)seconds locale:(NSLocale *)locale {
+    return [PointerPreferencesSecondsFormatter(locale) stringFromNumber:@(seconds)];
+}
+
+// Defines a field holding a number of seconds, read and shown with the user’s decimal separator.
+// Custom get/set blocks are supplied so the non-integer default is not type-checked against
+// kPreferenceInfoTypeDoubleTextField (which otherwise requires whole-number defaults), and so
+// parsing follows the locale. Negative values are stored as 0. Text that isn’t a number (for
+// example an empty field mid-edit) leaves the setting alone; ending the edit shows the stored value.
 - (PreferenceInfo *)defineSecondsField:(NSTextField *)field key:(NSString *)key {
     __weak __typeof(self) weakSelf = self;
     __weak NSTextField *weakField = field;
-    return [self defineControl:field
-                           key:key
-                   relatedView:nil
-                          type:kPreferenceInfoTypeDoubleTextField
-                settingChanged:^(id sender) {
-        [weakSelf setDouble:MAX(0, [sender doubleValue]) forKey:key];
-    }
-                        update:^BOOL{
+    void (^showStoredValue)(void) = ^{
         __strong __typeof(weakSelf) strongSelf = weakSelf;
         NSTextField *strongField = weakField;
         if (!strongSelf || !strongField) {
+            return;
+        }
+        strongField.stringValue = [PointerPreferencesViewController quickLookStringFromSeconds:[strongSelf doubleForKey:key]
+                                                                                       locale:[NSLocale currentLocale]];
+    };
+    PreferenceInfo *info = [self defineControl:field
+                                           key:key
+                                   relatedView:nil
+                                          type:kPreferenceInfoTypeDoubleTextField
+                                settingChanged:^(id sender) {
+        NSNumber *seconds = [PointerPreferencesViewController quickLookSecondsFromString:[sender stringValue]
+                                                                                  locale:[NSLocale currentLocale]];
+        if (!seconds) {
+            return;
+        }
+        [weakSelf setDouble:MAX(0, seconds.doubleValue) forKey:key];
+    }
+                                        update:^BOOL{
+        if (!weakSelf || !weakField) {
             return NO;
         }
-        strongField.doubleValue = [strongSelf doubleForKey:key];
+        showStoredValue();
         return YES;
     }];
+    info.controlTextDidEndEditing = ^(NSNotification *notification) {
+        showStoredValue();
+    };
+    return info;
 }
 
 - (void)setShouldBeEnabled:(BOOL (^)(void))shouldBeEnabled

@@ -160,8 +160,42 @@
     never.state = NSControlStateValueOff;
     [vc quickLookHoverNeverCloseChanged:never];
     XCTAssertEqual([iTermPreferences doubleForKey:kPreferenceKeyQuickLookHoverAutoCloseDelay], 1.5);
-    XCTAssertEqual(autoClose.doubleValue, 1.5);
+    XCTAssertEqualObjects(autoClose.stringValue,
+                          [PointerPreferencesViewController quickLookStringFromSeconds:1.5 locale:[NSLocale currentLocale]]);
     XCTAssertTrue(autoClose.enabled);
+}
+
+// In comma-decimal locales “0,75” used to parse as 0, which also checked “Never”.
+- (void)testSecondsParseWithTheLocaleDecimalSeparator {
+    NSLocale *german = [NSLocale localeWithLocaleIdentifier:@"de_DE"];
+    NSLocale *american = [NSLocale localeWithLocaleIdentifier:@"en_US"];
+    XCTAssertEqualObjects([PointerPreferencesViewController quickLookSecondsFromString:@"0,75" locale:german], @0.75);
+    XCTAssertEqualObjects([PointerPreferencesViewController quickLookSecondsFromString:@"0.75" locale:german], @0.75,
+                          @"a period is accepted in every locale");
+    XCTAssertEqualObjects([PointerPreferencesViewController quickLookSecondsFromString:@" 2 " locale:german], @2);
+    XCTAssertEqualObjects([PointerPreferencesViewController quickLookSecondsFromString:@"1.5" locale:american], @1.5);
+    XCTAssertNil([PointerPreferencesViewController quickLookSecondsFromString:@"" locale:german]);
+    XCTAssertNil([PointerPreferencesViewController quickLookSecondsFromString:@"abc" locale:american]);
+
+    XCTAssertEqualObjects([PointerPreferencesViewController quickLookStringFromSeconds:0.75 locale:german], @"0,75");
+    XCTAssertEqualObjects([PointerPreferencesViewController quickLookStringFromSeconds:1.5 locale:american], @"1.5");
+    XCTAssertEqualObjects([PointerPreferencesViewController quickLookStringFromSeconds:2 locale:american], @"2");
+}
+
+- (void)testTypingSecondsStoresTheParsedValue {
+    [iTermPreferences setInt:1 forKey:kPreferenceKeyQuickLookHoverMode];
+    [iTermPreferences setDouble:1.5 forKey:kPreferenceKeyQuickLookHoverAutoCloseDelay];
+
+    PointerPreferencesViewController *vc = [self awakenedController];
+    NSTextField *autoClose = [vc valueForKey:@"_quickLookHoverAutoCloseDelay"];
+    autoClose.stringValue = [PointerPreferencesViewController quickLookStringFromSeconds:0.25 locale:[NSLocale currentLocale]];
+    [vc settingChanged:autoClose];
+    XCTAssertEqual([iTermPreferences doubleForKey:kPreferenceKeyQuickLookHoverAutoCloseDelay], 0.25);
+
+    autoClose.stringValue = @"";
+    [vc settingChanged:autoClose];
+    XCTAssertEqual([iTermPreferences doubleForKey:kPreferenceKeyQuickLookHoverAutoCloseDelay], 0.25,
+                   @"an empty field mid-edit does not store 0");
 }
 
 - (void)testChangingHoverModeUpdatesEnabledState {
