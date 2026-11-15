@@ -69,6 +69,11 @@ New Features:
   Encoding, switches the current session’s
   character encoding with one keystroke. Find it
   under Profile in the key binding editor.
+- Quick Look on a web link can use the built-in
+  browser, so sites you sign in to stay signed
+  in, and it can open when you hover over a link
+  (or hold ⌘ while hovering). Turn these on in
+  Settings > Pointer under Quick Look.
 
 Improvements:
 - Fetch Models in the manual AI model editor now

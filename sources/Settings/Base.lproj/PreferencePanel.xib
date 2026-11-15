@@ -1512,6 +1512,13 @@ CA
                 <outlet property="_focusFollowsMouseIncludingSubviews" destination="QVc-Sm-PdQ" id="Ffm-Sb-v1w"/>
                 <outlet property="_focusOnRightOrMiddleClick" destination="j6a-ag-jgf" id="m8S-Wq-a1R"/>
                 <outlet property="_optionClickMovesCursor" destination="6407" id="hKN-R0-UCE"/>
+                <outlet property="_quickLookHoverAutoCloseDelay" destination="QUy-JY-5eI" id="l6J-zB-6xA"/>
+                <outlet property="_quickLookHoverDelay" destination="raG-Hu-hfc" id="EOK-aI-Tuw"/>
+                <outlet property="_quickLookHoverDomainAllowlist" destination="jM2-h1-HK8" id="M8t-Pi-53F"/>
+                <outlet property="_quickLookHoverMode" destination="WXu-C9-qnB" id="43s-bT-BE7"/>
+                <outlet property="_quickLookHoverNeverClose" destination="fKx-Iy-N8o" id="bG8-yG-V6V"/>
+                <outlet property="_quickLookPluginNote" destination="AXd-Jd-a2R" id="fnv-47-9Sq"/>
+                <outlet property="_quickLookUsesBrowserEngine" destination="1bh-pr-p9C" id="gC4-oV-xUQ"/>
                 <outlet property="_reportHorizontalScrollEvents" destination="cgK-BO-rKa" id="13W-yw-YvC"/>
                 <outlet property="_rightClickActsLikeRightClick" destination="ZG1-dm-1gD" id="N8K-Uy-gd3"/>
                 <outlet property="_tabView" destination="kxy-pe-gzv" id="iKb-9p-k0h"/>
@@ -10511,25 +10518,25 @@ instead of the system keyboard.</string>
             <point key="canvasLocation" x="-844" y="195.5"/>
         </customView>
         <customView id="qwf-ly-A8K" userLabel="Prefs - Pointer" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="892" height="421"/>
+            <rect key="frame" x="0.0" y="0.0" width="892" height="631"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <tabView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kxy-pe-gzv">
-                    <rect key="frame" x="0.0" y="10" width="879" height="417"/>
+                    <rect key="frame" x="0.0" y="10" width="879" height="627"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     <font key="font" metaFont="system"/>
                     <tabViewItems>
                         <tabViewItem label="General" identifier="2" id="H6p-WE-6DF">
                             <view key="view" id="PCm-pP-b2X">
-                                <rect key="frame" x="10" y="33" width="859" height="371"/>
+                                <rect key="frame" x="10" y="33" width="859" height="581"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="T59-Vc-DXx" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="17" y="120" width="825" height="248"/>
+                                        <rect key="frame" x="17" y="120" width="825" height="458"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6407">
-                                                <rect key="frame" x="309" y="204" width="501" height="18"/>
+                                                <rect key="frame" x="309" y="414" width="501" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">If enabled, option-click sends arrow keys to move the cursor's position. If Shell Integration is installed then it does not take effect at the command line.</string>
                                                 <buttonCell key="cell" type="check" title="⌥-Click moves cursor" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6408">
@@ -10541,7 +10548,7 @@ instead of the system keyboard.</string>
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6227">
-                                                <rect key="frame" x="309" y="182" width="501" height="18"/>
+                                                <rect key="frame" x="309" y="392" width="501" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Three-finger tap emulates middle click" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6228">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -10552,7 +10559,7 @@ instead of the system keyboard.</string>
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6107">
-                                                <rect key="frame" x="309" y="226" width="501" height="18"/>
+                                                <rect key="frame" x="309" y="436" width="501" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="⌘-Click opens filename/URL (semantic history)" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6108">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -10563,7 +10570,7 @@ instead of the system keyboard.</string>
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6062">
-                                                <rect key="frame" x="309" y="148" width="501" height="18"/>
+                                                <rect key="frame" x="309" y="358" width="501" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Focus follows mouse" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6071">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -10574,7 +10581,7 @@ instead of the system keyboard.</string>
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="QVc-Sm-PdQ">
-                                                <rect key="frame" x="319" y="126" width="491" height="18"/>
+                                                <rect key="frame" x="319" y="336" width="491" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="…even to views like Search or Composer" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="tXe-jL-3Kg">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -10585,7 +10592,7 @@ instead of the system keyboard.</string>
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="j6a-ag-jgf">
-                                                <rect key="frame" x="309" y="98" width="501" height="18"/>
+                                                <rect key="frame" x="309" y="308" width="501" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Focus window after right or middle click" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="3Y4-p9-liW">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -10596,7 +10603,7 @@ instead of the system keyboard.</string>
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cgK-BO-rKa">
-                                                <rect key="frame" x="309" y="64" width="501" height="18"/>
+                                                <rect key="frame" x="309" y="274" width="501" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">When enabled, mouse reporting takes priority over swipe to switch tabs. Disable this if swiping to switch tabs sometimes doesn’t work.</string>
                                                 <buttonCell key="cell" type="check" title="Mouse reporting supports horizontal scrolling" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="hWJ-Ek-z7b">
@@ -10608,7 +10615,7 @@ instead of the system keyboard.</string>
                                                 </connections>
                                             </button>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kIM-uA-HHs">
-                                                <rect key="frame" x="18" y="227" width="284" height="16"/>
+                                                <rect key="frame" x="18" y="437" width="284" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Clicks:" id="axW-bU-qkO">
                                                     <font key="font" metaFont="system"/>
@@ -10617,7 +10624,7 @@ instead of the system keyboard.</string>
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="SN9-wq-wUg">
-                                                <rect key="frame" x="18" y="149" width="284" height="16"/>
+                                                <rect key="frame" x="18" y="359" width="284" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Focus:" id="f01-4b-exO">
                                                     <font key="font" metaFont="system"/>
@@ -10626,7 +10633,7 @@ instead of the system keyboard.</string>
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NIg-yh-Jn7">
-                                                <rect key="frame" x="18" y="65" width="284" height="16"/>
+                                                <rect key="frame" x="18" y="275" width="284" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Mouse Reporting:" id="8aJ-vw-hMr">
                                                     <font key="font" metaFont="system"/>
@@ -10635,7 +10642,7 @@ instead of the system keyboard.</string>
                                                 </textFieldCell>
                                             </textField>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6111">
-                                                <rect key="frame" x="309" y="42" width="501" height="18"/>
+                                                <rect key="frame" x="309" y="252" width="501" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">For terminal applications that use mouse reporting, turning this on allows control-click to be reported instead of opening the context menu.</string>
                                                 <buttonCell key="cell" type="check" title="^-Click reported to apps, does not open menu" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6112">
@@ -10647,7 +10654,7 @@ instead of the system keyboard.</string>
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ZG1-dm-1gD">
-                                                <rect key="frame" x="309" y="20" width="501" height="18"/>
+                                                <rect key="frame" x="309" y="230" width="501" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">For terminal applications that use mouse reporting, turning this on allows right click (or two finger tap on a trackpad) to be reported instead of opening the context menu.</string>
                                                 <buttonCell key="cell" type="check" title="Right click reported to apps, does not open menu" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="iBA-fC-cDp">
@@ -10658,6 +10665,173 @@ instead of the system keyboard.</string>
                                                     <action selector="settingChanged:" target="pwh-OY-l3e" id="pWG-HU-yMF"/>
                                                 </connections>
                                             </button>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="tPB-qz-5cQ">
+                                                <rect key="frame" x="18" y="197" width="284" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Quick Look:" id="LaW-g4-O8L">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1bh-pr-p9C">
+                                                <rect key="frame" x="309" y="196" width="501" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <string key="toolTip">Requires the iTerm2 Browser Plugin. Web previews then share sign-ins with the built-in browser, and sign-in popups work.</string>
+                                                <buttonCell key="cell" type="check" title="Use the iTerm2 browser engine for web previews" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="TGD-i0-OVd">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="pwh-OY-l3e" id="z1s-AD-8HQ"/>
+                                                </connections>
+                                            </button>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" hidden="YES" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="AXd-Jd-a2R">
+                                                <rect key="frame" x="329" y="178" width="481" height="14"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="Browser Plugin not installed; using the basic preview." id="GDx-BK-gfK">
+                                                    <font key="font" metaFont="smallSystem"/>
+                                                    <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eZJ-S0-MDa">
+                                                <rect key="frame" x="18" y="147" width="284" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Preview links on hover:" id="dDg-Xk-gob">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="WXu-C9-qnB">
+                                                <rect key="frame" x="306" y="140" width="160" height="25"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="Hej-zZ-5Bd">
+                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="message"/>
+                                                    <menu key="menu" id="cpI-Hj-FWT">
+                                                        <items>
+                                                            <menuItem title="Off" id="hZE-RA-xC6">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="Hover" tag="1" id="XMX-th-yic">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="⌘ + Hover" tag="2" id="kFq-jP-ZP2">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                        </items>
+                                                    </menu>
+                                                </popUpButtonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="pwh-OY-l3e" id="rZ9-37-hXw"/>
+                                                </connections>
+                                            </popUpButton>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dxK-rp-m4W">
+                                                <rect key="frame" x="18" y="115" width="284" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Hover delay:" id="DlE-C6-Cdd">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="raG-Hu-hfc">
+                                                <rect key="frame" x="309" y="112" width="60" height="21"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="fa2-1U-vyG">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="pwh-OY-l3e" id="M3D-eC-oRs"/>
+                                                    <outlet property="delegate" destination="pwh-OY-l3e" id="8TA-vC-Ooi"/>
+                                                </connections>
+                                            </textField>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YrW-GU-pM2">
+                                                <rect key="frame" x="375" y="115" width="80" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="seconds" id="2Of-b5-GzW">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="KtH-RP-Xr2">
+                                                <rect key="frame" x="18" y="85" width="284" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Close after pointer leaves:" id="Vwd-VE-wWJ">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="QUy-JY-5eI">
+                                                <rect key="frame" x="309" y="82" width="60" height="21"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="wN6-zJ-skk">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="pwh-OY-l3e" id="nQz-UZ-nsj"/>
+                                                    <outlet property="delegate" destination="pwh-OY-l3e" id="e4V-og-Hwn"/>
+                                                </connections>
+                                            </textField>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="K1h-M4-qeV">
+                                                <rect key="frame" x="375" y="85" width="80" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="seconds" id="HnQ-er-NFV">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fKx-Iy-N8o">
+                                                <rect key="frame" x="461" y="84" width="150" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="check" title="Never" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="eQT-fw-gL7">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="quickLookHoverNeverCloseChanged:" target="pwh-OY-l3e" id="Nyi-lN-F8N"/>
+                                                </connections>
+                                            </button>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Jc4-qL-5oU">
+                                                <rect key="frame" x="18" y="55" width="284" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Only preview these domains on hover:" id="m65-uP-0lJ">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jM2-h1-HK8">
+                                                <rect key="frame" x="309" y="52" width="501" height="21"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" placeholderString="All domains" drawsBackground="YES" id="4Tw-pL-4JU">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="pwh-OY-l3e" id="AA5-C5-WV4"/>
+                                                    <outlet property="delegate" destination="pwh-OY-l3e" id="FmO-w6-RYQ"/>
+                                                </connections>
+                                            </textField>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="QNj-Q1-Wl2">
+                                                <rect key="frame" x="309" y="32" width="501" height="14"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="Separate domains with commas. Subdomains match too. Force press always previews." id="OBi-UH-mOC">
+                                                    <font key="font" metaFont="smallSystem"/>
+                                                    <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
                                         </subviews>
                                     </customView>
                                 </subviews>
@@ -10665,11 +10839,11 @@ instead of the system keyboard.</string>
                         </tabViewItem>
                         <tabViewItem label="Bindings" identifier="1" id="FxS-Eb-dxA">
                             <view key="view" id="4w0-aP-GJy">
-                                <rect key="frame" x="10" y="33" width="859" height="371"/>
+                                <rect key="frame" x="10" y="33" width="859" height="581"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mgS-64-7dE" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="0.0" y="34" width="891" height="334"/>
+                                        <rect key="frame" x="0.0" y="244" width="891" height="334"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6214">
