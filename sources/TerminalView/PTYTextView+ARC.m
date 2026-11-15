@@ -908,7 +908,7 @@ iTermCommandInfoViewControllerDelegate>
                   urlAction:(URLAction *)urlAction
                   withEvent:(NSEvent *)event {
     if (urlAction.actionType == kURLActionOpenURL) {
-        [self showWebkitPopoverAtPoint:event.locationInWindow url:url];
+        [self showWebQuickLookForURL:url atPointInWindow:event.locationInWindow openedByHover:NO];
         return;
     }
 
@@ -979,7 +979,77 @@ iTermCommandInfoViewControllerDelegate>
     }
 }
 
-- (void)showWebkitPopoverAtPoint:(NSPoint)pointInWindow url:(NSURL *)url {
+- (void)showWebQuickLookForURL:(NSURL *)url
+               atPointInWindow:(NSPoint)pointInWindow
+                 openedByHover:(BOOL)openedByHover {
+    DLog(@"Show web Quick Look for %@ openedByHover=%@", url, @(openedByHover));
+    [self closeWebQuickLook];
+    NSPopover *popover = nil;
+    switch ([iTermQuickLookEngineSelector currentEngine]) {
+        case iTermQuickLookEngineLegacy:
+            popover = [self showWebkitPopoverAtPoint:pointInWindow url:url];
+            break;
+        case iTermQuickLookEngineBrowser:
+            popover = [self showBrowserQuickLookPopoverAtPoint:pointInWindow
+                                                           url:url
+                                                 openedByHover:openedByHover];
+            break;
+    }
+    self.webQuickLookPopover = popover;
+    self.webQuickLookPopoverOpenedByHover = openedByHover;
+}
+
+- (void)closeWebQuickLook {
+    NSPopover *popover = self.webQuickLookPopover;
+    if (!popover) {
+        return;
+    }
+    DLog(@"Close web Quick Look %@", popover);
+    // Forget it first so that popoverDidClose: knows this view closed it.
+    self.webQuickLookPopover = nil;
+    [popover close];
+}
+
+- (void)webQuickLookPopoverDidClose:(NSPopover *)popover {
+    NSViewController *viewController = popover.contentViewController;
+    if ([viewController isKindOfClass:[iTermWebViewWrapperViewController class]]) {
+        [(iTermWebViewWrapperViewController *)viewController terminateWebView];
+    } else if ([viewController isKindOfClass:[iTermBrowserQuickLookViewController class]]) {
+        [(iTermBrowserQuickLookViewController *)viewController tearDown];
+    }
+    if (popover != self.webQuickLookPopover) {
+        return;
+    }
+    DLog(@"Web Quick Look %@ was closed", popover);
+    self.webQuickLookPopover = nil;
+}
+
+- (NSRect)webQuickLookAnchorRectForPointInWindow:(NSPoint)pointInWindow {
+    NSRect rect = NSMakeRect(pointInWindow.x - self.charWidth / 2,
+                             pointInWindow.y - self.lineHeight / 2,
+                             self.charWidth,
+                             self.lineHeight);
+    return [self convertRect:rect fromView:nil];
+}
+
+- (NSPopover *)showBrowserQuickLookPopoverAtPoint:(NSPoint)pointInWindow
+                                              url:(NSURL *)url
+                                    openedByHover:(BOOL)openedByHover {
+    iTermBrowserQuickLookViewController *viewController =
+        [[iTermBrowserQuickLookViewController alloc] initWithURL:url];
+    NSPopover *popover = [[NSPopover alloc] init];
+    popover.contentViewController = viewController;
+    popover.contentSize = viewController.view.frame.size;
+    viewController.presentingPopover = popover;
+    popover.behavior = NSPopoverBehaviorSemitransient;
+    popover.delegate = self;
+    [popover showRelativeToRect:[self webQuickLookAnchorRectForPointInWindow:pointInWindow]
+                         ofView:self
+                  preferredEdge:NSRectEdgeMinY];
+    return popover;
+}
+
+- (NSPopover *)showWebkitPopoverAtPoint:(NSPoint)pointInWindow url:(NSURL *)url {
     WKWebView *webView = [[iTermWebViewFactory sharedInstance] webViewWithDelegate:nil];
     NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url];
     [webView loadRequest:request];
@@ -998,6 +1068,7 @@ iTermCommandInfoViewControllerDelegate>
     [popover showRelativeToRect:rect
                          ofView:self
                   preferredEdge:NSRectEdgeMinY];
+    return popover;
 }
 
 #pragma mark - Copy to Pasteboard
@@ -2731,7 +2802,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
 - (void)contextMenuHandleQuickLook:(iTermTextViewContextMenuHelper *)contextMenu
                          url:(NSURL *)url
                   windowCoordinate:(NSPoint)windowCoordinate {
-    [self showWebkitPopoverAtPoint:windowCoordinate url:url];
+    [self showWebQuickLookForURL:url atPointInWindow:windowCoordinate openedByHover:NO];
 }
 
 - (BOOL)contextMenuCurrentTabHasMultipleSessions:(iTermTextViewContextMenuHelper *)contextMenu {

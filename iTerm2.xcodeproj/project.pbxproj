@@ -1229,6 +1229,7 @@
 		9D00C0F07E4C2CD013AD0F47 /* OrchestratorClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84A25904AA380F451E72C586 /* OrchestratorClient.swift */; };
 		9D0D14C1945083235F5403E0 /* FloatingPaneLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2439B1C6616A31976B9C9969 /* FloatingPaneLayout.swift */; };
 		9D2E5C1E8FCA5BB50A12DFDA /* TmuxPaneInferredHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02C8736B56EFFCC6B075273B /* TmuxPaneInferredHost.swift */; };
+		9D6947E84FE6E1CD5F160309 /* iTermBrowserQuickLookViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BEB3590B9353CD13FE37F42 /* iTermBrowserQuickLookViewController.swift */; };
 		9D737D5F17495B4100B3334D /* PrefsGeneral.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D737D5D17495B4100B3334D /* PrefsGeneral.png */; };
 		9D737D6017495B4100B3334D /* PrefsGeneral@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D737D5E17495B4100B3334D /* PrefsGeneral@2x.png */; };
 		9DB3D6E0176C8F0B0071CCF8 /* PrefsAppearance.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6DE176C8F0B0071CCF8 /* PrefsAppearance.png */; };
@@ -5766,6 +5767,7 @@
 		3958B5886D15D42E92BF7392 /* WorkgroupRestorationCoordinator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupRestorationCoordinator.swift; sourceTree = "<group>"; };
 		39A91EF453B797BB100AD508 /* SessionNoteModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionNoteModel.swift; sourceTree = "<group>"; };
 		3B81856E5FFF3D6001EA8085 /* iTermController+SessionLookupDiagnosis.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "iTermController+SessionLookupDiagnosis.swift"; sourceTree = "<group>"; };
+		3BEB3590B9353CD13FE37F42 /* iTermBrowserQuickLookViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermBrowserQuickLookViewController.swift; sourceTree = "<group>"; };
 		3BF2267B1164F44724EB0853 /* LLM+Mac.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "LLM+Mac.swift"; sourceTree = "<group>"; };
 		3C05599DA2E4F97B75124672 /* iTermOpenDirectory+MainApp.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "iTermOpenDirectory+MainApp.m"; sourceTree = "<group>"; };
 		3C2A1099DFA4459A4A485034 /* ConfigCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ConfigCommand.swift; path = it2cli/Sources/it2core/Commands/ConfigCommand.swift; sourceTree = "<group>"; };
@@ -13384,6 +13386,7 @@
 				561FAB7268366F871453FFB8 /* iTermQuickLookDomainAllowlist.swift */,
 				DD87977CEA15B31D5760F6AF /* iTermQuickLookEngineSelector.swift */,
 				DDD8386174BE2C15575D8060 /* iTermQuickLookHoverController.swift */,
+				3BEB3590B9353CD13FE37F42 /* iTermBrowserQuickLookViewController.swift */,
 			);
 			path = QuickLook;
 			sourceTree = "<group>";
@@ -20810,6 +20813,7 @@
 				ACB1062ED8C5903FF5E7D361 /* iTermBrowserEngineDefaults.swift in Sources */,
 				D82D468AF6651A19663994A8 /* iTermQuickLookEngineSelector.swift in Sources */,
 				A3275920513B30BC4D53A3C3 /* iTermQuickLookHoverController.swift in Sources */,
+				9D6947E84FE6E1CD5F160309 /* iTermBrowserQuickLookViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

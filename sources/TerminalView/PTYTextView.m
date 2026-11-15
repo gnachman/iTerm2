@@ -421,6 +421,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     [_badgeLabel release];
     [_quickLookController close];
     [_quickLookController release];
+    [_webQuickLookPopover release];
     [_contextMenuHelper release];
     [_highlightedRows release];
     [_scrollAccumulator release];
@@ -7575,10 +7576,7 @@ static NSString *iTermStringFromRange(NSRange range) {
 #pragma mark - NSPopoverDelegate
 
 - (void)popoverDidClose:(NSNotification *)notification {
-    NSPopover *popover = notification.object;
-    iTermWebViewWrapperViewController *viewController = (iTermWebViewWrapperViewController *)popover.contentViewController;
-    [viewController terminateWebView];
-
+    [self webQuickLookPopoverDidClose:notification.object];
 }
 
 #pragma mark - iTermKeyboardHandlerDelegate

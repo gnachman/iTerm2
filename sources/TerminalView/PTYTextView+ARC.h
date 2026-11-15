@@ -92,6 +92,16 @@ iTermURLActionHelperDelegate>
 
 - (void)handleQuickLookWithEvent:(NSEvent *)event;
 
+// Shows a web page in a Quick Look popover, replacing any web Quick Look this view already shows.
+// The engine (legacy or the built-in browser's) follows iTermQuickLookEngineSelector.
+- (void)showWebQuickLookForURL:(NSURL *)url
+               atPointInWindow:(NSPoint)point
+                 openedByHover:(BOOL)openedByHover;
+// Closes the web Quick Look popover, if any.
+- (void)closeWebQuickLook;
+// Called when a popover this view is the delegate of has closed.
+- (void)webQuickLookPopoverDidClose:(NSPopover *)popover;
+
 #pragma mark - Copy to Pasteboard
 
 // Returns a dictionary to pass to NSAttributedString.

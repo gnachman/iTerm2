@@ -62,6 +62,10 @@ NSPopoverDelegate> {
 @property(nonatomic, strong) iTermFindCursorView *findCursorView;
 @property(nonatomic, strong) NSWindow *findCursorWindow;  // For find-cursor animation
 @property(nonatomic, strong) iTermQuickLookController *quickLookController;
+// The web Quick Look popover this view showed last, while it is open.
+@property(nonatomic, strong) NSPopover *webQuickLookPopover;
+// Whether webQuickLookPopover was opened by hovering a link (as opposed to force press or a menu).
+@property(nonatomic) BOOL webQuickLookPopoverOpenedByHover;
 @property(strong, readwrite) NSTouchBar *touchBar;
 @property(nonatomic, readonly) BOOL hasUnderline;
 @property(nonatomic, strong) id<iTermCancelable> lastUrlActionCanceler;

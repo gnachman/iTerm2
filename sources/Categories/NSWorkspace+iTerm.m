@@ -491,4 +491,20 @@ static NSMutableSet<NSString * > *urlTokens;
                           completionHandler:nil];
 }
 
+- (NSString *)it_defaultBrowserNameForURL:(NSURL *)url {
+    CFErrorRef error;
+    NSURL *URL = url ?: [NSURL URLWithString:@"http://example.com"];
+    NSURL *appUrl = (__bridge_transfer NSURL *)LSCopyDefaultApplicationURLForURL((__bridge CFURLRef)URL,
+                                                                                 kLSRolesAll,
+                                                                                 &error);
+    if (appUrl) {
+        NSString *name = nil;
+        [appUrl getResourceValue:&name forKey:NSURLLocalizedNameKey error:NULL];
+        if (name) {
+            return name;
+        }
+    }
+    return NSLocalizedStringWithDefaultValue(@"WebViewWrapper.DefaultBrowser", nil, [NSBundle mainBundle], @"Default Browser", @"Name used for the user’s default web browser when its real name is unknown");
+}
+
 @end

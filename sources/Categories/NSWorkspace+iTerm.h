@@ -45,4 +45,8 @@
 - (BOOL)it_urlIsConditionallyLocallyOpenable:(NSURL *)url;
 - (BOOL)it_urlIsLocallyOpenableWithUpsell:(NSURL *)url;
 
+// The localized name of the app that opens url (http://example.com when url is nil), or a
+// generic “Default Browser” when that can't be determined.
+- (NSString *)it_defaultBrowserNameForURL:(NSURL *)url;
+
 @end
