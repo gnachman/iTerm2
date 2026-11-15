@@ -59,6 +59,19 @@ final class QuickLookDomainAllowlistTests: XCTestCase {
         XCTAssertFalse(allowlist.allows(url("https://example.de/")))
     }
 
+    func testUnnormalizableEntryFailsClosed() {
+        let allowlist = iTermQuickLookDomainAllowlist(string: "\u{FFFF}.com")
+        XCTAssertFalse(allowlist.isEmpty)
+        XCTAssertFalse(allowlist.allows(url("https://example.com")))
+        XCTAssertFalse(allowlist.allows(url("http://example.com")))
+    }
+
+    func testUnnormalizableEntryDoesNotDropUsableOnes() {
+        let allowlist = iTermQuickLookDomainAllowlist(string: "\u{FFFF}.com, linear.app")
+        XCTAssertTrue(allowlist.allows(url("https://linear.app/x")))
+        XCTAssertFalse(allowlist.allows(url("https://example.com")))
+    }
+
     func testDefaultsAreOff() {
         XCTAssertEqual(iTermPreferences.defaultObject(forKey: kPreferenceKeyQuickLookUsesBrowserEngine) as? Bool, false)
         XCTAssertEqual(iTermPreferences.defaultObject(forKey: kPreferenceKeyQuickLookHoverMode) as? Int, 0)
