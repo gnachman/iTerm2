@@ -206,7 +206,7 @@ class iTermBrowserViewController: NSViewController {
         let user: iTermBrowserUser = if profileObserver.value(KEY_BROWSER_DEV_NULL) == true {
             .devNull
         } else {
-            .regular(id: UUID(uuidString: "AC0E9812-7F88-478B-B361-5526082EDDB3")!)
+            .regular(id: iTermBrowserEngineDefaults.regularUserStoreID)
         }
         historyController = iTermBrowserHistoryController(user: user,
                                                           sessionGuid: sessionGuid,

@@ -220,7 +220,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
             }
 
             // Configure proxy if enabled
-            applyProxyConfiguration(to: configuration.websiteDataStore)
+            iTermBrowserEngineDefaults.applyProxyConfiguration(to: configuration.websiteDataStore)
         }
 
         var logErrors = ""
@@ -479,16 +479,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         webView = iTermBrowserWebView(frame: .zero,
                                       configuration: configuration,
                                       pointerController: pointerController)
-        if let safariBundle = Bundle(path: "/Applications/Safari.app"),
-           let safariVersion = safariBundle.infoDictionary?["CFBundleShortVersionString"] as? String {
-            webView.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
-            "AppleWebKit/605.1.15 (KHTML, like Gecko) " +
-            "Version/\(safariVersion) Safari/605.1.15"
-        } else {
-            webView.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
-            "AppleWebKit/605.1.15 (KHTML, like Gecko) " +
-            "Version/16.4 Safari/605.1.15"
-        }
+        webView.customUserAgent = iTermBrowserEngineDefaults.safariUserAgent()
 
         webView.navigationDelegate = self
         webView.uiDelegate = self
@@ -1896,26 +1887,7 @@ extension iTermBrowserManager {
     }
     
     func updateProxyConfiguration() {
-        applyProxyConfiguration(to: webView.configuration.websiteDataStore)
-    }
-
-    private func applyProxyConfiguration(to dataStore: WKWebsiteDataStore) {
-        guard #available(macOS 14.0, *) else {
-            return
-        }
-
-        if iTermAdvancedSettingsModel.browserProxyEnabled() {
-            let proxyHost = iTermAdvancedSettingsModel.browserProxyHost() ?? "127.0.0.1"
-            let proxyPort = iTermAdvancedSettingsModel.browserProxyPort()
-
-            let endpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(proxyHost), port: NWEndpoint.Port(integerLiteral: UInt16(proxyPort)))
-            let proxyConfig = ProxyConfiguration(httpCONNECTProxy: endpoint)
-            dataStore.proxyConfigurations = [proxyConfig]
-            RLog("Configured browser proxy: \(proxyHost):\(proxyPort)")
-        } else {
-            RLog("Proxy disabled")
-            dataStore.proxyConfigurations = []
-        }
+        iTermBrowserEngineDefaults.applyProxyConfiguration(to: webView.configuration.websiteDataStore)
     }
 }
 
