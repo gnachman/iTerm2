@@ -504,7 +504,7 @@ iTermCommandInfoViewControllerDelegate>
         return;
     }
     if (!commandPressed || ![self shouldUnderlineLinkUnderCursorForEvent:event]) {
-        const BOOL changedUnderline = [self removeUnderline];
+        const BOOL changedUnderline = [self removeUnderlineExceptQuickLookHoverCue];
         const BOOL cursorChanged = [self updateCursor:event action:nil];
         DLog(@"Don't want an underline. changedUnderline=%@ cursorChanged=%@", @(changedUnderline), @(cursorChanged));
         if (changedUnderline || cursorChanged) {
@@ -540,14 +540,14 @@ iTermCommandInfoViewControllerDelegate>
     DLog(@"finishUpdatingUnderlinesWithAction:%@", action);
     if (!action) {
         DLog(@"No action: remove underline");
-        [self removeUnderline];
+        [self removeUnderlineExceptQuickLookHoverCue];
         [self updateCursor:event action:action];
         return;
     }
     if (![iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs] &&
         action.actionType != kURLActionSmartSelectionAction) {
         DLog(@"Cmd-click opens URLs is off and action is not a smart selection action; remove underline");
-        [self removeUnderline];
+        [self removeUnderlineExceptQuickLookHoverCue];
         [self updateCursor:event action:nil];
         return;
     }
@@ -777,6 +777,11 @@ iTermCommandInfoViewControllerDelegate>
     }
     if (changed) {
         [self.enclosingScrollView setDocumentCursor:cursor_];
+    }
+    if (!hover && self.quickLookHoverCueURL) {
+        // A pending hover preview shows the URL even though the pointer keeps its shape.
+        hover = self.quickLookHoverCueURL;
+        anchorRange = self.quickLookHoverCueVisualRange;
     }
     return [self.delegate textViewShowHoverURL:hover anchor:anchorRange];
 }
@@ -1159,6 +1164,12 @@ iTermCommandInfoViewControllerDelegate>
     callbacks.previewFrame = ^NSRect{
         return [weakSelf quickLookHoverPreviewFrame];
     };
+    callbacks.showCue = ^(NSURL *url) {
+        [weakSelf quickLookHoverShowCueForURL:url];
+    };
+    callbacks.clearCue = ^{
+        [weakSelf quickLookHoverClearCue];
+    };
     self.quickLookHoverAdapter = [[iTermQuickLookHoverAdapter alloc] initWithHost:callbacks];
     return self.quickLookHoverAdapter;
 }
@@ -1296,8 +1307,58 @@ iTermCommandInfoViewControllerDelegate>
             completion(nil, @[]);
             return;
         }
+        strongSelf.quickLookHoverResolvedURL = url;
+        strongSelf.quickLookHoverResolvedVisualRange = action.visualRange;
+        strongSelf.quickLookHoverResolvedUnderlinedRange =
+            VT100GridAbsWindowedRangeFromRelative(action.logicalRange,
+                                                  [strongSelf.dataSource totalScrollbackOverflow]);
         completion(url, [strongSelf rectsForVisualRange:action.visualRange]);
     }];
+}
+
+- (void)quickLookHoverShowCueForURL:(NSURL *)url {
+    if (![url isEqual:self.quickLookHoverResolvedURL]) {
+        DLog(@"Not showing hover cue for %@: last resolved %@", url, self.quickLookHoverResolvedURL);
+        return;
+    }
+    DLog(@"Show hover cue for %@", url);
+    self.quickLookHoverCueURL = url.absoluteString;
+    self.quickLookHoverCueVisualRange = self.quickLookHoverResolvedVisualRange;
+    self.quickLookHoverCueUnderlinedRange = self.quickLookHoverResolvedUnderlinedRange;
+    if ([iTermAdvancedSettingsModel enableUnderlineSemanticHistoryOnCmdHover]) {
+        self.drawingHelper.underlinedRange = self.quickLookHoverCueUnderlinedRange;
+        [self requestDelegateRedraw];
+    }
+    [self.delegate textViewShowHoverURL:self.quickLookHoverCueURL anchor:self.quickLookHoverCueVisualRange];
+}
+
+- (void)quickLookHoverClearCue {
+    if (!self.quickLookHoverCueURL) {
+        return;
+    }
+    DLog(@"Clear hover cue for %@", self.quickLookHoverCueURL);
+    self.quickLookHoverCueURL = nil;
+    if (VT100GridAbsWindowedRangeEquals(self.drawingHelper.underlinedRange, self.quickLookHoverCueUnderlinedRange)) {
+        [self removeUnderline];
+    }
+    if (([[iTermApplication sharedApplication] it_modifierFlags] & NSEventModifierFlagCommand) == 0) {
+        // With Cmd down the Cmd-hover cue owns the URL bar.
+        [self.delegate textViewShowHoverURL:nil
+                                     anchor:VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), -1, -1)];
+    }
+}
+
+// Like -removeUnderline, but leaves the hover cue's underline in place.
+- (BOOL)removeUnderlineExceptQuickLookHoverCue {
+    if (!self.quickLookHoverCueURL || ![iTermAdvancedSettingsModel enableUnderlineSemanticHistoryOnCmdHover]) {
+        return [self removeUnderline];
+    }
+    if (VT100GridAbsWindowedRangeEquals(self.drawingHelper.underlinedRange, self.quickLookHoverCueUnderlinedRange)) {
+        return NO;
+    }
+    self.drawingHelper.underlinedRange = self.quickLookHoverCueUnderlinedRange;
+    [self requestDelegateRedraw];
+    return YES;
 }
 
 // The rects, in this view's coordinates, that the cells of a visual range cover: one per line.

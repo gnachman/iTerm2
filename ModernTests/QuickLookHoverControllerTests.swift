@@ -90,6 +90,17 @@ private final class RecordingDelegate: iTermQuickLookHoverControllerDelegate {
     func hoverControllerPreviewFrame() -> NSRect? {
         return previewFrame
     }
+
+    var cues = [URL]()
+    var cueClearCount = 0
+
+    func hoverControllerShowCue(url: URL, linkRects: [NSRect]) {
+        cues.append(url)
+    }
+
+    func hoverControllerClearCue() {
+        cueClearCount += 1
+    }
 }
 
 final class QuickLookHoverControllerTests: XCTestCase {
@@ -571,5 +582,135 @@ final class QuickLookHoverControllerTests: XCTestCase {
         XCTAssertTrue(iTermQuickLookHoverAdapter.shouldHoverPreview(isOSC8: true, includesPlainTextURLs: true))
         XCTAssertFalse(iTermQuickLookHoverAdapter.shouldHoverPreview(isOSC8: false, includesPlainTextURLs: false))
         XCTAssertTrue(iTermQuickLookHoverAdapter.shouldHoverPreview(isOSC8: false, includesPlainTextURLs: true))
+    }
+
+    // MARK: - Cue
+
+    private func showCueOnA() {
+        controller.cueSettleDelay = 0.1
+        move(pointOnA)
+        scheduler.fire(delay: 0.1)
+        XCTAssertEqual(delegate.cues, [urlA])
+    }
+
+    func testCueShowsAfterSettleAndOpenReusesTheResolution() {
+        controller.cueSettleDelay = 0.1
+        move(pointOnA)
+        XCTAssertEqual(scheduler.active.map(\.delay).sorted(), [0.1, 0.75])
+        scheduler.fire(delay: 0.1)
+        XCTAssertEqual(delegate.cues, [urlA])
+        XCTAssertTrue(delegate.opens.isEmpty)
+
+        scheduler.fire(delay: 0.75)
+        XCTAssertEqual(delegate.opens.count, 1)
+        XCTAssertEqual(delegate.resolvedPoints, [pointOnA], "the open reuses the cue's resolution")
+        XCTAssertEqual(delegate.cues, [urlA])
+        XCTAssertEqual(delegate.cueClearCount, 0, "the cue may stay while the preview is open")
+    }
+
+    func testMovingWithinTheLinkKeepsTheCueWithoutResolvingAgain() {
+        showCueOnA()
+        let onA2 = NSPoint(x: 30, y: 18)
+        move(onA2)
+        XCTAssertEqual(delegate.cueClearCount, 0)
+        XCTAssertEqual(scheduler.active.map(\.delay), [0.75])
+        scheduler.fire(delay: 0.75)
+        XCTAssertEqual(delegate.opens.first?.point, onA2)
+        XCTAssertEqual(delegate.resolvedPoints, [pointOnA])
+    }
+
+    func testCueClearsWhenThePointerLeavesTheLink() {
+        showCueOnA()
+        move(pointNowhere)
+        XCTAssertEqual(delegate.cueClearCount, 1)
+        scheduler.fire(delay: 0.75)
+        XCTAssertEqual(delegate.cueClearCount, 1)
+    }
+
+    func testCueClearsOnClickKeyScrollAndDeactivation() {
+        let cancels: [(iTermQuickLookHoverController) -> Void] = [
+            { $0.mouseDown() },
+            { $0.keyDown() },
+            { $0.scrolled() },
+            { $0.deactivated() },
+        ]
+        for (i, cancel) in cancels.enumerated() {
+            showCueOnA()
+            delegate.cues = []
+            cancel(controller)
+            XCTAssertEqual(delegate.cueClearCount, i + 1)
+            scheduler.fire(delay: 0.75)
+            XCTAssertTrue(delegate.opens.isEmpty)
+        }
+    }
+
+    func testCueClearsWhenThePreviewCloses() {
+        showCueOnA()
+        scheduler.fire(delay: 0.75)
+        controller.previewClosed()
+        XCTAssertEqual(delegate.cueClearCount, 1)
+
+        delegate.cues = []
+        showCueOnA()
+        scheduler.fire(delay: 0.75)
+        move(pointNowhere)
+        XCTAssertEqual(delegate.cueClearCount, 2, "leaving the link clears the cue")
+    }
+
+    func testCueClearsWhenAutoCloseCloses() {
+        showCueOnA()
+        scheduler.fire(delay: 0.75)
+        // Leaving the link clears the cue; the auto-close that follows must not clear it again.
+        controller.pointerMoved(to: pointInPreview, commandDown: false, optionDown: false, windowActive: true)
+        XCTAssertEqual(delegate.cueClearCount, 1)
+        controller.pointerMoved(to: pointNowhere, commandDown: false, optionDown: false, windowActive: true)
+        scheduler.fire(delay: 1.5)
+        XCTAssertEqual(delegate.closeCount, 1)
+        XCTAssertEqual(delegate.cueClearCount, 1)
+    }
+
+    func testNoCueInCommandHoverOrOffOrWhenTurnedOff() {
+        configure(mode: .commandHover)
+        controller.cueSettleDelay = 0.1
+        move(pointOnA, command: true)
+        XCTAssertEqual(scheduler.active.map(\.delay), [0.75])
+        scheduler.fire(delay: 0.75)
+        XCTAssertEqual(delegate.opens.count, 1)
+        XCTAssertTrue(delegate.cues.isEmpty)
+
+        controller.previewClosed()
+        configure(mode: .off)
+        move(pointOnA)
+        XCTAssertTrue(scheduler.active.isEmpty)
+
+        configure(mode: .hover)
+        controller.cueSettleDelay = nil
+        move(pointOnA)
+        XCTAssertEqual(scheduler.active.map(\.delay), [0.75])
+        scheduler.fire(delay: 0.75)
+        XCTAssertTrue(delegate.cues.isEmpty)
+    }
+
+    func testNoCueForLinksThatWouldNotPreview() {
+        configure(allowlist: "example.org")
+        controller.cueSettleDelay = 0.1
+        move(pointOnA)
+        scheduler.fire(delay: 0.1)
+        XCTAssertTrue(delegate.cues.isEmpty)
+
+        delegate.resolution = (nil, [])
+        move(NSPoint(x: 30, y: 18))
+        scheduler.fire(delay: 0.1)
+        XCTAssertTrue(delegate.cues.isEmpty)
+    }
+
+    func testStaleCueResolutionIsDropped() {
+        controller.cueSettleDelay = 0.1
+        delegate.defersCompletion = true
+        move(pointOnA)
+        scheduler.fire(delay: 0.1)
+        move(pointNowhere)
+        delegate.deferredCompletions.first?(urlA, [rectA])
+        XCTAssertTrue(delegate.cues.isEmpty)
     }
 }

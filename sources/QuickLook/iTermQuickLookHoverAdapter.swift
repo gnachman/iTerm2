@@ -20,6 +20,9 @@ final class iTermQuickLookHoverHostCallbacks: NSObject {
     @objc var closePreview: (() -> Void)?
     // The open preview's frame, or NSZeroRect when there is none.
     @objc var previewFrame: (() -> NSRect)?
+    // Shows that the link at `url`, last returned by resolveLink, will preview.
+    @objc var showCue: ((_ url: URL) -> Void)?
+    @objc var clearCue: (() -> Void)?
 }
 
 @objc(iTermQuickLookHoverAdapter)
@@ -33,10 +36,15 @@ final class iTermQuickLookHoverAdapter: NSObject, iTermQuickLookHoverControllerD
     init(host: iTermQuickLookHoverHostCallbacks) {
         self.host = host
         controller = iTermQuickLookHoverController(scheduler: iTermQuickLookTimerScheduler())
+        controller.cueSettleDelay = Self.cueSettleDelay
         super.init()
         controller.delegate = self
         reloadPreferences()
     }
+
+    // Long enough that sweeping the pointer across text doesn't flash cues, short enough that the
+    // cue shows well before a preview opens at the default delay.
+    private static let cueSettleDelay: TimeInterval = 0.1
 
     @objc static var preferenceKeys: Set<String> {
         return [kPreferenceKeyQuickLookHoverMode,
@@ -103,6 +111,14 @@ final class iTermQuickLookHoverAdapter: NSObject, iTermQuickLookHoverControllerD
 
     func hoverControllerClosePreview() {
         host.closePreview?()
+    }
+
+    func hoverControllerShowCue(url: URL, linkRects: [NSRect]) {
+        host.showCue?(url)
+    }
+
+    func hoverControllerClearCue() {
+        host.clearCue?()
     }
 
     func hoverControllerPreviewFrame() -> NSRect? {

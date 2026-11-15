@@ -69,6 +69,15 @@ NSPopoverDelegate> {
 @property(nonatomic) BOOL webQuickLookPopoverOpenedByHover;
 // Drives Quick Look on hover. Created on first use while hovering is turned on.
 @property(nonatomic, strong) iTermQuickLookHoverAdapter *quickLookHoverAdapter;
+// The link the hover controller resolved last, kept so its cue can be shown without resolving again.
+@property(nonatomic, strong) NSURL *quickLookHoverResolvedURL;
+@property(nonatomic) VT100GridWindowedRange quickLookHoverResolvedVisualRange;
+@property(nonatomic) VT100GridAbsWindowedRange quickLookHoverResolvedUnderlinedRange;
+// The hover cue (underline and URL bar) shown in Hover mode before a preview opens. Nil URL means
+// no cue.
+@property(nonatomic, copy) NSString *quickLookHoverCueURL;
+@property(nonatomic) VT100GridWindowedRange quickLookHoverCueVisualRange;
+@property(nonatomic) VT100GridAbsWindowedRange quickLookHoverCueUnderlinedRange;
 @property(strong, readwrite) NSTouchBar *touchBar;
 @property(nonatomic, readonly) BOOL hasUnderline;
 @property(nonatomic, strong) id<iTermCancelable> lastUrlActionCanceler;
