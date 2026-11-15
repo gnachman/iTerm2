@@ -112,8 +112,12 @@ iTermURLActionHelperDelegate>
 - (void)quickLookHoverMouseDown;
 - (void)quickLookHoverKeyDown;
 - (void)quickLookHoverScrolled;
-// What the view shows changed, so links may have moved.
+// What the view shows changed, so links may have moved: forgets a rejected link and moves the
+// pending cue's URL bar to where its link is now.
 - (void)quickLookHoverContentChanged;
+// The pending cue's link in current visual coordinates; *valid is NO once it scrolled out of the
+// buffer.
+- (VT100GridWindowedRange)quickLookHoverCueAnchorValid:(BOOL *)valid;
 // The app or window lost focus.
 - (void)quickLookHoverDeactivated;
 // Removes the underline because this view or its window lost focus, but keeps the hover cue’s

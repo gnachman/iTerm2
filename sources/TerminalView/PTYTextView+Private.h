@@ -76,7 +76,8 @@ NSPopoverDelegate> {
 // The hover cue (underline and URL bar) shown in Hover mode before a preview opens. Nil URL means
 // no cue.
 @property(nonatomic, copy) NSString *quickLookHoverCueURL;
-@property(nonatomic) VT100GridWindowedRange quickLookHoverCueVisualRange;
+// Absolute, so the URL bar's anchor follows the link as lines scroll off the top.
+@property(nonatomic) VT100GridAbsWindowedRange quickLookHoverCueAbsVisualRange;
 @property(nonatomic) VT100GridAbsWindowedRange quickLookHoverCueUnderlinedRange;
 @property(strong, readwrite) NSTouchBar *touchBar;
 @property(nonatomic, readonly) BOOL hasUnderline;

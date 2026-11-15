@@ -782,11 +782,13 @@ iTermCommandInfoViewControllerDelegate>
     if (changed) {
         [self.enclosingScrollView setDocumentCursor:cursor_];
     }
-    if (!hover && self.quickLookHoverCueURL && ![self hasHoverOpenedWebQuickLook]) {
+    BOOL cueAnchorValid = NO;
+    const VT100GridWindowedRange cueAnchor = [self quickLookHoverCueAnchorValid:&cueAnchorValid];
+    if (!hover && self.quickLookHoverCueURL && ![self hasHoverOpenedWebQuickLook] && cueAnchorValid) {
         // A pending hover preview shows the URL even though the pointer keeps its shape. Once the
         // preview shows, its own address bar has the URL.
         hover = self.quickLookHoverCueURL;
-        anchorRange = self.quickLookHoverCueVisualRange;
+        anchorRange = cueAnchor;
     }
     return [self.delegate textViewShowHoverURL:hover anchor:anchorRange];
 }
@@ -1255,6 +1257,7 @@ iTermCommandInfoViewControllerDelegate>
 
 - (void)quickLookHoverContentChanged {
     [self.quickLookHoverAdapter.controller contentChanged];
+    [self quickLookHoverUpdateCueURLBar];
 }
 
 - (void)quickLookHoverDeactivated {
@@ -1376,7 +1379,9 @@ iTermCommandInfoViewControllerDelegate>
     }
     DLog(@"Show hover cue for %@", url);
     self.quickLookHoverCueURL = url.absoluteString;
-    self.quickLookHoverCueVisualRange = self.quickLookHoverResolvedVisualRange;
+    self.quickLookHoverCueAbsVisualRange =
+        VT100GridAbsWindowedRangeFromRelative(self.quickLookHoverResolvedVisualRange,
+                                              [self.dataSource totalScrollbackOverflow]);
     self.quickLookHoverCueUnderlinedRange = self.quickLookHoverResolvedUnderlinedRange;
     if ([iTermAdvancedSettingsModel enableUnderlineSemanticHistoryOnCmdHover]) {
         self.drawingHelper.underlinedRange = self.quickLookHoverCueUnderlinedRange;
@@ -1386,7 +1391,35 @@ iTermCommandInfoViewControllerDelegate>
         // The open preview’s address bar shows the URL.
         return;
     }
-    [self.delegate textViewShowHoverURL:self.quickLookHoverCueURL anchor:self.quickLookHoverCueVisualRange];
+    BOOL valid = NO;
+    const VT100GridWindowedRange anchor = [self quickLookHoverCueAnchorValid:&valid];
+    [self.delegate textViewShowHoverURL:self.quickLookHoverCueURL anchor:anchor];
+}
+
+// The cue's link in current visual coordinates. Not valid once the link has scrolled out of the
+// buffer.
+- (VT100GridWindowedRange)quickLookHoverCueAnchorValid:(BOOL *)valid {
+    return VT100GridWindowedRangeFromAbsWindowedRangeSafe(self.quickLookHoverCueAbsVisualRange,
+                                                          [self.dataSource totalScrollbackOverflow],
+                                                          valid);
+}
+
+// Moves the pending cue's URL bar to where its link is now, so the bar follows the link as output
+// scrolls, and hides it once the link has scrolled out of the buffer. Leaves the bar alone when
+// there is no pending cue or Cmd-hover owns it.
+- (void)quickLookHoverUpdateCueURLBar {
+    if (!self.quickLookHoverCueURL ||
+        [self hasHoverOpenedWebQuickLook] ||
+        ([[iTermApplication sharedApplication] it_modifierFlags] & NSEventModifierFlagCommand) != 0) {
+        return;
+    }
+    BOOL valid = NO;
+    const VT100GridWindowedRange anchor = [self quickLookHoverCueAnchorValid:&valid];
+    if (!valid) {
+        [self quickLookHoverHideCueURLBar];
+        return;
+    }
+    [self.delegate textViewShowHoverURL:self.quickLookHoverCueURL anchor:anchor];
 }
 
 - (void)quickLookHoverClearCue {

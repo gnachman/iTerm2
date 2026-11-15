@@ -267,6 +267,43 @@ final class PTYTextViewQuickLookHoverImmediateCueTests: XCTestCase {
                       "underline is \(VT100GridAbsWindowedRangeDescription(actual))")
     }
 
+    // The URL bar is anchored to the cue's link. Lines dropping off the top of a full scrollback
+    // renumber the rest, and the anchor must follow its link rather than its old line number.
+    func testCueAnchorFollowsItsLinkAsLinesScrollOff() {
+        let config = VT100MutableScreenConfiguration()
+        config.unlimitedScrollback = false
+        config.maxScrollbackLines = 10
+        config.isDirty = true
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.setConfig(config)
+        })
+        feed(String(repeating: "\r\n", count: 12) + "ab " + hyperlink("https://example.com/x", "link"))
+        let linkLine = 12
+        guard let url = lookUp(5, linkLine)?.url else {
+            XCTFail("no link under the pointer: \(screen.compactLineDump())")
+            return
+        }
+        textView.quickLookHoverShowCue(for: url)
+        var valid = ObjCBool(false)
+        var anchor = textView.quickLookHoverCueAnchorValid(&valid)
+        XCTAssertTrue(valid.boolValue)
+        XCTAssertEqual(anchor.coordRange.start.y, Int32(linkLine))
+        XCTAssertEqual(anchor.coordRange.start.x, 3)
+
+        let overflowBefore = screen.totalScrollbackOverflow()
+        feed(String(repeating: "\r\n", count: 6))
+        let dropped = Int32(screen.totalScrollbackOverflow() - overflowBefore)
+        XCTAssertGreaterThan(dropped, 0, "precondition: lines scrolled off the top")
+        anchor = textView.quickLookHoverCueAnchorValid(&valid)
+        XCTAssertTrue(valid.boolValue)
+        XCTAssertEqual(anchor.coordRange.start.y, Int32(linkLine) - dropped)
+        XCTAssertEqual(anchor.coordRange.end.y, Int32(linkLine) - dropped)
+
+        feed(String(repeating: "\r\n", count: 30))
+        _ = textView.quickLookHoverCueAnchorValid(&valid)
+        XCTAssertFalse(valid.boolValue, "the link scrolled out of the buffer")
+    }
+
     func testPlainTextIsNotALinkByDefault() {
         feed("see https://example.com/y here")
 
