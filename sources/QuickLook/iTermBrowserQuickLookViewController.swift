@@ -180,6 +180,10 @@ class iTermBrowserQuickLookViewController: NSViewController, WKUIDelegate, WKNav
         tornDown = true
         removeMouseDownMonitor()
         webView.stopLoading()
+        // stopLoading doesn't stop media that is already playing. Unload the page, as the legacy
+        // preview's terminateWebView does, so audio stops even if something keeps the view alive.
+        webView.pauseAllMediaPlayback(completionHandler: nil)
+        webView.loadHTMLString("<html/>", baseURL: nil)
         let panels = popups.map { $0.panel }
         for panel in panels {
             panel.close()
