@@ -102,6 +102,16 @@ iTermURLActionHelperDelegate>
 // Called when a popover this view is the delegate of has closed.
 - (void)webQuickLookPopoverDidClose:(NSPopover *)popover;
 
+// Quick Look on hover. These only observe events: they never consume or alter them.
+- (BOOL)quickLookHoverWantsMouseMovementEvents;
+- (void)quickLookHoverMouseMoved:(NSEvent *)event;
+- (void)quickLookHoverFlagsChanged:(NSEvent *)event;
+- (void)quickLookHoverMouseDown;
+- (void)quickLookHoverKeyDown;
+- (void)quickLookHoverScrolled;
+// The app or window lost focus.
+- (void)quickLookHoverDeactivated;
+
 #pragma mark - Copy to Pasteboard
 
 // Returns a dictionary to pass to NSAttributedString.

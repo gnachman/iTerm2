@@ -26,7 +26,7 @@ class iTermBrowserQuickLookViewController: NSViewController, WKUIDelegate, WKNav
     private let initialURL: URL
     private var popups = [(panel: NSPanel, webView: WKWebView)]()
     private var urlLabel: NSTextField?
-    private var mouseDownMonitor: Any?
+    private var clickWatcher: iTermQuickLookClickWatcher?
     private var tornDown = false
 
     @objc(initWithURL:)
@@ -210,34 +210,22 @@ class iTermBrowserQuickLookViewController: NSViewController, WKUIDelegate, WKNav
     // MARK: - Mouse-down detection
 
     private func installMouseDownMonitor() {
-        guard mouseDownMonitor == nil else {
+        guard clickWatcher == nil else {
             return
         }
-        mouseDownMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] event in
-            self?.handleMouseDown(event)
-            return event
+        clickWatcher = iTermQuickLookClickWatcher(view: view) { [weak self] in
+            guard let self else {
+                return
+            }
+            let callback = self.onUserInteraction
+            self.onUserInteraction = nil
+            callback?()
         }
     }
 
     private func removeMouseDownMonitor() {
-        if let mouseDownMonitor {
-            NSEvent.removeMonitor(mouseDownMonitor)
-        }
-        mouseDownMonitor = nil
-    }
-
-    private func handleMouseDown(_ event: NSEvent) {
-        guard isViewLoaded, let window = view.window, event.window === window else {
-            return
-        }
-        let point = view.convert(event.locationInWindow, from: nil)
-        guard view.bounds.contains(point) else {
-            return
-        }
-        removeMouseDownMonitor()
-        let callback = onUserInteraction
-        onUserInteraction = nil
-        callback?()
+        clickWatcher?.stop()
+        clickWatcher = nil
     }
 
     // MARK: - WKUIDelegate

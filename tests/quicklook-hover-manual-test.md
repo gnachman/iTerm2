@@ -1,0 +1,85 @@
+# Web Quick Look on the browser engine, and on hover: manual test
+
+Covers the Quick Look settings in Settings > Pointer > Quick Look: the browser
+engine for web previews, and opening previews on hover.
+
+Implementation: `sources/QuickLook/` (`iTermBrowserQuickLookViewController`,
+`iTermQuickLookHoverController`, `iTermQuickLookHoverAdapter`,
+`iTermQuickLookEngineSelector`) and the Quick Look sections of
+`sources/TerminalView/PTYTextView+ARC.m`.
+
+## 0. Setup
+
+- Build and run with `make run` (it passes `-suite`). Never run without it.
+- Install the iTerm2 Browser Plugin for section 1. Section 2 works with or
+  without it.
+- Test links: a Linear ticket, a GitHub PR, and a docs page. Print them as plain
+  text and as OSC 8 hyperlinks whose text differs from the URL, for example:
+  `printf '\e]8;;https://linear.app/\e\\Linear home\e]8;;\e\\\n'`
+- A link long enough to wrap onto a second line.
+- Claude Code (prints OSC 8 links and turns on mouse reporting) and `vim` with
+  `:set mouse=a`.
+
+## 1. Browser engine
+
+1. Engine off: force press a web link (or right-click > Quick Look Link). The
+   old popover appears, with only an “Open in <browser>” button.
+2. Engine on, plugin installed: force press the Linear link. The new popover
+   shows a bar with the URL, “Open in iTerm2 Browser”, “Open in <browser>” and a
+   close button. The page loads.
+3. Engine on, plugin not installed: the old popover appears, and Settings shows
+   the “plugin not installed” note under the checkbox.
+4. Sign in to Linear with Google using a password. The Google window opens as a
+   small panel, the second factor completes, the panel closes by itself and the
+   popover is signed in.
+5. Close the popover and preview the link again: still signed in.
+6. Open the same site in a built-in browser tab: signed in there too.
+7. Quit and relaunch: previews are still signed in.
+8. “Open in iTerm2 Browser” opens the page (the current page, if you navigated)
+   in a browser tab. With browser profiles unavailable it opens the default
+   browser instead.
+9. A `target=_blank` link inside the preview loads in the preview itself, not
+   in a new window.
+10. Escape, the close button and clicking elsewhere in the terminal each close
+    the popover, and a sign-in panel still open closes with it.
+
+## 2. Hover
+
+Use Settings > Pointer > Quick Look. Defaults: delay 0.75s, close after 1.5s.
+
+1. Mode Off: resting on links never opens anything. Mouse movement over output
+   behaves exactly as before.
+2. Mode Hover: rest on an OSC 8 Linear link. The preview opens after about
+   0.75s. Moving across the link without resting does not open it.
+3. Mode ⌘ + Hover: resting without Cmd does nothing. Hold Cmd while resting:
+   opens after the delay. Pressing Cmd while already resting on the link also
+   starts the delay. Releasing Cmd before it elapses cancels. Cmd + Option
+   never opens.
+4. Move from the link to anywhere outside the link and the popover: it closes
+   about 1.5s later. Moving back onto the link or into the popover before then
+   keeps it open.
+5. Check “Never”: the popover stays open until closed by hand. Uncheck it: the
+   field returns to 1.5.
+6. Click into the popover and start signing in, then move the pointer away and
+   switch to a password manager or authenticator app: the popover never
+   auto-closes.
+7. Opening on hover does not take keyboard focus: type right after it opens and
+   the text goes to the terminal. Typing, clicking or scrolling while the delay
+   is pending cancels it.
+8. A wrapped link opens when resting on either line, and auto-close treats both
+   lines as the link.
+9. An OSC 8 link whose text differs from its URL previews the URL.
+10. Hovering a second link while a preview is open replaces it after the
+    delay. Resting on the open link again (or another occurrence of it) does
+    nothing.
+11. Allowlist `linear.app`: a Linear link opens on hover, a github.com link
+    does not, but force press on the github.com link still previews it.
+12. In Claude Code and in `vim` with `mouse=a`: hover still opens previews,
+    and clicks, drags and mouse movement still reach the app.
+13. Background window: with another app or another iTerm2 window focused,
+    resting on a link in an unfocused window never opens a preview. Switching
+    away while a hover preview is open (and not clicked) closes it.
+14. Both engines: repeat 2, 4 and 6 with the browser engine off (old popover)
+    and on.
+15. Changing the mode, delay, close time or allowlist takes effect without a
+    restart.

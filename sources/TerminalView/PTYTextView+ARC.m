@@ -19,6 +19,7 @@
 #import "iTermLaunchServices.h"
 #import "iTermMouseCursor.h"
 #import "iTermNotificationController.h"
+#import "iTermPreferenceDidChangeNotification.h"
 #import "iTermPreferences.h"
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
@@ -134,6 +135,17 @@ iTermCommandInfoViewControllerDelegate>
                                              selector:@selector(imageDidLoad:)
                                                  name:iTermImageDidLoad
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(quickLookHoverWindowDidResignKey:)
+                                                 name:NSWindowDidResignKeyNotification
+                                               object:nil];
+    __weak __typeof(self) weakSelf = self;
+    [iTermPreferenceDidChangeNotification subscribe:self
+                                              block:^(iTermPreferenceDidChangeNotification * _Nonnull notification) {
+        if ([[iTermQuickLookHoverAdapter preferenceKeys] containsObject:notification.key]) {
+            [weakSelf quickLookHoverPreferencesDidChange];
+        }
+    }];
 }
 
 #pragma mark - NSResponder
@@ -983,7 +995,14 @@ iTermCommandInfoViewControllerDelegate>
                atPointInWindow:(NSPoint)pointInWindow
                  openedByHover:(BOOL)openedByHover {
     DLog(@"Show web Quick Look for %@ openedByHover=%@", url, @(openedByHover));
+    const BOOL replacesHoverPreview = (!openedByHover &&
+                                       self.webQuickLookPopover != nil &&
+                                       self.webQuickLookPopoverOpenedByHover);
     [self closeWebQuickLook];
+    if (replacesHoverPreview) {
+        // The hover controller didn't ask for this, so tell it its preview is gone.
+        [self.quickLookHoverAdapter.controller previewClosed];
+    }
     NSPopover *popover = nil;
     switch ([iTermQuickLookEngineSelector currentEngine]) {
         case iTermQuickLookEngineLegacy:
@@ -997,6 +1016,27 @@ iTermCommandInfoViewControllerDelegate>
     }
     self.webQuickLookPopover = popover;
     self.webQuickLookPopoverOpenedByHover = openedByHover;
+    if (openedByHover) {
+        [self prepareHoverOpenedWebQuickLook:popover];
+    }
+}
+
+// A preview opened by hovering must not take keyboard focus from the terminal, and the hover
+// controller needs to know when the user clicks into it.
+- (void)prepareHoverOpenedWebQuickLook:(NSPopover *)popover {
+    NSViewController *viewController = popover.contentViewController;
+    if ([viewController isKindOfClass:[iTermBrowserQuickLookViewController class]]) {
+        __weak __typeof(self) weakSelf = self;
+        ((iTermBrowserQuickLookViewController *)viewController).onUserInteraction = ^{
+            [weakSelf.quickLookHoverAdapter.controller previewClicked];
+        };
+    } else if (viewController.isViewLoaded) {
+        [self.quickLookHoverAdapter watchForClicksInView:viewController.view];
+    }
+    if (NSApp.isActive && self.window != nil && !self.window.isKeyWindow) {
+        DLog(@"Hover-opened Quick Look took key; giving it back to %@", self.window);
+        [self.window makeKeyWindow];
+    }
 }
 
 - (void)closeWebQuickLook {
@@ -1005,6 +1045,9 @@ iTermCommandInfoViewControllerDelegate>
         return;
     }
     DLog(@"Close web Quick Look %@", popover);
+    if (self.webQuickLookPopoverOpenedByHover) {
+        [self.quickLookHoverAdapter stopWatchingForClicks];
+    }
     // Forget it first so that popoverDidClose: knows this view closed it.
     self.webQuickLookPopover = nil;
     [popover close];
@@ -1021,7 +1064,214 @@ iTermCommandInfoViewControllerDelegate>
         return;
     }
     DLog(@"Web Quick Look %@ was closed", popover);
+    const BOOL openedByHover = self.webQuickLookPopoverOpenedByHover;
     self.webQuickLookPopover = nil;
+    if (openedByHover) {
+        [self.quickLookHoverAdapter stopWatchingForClicks];
+        [self.quickLookHoverAdapter.controller previewClosed];
+    }
+}
+
+// Whether window belongs to the open web Quick Look (its popover or one of its popups).
+- (BOOL)webQuickLookOwnsWindow:(NSWindow *)window {
+    if (!window || !self.webQuickLookPopover) {
+        return NO;
+    }
+    NSViewController *viewController = self.webQuickLookPopover.contentViewController;
+    if (viewController.isViewLoaded && viewController.view.window == window) {
+        return YES;
+    }
+    if ([viewController isKindOfClass:[iTermBrowserQuickLookViewController class]]) {
+        return [(iTermBrowserQuickLookViewController *)viewController ownsWindow:window];
+    }
+    return NO;
+}
+
+#pragma mark - Quick Look on hover
+
+- (iTermQuickLookHoverAdapter *)quickLookHoverAdapterCreatingIfNeeded {
+    if (self.quickLookHoverAdapter) {
+        return self.quickLookHoverAdapter;
+    }
+    if ([iTermQuickLookHoverAdapter currentMode] == iTermQuickLookHoverModeOff) {
+        return nil;
+    }
+    DLog(@"Create Quick Look hover adapter for %@", self);
+    __weak __typeof(self) weakSelf = self;
+    iTermQuickLookHoverHostCallbacks *callbacks = [[iTermQuickLookHoverHostCallbacks alloc] init];
+    callbacks.resolveLink = ^(NSPoint point, void (^completion)(NSURL *, NSArray<NSValue *> *)) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            completion(nil, @[]);
+            return;
+        }
+        [strongSelf quickLookHoverResolveLinkAt:point completion:completion];
+    };
+    callbacks.openPreview = ^(NSURL *url, NSPoint point) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        [strongSelf showWebQuickLookForURL:url
+                           atPointInWindow:[strongSelf convertPoint:point toView:nil]
+                             openedByHover:YES];
+    };
+    callbacks.closePreview = ^{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (strongSelf.webQuickLookPopoverOpenedByHover) {
+            [strongSelf closeWebQuickLook];
+        }
+    };
+    callbacks.previewFrame = ^NSRect{
+        return [weakSelf quickLookHoverPreviewFrame];
+    };
+    self.quickLookHoverAdapter = [[iTermQuickLookHoverAdapter alloc] initWithHost:callbacks];
+    return self.quickLookHoverAdapter;
+}
+
+- (BOOL)quickLookHoverWantsMouseMovementEvents {
+    // In ⌘ + Hover mode, holding Cmd already turns on mouse-moved events.
+    return [iTermQuickLookHoverAdapter currentMode] == iTermQuickLookHoverModeHover;
+}
+
+- (BOOL)quickLookHoverWindowIsActive {
+    return self.window.isKeyWindow && NSApp.isActive;
+}
+
+- (void)quickLookHoverMouseMoved:(NSEvent *)event {
+    iTermQuickLookHoverAdapter *adapter = [self quickLookHoverAdapterCreatingIfNeeded];
+    if (!adapter || event.window != self.window) {
+        return;
+    }
+    const NSEventModifierFlags flags = event.it_modifierFlags;
+    [adapter.controller pointerMovedTo:[self convertPoint:event.locationInWindow fromView:nil]
+                           commandDown:(flags & NSEventModifierFlagCommand) != 0
+                            optionDown:(flags & NSEventModifierFlagOption) != 0
+                          windowActive:[self quickLookHoverWindowIsActive]];
+}
+
+- (void)quickLookHoverFlagsChanged:(NSEvent *)event {
+    iTermQuickLookHoverAdapter *adapter = [self quickLookHoverAdapterCreatingIfNeeded];
+    if (!adapter) {
+        return;
+    }
+    const NSEventModifierFlags flags = event.it_modifierFlags;
+    const BOOL commandDown = (flags & NSEventModifierFlagCommand) != 0;
+    const BOOL optionDown = (flags & NSEventModifierFlagOption) != 0;
+    [adapter.controller modifiersChangedWithCommandDown:commandDown optionDown:optionDown];
+    if (adapter.mode != iTermQuickLookHoverModeCommandHover || !commandDown || optionDown || !self.window) {
+        return;
+    }
+    // Pressing Cmd while the pointer rests on a link counts as arriving there with Cmd held.
+    const NSPoint point = [self convertPoint:[self.window mouseLocationOutsideOfEventStream] fromView:nil];
+    if (!NSPointInRect(point, self.visibleRect)) {
+        return;
+    }
+    [adapter.controller pointerMovedTo:point
+                           commandDown:commandDown
+                            optionDown:optionDown
+                          windowActive:[self quickLookHoverWindowIsActive]];
+}
+
+- (void)quickLookHoverMouseDown {
+    [self.quickLookHoverAdapter.controller mouseDown];
+}
+
+- (void)quickLookHoverKeyDown {
+    [self.quickLookHoverAdapter.controller keyDown];
+}
+
+- (void)quickLookHoverScrolled {
+    [self.quickLookHoverAdapter.controller scrolled];
+}
+
+- (void)quickLookHoverDeactivated {
+    [self.quickLookHoverAdapter.controller deactivated];
+}
+
+- (void)quickLookHoverWindowDidResignKey:(NSNotification *)notification {
+    if (!self.quickLookHoverAdapter || notification.object != self.window) {
+        return;
+    }
+    // The new key window isn't known yet. If it turns out to be the preview itself (the user
+    // clicked into it) or one of its sign-in popups, the terminal didn't really lose focus.
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf quickLookHoverCheckWindowDeactivation];
+    });
+}
+
+- (void)quickLookHoverCheckWindowDeactivation {
+    if (self.window.isKeyWindow || [self webQuickLookOwnsWindow:NSApp.keyWindow]) {
+        return;
+    }
+    DLog(@"Window resigned key; deactivate Quick Look hover");
+    [self quickLookHoverDeactivated];
+}
+
+- (void)quickLookHoverPreferencesDidChange {
+    [self.quickLookHoverAdapter reloadPreferences];
+    // Plain hover mode needs mouse-moved events, which depend on the tracking areas.
+    [self.delegate textViewUpdateTrackingAreas];
+}
+
+- (NSRect)quickLookHoverPreviewFrame {
+    NSViewController *viewController = self.webQuickLookPopover.contentViewController;
+    NSWindow *previewWindow = viewController.isViewLoaded ? viewController.view.window : nil;
+    if (!previewWindow || !self.window) {
+        return NSZeroRect;
+    }
+    const NSRect windowRect = [self.window convertRectFromScreen:previewWindow.frame];
+    return [self convertRect:windowRect fromView:nil];
+}
+
+// Resolves the link at point (in this view's coordinates). Calls completion with an http(s) URL
+// and the rects the link occupies, or with nil when the point isn't on a web link.
+- (void)quickLookHoverResolveLinkAt:(NSPoint)point
+                         completion:(void (^)(NSURL *, NSArray<NSValue *> *))completion {
+    const VT100GridCoord requestCoord = [self coordForPoint:point allowRightMarginOverflow:YES];
+    const VT100GridCoord coord = [self coordForPoint:point allowRightMarginOverflow:NO];
+    __weak __typeof(self) weakSelf = self;
+    [_urlActionHelper urlActionForClickAtCoord:requestCoord completion:^(URLAction *action) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf ||
+            !action ||
+            action.actionType != kURLActionOpenURL ||
+            !VT100GridWindowedRangeContainsCoord(action.visualRange, coord)) {
+            completion(nil, @[]);
+            return;
+        }
+        NSURL *url = [strongSelf urlForQuickLookWithURLAction:action withEvent:nil];
+        if (!url) {
+            completion(nil, @[]);
+            return;
+        }
+        completion(url, [strongSelf rectsForVisualRange:action.visualRange]);
+    }];
+}
+
+// The rects, in this view's coordinates, that the cells of a visual range cover: one per line.
+- (NSArray<NSValue *> *)rectsForVisualRange:(VT100GridWindowedRange)range {
+    int left = 0;
+    int right = self.dataSource.width;
+    if (range.columnWindow.length > 0) {
+        left = range.columnWindow.location;
+        right = range.columnWindow.location + range.columnWindow.length;
+    }
+    // Inverse of the y correction in -coordForPoint:allowRightMarginOverflow:.
+    const CGFloat yOffset = (NSMinY([self.enclosingScrollView documentVisibleRect]) -
+                             NSMinY([self adjustedDocumentVisibleRect]));
+    const CGFloat sideMargins = [iTermPreferences sideMargins];
+    NSMutableArray<NSValue *> *rects = [NSMutableArray array];
+    for (int y = range.coordRange.start.y; y <= range.coordRange.end.y; y++) {
+        const int startX = (y == range.coordRange.start.y) ? range.coordRange.start.x : left;
+        const int endX = (y == range.coordRange.end.y) ? range.coordRange.end.x : right;
+        if (endX <= startX) {
+            continue;
+        }
+        [rects addObject:[NSValue valueWithRect:NSMakeRect(sideMargins + startX * self.charWidth,
+                                                           y * self.lineHeight + yOffset,
+                                                           (endX - startX) * self.charWidth,
+                                                           self.lineHeight)]];
+    }
+    return rects;
 }
 
 - (NSRect)webQuickLookAnchorRectForPointInWindow:(NSPoint)pointInWindow {

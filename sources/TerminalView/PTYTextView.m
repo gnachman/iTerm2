@@ -422,6 +422,8 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     [_quickLookController close];
     [_quickLookController release];
     [_webQuickLookPopover release];
+    [_quickLookHoverAdapter stopWatchingForClicks];
+    [_quickLookHoverAdapter release];
     [_contextMenuHelper release];
     [_highlightedRows release];
     [_scrollAccumulator release];
@@ -683,6 +685,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
           !!(theEvent.it_modifierFlags & NSEventModifierFlagControl));
     [_delegate textViewDidReceiveFlagsChangedEvent:theEvent];
     [self updateUnderlinedURLs:theEvent];
+    [self quickLookHoverFlagsChanged:theEvent];
     if (!(theEvent.it_modifierFlags & NSEventModifierFlagCommand)) {
         // With Cmd down, updateUnderlinedURLs takes care of the pointer. Otherwise it may
         // return early, so update the pointer here. This makes Option (which bypasses mouse
@@ -779,6 +782,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 }
 
 - (void)keyDown:(NSEvent *)event {
+    [self quickLookHoverKeyDown];
     _hasAccessibilitySelectedRange = NO;
     [_mouseHandler keyDown:event];
     [_keyboardHandler keyDown:event inputContext:self.inputContext];
@@ -1255,6 +1259,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (void)scrollWheel:(NSEvent *)event {
+    [self quickLookHoverScrolled];
     DLog(@"scrollWheel: momentumPhase=%@, eventPhase=%@, _ignoreMomentumScroll=%@",
           iTermStringForEventPhase(event.momentumPhase), iTermStringForEventPhase(event.phase), @(_ignoreMomentumScroll));
     if (_ignoreMomentumScroll && event.momentumPhase == NSEventPhaseChanged && event.phase == NSEventPhaseNone) {
@@ -1270,6 +1275,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (void)mouseDown:(NSEvent *)event {
+    [self quickLookHoverMouseDown];
     [_selectCommandTimer invalidate];
     [_selectCommandTimer release];
     _selectCommandTimer = nil;
@@ -1308,6 +1314,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     }
     if ([self hasTerminalButtons]) {
         DLog(@"Have terminal buttons");
+        return YES;
+    }
+    if ([self quickLookHoverWantsMouseMovementEvents]) {
+        DLog(@"Quick Look on hover is on");
         return YES;
     }
     return [_mouseHandler wantsMouseMovementEvents] || [self hasTerminalButtons];
@@ -1379,6 +1389,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [self updateButtonHover:event.locationInWindow pressed:!!([NSEvent pressedMouseButtons] & 1)];
     [self updateCursor:event];
     [_mouseHandler mouseMoved:event];
+    [self quickLookHoverMouseMoved:event];
 }
 
 - (void)mouseDragged:(NSEvent *)event {
@@ -1391,6 +1402,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (void)rightMouseDown:(NSEvent *)event {
+    [self quickLookHoverMouseDown];
     [_mouseHandler rightMouseDown:event
                       superCaller:^{ [super rightMouseDown:event]; }];
 }
@@ -1405,6 +1417,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (void)otherMouseDown:(NSEvent *)event {
+    [self quickLookHoverMouseDown];
     [_mouseHandler otherMouseDown:event];
 }
 
@@ -1469,6 +1482,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     }
     [_delegate textViewShowHoverURL:nil
                              anchor:VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), -1, -1)];
+    // Leaving the view may mean the pointer left the hovered link for good.
+    [self quickLookHoverMouseMoved:event];
 }
 
 - (void)mouseEntered:(NSEvent *)event {
@@ -6332,6 +6347,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 - (void)applicationDidResignActive:(NSNotification *)notification {
     DLog(@"applicationDidResignActive: reset _numTouches to 0");
     _mouseHandler.numTouches = 0;
+    [self quickLookHoverDeactivated];
 }
 
 - (void)redrawTerminalsNotification:(NSNotification *)notification {

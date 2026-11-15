@@ -4818,6 +4818,7 @@
 		EB1C2E4CAAB6837B9A7971B2 /* repl_banner-fi.txt in Resources */ = {isa = PBXBuildFile; fileRef = 4350A0552366F6D9FB355B3B /* repl_banner-fi.txt */; };
 		5BF8DA367920D5CEBC3E0519 /* repl_banner-nb.txt in Resources */ = {isa = PBXBuildFile; fileRef = CDF934C494BAD6FF1BD76C28 /* repl_banner-nb.txt */; };
 		4196347B187776F2B0591B88 /* repl_banner-da.txt in Resources */ = {isa = PBXBuildFile; fileRef = 38D839CA7530C040AC101600 /* repl_banner-da.txt */; };
+		4276D975D5F2D95D8B48A1E5 /* iTermQuickLookHoverAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E07252E58C69C1D81DA3D3C9 /* iTermQuickLookHoverAdapter.swift */; };
 		FF2650F78E4451DA58A55EE3 /* repl_banner-sv.txt in Resources */ = {isa = PBXBuildFile; fileRef = 53D827AD2B7CD7BB9BCDCACA /* repl_banner-sv.txt */; };
 		1553CAA7DDFE419BFA5297CC /* repl_banner-nl.txt in Resources */ = {isa = PBXBuildFile; fileRef = 87210F4B2BE94BF603CFE172 /* repl_banner-nl.txt */; };
 		71EBDA870F768D613C38493D /* repl_banner-tr.txt in Resources */ = {isa = PBXBuildFile; fileRef = 349F14A036B697A98BF7DE19 /* repl_banner-tr.txt */; };
@@ -9160,6 +9161,7 @@
 		DF6440F5192CCA7D62FF605A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/AdvancedWorkingDirectoryWindow.xib; sourceTree = "<group>"; };
 		DF808B854D1D46A0BCFC82B3 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/iTermStatusBarKnobTextViewController.xcstrings; sourceTree = "<group>"; };
 		DFAA310FA09A4B4B8111E586 /* iTermStuckKeyReportingDetector.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermStuckKeyReportingDetector.swift; sourceTree = "<group>"; };
+		E07252E58C69C1D81DA3D3C9 /* iTermQuickLookHoverAdapter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermQuickLookHoverAdapter.swift; sourceTree = "<group>"; };
 		E0E20BFEA58A4C03B21D22FD /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/iTermOptionalComponentDownloadWindowController.xcstrings; sourceTree = "<group>"; };
 		E14CEFBAD0421B3A960496A9 /* WorkgroupPresets.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupPresets.swift; sourceTree = "<group>"; };
 		E2BE75D00D5642419A4E0507 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/NumberOfSpacesAccessoryView.xcstrings; sourceTree = "<group>"; };
@@ -13387,6 +13389,7 @@
 				DD87977CEA15B31D5760F6AF /* iTermQuickLookEngineSelector.swift */,
 				DDD8386174BE2C15575D8060 /* iTermQuickLookHoverController.swift */,
 				3BEB3590B9353CD13FE37F42 /* iTermBrowserQuickLookViewController.swift */,
+				E07252E58C69C1D81DA3D3C9 /* iTermQuickLookHoverAdapter.swift */,
 			);
 			path = QuickLook;
 			sourceTree = "<group>";
@@ -20814,6 +20817,7 @@
 				D82D468AF6651A19663994A8 /* iTermQuickLookEngineSelector.swift in Sources */,
 				A3275920513B30BC4D53A3C3 /* iTermQuickLookHoverController.swift in Sources */,
 				9D6947E84FE6E1CD5F160309 /* iTermBrowserQuickLookViewController.swift in Sources */,
+				4276D975D5F2D95D8B48A1E5 /* iTermQuickLookHoverAdapter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

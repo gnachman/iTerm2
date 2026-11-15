@@ -26,6 +26,7 @@
 @protocol iTermCancelable;
 @class iTermContentNavigationShortcut;
 @class iTermIdempotentOperationJoiner;
+@class iTermQuickLookHoverAdapter;
 @class iTermShellIntegrationWindowController;
 @class iTermURLActionHelper;
 @protocol Porthole;
@@ -66,6 +67,8 @@ NSPopoverDelegate> {
 @property(nonatomic, strong) NSPopover *webQuickLookPopover;
 // Whether webQuickLookPopover was opened by hovering a link (as opposed to force press or a menu).
 @property(nonatomic) BOOL webQuickLookPopoverOpenedByHover;
+// Drives Quick Look on hover. Created on first use while hovering is turned on.
+@property(nonatomic, strong) iTermQuickLookHoverAdapter *quickLookHoverAdapter;
 @property(strong, readwrite) NSTouchBar *touchBar;
 @property(nonatomic, readonly) BOOL hasUnderline;
 @property(nonatomic, strong) id<iTermCancelable> lastUrlActionCanceler;
