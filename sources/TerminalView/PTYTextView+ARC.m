@@ -1334,6 +1334,8 @@ iTermCommandInfoViewControllerDelegate>
                                     openedByHover:(BOOL)openedByHover {
     iTermBrowserQuickLookViewController *viewController =
         [[iTermBrowserQuickLookViewController alloc] initWithURL:url];
+    // Before the view loads, which starts loading the page.
+    viewController.suppressesJavaScriptDialogsUntilClicked = openedByHover;
     NSPopover *popover = [[NSPopover alloc] init];
     popover.contentViewController = viewController;
     popover.contentSize = viewController.view.frame.size;

@@ -102,6 +102,42 @@ final class BrowserQuickLookViewControllerTests: XCTestCase {
         XCTAssertFalse(second.window?.isVisible ?? false)
     }
 
+    // Only the suppressed path is exercised: the other one runs an app-modal dialog.
+    func testHoverPreviewAnswersDialogsSilentlyUntilClicked() {
+        controller.suppressesJavaScriptDialogsUntilClicked = true
+        XCTAssertTrue(controller.suppressesJavaScriptDialogs)
+        let frame = WKFrameInfo()
+        Self.fakesKeptAlive.append(frame)
+
+        var alertCompleted = false
+        controller.webView(controller.webView,
+                           runJavaScriptAlertPanelWithMessage: "hi",
+                           initiatedByFrame: frame) {
+            alertCompleted = true
+        }
+        XCTAssertTrue(alertCompleted, "the alert completes at once, without a dialog")
+
+        var confirmResult: Bool?
+        controller.webView(controller.webView,
+                           runJavaScriptConfirmPanelWithMessage: "sure?",
+                           initiatedByFrame: frame) { result in
+            confirmResult = result
+        }
+        XCTAssertEqual(confirmResult, false, "the confirm is declined at once, without a dialog")
+
+        var interacted = false
+        controller.onUserInteraction = {
+            interacted = true
+        }
+        controller.userDidClick()
+        XCTAssertTrue(interacted)
+        XCTAssertFalse(controller.suppressesJavaScriptDialogs, "after a click, dialogs show as usual")
+    }
+
+    func testDeliberatePreviewDoesNotSuppressDialogs() {
+        XCTAssertFalse(controller.suppressesJavaScriptDialogs)
+    }
+
     func testOwnsItsPopupWindows() throws {
         let child = try XCTUnwrap(requestPopup(navigationType: .other))
         XCTAssertTrue(controller.owns(window: child.window))

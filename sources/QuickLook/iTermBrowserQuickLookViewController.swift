@@ -22,12 +22,21 @@ class iTermBrowserQuickLookViewController: NSViewController, WKUIDelegate, WKNav
     @objc var onUserInteraction: (() -> Void)?
     // The popover hosting this controller. The close button closes it.
     @objc weak var presentingPopover: NSPopover?
+    // Set for previews opened by hovering a link. Until the user clicks into the preview, JavaScript
+    // alert and confirm dialogs are answered without being shown (alert dismissed, confirm declined),
+    // so resting the pointer on a link can’t put up an app-modal dialog.
+    @objc var suppressesJavaScriptDialogsUntilClicked = false
 
     private let initialURL: URL
     private var popups = [(panel: NSPanel, webView: WKWebView)]()
     private var urlLabel: NSTextField?
     private var clickWatcher: iTermQuickLookClickWatcher?
     private var tornDown = false
+    private var userClicked = false
+
+    var suppressesJavaScriptDialogs: Bool {
+        return suppressesJavaScriptDialogsUntilClicked && !userClicked
+    }
 
     @objc(initWithURL:)
     init(url: URL) {
@@ -214,13 +223,16 @@ class iTermBrowserQuickLookViewController: NSViewController, WKUIDelegate, WKNav
             return
         }
         clickWatcher = iTermQuickLookClickWatcher(view: view) { [weak self] in
-            guard let self else {
-                return
-            }
-            let callback = self.onUserInteraction
-            self.onUserInteraction = nil
-            callback?()
+            self?.userDidClick()
         }
+    }
+
+    // Called on the first mouse-down inside the view.
+    func userDidClick() {
+        userClicked = true
+        let callback = onUserInteraction
+        onUserInteraction = nil
+        callback?()
     }
 
     private func removeMouseDownMonitor() {
@@ -259,6 +271,11 @@ class iTermBrowserQuickLookViewController: NSViewController, WKUIDelegate, WKNav
                  runJavaScriptAlertPanelWithMessage message: String,
                  initiatedByFrame frame: WKFrameInfo,
                  completionHandler: @escaping () -> Void) {
+        if suppressesJavaScriptDialogs {
+            DLog("Not showing a JavaScript alert in a preview the user hasn’t clicked into")
+            completionHandler()
+            return
+        }
         let warning = iTermWarning()
         warning.heading = String(localized: "BrowserManager.WebPageAlert", defaultValue: "Web Page Alert", comment: "Title for a JavaScript alert dialog")
         warning.title = message
@@ -272,6 +289,11 @@ class iTermBrowserQuickLookViewController: NSViewController, WKUIDelegate, WKNav
                  runJavaScriptConfirmPanelWithMessage message: String,
                  initiatedByFrame frame: WKFrameInfo,
                  completionHandler: @escaping (Bool) -> Void) {
+        if suppressesJavaScriptDialogs {
+            DLog("Declining a JavaScript confirm in a preview the user hasn’t clicked into")
+            completionHandler(false)
+            return
+        }
         let warning = iTermWarning()
         warning.heading = String(localized: "BrowserManager.WebPageConfirmation", defaultValue: "Web Page Confirmation", comment: "Title for a JavaScript confirmation dialog")
         warning.title = message
