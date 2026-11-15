@@ -19,6 +19,7 @@
 @protocol iTermContentNavigationShortcutView;
 @protocol iTermTextDataSource;
 @class iTermProgress;
+@class iTermQuickLookHoverHostCell;
 @class iTermQuickLookHoverImmediateLink;
 @class iTermBlurredScreenshotSelectionRegion;
 
@@ -119,6 +120,9 @@ iTermURLActionHelperDelegate>
 // The content cell at a point, with the lines dropped off the top counted in, so a cell keeps its
 // number while lines scroll off.
 - (VT100GridAbsCoord)quickLookHoverAbsoluteCellAtPoint:(NSPoint)point;
+// The same cell, and whether it is on the alternate screen, which numbers its lines like the main
+// screen.
+- (iTermQuickLookHoverHostCell *)quickLookHoverCellAtPoint:(NSPoint)point;
 // What the view shows changed, so links may have moved: forgets a rejected link and moves the
 // pending cue's URL bar to where its link is now.
 - (void)quickLookHoverContentChanged;

@@ -119,14 +119,15 @@ private final class RecordingDelegate: iTermQuickLookHoverControllerDelegate {
         return pointerLocation
     }
 
-    // The content cell at a point: 10-point columns and 16-point lines by default.
-    var cell: (NSPoint) -> iTermQuickLookHoverCell? = { point in
+    // The content cell at a point: 10-point columns and 16-point lines on the main screen by default.
+    var cell: (NSPoint) -> iTermQuickLookHoverCell = { point in
         iTermQuickLookHoverCell(line: Int64((point.y / 16).rounded(.down)),
-                                column: Int32((point.x / 10).rounded(.down)))
+                                column: Int32((point.x / 10).rounded(.down)),
+                                alternateScreen: false)
     }
     var cellLookups = 0
 
-    func hoverControllerCell(at point: NSPoint) -> iTermQuickLookHoverCell? {
+    func hoverControllerCell(at point: NSPoint) -> iTermQuickLookHoverCell {
         cellLookups += 1
         return cell(point)
     }
@@ -695,12 +696,16 @@ final class QuickLookHoverControllerTests: XCTestCase {
 
     // Streaming output while scrolled back: lines drop off the top, so the view moves under the
     // still pointer, but the pointer stays on the same text.
-    func testContentShiftOnTheSameCellKeepsThePendingOpenWithoutALookUp() throws {
+    // A hyperlink's cue is checked with the cheap immediate lookup, never the full resolution.
+    func testContentShiftOnTheSameCellKeepsThePendingOpenWithoutResolving() throws {
         let movedRectA = rectA.offsetBy(dx: 0, dy: -32)
         let movedPoint = NSPoint(x: pointOnA.x, y: pointOnA.y - 32)
-        delegate.cell = { _ in iTermQuickLookHoverCell(line: 7, column: 2) }
-        delegate.immediate = { [rectA, urlA] point in
-            rectA.contains(point) ? .link(urlA, [rectA]) : .noLink([])
+        delegate.cell = { _ in iTermQuickLookHoverCell(line: 7, column: 2, alternateScreen: false) }
+        delegate.immediate = { [rectA, movedRectA, urlA] point in
+            if rectA.contains(point) {
+                return .link(urlA, [rectA])
+            }
+            return movedRectA.contains(point) ? .link(urlA, [movedRectA]) : .noLink([])
         }
         controller.cueSettleDelay = 0.1
         move(pointOnA)
@@ -710,7 +715,7 @@ final class QuickLookHoverControllerTests: XCTestCase {
         delegate.pointerLocation = movedPoint
         controller.contentShifted()
         controller.contentShifted()
-        XCTAssertEqual(delegate.immediateLookups.count, lookupsBefore)
+        XCTAssertEqual(delegate.immediateLookups.count, lookupsBefore + 2, "one cheap look per shift")
         XCTAssertTrue(delegate.resolvedPoints.isEmpty)
         XCTAssertEqual(delegate.cueClearCount, 0)
         XCTAssertEqual(delegate.cues, [urlA])
@@ -727,7 +732,7 @@ final class QuickLookHoverControllerTests: XCTestCase {
     // A plain-text URL needs the full resolution. Streaming output must not make it resolve again
     // on every line, which would never finish while lines keep coming.
     func testContentShiftOnTheSameCellKeepsAResolvedCueWithoutResolvingAgain() throws {
-        delegate.cell = { _ in iTermQuickLookHoverCell(line: 7, column: 2) }
+        delegate.cell = { _ in iTermQuickLookHoverCell(line: 7, column: 2, alternateScreen: false) }
         showCueOnA()
         XCTAssertEqual(delegate.resolvedPoints, [pointOnA])
         let movedPoint = NSPoint(x: pointOnA.x, y: pointOnA.y - 16)
@@ -803,7 +808,7 @@ final class QuickLookHoverControllerTests: XCTestCase {
     }
 
     func testResolutionInFlightSurvivesAShiftOnTheSameCell() throws {
-        delegate.cell = { _ in iTermQuickLookHoverCell(line: 7, column: 2) }
+        delegate.cell = { _ in iTermQuickLookHoverCell(line: 7, column: 2, alternateScreen: false) }
         delegate.defersCompletion = true
         move(pointOnA)
         scheduler.fire(delay: 0.75)
@@ -1128,5 +1133,119 @@ final class QuickLookHoverControllerTests: XCTestCase {
         XCTAssertEqual(delegate.cueClearCount, 0)
         controller.previewClosed()
         XCTAssertEqual(delegate.cueClearCount, 1)
+    }
+
+    // MARK: - Content shifts: edge cases
+
+    // The host declined the open (a force-press preview is open). Streaming output while scrolled
+    // back must neither flicker the cue nor retry the open while the pointer stays on that text.
+    func testDeclinedOpenOnTheSameCellNeitherFlickersNorRetries() {
+        delegate.cell = { _ in iTermQuickLookHoverCell(line: 7, column: 2, alternateScreen: false) }
+        delegate.immediate = { [rectA, urlA] point in
+            rectA.contains(point) ? .link(urlA, [rectA]) : .noLink([])
+        }
+        delegate.declinesOpen = true
+        controller.cueSettleDelay = 0.1
+        move(pointOnA)
+        scheduler.fire(delay: 0.75)
+        XCTAssertEqual(delegate.opens.count, 1)
+
+        delegate.pointerLocation = pointOnA
+        for _ in 0..<5 {
+            controller.contentShifted()
+        }
+        XCTAssertEqual(delegate.cueClearCount, 0)
+        XCTAssertEqual(delegate.cues, [urlA])
+        XCTAssertTrue(scheduler.active.isEmpty, "the declined open is not retried")
+        XCTAssertEqual(delegate.opens.count, 1)
+
+        // Different text under the pointer is a fresh move: the cue is redone and the open tried
+        // after the full delay.
+        delegate.cell = { _ in iTermQuickLookHoverCell(line: 8, column: 2, alternateScreen: false) }
+        controller.contentShifted()
+        XCTAssertEqual(delegate.cueClearCount, 1)
+        XCTAssertEqual(delegate.cues, [urlA, urlA])
+        scheduler.fire(delay: 0.75)
+        XCTAssertEqual(delegate.opens.count, 2)
+    }
+
+    // A full-screen program switches to the alternate screen, which keeps the line numbers: the same
+    // line and column now hold other text.
+    func testSwitchingToTheAlternateScreenDropsThePendingHover() throws {
+        var alternate = false
+        delegate.cell = { _ in iTermQuickLookHoverCell(line: 7, column: 2, alternateScreen: alternate) }
+        showCueOnA()
+        delegate.pointerLocation = pointOnA
+        controller.contentShifted()
+        XCTAssertEqual(delegate.cueClearCount, 0, "precondition: same screen, same cell")
+
+        alternate = true
+        delegate.resolution = (nil, [])
+        controller.contentShifted()
+        XCTAssertEqual(delegate.cueClearCount, 1)
+        scheduler.fire(delay: 0.1)
+        scheduler.fire(delay: 0.75)
+        XCTAssertTrue(delegate.opens.isEmpty, "the old screen's link does not open")
+    }
+
+    // The same cell now holds a different hyperlink (a program redrew in place).
+    func testHyperlinkCueIsDroppedWhenTheCellsHyperlinkChanges() {
+        delegate.cell = { _ in iTermQuickLookHoverCell(line: 7, column: 2, alternateScreen: false) }
+        var current = urlA
+        delegate.immediate = { [rectA] point in
+            rectA.contains(point) ? .link(current, [rectA]) : .noLink([])
+        }
+        controller.cueSettleDelay = 0.1
+        move(pointOnA)
+        XCTAssertEqual(delegate.cues, [urlA])
+        delegate.pointerLocation = pointOnA
+        controller.contentShifted()
+        XCTAssertEqual(delegate.cueClearCount, 0)
+
+        current = urlB
+        controller.contentShifted()
+        XCTAssertEqual(delegate.cueClearCount, 1)
+        XCTAssertEqual(delegate.cues, [urlA, urlB], "the new link starts over as a fresh move")
+        XCTAssertTrue(delegate.resolvedPoints.isEmpty, "no full resolution on a shift")
+        scheduler.fire(delay: 0.75)
+        XCTAssertEqual(delegate.opens.map(\.url), [urlB])
+    }
+
+    // A resolution in flight across a same-cell shift answers in pre-shift coordinates. The open
+    // must anchor where the link is now.
+    func testResolutionInFlightAcrossAShiftUsesTheCurrentCoordinates() throws {
+        delegate.cell = { _ in iTermQuickLookHoverCell(line: 7, column: 2, alternateScreen: false) }
+        delegate.defersCompletion = true
+        move(pointOnA)
+        scheduler.fire(delay: 0.75)
+        let completion = try XCTUnwrap(delegate.deferredCompletions.last)
+        let movedPoint = NSPoint(x: pointOnA.x, y: pointOnA.y - 48)
+        delegate.pointerLocation = movedPoint
+        controller.contentShifted()
+        completion(urlA, [rectA])
+        let open = try XCTUnwrap(delegate.opens.first)
+        XCTAssertEqual(open.point, movedPoint)
+        XCTAssertEqual(open.linkRects, [rectA.offsetBy(dx: 0, dy: -48)])
+    }
+
+    func testCueResolutionInFlightAcrossAShiftUsesTheCurrentCoordinates() throws {
+        delegate.cell = { _ in iTermQuickLookHoverCell(line: 7, column: 2, alternateScreen: false) }
+        controller.cueSettleDelay = 0.1
+        delegate.defersCompletion = true
+        move(pointOnA)
+        scheduler.fire(delay: 0.1)
+        let completion = try XCTUnwrap(delegate.deferredCompletions.last)
+        let movedPoint = NSPoint(x: pointOnA.x, y: pointOnA.y - 48)
+        delegate.pointerLocation = movedPoint
+        controller.contentShifted()
+        completion(urlA, [rectA])
+        XCTAssertEqual(delegate.cues, [urlA], "the cue shows: its link is still under the pointer")
+
+        delegate.defersCompletion = false
+        scheduler.fire(delay: 0.75)
+        let open = try XCTUnwrap(delegate.opens.first)
+        XCTAssertEqual(open.linkRects, [rectA.offsetBy(dx: 0, dy: -48)])
+        XCTAssertEqual(open.point, movedPoint)
+        XCTAssertEqual(delegate.resolvedPoints, [pointOnA], "the open reuses the cue's resolution")
     }
 }

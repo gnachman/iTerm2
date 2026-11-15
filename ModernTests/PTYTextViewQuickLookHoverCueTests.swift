@@ -327,6 +327,22 @@ final class PTYTextViewQuickLookHoverImmediateCueTests: XCTestCase {
         XCTAssertEqual(cell.y, Int64(relative.y) + overflow)
     }
 
+    // The alternate screen numbers its lines like the main screen, so the cell says which screen
+    // it is on: a full-screen program starting under a still pointer changes the cell.
+    func testCellTellsTheAlternateScreenApart() {
+        let p = point(4, 2)
+        let main = textView.quickLookHoverCell(at: p)
+        XCTAssertFalse(main.alternateScreen)
+
+        feed("\u{1b}[?1049h")
+        let alternate = textView.quickLookHoverCell(at: p)
+        XCTAssertTrue(alternate.alternateScreen)
+        XCTAssertEqual(alternate.coord.y, main.coord.y, "same line number on both screens")
+
+        feed("\u{1b}[?1049l")
+        XCTAssertFalse(textView.quickLookHoverCell(at: p).alternateScreen)
+    }
+
     func testPlainTextIsNotALinkByDefault() {
         feed("see https://example.com/y here")
 

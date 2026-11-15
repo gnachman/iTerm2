@@ -29,9 +29,32 @@ final class iTermQuickLookHoverHostCallbacks: NSObject {
     @objc var clearCue: (() -> Void)?
     // Where the pointer is now, as an NSPoint value, or nil when it is not over the view.
     @objc var pointerLocation: (() -> NSValue?)?
-    // The content cell at a point, numbered so that it keeps its number while lines scroll off the
-    // top (the line includes the lines dropped so far).
-    @objc var absoluteCell: ((_ point: NSPoint) -> VT100GridAbsCoord)?
+    // The content cell at a point. Required: without it every content shift would look like the
+    // text under the pointer changed.
+    @objc let absoluteCell: (_ point: NSPoint) -> iTermQuickLookHoverHostCell
+
+    @objc(initWithAbsoluteCell:)
+    init(absoluteCell: @escaping (_ point: NSPoint) -> iTermQuickLookHoverHostCell) {
+        self.absoluteCell = absoluteCell
+        super.init()
+    }
+}
+
+// The answer to iTermQuickLookHoverHostCallbacks.absoluteCell.
+@objc(iTermQuickLookHoverHostCell)
+final class iTermQuickLookHoverHostCell: NSObject {
+    // Numbered so that it keeps its number while lines scroll off the top (the line includes the
+    // lines dropped so far).
+    @objc let coord: VT100GridAbsCoord
+    // The main and alternate screens number their lines alike.
+    @objc let alternateScreen: Bool
+
+    @objc(initWithCoord:alternateScreen:)
+    init(coord: VT100GridAbsCoord, alternateScreen: Bool) {
+        self.coord = coord
+        self.alternateScreen = alternateScreen
+        super.init()
+    }
 }
 
 // The answer to iTermQuickLookHoverHostCallbacks.lookUpLinkImmediately.
@@ -161,11 +184,11 @@ final class iTermQuickLookHoverAdapter: NSObject, iTermQuickLookHoverControllerD
         return host.pointerLocation?()?.pointValue
     }
 
-    func hoverControllerCell(at point: NSPoint) -> iTermQuickLookHoverCell? {
-        guard let coord = host.absoluteCell?(point) else {
-            return nil
-        }
-        return iTermQuickLookHoverCell(line: coord.y, column: coord.x)
+    func hoverControllerCell(at point: NSPoint) -> iTermQuickLookHoverCell {
+        let cell = host.absoluteCell(point)
+        return iTermQuickLookHoverCell(line: cell.coord.y,
+                                       column: cell.coord.x,
+                                       alternateScreen: cell.alternateScreen)
     }
 
     func hoverControllerPreviewFrame() -> NSRect? {

@@ -174,6 +174,15 @@ Use Settings > Pointer > Quick Look. Defaults: delay 0.75s, close after 1.5s.
        “Also preview web addresses that aren’t hyperlinks” on. Same
        results: never opens at the bottom, opens after the delay when
        scrolled back.
+    d. Force press any link so its preview stays open, then repeat b on a
+       different link: the hover preview does not open (the force-press
+       preview is kept), and while output streams the link’s underline and
+       URL bar stay steady, without flickering on each new line. Move the
+       pointer to another link: it gets its own cue as usual.
+    e. Alternate screen, with a hover delay of several seconds: print a
+       link, run `sleep 2; vim`, and at once rest the pointer on the link
+       until the cue shows. When vim takes over the screen under the still
+       pointer, the cue goes away and the old link does not open.
     With a hover preview already open, the scrolling leaves its link
     underlined. Press Ctrl-C to stop.
 32. Pop-ups and non-web addresses, browser engine on. Serve a page that calls

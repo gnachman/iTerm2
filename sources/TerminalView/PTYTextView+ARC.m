@@ -1142,7 +1142,14 @@ iTermCommandInfoViewControllerDelegate>
     }
     DLog(@"Create Quick Look hover adapter for %@", self);
     __weak __typeof(self) weakSelf = self;
-    iTermQuickLookHoverHostCallbacks *callbacks = [[iTermQuickLookHoverHostCallbacks alloc] init];
+    iTermQuickLookHoverHostCallbacks *callbacks = [[iTermQuickLookHoverHostCallbacks alloc] initWithAbsoluteCell:^iTermQuickLookHoverHostCell *(NSPoint point) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return [[iTermQuickLookHoverHostCell alloc] initWithCoord:VT100GridAbsCoordMake(0, 0)
+                                                      alternateScreen:NO];
+        }
+        return [strongSelf quickLookHoverCellAtPoint:point];
+    }];
     callbacks.resolveLink = ^(NSPoint point, void (^completion)(NSURL *, NSArray<NSValue *> *)) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) {
@@ -1188,9 +1195,6 @@ iTermCommandInfoViewControllerDelegate>
     callbacks.pointerLocation = ^NSValue *{
         return [weakSelf quickLookHoverPointerLocation];
     };
-    callbacks.absoluteCell = ^VT100GridAbsCoord(NSPoint point) {
-        return [weakSelf quickLookHoverAbsoluteCellAtPoint:point];
-    };
     self.quickLookHoverAdapter = [[iTermQuickLookHoverAdapter alloc] initWithHost:callbacks];
     return self.quickLookHoverAdapter;
 }
@@ -1212,6 +1216,11 @@ iTermCommandInfoViewControllerDelegate>
 - (VT100GridAbsCoord)quickLookHoverAbsoluteCellAtPoint:(NSPoint)point {
     const VT100GridCoord coord = [self coordForPoint:point allowRightMarginOverflow:NO];
     return VT100GridAbsCoordFromCoord(coord, [self.dataSource totalScrollbackOverflow]);
+}
+
+- (iTermQuickLookHoverHostCell *)quickLookHoverCellAtPoint:(NSPoint)point {
+    return [[iTermQuickLookHoverHostCell alloc] initWithCoord:[self quickLookHoverAbsoluteCellAtPoint:point]
+                                              alternateScreen:[self.dataSource showingAlternateScreen]];
 }
 
 - (BOOL)quickLookHoverWantsMouseMovementEvents {
