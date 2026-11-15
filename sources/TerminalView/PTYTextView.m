@@ -3557,12 +3557,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         }
         [self searchForVisibleBlocks];
     }];
-    if (contentShifted) {
-        [self quickLookHoverContentShifted];
-    }
-    if (contentChanged) {
-        [self quickLookHoverContentChanged];
-    }
+    [self quickLookHoverRefreshedWithContentShifted:contentShifted changed:contentChanged];
     if (scrollbackOverflow > 0 || frameDidChange) {
         // Need to redraw locations of search results.
         [self.delegate textViewFindOnPageLocationsDidChange];

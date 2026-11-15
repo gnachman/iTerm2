@@ -18,11 +18,11 @@ class iTermBrowserQuickLookViewController: NSViewController, WKUIDelegate, WKNav
     private static let margin = CGFloat(8)
 
     @objc let webView: WKWebView
-    // Called once, on the first mouse-down inside the view.
+    // Called once, on the first mouse-down inside the view or key-down while its window is key.
     @objc var onUserInteraction: (() -> Void)?
     // The popover hosting this controller. The close button closes it.
     @objc weak var presentingPopover: NSPopover?
-    // Set for previews opened by hovering a link. Until the user clicks into the preview, JavaScript
+    // Set for previews opened by hovering a link. Until the user clicks or types in the preview, JavaScript
     // alert and confirm dialogs are answered without being shown (alert dismissed, confirm declined)
     // and pop-up windows are refused, so resting the pointer on a link can’t put up an app-modal
     // dialog or a window.
@@ -227,7 +227,7 @@ class iTermBrowserQuickLookViewController: NSViewController, WKUIDelegate, WKNav
         NSWorkspace.shared.it_open(url, target: nil, style: .tab, window: view.window)
     }
 
-    // MARK: - Mouse-down detection
+    // MARK: - Interaction detection
 
     private func installMouseDownMonitor() {
         guard clickWatcher == nil else {
@@ -238,7 +238,7 @@ class iTermBrowserQuickLookViewController: NSViewController, WKUIDelegate, WKNav
         }
     }
 
-    // Called on the first mouse-down inside the view.
+    // Called on the first mouse-down inside the view or key-down while its window is key.
     func userDidClick() {
         userClicked = true
         let callback = onUserInteraction

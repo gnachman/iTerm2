@@ -79,6 +79,8 @@ NSPopoverDelegate> {
 // Absolute, so the URL bar's anchor follows the link as lines scroll off the top.
 @property(nonatomic) VT100GridAbsWindowedRange quickLookHoverCueAbsVisualRange;
 @property(nonatomic) VT100GridAbsWindowedRange quickLookHoverCueUnderlinedRange;
+// Whether the alternate screen showed at the last refresh, to notice a switch that scrolled nothing.
+@property(nonatomic) BOOL quickLookHoverLastShowedAlternateScreen;
 @property(strong, readwrite) NSTouchBar *touchBar;
 @property(nonatomic, readonly) BOOL hasUnderline;
 @property(nonatomic, strong) id<iTermCancelable> lastUrlActionCanceler;

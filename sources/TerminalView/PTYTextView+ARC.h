@@ -19,6 +19,7 @@
 @protocol iTermContentNavigationShortcutView;
 @protocol iTermTextDataSource;
 @class iTermProgress;
+@class iTermQuickLookHoverHostCallbacks;
 @class iTermQuickLookHoverHostCell;
 @class iTermQuickLookHoverImmediateLink;
 @class iTermBlurredScreenshotSelectionRegion;
@@ -117,6 +118,11 @@ iTermURLActionHelperDelegate>
 // keeps a pending hover cue and open while the pointer is still on the same content cell, and
 // otherwise drops them and treats the pointer as having just moved there.
 - (void)quickLookHoverContentShifted;
+// Called after each refresh with whether the content moved and whether anything was redrawn. Also
+// treats a switch between the main and alternate screens since the last refresh as a shift.
+- (void)quickLookHoverRefreshedWithContentShifted:(BOOL)shifted changed:(BOOL)changed;
+// The callbacks the hover adapter uses to reach this view.
+- (iTermQuickLookHoverHostCallbacks *)quickLookHoverHostCallbacks;
 // The content cell at a point, with the lines dropped off the top counted in, so a cell keeps its
 // number while lines scroll off.
 - (VT100GridAbsCoord)quickLookHoverAbsoluteCellAtPoint:(NSPoint)point;

@@ -198,3 +198,6 @@ Use Settings > Pointer > Quick Look. Defaults: delay 0.75s, close after 1.5s.
        a custom scheme such as `zoommtg:`): the preview stays on its page.
        “Open in iTerm2 Browser” and “Open in <browser>” then open the last
        web page shown, never the other address.
+    e. Rest on the link of 32a, make the preview's window key without clicking
+       into the page (for example with Accessibility keyboard navigation), and
+       press Tab: pop-ups then work as after a click.

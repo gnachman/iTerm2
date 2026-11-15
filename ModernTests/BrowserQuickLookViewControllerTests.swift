@@ -136,6 +136,33 @@ final class BrowserQuickLookViewControllerTests: XCTestCase {
         XCTAssertFalse(controller.suppressesInterruptions, "after a click, dialogs show as usual")
     }
 
+    private final class KeyWindow: NSWindow {
+        var key = false
+        override var isKeyWindow: Bool { key }
+    }
+
+    // Keyboard-only use of a hover preview (Tab, Return) counts as interacting, as a click does.
+    func testKeyDownInTheKeyPreviewWindowCountsAsInteraction() {
+        let window = KeyWindow(contentRect: NSRect(x: 0, y: 0, width: 100, height: 100),
+                               styleMask: .borderless,
+                               backing: .buffered,
+                               defer: true)
+        window.isReleasedWhenClosed = false
+        let view = NSView(frame: NSRect(x: 0, y: 0, width: 50, height: 50))
+        window.contentView?.addSubview(view)
+        let outside = NSPoint(x: 80, y: 80)
+
+        XCTAssertFalse(iTermQuickLookClickWatcher.isInteraction(type: .keyDown, window: window, locationInWindow: outside, in: view),
+                       "not while another window is key")
+        window.key = true
+        XCTAssertTrue(iTermQuickLookClickWatcher.isInteraction(type: .keyDown, window: window, locationInWindow: outside, in: view))
+        XCTAssertFalse(iTermQuickLookClickWatcher.isInteraction(type: .keyDown, window: NSWindow(), locationInWindow: outside, in: view),
+                       "not a key-down in another window")
+        XCTAssertFalse(iTermQuickLookClickWatcher.isInteraction(type: .leftMouseDown, window: window, locationInWindow: outside, in: view),
+                       "a click must still land inside the view")
+        XCTAssertTrue(iTermQuickLookClickWatcher.isInteraction(type: .leftMouseDown, window: window, locationInWindow: NSPoint(x: 10, y: 10), in: view))
+    }
+
     func testDeliberatePreviewDoesNotSuppressDialogs() {
         XCTAssertFalse(controller.suppressesInterruptions)
     }

@@ -1066,7 +1066,7 @@ iTermCommandInfoViewControllerDelegate>
 }
 
 // A preview opened by hovering must not take keyboard focus from the terminal, and the hover
-// controller needs to know when the user clicks into it.
+// controller needs to know when the user clicks or types into it.
 - (void)prepareHoverOpenedWebQuickLook:(NSPopover *)popover {
     NSViewController *viewController = popover.contentViewController;
     if ([viewController isKindOfClass:[iTermBrowserQuickLookViewController class]]) {
@@ -1141,6 +1141,11 @@ iTermCommandInfoViewControllerDelegate>
         return nil;
     }
     DLog(@"Create Quick Look hover adapter for %@", self);
+    self.quickLookHoverAdapter = [[iTermQuickLookHoverAdapter alloc] initWithHost:[self quickLookHoverHostCallbacks]];
+    return self.quickLookHoverAdapter;
+}
+
+- (iTermQuickLookHoverHostCallbacks *)quickLookHoverHostCallbacks {
     __weak __typeof(self) weakSelf = self;
     iTermQuickLookHoverHostCallbacks *callbacks = [[iTermQuickLookHoverHostCallbacks alloc] initWithAbsoluteCell:^iTermQuickLookHoverHostCell *(NSPoint point) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -1195,8 +1200,7 @@ iTermCommandInfoViewControllerDelegate>
     callbacks.pointerLocation = ^NSValue *{
         return [weakSelf quickLookHoverPointerLocation];
     };
-    self.quickLookHoverAdapter = [[iTermQuickLookHoverAdapter alloc] initWithHost:callbacks];
-    return self.quickLookHoverAdapter;
+    return callbacks;
 }
 
 // Where the pointer is now in this view's coordinates, or nil when it is outside the visible part.
@@ -1291,6 +1295,20 @@ iTermCommandInfoViewControllerDelegate>
 
 - (void)quickLookHoverContentShifted {
     [self.quickLookHoverAdapter.controller contentShifted];
+}
+
+- (void)quickLookHoverRefreshedWithContentShifted:(BOOL)shifted changed:(BOOL)changed {
+    // Switching screens (a full-screen program starting or exiting) without scrolling only marks
+    // cells dirty, but the text under the pointer is all new, so it counts as a shift.
+    const BOOL showingAlternateScreen = [self.dataSource showingAlternateScreen];
+    const BOOL switchedScreens = showingAlternateScreen != self.quickLookHoverLastShowedAlternateScreen;
+    self.quickLookHoverLastShowedAlternateScreen = showingAlternateScreen;
+    if (shifted || switchedScreens) {
+        [self quickLookHoverContentShifted];
+    }
+    if (changed || switchedScreens) {
+        [self quickLookHoverContentChanged];
+    }
 }
 
 - (void)quickLookHoverContentChanged {

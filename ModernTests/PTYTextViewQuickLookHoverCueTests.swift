@@ -200,6 +200,8 @@ final class PTYTextViewQuickLookHoverImmediateCueTests: XCTestCase {
     }
 
     override func tearDown() {
+        // Cancels the pending open's timer.
+        textView.quickLookHoverAdapter?.controller.deactivated()
         textView = nil
         screen = nil
         session = nil
@@ -341,6 +343,56 @@ final class PTYTextViewQuickLookHoverImmediateCueTests: XCTestCase {
 
         feed("\u{1b}[?1049l")
         XCTAssertFalse(textView.quickLookHoverCell(at: p).alternateScreen)
+    }
+
+    // Cues the hyperlink at (x, y) through the host's real hover adapter, with the pointer resting
+    // there, the way a pointer move in Hover mode does.
+    private func cueHyperlinkThroughTheAdapter(_ x: Int, _ y: Int) {
+        let callbacks = textView.quickLookHoverHostCallbacks()
+        let p = point(x, y)
+        callbacks.pointerLocation = { NSValue(point: p) }
+        let adapter = iTermQuickLookHoverAdapter(host: callbacks)
+        adapter.controller.configure(mode: .hover, delay: 3600, autoCloseDelay: 0, allowlistString: "")
+        adapter.controller.cueSettleDelay = 0.1
+        textView.quickLookHoverAdapter = adapter
+        adapter.controller.pointerMoved(to: p, commandDown: false, optionDown: false, windowActive: true)
+        XCTAssertEqual(textView.quickLookHoverCueURL, "https://example.com/x",
+                       "precondition: the cue shows: \(screen.compactLineDump())")
+    }
+
+    // A full-screen program starting under a still pointer redraws without scrolling, so only the
+    // switch to the alternate screen tells the refresh that the text under the pointer is new.
+    func testSwitchingToTheAlternateScreenDropsThePendingCue() {
+        feed("ab " + hyperlink("https://example.com/x", "link"))
+        cueHyperlinkThroughTheAdapter(5, 0)
+        textView.quickLookHoverRefreshed(withContentShifted: false, changed: false)
+        XCTAssertEqual(textView.quickLookHoverCueURL, "https://example.com/x", "nothing changed yet")
+
+        feed("\u{1b}[?1049h")
+        textView.quickLookHoverRefreshed(withContentShifted: false, changed: true)
+
+        XCTAssertNil(textView.quickLookHoverCueURL, "the alternate screen does not show the link")
+    }
+
+    func testRedrawingWithoutSwitchingScreensKeepsThePendingCue() {
+        feed("ab " + hyperlink("https://example.com/x", "link"))
+        cueHyperlinkThroughTheAdapter(5, 0)
+
+        feed("\r\nmore output")
+        textView.quickLookHoverRefreshed(withContentShifted: false, changed: true)
+
+        XCTAssertEqual(textView.quickLookHoverCueURL, "https://example.com/x")
+    }
+
+    func testSwitchingBackToTheMainScreenDropsThePendingCue() {
+        feed("\u{1b}[?1049h" + "ab " + hyperlink("https://example.com/x", "link"))
+        textView.quickLookHoverRefreshed(withContentShifted: false, changed: true)
+        cueHyperlinkThroughTheAdapter(5, 0)
+
+        feed("\u{1b}[?1049l")
+        textView.quickLookHoverRefreshed(withContentShifted: false, changed: true)
+
+        XCTAssertNil(textView.quickLookHoverCueURL)
     }
 
     func testPlainTextIsNotALinkByDefault() {
