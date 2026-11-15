@@ -1474,13 +1474,11 @@ iTermCommandInfoViewControllerDelegate>
 }
 
 - (void)quickLookHoverResignedFirstResponder {
-    if ([self quickLookHoverCueBelongsToOpenPreview]) {
-        return;
-    }
-    // A pending cue would otherwise come back on the next underline update in this view.
+    // A pending cue would otherwise come back on the next underline update in this view, and a
+    // pending open would still fire. The controller keeps the cue of an open hover preview.
     if (self.quickLookHoverAdapter) {
         [self.quickLookHoverAdapter.controller focusLost];
-    } else {
+    } else if (![self quickLookHoverCueBelongsToOpenPreview]) {
         [self quickLookHoverClearCue];
     }
 }

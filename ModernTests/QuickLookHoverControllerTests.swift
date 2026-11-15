@@ -686,6 +686,29 @@ final class QuickLookHoverControllerTests: XCTestCase {
         XCTAssertEqual(delegate.cues, [urlA])
     }
 
+    func testFocusLossCancelsAPendingOpenButKeepsTheOpenPreviewsCue() {
+        openPreviewWithCueOnA()
+        move(pointInPreview)
+        delegate.resolution = (urlB, [rectB])
+        move(pointOnB)
+        controller.focusLost()
+        scheduler.fire(delay: 0.75)
+        XCTAssertEqual(delegate.opens.count, 1, "the pending open on the other link is dropped")
+        XCTAssertEqual(delegate.cueClearCount, 0)
+        XCTAssertEqual(delegate.cues, [urlA])
+    }
+
+    // Showing the popover can take key focus from the text view before the open is recorded.
+    func testFocusLossWhileThePreviewOpensKeepsTheCue() {
+        showCueOnA()
+        delegate.onOpen = { [unowned self] in
+            self.controller.focusLost()
+        }
+        scheduler.fire(delay: 0.75)
+        XCTAssertEqual(delegate.opens.count, 1)
+        XCTAssertEqual(delegate.cueClearCount, 0)
+    }
+
     private func openPreviewWithCueOnA() {
         showCueOnA()
         scheduler.fire(delay: 0.75)

@@ -131,11 +131,13 @@
     }
     // Divider columns are logical, so pick the window with the logical coord.
     [extractor restrictToLogicalWindowIncludingCoord:logicalCoord];
-    if ([iTermURLActionFactory urlActionForPromptAtCoord:logicalCoord extractor:extractor]) {
+    URLAction *action = [iTermURLActionFactory urlActionForHypertextLinkAtCoord:logicalCoord extractor:extractor];
+    // The cheap hyperlink check goes first; the prompt lookup runs only on a cell with a link.
+    if (action && [iTermURLActionFactory urlActionForPromptAtCoord:logicalCoord extractor:extractor]) {
         // A click shows the prompt's command info rather than opening the link.
         return nil;
     }
-    return [iTermURLActionFactory urlActionForHypertextLinkAtCoord:logicalCoord extractor:extractor];
+    return action;
 }
 
 - (NSURL *)urlForCopyAtCoord:(VT100GridCoord)visualCoord {
