@@ -441,13 +441,13 @@ static NSString *iTermAnchored(NSString *regex) {
                                               maximumDistance:1000
                                                   passingTest:^BOOL(screen_char_t *c,
                                                                     iTermExternalAttribute *ea,
-                                                                    VT100GridCoord coord) {
+                                                                    VT100GridCoord candidate) {
         if ([NSObject object:ea.url isEqualToObject:oea.url]) {
             return YES;
         }
         NSString *thisId;
         NSString *thisTarget;
-        NSURL *thisURL = [extractor urlOfHypertextLinkAt:coord urlId:&thisId target:&thisTarget];
+        NSURL *thisURL = [extractor urlOfHypertextLinkAt:candidate urlId:&thisId target:&thisTarget];
         // Hover together only if URL, ID, and target are equal.
         return ([thisURL isEqual:url] &&
                 (thisId == urlId || [thisId isEqualToString:urlId]) &&

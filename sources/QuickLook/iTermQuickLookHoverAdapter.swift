@@ -16,7 +16,8 @@ final class iTermQuickLookHoverHostCallbacks: NSObject {
     // NSRect values covering the link otherwise.
     @objc var resolveLink: ((_ point: NSPoint, _ completion: @escaping (URL?, [NSValue]) -> Void) -> Void)?
     // Looks up the link under a point synchronously and cheaply. Returns nil when only resolveLink
-    // can tell, and a link with a nil URL when nothing there would preview.
+    // can tell, and a link with a nil URL when nothing there would preview (with the rects of a link
+    // that won't preview, if that is what is there).
     @objc var lookUpLinkImmediately: ((_ point: NSPoint) -> iTermQuickLookHoverImmediateLink?)?
     // Returns NO if the host declined to open a preview.
     @objc var openPreview: ((_ url: URL, _ point: NSPoint) -> Bool)?
@@ -31,7 +32,7 @@ final class iTermQuickLookHoverHostCallbacks: NSObject {
 // The answer to iTermQuickLookHoverHostCallbacks.lookUpLinkImmediately.
 @objc(iTermQuickLookHoverImmediateLink)
 final class iTermQuickLookHoverImmediateLink: NSObject {
-    // nil when nothing at the point would preview.
+    // nil when nothing at the point would preview. Rects may then cover a link that won't preview.
     @objc let url: URL?
     // The regions the link occupies, as NSRect values.
     @objc let rects: [NSValue]
@@ -128,10 +129,11 @@ final class iTermQuickLookHoverAdapter: NSObject, iTermQuickLookHoverControllerD
         guard let link = host.lookUpLinkImmediately?(point) else {
             return .unknown
         }
+        let rects = link.rects.map { $0.rectValue }
         guard let url = link.url else {
-            return .noLink
+            return .noLink(rects)
         }
-        return .link(url, link.rects.map { $0.rectValue })
+        return .link(url, rects)
     }
 
     func hoverControllerOpenPreview(url: URL, linkRects: [NSRect], at point: NSPoint) -> Bool {

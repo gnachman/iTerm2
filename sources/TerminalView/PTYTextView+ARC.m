@@ -1253,6 +1253,10 @@ iTermCommandInfoViewControllerDelegate>
     [self.quickLookHoverAdapter.controller scrolled];
 }
 
+- (void)quickLookHoverContentChanged {
+    [self.quickLookHoverAdapter.controller contentChanged];
+}
+
 - (void)quickLookHoverDeactivated {
     [self.quickLookHoverAdapter.controller deactivated];
 }
@@ -1352,16 +1356,17 @@ iTermCommandInfoViewControllerDelegate>
     if (!VT100GridWindowedRangeContainsCoord(action.visualRange, coord)) {
         return noLink;
     }
+    NSArray<NSValue *> *rects = [self rectsForVisualRange:action.visualRange];
     NSURL *url = [self urlForQuickLookWithURLAction:action withEvent:nil];
     if (!url) {
-        return noLink;
+        // Its extent lets the controller skip this link on the moves that follow.
+        return [[iTermQuickLookHoverImmediateLink alloc] initWithURL:nil rects:rects];
     }
     self.quickLookHoverResolvedURL = url;
     self.quickLookHoverResolvedVisualRange = action.visualRange;
     self.quickLookHoverResolvedUnderlinedRange =
         VT100GridAbsWindowedRangeFromRelative(action.logicalRange, [self.dataSource totalScrollbackOverflow]);
-    return [[iTermQuickLookHoverImmediateLink alloc] initWithURL:url
-                                                           rects:[self rectsForVisualRange:action.visualRange]];
+    return [[iTermQuickLookHoverImmediateLink alloc] initWithURL:url rects:rects];
 }
 
 - (void)quickLookHoverShowCueForURL:(NSURL *)url {

@@ -47,8 +47,9 @@ final class iTermQuickLookTimerScheduler: iTermQuickLookScheduling {
 enum iTermQuickLookHoverImmediateLookup: Equatable {
     // A link that hover may preview, and the regions it occupies.
     case link(URL, [NSRect])
-    // Nothing there would preview, so there is no need to resolve it later.
-    case noLink
+    // Nothing there would preview, so there is no need to resolve it later. The regions are those of
+    // a link that won't preview, or empty when there is no link.
+    case noLink([NSRect])
     // Only the full (asynchronous) resolution can tell.
     case unknown
 }
@@ -96,6 +97,10 @@ class iTermQuickLookHoverController: NSObject {
     // The link the cue is shown for. Reused when the hover delay elapses on it, so the link is
     // resolved once per link the pointer settles on.
     private var cue: (url: URL, linkRects: [NSRect])?
+    // The regions of the last link the immediate lookup found that won't get a cue. Moves inside them
+    // look nothing up again. Forgotten when the pointer leaves them and whenever what they cover
+    // might have changed (content, scrolling, settings, input).
+    private var rejectedLinkRects = [NSRect]()
     // Bumped whenever a pending open is cancelled or superseded so that a resolution that completes
     // afterwards (the delegate may answer asynchronously) is recognized as stale and dropped.
     private var generation = 0
@@ -127,6 +132,7 @@ class iTermQuickLookHoverController: NSObject {
         self.allowlist = iTermQuickLookDomainAllowlist(string: allowlistString)
         cancelPendingOpen()
         clearCue()
+        rejectedLinkRects = []
     }
 
     // MARK: - Inputs
@@ -147,16 +153,28 @@ class iTermQuickLookHoverController: NSObject {
             clearPendingCue()
             return
         }
-        // While the pointer stays inside the cue's link there is nothing new to look up.
+        // While the pointer stays inside the cue's link, or a link already rejected, there is nothing
+        // new to look up.
         if cue == nil, let settle = cueSettleDelay, mode == .hover {
+            if rejectedLinkRects.contains(where: { $0.contains(point) }) {
+                return
+            }
+            rejectedLinkRects = []
             switch delegate?.hoverControllerLookUpLinkImmediately(at: point) ?? .unknown {
             case let .link(url, rects):
-                guard allowlist.allows(url), rects.contains(where: { $0.contains(point) }) else {
+                guard rects.contains(where: { $0.contains(point) }) else {
+                    return
+                }
+                guard allowlist.allows(url) else {
+                    rejectedLinkRects = rects
                     return
                 }
                 // The open timer reuses this, so the link isn't resolved again.
                 showCueIfWanted(url: url, linkRects: rects)
-            case .noLink:
+            case let .noLink(rects):
+                if rects.contains(where: { $0.contains(point) }) {
+                    rejectedLinkRects = rects
+                }
                 return
             case .unknown:
                 if settle < delay {
@@ -180,16 +198,19 @@ class iTermQuickLookHoverController: NSObject {
     @objc func mouseDown() {
         cancelPendingOpen()
         clearPendingCue()
+        rejectedLinkRects = []
     }
 
     @objc func keyDown() {
         cancelPendingOpen()
         clearPendingCue()
+        rejectedLinkRects = []
     }
 
     @objc func scrolled() {
         cancelPendingOpen()
         clearPendingCue()
+        rejectedLinkRects = []
     }
 
     // The view lost keyboard focus, for example to another split pane. A pending cue would linger
@@ -201,12 +222,20 @@ class iTermQuickLookHoverController: NSObject {
         }
         cancelPendingOpen()
         clearPendingCue()
+        rejectedLinkRects = []
+    }
+
+    // What the view shows changed (new output, lines scrolled off the top, a resize), so a rejected
+    // link may no longer be where it was.
+    @objc func contentChanged() {
+        rejectedLinkRects = []
     }
 
     // The app or window lost focus.
     @objc func deactivated() {
         cancelPendingOpen()
         clearCue()
+        rejectedLinkRects = []
         if isOpen && !clickedInPreview {
             closeHoverPreview()
         }

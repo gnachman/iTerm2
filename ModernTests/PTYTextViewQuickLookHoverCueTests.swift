@@ -307,6 +307,11 @@ final class PTYTextViewQuickLookHoverImmediateCueTests: XCTestCase {
 
         XCTAssertNil(lookUp(1, 0)?.url)
         XCTAssertNil(lookUp(6, 0)?.url)
+        let rects = lookUp(1, 0)?.rects.map(\.rectValue) ?? []
+        XCTAssertEqual(rects.count, 1, "the extent, so moves inside the link can skip it")
+        XCTAssertTrue(rects.first?.contains(point(0, 0)) ?? false)
+        XCTAssertTrue(rects.first?.contains(point(3, 0)) ?? false)
+        XCTAssertFalse(rects.first?.contains(point(5, 0)) ?? true)
         XCTAssertNotNil(lookUp(6, 0, plainText: true), "a definite answer even with plain text included")
     }
 }

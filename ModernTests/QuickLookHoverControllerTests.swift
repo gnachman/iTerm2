@@ -770,7 +770,7 @@ final class QuickLookHoverControllerTests: XCTestCase {
         let rectA = self.rectA
         let urlA = self.urlA
         delegate.immediate = { point in
-            rectA.contains(point) ? .link(urlA, [rectA]) : .noLink
+            rectA.contains(point) ? .link(urlA, [rectA]) : .noLink([])
         }
     }
 
@@ -819,6 +819,63 @@ final class QuickLookHoverControllerTests: XCTestCase {
         move(pointOnA)
         XCTAssertTrue(delegate.cues.isEmpty)
         XCTAssertTrue(scheduler.items.isEmpty)
+    }
+
+    func testMovesInsideALinkOutsideTheAllowlistDoNotLookItUpAgain() {
+        configure(allowlist: "example.org")
+        useImmediateHyperlinkOnA()
+        move(pointOnA)
+        move(NSPoint(x: 30, y: 18))
+        move(NSPoint(x: 90, y: 20))
+        XCTAssertEqual(delegate.immediateLookups, [pointOnA])
+
+        move(pointNowhere)
+        move(pointOnA)
+        XCTAssertEqual(delegate.immediateLookups, [pointOnA, pointNowhere, pointOnA],
+                       "leaving the link forgets it")
+        XCTAssertTrue(delegate.cues.isEmpty)
+        XCTAssertTrue(scheduler.items.isEmpty)
+    }
+
+    func testMovesInsideALinkThatWontPreviewDoNotLookItUpAgain() {
+        controller.cueSettleDelay = 0.1
+        let rectA = self.rectA
+        delegate.immediate = { point in
+            rectA.contains(point) ? .noLink([rectA]) : .noLink([])
+        }
+        move(pointOnA)
+        move(NSPoint(x: 30, y: 18))
+        XCTAssertEqual(delegate.immediateLookups, [pointOnA])
+        XCTAssertTrue(delegate.cues.isEmpty)
+        XCTAssertTrue(scheduler.items.isEmpty)
+    }
+
+    func testRejectedLinkIsLookedUpAgainWhenItMightHaveChanged() {
+        let invalidations: [(iTermQuickLookHoverController) -> Void] = [
+            { $0.contentChanged() },
+            { $0.scrolled() },
+            { $0.keyDown() },
+            { $0.mouseDown() },
+            { $0.focusLost() },
+            { $0.deactivated() },
+        ]
+        let onA2 = NSPoint(x: 30, y: 18)
+        for (i, invalidate) in invalidations.enumerated() {
+            configure(allowlist: "example.org")
+            useImmediateHyperlinkOnA()
+            delegate.immediateLookups = []
+            move(pointOnA)
+            invalidate(controller)
+            move(onA2)
+            XCTAssertEqual(delegate.immediateLookups, [pointOnA, onA2], "invalidation \(i)")
+        }
+        // Changing settings (here, allowing the link) also forgets it.
+        move(pointOnA)
+        delegate.immediateLookups = []
+        configure(allowlist: "")
+        move(onA2)
+        XCTAssertEqual(delegate.immediateLookups, [onA2])
+        XCTAssertEqual(delegate.cues, [urlA])
     }
 
     func testUnknownLinksWaitForTheSettleTimer() {

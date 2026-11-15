@@ -112,6 +112,8 @@ iTermURLActionHelperDelegate>
 - (void)quickLookHoverMouseDown;
 - (void)quickLookHoverKeyDown;
 - (void)quickLookHoverScrolled;
+// What the view shows changed, so links may have moved.
+- (void)quickLookHoverContentChanged;
 // The app or window lost focus.
 - (void)quickLookHoverDeactivated;
 // Removes the underline because this view or its window lost focus, but keeps the hover cue’s

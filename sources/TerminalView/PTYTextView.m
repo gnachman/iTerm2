@@ -3545,15 +3545,20 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     // See if any characters are dirty and mark them as needing to be redrawn.
     // Return if anything was found to be blinking.
     __block BOOL foundBlink = NO;
+    __block BOOL contentChanged = (scrollbackOverflow > 0 || frameDidChange || syncResult.haveScrolled);
     [self.dataSource performBlockWithSavedGrid:^(id<PTYTextViewSynchronousUpdateStateReading>  _Nullable state) {
         BOOL foundDirty = NO;
         foundBlink = [self updateDirtyRects:&foundDirty haveScrolled:syncResult.haveScrolled] || [self isCursorBlinking];
+        contentChanged = contentChanged || foundDirty;
         // Update accessibility.
         if (foundDirty) {
             [self refreshAccessibility];
         }
         [self searchForVisibleBlocks];
     }];
+    if (contentChanged) {
+        [self quickLookHoverContentChanged];
+    }
     if (scrollbackOverflow > 0 || frameDidChange) {
         // Need to redraw locations of search results.
         [self.delegate textViewFindOnPageLocationsDidChange];
