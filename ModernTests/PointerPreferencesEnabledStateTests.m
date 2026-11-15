@@ -25,6 +25,7 @@
     id _savedIncludingSubviews;
     id _savedHoverMode;
     id _savedAutoCloseDelay;
+    id _savedUsesBrowserEngine;
 }
 
 - (void)setUp {
@@ -35,6 +36,7 @@
     _savedIncludingSubviews = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyFocusFollowsMouseIncludingSubviews];
     _savedHoverMode = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyQuickLookHoverMode];
     _savedAutoCloseDelay = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyQuickLookHoverAutoCloseDelay];
+    _savedUsesBrowserEngine = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyQuickLookUsesBrowserEngine];
 }
 
 - (void)tearDown {
@@ -42,6 +44,7 @@
     [iTermPreferences setObject:_savedIncludingSubviews forKey:kPreferenceKeyFocusFollowsMouseIncludingSubviews];
     [iTermPreferences setObject:_savedHoverMode forKey:kPreferenceKeyQuickLookHoverMode];
     [iTermPreferences setObject:_savedAutoCloseDelay forKey:kPreferenceKeyQuickLookHoverAutoCloseDelay];
+    [iTermPreferences setObject:_savedUsesBrowserEngine forKey:kPreferenceKeyQuickLookUsesBrowserEngine];
     [super tearDown];
 }
 
@@ -196,6 +199,14 @@
     [vc settingChanged:autoClose];
     XCTAssertEqual([iTermPreferences doubleForKey:kPreferenceKeyQuickLookHoverAutoCloseDelay], 0.25,
                    @"an empty field mid-edit does not store 0");
+}
+
+- (void)testPluginNoteHiddenWhileBrowserEngineIsOff {
+    [iTermPreferences setBool:NO forKey:kPreferenceKeyQuickLookUsesBrowserEngine];
+
+    PointerPreferencesViewController *vc = [self awakenedController];
+    NSTextField *note = [vc valueForKey:@"_quickLookPluginNote"];
+    XCTAssertTrue(note.hidden);
 }
 
 - (void)testChangingHoverModeUpdatesEnabledState {

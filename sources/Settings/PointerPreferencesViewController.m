@@ -8,6 +8,7 @@
 
 #import "PointerPreferencesViewController.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "NSObject+iTerm.h"
 #import "PreferencePanel.h"
 
@@ -251,8 +252,26 @@ static NSNumberFormatter *PointerPreferencesSecondsFormatter(NSLocale *locale) {
 
 // The note under the browser engine checkbox explains why the setting has no effect.
 - (void)updateQuickLookPluginNote {
-    const BOOL wanted = [self boolForKey:kPreferenceKeyQuickLookUsesBrowserEngine];
-    _quickLookPluginNote.hidden = !wanted || [iTermBrowserGateway browserAllowedCheckingIfNot:YES];
+    NSString *note = nil;
+    if (![self boolForKey:kPreferenceKeyQuickLookUsesBrowserEngine]) {
+        // No note: the setting is off.
+    } else if (![iTermAdvancedSettingsModel browserProfiles]) {
+        note = NSLocalizedStringWithDefaultValue(@"PointerPreferences.QuickLookBrowserProfilesOff",
+                                                 nil,
+                                                 [NSBundle mainBundle],
+                                                 @"“Enable browser-style profiles” is off in Settings > Advanced; using the basic preview.",
+                                                 @"Note under the Quick Look browser engine checkbox when the advanced setting that enables the built-in browser is off");
+    } else if (![iTermBrowserGateway browserAllowedCheckingIfNot:YES]) {
+        note = NSLocalizedStringWithDefaultValue(@"PointerPreferences.QuickLookPluginNotInstalled",
+                                                 nil,
+                                                 [NSBundle mainBundle],
+                                                 @"Browser Plugin not installed; using the basic preview.",
+                                                 @"Note under the Quick Look browser engine checkbox when the Browser Plugin is not installed");
+    }
+    _quickLookPluginNote.hidden = (note == nil);
+    if (note) {
+        _quickLookPluginNote.stringValue = note;
+    }
 }
 
 - (void)updateQuickLookNeverClose {
