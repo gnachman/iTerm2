@@ -602,6 +602,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
 - (void)layoutSubviewsForEditCurrentSessionMode {
     self.view = _editCurrentSessionView;
+    [self layoutEditCurrentSessionViewForTranslations];
 
     PreferenceInfo *info = [self infoForControl:_allowTitleSetting];
     [self setControl:_locked inPreference:info];
@@ -613,6 +614,95 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         [weakSelf toggleLock];
     };
     [self updateLockImage];
+}
+
+// The Edit Session view's label column is laid out for English, and its labels are as narrow
+// as their English text. Translations can be longer, so grow each label leftward to the margin
+// and, if that's still not enough, widen the column by moving the fields right and narrowing
+// them so their right edges stay put. English is unchanged. This runs before the modal
+// enclosures save their frames, so they restore these frames rather than the nib's.
+- (void)layoutEditCurrentSessionViewForTranslations {
+    NSView *container = _editCurrentSessionView;
+    const CGFloat leftMargin = 16;
+    NSArray<NSView *> *candidates = @[ _profileNameFieldForEditCurrentSession,
+                                       _badgeTextForEditCurrentSession,
+                                       _titleSettingsForEditCurrentSession,
+                                       _tabTitle,
+                                       _windowTitle ];
+    NSMutableArray<NSView *> *fields = [NSMutableArray array];
+    NSMutableArray<NSTextField *> *labels = [NSMutableArray array];
+    CGFloat shift = 0;
+    for (NSView *field in candidates) {
+        if (![field isDescendantOf:container]) {
+            continue;
+        }
+        NSTextField *label = [self labelBesideControl:field];
+        if (!label) {
+            continue;
+        }
+        [fields addObject:field];
+        [labels addObject:label];
+        const NSRect frame = [label.superview convertRect:label.frame toView:container];
+        shift = MAX(shift, ceil(label.cell.cellSize.width) - (NSMaxX(frame) - leftMargin));
+    }
+    DLog(@"Edit Session label column needs %@ more points", @(shift));
+    shift = MAX(0, shift);
+    [labels enumerateObjectsUsingBlock:^(NSTextField *label, NSUInteger i, BOOL *stop) {
+        NSView *superview = label.superview;
+        if (superview != container) {
+            // An enclosure: extend it to the margin so the label can grow into it
+            // without being clipped, keeping its subviews where they are.
+            NSRect enclosureFrame = [superview.superview convertRect:superview.frame toView:container];
+            const CGFloat grow = NSMinX(enclosureFrame) - leftMargin;
+            if (grow > 0 && superview.superview == container) {
+                NSRect frame = superview.frame;
+                frame.origin.x -= grow;
+                frame.size.width += grow;
+                superview.frame = frame;
+                for (NSView *subview in superview.subviews) {
+                    NSRect subframe = subview.frame;
+                    subframe.origin.x += grow;
+                    subview.frame = subframe;
+                }
+            }
+        }
+        const CGFloat leftInSuperview = [container convertPoint:NSMakePoint(leftMargin, 0) toView:superview].x;
+        NSRect labelFrame = label.frame;
+        const CGFloat maxX = NSMaxX(labelFrame) + shift;
+        labelFrame.origin.x = MIN(NSMinX(labelFrame), leftInSuperview);
+        labelFrame.size.width = maxX - NSMinX(labelFrame);
+        label.frame = labelFrame;
+
+        NSView *field = fields[i];
+        NSRect fieldFrame = field.frame;
+        fieldFrame.origin.x += shift;
+        fieldFrame.size.width -= shift;
+        field.frame = fieldFrame;
+    }];
+}
+
+// The non-editable text field just left of `control` in the same row, if any.
+- (NSTextField *)labelBesideControl:(NSView *)control {
+    const NSRect controlFrame = control.frame;
+    const CGFloat midY = NSMidY(controlFrame);
+    NSTextField *best = nil;
+    for (NSView *view in control.superview.subviews) {
+        if (view == control || ![view isKindOfClass:[NSTextField class]]) {
+            continue;
+        }
+        NSTextField *textField = (NSTextField *)view;
+        if (textField.isEditable || textField.isHidden) {
+            continue;
+        }
+        const NSRect frame = textField.frame;
+        if (midY < NSMinY(frame) || midY > NSMaxY(frame) || NSMaxX(frame) > NSMinX(controlFrame) + 1) {
+            continue;
+        }
+        if (!best || NSMaxX(frame) > NSMaxX(best.frame)) {
+            best = textField;
+        }
+    }
+    return best;
 }
 
 - (void)toggleLock {

@@ -89534,7 +89534,7 @@
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Αποστολή κειμένου κατά την εκκίνηση:"
+            "value" : "Κείμενο στην εκκίνηση:"
           }
         },
         "en" : {
@@ -89594,19 +89594,19 @@
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lähetä teksti käynnistyksessä:"
+            "value" : "Teksti käynnistettäessä:"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Envoyer du texte au démarrage :"
+            "value" : "Texte initial à envoyer :"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Envoyer du texte au démarrage :"
+            "value" : "Texte initial à envoyer :"
           }
         },
         "hi" : {
@@ -89732,7 +89732,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Надіслати текст на початку:"
+            "value" : "Текст під час запуску:"
           }
         },
         "vi" : {
