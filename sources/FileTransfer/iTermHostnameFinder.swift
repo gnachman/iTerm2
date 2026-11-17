@@ -8,8 +8,14 @@
 import Foundation
 
 class iTermHostnameFinder: SSHHostnameFinder {
+    private let configs: () -> [NMSSHConfig]
+
+    init(configs: @escaping () -> [NMSSHConfig] = { iTermSSHHelpers.configs() }) {
+        self.configs = configs
+    }
+
     func sshHostname(forHost host: String) -> String {
-        for config in iTermSSHHelpers.configs() {
+        for config in configs() {
             if let hostConfig = config.hostConfig(forHost: host),
                let hostname = hostConfig.hostname {
                 return hostname
