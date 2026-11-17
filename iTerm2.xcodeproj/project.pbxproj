@@ -4709,6 +4709,7 @@
 		AE60A436CB4E685242ACA409 /* iTermBrowserBasicAuthPasswordPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BC5130911CA7C20AB2F3647 /* iTermBrowserBasicAuthPasswordPicker.swift */; };
 		AE70AD01774C1A0D459D83EB /* ChatProviderBinding.swift in Sources */ = {isa = PBXBuildFile; fileRef = F93A075070332E927BC887FD /* ChatProviderBinding.swift */; };
 		AEAE1BE268EBB651C8C55236 /* ChatFindBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89D84C6E401120F8E67C44A3 /* ChatFindBarView.swift */; };
+		B024F16AF2C3481268B9E3FD /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624232519CF70DF00182C08 /* NMSSH.framework */; };
 		B0DBAA2AED68CD2C26771677 /* PSMTabGroupChipView.m in Sources */ = {isa = PBXBuildFile; fileRef = 693EE5C4C127AC8FB85F37D9 /* PSMTabGroupChipView.m */; };
 		B1697C2B511CFD9C80710208 /* RemoteGitState.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC40E77AF12D0B04983CA135 /* RemoteGitState.swift */; };
 		B227A6877007742A924ACE7D /* ArgumentParser in Frameworks */ = {isa = PBXBuildFile; productRef = EFA829AC3181DC26280758FC /* ArgumentParser */; };
@@ -4897,6 +4898,7 @@
 		F639888C586AAEB1D3D93A3F /* iTermWeakObserverList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A292340C410A896E03ADEC3 /* iTermWeakObserverList.swift */; };
 		F7C626F9C65F19A1BEE800DA /* iTermWordExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BF1E9C79C30008CC546F987 /* iTermWordExtractor.swift */; };
 		F7E9577EBDD47ED18CBD569F /* iTermImageComparison.h in Sources */ = {isa = PBXBuildFile; fileRef = 516BF83D01B179D961D3EDB6 /* iTermImageComparison.h */; };
+		F81DAF3D6869904C58EA7C5E /* iTermSSHConfigIncludeExpander.swift in Sources */ = {isa = PBXBuildFile; fileRef = F25FB876F151A9E90A9090DB /* iTermSSHConfigIncludeExpander.swift */; };
 		F81F042365701BE191505DF5 /* CompanionSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A99A211B9CCCCDFA3692A5C4 /* CompanionSession.swift */; };
 		F8CE449366C8E4E273D52810 /* iTermKeyCodeZeroCharacters.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB81962D4307FE25CB8DC773 /* iTermKeyCodeZeroCharacters.swift */; };
 		F8ECBE597A69D02A7C924093 /* iTermPasswordInputDebouncer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F20922E7C56B246576E589A /* iTermPasswordInputDebouncer.swift */; };
@@ -9213,6 +9215,7 @@
 		F1BD72B3A14F9A4D85DB08DB /* PasswordArchiveController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PasswordArchiveController.swift; sourceTree = "<group>"; };
 		F1D98D4F4D522B88FB7F898D /* CompanionVideoEncoder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionVideoEncoder.swift; sourceTree = "<group>"; };
 		F1FA5EA310888B7DB4DFBE61 /* ClaudeIntegrationHealthMonitor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClaudeIntegrationHealthMonitor.swift; sourceTree = "<group>"; };
+		F25FB876F151A9E90A9090DB /* iTermSSHConfigIncludeExpander.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermSSHConfigIncludeExpander.swift; sourceTree = "<group>"; };
 		F30D7F2F2EFCBD6F0ADB7393 /* TmuxAddress.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TmuxAddress.swift; path = it2cli/Sources/it2core/TmuxAddress.swift; sourceTree = "<group>"; };
 		F38A58A9C98BC08CC8CEEA2E /* TmuxWorkgroupCommands.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TmuxWorkgroupCommands.swift; sourceTree = "<group>"; };
 		F38C0DAB55C8520927EB4FB0 /* iTermNotifyOnStatusChangeController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermNotifyOnStatusChangeController.swift; sourceTree = "<group>"; };
@@ -9449,6 +9452,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C0A1E5CE0000000000000001 /* iTermSwiftPackages.framework in Frameworks */,
+				B024F16AF2C3481268B9E3FD /* NMSSH.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -11241,6 +11245,7 @@
 				A68A30F3186D150A007F550F /* VT100WorkingDirectory.h */,
 				A68A30DB186D1429007F550F /* VT100WorkingDirectory.m */,
 				1191F8492A220B356000A847 /* TransferrableFileStatusRowLayout.swift */,
+				F25FB876F151A9E90A9090DB /* iTermSSHConfigIncludeExpander.swift */,
 			);
 			path = FileTransfer;
 			sourceTree = "<group>";
@@ -20794,6 +20799,7 @@
 				DE99387F4738F705DB245E77 /* UILanguageCase.swift in Sources */,
 				A62305DD709AEA800869BF10 /* ClaudeCodeStatusOverlay.swift in Sources */,
 				7F21CC66F413DBE8E2306AF2 /* iTermTabGroupNesting.swift in Sources */,
+				F81DAF3D6869904C58EA7C5E /* iTermSSHConfigIncludeExpander.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
