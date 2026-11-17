@@ -596,6 +596,22 @@ Bug Fixes:
   text as the explanation, or crash, depending
   on how the AI’s reply was laid out. Thanks
   to Kim Dong Han (@ehdgks0627) for the fix.
+- Heavy terminal output made iTerm2 use more
+  and more memory that it never gave back, even
+  after closing every window. Printing a lot of
+  output could grow it by gigabytes.
+- In tmux integration, resizing a window or
+  adding a tab while a pane running a program
+  such as vim was zoomed could make iTerm2 and
+  tmux resize the window back and forth forever,
+  using lots of CPU and ignoring the keyboard.
+- Downloading or uploading a file with scp
+  slowed to a crawl while the Downloads or
+  Uploads menu was open.
+- If iTerm2 crashed while it was the active app,
+  tabs and split panes opened since you last
+  switched to another app came back in a
+  separate window after relaunching.
 - Fixed crashes when:
   - launching right after an update;
   - showing a tip of the day;
