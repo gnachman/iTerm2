@@ -580,7 +580,7 @@
 }
 
 // Convert an array like ["a", "b", "b", "c"] into
-// ["a", "2 instances of \"b\"", "c"].
+// ["a", "2 instances of “b”", "c"].
 - (NSArray *)countedInstancesStrings {
     NSDictionary *classified = [self classifyWithBlock:^id(id object) {
         return object;
@@ -590,7 +590,8 @@
         NSArray *values = classified[key];
         const NSInteger count = values.count;
         if (count > 1) {
-            return [NSString stringWithFormat:@"%@ instances of \"%@\"", @(count), key];
+            // TODO(l10n): plural. This needs a plural substitution (a count and a name).
+            return [NSString stringWithFormat:@"%@ instances of “%@”", @(count), key];
         } else {
             return values.firstObject;
         }
