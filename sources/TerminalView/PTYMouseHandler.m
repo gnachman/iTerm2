@@ -37,6 +37,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return sqrt(Square(p1.x - p2.x) + Square(p1.y - p2.y));
 }
 
+typedef NS_ENUM(NSUInteger, iTermScrollWheelDisposition) {
+    // Handle normally (e.g., scroll the view or report the mouse event).
+    iTermScrollWheelDispositionDefault,
+    // Send arrow keys or a custom string to the tty.
+    iTermScrollWheelDispositionSendData,
+    // Don't scroll the view. Used when alternate mouse scroll owns the scroll wheel but this event
+    // shouldn't send anything; passing it on would scroll the view into history. It may still be
+    // used to swipe between tabs.
+    iTermScrollWheelDispositionDiscard
+};
+
 @interface PTYMouseHandler()<iTermAltScreenMouseScrollInferrerDelegate, iTermSwipeTrackerDelegate>
 @end
 
@@ -1139,19 +1150,34 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"disableScrollReportingUntilMomentumEnds <- NO");
         _disableScrollReportingUntilMomentumEnds = NO;
     }
-    if ([self scrollWheelShouldSendDataForEvent:event at:point]) {
-        DLog(@"disableScrollReportingUntilMomentumEnds=%@", @(_disableScrollReportingUntilMomentumEnds));
-        if (!_disableScrollReportingUntilMomentumEnds) {
-            [self sendDataForScrollEvent:event];
-            return NO;
-        }
-    } else if (event.momentumPhase == NSEventPhaseBegan) {
-        DLog(@"disableScrollReportingUntilMomentumEnds <- YES");
-        _disableScrollReportingUntilMomentumEnds = YES;
+    const iTermScrollWheelDisposition disposition = [self scrollWheelDispositionForEvent:event at:point];
+    switch (disposition) {
+        case iTermScrollWheelDispositionSendData:
+            DLog(@"disableScrollReportingUntilMomentumEnds=%@", @(_disableScrollReportingUntilMomentumEnds));
+            if (!_disableScrollReportingUntilMomentumEnds) {
+                [self sendDataForScrollEvent:event];
+                return NO;
+            }
+            break;
+        case iTermScrollWheelDispositionDiscard:
+            break;
+        case iTermScrollWheelDispositionDefault:
+            if (event.momentumPhase == NSEventPhaseBegan) {
+                DLog(@"disableScrollReportingUntilMomentumEnds <- YES");
+                _disableScrollReportingUntilMomentumEnds = YES;
+            }
+            break;
     }
     if (event.momentumPhase == NSEventPhaseEnded) {
         DLog(@"disableScrollReportingUntilMomentumEnds <- NO");
         _disableScrollReportingUntilMomentumEnds = NO;
+    }
+    if (disposition == iTermScrollWheelDispositionDiscard) {
+        // Swiping between tabs is the reason to restrict alternate mouse scroll to vertical
+        // (issue 11476), so give the swipe tracker a chance. Never pass the event on, though.
+        const BOOL swiped = [self tryToHandleSwipeBetweenTabsForScrollWheelEvent:event];
+        DLog(@"Discarding scroll wheel event. Handled as swipe between tabs=%@", @(swiped));
+        return NO;
     }
     BOOL reportable = NO;
     if ([self handleMouseEvent:event testOnly:NO deltaOut:NULL reportableOut:&reportable]) {
@@ -1613,33 +1639,33 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (BOOL)scrollWheelShouldSendDataForEvent:(NSEvent *)event at:(NSPoint)point {
+- (iTermScrollWheelDisposition)scrollWheelDispositionForEvent:(NSEvent *)event at:(NSPoint)point {
     if (![self.mouseDelegate mouseHandler:self viewCoordIsReportable:point]) {
         DLog(@"Coord not reportable");
-        return NO;
+        return iTermScrollWheelDispositionDefault;
     }
     if (event.type != NSEventTypeScrollWheel) {
         DLog(@"Not a wheel event");
-        return NO;
+        return iTermScrollWheelDispositionDefault;
     }
     if (![self.mouseDelegate mouseHandlerShowingAlternateScreen:self]) {
         DLog(@"Not in alt screen");
-        return NO;
+        return iTermScrollWheelDispositionDefault;
     }
     if (![self.mouseDelegate mouseHandlerCanWriteToTTY:self]) {
         DLog(@"TTY is not writable");
-        return NO;
+        return iTermScrollWheelDispositionDefault;
     }
     if ([self shouldReportMouseEvent:event at:point] &&
         [self.mouseDelegate mouseHandlerMouseMode:self] != MOUSE_REPORTING_NONE) {
         // Prefer to report the scroll than to send arrow keys in this mouse reporting mode.
         DLog(@"Mouse reporting is on");
-        return NO;
+        return iTermScrollWheelDispositionDefault;
     }
     if (event.it_modifierFlags & NSEventModifierFlagOption) {
         // Hold alt to disable sending arrow keys.
         DLog(@"Alt held");
-        return NO;
+        return iTermScrollWheelDispositionDefault;
     }
     BOOL verticalOnly = NO;
     const BOOL alternateMouseScroll = [self.mouseDelegate mouseHandlerAlternateScrollModeIsEnabled:self
@@ -1648,21 +1674,30 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSString *downString = [iTermAdvancedSettingsModel alternateMouseScrollStringForDown];
 
     if (event.it_isVerticalScroll && !alternateMouseScroll) {
-        DLog(@"Horizontal scroll without alternateMouseScroll enabled, return NO");
-        return NO;
+        DLog(@"Vertical scroll without alternateMouseScroll enabled, use default handling");
+        return iTermScrollWheelDispositionDefault;
     }
     if (!event.it_isVerticalScroll && verticalOnly) {
-        DLog(@"Horizontal scroll in vertical alternateMouseScroll mode, return NO");
-        return NO;
+        if (!alternateMouseScroll) {
+            // verticalOnly reflects the profile setting even when alternate mouse scroll is off,
+            // in which case the view owns the scroll wheel and needs the whole gesture.
+            DLog(@"Horizontal scroll with verticalOnly but alternateMouseScroll off, use default handling");
+            return iTermScrollWheelDispositionDefault;
+        }
+        // A trackpad swipe is rarely perfectly vertical, so some events in a vertical gesture
+        // have |dx| >= |dy|. Passing them on would scroll the view into the primary screen's
+        // history (issue 13212).
+        DLog(@"Horizontal scroll in vertical alternateMouseScroll mode, discard");
+        return iTermScrollWheelDispositionDiscard;
     }
 
     if (alternateMouseScroll || upString.length || downString.length) {
         DLog(@"alternateMouseScroll=%@, upstring=%@, downString=%@", @(alternateMouseScroll), upString, downString);
-        return YES;
+        return iTermScrollWheelDispositionSendData;
     } else {
         DLog(@"Feature disabled or empty/nil string");
         [_altScreenMouseScrollInferrer scrollWheel:event];
-        return NO;
+        return iTermScrollWheelDispositionDefault;
     }
 }
 

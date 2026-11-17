@@ -238,6 +238,12 @@ Improvements:
   hang.
 
 Bug Fixes:
+- With “Restrict alternate mouse scroll to
+  vertical scrolling” on in Settings > Profiles >
+  Terminal, scrolling a full-screen app like vim
+  with the trackpad sometimes also scrolled the
+  terminal, revealing lines from before the app
+  started. Fixed.
 - A sixel image with very large dimensions
   could crash iTerm2’s image decoder or use
   gigabytes of memory. Images with more pixels
