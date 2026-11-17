@@ -190009,259 +190009,259 @@
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Colors de l’ítem de menú de color de pestanya.\nCadenes separades per espais com #rrggbb o #rgb a l’espai de color sRGB. Si l’espai de color P3 és disponible, pots utilitzar cadenes com: color(p3 1 0.5 0.25)"
+            "value" : "Colors de l’ítem de menú de color de pestanya.\nCadenes separades per espais com #rrggbb o #rgb a l’espai de color sRGB. Si l’espai de color P3 és disponible, pots utilitzar cadenes com: p3#RRRRGGGGBBBB"
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Barvy pro položku nabídky barvy panelu.\nŘetězce oddělené mezerami jako #rrggbb nebo #rgb v barevném prostoru sRGB. Pokud je dostupný barevný prostor P3, můžete použít řetězce jako: color(p3 1 0.5 0.25)"
+            "value" : "Barvy pro položku nabídky barvy panelu.\nŘetězce oddělené mezerami jako #rrggbb nebo #rgb v barevném prostoru sRGB. Pokud je dostupný barevný prostor P3, můžete použít řetězce jako: p3#RRRRGGGGBBBB"
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Farver til menuemnet for fanefarve.\nStrenge adskilt af mellemrum som #rrggbb eller #rgb i farverummet sRGB. Hvis farverummet P3 er tilgængeligt, kan du bruge strenge som: color(p3 1 0.5 0.25)"
+            "value" : "Farver til menuemnet for fanefarve.\nStrenge adskilt af mellemrum som #rrggbb eller #rgb i farverummet sRGB. Hvis farverummet P3 er tilgængeligt, kan du bruge strenge som: p3#RRRRGGGGBBBB"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Farben für den Menüpunkt „Tab-Farbe“.\nDurch Leerzeichen getrennte Zeichenfolgen wie #rrggbb oder #rgb im sRGB-Farbraum. Wenn der P3-Farbraum verfügbar ist, können Sie Zeichenfolgen wie color(p3 1 0.5 0.25) verwenden."
+            "value" : "Farben für den Menüpunkt „Tab-Farbe“.\nDurch Leerzeichen getrennte Zeichenfolgen wie #rrggbb oder #rgb im sRGB-Farbraum. Wenn der P3-Farbraum verfügbar ist, können Sie Zeichenfolgen wie p3#RRRRGGGGBBBB verwenden."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Χρώματα για το στοιχείο μενού χρώματος καρτέλας.\nΣυμβολοσειρές χωρισμένες με κενά, όπως #rrggbb ή #rgb στον χρωματικό χώρο sRGB. Αν ο χρωματικός χώρος P3 είναι διαθέσιμος, μπορείτε να χρησιμοποιήσετε συμβολοσειρές όπως: color(p3 1 0.5 0.25)"
+            "value" : "Χρώματα για το στοιχείο μενού χρώματος καρτέλας.\nΣυμβολοσειρές χωρισμένες με κενά, όπως #rrggbb ή #rgb στον χρωματικό χώρο sRGB. Αν ο χρωματικός χώρος P3 είναι διαθέσιμος, μπορείτε να χρησιμοποιήσετε συμβολοσειρές όπως: p3#RRRRGGGGBBBB"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Colors for tab color menu item.\nSpace delimited strings like #rrggbb or #rgb in sRGB color space. If the P3 color space is available, you can use strings like: color(p3 1 0.5 0.25)"
+            "value" : "Colors for tab color menu item.\nSpace delimited strings like #rrggbb or #rgb in sRGB color space. If the P3 color space is available, you can use strings like: p3#RRRRGGGGBBBB"
           }
         },
         "en-AU" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Colours for tab colour menu item.\nSpace delimited strings like #rrggbb or #rgb in sRGB colour space. If the P3 colour space is available, you can use strings like: color(p3 1 0.5 0.25)"
+            "value" : "Colours for tab colour menu item.\nSpace delimited strings like #rrggbb or #rgb in sRGB colour space. If the P3 colour space is available, you can use strings like: p3#RRRRGGGGBBBB"
           }
         },
         "en-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Colours for tab colour menu item.\nSpace delimited strings like #rrggbb or #rgb in sRGB colour space. If the P3 colour space is available, you can use strings like: color(p3 1 0.5 0.25)"
+            "value" : "Colours for tab colour menu item.\nSpace delimited strings like #rrggbb or #rgb in sRGB colour space. If the P3 colour space is available, you can use strings like: p3#RRRRGGGGBBBB"
           }
         },
         "en-GB" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Colours for tab colour menu item.\nSpace delimited strings like #rrggbb or #rgb in sRGB colour space. If the P3 colour space is available, you can use strings like: color(p3 1 0.5 0.25)"
+            "value" : "Colours for tab colour menu item.\nSpace delimited strings like #rrggbb or #rgb in sRGB colour space. If the P3 colour space is available, you can use strings like: p3#RRRRGGGGBBBB"
           }
         },
         "en-IN" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Colours for tab colour menu item.\nSpace delimited strings like #rrggbb or #rgb in sRGB colour space. If the P3 colour space is available, you can use strings like: color(p3 1 0.5 0.25)"
+            "value" : "Colours for tab colour menu item.\nSpace delimited strings like #rrggbb or #rgb in sRGB colour space. If the P3 colour space is available, you can use strings like: p3#RRRRGGGGBBBB"
           }
         },
         "en-PH" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Colors for tab color menu item.\nSpace delimited strings like #rrggbb or #rgb in sRGB color space. If the P3 color space is available, you can use strings like: color(p3 1 0.5 0.25)"
+            "value" : "Colors for tab color menu item.\nSpace delimited strings like #rrggbb or #rgb in sRGB color space. If the P3 color space is available, you can use strings like: p3#RRRRGGGGBBBB"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Colores del ítem de menú de color de pestaña.\nCadenas separadas por espacios como #rrggbb o #rgb en el espacio de color sRGB. Si el espacio de color P3 está disponible, puedes usar cadenas como: color(p3 1 0.5 0.25)"
+            "value" : "Colores del ítem de menú de color de pestaña.\nCadenas separadas por espacios como #rrggbb o #rgb en el espacio de color sRGB. Si el espacio de color P3 está disponible, puedes usar cadenas como: p3#RRRRGGGGBBBB"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Colores del elemento de menú de color de pestaña.\nCadenas separadas por espacios como #rrggbb o #rgb en el espacio de color sRGB. Si el espacio de color P3 está disponible, puedes usar cadenas como: color(p3 1 0.5 0.25)"
+            "value" : "Colores del elemento de menú de color de pestaña.\nCadenas separadas por espacios como #rrggbb o #rgb en el espacio de color sRGB. Si el espacio de color P3 está disponible, puedes usar cadenas como: p3#RRRRGGGGBBBB"
           }
         },
         "es-US" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Colores del elemento de menú de color de pestaña.\nCadenas separadas por espacios como #rrggbb o #rgb en el espacio de color sRGB. Si el espacio de color P3 está disponible, puedes usar cadenas como: color(p3 1 0.5 0.25)"
+            "value" : "Colores del elemento de menú de color de pestaña.\nCadenas separadas por espacios como #rrggbb o #rgb en el espacio de color sRGB. Si el espacio de color P3 está disponible, puedes usar cadenas como: p3#RRRRGGGGBBBB"
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Välilehden värivalikkokohteen värit.\nVälilyönnillä erotetut merkkijonot kuten #rrggbb tai #rgb sRGB-värimaailmassa. Jos P3-värimaailma on saatavilla, voit käyttää merkkijonoja kuten: color(p3 1 0.5 0.25)"
+            "value" : "Välilehden värivalikkokohteen värit.\nVälilyönnillä erotetut merkkijonot kuten #rrggbb tai #rgb sRGB-värimaailmassa. Jos P3-värimaailma on saatavilla, voit käyttää merkkijonoja kuten: p3#RRRRGGGGBBBB"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Couleurs de l’élément de menu de couleur d’onglet.\nChaînes séparées par des espaces comme #rrggbb ou #rgb dans l’espace colorimétrique sRGB. Si l’espace colorimétrique P3 est disponible, vous pouvez utiliser des chaînes comme : color(p3 1 0.5 0.25)"
+            "value" : "Couleurs de l’élément de menu de couleur d’onglet.\nChaînes séparées par des espaces comme #rrggbb ou #rgb dans l’espace colorimétrique sRGB. Si l’espace colorimétrique P3 est disponible, vous pouvez utiliser des chaînes comme : p3#RRRRGGGGBBBB"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Couleurs de l’élément de menu de couleur d’onglet.\nChaînes séparées par des espaces comme #rrggbb ou #rgb dans l’espace colorimétrique sRGB. Si l’espace colorimétrique P3 est disponible, vous pouvez utiliser des chaînes comme : color(p3 1 0.5 0.25)"
+            "value" : "Couleurs de l’élément de menu de couleur d’onglet.\nChaînes séparées par des espaces comme #rrggbb ou #rgb dans l’espace colorimétrique sRGB. Si l’espace colorimétrique P3 est disponible, vous pouvez utiliser des chaînes comme : p3#RRRRGGGGBBBB"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "टैब रंग मेन्यू आइटम के रंग।\nsRGB कलर स्पेस में #rrggbb या #rgb जैसी स्पेस से अलग की गई स्ट्रिंग। अगर P3 कलर स्पेस उपलब्ध है, तो आप इस तरह की स्ट्रिंग उपयोग कर सकते हैं : color(p3 1 0.5 0.25)"
+            "value" : "टैब रंग मेन्यू आइटम के रंग।\nsRGB कलर स्पेस में #rrggbb या #rgb जैसी स्पेस से अलग की गई स्ट्रिंग। अगर P3 कलर स्पेस उपलब्ध है, तो आप इस तरह की स्ट्रिंग उपयोग कर सकते हैं : p3#RRRRGGGGBBBB"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Boje za stavku izbornika boje kartice.\nNizovi odvojeni razmakom poput #rrggbb ili #rgb u prostoru boja sRGB. Ako je dostupan prostor boja P3, možete koristiti nizove poput: color(p3 1 0.5 0.25)"
+            "value" : "Boje za stavku izbornika boje kartice.\nNizovi odvojeni razmakom poput #rrggbb ili #rgb u prostoru boja sRGB. Ako je dostupan prostor boja P3, možete koristiti nizove poput: p3#RRRRGGGGBBBB"
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A lapszín menüelem színei.\nSzóközzel tagolt, #rrggbb vagy #rgb formátumú karakterláncok sRGB színtérben. Ha a P3 színtér elérhető, használhat ilyen karakterláncokat is: color(p3 1 0.5 0.25)"
+            "value" : "A lapszín menüelem színei.\nSzóközzel tagolt, #rrggbb vagy #rgb formátumú karakterláncok sRGB színtérben. Ha a P3 színtér elérhető, használhat ilyen karakterláncokat is: p3#RRRRGGGGBBBB"
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Warna untuk item menu warna tab.\nString dipisahkan spasi seperti #rrggbb atau #rgb dalam ruang warna sRGB. Jika ruang warna P3 tersedia, Anda dapat menggunakan string seperti: color(p3 1 0.5 0.25)"
+            "value" : "Warna untuk item menu warna tab.\nString dipisahkan spasi seperti #rrggbb atau #rgb dalam ruang warna sRGB. Jika ruang warna P3 tersedia, Anda dapat menggunakan string seperti: p3#RRRRGGGGBBBB"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Colori per la voce di menu del colore del pannello.\nStringhe separate da spazi come #rrggbb o #rgb nello spazio colore sRGB. Se lo spazio colore P3 è disponibile, puoi usare stringhe come: color(p3 1 0.5 0.25)"
+            "value" : "Colori per la voce di menu del colore del pannello.\nStringhe separate da spazi come #rrggbb o #rgb nello spazio colore sRGB. Se lo spazio colore P3 è disponibile, puoi usare stringhe come: p3#RRRRGGGGBBBB"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "タブの色メニュー項目の色。\nsRGBカラースペースでの#rrggbbや#rgbのようなスペース区切りの文字列。P3カラースペースが利用可能な場合、color(p3 1 0.5 0.25)のような文字列も使用できます"
+            "value" : "タブの色メニュー項目の色。\nsRGBカラースペースでの#rrggbbや#rgbのようなスペース区切りの文字列。P3カラースペースが利用可能な場合、p3#RRRRGGGGBBBBのような文字列も使用できます"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "탭 색상 메뉴 항목에 사용할 색상입니다.\nsRGB 색 공간의 #rrggbb 또는 #rgb 같은 문자열을 공백으로 구분하여 입력합니다. P3 색 공간을 사용할 수 있으면 다음과 같은 문자열을 사용할 수 있습니다: color(p3 1 0.5 0.25)"
+            "value" : "탭 색상 메뉴 항목에 사용할 색상입니다.\nsRGB 색 공간의 #rrggbb 또는 #rgb 같은 문자열을 공백으로 구분하여 입력합니다. P3 색 공간을 사용할 수 있으면 다음과 같은 문자열을 사용할 수 있습니다: p3#RRRRGGGGBBBB"
           }
         },
         "ms" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Warna untuk item menu warna tab.\nRentetan dipisahkan ruang seperti #rrggbb atau #rgb dalam ruang warna sRGB. Jika ruang warna P3 tersedia, anda boleh menggunakan rentetan seperti: color(p3 1 0.5 0.25)"
+            "value" : "Warna untuk item menu warna tab.\nRentetan dipisahkan ruang seperti #rrggbb atau #rgb dalam ruang warna sRGB. Jika ruang warna P3 tersedia, anda boleh menggunakan rentetan seperti: p3#RRRRGGGGBBBB"
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Farger for menyobjektet for fanefarge.\nStrenger atskilt med mellomrom, som #rrggbb eller #rgb i sRGB-fargerommet. Hvis P3-fargerommet er tilgjengelig, kan du bruke strenger som: color(p3 1 0.5 0.25)"
+            "value" : "Farger for menyobjektet for fanefarge.\nStrenger atskilt med mellomrom, som #rrggbb eller #rgb i sRGB-fargerommet. Hvis P3-fargerommet er tilgjengelig, kan du bruke strenger som: p3#RRRRGGGGBBBB"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kleuren voor het menuonderdeel voor tabbladkleur.\nDoor spaties gescheiden tekenreeksen zoals #rrggbb of #rgb in de sRGB-kleurruimte. Als de kleurruimte P3 beschikbaar is, kun je tekenreeksen gebruiken zoals: color(p3 1 0.5 0.25)"
+            "value" : "Kleuren voor het menuonderdeel voor tabbladkleur.\nDoor spaties gescheiden tekenreeksen zoals #rrggbb of #rgb in de sRGB-kleurruimte. Als de kleurruimte P3 beschikbaar is, kun je tekenreeksen gebruiken zoals: p3#RRRRGGGGBBBB"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kolory dla elementu menu koloru karty.\nCiągi oddzielone spacjami, takie jak #rrggbb lub #rgb w przestrzeni kolorów sRGB. Jeśli dostępna jest przestrzeń kolorów P3, możesz użyć ciągów takich jak: color(p3 1 0.5 0.25)"
+            "value" : "Kolory dla elementu menu koloru karty.\nCiągi oddzielone spacjami, takie jak #rrggbb lub #rgb w przestrzeni kolorów sRGB. Jeśli dostępna jest przestrzeń kolorów P3, możesz użyć ciągów takich jak: p3#RRRRGGGGBBBB"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cores para o item de menu de cor de aba.\nStrings separadas por espaço, como #rrggbb ou #rgb no espaço de cores sRGB. Se o espaço de cores P3 estiver disponível, você pode usar strings como: color(p3 1 0.5 0.25)"
+            "value" : "Cores para o item de menu de cor de aba.\nStrings separadas por espaço, como #rrggbb ou #rgb no espaço de cores sRGB. Se o espaço de cores P3 estiver disponível, você pode usar strings como: p3#RRRRGGGGBBBB"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cores para o item de menu de cor de separador.\nStrings separadas por espaço, como #rrggbb ou #rgb no espaço de cores sRGB. Se o espaço de cores P3 estiver disponível, pode usar strings como: color(p3 1 0.5 0.25)"
+            "value" : "Cores para o item de menu de cor de separador.\nStrings separadas por espaço, como #rrggbb ou #rgb no espaço de cores sRGB. Se o espaço de cores P3 estiver disponível, pode usar strings como: p3#RRRRGGGGBBBB"
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Culori pentru articolul de meniu al culorii filei.\nȘiruri separate prin spațiu, precum #rrggbb sau #rgb, în spațiul de culoare sRGB. Dacă spațiul de culoare P3 este disponibil, puteți folosi șiruri precum: color(p3 1 0.5 0.25)"
+            "value" : "Culori pentru articolul de meniu al culorii filei.\nȘiruri separate prin spațiu, precum #rrggbb sau #rgb, în spațiul de culoare sRGB. Dacă spațiul de culoare P3 este disponibil, puteți folosi șiruri precum: p3#RRRRGGGGBBBB"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Цвета для пункта меню цвета вкладки.\nСтроки, разделённые пробелами, вида #rrggbb или #rgb в цветовом пространстве sRGB. Если доступно цветовое пространство P3, можно использовать строки вида: color(p3 1 0.5 0.25)"
+            "value" : "Цвета для пункта меню цвета вкладки.\nСтроки, разделённые пробелами, вида #rrggbb или #rgb в цветовом пространстве sRGB. Если доступно цветовое пространство P3, можно использовать строки вида: p3#RRRRGGGGBBBB"
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Farby pre položku menu farby tabu.\nReťazce oddelené medzerami, napríklad #rrggbb alebo #rgb vo farebnom priestore sRGB. Ak je dostupný farebný priestor P3, môžete použiť reťazce ako: color(p3 1 0.5 0.25)"
+            "value" : "Farby pre položku menu farby tabu.\nReťazce oddelené medzerami, napríklad #rrggbb alebo #rgb vo farebnom priestore sRGB. Ak je dostupný farebný priestor P3, môžete použiť reťazce ako: p3#RRRRGGGGBBBB"
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Barve za element menija z barvo zavihka.\nNizi, ločeni s presledki, kot #rrggbb ali #rgb v barvnem prostoru sRGB. Če je na voljo barvni prostor P3, lahko uporabite nize, kot je: color(p3 1 0.5 0.25)"
+            "value" : "Barve za element menija z barvo zavihka.\nNizi, ločeni s presledki, kot #rrggbb ali #rgb v barvnem prostoru sRGB. Če je na voljo barvni prostor P3, lahko uporabite nize, kot je: p3#RRRRGGGGBBBB"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Färger för menyobjektet för flikfärg.\nMellanslagsavgränsade strängar som #rrggbb eller #rgb i färgrymden sRGB. Om färgrymden P3 är tillgänglig kan du använda strängar som: color(p3 1 0.5 0.25)"
+            "value" : "Färger för menyobjektet för flikfärg.\nMellanslagsavgränsade strängar som #rrggbb eller #rgb i färgrymden sRGB. Om färgrymden P3 är tillgänglig kan du använda strängar som: p3#RRRRGGGGBBBB"
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "สีสำหรับรายการเมนูสีของแถบ\nสตริงที่คั่นด้วยช่องว่าง เช่น #rrggbb หรือ #rgb ในพื้นที่สี sRGB หากมีพื้นที่สี P3 คุณใช้สตริงอย่าง color(p3 1 0.5 0.25) ได้"
+            "value" : "สีสำหรับรายการเมนูสีของแถบ\nสตริงที่คั่นด้วยช่องว่าง เช่น #rrggbb หรือ #rgb ในพื้นที่สี sRGB หากมีพื้นที่สี P3 คุณใช้สตริงอย่าง p3#RRRRGGGGBBBB ได้"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sekme rengi menü öğesi için renkler.\nsRGB renk alanında #rrggbb veya #rgb gibi boşlukla ayrılmış dizeler. P3 renk alanı varsa şu gibi dizeler kullanabilirsiniz: color(p3 1 0.5 0.25)"
+            "value" : "Sekme rengi menü öğesi için renkler.\nsRGB renk alanında #rrggbb veya #rgb gibi boşlukla ayrılmış dizeler. P3 renk alanı varsa şu gibi dizeler kullanabilirsiniz: p3#RRRRGGGGBBBB"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Кольори для пункту меню кольору вкладки.\nРядки, розділені пробілами, як-от #rrggbb або #rgb у колірному просторі sRGB. Якщо доступний колірний простір P3, можна використовувати рядки на кшталт: color(p3 1 0.5 0.25)"
+            "value" : "Кольори для пункту меню кольору вкладки.\nРядки, розділені пробілами, як-от #rrggbb або #rgb у колірному просторі sRGB. Якщо доступний колірний простір P3, можна використовувати рядки на кшталт: p3#RRRRGGGGBBBB"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Màu cho mục menu màu tab.\nCác chuỗi phân tách bằng dấu cách như #rrggbb hoặc #rgb trong không gian màu sRGB. Nếu có không gian màu P3, bạn có thể dùng các chuỗi như: color(p3 1 0.5 0.25)"
+            "value" : "Màu cho mục menu màu tab.\nCác chuỗi phân tách bằng dấu cách như #rrggbb hoặc #rgb trong không gian màu sRGB. Nếu có không gian màu P3, bạn có thể dùng các chuỗi như: p3#RRRRGGGGBBBB"
           }
         },
         "yue-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "标签页颜色菜单项的颜色。\n以空格分隔的字符串，例如sRGB色彩空间中的 #rrggbb或 #rgb。如果P3色彩空间可用，可以使用类似color(p3 1 0.5 0.25)的字符串"
+            "value" : "标签页颜色菜单项的颜色。\n以空格分隔的字符串，例如sRGB色彩空间中的 #rrggbb或 #rgb。如果P3色彩空间可用，可以使用类似p3#RRRRGGGGBBBB的字符串"
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "分頁顏色選單項目的顏色。\n以空格分隔的字串，例如 sRGB 色彩空間中的 #rrggbb 或 #rgb。如果可以使用 P3 色彩空間，則可使用像這樣的字串：color(p3 1 0.5 0.25)"
+            "value" : "分頁顏色選單項目的顏色。\n以空格分隔的字串，例如 sRGB 色彩空間中的 #rrggbb 或 #rgb。如果可以使用 P3 色彩空間，則可使用像這樣的字串：p3#RRRRGGGGBBBB"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "标签页颜色菜单项的颜色。  \n如 sRGB 颜色空间中的空格分隔字符串，例如 #rrggbb 或 #rgb。若可用 P3 颜色空间，可使用类似格式：color(p3 1 0.5 0.25)。"
+            "value" : "标签页颜色菜单项的颜色。  \n如 sRGB 颜色空间中的空格分隔字符串，例如 #rrggbb 或 #rgb。若可用 P3 颜色空间，可使用类似格式：p3#RRRRGGGGBBBB。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "標籤頁顏色選單項目的顏色。\n以空格分隔的字串，例如 sRGB 色彩空間中的 #rrggbb 或 #rgb。如果可以使用 P3 色彩空間，則可使用像這樣的字串：color(p3 1 0.5 0.25)"
+            "value" : "標籤頁顏色選單項目的顏色。\n以空格分隔的字串，例如 sRGB 色彩空間中的 #rrggbb 或 #rgb。如果可以使用 P3 色彩空間，則可使用像這樣的字串：p3#RRRRGGGGBBBB"
           }
         }
       }
