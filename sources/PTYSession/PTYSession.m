@@ -11759,6 +11759,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         [_tmuxController didLearnLayout:layout forWindow:windowId];
         return NO;
     }
+    // Whenever tmux resizes a zoomed window, even to the size it already has, it unzooms it,
+    // announces the unzoomed layout, and zooms it again. Fitting the window to the unzoomed layout
+    // would ask for a size that suits the unzoomed panes, and the zoomed layout that follows would
+    // ask for one that suits the zoomed pane, and so on forever. An unzoom notification can't be
+    // told apart from a real unzoom when it arrives, so instead of fitting the window to it, ask
+    // tmux for the window's layout. By the time tmux answers it has zoomed the window again if the
+    // unzoom was transient, and the answer fits the window to whichever layout is real.
+    const BOOL possiblyTransientUnzoom = (only &&
+                                          tab.isMaximized &&
+                                          zoomed != nil &&
+                                          !zoomed.boolValue);
     const BOOL result = [_tmuxController setLayoutInTab:tab
                                                toLayout:layout
                                           visibleLayout:visibleLayout
@@ -11766,7 +11777,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     // Do this after the opener for any new panes has registered them.
     [_tmuxController didLearnLayout:layout forWindow:windowId];
     if (result && only) {
-        [_tmuxController adjustWindowSizeIfNeededForTabs:@[ tab ]];
+        if (possiblyTransientUnzoom) {
+            DLog(@"Refresh the layout of window %d rather than fitting the window to a possibly transient unzoom", windowId);
+            [_tmuxController refreshLayoutOfWindow:windowId];
+        } else {
+            [_tmuxController adjustWindowSizeIfNeededForTabs:@[ tab ]];
+        }
     }
     return result;
 }

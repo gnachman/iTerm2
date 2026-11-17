@@ -27,6 +27,7 @@
 #import "iTermTuple.h"
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
+#import "NSDate+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSFont+iTerm.h"
 #import "NSStringITerm.h"
@@ -228,6 +229,8 @@ static const NSTimeInterval kTmuxServerLocalityRetryWindow = 10;
     int _paneToActivateWhenCreated;
     iTermTmuxBufferSizeMonitor *_tmuxBufferMonitor;
     NSMutableDictionary<NSNumber *, NSValue *> *_windowSizes;  // window -> NSValue cell size
+    // Refuses size requests made in response to layout changes when they ping-pong.
+    iTermTmuxResizeOscillationGuard *_resizeOscillationGuard;
     // window id -> iTermTmuxPaneBorderStatus boxed as NSNumber. Absent means off. See issue 12925.
     // Refreshed from list-windows (attach, reconnect, and runtime relists). tmux sends no
     // notification when pane-border-status is toggled mid-session, so a change is not reflected
@@ -389,6 +392,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                                    object:nil];
 
         _windowSizes = [[NSMutableDictionary alloc] init];
+        _resizeOscillationGuard = [[iTermTmuxResizeOscillationGuard alloc] init];
         _paneBorderStatusByWindow = [[NSMutableDictionary alloc] init];
         _borderlessPanes = [[NSMutableSet alloc] init];
         _panesInLayouts = [[NSMutableSet alloc] init];
@@ -599,7 +603,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     // the layout.
 
     DLog(@"adjustWindowSizeIfNeededForTabs: Tab's root splitter is oversize. Fit layout to windows");
-    [self fitLayoutToWindows];
+    [self fitLayoutToWindowsInResponseToLayoutChange:YES];
 }
 
 - (void)sessionChangedTo:(NSString *)newSessionName sessionId:(int)sessionid {
@@ -1567,6 +1571,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (term.closing) {
         return;
     }
+    [_resizeOscillationGuard reset];
     if (_variableWindowSize) {
         [self variableSizeWindowDidResize:term];
         return;
@@ -1615,11 +1620,20 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)fitLayoutToWindows {
+    [self fitLayoutToWindowsInResponseToLayoutChange:NO];
+}
+
+// A size requested in response to a layout change can provoke another layout change. Those go
+// through the oscillation guard so that iTerm2 and tmux can't resize each other forever.
+- (void)fitLayoutToWindowsInResponseToLayoutChange:(BOOL)inResponseToLayoutChange {
     if (!_windowStates.count) {
         return;
     }
+    if (!inResponseToLayoutChange) {
+        [_resizeOscillationGuard reset];
+    }
     if (_variableWindowSize) {
-        [self fitLayoutToVariableSizeWindows];
+        [self fitLayoutToVariableSizeWindowsInResponseToLayoutChange:inResponseToLayoutChange];
         return;
     }
     NSSize minSize = NSMakeSize(INFINITY, INFINITY);
@@ -1639,16 +1653,32 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (NSEqualSizes(minSize, lastSize_)) {
         return;
     }
+    // The client size isn't per window. -1 is not a valid window ID.
+    if (inResponseToLayoutChange &&
+        ![_resizeOscillationGuard shouldRequestSize:minSize
+                                          forWindow:-1
+                                                now:[NSDate it_timeSinceBoot]]) {
+        return;
+    }
     DLog(@"fitLayoutToWindows setting client size to %@", NSStringFromSize(minSize));
     [self setClientSize:minSize];
 }
 
-- (void)fitLayoutToVariableSizeWindows {
+- (void)fitLayoutToVariableSizeWindowsInResponseToLayoutChange:(BOOL)inResponseToLayoutChange {
+    const NSTimeInterval now = [NSDate it_timeSinceBoot];
     [self setWindowSizes:[_windowStates.allKeys mapWithBlock:^iTermTuple<NSString *, NSValue *> *(NSNumber *windowNumber) {
         iTermTmuxWindowState *state = _windowStates[windowNumber];
         PTYTab *tab = state.tab;
+        NSValue *sizeValue = [NSValue valueWithSize:tab.tmuxSize];
+        if (inResponseToLayoutChange &&
+            ![_windowSizes[windowNumber] isEqual:sizeValue] &&
+            ![_resizeOscillationGuard shouldRequestSize:sizeValue.sizeValue
+                                              forWindow:windowNumber.intValue
+                                                    now:now]) {
+            return nil;
+        }
         return [iTermTuple tupleWithObject:[NSString stringWithInt:windowNumber.intValue]
-                                 andObject:[NSValue valueWithSize:tab.tmuxSize]];
+                                 andObject:sizeValue];
     }]];
 }
 
@@ -4309,6 +4339,8 @@ static NSString *iTermTmuxRelativeFlags(int columns, int rows, NSString *right, 
         DLog(@"Not toggling zoom for pane %%%d because detached", pane);
         return;
     }
+    // Zooming changes which size fits, so the sizes requested next aren't a ping-pong.
+    [_resizeOscillationGuard reset];
     NSArray *commands = @[ [gateway_ dictionaryForCommand:[NSString stringWithFormat:@"resize-pane -Z -t \"%%%d\"", pane]
                                            responseTarget:nil
                                          responseSelector:NULL
