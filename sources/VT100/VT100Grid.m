@@ -915,6 +915,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         }
     }
     [lineBuffer appendLines:&items width:width];
+    CTVectorDestroy(&items);
     screenTop_ = (screenTop_ + y) % size_.height;
     _haveScrolled = YES;
 
