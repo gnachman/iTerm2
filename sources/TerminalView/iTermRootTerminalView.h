@@ -81,6 +81,9 @@
 - (NSString *)rootTerminalViewWindowSizeViewDetailString;
 - (void)rootTerminalViewWillLayoutSubviews;
 - (void)rootTerminalViewDidLayoutSubviews;
+// YES while the window is zooming. Layout passes are skipped then, and an
+// animated zoom posts no resize notification until its last frame.
+- (BOOL)rootTerminalViewIsZooming;
 - (NSString *)rootTerminalViewCurrentTabSubtitle;
 - (id<PSMPUAFontProvider>)rootTerminalViewPUAFontProvider;
 @end

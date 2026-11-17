@@ -235,6 +235,10 @@ typedef struct {
     iTermImageView *_backgroundImage;
     iTermLayerBackedSolidColorView *_notchMask;
     iTermCompactProxyIconView *_compactProxyIconView;
+    // Views given flexible margins by -setIntendedAutoresizingMask:forView:,
+    // mapped
+    // to the mask they would have had otherwise.
+    NSMapTable<NSView *, NSNumber *> *_intendedAutoresizingMasks;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -244,6 +248,7 @@ typedef struct {
     self = [super initWithFrame:frameRect color:color];
     if (self) {
         _delegate = delegate;
+        _intendedAutoresizingMasks = [NSMapTable weakToStrongObjectsMapTable];
 
         self.autoresizesSubviews = YES;
         _leftTabBarPreferredWidth = round([iTermPreferences doubleForKey:kPreferenceKeyLeftTabBarWidth]);
@@ -258,7 +263,7 @@ typedef struct {
         // Create the tab view.
         self.tabView = [[PTYTabView alloc] initWithFrame:self.bounds];
         self.tabView.drawsBackground = NO;
-        _tabView.autoresizingMask = iTermMaskWithoutFixedMarginsOnFlexibleAxes(NSViewWidthSizable | NSViewHeightSizable);
+        [self setIntendedAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable forView:_tabView];
         _tabView.autoresizesSubviews = YES;
         _tabView.allowsTruncatedLabels = NO;
         _tabView.controlSize = NSControlSizeSmall;
@@ -363,7 +368,7 @@ typedef struct {
         _windowTitleLabel.alignment = NSTextAlignmentCenter;
         _windowTitleLabel.hidden = YES;
         // The label is centered with fixed insets.
-        _windowTitleLabel.autoresizingMask = iTermMaskWithoutFixedMarginsOnFlexibleAxes(NSViewMinYMargin | NSViewWidthSizable);
+        [self setIntendedAutoresizingMask:NSViewMinYMargin | NSViewWidthSizable forView:_windowTitleLabel];
         [self addSubview:_windowTitleLabel];
         
         _windowBorderView = [[iTermWindowBorderView alloc] initWithFrame:self.bounds];
@@ -1614,7 +1619,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
                 theClass = _useMetal ? [iTermLayerBackedSolidColorView class] : [SolidColorView class];
             }
             _divisionView = [[theClass alloc] initWithFrame:divisionViewFrame];
-            _divisionView.autoresizingMask = iTermMaskWithoutFixedMarginsOnFlexibleAxes(NSViewWidthSizable | NSViewMinYMargin);
+            [self setIntendedAutoresizingMask:NSViewWidthSizable | NSViewMinYMargin forView:_divisionView];
             [self addSubview:_divisionView];
         }
         iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
@@ -2010,12 +2015,12 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 
 - (void)setTabBarControlAutoresizingMask:(NSAutoresizingMaskOptions)mask {
     if (_tabBarBacking) {
-        _tabBarBacking.autoresizingMask = iTermMaskWithoutFixedMarginsOnFlexibleAxes(mask);
+        [self setIntendedAutoresizingMask:mask forView:_tabBarBacking];
         _tabBarControl.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
         return;
     }
 
-    _tabBarControl.autoresizingMask = iTermMaskWithoutFixedMarginsOnFlexibleAxes(mask);
+    [self setIntendedAutoresizingMask:mask forView:_tabBarControl];
 }
 
 - (void)layoutSubviewsWithVisibleLeftTabBarAndInlineToolbelt:(BOOL)showToolbeltInline forWindow:(NSWindow *)thisWindow {
@@ -2215,6 +2220,44 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     _windowNumberLabel.frame = [self frameForWindowNumberLabel];
 }
 
+// Gives view the mask without fixed margins on its flexible axes, and
+// remembers the intended mask for -resizeSubviewsWithOldSize:.
+- (void)setIntendedAutoresizingMask:(NSAutoresizingMaskOptions)mask forView:(NSView *)view {
+    if (!view) {
+        return;
+    }
+    view.autoresizingMask = iTermMaskWithoutFixedMarginsOnFlexibleAxes(mask);
+    [_intendedAutoresizingMasks setObject:@(mask) forKey:view];
+}
+
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    if (![self.delegate rootTerminalViewIsZooming]) {
+        [super resizeSubviewsWithOldSize:oldSize];
+        return;
+    }
+    // windowDidResize: does not lay this view out during a zoom, and an
+    // animated zoom posts no resize notification until its last frame. Until
+    // then only autoresizing positions our subviews, and the flexible margins
+    // that keep the masks from becoming size floors would scale the space
+    // around them (e.g., opening a growing gap between a top status bar and
+    // the tab view). Autoresize with the intended fixed-margin masks instead,
+    // and put the flexible ones back afterwards. The real layout pass runs
+    // when the zoom ends. Issue 13213.
+    NSMutableArray<NSView *> *views = [NSMutableArray array];
+    for (NSView *view in _intendedAutoresizingMasks.keyEnumerator) {
+        if (view.superview == self && !view.isHidden) {
+            [views addObject:view];
+        }
+    }
+    for (NSView *view in views) {
+        view.autoresizingMask = [[_intendedAutoresizingMasks objectForKey:view] unsignedIntegerValue];
+    }
+    [super resizeSubviewsWithOldSize:oldSize];
+    for (NSView *view in views) {
+        view.autoresizingMask = iTermMaskWithoutFixedMarginsOnFlexibleAxes(view.autoresizingMask);
+    }
+}
+
 - (void)layoutSubviews {
     DLog(@"Before:\n%@", [self iterm_recursiveDescription]);
     [self.delegate rootTerminalViewWillLayoutSubviews];
@@ -2382,16 +2425,16 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     return NSZeroRect;
 }
 
-- (NSAutoresizingMaskOptions)statusBarContainerAutoresizingMask {
+- (NSAutoresizingMaskOptions)statusBarContainerIntendedAutoresizingMask {
     switch ([iTermPreferences unsignedIntegerForKey:kPreferenceKeyStatusBarPosition]) {
         case iTermStatusBarPositionTop:
-            return iTermMaskWithoutFixedMarginsOnFlexibleAxes(NSViewWidthSizable | NSViewMinYMargin);
+            return NSViewWidthSizable | NSViewMinYMargin;
 
         case iTermStatusBarPositionBottom:
-            return iTermMaskWithoutFixedMarginsOnFlexibleAxes(NSViewWidthSizable | NSViewMaxYMargin);
+            return NSViewWidthSizable | NSViewMaxYMargin;
     }
 
-    return iTermMaskWithoutFixedMarginsOnFlexibleAxes(NSViewWidthSizable | NSViewMinYMargin);
+    return NSViewWidthSizable | NSViewMinYMargin;
 }
 
 - (void)updateDecorationHeightsForStatusBar:(iTermDecorationHeights *)decorationHeights {
@@ -2445,7 +2488,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
             statusBarViewController.view.frame = _statusBarContainer.bounds;
         }
     }
-    _statusBarContainer.autoresizingMask = [self statusBarContainerAutoresizingMask];
+    [self setIntendedAutoresizingMask:[self statusBarContainerIntendedAutoresizingMask] forView:_statusBarContainer];
     _statusBarContainer.hidden = (statusBarViewController == nil);
     _statusBarViewController = statusBarViewController;
     _statusBarContainer.frame = statusBarFrame;
@@ -2480,7 +2523,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
             statusBarViewController.view.frame = _statusBarContainer.bounds;
         }
     }
-    _statusBarContainer.autoresizingMask = [self statusBarContainerAutoresizingMask];
+    [self setIntendedAutoresizingMask:[self statusBarContainerIntendedAutoresizingMask] forView:_statusBarContainer];
     _statusBarContainer.hidden = (statusBarViewController == nil);
     _statusBarViewController = statusBarViewController;
     _statusBarContainer.frame = statusBarFrame;

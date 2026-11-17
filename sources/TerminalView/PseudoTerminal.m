@@ -6581,8 +6581,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (zooming_) {
         RLog(@"zooming so pretend nothing happened for better performance");
         // Pretend nothing happened to avoid slowing down zooming.
+        _resizeIgnoredWhileZooming = YES;
         return;
     }
+    _resizeIgnoredWhileZooming = NO;
 
     _windowDidResize = YES;
 
@@ -7481,8 +7483,16 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         RLog(@"Not resetting zoom");
         return;
     }
+    RLog(@"set zooming=NO without live resize. resizeIgnoredWhileZooming=%@", @(_resizeIgnoredWhileZooming));
     zooming_ = NO;
     [self updateUseMetalInAllTabs];
+    if (_resizeIgnoredWhileZooming) {
+        // A zoom that is not a live resize (e.g., option-clicking the green
+        // button, or with Reduce Motion) gets no windowDidEndLiveResize: to
+        // replay the resize ignored above, so do it here. Issue 13213.
+        [self windowDidResize:[NSNotification notificationWithName:NSWindowDidResizeNotification
+                                                            object:nil]];
+    }
 }
 
 - (void)windowWillShowInitial {
@@ -14678,6 +14688,10 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         [self forceUpdateTitlebarSeparator];
         _previousTerminalWindowShouldHaveTitlebarSeparator = shouldHave;
     }
+}
+
+- (BOOL)rootTerminalViewIsZooming {
+    return zooming_;
 }
 
 - (void)rootTerminalViewDidLayoutSubviews {

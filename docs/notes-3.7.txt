@@ -612,3 +612,7 @@ Bug Fixes:
   variable now also runs for a new split pane.
   Thanks to Evan Alter (@hadees) for tracking
   it down.
+- Zooming a window, for example by
+  Option-clicking the green button, could leave
+  a gap above the terminal and fail to resize
+  the session to fit. Issue 13213.

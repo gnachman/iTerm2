@@ -77,6 +77,11 @@ extern NSString *const TERMINAL_ARRANGEMENT_LAYOUT_LOCKED;
     // In the process of zooming in Lion or later.
     BOOL zooming_;
 
+    // windowDidResize: ignored a resize because zooming_ was set. If the zoom
+    // was not a live resize, nothing else replays it, so resetting the zoom
+    // must. Issue 13213.
+    BOOL _resizeIgnoredWhileZooming;
+
     // When you enter full-screen mode the old frame size is saved here. When
     // full-screen mode is exited that frame is restored.
     NSRect oldFrame_;
