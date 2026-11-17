@@ -149,6 +149,13 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 - (void)shutdown;
 
 - (void)layoutSubviews;
+// NO if -layoutSubviews has already run at the view's current size.
+// Lets a caller that would repeat the pass a resize just performed
+// (e.g. -[PseudoTerminal windowDidResize:]) skip the duplicate without
+// weakening the resize-time guarantee. Callers whose layout inputs
+// changed without a resize must call -layoutSubviews directly, as they
+// do today.
+- (BOOL)needsLayoutForCurrentSize;
 - (void)layoutIfStatusBarChanged;
 
 - (BOOL)tabBarShouldBeVisibleWithAdditionalTabs:(int)numberOfAdditionalTabs;

@@ -190,6 +190,10 @@ typedef struct {
 @end
 
 @implementation iTermRootTerminalView {
+    // Size the most recent -layoutSubviews pass laid out for, and whether
+    // there has been one at all. See -needsLayoutForCurrentSize.
+    NSSize _lastLaidOutSize;
+    BOOL _haveLaidOut;
     BOOL _tabViewFrameReduced;
     BOOL _haveShownToolbelt;
     iTermStoplightHotbox *_stoplightHotbox;
@@ -2215,6 +2219,28 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     _windowNumberLabel.frame = [self frameForWindowNumberLabel];
 }
 
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [super resizeSubviewsWithOldSize:oldSize];
+    if (self.window.inLiveResize) {
+        // A live resize already gets a layout pass of its own:
+        // -[PseudoTerminal windowDidResize:] on each frame of a drag, or
+        // the single pass -windowDidEndLiveResize: synthesizes when a zoom
+        // suppresses it. Laying out here as well would add a second pass
+        // per frame, so leave the proportional frames transient until the
+        // live resize's own pass runs.
+        return;
+    }
+    // Lay out explicitly on every autoresizing resize rather than trusting
+    // autoresizing. Subviews such as _tabView use flexible margins on
+    // flexible axes (Issue 13118), so AppKit's proportional autoresizing
+    // leaves gaps whenever a resize does not immediately invoke -layoutSubviews.
+    [self layoutSubviews];
+}
+
+- (BOOL)needsLayoutForCurrentSize {
+    return !_haveLaidOut || !NSEqualSizes(_lastLaidOutSize, self.bounds.size);
+}
+
 - (void)layoutSubviews {
     DLog(@"Before:\n%@", [self iterm_recursiveDescription]);
     [self.delegate rootTerminalViewWillLayoutSubviews];
@@ -2282,6 +2308,8 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 #endif
     DLog(@"After:\n%@", [self iterm_recursiveDescription]);
     [self.delegate rootTerminalViewDidLayoutSubviews];
+    _lastLaidOutSize = self.bounds.size;
+    _haveLaidOut = YES;
 }
 
 // The passes above only lay out views that are showing, so a hidden view keeps

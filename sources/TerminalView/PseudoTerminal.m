@@ -6578,9 +6578,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     lastResizeTime_ = [[NSDate date] timeIntervalSince1970];
     [_locationLockController windowDidResize];
-    if (zooming_) {
-        RLog(@"zooming so pretend nothing happened for better performance");
-        // Pretend nothing happened to avoid slowing down zooming.
+    if (zooming_ && liveResize_) {
+        RLog(@"zooming in live resize so pretend nothing happened for better performance");
+        // Pretend nothing happened to avoid slowing down animated zooming.
         return;
     }
 
@@ -6592,9 +6592,19 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return;
     }
 
-    // Adjust the size of all the sessions.
+    // Adjust the size of all the sessions. Skip the layout if the content
+    // view already laid out at this size during this resize (see
+    // -[iTermRootTerminalView resizeSubviewsWithOldSize:]); a repeat pass
+    // would recompute identical frames. Anything that changes layout
+    // inputs without resizing calls repositionWidgets directly and is
+    // unaffected.
     PtyLog(@"windowDidResize - call repositionWidgets");
-    [self repositionWidgets];
+    if ([_contentView needsLayoutForCurrentSize]) {
+        [self repositionWidgets];
+    } else {
+        RLog(@"Content view already laid out at %@; skipping duplicate layout",
+             NSStringFromSize(_contentView.bounds.size));
+    }
 
     [self notifyTmuxOfWindowResize];
     // windowDidMove does not get called if the origin changes because of a resize.
@@ -7420,9 +7430,6 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame {
     RLog(@"windowWillUseStandardFrame. defaultFrame=%@ self=%@", NSStringFromRect(defaultFrame), self);
-    // Disable redrawing during zoom-initiated live resize.
-    RLog(@"Set zooming=YES");
-    zooming_ = YES;
     [self updateUseMetalInAllTabs];
     if (togglingLionFullScreen_) {
         RLog(@"Currently toggling lion full screen so accept default frame");
@@ -7430,6 +7437,12 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         // This is actually called twice in a row when entering fullscreen.
         return defaultFrame;
     }
+    // Disable redrawing during zoom-initiated live resize. zooming_ is not
+    // set above the full-screen early return: that path returns before the
+    // dispatch_async below that clears it, so it would leak until the end
+    // of some later live resize.
+    RLog(@"Set zooming=YES");
+    zooming_ = YES;
 
     NSRect proposedFrame;
     // Initially, set the proposed x-origin to remain unchanged in case we're
