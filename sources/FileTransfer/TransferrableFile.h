@@ -66,6 +66,10 @@ typedef void (^TransferrableFileCompletionBlock)(BOOL success, NSString * _Nulla
 
 #pragma mark - Utility
 
+// Whether finalDestinationForPath:destinationDirectory:prompt:YES would ask the user what to do,
+// because the destination's name is already taken.
+- (BOOL)finalDestinationNeedsPromptForPath:(NSString *)baseName
+                      destinationDirectory:(NSString *)destinationDirectory;
 - (nullable NSString *)finalDestinationForPath:(NSString *)baseName
                           destinationDirectory:(NSString *)destinationDirectory
                                         prompt:(BOOL)prompt;

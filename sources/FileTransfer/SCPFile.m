@@ -635,7 +635,7 @@ static NSError *SCPFileError(NSString *description) {
             }
             self.bytesTransferred = bytes;
             self.fileSize = fileSize;
-            [self performOnMainThread:^{
+            [self performProgressUpdateOnMainThread:^{
                 if (!self.stopped) {
                     [[FileTransferManager sharedInstance] transferrableFileProgressDidChange:self];
                 }
@@ -663,10 +663,10 @@ static NSError *SCPFileError(NSString *description) {
             error = nil;
             // We determine the filename and perform the move in the main thread to avoid two
             // threads trying to determine the final destination at the same time.
-            [self performOnMainThread:^{
+            void (^moveIntoPlace)(BOOL) = ^(BOOL prompt) {
                 finalDestination = [self finalDestinationForPath:baseName
                                             destinationDirectory:downloadDirectory
-                                                          prompt:YES];
+                                                          prompt:prompt];
                 if ([[NSFileManager defaultManager] fileExistsAtPath:finalDestination]) {
                     [[NSFileManager defaultManager] replaceItemAtURL:[NSURL fileURLWithPath:finalDestination]
                                                        withItemAtURL:[NSURL fileURLWithPath:tempfile]
@@ -679,7 +679,23 @@ static NSError *SCPFileError(NSString *description) {
                                                             toPath:finalDestination
                                                              error:&error];
                 }
+            };
+            // Without a name conflict there's nothing to ask, so move the file into place even if
+            // the Downloads menu is open.
+            __block BOOL needsPrompt = NO;
+            [self performOnMainThreadEvenDuringMenuTracking:^{
+                needsPrompt = [self finalDestinationNeedsPromptForPath:baseName
+                                                  destinationDirectory:downloadDirectory];
+                if (!needsPrompt) {
+                    moveIntoPlace(NO);
+                }
             }];
+            if (needsPrompt) {
+                // Asking whether to replace the existing file waits until no menu is open.
+                [self performOnMainThread:^{
+                    moveIntoPlace(YES);
+                }];
+            }
             if (error) {
                 self.error = error.localizedDescription;
                 RLog(@"%@", error);
@@ -696,7 +712,7 @@ static NSError *SCPFileError(NSString *description) {
                 }];
             }
             if (self.stopped) {
-                [self performOnMainThread:^{
+                [self performCompletionOnMainThread:^{
                     [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
                 }];
                 return;
@@ -714,7 +730,7 @@ static NSError *SCPFileError(NSString *description) {
                 error = SCPFileError(NSLocalizedStringWithDefaultValue(@"SCPFile.DownloadFailed", nil, [NSBundle mainBundle], @"Download failed", @"Error shown when an SCP download fails"));
             }
         }
-        [self performOnMainThread:^{
+        [self performCompletionOnMainThread:^{
             if (!error) {
                 self.localPath = finalDestination;
             }
@@ -737,10 +753,10 @@ static NSError *SCPFileError(NSString *description) {
                                                 to:self.path.path
                                           progress:^BOOL (NSUInteger bytes) {
             self.bytesTransferred = bytes;
-            [self performOnMainThread:^{
-                                                  if (!self.stopped) {
-                                                      [[FileTransferManager sharedInstance] transferrableFileProgressDidChange:self];
-                                                  }
+            [self performProgressUpdateOnMainThread:^{
+                if (!self.stopped) {
+                    [[FileTransferManager sharedInstance] transferrableFileProgressDidChange:self];
+                }
             }];
             return !self.stopped;
         }];
@@ -751,7 +767,7 @@ static NSError *SCPFileError(NSString *description) {
         } else {
             RLog(@"Upload failed: %@", error);
             if (self.stopped) {
-                [self performOnMainThread:^{
+                [self performCompletionOnMainThread:^{
                     [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
                 }];
                 return;
@@ -765,7 +781,7 @@ static NSError *SCPFileError(NSString *description) {
                 error = SCPFileError(NSLocalizedStringWithDefaultValue(@"SCPFile.UploadFailed", nil, [NSBundle mainBundle], @"Upload failed", @"Error shown when an SCP upload fails"));
             }
         }
-        [self performOnMainThread:^{
+        [self performCompletionOnMainThread:^{
             [[FileTransferManager sharedInstance] transferrableFile:self
                                      didFinishTransmissionWithError:error];
         }];
@@ -781,13 +797,42 @@ static NSError *SCPFileError(NSString *description) {
 }
 
 - (void)performOnMainThread:(void (^ NS_NOESCAPE)(void))block {
+    [self performOnMainThread:block inMode:NSDefaultRunLoopMode];
+}
+
+// The transfer thread waits for each progress update. The Downloads or Uploads menu opens when a
+// transfer starts, and while a menu is open the run loop is in event tracking mode, where a
+// default-mode timer never fires. Run progress updates in the common modes so the transfer keeps
+// going (and the open menu shows its progress) instead of stalling until the menu closes.
+- (void)performProgressUpdateOnMainThread:(void (^ NS_NOESCAPE)(void))block {
+    [self performOnMainThreadEvenDuringMenuTracking:block];
+}
+
+// For work that never shows a prompt or a menu of its own.
+- (void)performOnMainThreadEvenDuringMenuTracking:(void (^ NS_NOESCAPE)(void))block {
+    [self performOnMainThread:block inMode:NSRunLoopCommonModes];
+}
+
+// Reports that the transfer finished or stopped, so the open menu shows the outcome right away. A
+// completion block (e.g., Upload and Paste Path's) can do anything, such as paste or open a menu,
+// so when there is one this waits until no menu is open.
+- (void)performCompletionOnMainThread:(void (^ NS_NOESCAPE)(void))block {
+    if (self.completionBlock) {
+        [self performOnMainThread:block];
+    } else {
+        [self performOnMainThreadEvenDuringMenuTracking:block];
+    }
+}
+
+- (void)performOnMainThread:(void (^ NS_NOESCAPE)(void))block inMode:(NSRunLoopMode)mode {
     dispatch_group_t group = dispatch_group_create();
     dispatch_group_enter(group);
     dispatch_async(dispatch_get_main_queue(), ^() {
-        [NSTimer scheduledTimerWithTimeInterval:0 repeats:NO block:^(NSTimer * _Nonnull timer) {
+        NSTimer *timer = [NSTimer timerWithTimeInterval:0 repeats:NO block:^(NSTimer * _Nonnull timer) {
             block();
             dispatch_group_leave(group);
         }];
+        [[NSRunLoop currentRunLoop] addTimer:timer forMode:mode];
     });
     dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
 }

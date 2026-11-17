@@ -109,13 +109,24 @@ static NSMutableSet<NSString *> *iTermTransferrableFileLockedFileNames(void) {
     assert(false);
 }
 
+- (NSString *)baseNameForFinalDestination:(NSString *)originalBaseName {
+    if (self.isZipOfFolder) {
+        return [originalBaseName stringByAppendingString:@".zip"];
+    }
+    return originalBaseName;
+}
+
+- (BOOL)finalDestinationNeedsPromptForPath:(NSString *)originalBaseName
+                      destinationDirectory:(NSString *)destinationDirectory {
+    NSString *path = [destinationDirectory stringByAppendingPathComponent:[self baseNameForFinalDestination:originalBaseName]];
+    return ([[NSFileManager defaultManager] fileExistsAtPath:path] ||
+            [TransferrableFile fileNameIsLocked:path]);
+}
+
 - (NSString *)finalDestinationForPath:(NSString *)originalBaseName
                  destinationDirectory:(NSString *)destinationDirectory
                                prompt:(BOOL)prompt {
-    NSString *baseName = originalBaseName;
-    if (self.isZipOfFolder) {
-        baseName = [baseName stringByAppendingString:@".zip"];
-    }
+    NSString *baseName = [self baseNameForFinalDestination:originalBaseName];
     NSString *name = baseName;
     NSString *finalDestination = nil;
     int retries = 0;
