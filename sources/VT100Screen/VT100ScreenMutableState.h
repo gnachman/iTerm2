@@ -383,6 +383,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)commandDidEnd;
 - (BOOL)commandDidEndAtAbsCoord:(VT100GridAbsCoord)coord;
 - (void)commandDidEndWithRange:(VT100GridCoordRange)range;
+// Drops the last prompt mark's excluded subranges (e.g., a right prompt) whose cells no longer
+// hold the text they held when recorded, as commandDidEndWithRange: does when the command ends.
+- (void)dropStaleExcludedSubrangesOfLastPromptMark;
 - (void)commandWasAborted;
 - (void)assignCurrentCommandEndDate;
 - (void)didInferEndOfCommand;

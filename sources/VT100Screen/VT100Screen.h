@@ -258,6 +258,10 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (BOOL)haveCommandInRange:(VT100GridCoordRange)range;
 - (VT100GridCoordRange)commandRange;
 - (VT100GridCoordRange)extendedCommandRange;
+// Joins threads and drops the last prompt mark's excluded subranges whose cells the shell has
+// since erased or typed over (e.g., a right prompt hidden by a long command). Call before using
+// the excluded subranges of a prompt whose command hasn't ended yet.
+- (void)dropStaleExcludedSubrangesOfLastPromptMark;
 - (void)injectData:(NSData *)data;
 // Main queue. See -[VT100ScreenMutableState tmuxInputBudget].
 - (void)setTmuxInputBudget:(iTermByteBudget * _Nullable)budget;

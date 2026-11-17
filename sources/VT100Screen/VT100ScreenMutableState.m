@@ -3924,6 +3924,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self replaceExcludedSubrangesOfMark:mark atIndexes:stale withMutationRange:nil unboundRange:nil];
 }
 
+- (void)dropStaleExcludedSubrangesOfLastPromptMark {
+    [self dropStaleExcludedSubrangesOfMark:self.lastPromptMark];
+}
+
 // Removes the excluded subranges of the prompt mark on lastPromptLine if its command hasn't been
 // recorded yet. Mutates only when there is something to clear so shells that redraw their prompt
 // on every keystroke without non-initial prompts pay nothing.

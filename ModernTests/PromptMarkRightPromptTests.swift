@@ -367,6 +367,54 @@ final class PromptMarkRightPromptTests: XCTestCase {
                        "The hidden right prompt's exclusion is stale")
     }
 
+    /// Same as above, but before Return, as Select Current Command sees it.
+    /// The command hasn't ended, so the stale exclusion is still on the mark
+    /// and cuts the characters typed over the old right prompt until it is
+    /// dropped explicitly.
+    func test_p10k_rightPromptHiddenByLongCommand_liveCommandDropsStaleExclusion() {
+        let harness = makeHarness()
+        let column = zshRightPromptColumn(indent: 1)
+        let command = "echo " + String(repeating: "x", count: 70)
+
+        var bytes = p10kPaint(buffer: "", rightPromptColumn: column)
+        bytes += hideRightPromptWhileTyping(command, rightPromptColumn: column)
+        harness.feedEscapeSequence(bytes)
+        harness.sync()
+
+        guard let before = onlyPromptMark(in: harness) else {
+            return
+        }
+        XCTAssertEqual(before.excludedSubranges?.count, 1,
+                       "Precondition: the exclusion is still recorded while typing")
+
+        harness.screen.dropStaleExcludedSubrangesOfLastPromptMark()
+        harness.sync()
+
+        guard let after = onlyPromptMark(in: harness) else {
+            return
+        }
+        XCTAssertEqual(after.excludedSubranges?.count ?? 0, 0)
+        XCTAssertEqual(currentCommandText(in: harness, mark: after), command)
+    }
+
+    /// Dropping stale exclusions at a live prompt keeps a right prompt that is
+    /// still on screen.
+    func test_p10k_visibleRightPrompt_liveCommandKeepsExclusion() {
+        let harness = makeHarness()
+
+        harness.feedEscapeSequence(p10kPaint(buffer: "echo hi",
+                                             rightPromptColumn: zshRightPromptColumn(indent: 1)))
+        harness.sync()
+        harness.screen.dropStaleExcludedSubrangesOfLastPromptMark()
+        harness.sync()
+
+        guard let mark = onlyPromptMark(in: harness) else {
+            return
+        }
+        XCTAssertEqual(mark.excludedSubranges?.count, 1)
+        XCTAssertEqual(currentCommandText(in: harness, mark: mark), "echo hi")
+    }
+
     /// fish redraws its right prompt after every keystroke. With the right
     /// prompt marked, each redraw closes another P;k=r over the same cells.
     /// Only one exclusion should remain for them.

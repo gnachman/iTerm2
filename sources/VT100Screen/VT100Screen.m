@@ -2196,6 +2196,14 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     return _state.extendedCommandRange;
 }
 
+- (void)dropStaleExcludedSubrangesOfLastPromptMark {
+    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                          VT100ScreenMutableState *mutableState,
+                                          id<VT100ScreenDelegate> delegate) {
+        [mutableState dropStaleExcludedSubrangesOfLastPromptMark];
+    }];
+}
+
 - (id<VT100ScreenConfiguration>)config {
     return _state.config;
 }

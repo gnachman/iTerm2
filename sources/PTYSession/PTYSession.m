@@ -15459,9 +15459,16 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     // PS2 prefixes / right-prompts inside `outerRange`. At a live prompt
     // it's the still-unfinished prompt mark; otherwise it's the most
     // recent command mark (commandDidEndWithRange: promoted it).
-    id<VT100ScreenMarkReading> mark = self.isAtShellPrompt
-        ? [_screen lastPromptMark]
-        : [_screen lastCommandMark];
+    id<VT100ScreenMarkReading> mark;
+    if (self.isAtShellPrompt) {
+        // A right prompt the shell hid because the command grew into it leaves an exclusion over
+        // cells that now hold command text. Command history drops such exclusions when the
+        // command ends; do the same here so the selection matches it.
+        [_screen dropStaleExcludedSubrangesOfLastPromptMark];
+        mark = [_screen lastPromptMark];
+    } else {
+        mark = [_screen lastCommandMark];
+    }
     return [iTermSubSelection subSelectionsInRange:outerRange
                                 excludingSubranges:mark.excludedSubranges
                                              width:_screen.width];
