@@ -32,6 +32,34 @@ final class MarkdownImageLoader {
         return image
     }
 
+    /// The directory that relative image paths in a Markdown document resolve against.
+    /// `documentName` is the name the document arrived with (imgcat sends the path it was
+    /// given, relative to the shell's directory), and `promptDirectory` is the directory
+    /// recorded for the output. When the name includes a directory and names a file that
+    /// exists, its directory is used, so a README shown from a parent directory finds its
+    /// images. Otherwise the prompt's directory is used.
+    static func baseDirectory(promptDirectory: String?,
+                              documentName: String?,
+                              fileExists: (String) -> Bool) -> String? {
+        guard let documentName, documentName.contains("/") else {
+            return promptDirectory
+        }
+        let documentPath: String
+        if documentName.hasPrefix("/") {
+            documentPath = documentName
+        } else if let promptDirectory {
+            documentPath = (promptDirectory as NSString).appendingPathComponent(documentName)
+        } else {
+            return nil
+        }
+        let standardized = (documentPath as NSString).standardizingPath
+        guard fileExists(standardized) else {
+            DLog("Markdown document \(standardized) not found; using \(String(describing: promptDirectory))")
+            return promptDirectory
+        }
+        return (standardized as NSString).deletingLastPathComponent
+    }
+
     /// True when the image's bytes are in the Markdown itself (a data: URL), so
     /// showing it doesn't read anything from this Mac.
     static func isEmbedded(_ source: String) -> Bool {

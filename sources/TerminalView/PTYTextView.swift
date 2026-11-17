@@ -87,7 +87,17 @@ extension PTYTextView: ExternalSearchResultsController {
         // report can arrive after the output). Like clicking a path, fall back to the
         // session's local directory, but only one already known: waiting for a poll
         // could pick up a directory the shell moved to afterward.
-        let directory = pwd ?? (isLocal ? delegate?.textViewKnownLocalWorkingDirectory() : nil)
+        let promptDirectory = pwd ?? (isLocal ? delegate?.textViewKnownLocalWorkingDirectory() : nil)
+        // Relative image paths in a Markdown file are relative to the file, not to the
+        // directory imgcat ran in. Only a local file can be checked.
+        let directory = isLocal
+            ? MarkdownImageLoader.baseDirectory(promptDirectory: promptDirectory,
+                                                documentName: filename,
+                                                fileExists: { path in
+                                                    var isDirectory = ObjCBool(false)
+                                                    return FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory) && !isDirectory.boolValue
+                                                })
+            : promptDirectory
         DLog("Porthole base directory \(String(describing: directory))")
         replaceWithPorthole(inRange: absRange,
                             text: text,
