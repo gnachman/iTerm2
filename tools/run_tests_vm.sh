@@ -279,7 +279,7 @@ if [[ $sync == 1 ]]; then
     for attempt in 1 2; do
     if rsync -a --delete \
         --exclude='/.git' --exclude='.git' \
-        --exclude='/Build/' --exclude='/Companion/Build/' --exclude='DerivedData/' \
+        --exclude='/Build/' --exclude='/build/' --exclude='/Companion/Build/' --exclude='DerivedData/' \
         --exclude='.build/' --exclude='.build-arm64/' --exclude='.build-x86_64/' \
         --exclude='node_modules/' --exclude='.wrangler/' --exclude='.swiftpm/' \
         --exclude='xcuserdata/' --exclude='*.xcuserstate' --exclude='.DS_Store' \
