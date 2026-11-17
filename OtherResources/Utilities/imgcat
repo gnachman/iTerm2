@@ -107,6 +107,17 @@ function print_image() {
     has_image_displayed=t
 }
 
+# absolute_path path
+#   Prints the absolute path of an existing file, so the terminal can tell where it is even
+#   after the shell has changed directories since its last prompt.
+function absolute_path() {
+    case "$1" in
+        /*) printf "%s" "$1" ;;
+        # CDPATH could send cd to another directory and make it print that directory.
+        *) printf "%s/%s" "$(CDPATH= cd -- "$(dirname -- "$1")" && pwd)" "$(basename -- "$1")" ;;
+    esac
+}
+
 function error() {
     errcho "ERROR: $*"
 }
@@ -256,7 +267,12 @@ while [ $# -gt 0 ]; do
             exit 2
         fi
         has_stdin=f
-        print_image "$1" 1 "$encoded_image" "$print_filename" "$width" "$height" "$preserve_aspect_ratio" "$file_type" "$legacy"
+        if [ "$is_url" == "t" ]; then
+            print_image "$1" 1 "$encoded_image" "$print_filename" "$width" "$height" "$preserve_aspect_ratio" "$file_type" "$legacy"
+        else
+            print_image "$(absolute_path "$1")" 1 "$encoded_image" 0 "$width" "$height" "$preserve_aspect_ratio" "$file_type" "$legacy"
+            [ "$print_filename" == "1" ] && echo "$1"
+        fi
         ;;
     esac
     shift

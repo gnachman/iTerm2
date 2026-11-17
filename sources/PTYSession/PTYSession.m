@@ -21485,15 +21485,17 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     NSString *identifier = @"NoSyncSuppressDownloadConfirmation";
     *promptIfBig = YES;
     const BOOL wasSilenced = [iTermWarning identifierIsSilenced:identifier];
+    // imgcat sends a full path. Only the file's own name is useful here.
+    NSString *const displayName = name.lastPathComponent;
     NSString *title;
     NSString *heading;
     if (displayInline) {
         title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.TerminalInitiatedDisplay", nil, [NSBundle mainBundle], @"The terminal has initiated display of a file named “%1$@” of size %2$@. Allow it?", @"Prompt asking whether to allow terminal-initiated display of a file; first placeholder is the filename, second is the size"),
-                 name, [NSString it_formatBytes:size]];
+                 displayName, [NSString it_formatBytes:size]];
         heading = NSLocalizedStringWithDefaultValue(@"PTYSession.AllowDisplayHeading", nil, [NSBundle mainBundle], @"Allow Terminal-Initiated Display?", @"Heading for a prompt asking whether to allow terminal-initiated display");
     } else {
         title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.TerminalInitiatedTransfer", nil, [NSBundle mainBundle], @"The terminal has initiated transfer of a file named “%1$@” of size %2$@. Download it?", @"Prompt asking whether to allow terminal-initiated download of a file; first placeholder is the filename, second is the size"),
-                 name, [NSString it_formatBytes:size]];
+                 displayName, [NSString it_formatBytes:size]];
         heading = NSLocalizedStringWithDefaultValue(@"PTYSession.AllowDownloadHeading", nil, [NSBundle mainBundle], @"Allow Terminal-Initiated Download?", @"Heading for a prompt asking whether to allow terminal-initiated download");
     }
     const iTermWarningSelection selection =

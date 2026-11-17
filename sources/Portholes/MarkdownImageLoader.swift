@@ -33,11 +33,16 @@ final class MarkdownImageLoader {
     }
 
     /// The directory that relative image paths in a Markdown document resolve against.
-    /// `documentName` is the name the document arrived with (imgcat sends the path it was
-    /// given, relative to the shell's directory), and `promptDirectory` is the directory
-    /// recorded for the output. When the name includes a directory and names a file that
-    /// exists, its directory is used, so a README shown from a parent directory finds its
-    /// images. Otherwise the prompt's directory is used.
+    /// `documentName` is the name the document arrived with (current versions of imgcat send
+    /// an absolute path; older ones send the path they were given, relative to the shell's
+    /// directory), and `promptDirectory` is the directory recorded for the output. When the
+    /// name includes a directory and names a file that exists, its directory is used, so a
+    /// README shown from another directory finds its images. Otherwise the prompt's directory
+    /// is used.
+    ///
+    /// Limitation: with an older imgcat, a bare name, as in `cd docs && imgcat README.md`,
+    /// resolves against the prompt's directory. The shell reports no new directory until its
+    /// next prompt, so the recorded one predates the `cd`.
     static func baseDirectory(promptDirectory: String?,
                               documentName: String?,
                               fileExists: (String) -> Bool) -> String? {
