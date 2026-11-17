@@ -90,7 +90,8 @@ TOP-LEVEL keys
   NoSyncLoadURLAllowed_* ................. host in the key name (likewise)
   PathToExecutable_* ..................... password-manager adapter path
   OnePasswordAccount, LastpassGroups ..... password-manager identifiers
-  FakeFullyQualifiedDomainName, FakeBootSessionUUID, AlternateSSHIntegrationScript, SshSchemePath
+  FakeFullyQualifiedDomainName, FakeBootSessionUUID, AlternateSSHIntegrationScript, SshSchemePath,
+                                           QuickLookHoverDomainAllowlist (user-chosen domains)
   PasteSpecialRegex, PasteSpecialSubstitution
   SessionEndMessageText, SessionRestartedMessageText,
     SessionFinishedMessageText, TmuxTitlePrefix, NoSyncVariablesToReport,
@@ -197,6 +198,7 @@ CONTENT_KEYS = {
     "UrlHandlerCommand": REDACT_V,
     "AlternateSSHIntegrationScript": REDACT_V,
     "SshSchemePath": REDACT_V,
+    "QuickLookHoverDomainAllowlist": REDACT_V,
     # text sent to the terminal / key-binding & action parameters
     "Text": REDACT_V,
     "Label": REDACT_V,            # key-binding / touch-bar button label (user text)

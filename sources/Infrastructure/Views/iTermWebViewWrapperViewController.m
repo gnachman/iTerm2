@@ -82,19 +82,7 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
 }
 
 - (NSString *)browserName {
-    CFErrorRef error;
-    NSURL *URL = self.webView.URL ?: [NSURL URLWithString:@"http://example.com"];
-    NSURL *appUrl = (__bridge_transfer NSURL *)LSCopyDefaultApplicationURLForURL((__bridge CFURLRef)URL,
-                                                                                 kLSRolesAll,
-                                                                                 &error);
-    if (appUrl) {
-        NSString *name = nil;
-        [appUrl getResourceValue:&name forKey:NSURLLocalizedNameKey error:NULL];
-        if (name) {
-            return name;
-        }
-    }
-    return NSLocalizedStringWithDefaultValue(@"WebViewWrapper.DefaultBrowser", nil, [NSBundle mainBundle], @"Default Browser", @"Name used for the user’s default web browser when its real name is unknown");
+    return [[NSWorkspace sharedWorkspace] it_defaultBrowserNameForURL:self.webView.URL];
 }
 
 - (void)terminateWebView {

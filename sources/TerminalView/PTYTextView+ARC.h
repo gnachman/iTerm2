@@ -92,6 +92,10 @@ iTermURLActionHelperDelegate>
 
 - (void)handleQuickLookWithEvent:(NSEvent *)event;
 
+// Removes the underline because this view or its window lost focus, but keeps the hover cue’s
+// underline while the hover preview it marks is open.
+- (BOOL)removeUnderlineForFocusChange;
+
 #pragma mark - Copy to Pasteboard
 
 // Returns a dictionary to pass to NSAttributedString.

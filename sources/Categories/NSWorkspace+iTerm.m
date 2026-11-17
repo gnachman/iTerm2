@@ -491,4 +491,67 @@ static NSMutableSet<NSString * > *urlTokens;
                           completionHandler:nil];
 }
 
+- (NSString *)it_defaultBrowserNameForURL:(NSURL *)url {
+    CFErrorRef error;
+    NSURL *URL = url ?: [NSURL URLWithString:@"http://example.com"];
+    NSURL *appUrl = (__bridge_transfer NSURL *)LSCopyDefaultApplicationURLForURL((__bridge CFURLRef)URL,
+                                                                                 kLSRolesAll,
+                                                                                 &error);
+    if (appUrl) {
+        NSString *name = nil;
+        [appUrl getResourceValue:&name forKey:NSURLLocalizedNameKey error:NULL];
+        if (name) {
+            return name;
+        }
+    }
+    return NSLocalizedStringWithDefaultValue(@"WebViewWrapper.DefaultBrowser", nil, [NSBundle mainBundle], @"Default Browser", @"Name used for the user’s default web browser when its real name is unknown");
+}
+
+- (BOOL)it_linksOpenInBuiltInBrowser:(NSURL *)url {
+    if (![self it_urlIsWeb:url] || ![self it_localBrowserCouldHypotheticallyHandleURL:url]) {
+        return NO;
+    }
+    // Use the cached answer. Checking again when it is NO verifies the plugin's signature and
+    // posts iTermBrowserGateway.didChange, too much to do each time a preview opens.
+    if (![iTermBrowserGateway browserAllowedCheckingIfNot:NO]) {
+        return NO;
+    }
+    // Same as it_isDefaultBrowserForWebURL:, which would check the plugin again.
+    NSString *bundleID = [iTermAdvancedSettingsModel browserBundleID];
+    if ([bundleID isEqual:NSBundle.mainBundle.bundleIdentifier] || [self it_isDefaultAppForURL:url]) {
+        return YES;
+    }
+    NSNumber *saved = [iTermWarning conditionalSavedSelectionForIdentifier:@"NoSyncOpenLinksInApp"];
+    return saved != nil && saved.intValue == kiTermWarningSelection1;
+}
+
+- (void)it_openURLInExternalBrowser:(NSURL *)url {
+    RLog(@"Open %@ in the external browser", url);
+    [self it_openURLWithDefaultBrowser:url
+                         configuration:[NSWorkspaceOpenConfiguration configuration]
+                            completion:^(NSRunningApplication *app, NSError *error) {}];
+}
+
+- (NSString *)it_externalBrowserNameForURL:(NSURL *)url {
+    // Mirrors it_openURLWithDefaultBrowser:configuration:completion:.
+    NSString *bundleID = [[iTermAdvancedSettingsModel browserBundleID] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    if (bundleID.length > 0) {
+        NSURL *appURL = [self URLForApplicationWithBundleIdentifier:bundleID];
+        NSString *name = nil;
+        if (appURL && [appURL getResourceValue:&name forKey:NSURLLocalizedNameKey error:NULL] && name) {
+            return name;
+        }
+    }
+    return [self it_defaultBrowserNameForURL:url];
+}
+
+- (BOOL)it_externalBrowserIsITerm2ForURL:(NSURL *)url {
+    // Mirrors it_openURLWithDefaultBrowser:configuration:completion:.
+    NSString *bundleID = [[iTermAdvancedSettingsModel browserBundleID] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    if (bundleID.length > 0 && [self URLForApplicationWithBundleIdentifier:bundleID] != nil) {
+        return [bundleID isEqualToString:NSBundle.mainBundle.bundleIdentifier];
+    }
+    return [self it_isDefaultAppForURL:url];
+}
+
 @end

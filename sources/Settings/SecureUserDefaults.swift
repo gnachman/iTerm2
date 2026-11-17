@@ -97,6 +97,8 @@ struct SecureUserDefaults {
     lazy var enableCompanionPairing = { SecureUserDefault<Bool>("EnableCompanionPairing", defaultValue: false) }()
     lazy var browserBundleID = { SecureUserDefault<String>("BrowserBundleID", defaultValue: "") }()
     lazy var aiCompletionsEnabled = { SecureUserDefault<Bool>("AICompletions", defaultValue: false) }()
+    // Lets Quick Look on hover preview links to any domain, not just the allowlisted ones.
+    lazy var quickLookHoverAllowsAllDomains = { SecureUserDefault<Bool>("QuickLookHoverAllowsAllDomains", defaultValue: false) }()
 
     /// Grant AI and/or companion consent in a SINGLE administrator prompt.
     /// Setting these one at a time (the normal `set(true)` path) puts up one
@@ -208,7 +210,8 @@ struct SecureUserDefaults {
          enableAI,
          enableCompanionPairing,
          browserBundleID,
-         aiCompletionsEnabled] + Array(hostToOpenURLSUDs.values)
+         aiCompletionsEnabled,
+         quickLookHoverAllowsAllDomains] + Array(hostToOpenURLSUDs.values)
     }
 }
 

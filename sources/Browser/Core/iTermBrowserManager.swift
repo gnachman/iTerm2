@@ -211,8 +211,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         if !inheritedFromOpener {
             switch user {
             case .regular(id: let userID):
-                if #available(macOS 14, *) {
-                    let profileStore = WKWebsiteDataStore(forIdentifier: userID)
+                if let profileStore = iTermBrowserEngineDefaults.websiteDataStore(forUserID: userID) {
                     configuration.websiteDataStore = profileStore
                 }
             case .devNull:
@@ -220,7 +219,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
             }
 
             // Configure proxy if enabled
-            applyProxyConfiguration(to: configuration.websiteDataStore)
+            iTermBrowserEngineDefaults.applyProxyConfiguration(to: configuration.websiteDataStore)
         }
 
         var logErrors = ""
@@ -479,16 +478,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         webView = iTermBrowserWebView(frame: .zero,
                                       configuration: configuration,
                                       pointerController: pointerController)
-        if let safariBundle = Bundle(path: "/Applications/Safari.app"),
-           let safariVersion = safariBundle.infoDictionary?["CFBundleShortVersionString"] as? String {
-            webView.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
-            "AppleWebKit/605.1.15 (KHTML, like Gecko) " +
-            "Version/\(safariVersion) Safari/605.1.15"
-        } else {
-            webView.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
-            "AppleWebKit/605.1.15 (KHTML, like Gecko) " +
-            "Version/16.4 Safari/605.1.15"
-        }
+        webView.customUserAgent = iTermBrowserEngineDefaults.safariUserAgent()
 
         webView.navigationDelegate = self
         webView.uiDelegate = self
@@ -1648,28 +1638,14 @@ extension iTermBrowserManager: WKUIDelegate {
     }
     
     func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
-        // Handle JavaScript alerts
-        let warning = iTermWarning()
-        warning.heading = String(localized: "BrowserManager.WebPageAlert", defaultValue: "Web Page Alert", comment: "Title for a JavaScript alert dialog")
-        warning.title = message
-        warning.actionLabels = [iTermLocalizedOK()]
-        warning.warningType = .kiTermWarningTypePersistent
-        warning.runModal()
+        iTermWebPageDialogs.showAlert(message: message)
         completionHandler()
     }
-    
+
     func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) {
-        // Handle JavaScript confirmations
-        let warning = iTermWarning()
-        warning.heading = String(localized: "BrowserManager.WebPageConfirmation", defaultValue: "Web Page Confirmation", comment: "Title for a JavaScript confirmation dialog")
-        warning.title = message
-        warning.actionLabels = [iTermLocalizedOK(), iTermLocalizedCancel()]
-        warning.cancelLabel = iTermLocalizedCancel()
-        warning.warningType = .kiTermWarningTypePersistent
-        let selection = warning.runModal()
-        completionHandler(selection == .kiTermWarningSelection0)
+        completionHandler(iTermWebPageDialogs.confirm(message: message))
     }
-    
+
     func webView(_ webView: WKWebView, runOpenPanelWith parameters: WKOpenPanelParameters, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping ([URL]?) -> Void) {
         // Handle file input elements (e.g., <input type="file">)
         guard let window = webView.window else {
@@ -1896,26 +1872,7 @@ extension iTermBrowserManager {
     }
     
     func updateProxyConfiguration() {
-        applyProxyConfiguration(to: webView.configuration.websiteDataStore)
-    }
-
-    private func applyProxyConfiguration(to dataStore: WKWebsiteDataStore) {
-        guard #available(macOS 14.0, *) else {
-            return
-        }
-
-        if iTermAdvancedSettingsModel.browserProxyEnabled() {
-            let proxyHost = iTermAdvancedSettingsModel.browserProxyHost() ?? "127.0.0.1"
-            let proxyPort = iTermAdvancedSettingsModel.browserProxyPort()
-
-            let endpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(proxyHost), port: NWEndpoint.Port(integerLiteral: UInt16(proxyPort)))
-            let proxyConfig = ProxyConfiguration(httpCONNECTProxy: endpoint)
-            dataStore.proxyConfigurations = [proxyConfig]
-            RLog("Configured browser proxy: \(proxyHost):\(proxyPort)")
-        } else {
-            RLog("Proxy disabled")
-            dataStore.proxyConfigurations = []
-        }
+        iTermBrowserEngineDefaults.applyProxyConfiguration(to: webView.configuration.websiteDataStore)
     }
 }
 

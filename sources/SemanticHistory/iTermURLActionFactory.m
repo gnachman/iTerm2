@@ -391,60 +391,70 @@ static NSString *iTermAnchored(NSString *regex) {
 #pragma mark - Sub-factories
 
 - (URLAction *)urlActionForPrompt {
+    return [iTermURLActionFactory urlActionForPromptAtCoord:self.coord extractor:self.extractor];
+}
+
++ (URLAction *)urlActionForPromptAtCoord:(VT100GridCoord)coord
+                               extractor:(iTermTextExtractor *)extractor {
     if (![iTermAdvancedSettingsModel enableCmdClickPromptForShowCommandInfo]) {
         return nil;
     }
     VT100GridWindowedRange range = { 0 };
-    id<VT100ScreenMarkReading> mark = [self.extractor.dataSource commandMarkAt:self.coord
-                                                               mustHaveCommand:YES
-                                                                         range:&range];
+    id<VT100ScreenMarkReading> mark = [extractor.dataSource commandMarkAt:coord
+                                                          mustHaveCommand:YES
+                                                                    range:&range];
     if (!mark ||
         mark.promptRange.start.x < 0 ||
         !mark.firstLineOfCommand ||
-        !VT100GridWindowedRangeContainsCoord(range, self.coord)) {
+        !VT100GridWindowedRangeContainsCoord(range, coord)) {
         return nil;
     }
     URLAction *action = [URLAction actionToShowCommandInfoForMark:mark
-                                                            coord:self.coord];
+                                                            coord:coord];
     action.logicalRange = range;
-    action.visualRange = [self.extractor visualWindowedRangeForLogical:action.logicalRange];
+    action.visualRange = [extractor visualWindowedRangeForLogical:action.logicalRange];
     return action;
 }
 - (URLAction *)urlActionForHypertextLink {
-    iTermTextExtractor *extractor = self.extractor;
-    iTermExternalAttribute *oea = [extractor externalAttributesAt:self.coord];
+    URLAction *action = [iTermURLActionFactory urlActionForHypertextLinkAtCoord:self.coord
+                                                                      extractor:self.extractor];
+    // file: URLs with a fragment go through semantic history and therefore need a workingDirectory.
+    action.workingDirectory = self.workingDirectory;
+    return action;
+}
+
++ (URLAction *)urlActionForHypertextLinkAtCoord:(VT100GridCoord)coord
+                                      extractor:(iTermTextExtractor *)extractor {
+    iTermExternalAttribute *oea = [extractor externalAttributesAt:coord];
     NSString *urlId = nil;
     NSString *target = nil;
-    NSURL *url = [extractor urlOfHypertextLinkAt:self.coord urlId:&urlId target:&target];
-    if (url != nil) {
-        DLog(@"Found hypertext url %@", url);
-        URLAction *action = [URLAction urlActionToOpenURL:url.absoluteString];
-        action.hover = YES;
-        // file: URLs with a fragment go through semantic history and therefore need a workingDirectory.
-        action.workingDirectory = self.workingDirectory;
-        action.osc8 = YES;
-        action.target = target;
-        action.logicalRange = [extractor rangeOfCoordinatesAround:self.coord
-                                                  maximumDistance:1000
-                                                      passingTest:^BOOL(screen_char_t *c,
-                                                                        iTermExternalAttribute *ea,
-                                                                        VT100GridCoord coord) {
-            if ([NSObject object:ea.url isEqualToObject:oea.url]) {
-                return YES;
-            }
-            NSString *thisId;
-            NSString *thisTarget;
-            NSURL *thisURL = [extractor urlOfHypertextLinkAt:coord urlId:&thisId target:&thisTarget];
-            // Hover together only if URL, ID, and target are equal.
-            return ([thisURL isEqual:url] &&
-                    (thisId == urlId || [thisId isEqualToString:urlId]) &&
-                    [NSObject object:thisTarget isEqualToObject:target]);
-        }];
-        action.visualRange = [extractor visualWindowedRangeForLogical:action.logicalRange];
-        return action;
-    } else {
+    NSURL *url = [extractor urlOfHypertextLinkAt:coord urlId:&urlId target:&target];
+    if (url == nil) {
         return nil;
     }
+    DLog(@"Found hypertext url %@", url);
+    URLAction *action = [URLAction urlActionToOpenURL:url.absoluteString];
+    action.hover = YES;
+    action.osc8 = YES;
+    action.target = target;
+    action.logicalRange = [extractor rangeOfCoordinatesAround:coord
+                                              maximumDistance:1000
+                                                  passingTest:^BOOL(screen_char_t *c,
+                                                                    iTermExternalAttribute *ea,
+                                                                    VT100GridCoord candidate) {
+        if ([NSObject object:ea.url isEqualToObject:oea.url]) {
+            return YES;
+        }
+        NSString *thisId;
+        NSString *thisTarget;
+        NSURL *thisURL = [extractor urlOfHypertextLinkAt:candidate urlId:&thisId target:&thisTarget];
+        // Hover together only if URL, ID, and target are equal.
+        return ([thisURL isEqual:url] &&
+                (thisId == urlId || [thisId isEqualToString:urlId]) &&
+                [NSObject object:thisTarget isEqualToObject:target]);
+    }];
+    action.visualRange = [extractor visualWindowedRangeForLogical:action.logicalRange];
+    return action;
 }
 
 - (void)urlActionForExistingFileWithPrefix:(iTermLocatedString *)locatedPrefix

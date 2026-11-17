@@ -1,5 +1,15 @@
 Version TBD (unreleased; built off master)
 
+New Features:
+- Quick Look on a web link can use the built-in
+  browser, so sites you sign in to stay signed
+  in. It can also open when you hover over a
+  link (or hold ⌘ while hovering), for domains
+  you list. Set this up in Settings > Pointer >
+  Preview links on hover > Configure…, or add
+  a domain when iTerm2 offers to after you rest
+  on one of its links.
+
 Improvements:
 - Downloading and uploading files with scp and
   the SSH integration now read your ssh config

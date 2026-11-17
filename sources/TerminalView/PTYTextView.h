@@ -30,6 +30,7 @@
 
 @class CRunStorage;
 @class iTermAction;
+@class iTermAnnouncementViewController;
 @class iTermBidiDisplayInfo;
 @class iTermKittyDnDBridge;
 @class iTermExpect;
@@ -418,6 +419,9 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewSaveArchive:(iTermSavePanelItem *)location;
 - (void)textViewSendCustomButtonCode:(int)code;
 - (void)textViewToggleBufferInput;
+// Shows an announcement in the session, replacing any with the same identifier.
+- (void)textViewQueueAnnouncement:(iTermAnnouncementViewController *)announcement
+                       identifier:(NSString *)identifier;
 @end
 
 @interface iTermHighlightedRow : NSObject

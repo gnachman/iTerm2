@@ -13,4 +13,7 @@ extern NSString *const kPointerPrefsSemanticHistoryEnabledChangedNotification;
 
 @interface PointerPreferencesViewController : iTermPreferencesBaseViewController
 
+// Opens the Quick Look settings sheet.
+- (IBAction)configureQuickLook:(id)sender;
+
 @end

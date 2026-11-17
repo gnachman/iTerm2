@@ -26,6 +26,7 @@
 @protocol iTermCancelable;
 @class iTermContentNavigationShortcut;
 @class iTermIdempotentOperationJoiner;
+@class iTermWebQuickLookCoordinator;
 @class iTermShellIntegrationWindowController;
 @class iTermURLActionHelper;
 @protocol Porthole;
@@ -62,6 +63,8 @@ NSPopoverDelegate> {
 @property(nonatomic, strong) iTermFindCursorView *findCursorView;
 @property(nonatomic, strong) NSWindow *findCursorWindow;  // For find-cursor animation
 @property(nonatomic, strong) iTermQuickLookController *quickLookController;
+// Web Quick Look: the popover, Quick Look on hover, and the hover cue.
+@property(nonatomic, strong) iTermWebQuickLookCoordinator *webQuickLook;
 @property(strong, readwrite) NSTouchBar *touchBar;
 @property(nonatomic, readonly) BOOL hasUnderline;
 @property(nonatomic, strong) id<iTermCancelable> lastUrlActionCanceler;

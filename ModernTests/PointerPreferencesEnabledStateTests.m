@@ -53,6 +53,12 @@
         NSButton *button = [NSButton checkboxWithTitle:outlet target:nil action:nil];
         [vc setValue:button forKey:outlet];
     }
+    NSPopUpButton *hoverMode = [[NSPopUpButton alloc] initWithFrame:NSZeroRect pullsDown:NO];
+    for (NSInteger tag = 0; tag <= 2; tag++) {
+        [hoverMode addItemWithTitle:[@(tag) stringValue]];
+        hoverMode.lastItem.tag = tag;
+    }
+    [vc setValue:hoverMode forKey:@"_quickLookHoverMode"];
     [vc awakeFromNib];
     return [vc valueForKey:@"_focusFollowsMouseIncludingSubviews"];
 }

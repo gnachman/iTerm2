@@ -129,6 +129,22 @@ class CRUDTableViewController<Delegate: CRUDTableViewControllerDelegate>: NSObje
     private let schema: CRUDSchema
     weak var delegate: Delegate?
 
+    // When false, the table, its rows and the add/remove buttons can't be used.
+    var isEnabled = true {
+        didSet {
+            guard isEnabled != oldValue else {
+                return
+            }
+            if !isEnabled {
+                tableView.abortEditing()
+                tableView.deselectAll(nil)
+            }
+            tableView.isEnabled = isEnabled
+            tableView.reloadData()
+            updateEnabled()
+        }
+    }
+
     init(tableView: CompetentTableView, addRemove: NSSegmentedControl, schema: CRUDSchema) {
         self.tableView = tableView
         self.addRemove = addRemove
@@ -207,8 +223,8 @@ class CRUDTableViewController<Delegate: CRUDTableViewControllerDelegate>: NSObje
     // MARK: - Private
 
     private func updateEnabled() {
-        addRemove.setEnabled(true, forSegment: 0)
-        addRemove.setEnabled(tableView.numberOfSelectedRows > 0, forSegment: 1)
+        addRemove.setEnabled(isEnabled, forSegment: 0)
+        addRemove.setEnabled(isEnabled && tableView.numberOfSelectedRows > 0, forSegment: 1)
     }
 
     private func add() {
@@ -245,6 +261,9 @@ class CRUDTableViewController<Delegate: CRUDTableViewControllerDelegate>: NSObje
 
     @objc
     func handleSegmentedControl(_ sender: Any) {
+        guard isEnabled else {
+            return
+        }
         switch (sender as! NSSegmentedControl).selectedSegment {
         case 0:
             add()
@@ -256,7 +275,7 @@ class CRUDTableViewController<Delegate: CRUDTableViewControllerDelegate>: NSObje
     }
 
     func competentTableViewDeleteSelectedRows(_ sender: CompetentTableView) {
-        if sender.selectedRowIndexes.isEmpty {
+        if !isEnabled || sender.selectedRowIndexes.isEmpty {
             return
         }
         removeSelected()
@@ -264,6 +283,9 @@ class CRUDTableViewController<Delegate: CRUDTableViewControllerDelegate>: NSObje
 
     @objc
     func handleDoubleClick(_ sender: Any) {
+        guard isEnabled else {
+            return
+        }
         delegate?.crudDoubleClick(self, row: tableView.clickedRow, column: tableView.clickedColumn)
     }
 
@@ -319,8 +341,9 @@ class CRUDTableViewController<Delegate: CRUDTableViewControllerDelegate>: NSObje
                                                                font: NSFont.systemFont(ofSize: NSFont.systemFontSize),
                                                                string: stringValue)
             cell.textField?.stringValue = stringValue
+            cell.textField?.textColor = isEnabled ? .labelColor : .disabledControlTextColor
             if schema.dataProvider.supportsInlineEditing {
-                cell.textField?.isEditable = true
+                cell.textField?.isEditable = isEnabled
                 cell.textField?.delegate = self
             }
             return cell
@@ -339,6 +362,7 @@ class CRUDTableViewController<Delegate: CRUDTableViewControllerDelegate>: NSObje
             }
             if let checkbox = cell.subviews.first as? NSButton {
                 checkbox.state = boolValue ? .on : .off
+                checkbox.isEnabled = isEnabled
                 checkbox.tag = row
             }
             return cell

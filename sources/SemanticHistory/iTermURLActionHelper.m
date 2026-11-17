@@ -115,6 +115,31 @@
     return canceller;
 }
 
+- (URLAction *)hypertextLinkActionAtCoord:(VT100GridCoord)visualCoord {
+    if (visualCoord.y < 0) {
+        return nil;
+    }
+    if ([self.delegate urlActionHelper:self imageInfoAt:visualCoord]) {
+        // A click opens the image rather than the link.
+        return nil;
+    }
+    iTermTextExtractor *extractor = [self.delegate urlActionHelperNewTextExtractor:self];
+    extractor.supportBidi = [iTermPreferences bidiEnabled];
+    const VT100GridCoord logicalCoord = [extractor logicalCoordForVisualCoord:visualCoord];
+    if ([extractor characterAt:logicalCoord].code == 0) {
+        return nil;
+    }
+    // Divider columns are logical, so pick the window with the logical coord.
+    [extractor restrictToLogicalWindowIncludingCoord:logicalCoord];
+    URLAction *action = [iTermURLActionFactory urlActionForHypertextLinkAtCoord:logicalCoord extractor:extractor];
+    // The cheap hyperlink check goes first; the prompt lookup runs only on a cell with a link.
+    if (action && [iTermURLActionFactory urlActionForPromptAtCoord:logicalCoord extractor:extractor]) {
+        // A click shows the prompt's command info rather than opening the link.
+        return nil;
+    }
+    return action;
+}
+
 - (NSURL *)urlForCopyAtCoord:(VT100GridCoord)visualCoord {
     if (visualCoord.y < 0) {
         return nil;

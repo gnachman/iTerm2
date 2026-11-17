@@ -1,0 +1,264 @@
+//
+//  BrowserQuickLookViewControllerTests.swift
+//  ModernTests
+//
+//  Web Quick Look on the browser engine must share the built-in browser’s login store and user
+//  agent, and must service script-opened popups so OAuth sign-in can complete.
+//
+
+import XCTest
+import WebKit
+@testable import iTerm2SharedARC
+
+final class BrowserQuickLookViewControllerTests: XCTestCase {
+    // WebKit objects created with plain init() must outlive the test, as in BrowserViewSourceTests.
+    private static var fakesKeptAlive = [NSObject]()
+
+    private final class FakeNavigationAction: WKNavigationAction {
+        private let fakeRequest: URLRequest
+        private let fakeNavigationType: WKNavigationType
+        init(url: URL, navigationType: WKNavigationType) {
+            fakeRequest = URLRequest(url: url)
+            fakeNavigationType = navigationType
+            super.init()
+        }
+        override var request: URLRequest { fakeRequest }
+        override var targetFrame: WKFrameInfo? { nil }
+        override var navigationType: WKNavigationType { fakeNavigationType }
+        override var modifierFlags: NSEvent.ModifierFlags { [] }
+    }
+
+    private static let signInURL = "https://accounts.example.invalid/signin"
+    private let url = URL(string: "https://example.invalid/page")!
+    private var controller: iTermBrowserQuickLookViewController!
+
+    override func setUp() {
+        super.setUp()
+        controller = iTermBrowserQuickLookViewController(url: url)
+    }
+
+    override func tearDown() {
+        controller.tearDown()
+        controller = nil
+        super.tearDown()
+    }
+
+    private func requestPopup(navigationType: WKNavigationType,
+                              url popupURL: String) throws -> WKWebView? {
+        let action = FakeNavigationAction(url: try XCTUnwrap(URL(string: popupURL)),
+                                          navigationType: navigationType)
+        let features = WKWindowFeatures()
+        Self.fakesKeptAlive.append(action)
+        Self.fakesKeptAlive.append(features)
+        return controller.webView(controller.webView,
+                                  createWebViewWith: controller.webView.configuration,
+                                  for: action,
+                                  windowFeatures: features)
+    }
+
+    func testUsesSharedStoreAndSafariUA() {
+        if #available(macOS 14, *) {
+            XCTAssertEqual(controller.webView.configuration.websiteDataStore.identifier,
+                           iTermBrowserEngineDefaults.regularUserStoreID)
+        }
+        XCTAssertTrue(controller.webView.configuration.websiteDataStore.isPersistent)
+        XCTAssertEqual(controller.webView.customUserAgent, iTermBrowserEngineDefaults.safariUserAgent())
+        XCTAssertTrue(controller.webView.uiDelegate === controller)
+    }
+
+    func testPopupCreatesChildWebView() throws {
+        let child = try XCTUnwrap(try requestPopup(navigationType: .other, url: Self.signInURL))
+        XCTAssertFalse(child === controller.webView)
+        if #available(macOS 14, *) {
+            XCTAssertEqual(child.configuration.websiteDataStore.identifier,
+                           iTermBrowserEngineDefaults.regularUserStoreID)
+        }
+        XCTAssertEqual(child.customUserAgent, iTermBrowserEngineDefaults.safariUserAgent())
+        XCTAssertTrue(child.uiDelegate === controller)
+        XCTAssertEqual(controller.popupWebViews.count, 1)
+        XCTAssertNotNil(child.window)
+        XCTAssertTrue(child.window?.isVisible ?? false)
+    }
+
+    func testPopupClosesWhenPageClosesIt() throws {
+        let child = try XCTUnwrap(try requestPopup(navigationType: .other, url: Self.signInURL))
+        controller.webViewDidClose(child)
+        XCTAssertTrue(controller.popupWebViews.isEmpty)
+        XCTAssertFalse(child.window?.isVisible ?? false)
+    }
+
+    func testBlankLinkLoadsInPlace() throws {
+        XCTAssertNil(try requestPopup(navigationType: .linkActivated, url: Self.signInURL))
+        XCTAssertTrue(controller.popupWebViews.isEmpty)
+    }
+
+    func testTearDownClosesChildren() throws {
+        let first = try XCTUnwrap(try requestPopup(navigationType: .other, url: Self.signInURL))
+        let second = try XCTUnwrap(try requestPopup(navigationType: .other, url: Self.signInURL))
+        XCTAssertEqual(controller.popupWebViews.count, 2)
+
+        controller.tearDown()
+
+        XCTAssertTrue(controller.popupWebViews.isEmpty)
+        XCTAssertFalse(first.window?.isVisible ?? false)
+        XCTAssertFalse(second.window?.isVisible ?? false)
+    }
+
+    private func useHoverPreview(allowing entries: [String] = ["example.invalid"]) {
+        controller.tearDown()
+        controller = iTermBrowserQuickLookViewController(url: url,
+                                                         hoverAllowlist: iTermQuickLookDomainAllowlist(entries: entries,
+                                                                                                      allowsAllDomains: false))
+    }
+
+    // Resting the pointer on program output must never send the user's cookies.
+    func testHoverPreviewUsesAThrowawayStore() {
+        useHoverPreview()
+        XCTAssertFalse(controller.webView.configuration.websiteDataStore.isPersistent)
+        XCTAssertEqual(controller.webView.customUserAgent, iTermBrowserEngineDefaults.safariUserAgent())
+    }
+
+    // Only the suppressed path is exercised: the other one runs an app-modal dialog.
+    func testHoverPreviewAnswersDialogsSilentlyUntilClicked() {
+        useHoverPreview()
+        XCTAssertTrue(controller.suppressesInterruptions)
+        let frame = WKFrameInfo()
+        Self.fakesKeptAlive.append(frame)
+
+        var alertCompleted = false
+        controller.webView(controller.webView,
+                           runJavaScriptAlertPanelWithMessage: "hi",
+                           initiatedByFrame: frame) {
+            alertCompleted = true
+        }
+        XCTAssertTrue(alertCompleted, "the alert completes at once, without a dialog")
+
+        var confirmResult: Bool?
+        controller.webView(controller.webView,
+                           runJavaScriptConfirmPanelWithMessage: "sure?",
+                           initiatedByFrame: frame) { result in
+            confirmResult = result
+        }
+        XCTAssertEqual(confirmResult, false, "the confirm is declined at once, without a dialog")
+
+        var interacted = false
+        controller.onUserInteraction = {
+            interacted = true
+        }
+        controller.userDidClick()
+        XCTAssertTrue(interacted)
+        XCTAssertFalse(controller.suppressesInterruptions, "after a click, dialogs show as usual")
+    }
+
+    private final class KeyWindow: NSWindow {
+        var key = false
+        override var isKeyWindow: Bool { key }
+    }
+
+    // Keyboard-only use of a hover preview (Tab, Return) counts as interacting, as a click does.
+    func testKeyDownInTheKeyPreviewWindowCountsAsInteraction() {
+        let window = KeyWindow(contentRect: NSRect(x: 0, y: 0, width: 100, height: 100),
+                               styleMask: .borderless,
+                               backing: .buffered,
+                               defer: true)
+        window.isReleasedWhenClosed = false
+        let view = NSView(frame: NSRect(x: 0, y: 0, width: 50, height: 50))
+        window.contentView?.addSubview(view)
+        let outside = NSPoint(x: 80, y: 80)
+
+        XCTAssertFalse(iTermQuickLookClickWatcher.isInteraction(type: .keyDown, window: window, locationInWindow: outside, in: view),
+                       "not while another window is key")
+        window.key = true
+        XCTAssertTrue(iTermQuickLookClickWatcher.isInteraction(type: .keyDown, window: window, locationInWindow: outside, in: view))
+        XCTAssertFalse(iTermQuickLookClickWatcher.isInteraction(type: .keyDown, window: NSWindow(), locationInWindow: outside, in: view),
+                       "not a key-down in another window")
+        XCTAssertFalse(iTermQuickLookClickWatcher.isInteraction(type: .leftMouseDown, window: window, locationInWindow: outside, in: view),
+                       "a click must still land inside the view")
+        XCTAssertTrue(iTermQuickLookClickWatcher.isInteraction(type: .leftMouseDown, window: window, locationInWindow: NSPoint(x: 10, y: 10), in: view))
+    }
+
+    func testDeliberatePreviewDoesNotSuppressDialogs() {
+        XCTAssertFalse(controller.suppressesInterruptions)
+    }
+
+    func testOwnsItsPopupWindows() throws {
+        let child = try XCTUnwrap(try requestPopup(navigationType: .other, url: Self.signInURL))
+        XCTAssertTrue(controller.owns(window: child.window))
+        XCTAssertFalse(controller.owns(window: NSWindow()))
+        XCTAssertFalse(controller.owns(window: nil))
+    }
+
+    func testHoverPreviewRefusesPopupsUntilClicked() throws {
+        useHoverPreview()
+        XCTAssertNil(try requestPopup(navigationType: .other, url: Self.signInURL), "no window before the user clicks in")
+        XCTAssertTrue(controller.popupWebViews.isEmpty)
+
+        controller.userDidClick()
+
+        XCTAssertNotNil(try requestPopup(navigationType: .other, url: Self.signInURL), "sign-in pop-ups work after a click")
+        XCTAssertEqual(controller.popupWebViews.count, 1)
+    }
+
+    func testBlankLinkToNonWebAddressIsDropped() throws {
+        XCTAssertNil(try requestPopup(navigationType: .linkActivated, url: "file:///etc/passwd"))
+        XCTAssertTrue(controller.popupWebViews.isEmpty)
+        XCTAssertNil(controller.webView.url, "the preview did not navigate to it")
+    }
+
+    private func policy(for string: String,
+                        allowlist: iTermQuickLookDomainAllowlist? = nil) throws -> WKNavigationActionPolicy {
+        let action = FakeNavigationAction(url: try XCTUnwrap(URL(string: string)), navigationType: .other)
+        Self.fakesKeptAlive.append(action)
+        return iTermBrowserQuickLookViewController.policy(for: action, allowlist: allowlist)
+    }
+
+    // A redirect or script must not take a hover preview off the allowlist before the user clicks in.
+    func testHoverPreviewNavigationStaysOnTheAllowlist() throws {
+        let allowlist = iTermQuickLookDomainAllowlist(entries: ["github.com"], allowsAllDomains: false)
+        XCTAssertEqual(try policy(for: "https://github.com/a", allowlist: allowlist), .allow)
+        XCTAssertEqual(try policy(for: "https://gist.github.com/a", allowlist: allowlist), .allow)
+        XCTAssertEqual(try policy(for: "https://evil.example/", allowlist: allowlist), .cancel)
+        XCTAssertEqual(try policy(for: "http://192.168.1.1/", allowlist: allowlist), .cancel)
+        XCTAssertEqual(try policy(for: "about:blank", allowlist: allowlist), .allow)
+        XCTAssertEqual(try policy(for: "file:///etc/passwd", allowlist: allowlist), .cancel)
+    }
+
+    // With every public domain allowed, a redirect to IPv4 shorthand for a private address, which
+    // WebKit would load, is still refused.
+    func testHoverPreviewNavigationRefusesPrivateIPv4Shorthand() throws {
+        let allowlist = iTermQuickLookDomainAllowlist(entries: [], allowsAllDomains: true)
+        XCTAssertEqual(try policy(for: "https://example.com/", allowlist: allowlist), .allow)
+        for string in ["http://127.1/", "http://0x7f.0.0.1/", "http://0177.0.0.1/", "http://192.168.1/"] {
+            XCTAssertEqual(try policy(for: string, allowlist: allowlist), .cancel, string)
+        }
+    }
+
+    func testHoverPreviewDeniesCameraAndMicrophoneUntilClicked() {
+        guard #available(macOS 12.0, *) else {
+            return
+        }
+        XCTAssertEqual(controller.mediaCaptureDecision, .prompt, "a deliberate preview asks as usual")
+        useHoverPreview()
+        XCTAssertEqual(controller.mediaCaptureDecision, .deny)
+        controller.userDidClick()
+        XCTAssertEqual(controller.mediaCaptureDecision, .prompt)
+    }
+
+    func testMainFrameNavigationAllowsOnlyWebAddresses() throws {
+        XCTAssertEqual(try policy(for: "https://example.invalid/"), .allow)
+        XCTAssertEqual(try policy(for: "HTTP://example.invalid/"), .allow)
+        XCTAssertEqual(try policy(for: "about:blank"), .allow, "tearDown unloads the page with about:blank")
+        XCTAssertEqual(try policy(for: "file:///etc/passwd"), .cancel)
+        XCTAssertEqual(try policy(for: "zoommtg://zoom.us/join"), .cancel)
+        XCTAssertEqual(try policy(for: "data:text/html,hi"), .cancel)
+    }
+
+    func testOnlyWebAddressesAreHandedOn() throws {
+        let initial = try XCTUnwrap(URL(string: "https://example.invalid/start"))
+        let moved = try XCTUnwrap(URL(string: "https://example.invalid/next"))
+        XCTAssertEqual(iTermBrowserQuickLookViewController.urlToHandOn(current: moved, initial: initial), moved)
+        XCTAssertEqual(iTermBrowserQuickLookViewController.urlToHandOn(current: nil, initial: initial), initial)
+        XCTAssertEqual(iTermBrowserQuickLookViewController.urlToHandOn(current: URL(string: "about:blank"), initial: initial), initial)
+        XCTAssertEqual(iTermBrowserQuickLookViewController.urlToHandOn(current: URL(string: "file:///etc/passwd"), initial: initial), initial)
+    }
+}

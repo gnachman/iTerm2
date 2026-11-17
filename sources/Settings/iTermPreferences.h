@@ -361,6 +361,12 @@ extern NSString *const kPreferenceKeyHotkeyAutoHides_Deprecated;  // Deprecated
 
 // Pointer
 extern NSString *const kPreferenceKeyCmdClickOpensURLs;
+extern NSString *const kPreferenceKeyQuickLookUsesBrowserEngine;  // BOOL
+extern NSString *const kPreferenceKeyQuickLookHoverMode;  // iTermQuickLookHoverMode (int)
+extern NSString *const kPreferenceKeyQuickLookHoverDelay;  // double, seconds
+extern NSString *const kPreferenceKeyQuickLookHoverAutoCloseDelay;  // double, seconds
+extern NSString *const kPreferenceKeyQuickLookHoverDomainAllowlist;  // array of strings, one domain each
+extern NSString *const kPreferenceKeyQuickLookHoverIncludesPlainTextURLs;  // BOOL: hover also previews URLs that aren't OSC 8 hyperlinks
 extern NSString *const kPreferenceKeyControlLeftClickBypassesContextMenu;
 extern NSString *const kPreferenceKeyRightClickClickBypassesContextMenu;
 extern NSString *const kPreferenceKeyOptionClickMovesCursor;

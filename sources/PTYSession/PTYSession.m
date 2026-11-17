@@ -15814,6 +15814,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return [_view convertRect:visibleAnchorRect fromView:_textview];
 }
 
+- (void)textViewQueueAnnouncement:(iTermAnnouncementViewController *)announcement
+                       identifier:(NSString *)identifier {
+    [self queueAnnouncement:announcement identifier:identifier];
+}
+
 - (BOOL)textViewShowHoverURL:(NSString *)url anchor:(VT100GridWindowedRange)anchor {
     return [_view setHoverURL:url
                   anchorFrame:url ? [self boundingFrameForWindowedRange:anchor] : NSZeroRect];

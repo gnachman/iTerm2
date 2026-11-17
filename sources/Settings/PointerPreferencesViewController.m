@@ -7,6 +7,7 @@
 //
 
 #import "PointerPreferencesViewController.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "PreferencePanel.h"
 
 NSString *const kPointerPrefsChangedNotification = @"kPointerPrefsChangedNotification";
@@ -36,6 +37,10 @@ NSString *const kPointerPrefsSemanticHistoryEnabledChangedNotification = @"kPoin
     IBOutlet NSButton *_focusOnRightOrMiddleClick;
 
     IBOutlet NSButton *_reportHorizontalScrollEvents;
+
+    // Quick Look on hover. Everything else about Quick Look is in the sheet Configure… opens.
+    IBOutlet NSPopUpButton *_quickLookHoverMode;
+    iTermQuickLookSettingsWindowController *_quickLookSettings;
 }
 
 - (void)awakeFromNib {
@@ -100,6 +105,30 @@ NSString *const kPointerPrefsSemanticHistoryEnabledChangedNotification = @"kPoin
                     key:kPreferenceKeyReportHorizontalScrollEvents
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
+    [self defineQuickLookControls];
+}
+
+- (void)defineQuickLookControls {
+    [self defineControl:_quickLookHoverMode
+                    key:kPreferenceKeyQuickLookHoverMode
+            relatedView:nil
+                   type:kPreferenceInfoTypePopup];
+}
+
+- (IBAction)configureQuickLook:(id)sender {
+    NSWindow *window = self.view.window;
+    if (!window || _quickLookSettings) {
+        return;
+    }
+    _quickLookSettings = [[iTermQuickLookSettingsWindowController alloc] init];
+    __weak __typeof(self) weakSelf = self;
+    [window beginSheet:_quickLookSettings.window completionHandler:^(NSModalResponse returnCode) {
+        [weakSelf quickLookSettingsDidClose];
+    }];
+}
+
+- (void)quickLookSettingsDidClose {
+    _quickLookSettings = nil;
 }
 
 - (NSTabView *)tabView {

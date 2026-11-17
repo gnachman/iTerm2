@@ -32,7 +32,6 @@
 #import "iTermURLActionFactory.h"
 #import "iTermURLStore.h"
 #import "iTermWarning.h"
-#import "iTermWebViewWrapperViewController.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSData+iTerm.h"
@@ -61,6 +60,9 @@
 static const NSUInteger kDragPaneModifiers = (NSEventModifierFlagOption | NSEventModifierFlagCommand | NSEventModifierFlagShift);
 static const NSUInteger kRectangularSelectionModifiers = (NSEventModifierFlagCommand | NSEventModifierFlagOption);
 static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelectionModifiers | NSEventModifierFlagControl);
+
+@interface PTYTextView (WebQuickLookHost)<iTermWebQuickLookHost>
+@end
 
 @interface PTYTextView (ARCPrivate)<iTermShellIntegrationWindowControllerDelegate,
 iTermCommandInfoViewControllerDelegate>
@@ -134,6 +136,11 @@ iTermCommandInfoViewControllerDelegate>
                                              selector:@selector(imageDidLoad:)
                                                  name:iTermImageDidLoad
                                                object:nil];
+    self.webQuickLook = [[iTermWebQuickLookCoordinator alloc] initWithView:self host:self];
+}
+
+- (BOOL)removeUnderlineForFocusChange {
+    return [self.webQuickLook removeUnderlineForFocusChange];
 }
 
 #pragma mark - NSResponder
@@ -492,7 +499,7 @@ iTermCommandInfoViewControllerDelegate>
         return;
     }
     if (!commandPressed || ![self shouldUnderlineLinkUnderCursorForEvent:event]) {
-        const BOOL changedUnderline = [self removeUnderline];
+        const BOOL changedUnderline = [self.webQuickLook removeUnderlineExceptCue];
         const BOOL cursorChanged = [self updateCursor:event action:nil];
         DLog(@"Don't want an underline. changedUnderline=%@ cursorChanged=%@", @(changedUnderline), @(cursorChanged));
         if (changedUnderline || cursorChanged) {
@@ -528,14 +535,14 @@ iTermCommandInfoViewControllerDelegate>
     DLog(@"finishUpdatingUnderlinesWithAction:%@", action);
     if (!action) {
         DLog(@"No action: remove underline");
-        [self removeUnderline];
+        [self.webQuickLook removeUnderlineExceptCue];
         [self updateCursor:event action:action];
         return;
     }
     if (![iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs] &&
         action.actionType != kURLActionSmartSelectionAction) {
         DLog(@"Cmd-click opens URLs is off and action is not a smart selection action; remove underline");
-        [self removeUnderline];
+        [self.webQuickLook removeUnderlineExceptCue];
         [self updateCursor:event action:nil];
         return;
     }
@@ -766,6 +773,15 @@ iTermCommandInfoViewControllerDelegate>
     if (changed) {
         [self.enclosingScrollView setDocumentCursor:cursor_];
     }
+    if (!hover) {
+        // A pending hover preview shows the URL even though the pointer keeps its shape.
+        VT100GridWindowedRange cueAnchor;
+        NSString *cueURL = [self.webQuickLook pendingCueURLWithAnchor:&cueAnchor];
+        if (cueURL) {
+            hover = cueURL;
+            anchorRange = cueAnchor;
+        }
+    }
     return [self.delegate textViewShowHoverURL:hover anchor:anchorRange];
 }
 
@@ -908,7 +924,7 @@ iTermCommandInfoViewControllerDelegate>
                   urlAction:(URLAction *)urlAction
                   withEvent:(NSEvent *)event {
     if (urlAction.actionType == kURLActionOpenURL) {
-        [self showWebkitPopoverAtPoint:event.locationInWindow url:url];
+        [self.webQuickLook showURL:url atPointInWindow:event.locationInWindow openedByHover:NO];
         return;
     }
 
@@ -979,26 +995,6 @@ iTermCommandInfoViewControllerDelegate>
     }
 }
 
-- (void)showWebkitPopoverAtPoint:(NSPoint)pointInWindow url:(NSURL *)url {
-    WKWebView *webView = [[iTermWebViewFactory sharedInstance] webViewWithDelegate:nil];
-    NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url];
-    [webView loadRequest:request];
-    NSPopover *popover = [[NSPopover alloc] init];
-    NSViewController *viewController = [[iTermWebViewWrapperViewController alloc] initWithWebView:webView
-                                                                                        backupURL:url];
-    popover.contentViewController = viewController;
-    popover.contentSize = viewController.view.frame.size;
-    NSRect rect = NSMakeRect(pointInWindow.x - self.charWidth / 2,
-                             pointInWindow.y - self.lineHeight / 2,
-                             self.charWidth,
-                             self.lineHeight);
-    rect = [self convertRect:rect fromView:nil];
-    popover.behavior = NSPopoverBehaviorSemitransient;
-    popover.delegate = self;
-    [popover showRelativeToRect:rect
-                         ofView:self
-                  preferredEdge:NSRectEdgeMinY];
-}
 
 #pragma mark - Copy to Pasteboard
 
@@ -2731,7 +2727,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
 - (void)contextMenuHandleQuickLook:(iTermTextViewContextMenuHelper *)contextMenu
                          url:(NSURL *)url
                   windowCoordinate:(NSPoint)windowCoordinate {
-    [self showWebkitPopoverAtPoint:windowCoordinate url:url];
+    [self.webQuickLook showURL:url atPointInWindow:windowCoordinate openedByHover:NO];
 }
 
 - (BOOL)contextMenuCurrentTabHasMultipleSessions:(iTermTextViewContextMenuHelper *)contextMenu {
@@ -3122,6 +3118,79 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
 
 - (IBAction)changeProfileInArrangement:(id)sender {
     [self.delegate textViewChangeProfileInArrangement];
+}
+
+@end
+
+#pragma mark -
+
+@implementation PTYTextView (WebQuickLookHost)
+
+#pragma mark iTermWebQuickLookHost
+
+- (VT100GridCoord)webQuickLookCoordForPoint:(NSPoint)point allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
+    // coordForPoint: rounds into the next cell over the right part of a cell, which suits
+    // selection. Hover compares against cell-exact link rects, so use the cell under the pointer.
+    const NSPoint cellPoint = NSMakePoint(point.x - self.charWidth * [iTermAdvancedSettingsModel fractionOfCharacterSelectingNextNeighbor],
+                                          point.y);
+    return [self coordForPoint:cellPoint allowRightMarginOverflow:allowRightMarginOverflow];
+}
+
+- (int64_t)webQuickLookTotalScrollbackOverflow {
+    return [self.dataSource totalScrollbackOverflow];
+}
+
+- (BOOL)webQuickLookShowingAlternateScreen {
+    return [self.dataSource showingAlternateScreen];
+}
+
+- (int32_t)webQuickLookGridWidth {
+    return self.dataSource.width;
+}
+
+- (NSSize)webQuickLookCellSize {
+    return NSMakeSize(self.charWidth, self.lineHeight);
+}
+
+- (CGFloat)webQuickLookVerticalOffset {
+    // Inverse of the y correction in -coordForPoint:allowRightMarginOverflow:.
+    return NSMinY([self.enclosingScrollView documentVisibleRect]) - NSMinY([self adjustedDocumentVisibleRect]);
+}
+
+- (iTermURLActionHelper *)webQuickLookURLActionHelper {
+    return self.urlActionHelper;
+}
+
+- (NSURL *)webQuickLookURLForAction:(URLAction *)action {
+    return [self urlForQuickLookWithURLAction:action withEvent:nil];
+}
+
+- (VT100GridAbsWindowedRange)webQuickLookUnderlinedRange {
+    return self.drawingHelper.underlinedRange;
+}
+
+- (void)webQuickLookSetUnderlinedRange:(VT100GridAbsWindowedRange)range {
+    self.drawingHelper.underlinedRange = range;
+    [self requestDelegateRedraw];
+}
+
+- (BOOL)webQuickLookRemoveUnderline {
+    return [self removeUnderline];
+}
+
+- (void)webQuickLookShowHoverURL:(NSString *)url anchor:(VT100GridWindowedRange)anchor {
+    [self.delegate textViewShowHoverURL:url anchor:anchor];
+}
+
+- (void)webQuickLookUpdateTrackingAreas {
+    [self.delegate textViewUpdateTrackingAreas];
+}
+
+- (void)webQuickLookQueueAnnouncement:(iTermAnnouncementViewController *)announcement
+                           identifier:(NSString *)identifier {
+    if ([self.delegate respondsToSelector:@selector(textViewQueueAnnouncement:identifier:)]) {
+        [self.delegate textViewQueueAnnouncement:announcement identifier:identifier];
+    }
 }
 
 @end

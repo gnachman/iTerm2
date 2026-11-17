@@ -421,6 +421,8 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     [_badgeLabel release];
     [_quickLookController close];
     [_quickLookController release];
+    [_webQuickLook tearDown];
+    [_webQuickLook release];
     [_contextMenuHelper release];
     [_highlightedRows release];
     [_scrollAccumulator release];
@@ -610,7 +612,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     DLog(@"resign first responder: reset numTouches to 0");
     _mouseHandler.numTouches = 0;
     [_mouseHandler didResignFirstResponder];
-    [self removeUnderline];
+    [_webQuickLook textViewResignedFirstResponder];
     [self placeFindCursorOnAutoHide];
     [_delegate textViewDidResignFirstResponder];
     DLog(@"resignFirstResponder %@", self);
@@ -624,6 +626,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 - (BOOL)becomeFirstResponder {
     DLog(@"%@", [NSThread callStackSymbols]);
     [_mouseHandler didBecomeFirstResponder];
+    [_webQuickLook textViewBecameFirstResponder];
     [_delegate textViewDidBecomeFirstResponder];
     DLog(@"becomeFirstResponder %@", self);
     DLog(@"%@", [NSThread callStackSymbols]);
@@ -682,6 +685,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
           !!(theEvent.it_modifierFlags & NSEventModifierFlagControl));
     [_delegate textViewDidReceiveFlagsChangedEvent:theEvent];
     [self updateUnderlinedURLs:theEvent];
+    [_webQuickLook flagsChanged:theEvent];
     if (!(theEvent.it_modifierFlags & NSEventModifierFlagCommand)) {
         // With Cmd down, updateUnderlinedURLs takes care of the pointer. Otherwise it may
         // return early, so update the pointer here. This makes Option (which bypasses mouse
@@ -778,6 +782,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 }
 
 - (void)keyDown:(NSEvent *)event {
+    [_webQuickLook keyDown];
     _hasAccessibilitySelectedRange = NO;
     [_mouseHandler keyDown:event];
     [_keyboardHandler keyDown:event inputContext:self.inputContext];
@@ -1121,6 +1126,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 }
 
 - (void)viewWillMoveToWindow:(NSWindow *)win {
+    [_webQuickLook viewWillMoveToWindow:win];
     if (!win && [self window]) {
         [self removeAllTrackingAreas];
     }
@@ -1254,6 +1260,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (void)scrollWheel:(NSEvent *)event {
+    [_webQuickLook scrolled];
     DLog(@"scrollWheel: momentumPhase=%@, eventPhase=%@, _ignoreMomentumScroll=%@",
           iTermStringForEventPhase(event.momentumPhase), iTermStringForEventPhase(event.phase), @(_ignoreMomentumScroll));
     if (_ignoreMomentumScroll && event.momentumPhase == NSEventPhaseChanged && event.phase == NSEventPhaseNone) {
@@ -1269,6 +1276,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (void)mouseDown:(NSEvent *)event {
+    [_webQuickLook mouseDown];
     [_selectCommandTimer invalidate];
     [_selectCommandTimer release];
     _selectCommandTimer = nil;
@@ -1307,6 +1315,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     }
     if ([self hasTerminalButtons]) {
         DLog(@"Have terminal buttons");
+        return YES;
+    }
+    if (_webQuickLook.wantsMouseMovementEvents) {
+        DLog(@"Quick Look on hover is on");
         return YES;
     }
     return [_mouseHandler wantsMouseMovementEvents] || [self hasTerminalButtons];
@@ -1378,6 +1390,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [self updateButtonHover:event.locationInWindow pressed:!!([NSEvent pressedMouseButtons] & 1)];
     [self updateCursor:event];
     [_mouseHandler mouseMoved:event];
+    [_webQuickLook mouseMoved:event];
 }
 
 - (void)mouseDragged:(NSEvent *)event {
@@ -1390,6 +1403,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (void)rightMouseDown:(NSEvent *)event {
+    [_webQuickLook mouseDown];
     [_mouseHandler rightMouseDown:event
                       superCaller:^{ [super rightMouseDown:event]; }];
 }
@@ -1404,6 +1418,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (void)otherMouseDown:(NSEvent *)event {
+    [_webQuickLook mouseDown];
     [_mouseHandler otherMouseDown:event];
 }
 
@@ -1468,6 +1483,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     }
     [_delegate textViewShowHoverURL:nil
                              anchor:VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), -1, -1)];
+    // Leaving the view may mean the pointer left the hovered link for good.
+    [_webQuickLook mouseMoved:event];
 }
 
 - (void)mouseEntered:(NSEvent *)event {
@@ -3521,15 +3538,19 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     // See if any characters are dirty and mark them as needing to be redrawn.
     // Return if anything was found to be blinking.
     __block BOOL foundBlink = NO;
+    const BOOL contentShifted = (scrollbackOverflow > 0 || frameDidChange || syncResult.haveScrolled);
+    __block BOOL contentChanged = contentShifted;
     [self.dataSource performBlockWithSavedGrid:^(id<PTYTextViewSynchronousUpdateStateReading>  _Nullable state) {
         BOOL foundDirty = NO;
         foundBlink = [self updateDirtyRects:&foundDirty haveScrolled:syncResult.haveScrolled] || [self isCursorBlinking];
+        contentChanged = contentChanged || foundDirty;
         // Update accessibility.
         if (foundDirty) {
             [self refreshAccessibility];
         }
         [self searchForVisibleBlocks];
     }];
+    [_webQuickLook refreshedWithContentShifted:contentShifted changed:contentChanged];
     if (scrollbackOverflow > 0 || frameDidChange) {
         // Need to redraw locations of search results.
         [self.delegate textViewFindOnPageLocationsDidChange];
@@ -6331,6 +6352,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 - (void)applicationDidResignActive:(NSNotification *)notification {
     DLog(@"applicationDidResignActive: reset _numTouches to 0");
     _mouseHandler.numTouches = 0;
+    [_webQuickLook deactivated];
 }
 
 - (void)redrawTerminalsNotification:(NSNotification *)notification {
@@ -7570,15 +7592,6 @@ static NSString *iTermStringFromRange(NSRange range) {
 - (int)accessibilityHelperNumberOfLines {
     return MIN([iTermAdvancedSettingsModel numberOfLinesForAccessibility],
                [_dataSource numberOfLines]);
-}
-
-#pragma mark - NSPopoverDelegate
-
-- (void)popoverDidClose:(NSNotification *)notification {
-    NSPopover *popover = notification.object;
-    iTermWebViewWrapperViewController *viewController = (iTermWebViewWrapperViewController *)popover.contentViewController;
-    [viewController terminateWebView];
-
 }
 
 #pragma mark - iTermKeyboardHandlerDelegate

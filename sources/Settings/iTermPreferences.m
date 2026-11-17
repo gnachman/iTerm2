@@ -180,6 +180,12 @@ NSString *const kPreferenceKeyHotkeyProfileGuid_Deprecated = @"HotKeyBookmark"; 
 NSString *const kPreferenceKeyHotkeyAutoHides_Deprecated = @"HotkeyAutoHides";  // deprecated
 
 NSString *const kPreferenceKeyCmdClickOpensURLs = @"CommandSelection";
+NSString *const kPreferenceKeyQuickLookUsesBrowserEngine = @"QuickLookUsesBrowserEngine";
+NSString *const kPreferenceKeyQuickLookHoverMode = @"QuickLookHoverMode";
+NSString *const kPreferenceKeyQuickLookHoverDelay = @"QuickLookHoverDelay";
+NSString *const kPreferenceKeyQuickLookHoverAutoCloseDelay = @"QuickLookHoverAutoCloseDelay";
+NSString *const kPreferenceKeyQuickLookHoverDomainAllowlist = @"QuickLookHoverDomainAllowlist";
+NSString *const kPreferenceKeyQuickLookHoverIncludesPlainTextURLs = @"QuickLookHoverIncludesPlainTextURLs";
 NSString *const kPreferenceKeyControlLeftClickBypassesContextMenu = @"PassOnControlClick";
 NSString *const kPreferenceKeyRightClickClickBypassesContextMenu = @"ReportRightClick";
 NSString *const kPreferenceKeyOptionClickMovesCursor = @"OptionClickMovesCursor";
@@ -908,6 +914,12 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
                   kPreferenceKeyLanguageAgnosticKeyBindings: @NO,
 
                   kPreferenceKeyCmdClickOpensURLs: @YES,
+                  kPreferenceKeyQuickLookUsesBrowserEngine: @NO,
+                  kPreferenceKeyQuickLookHoverMode: @0,
+                  kPreferenceKeyQuickLookHoverDelay: @0.75,
+                  kPreferenceKeyQuickLookHoverAutoCloseDelay: @1.5,
+                  kPreferenceKeyQuickLookHoverDomainAllowlist: @[],
+                  kPreferenceKeyQuickLookHoverIncludesPlainTextURLs: @NO,
                   kPreferenceKeyControlLeftClickBypassesContextMenu: @NO,
                   kPreferenceKeyRightClickClickBypassesContextMenu: @NO,
                   kPreferenceKeyOptionClickMovesCursor: @YES,

@@ -45,6 +45,18 @@
           respectHardNewlines:(BOOL)respectHardNewlines
                     extractor:(iTermTextExtractor *)extractor;
 
+// Synchronously returns the action for the OSC 8 hyperlink at the logical `coord`, covering every
+// cell of that link, or nil when the cell has none. It only reads cell attributes, so it is cheap
+// enough to call on every mouse move. The action has no working directory.
++ (URLAction *)urlActionForHypertextLinkAtCoord:(VT100GridCoord)coord
+                                      extractor:(iTermTextExtractor *)extractor;
+
+// Synchronously returns the action to show command info for the shell prompt at the logical `coord`,
+// or nil when there is none there or ⌘-click on a prompt is turned off. ⌘-click tries this before
+// a hyperlink, so a prompt wins over a hyperlink inside it.
++ (URLAction *)urlActionForPromptAtCoord:(VT100GridCoord)coord
+                               extractor:(iTermTextExtractor *)extractor;
+
 // Turns user-selected text (e.g. from “Open Selection as URL”) into a URL that
 // -[iTermURLActionHelper openURL:...] can open, or nil. Surrounding punctuation is
 // trimmed the way ⌘-click trims it. Text with an explicit scheme (scheme://...) is
