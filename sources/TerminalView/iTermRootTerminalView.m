@@ -726,7 +726,14 @@ typedef struct {
         x = NSMaxX([self frameForStandardWindowButtons]) + proxyIconWidth + iTermRootTerminalViewWindowNumberLabelMargin;
     }
     if ([self.delegate rootTerminalViewWindowNumberLabelShouldBeVisible]) {
-        x += iTermRootTerminalViewWindowNumberLabelWidth + iTermWindowNameBesideTabsLeftMargin;
+        // Follow the number's text rather than its fixed-width box. The box keeps top tabs
+        // from shifting when the number changes, but the name takes nothing from the tabs
+        // here, and at the default width of a left tab bar the box's slack (and a margin on
+        // top of the two labels' own insets, which already separate them) left too little
+        // room for even a short title like “-zsh”.
+        const CGFloat windowNumberWidth = MIN(iTermRootTerminalViewWindowNumberLabelWidth,
+                                              ceil([_windowNumberLabel.cell cellSize].width));
+        x += windowNumberWidth;
     } else if (proxyIconWidth > 0) {
         x += iTermRootTerminalViewCompactProxyIconExtraPadding;
     }
