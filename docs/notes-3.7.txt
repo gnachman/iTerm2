@@ -605,6 +605,9 @@ Bug Fixes:
   such as vim was zoomed could make iTerm2 and
   tmux resize the window back and forth forever,
   using lots of CPU and ignoring the keyboard.
+- Attaching to a tmux session with a zoomed
+  window now keeps it zoomed with tmux 3.3 or
+  later. iTerm2 used to unzoom it.
 - Downloading or uploading a file with scp
   slowed to a crawl while the Downloads or
   Uploads menu was open.
@@ -632,7 +635,9 @@ Bug Fixes:
   - entering the alternate screen with an
     annotation that began before the first line;
   - opening the password manager after iTerm2
-    was replaced while running.
+    was replaced while running;
+  - zooming a pane in tmux integration,
+    especially with old versions of tmux.
 - Fixed a crash when splitting a pane or closing
   a window, if the profile had a Variable Changed
   trigger whose parameter used an interpolated
