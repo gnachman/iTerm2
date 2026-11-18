@@ -6,7 +6,10 @@
 //
 
 #import "PSMMinimalTabStyle.h"
+#import "NSColor+PSM.h"
 #import "PSMOverflowPopUpButton.h"
+#import "PSMTabBarCell.h"
+#import "PSMTabGroup.h"
 
 @implementation NSColor(PSMMinimalTabStyle)
 
@@ -48,9 +51,378 @@
     return @"Minimal";
 }
 
-// Minimal inherits the squared tab-group run decoration from PSMYosemiteTabStyle
-// (usesExternalTabGroupDecoration + drawTabGroupRunDecorationsForTabBar:), so it
-// needs no override here.
+#pragma mark - Tab groups
+
+// Minimal draws tab groups quietly, to match the rest of the bar: the group's
+// name sits in a short tinted capsule (not a full-height solid block), and a
+// thin strip in the full group color runs along the bar edge under the chip and
+// every member tab to show the group's extent. A collapsed group is a capsule
+// with the name, a member-count badge, and a right-pointing chevron.
+static const CGFloat kPSMMinimalGroupChipMargin = 6;      // between the chip cell edge and the capsule
+static const CGFloat kPSMMinimalGroupChipPad = 9;         // horizontal padding inside the capsule
+static const CGFloat kPSMMinimalGroupChipHeight = 22;     // capsule height (clamped to the cell)
+static const CGFloat kPSMMinimalGroupDotSize = 10;        // an unnamed expanded group's dot
+static const CGFloat kPSMMinimalGroupBadgeGap = 6;        // name to count badge
+static const CGFloat kPSMMinimalGroupChevronGap = 5;      // badge to chevron
+static const CGFloat kPSMMinimalGroupChevronWidth = 5;
+static const CGFloat kPSMMinimalGroupChevronTrailPad = 8; // chevron to the capsule's trailing edge
+static const CGFloat kPSMMinimalGroupStripWidth = 2;      // membership strip thickness
+static const CGFloat kPSMMinimalGroupStripGap = 1;        // between a parent's strip and a sub-group's
+static const CGFloat kPSMMinimalGroupFontSize = 11;       // matches the default tab title size
+static const CGFloat kPSMMinimalGroupChipFillFraction = 0.22;
+static const CGFloat kPSMMinimalGroupBadgeFillFraction = 0.40;
+static const CGFloat kPSMMinimalGroupLabelFraction = 0.45;
+static const CGFloat kPSMMinimalGroupWashAlpha = 0.06;
+static const CGFloat kPSMMinimalGroupMinimumContrast = 4.5;
+
+// WCAG relative luminance of an sRGB color.
+static CGFloat PSMMinimalRelativeLuminance(NSColor *color) {
+    NSColor *srgb = [color colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+    if (!srgb) {
+        return 0.5;
+    }
+    CGFloat (^linear)(CGFloat) = ^CGFloat(CGFloat c) {
+        return (c <= 0.03928) ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * linear(srgb.redComponent) +
+           0.7152 * linear(srgb.greenComponent) +
+           0.0722 * linear(srgb.blueComponent);
+}
+
+static CGFloat PSMMinimalContrastRatio(NSColor *a, NSColor *b) {
+    const CGFloat la = PSMMinimalRelativeLuminance(a);
+    const CGFloat lb = PSMMinimalRelativeLuminance(b);
+    return (MAX(la, lb) + 0.05) / (MIN(la, lb) + 0.05);
+}
+
+- (NSFont *)minimalGroupNameFont {
+    return [NSFont systemFontOfSize:kPSMMinimalGroupFontSize weight:NSFontWeightMedium];
+}
+
+- (NSFont *)minimalGroupBadgeFont {
+    return [NSFont monospacedDigitSystemFontOfSize:kPSMMinimalGroupFontSize - 1 weight:NSFontWeightMedium];
+}
+
+- (CGFloat)minimalGroupTextWidth:(NSString *)text font:(NSFont *)font {
+    return ceil([(text ?: @"") sizeWithAttributes:@{ NSFontAttributeName: font }].width);
+}
+
+- (NSSize)minimalGroupBadgeSizeForCount:(NSInteger)count {
+    NSFont *font = [self minimalGroupBadgeFont];
+    const CGFloat height = ceil(font.ascender - font.descender) + 2;
+    const CGFloat width = MAX(height, [self minimalGroupTextWidth:[@(count) stringValue] font:font] + 8);
+    return NSMakeSize(width, height);
+}
+
+// Width of everything after the name in a collapsed capsule: the badge, the
+// chevron, and the trailing padding.
+- (CGFloat)minimalCollapsedTrailingWidthForCount:(NSInteger)count {
+    return [self minimalGroupBadgeSizeForCount:count].width +
+        kPSMMinimalGroupChevronGap + kPSMMinimalGroupChevronWidth + kPSMMinimalGroupChevronTrailPad;
+}
+
+- (CGFloat)tabGroupChipCellWidthForName:(NSString *)name {
+    if (name.length == 0) {
+        return kPSMMinimalGroupChipMargin * 2 + kPSMMinimalGroupDotSize;
+    }
+    const CGFloat textWidth = [self minimalGroupTextWidth:name font:[self minimalGroupNameFont]];
+    return kPSMMinimalGroupChipMargin * 2 + kPSMMinimalGroupChipPad * 2 + textWidth;
+}
+
+- (CGFloat)tabGroupCollapsedChipCellWidthForName:(NSString *)name
+                                     memberCount:(NSInteger)count
+                                          nested:(BOOL)nested {
+    CGFloat capsule = [self minimalCollapsedTrailingWidthForCount:count];
+    if (name.length > 0) {
+        capsule += kPSMMinimalGroupChipPad +
+            [self minimalGroupTextWidth:name font:[self minimalGroupNameFont]] +
+            kPSMMinimalGroupBadgeGap;
+    } else {
+        capsule += kPSMMinimalGroupChevronTrailPad;
+    }
+    return kPSMMinimalGroupChipMargin * 2 + capsule;
+}
+
+// The bar color without transparency, used as the base that group colors are
+// mixed into so tints hold up in light mode and with custom tab colors.
+- (NSColor *)minimalOpaqueBarColor {
+    NSColor *bar = [[self tabBarColor] colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+    return [bar colorWithAlphaComponent:1] ?: [NSColor blackColor];
+}
+
+- (NSColor *)minimalGroupForegroundColor {
+    return self.backgroundIsDark ? [NSColor whiteColor] : [NSColor blackColor];
+}
+
+- (NSColor *)minimalTintOfGroupColor:(NSColor *)groupColor fraction:(CGFloat)fraction {
+    NSColor *base = [self minimalOpaqueBarColor];
+    NSColor *group = [groupColor colorUsingColorSpace:[NSColorSpace sRGBColorSpace]] ?: groupColor;
+    return [base blendedColorWithFraction:fraction ofColor:group] ?: base;
+}
+
+// The group color pushed toward the foreground, then further until it reaches a
+// minimum contrast against `fill`.
+- (NSColor *)minimalGroupLabelColorForGroupColor:(NSColor *)groupColor fill:(NSColor *)fill {
+    NSColor *fg = [self minimalGroupForegroundColor];
+    NSColor *group = [groupColor colorUsingColorSpace:[NSColorSpace sRGBColorSpace]] ?: groupColor;
+    CGFloat fraction = kPSMMinimalGroupLabelFraction;
+    NSColor *label = [group blendedColorWithFraction:fraction ofColor:fg] ?: fg;
+    while (fraction < 1 && PSMMinimalContrastRatio(label, fill) < kPSMMinimalGroupMinimumContrast) {
+        fraction = MIN(1, fraction + 0.1);
+        label = [group blendedColorWithFraction:fraction ofColor:fg] ?: fg;
+    }
+    return label;
+}
+
+// Strips stack inward from the bar's outer content edge so a sub-group's strip
+// sits beside its parent's rather than on top of it.
+- (CGFloat)minimalStripDepthForChip:(PSMTabBarCell *)chip {
+    const BOOL nested = chip.tabGroupParentIdentifier.length > 0;
+    return nested ? kPSMMinimalGroupStripWidth + kPSMMinimalGroupStripGap : 0;
+}
+
+// The membership strip for a run spanning `extent` (chip through last member).
+// On a horizontal bar it lies along the edge facing the content, just inside the
+// 1pt outline Minimal draws there. On a vertical bar it lies along the bar's
+// outer edge.
+- (NSRect)minimalStripRectForExtent:(NSRect)extent depth:(CGFloat)depth bar:(PSMTabBarControl *)bar {
+    const CGFloat w = kPSMMinimalGroupStripWidth;
+    if (bar.orientation == PSMTabBarHorizontalOrientation) {
+        if (bar.tabLocation == PSMTab_BottomTab) {
+            return NSMakeRect(NSMinX(extent), NSMinY(extent) + 1 + depth, NSWidth(extent), w);
+        }
+        return NSMakeRect(NSMinX(extent), NSMaxY(extent) - 1 - depth - w, NSWidth(extent), w);
+    }
+    if (bar.tabLocation == PSMTab_RightTab) {
+        return NSMakeRect(NSMaxX(extent) - depth - w, NSMinY(extent), w, NSHeight(extent));
+    }
+    return NSMakeRect(NSMinX(extent) + depth, NSMinY(extent), w, NSHeight(extent));
+}
+
+// The capsule's rect within a chip cell, `width` wide (clamped to the cell).
+- (NSRect)minimalCapsuleRectInChipFrame:(NSRect)chipFrame width:(CGFloat)width bar:(PSMTabBarControl *)bar {
+    CGFloat leading = kPSMMinimalGroupChipMargin;
+    CGFloat trailing = kPSMMinimalGroupChipMargin;
+    if (bar.orientation != PSMTabBarHorizontalOrientation) {
+        // Clear the strips along the outer edge.
+        const CGFloat strips = kPSMMinimalGroupStripWidth * 2 + kPSMMinimalGroupStripGap;
+        if (bar.tabLocation == PSMTab_RightTab) {
+            trailing += strips;
+        } else {
+            leading += strips;
+        }
+    }
+    const CGFloat available = MAX(0, NSWidth(chipFrame) - leading - trailing);
+    const CGFloat height = MIN(kPSMMinimalGroupChipHeight, MAX(0, NSHeight(chipFrame) - 8));
+    return NSIntegralRect(NSMakeRect(NSMinX(chipFrame) + leading,
+                                     NSMidY(chipFrame) - height / 2.0,
+                                     MIN(width, available),
+                                     height));
+}
+
+// Positions the name the way PSMYosemiteTabStyle positions a tab title
+// (floor-centered on the cell using the attributed string's bounding height) so
+// the two share a baseline.
+- (void)drawMinimalGroupName:(NSString *)name
+                      inRect:(NSRect)rect
+                   cellFrame:(NSRect)cellFrame
+                       color:(NSColor *)color {
+    if (name.length == 0 || NSWidth(rect) <= 0) {
+        return;
+    }
+    NSMutableParagraphStyle *para = [[NSMutableParagraphStyle alloc] init];
+    para.alignment = NSTextAlignmentLeft;
+    para.lineBreakMode = NSLineBreakByTruncatingTail;
+    NSAttributedString *attributed =
+        [[NSAttributedString alloc] initWithString:name
+                                        attributes:@{ NSFontAttributeName: [self minimalGroupNameFont],
+                                                      NSForegroundColorAttributeName: color,
+                                                      NSParagraphStyleAttributeName: para }];
+    const CGFloat height = [attributed boundingRectWithSize:rect.size options:0].size.height;
+    [attributed drawInRect:NSMakeRect(NSMinX(rect),
+                                      NSMinY(cellFrame) + floor((NSHeight(cellFrame) - height) / 2.0),
+                                      NSWidth(rect),
+                                      height)];
+}
+
+- (void)drawTabGroupRunDecorationsForTabBar:(PSMTabBarControl *)bar clipRect:(NSRect)clipRect {
+    if (bar.suppressTabGroupRunDecoration || NSIsEmptyRect(clipRect)) {
+        return;
+    }
+    PSMTabBarCell *selected = [self selectedCellInTabBarControl:bar];
+    [bar enumerateTabGroupRunsWithRect:nil
+                                 block:^(PSMTabBarCell *chip,
+                                         NSRect tabsRect,
+                                         PSMTabBarCell *firstTab,
+                                         NSString *gid) {
+        [self drawMinimalTabGroupRunWithChip:chip
+                                    tabsRect:tabsRect
+                                     groupID:gid
+                                    selected:selected
+                                       inBar:bar];
+    }];
+    NSString *dropTargetGID = [bar collapsedTabGroupDropTargetIdentifier];
+    [bar enumerateCollapsedTabGroupChipsWithBlock:^(PSMTabBarCell *chip,
+                                                    NSInteger memberCount,
+                                                    NSString *gid) {
+        [self drawMinimalCollapsedTabGroupChip:chip
+                                   memberCount:memberCount
+                                       groupID:gid
+                                         inBar:bar
+                                  isDropTarget:[gid isEqualToString:dropTargetGID]];
+    }];
+}
+
+- (void)drawMinimalTabGroupRunWithChip:(PSMTabBarCell *)chip
+                              tabsRect:(NSRect)tabsRect
+                               groupID:(NSString *)gid
+                              selected:(PSMTabBarCell *)selected
+                                 inBar:(PSMTabBarControl *)bar {
+    id<PSMTabGroup> group = [bar.tabGroupDataSource tabGroupWithIdentifier:gid];
+    NSColor *groupColor = group.color ?: [NSColor systemBlueColor];
+    NSString *name = group.name ?: @"";
+    const BOOL horizontal = (bar.orientation == PSMTabBarHorizontalOrientation);
+    const NSRect chipFrame = chip.frame;
+    const NSRect extent = horizontal
+        ? NSMakeRect(NSMinX(chipFrame), NSMinY(tabsRect),
+                     MAX(0, NSMaxX(tabsRect) - NSMinX(chipFrame)), NSHeight(tabsRect))
+        : NSMakeRect(NSMinX(tabsRect), NSMinY(chipFrame),
+                     NSWidth(tabsRect), MAX(0, NSMaxY(tabsRect) - NSMinY(chipFrame)));
+
+    // A faint wash over the member tabs, leaving the selected tab untouched so
+    // it keeps reading as one surface with the content.
+    [NSGraphicsContext saveGraphicsState];
+    NSBezierPath *washClip = [NSBezierPath bezierPathWithRect:tabsRect];
+    if (selected && !selected.isInOverflowMenu && NSIntersectsRect(selected.frame, tabsRect)) {
+        [washClip appendBezierPathWithRect:selected.frame];
+        washClip.windingRule = NSWindingRuleEvenOdd;
+    }
+    [washClip addClip];
+    [[groupColor colorWithAlphaComponent:kPSMMinimalGroupWashAlpha] set];
+    NSRectFillUsingOperation(tabsRect, NSCompositingOperationSourceOver);
+    [NSGraphicsContext restoreGraphicsState];
+
+    // The chip: a tinted capsule with the name, or a dot when unnamed.
+    NSRect capsule;
+    if (name.length == 0) {
+        capsule = [self minimalCapsuleRectInChipFrame:chipFrame width:kPSMMinimalGroupDotSize bar:bar];
+        const CGFloat d = MIN(kPSMMinimalGroupDotSize, MIN(NSWidth(capsule), NSHeight(capsule)));
+        if (d > 0) {
+            NSRect dot = NSMakeRect(NSMinX(capsule), NSMidY(capsule) - d / 2.0, d, d);
+            [groupColor set];
+            [[NSBezierPath bezierPathWithOvalInRect:dot] fill];
+        }
+    } else {
+        const CGFloat textWidth = [self minimalGroupTextWidth:name font:[self minimalGroupNameFont]];
+        capsule = [self minimalCapsuleRectInChipFrame:chipFrame
+                                                width:textWidth + kPSMMinimalGroupChipPad * 2
+                                                  bar:bar];
+        if (NSWidth(capsule) > 0 && NSHeight(capsule) > 0) {
+            NSColor *fill = [self minimalTintOfGroupColor:groupColor fraction:kPSMMinimalGroupChipFillFraction];
+            [fill set];
+            const CGFloat radius = NSHeight(capsule) / 2.0;
+            [[NSBezierPath bezierPathWithRoundedRect:capsule xRadius:radius yRadius:radius] fill];
+            [self drawMinimalGroupName:name
+                                inRect:NSInsetRect(capsule, kPSMMinimalGroupChipPad, 0)
+                             cellFrame:chipFrame
+                                 color:[self minimalGroupLabelColorForGroupColor:groupColor fill:fill]];
+        }
+    }
+
+    // The membership strip, from the chip cell's leading edge to the end of the
+    // last member.
+    [groupColor set];
+    NSRectFill([self minimalStripRectForExtent:extent depth:[self minimalStripDepthForChip:chip] bar:bar]);
+}
+
+- (void)drawMinimalCollapsedTabGroupChip:(PSMTabBarCell *)chip
+                             memberCount:(NSInteger)count
+                                 groupID:(NSString *)gid
+                                   inBar:(PSMTabBarControl *)bar
+                            isDropTarget:(BOOL)isDropTarget {
+    id<PSMTabGroup> group = [bar.tabGroupDataSource tabGroupWithIdentifier:gid];
+    NSColor *groupColor = group.color ?: [NSColor systemBlueColor];
+    NSString *name = group.name ?: @"";
+    NSFont *nameFont = [self minimalGroupNameFont];
+    const CGFloat trailing = [self minimalCollapsedTrailingWidthForCount:count];
+    const CGFloat leadingPad = (name.length > 0) ? kPSMMinimalGroupChipPad : kPSMMinimalGroupChevronTrailPad;
+    const CGFloat nameWidth = (name.length > 0)
+        ? [self minimalGroupTextWidth:name font:nameFont] + kPSMMinimalGroupBadgeGap
+        : 0;
+    const NSRect capsule = [self minimalCapsuleRectInChipFrame:chip.frame
+                                                         width:leadingPad + nameWidth + trailing
+                                                           bar:bar];
+    if (NSWidth(capsule) <= 0 || NSHeight(capsule) <= 0) {
+        return;
+    }
+    const CGFloat radius = NSHeight(capsule) / 2.0;
+    NSBezierPath *capsulePath = [NSBezierPath bezierPathWithRoundedRect:capsule xRadius:radius yRadius:radius];
+    NSColor *fill = [self minimalTintOfGroupColor:groupColor fraction:kPSMMinimalGroupChipFillFraction];
+    [fill set];
+    [capsulePath fill];
+
+    NSColor *labelColor = [self minimalGroupLabelColorForGroupColor:groupColor fill:fill];
+    const CGFloat midY = NSMidY(capsule);
+
+    // Lay out from the trailing edge so the badge and chevron stay visible when
+    // the capsule is squeezed; the name truncates instead.
+    const CGFloat chevronX = NSMaxX(capsule) - kPSMMinimalGroupChevronTrailPad - kPSMMinimalGroupChevronWidth;
+    const NSSize badgeSize = [self minimalGroupBadgeSizeForCount:count];
+    const NSRect badge = NSMakeRect(chevronX - kPSMMinimalGroupChevronGap - badgeSize.width,
+                                    round(midY - badgeSize.height / 2.0),
+                                    badgeSize.width,
+                                    badgeSize.height);
+
+    [self drawMinimalGroupName:name
+                        inRect:NSMakeRect(NSMinX(capsule) + leadingPad,
+                                          NSMinY(capsule),
+                                          MAX(0, NSMinX(badge) - kPSMMinimalGroupBadgeGap - NSMinX(capsule) - leadingPad),
+                                          NSHeight(capsule))
+                     cellFrame:chip.frame
+                         color:labelColor];
+
+    // Count badge.
+    if (NSMinX(badge) >= NSMinX(capsule)) {
+        NSColor *badgeFill = [self minimalTintOfGroupColor:groupColor fraction:kPSMMinimalGroupBadgeFillFraction];
+        [badgeFill set];
+        const CGFloat badgeRadius = badgeSize.height / 2.0;
+        [[NSBezierPath bezierPathWithRoundedRect:badge xRadius:badgeRadius yRadius:badgeRadius] fill];
+        NSFont *badgeFont = [self minimalGroupBadgeFont];
+        NSMutableParagraphStyle *para = [[NSMutableParagraphStyle alloc] init];
+        para.alignment = NSTextAlignmentCenter;
+        const CGFloat textHeight = ceil(badgeFont.ascender - badgeFont.descender);
+        [[@(count) stringValue] drawInRect:NSMakeRect(NSMinX(badge), NSMidY(badge) - textHeight / 2.0,
+                                                      NSWidth(badge), textHeight)
+                            withAttributes:@{ NSFontAttributeName: badgeFont,
+                                              NSForegroundColorAttributeName: [self minimalGroupLabelColorForGroupColor:groupColor fill:badgeFill],
+                                              NSParagraphStyleAttributeName: para }];
+    }
+
+    // Right-pointing chevron: the group is collapsed and can be opened. The view
+    // is flipped, so y grows downward.
+    const CGFloat half = 3;
+    NSBezierPath *chevron = [NSBezierPath bezierPath];
+    [chevron moveToPoint:NSMakePoint(chevronX + 1, midY - half)];
+    [chevron lineToPoint:NSMakePoint(chevronX + 1 + half, midY)];
+    [chevron lineToPoint:NSMakePoint(chevronX + 1, midY + half)];
+    chevron.lineWidth = 1.5;
+    chevron.lineCapStyle = NSLineCapStyleRound;
+    chevron.lineJoinStyle = NSLineJoinStyleRound;
+    [labelColor setStroke];
+    [chevron stroke];
+
+    // Drop-target feedback: a dragged tab is poised to join this collapsed group.
+    if (isDropTarget) {
+        NSBezierPath *ring = [NSBezierPath bezierPathWithRoundedRect:NSInsetRect(capsule, -1.5, -1.5)
+                                                             xRadius:radius + 1.5
+                                                             yRadius:radius + 1.5];
+        ring.lineWidth = 2;
+        [[NSColor controlAccentColor] setStroke];
+        [ring stroke];
+    }
+}
+
+#pragma mark -
 
 - (NSRect)adjustedCellRect:(NSRect)rect generic:(NSRect)generic {
     return rect;

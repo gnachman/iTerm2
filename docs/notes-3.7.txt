@@ -11,6 +11,12 @@ New Features:
   on one of its links.
 
 Improvements:
+- Tab groups look quieter in the Minimal theme.
+  A group’s name sits in a small tinted capsule
+  instead of a solid full-height block, and a
+  thin strip in the group’s color runs under its
+  tabs. A collapsed group shows its tab count in
+  a badge.
 - Downloading and uploading files with scp and
   the SSH integration now read your ssh config
   the way ssh does, including Include and Match
