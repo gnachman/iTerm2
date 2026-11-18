@@ -124,6 +124,69 @@
                    @"no other size is sent: %@", written);
 }
 
+// tmux -CC new makes an 80x24 window because a control client has no size yet. Pinning it at its
+// own size kept it there instead of the tmux profile's size (issue 13218). A window smaller than
+// the client size grows to it, which never clamps a float.
+- (void)testWindowSmallerThanTheClientSizeGrowsToIt {
+    [self useVersion:@"3.8" variableWindowSize:YES];
+    [_controller openWindowsOfSize:VT100GridSizeMake(180, 40)];
+    [_delegate.writtenStrings removeAllObjects];
+
+    [_controller initialListWindowsResponse:[self recordForWindow:9 width:80 height:24]];
+    NSString *written = [self written];
+    const NSUInteger grow = [self locationOf:@"refresh-client -C 180,40" in:written];
+    const NSUInteger pin = [self locationOf:@"refresh-client -C @9:180x40" in:written];
+    XCTAssertLessThan(grow, pin, @"%@", written);
+    XCTAssertFalse([written containsString:@"80x24"], @"the window must not be pinned at its old size: %@", written);
+    XCTAssertFalse([written containsString:@"80,24"], @"%@", written);
+}
+
+// Each dimension is handled on its own: wider than the client keeps its width, shorter grows.
+- (void)testWindowLargerInOneDimensionAndSmallerInTheOtherIsOnlyGrown {
+    [self useVersion:@"3.8" variableWindowSize:YES];
+    [_controller openWindowsOfSize:VT100GridSizeMake(180, 40)];
+    [_delegate.writtenStrings removeAllObjects];
+
+    [_controller initialListWindowsResponse:[self recordForWindow:0 width:200 height:30]];
+    NSString *written = [self written];
+    const NSUInteger grow = [self locationOf:@"refresh-client -C 200,40" in:written];
+    const NSUInteger pin = [self locationOf:@"refresh-client -C @0:200x40" in:written];
+    const NSUInteger clientSize = [self locationOf:@"refresh-client -C 180,40" in:written];
+    XCTAssertLessThan(grow, pin, @"%@", written);
+    XCTAssertLessThan(pin, clientSize, @"%@", written);
+}
+
+// Notifications are off during attach, so the %layout-change for a window that grew is not seen.
+// The initial listing is stale, so windows are listed again and opened from the new listing.
+- (void)testGrowingAWindowListsWindowsAgain {
+    [self useVersion:@"3.8" variableWindowSize:YES];
+    [_controller openWindowsOfSize:VT100GridSizeMake(180, 40)];
+    [_delegate.writtenStrings removeAllObjects];
+
+    [_controller initialListWindowsResponse:[self recordForWindow:9 width:80 height:24]];
+    NSString *written = [self written];
+    const NSUInteger pin = [self locationOf:@"refresh-client -C @9:180x40" in:written];
+    const NSUInteger relist = [self locationOf:@"list-windows -F" in:written];
+    XCTAssertLessThan(pin, relist, @"%@", written);
+
+    // The second listing reflects the new size and is not pinned again.
+    [_delegate.writtenStrings removeAllObjects];
+    [_controller initialListWindowsResponse:[self recordForWindow:9 width:180 height:40]];
+    written = [self written];
+    XCTAssertFalse([written containsString:@"refresh-client -C"], @"%@", written);
+    XCTAssertFalse([written containsString:@"list-windows -F"], @"%@", written);
+}
+
+// Windows already at least as large as the client size are opened from the first listing.
+- (void)testNoWindowGrowsSoWindowsAreNotListedAgain {
+    [self useVersion:@"3.8" variableWindowSize:YES];
+    [_controller openWindowsOfSize:VT100GridSizeMake(80, 25)];
+    [_delegate.writtenStrings removeAllObjects];
+
+    [_controller initialListWindowsResponse:[self recordForWindow:0 width:157 height:40]];
+    XCTAssertFalse([[self written] containsString:@"list-windows -F"], @"%@", [self written]);
+}
+
 // With no windows to pin, only the deferred client size goes out.
 - (void)testEmptyListingSendsOnlyTheClientSize {
     [self useVersion:@"3.8" variableWindowSize:YES];

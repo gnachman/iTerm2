@@ -260,6 +260,9 @@ Bug Fixes:
 - Reader Mode and Remove Distractions in the
   built-in browser did nothing when chosen.
   They work again.
+- With tmux 3.8, tmux integration windows
+  opened at 80x24 instead of the size in your
+  tmux profile. Issue 13218.
 - The tooltip for “Enable support for
   right-to-left scripts” in Settings > General >
   Experimental described a tmux setting instead.

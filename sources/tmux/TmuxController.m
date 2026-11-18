@@ -721,20 +721,25 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 // Sends the client size deferred by -openWindowsOfSize:, after giving every listed window (hidden
-// ones too) its current size for this client, so the client size only sizes windows made later.
+// ones too) a size of its own for this client, so the client size only sizes windows made later.
 // tmux recalculates window sizes after each refresh-client. Once this client has sized any window,
 // the windows it has not sized yet take its client size, which until now is tmux's default. So the
-// client size is first set to the largest window size, which can only grow a window and never
-// clamps a floating pane, then each window is pinned at its own size. Windows iTerm2 does not open
-// (hidden ones, for example) stay pinned, so they keep their size instead of following this client's.
-- (void)pinWindowSizesThenSetDeferredClientSizeForInitialListing:(TSVDocument *)doc {
+// client size is first set to the largest pinned size, which can only grow a window and never
+// clamps a floating pane, then each window is pinned. A window is pinned at the larger of its own
+// size and the client size in each dimension: shrinking it would clamp its floats, but a window
+// smaller than the profile (such as the 80x24 one tmux -CC new makes) grows to the profile's size,
+// as it did when the client size was sent before listing. Windows iTerm2 does not open (hidden
+// ones, for example) stay pinned, so they keep their size instead of following this client's.
+// Returns YES if any window grows, in which case the listing is stale.
+- (BOOL)pinWindowSizesThenSetDeferredClientSizeForInitialListing:(TSVDocument *)doc {
     if (!_deferredInitialClientSize) {
-        return;
+        return NO;
     }
     const NSSize clientSize = _deferredInitialClientSize.sizeValue;
     _deferredInitialClientSize = nil;
     NSMutableArray<iTermTuple<NSString *, NSValue *> *> *windowSizes = [NSMutableArray array];
     NSSize largest = NSZeroSize;
+    BOOL anyWindowGrows = NO;
     for (NSArray *record in doc.records) {
         const int wid = [self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]];
         const NSSize size = NSMakeSize([[doc valueInRecord:record forField:@"window_width"] intValue],
@@ -742,10 +747,15 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         if (wid < 0 || size.width < 1 || size.height < 1) {
             continue;
         }
-        largest.width = MAX(largest.width, size.width);
-        largest.height = MAX(largest.height, size.height);
+        const NSSize pinnedSize = NSMakeSize(MAX(size.width, clientSize.width),
+                                             MAX(size.height, clientSize.height));
+        if (!NSEqualSizes(pinnedSize, size)) {
+            anyWindowGrows = YES;
+        }
+        largest.width = MAX(largest.width, pinnedSize.width);
+        largest.height = MAX(largest.height, pinnedSize.height);
         [windowSizes addObject:[iTermTuple tupleWithObject:[NSString stringWithInt:wid]
-                                                 andObject:[NSValue valueWithSize:size]]];
+                                                 andObject:[NSValue valueWithSize:pinnedSize]]];
     }
     DLog(@"Pin window sizes %@ then set client size to %@", windowSizes, NSStringFromSize(clientSize));
     NSMutableArray<NSDictionary *> *commands = [NSMutableArray array];
@@ -763,6 +773,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     }
     [commands addObject:setClientSize(clientSize)];
     [gateway_ sendCommandList:commands];
+    return anyWindowGrows;
 }
 
 // Windows that closed while this iTerm2 was not attached left entries behind. The next save
@@ -800,7 +811,14 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"TmuxController.BadInitialListWindowsResponse", nil, [NSBundle mainBundle], @"Bad response for initial list windows request: %@", @"Error shown when tmux returns an unparseable response to the initial list-windows request; %@ is the raw response"), response]];
         return;
     }
-    [self pinWindowSizesThenSetDeferredClientSizeForInitialListing:doc];
+    if ([self pinWindowSizesThenSetDeferredClientSizeForInitialListing:doc]) {
+        // Notifications are off until the initial windows open, so the %layout-change for a window
+        // that grew is not seen. List again to open windows at their new sizes. The client size is
+        // no longer deferred, so the second listing is used as-is.
+        DLog(@"A window grew to the client size. List windows again.");
+        [self sendInitialListWindowsCommand];
+        return;
+    }
     [self forgetSavedTabStateOfWindowsNotInInitialListing:doc];
     NSMutableArray<NSArray *> *windowsToOpen = [NSMutableArray array];
     BOOL haveHidden = NO;
@@ -945,7 +963,6 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     // wait for the initial list-windows and pin each window at its current size first.
     const BOOL deferSetSize = [self canPinWindowSizes];
     _deferredInitialClientSize = deferSetSize ? [NSValue valueWithSize:NSMakeSize(size.width, size.height)] : nil;
-    NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@", [self listWindowsDetailedFormat]];
     NSString *listSessionsCommand = @"list-sessions -F \"#{session_id} #{session_name}\"";
     NSString *getAffinitiesCommand = [NSString stringWithFormat:@"show -v -q -t $%d @affinities", sessionId_];
     NSString *getPerWindowSettingsCommand = [NSString stringWithFormat:@"show -v -q -t $%d @per_window_settings", sessionId_];
@@ -1023,14 +1040,23 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                          responseSelector:@selector(listSessionsResponse:)
                                            responseObject:nil
                                                     flags:0],
-                           [gateway_ dictionaryForCommand:listWindowsCommand
-                                           responseTarget:self
-                                         responseSelector:@selector(initialListWindowsResponse:)
-                                           responseObject:nil
-                                                    flags:0] ];
+                           [self initialListWindowsCommand] ];
     [gateway_ sendCommandList:[commands filteredArrayUsingBlock:^BOOL(id anObject) {
         return ![anObject isKindOfClass:[NSNull class]];
     }]];
+}
+
+- (NSDictionary *)initialListWindowsCommand {
+    NSString *command = [NSString stringWithFormat:@"list-windows -F %@", [self listWindowsDetailedFormat]];
+    return [gateway_ dictionaryForCommand:command
+                           responseTarget:self
+                         responseSelector:@selector(initialListWindowsResponse:)
+                           responseObject:nil
+                                    flags:0];
+}
+
+- (void)sendInitialListWindowsCommand {
+    [gateway_ sendCommandList:@[ [self initialListWindowsCommand] ]];
 }
 
 // Returns the mutable set of session GUIDs we're attached to.
