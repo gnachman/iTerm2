@@ -7087,6 +7087,11 @@ typedef struct {
 }
 
 - (void)collectTiledLeavesInTmuxParseTree:(NSDictionary *)node into:(NSMutableArray<NSDictionary *> *)leaves {
+    if (!node) {
+        // No visible layout: tmux before 2.2 doesn't send one, and tmux sometimes leaves it
+        // empty. A nil node's type reads as 0, which is kLeafLayoutNode.
+        return;
+    }
     if ([node[kLayoutDictNodeType] intValue] == kLeafLayoutNode) {
         [leaves addObject:node];
         return;

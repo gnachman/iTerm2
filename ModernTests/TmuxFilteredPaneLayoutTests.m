@@ -27,6 +27,7 @@
                            tmuxController:(TmuxController *)tmuxController;
 - (void)replaceActiveSessionWithSyntheticSession:(PTYSession *)newSession;
 - (void)setTmuxWindow:(int)window;
+- (PTYSession *)tmuxZoomedSessionInVisibleParseTree:(NSDictionary *)visibleParseTree;
 @end
 
 @interface TmuxFilteredPaneLayoutTests : XCTestCase
@@ -282,6 +283,27 @@
     XCTAssertNotNil(standInPane);
     XCTAssertFalse([[standInPane valueForKey:@"isHiddenByTmux"] boolValue],
                    @"tmux shows float %%2, so it must not be hidden");
+}
+
+#pragma mark - A zoomed window without a visible layout
+
+// tmux before 2.2 sends no visible layout, and tmux sometimes leaves it empty. A nil tree used to
+// be taken for a leaf and inserted into an array, which threw.
+- (void)testZoomedSessionForMissingVisibleLayoutIsNil {
+    PTYSession *standIn = nil;
+    NSArray<PTYSession *> *panes = nil;
+    PTYTab *tab = [self tabWithFilteredPaneTwo:&standIn panes:&panes];
+    XCTAssertNil([tab tmuxZoomedSessionInVisibleParseTree:nil]);
+}
+
+- (void)testZoomedLayoutWithoutVisibleLayoutDoesNotThrow {
+    PTYSession *standIn = nil;
+    NSArray<PTYSession *> *panes = nil;
+    PTYTab *tab = [self tabWithFilteredPaneTwo:&standIn panes:&panes];
+    XCTAssertNoThrow([tab setTmuxLayout:[self parseTreeForLayout:@"abcd,80x24,0,0{26x24,0,0,0,26x24,27,0,1,26x24,54,0,2}"]
+                          visibleLayout:nil
+                         tmuxController:_controller
+                                 zoomed:@YES]);
 }
 
 @end
