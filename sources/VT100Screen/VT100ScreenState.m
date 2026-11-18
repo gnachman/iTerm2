@@ -315,6 +315,12 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     }
 }
 
+static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
+    NSInteger location = MAX(0, lowerBound);
+    NSInteger length = MAX(0, upperBound - location);
+    return NSMakeRange(location, length);
+}
+
 // Search for images in the mutable area of the old instance of VT100ScreenState and check in the
 // updated version if any cell of that image is still present. If not, it can be released.
 - (void)releaseOverwrittenImagesIn:(VT100ScreenMutableState *)updated {
@@ -330,8 +336,8 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
         return;
     }
     Interval *topOfScreen = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0, self.numberOfScrollbackLines, 0, self.numberOfScrollbackLines)];
-    const int height = self.height;
-    NSMutableArray<iTermMark *> *marksToRemove = [NSMutableArray array];
+    NSMutableArray<iTermImageMark *> *candidates = [NSMutableArray array];
+    __block int tallestImage = 0;
     [_intervalTree enumerateLimitsAfter:topOfScreen.location
                                   block:^(id<IntervalTreeObject> object, BOOL *stop) {
         DLog(@"Consider %@", object);
@@ -340,57 +346,67 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
             DLog(@"Not an image");
             return;
         }
-        VT100GridAbsCoordRange coordRange = [self absCoordRangeForInterval:imageMark.entry.interval];
-        iTermMark *progenitor = imageMark.progenitor;
-        if (progenitor != nil &&
-            ![updated imageInUse:imageMark above:coordRange.end.y searchHeight:height]) {
-            DLog(@"Not in use. Add to delete list.");
-            [marksToRemove addObject:progenitor];
-        }
+        [candidates addObject:imageMark];
+        iTermImageInfo *imageInfo = [[iTermImageRegistry sharedInstance] infoForCode:imageMark.imageCode.intValue];
+        tallestImage = MAX(tallestImage, (int)imageInfo.size.height);
     }];
+    if (candidates.count == 0) {
+        return;
+    }
+    // A mark sits on the line below its image, but it stays put when a scroll region or inserted
+    // lines move the image's cells, so look for each image's code anywhere on screen rather than
+    // just above its mark. Include enough history to cover an image partly scrolled off the top.
+    NSIndexSet *codesInUse = [updated imageCodesOnScreenAndInHistoryLines:tallestImage];
+    const int height = self.height;
+    NSMutableArray<iTermMark *> *marksToRemove = [NSMutableArray array];
+    for (iTermImageMark *imageMark in candidates) {
+        iTermMark *progenitor = imageMark.progenitor;
+        if (progenitor == nil) {
+            continue;
+        }
+        const int code = imageMark.imageCode.intValue;
+        if ([[iTermImageRegistry sharedInstance] infoForCode:code] != nil) {
+            if ([codesInUse containsIndex:code]) {
+                continue;
+            }
+            const long long markAbsY = [self absCoordRangeForInterval:imageMark.entry.interval].end.y;
+            if ([updated anyFoldInAbsRange:NSRangeFromBounds(markAbsY - height, markAbsY)
+                         containsImageMark:imageMark]) {
+                continue;
+            }
+        } else {
+            RLog(@"No image info with code %d", code);
+        }
+        DLog(@"Not in use. Add to delete list.");
+        [marksToRemove addObject:progenitor];
+    }
     for (iTermMark *mark in marksToRemove) {
         DLog(@"Remove %@", mark);
         [[updated mutableIntervalTree] removeObject:mark];
     }
 }
 
-static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
-    NSInteger location = MAX(0, lowerBound);
-    NSInteger length = MAX(0, upperBound - location);
-    return NSMakeRange(location, length);
-}
-
-// Search cells backwards from the image mark to see if any of it is still referenced.
-- (BOOL)imageInUse:(iTermImageMark *)mark above:(long long)aboveAbsY searchHeight:(int)searchHeight {
-    const int code = mark.imageCode.intValue;
-    iTermImageInfo *imageInfo = [[iTermImageRegistry sharedInstance] infoForCode:code];
-    if (!imageInfo) {
-        RLog(@"No image info with code %d", code);
-        return NO;
-    }
-    const long long aboveY = aboveAbsY - self.cumulativeScrollbackOverflow;
-    if (aboveY < 0) {
-        DLog(@"Image has scrolled off");
-        return NO;
-    }
-    if ([self anyFoldInAbsRange:NSRangeFromBounds(aboveAbsY - searchHeight, aboveAbsY)
-              containsImageMark:mark]) {
-        return YES;
-    }
-    const long long startY = MAX(0, aboveY - imageInfo.size.height);
-    __block BOOL found = NO;
-    [self enumerateLinesInRange:NSMakeRange(startY, aboveY - startY + 1)
+// Codes of the inline images with a cell on screen or in the last `historyLines` lines of history.
+- (NSIndexSet *)imageCodesOnScreenAndInHistoryLines:(int)historyLines {
+    const long long screenTop = self.numberOfScrollbackLines;
+    const long long firstLine = MAX(0, screenTop - historyLines);
+    const long long lastLine = screenTop + self.height - 1;
+    NSMutableIndexSet *codes = [NSMutableIndexSet indexSet];
+    [self enumerateLinesInRange:NSMakeRange(firstLine, lastLine - firstLine + 1)
                           block:^(int line,
                                   ScreenCharArray *sca,
                                   iTermImmutableMetadata metadata,
                                   BOOL *stop) {
-        DLog(@"Check line %d: %@", line, sca);
-        if ([self screenCharArray:sca containsImageCode:code]) {
-            found = YES;
-            *stop = YES;
+        const int width = sca.length;
+        const screen_char_t *chars = sca.line;
+        for (int i = 0; i < width; i++) {
+            if (chars[i].image && !chars[i].virtualPlaceholder) {
+                [codes addIndex:chars[i].code];
+            }
         }
     }];
-    return found;
+    DLog(@"Image codes in use: %@", codes);
+    return codes;
 }
 
 - (BOOL)anyFoldInAbsRange:(NSRange)lineRange containsImageMark:(iTermImageMark *)imageMark {
@@ -403,17 +419,6 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
     }];
 }
 
-- (BOOL)screenCharArray:(ScreenCharArray *)sca containsImageCode:(int)code {
-    const int width = sca.length;
-    const screen_char_t *line = sca.line;
-    for (int i = 0; i < width; i++) {
-        if (line[i].image && line[i].code == code && !line[i].virtualPlaceholder) {
-            DLog(@"Found code %d at column %d", code, i);
-            return YES;
-        }
-    }
-    return NO;
-}
 
 - (void)mergeFrom:(VT100ScreenMutableState *)source {
     [self copyFastStuffFrom:source];

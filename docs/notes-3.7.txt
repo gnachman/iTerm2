@@ -252,6 +252,11 @@ Bug Fixes:
   could crash iTerm2’s image decoder or use
   gigabytes of memory. Images with more pixels
   than 8192×8192 are now rejected.
+- Inline images drawn over by newer ones, as a
+  program showing a live picture does, stayed
+  in memory until the tab was closed or its
+  buffer cleared, so memory could grow by
+  gigabytes in minutes. Issue 13214.
 - Fixed a crash when typing a very long word or
   certain unusual characters into the Settings
   search field.

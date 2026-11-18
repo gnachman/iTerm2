@@ -1197,7 +1197,9 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
         return NO;
     }
     IntervalTreeValue *value = node.data;
-    if (value.maxLimit < minimumLimit) {
+    // Prune on the subtree's limit, not this node's own: entries that end before minimumLimit
+    // can sit above newer ones that end after it.
+    if (value.maxLimitAtSubtree < minimumLimit) {
         return NO;
     }
     for (IntervalTreeEntry *entry in value.entries) {

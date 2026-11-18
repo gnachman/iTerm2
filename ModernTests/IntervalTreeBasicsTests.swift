@@ -53,6 +53,23 @@ final class IntervalTreeBasicsTests: XCTestCase {
                        line: line)
     }
 
+    // MARK: - enumerateLimitsAfter
+
+    /// A node whose own entries all end before the threshold must still have its subtrees
+    /// searched; newer entries hang below it. Issue 13214: an older mark at the root hid every
+    /// on-screen image mark from the overwritten-image scan, so no image was ever released.
+    func testEnumerateLimitsAfterVisitsDescendantsOfANodeThatEndsEarly() {
+        let objects = (0..<7).map { _ in PTYAnnotation() }
+        for (line, object) in objects.enumerated() {
+            tree.add(object, with: makeInterval(Int64(line * 11), 10))
+        }
+        var seen = Set<ObjectIdentifier>()
+        tree.enumerateLimits(after: 5 * 11) { object, _ in
+            seen.insert(ObjectIdentifier(object as AnyObject))
+        }
+        XCTAssertEqual(seen, Set([ObjectIdentifier(objects[5]), ObjectIdentifier(objects[6])]))
+    }
+
     // MARK: - Basic queries
 
     func testEmptyTreeHasNoObjectsInInterval() {
