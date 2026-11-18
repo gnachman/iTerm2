@@ -142,6 +142,9 @@ static const NSTimeInterval kTmuxServerLocalityRetryWindow = 10;
     // The client size to set once the initial list-windows has told us the windows' sizes, or nil.
     // See -openWindowsOfSize:.
     NSValue *_deferredInitialClientSize;
+    // Whether pinning grows windows with split panes that are smaller than
+    // _deferredInitialClientSize to it. Windows with one pane always grow.
+    BOOL _deferredInitialClientSizeGrowsSplitWindows;
     // Backs the serverIsLocal property, which has a hand-written getter below.
     BOOL _serverIsLocal;
     // Whether the serverIsLocal lookup has ever produced an answer, as opposed to failing. See
@@ -734,6 +737,10 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 // smaller than the profile (such as the 80x24 one tmux -CC new makes) grows to the profile's size,
 // as it did when the client size was sent before listing. Windows iTerm2 does not open (hidden
 // ones, for example) stay pinned, so they keep their size instead of following this client's.
+// Windows with split panes don't grow when the client size comes from the window that will hold
+// them as tabs. That size is measured from the window's frame, and a tab with split panes needs a
+// larger frame than a single pane of the same size, so growing to it would widen the window on
+// every attach.
 // Returns YES if any window grows, in which case the listing is stale.
 - (BOOL)pinWindowSizesThenSetDeferredClientSizeForInitialListing:(TSVDocument *)doc {
     if (!_deferredInitialClientSize) {
@@ -751,8 +758,15 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         if (wid < 0 || size.width < 1 || size.height < 1) {
             continue;
         }
-        const NSSize pinnedSize = NSMakeSize(MAX(size.width, clientSize.width),
-                                             MAX(size.height, clientSize.height));
+        NSString *const layout = [doc valueInRecord:record forField:@"window_layout"];
+        // Floating panes don't change the frame a tab needs, so only tiled panes count.
+        NSDictionary *const parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:layout];
+        const NSInteger tiledPanes = ((NSInteger)[[TmuxLayoutParser sharedInstance] windowPanesInParseTree:parseTree].count -
+                                      (NSInteger)[(NSArray *)parseTree[kLayoutDictFloatingPanesKey] count]);
+        const BOOL hasSplits = tiledPanes > 1;
+        const BOOL grow = _deferredInitialClientSizeGrowsSplitWindows || !hasSplits;
+        const NSSize pinnedSize = grow ? NSMakeSize(MAX(size.width, clientSize.width),
+                                                    MAX(size.height, clientSize.height)) : size;
         if (!NSEqualSizes(pinnedSize, size)) {
             anyWindowGrows = YES;
         }
@@ -938,7 +952,13 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)openWindowsOfSize:(VT100GridSize)size {
-    DLog(@"openWindowsOfSize: %@", VT100GridSizeDescription(size));
+    const iTermOpenTmuxWindowsMode openWindowsMode = [iTermPreferences intForKey:kPreferenceKeyOpenTmuxWindowsIn];
+    [self openWindowsOfSize:size
+growingSplitWindowsToClientSize:openWindowsMode != kOpenTmuxWindowsAsNativeTabsInExistingWindow];
+}
+
+- (void)openWindowsOfSize:(VT100GridSize)size growingSplitWindowsToClientSize:(BOOL)growSplitWindows {
+    DLog(@"openWindowsOfSize: %@ growSplitWindows=%@", VT100GridSizeDescription(size), @(growSplitWindows));
 
     // There's a (hopefully) minor race condition here. When we initially connect to
     // a session we get its @iterm2_id. If one doesn't exist, it is assigned. This
@@ -967,6 +987,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     // wait for the initial list-windows and pin each window at its current size first.
     const BOOL deferSetSize = [self canPinWindowSizes];
     _deferredInitialClientSize = deferSetSize ? [NSValue valueWithSize:NSMakeSize(size.width, size.height)] : nil;
+    _deferredInitialClientSizeGrowsSplitWindows = growSplitWindows;
     NSString *listSessionsCommand = @"list-sessions -F \"#{session_id} #{session_name}\"";
     NSString *getAffinitiesCommand = [NSString stringWithFormat:@"show -v -q -t $%d @affinities", sessionId_];
     NSString *getPerWindowSettingsCommand = [NSString stringWithFormat:@"show -v -q -t $%d @per_window_settings", sessionId_];
