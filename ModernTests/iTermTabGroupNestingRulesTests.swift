@@ -95,4 +95,33 @@ final class iTermTabGroupNestingRulesTests: XCTestCase {
     func testTopLevelGroupMadeTopLevelStaysPut() {
         XCTAssertEqual(order("A", to: nil, ["A", "-"]), ["A", "-"])
     }
+
+    // MARK: - Depth violations
+
+    private func violations(_ tabs: [String]) -> [String] {
+        let (groupIDs, parentIDs) = split(tabs)
+        return iTermTabGroupNesting.groupsViolatingNestingDepth(groupIDs: groupIDs, parentIDs: parentIDs)
+    }
+
+    func testValidNestingHasNoViolations() {
+        XCTAssertEqual(violations(["P", "P/C", "P/D", "-", "S", "S/T"]), [])
+    }
+
+    // The field report: Q was both a parent (of F) and a sub-group of S.
+    func testGroupThatIsBothParentAndSubgroupViolates() {
+        XCTAssertEqual(violations(["Q/F", "Q/F", "S", "S/Q", "-"]), ["Q"])
+    }
+
+    // A parent with no direct tabs appears only as a parent id.
+    func testParentWithoutDirectTabsStillCounts() {
+        XCTAssertEqual(violations(["S", "S/Q", "Q/F"]), ["Q"])
+    }
+
+    func testGroupNestedInItselfViolates() {
+        XCTAssertEqual(violations(["G/G", "-"]), ["G"])
+    }
+
+    func testEachViolatorIsReportedOnceInTabOrder() {
+        XCTAssertEqual(violations(["A/B", "B/C", "A/B", "C/D", "B/C"]), ["B", "C"])
+    }
 }

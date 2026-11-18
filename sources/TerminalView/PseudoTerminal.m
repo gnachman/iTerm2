@@ -307,6 +307,11 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     // tabs, which can funnel back through reorder plumbing).
     BOOL _enforcingTabGroupContiguity;
 
+    // YES while -restoreTabsFromArrangement: adds tabs. The nesting-depth repair
+    // runs once at the end so a bad saved arrangement is logged as such rather
+    // than as a reorder that broke the rule.
+    BOOL _restoringTabsFromArrangement;
+
     // Nonzero while a batch operation (duplicate, whole-group move/tear-off,
     // reorder) transiently selects tabs: auto-selecting a collapsed member would
     // otherwise fire -tabView:didSelectTabViewItem: and spuriously expand its
@@ -4639,6 +4644,7 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
                 partialAttachments:(NSDictionary *)partialAttachments
               largeContentProvider:(id<iTermLargeContentProvider>)largeContentProvider {
     BOOL openedAny = NO;
+    _restoringTabsFromArrangement = YES;
     for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
         NSDictionary<NSString *, PTYSession *> *sessionMap = nil;
         if (sessions) {
@@ -4658,12 +4664,19 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
                                  sessionMap:sessionMap
                        partialAttachments:partialAttachments
                                   options:options.count > 0 ? options : nil]) {
+            _restoringTabsFromArrangement = NO;
             return NO;
         }
         openedAny = YES;
     }
+    _restoringTabsFromArrangement = NO;
     if (!openedAny) {
         return NO;
+    }
+    // Arrangements are saved without validation, so one saved while a bug had
+    // nested groups too deeply would bring that back on every restore.
+    if ([self repairTabGroupNestingDepthAfter:@"restoring an arrangement"]) {
+        [self tabsDidReorder];
     }
     [self updateUseTransparency];
     return YES;
@@ -9733,6 +9746,40 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     *parentIDsOut = parentIDs;
 }
 
+// Make top-level every group that both has a parent and is itself a parent
+// (nesting is one level deep), keeping its own sub-groups under it. Returns YES
+// if anything changed; the caller must then run -tabsDidReorder (or already be
+// in it) so the order follows the repaired hierarchy.
+- (BOOL)repairTabGroupNestingDepthAfter:(NSString *)context {
+    NSArray *groupIDs = nil;
+    NSArray *parentIDs = nil;
+    [self getTabGroupIDs:&groupIDs parentIDs:&parentIDs];
+    NSArray<NSString *> *violators = [iTermTabGroupNesting groupsViolatingNestingDepthWithGroupIDs:groupIDs
+                                                                                         parentIDs:parentIDs];
+    if (violators.count == 0) {
+        return NO;
+    }
+    NSMutableArray<NSString *> *hierarchy = [NSMutableArray array];
+    [[self tabs] enumerateObjectsUsingBlock:^(PTYTab *tab, NSUInteger i, BOOL *stop) {
+        [hierarchy addObject:[NSString stringWithFormat:@"%@/%@",
+                              tab.nestedTabGroupParentID ?: @"-",
+                              tab.tabGroupID ?: @"-"]];
+    }];
+    // This only happens when there is a bug, so the stack trace is affordable
+    // and is the best clue to which operation caused it.
+    RLog(@"tabGroup: nesting deeper than one level after %@; making %@ top-level. parent/group per tab: [%@]\n%@",
+         context,
+         [violators componentsJoinedByString:@", "],
+         [hierarchy componentsJoinedByString:@", "],
+         [[NSThread callStackSymbols] componentsJoinedByString:@"\n"]);
+    for (PTYTab *tab in [self tabs]) {
+        if (tab.tabGroupID && [violators containsObject:tab.tabGroupID]) {
+            [tab clearTabGroupParent];
+        }
+    }
+    return YES;
+}
+
 // Why `groupID` can't be nested in `parentID` (nil: made top-level), or nil if
 // it can. English, for the API and the log.
 - (NSString *)reasonTabGroup:(NSString *)groupID cannotMoveToParent:(NSString *)parentID {
@@ -11035,6 +11082,12 @@ deferringExpansion:(BOOL)deferExpansion {
 }
 
 - (void)tabsDidReorder {
+    // Nesting is one level deep. Nothing should break that, so a violation here
+    // means some operation has a bug: log it, then repair it before the
+    // contiguity pass orders tabs by the (repaired) hierarchy.
+    if (!_restoringTabsFromArrangement) {
+        [self repairTabGroupNestingDepthAfter:@"a reorder"];
+    }
     // Repair the group-contiguity invariant first so everything below (and the
     // persisted arrangement) sees a valid order regardless of how the reorder
     // happened.

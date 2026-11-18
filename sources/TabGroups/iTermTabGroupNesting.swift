@@ -116,4 +116,30 @@ final class iTermTabGroupNesting: NSObject {
                      groupIDs: groupIDs.map { $0 as? String },
                      parentIDs: parentIDs.map { $0 as? String }).map { NSNumber(value: $0) }
     }
+
+    // The groups that break the one-level rule: each has a parent and is itself
+    // some group's parent, or is nested in itself. Making each of them top-level
+    // restores the rule; their own sub-groups stay nested under them. Listed once
+    // each, in tab order. `parentIDs[i]` must be nil when `groupIDs[i]` is.
+    static func groupsViolatingNestingDepth(groupIDs: [String?],
+                                            parentIDs: [String?]) -> [String] {
+        it_assert(groupIDs.count == parentIDs.count, "parallel arrays required")
+        let parents = Set(parentIDs.compactMap { $0 })
+        var result = [String]()
+        for (groupID, parentID) in zip(groupIDs, parentIDs) {
+            guard let groupID, let parentID, !result.contains(groupID) else {
+                continue
+            }
+            if parentID == groupID || parents.contains(groupID) {
+                result.append(groupID)
+            }
+        }
+        return result
+    }
+
+    @objc(groupsViolatingNestingDepthWithGroupIDs:parentIDs:)
+    static func groupsViolatingNestingDepth(groupIDs: [Any], parentIDs: [Any]) -> [String] {
+        return groupsViolatingNestingDepth(groupIDs: groupIDs.map { $0 as? String },
+                                           parentIDs: parentIDs.map { $0 as? String })
+    }
 }
