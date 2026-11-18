@@ -66,4 +66,26 @@ final class TmuxResizeOscillationGuardTests: XCTestCase {
         XCTAssertFalse(sut.shouldRequest(size: wide, window: 0, now: 0))
         XCTAssertTrue(sut.shouldRequest(size: wide, window: 0, now: 10))
     }
+
+    // A refused size may be the one that fits, so the caller retries once after the interval.
+    // A loop that is still going must not retry forever, so only a reset re-arms the retry.
+    func testRetriesOnceAfterRefusalUntilReset() {
+        let sut = TmuxResizeOscillationGuard(interval: 3, maximumFlips: 1)
+        XCTAssertTrue(sut.shouldRequest(size: narrow, window: 0, now: 0))
+        XCTAssertTrue(sut.shouldRequest(size: wide, window: 0, now: 0))
+        XCTAssertTrue(sut.shouldRequest(size: narrow, window: 0, now: 0))
+        XCTAssertFalse(sut.shouldRequest(size: wide, window: 0, now: 0))
+        XCTAssertTrue(sut.shouldRetryAfterRefusal())
+        XCTAssertFalse(sut.shouldRetryAfterRefusal())
+
+        // The retry, after the interval, is allowed.
+        XCTAssertTrue(sut.shouldRequest(size: wide, window: 0, now: 3.25))
+        XCTAssertTrue(sut.shouldRequest(size: narrow, window: 0, now: 3.26))
+        XCTAssertTrue(sut.shouldRequest(size: wide, window: 0, now: 3.27))
+        XCTAssertFalse(sut.shouldRequest(size: narrow, window: 0, now: 3.28))
+        XCTAssertFalse(sut.shouldRetryAfterRefusal())
+
+        sut.reset()
+        XCTAssertTrue(sut.shouldRetryAfterRefusal())
+    }
 }

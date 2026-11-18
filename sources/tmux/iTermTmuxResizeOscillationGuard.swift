@@ -24,11 +24,13 @@ class TmuxResizeOscillationGuard: NSObject {
     }
 
     // Requests further apart than this are not considered part of a ping-pong.
-    private let interval: TimeInterval
+    @objc let interval: TimeInterval
     // How many times a window may return to the size it had two requests ago before requests are
     // refused.
     private let maximumFlips: Int
     private var histories = [Int32: History]()
+    // Whether a refusal has already used up its retry. See shouldRetryAfterRefusal().
+    private var retried = false
 
     @objc
     init(interval: TimeInterval, maximumFlips: Int) {
@@ -69,10 +71,25 @@ class TmuxResizeOscillationGuard: NSObject {
         return true
     }
 
+    // Call after a refusal. Returns true if the caller should fit the windows again once
+    // `interval` has passed. A refused request may be the one that fits, and if the flipping has
+    // stopped nothing else would send it, leaving tmux and iTerm2 disagreeing about the size. It
+    // returns true only once until the next reset, so a loop that is still going can't keep
+    // retrying in the background.
+    @objc
+    func shouldRetryAfterRefusal() -> Bool {
+        if retried {
+            return false
+        }
+        retried = true
+        return true
+    }
+
     // Call when the size changes for a reason other than a tmux layout change, such as the user
     // resizing the window.
     @objc
     func reset() {
         histories.removeAll()
+        retried = false
     }
 }

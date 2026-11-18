@@ -1658,14 +1658,40 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         ![_resizeOscillationGuard shouldRequestSize:minSize
                                           forWindow:-1
                                                 now:[NSDate it_timeSinceBoot]]) {
+        [self retryFitAfterOscillationRefusal];
         return;
     }
     DLog(@"fitLayoutToWindows setting client size to %@", NSStringFromSize(minSize));
     [self setClientSize:minSize];
 }
 
+// Once the guard's window has passed, ask again for the sizes the windows want.
+- (void)retryFitAfterOscillationRefusal {
+    if (![_resizeOscillationGuard shouldRetryAfterRefusal]) {
+        DLog(@"Not scheduling another fit after a resize refusal: already retried");
+        return;
+    }
+    DLog(@"Will fit tmux windows again after a resize refusal");
+    __weak __typeof(self) weakSelf = self;
+    // A little past the interval so the guard's history has expired.
+    const NSTimeInterval delay = _resizeOscillationGuard.interval + 0.25;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [weakSelf fitLayoutToWindowsAfterOscillationRefusal];
+    });
+}
+
+- (void)fitLayoutToWindowsAfterOscillationRefusal {
+    if (detached_ || !gateway_) {
+        DLog(@"Not fitting tmux windows after a resize refusal: detached");
+        return;
+    }
+    DLog(@"Fitting tmux windows after a resize refusal");
+    [self fitLayoutToWindowsInResponseToLayoutChange:YES];
+}
+
 - (void)fitLayoutToVariableSizeWindowsInResponseToLayoutChange:(BOOL)inResponseToLayoutChange {
     const NSTimeInterval now = [NSDate it_timeSinceBoot];
+    __block BOOL refused = NO;
     [self setWindowSizes:[_windowStates.allKeys mapWithBlock:^iTermTuple<NSString *, NSValue *> *(NSNumber *windowNumber) {
         iTermTmuxWindowState *state = _windowStates[windowNumber];
         PTYTab *tab = state.tab;
@@ -1675,11 +1701,15 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
             ![_resizeOscillationGuard shouldRequestSize:sizeValue.sizeValue
                                               forWindow:windowNumber.intValue
                                                     now:now]) {
+            refused = YES;
             return nil;
         }
         return [iTermTuple tupleWithObject:[NSString stringWithInt:windowNumber.intValue]
                                  andObject:sizeValue];
     }]];
+    if (refused) {
+        [self retryFitAfterOscillationRefusal];
+    }
 }
 
 - (void)setSize:(NSSize)size window:(int)window {
