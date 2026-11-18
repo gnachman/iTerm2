@@ -116,25 +116,20 @@ typedef NS_ENUM(NSInteger, NMSSHKnownHostStatus) {
 - (nonnull instancetype)initWithHost:(nonnull NSString *)host port:(NSInteger)port andUsername:(nonnull NSString *)username NS_DESIGNATED_INITIALIZER;
 
 /**
- Create and setup a new NMSSH instance using a chain of config files.
+ Create and setup a new NMSSH instance from settings resolved from ssh config
+ files (see NMSSHConfigResolver).
 
- The {host} is used to perform a lookup in NMSSHConfig objects in the
- {configs} array, which may alias the hostname and provide a port number or user
- name. All information relevant to {host} in {configs} will be combined into
- a single NMSSHHostConfig and saved in {self.hostConfig}. A config-
- provided value will override {host}, {defaultUsername} or {defaultPort}. If no
- match is found then {host} is used as the host name.
+ A value in {hostConfig} overrides {host}, {defaultUsername}, or {defaultPort}.
+ The combined settings are saved in {self.hostConfig}.
 
- @param host Host to search {configs} with. If no matching config specifies a
-     hostname, then {host} is the server hostname.
- @param configs An array of NMSSHHostConfig objects ordered from highest to
-     lowest priority
- @param defaultPort The port number (may be overridden by a config)
+ @param host The server hostname if {hostConfig} doesn't specify one.
+ @param hostConfig Settings resolved for {host}, or nil if there are none.
+ @param defaultPort The port number (may be overridden by {hostConfig})
  @param defaultUsername A valid username the server will accept (may be
-     overridden by a config)
+     overridden by {hostConfig})
  */
 - (nonnull instancetype)initWithHost:(nonnull NSString *)host
-                             configs:(nonnull NSArray *)configs
+                          hostConfig:(nullable NMSSHHostConfig *)hostConfig
                      withDefaultPort:(NSInteger)defaultPort
                      defaultUsername:(nonnull NSString *)defaultUsername;
 

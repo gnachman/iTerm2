@@ -1,27 +1,28 @@
 //
-//  NMSSHConfigCharacterizationTests.swift
+//  SSHConfigCharacterizationTests.swift
 //  ModernTests
 //
-//  Pins down NMSSHConfig behavior that iTerm2 relies on and that agrees with OpenSSH (or is a
-//  deliberate leniency), so a rewrite of the parser can't change it unnoticed. Where NMSSH
-//  disagrees with OpenSSH today, the test lives in NMSSHConfigOpenSSHDifferenceTests instead.
+//  Pins down config behavior iTerm2 relied on with NMSSH's original parser and that agrees
+//  with OpenSSH (or is a deliberate leniency). Written against the old parser before it was
+//  replaced, and now run against SSHConfigResolver to show the replacement keeps it.
 //
 
 import XCTest
-@testable import iTerm2SharedARC
+@_spi(Testing) import NMSSH
 
-final class NMSSHConfigCharacterizationTests: XCTestCase {
-    private func lookup(_ host: String,
-                        in contents: String,
-                        file: StaticString = #filePath,
-                        line: UInt = #line) throws -> NMSSHHostConfig? {
-        let config = try XCTUnwrap(NMSSHConfig(string: contents), "Config failed to parse",
-                                   file: file, line: line)
-        return config.hostConfig(forHost: host)
+final class SSHConfigCharacterizationTests: XCTestCase {
+    private var fixture: SSHConfigTestFixture!
+
+    override func setUpWithError() throws {
+        fixture = try SSHConfigTestFixture()
     }
 
-    private func identityFiles(_ hostConfig: NMSSHHostConfig?) -> [String] {
-        return (hostConfig?.identityFiles as? [String]) ?? []
+    override func tearDown() {
+        fixture = nil
+    }
+
+    private func lookup(_ host: String, in contents: String) throws -> NMSSHHostConfig {
+        return try fixture.resolve(host, in: contents)
     }
 
     // MARK: - Lexing
@@ -35,27 +36,26 @@ final class NMSSHConfigCharacterizationTests: XCTestCase {
                 IDENTITYFILE /keys/id
 
             """)
-        XCTAssertEqual(hostConfig?.hostname, "example.com")
-        XCTAssertEqual(hostConfig?.user, "alice")
-        XCTAssertEqual(hostConfig?.port, 2222)
-        XCTAssertEqual(identityFiles(hostConfig), ["/keys/id"])
+        XCTAssertEqual(hostConfig.hostname, "example.com")
+        XCTAssertEqual(hostConfig.user, "alice")
+        XCTAssertEqual(hostConfig.port, 2222)
+        XCTAssertEqual(hostConfig.identityFilePaths, ["/keys/id"])
     }
 
     func testTabsSeparateKeywordsAndValues() throws {
         let hostConfig = try lookup("web", in: "Host\tweb\n\tHostname\texample.com\n\tPort\t2222\n")
-        XCTAssertEqual(hostConfig?.hostname, "example.com")
-        XCTAssertEqual(hostConfig?.port, 2222)
+        XCTAssertEqual(hostConfig.hostname, "example.com")
+        XCTAssertEqual(hostConfig.port, 2222)
     }
 
     func testCRLFLineEndings() throws {
         let hostConfig = try lookup("web", in: "Host web\r\n    Hostname example.com\r\n    Port 2222\r\n")
-        XCTAssertEqual(hostConfig?.hostname, "example.com")
-        XCTAssertEqual(hostConfig?.port, 2222)
+        XCTAssertEqual(hostConfig.hostname, "example.com")
+        XCTAssertEqual(hostConfig.port, 2222)
     }
 
     func testNoTrailingNewline() throws {
-        let hostConfig = try lookup("web", in: "Host web\n    Hostname example.com")
-        XCTAssertEqual(hostConfig?.hostname, "example.com")
+        XCTAssertEqual(try lookup("web", in: "Host web\n    Hostname example.com").hostname, "example.com")
     }
 
     func testIndentedComment() throws {
@@ -65,7 +65,7 @@ final class NMSSHConfigCharacterizationTests: XCTestCase {
                 Hostname example.com
 
             """)
-        XCTAssertEqual(hostConfig?.hostname, "example.com")
+        XCTAssertEqual(hostConfig.hostname, "example.com")
     }
 
     func testTrailingCommentAfterValueIsIgnored() throws {
@@ -75,8 +75,8 @@ final class NMSSHConfigCharacterizationTests: XCTestCase {
                 Port 2222 # not the default
 
             """)
-        XCTAssertEqual(hostConfig?.hostname, "example.com")
-        XCTAssertEqual(hostConfig?.port, 2222)
+        XCTAssertEqual(hostConfig.hostname, "example.com")
+        XCTAssertEqual(hostConfig.port, 2222)
     }
 
     func testQuotedValue() throws {
@@ -86,8 +86,8 @@ final class NMSSHConfigCharacterizationTests: XCTestCase {
                 IdentityFile "/path with spaces/id"
 
             """)
-        XCTAssertEqual(hostConfig?.hostname, "example.com")
-        XCTAssertEqual(identityFiles(hostConfig), ["/path with spaces/id"])
+        XCTAssertEqual(hostConfig.hostname, "example.com")
+        XCTAssertEqual(hostConfig.identityFilePaths, ["/path with spaces/id"])
     }
 
     /// An unterminated quote drops that one line; the rest of the block still applies.
@@ -98,8 +98,8 @@ final class NMSSHConfigCharacterizationTests: XCTestCase {
                 Port 2222
 
             """)
-        XCTAssertNil(hostConfig?.hostname)
-        XCTAssertEqual(hostConfig?.port, 2222)
+        XCTAssertNil(hostConfig.hostname)
+        XCTAssertEqual(hostConfig.port, 2222)
     }
 
     /// Settings iTerm2 doesn't read (most of ssh_config) don't disturb the ones it does.
@@ -113,8 +113,8 @@ final class NMSSHConfigCharacterizationTests: XCTestCase {
                 User alice
 
             """)
-        XCTAssertEqual(hostConfig?.hostname, "example.com")
-        XCTAssertEqual(hostConfig?.user, "alice")
+        XCTAssertEqual(hostConfig.hostname, "example.com")
+        XCTAssertEqual(hostConfig.user, "alice")
     }
 
     /// A line with a keyword and no value is skipped without affecting the rest.
@@ -126,9 +126,9 @@ final class NMSSHConfigCharacterizationTests: XCTestCase {
                 Port 2222
 
             """)
-        XCTAssertNil(hostConfig?.hostname)
-        XCTAssertNil(hostConfig?.user)
-        XCTAssertEqual(hostConfig?.port, 2222)
+        XCTAssertNil(hostConfig.hostname)
+        XCTAssertNil(hostConfig.user)
+        XCTAssertEqual(hostConfig.port, 2222)
     }
 
     // MARK: - Host matching
@@ -136,15 +136,15 @@ final class NMSSHConfigCharacterizationTests: XCTestCase {
     /// A negated pattern after a positive one excludes the host.
     func testNegationAfterPositivePattern() throws {
         let contents = "Host a* !ab\n    Hostname example.com\n"
-        XCTAssertEqual(try lookup("abc", in: contents)?.hostname, "example.com")
-        XCTAssertNil(try lookup("ab", in: contents))
+        XCTAssertEqual(try lookup("abc", in: contents).hostname, "example.com")
+        XCTAssertTrue(try lookup("ab", in: contents).isEmpty)
     }
 
     /// Negation also works inside a comma-separated list on one Host argument.
     func testNegationInsideCommaList() throws {
         let contents = "Host a*,!ab\n    Hostname example.com\n"
-        XCTAssertEqual(try lookup("abc", in: contents)?.hostname, "example.com")
-        XCTAssertNil(try lookup("ab", in: contents))
+        XCTAssertEqual(try lookup("abc", in: contents).hostname, "example.com")
+        XCTAssertTrue(try lookup("ab", in: contents).isEmpty)
     }
 
     /// A host excluded from one block still matches later blocks.
@@ -157,20 +157,20 @@ final class NMSSHConfigCharacterizationTests: XCTestCase {
                 User outer
 
             """)
-        XCTAssertEqual(hostConfig?.user, "outer")
+        XCTAssertEqual(hostConfig.user, "outer")
     }
 
     func testDottedHostnamePatterns() throws {
         let contents = "Host *.example.com\n    User alice\n"
-        XCTAssertEqual(try lookup("web.example.com", in: contents)?.user, "alice")
-        XCTAssertNil(try lookup("example.com", in: contents))
-        XCTAssertNil(try lookup("web.example.org", in: contents))
+        XCTAssertEqual(try lookup("web.example.com", in: contents).user, "alice")
+        XCTAssertTrue(try lookup("example.com", in: contents).isEmpty)
+        XCTAssertTrue(try lookup("web.example.org", in: contents).isEmpty)
     }
 
     func testIPAddressPatterns() throws {
         let contents = "Host 10.0.0.*\n    User alice\n"
-        XCTAssertEqual(try lookup("10.0.0.5", in: contents)?.user, "alice")
-        XCTAssertNil(try lookup("10.0.1.5", in: contents))
+        XCTAssertEqual(try lookup("10.0.0.5", in: contents).user, "alice")
+        XCTAssertTrue(try lookup("10.0.1.5", in: contents).isEmpty)
     }
 
     // MARK: - Precedence
@@ -191,9 +191,9 @@ final class NMSSHConfigCharacterizationTests: XCTestCase {
                 User alice
 
             """)
-        XCTAssertEqual(hostConfig?.hostname, "web.example.com")
-        XCTAssertEqual(hostConfig?.port, 2222)
-        XCTAssertEqual(hostConfig?.user, "alice")
+        XCTAssertEqual(hostConfig.hostname, "web.example.com")
+        XCTAssertEqual(hostConfig.port, 2222)
+        XCTAssertEqual(hostConfig.user, "alice")
     }
 
     /// A `Host *` block that comes first beats a more specific block after it, as in OpenSSH.
@@ -206,8 +206,8 @@ final class NMSSHConfigCharacterizationTests: XCTestCase {
                 User alice
 
             """)
-        XCTAssertEqual(hostConfig?.port, 1)
-        XCTAssertEqual(hostConfig?.user, "alice")
+        XCTAssertEqual(hostConfig.port, 1)
+        XCTAssertEqual(hostConfig.user, "alice")
     }
 
     /// IdentityFile accumulates across matching blocks in file order, without duplicates.
@@ -222,32 +222,22 @@ final class NMSSHConfigCharacterizationTests: XCTestCase {
                 IdentityFile /keys/c
 
             """)
-        XCTAssertEqual(identityFiles(hostConfig), ["/keys/a", "/keys/b", "/keys/c"])
+        XCTAssertEqual(hostConfig.identityFilePaths, ["/keys/a", "/keys/b", "/keys/c"])
     }
 
     func testIdentityFileExpandsTilde() throws {
         let hostConfig = try lookup("web", in: "Host web\n    IdentityFile ~/.ssh/id_web\n")
-        XCTAssertEqual(identityFiles(hostConfig), [("~/.ssh/id_web" as NSString).expandingTildeInPath])
-    }
-
-    /// A matching block that sets nothing still counts as a match.
-    func testMatchingBlockWithNoSettings() throws {
-        let hostConfig = try lookup("web", in: "Host web\n")
-        XCTAssertNotNil(hostConfig)
-        XCTAssertNil(hostConfig?.hostname)
-        XCTAssertNil(hostConfig?.port)
-        XCTAssertNil(hostConfig?.user)
-        XCTAssertEqual(identityFiles(hostConfig), [])
+        XCTAssertEqual(hostConfig.identityFilePaths, [fixture.home + "/.ssh/id_web"])
     }
 
     // MARK: - Port
 
     func testPortAtTopOfRange() throws {
-        XCTAssertEqual(try lookup("web", in: "Host web\n    Port 65535\n")?.port, 65535)
+        XCTAssertEqual(try lookup("web", in: "Host web\n    Port 65535\n").port, 65535)
     }
 
     func testNegativePortIsIgnored() throws {
-        XCTAssertNil(try lookup("web", in: "Host web\n    Port -1\n")?.port)
+        XCTAssertNil(try lookup("web", in: "Host web\n    Port -1\n").port)
     }
 
     /// A negative port in an earlier block doesn't stop a later block from supplying one.
@@ -259,6 +249,6 @@ final class NMSSHConfigCharacterizationTests: XCTestCase {
                 Port 2222
 
             """)
-        XCTAssertEqual(hostConfig?.port, 2222)
+        XCTAssertEqual(hostConfig.port, 2222)
     }
 }

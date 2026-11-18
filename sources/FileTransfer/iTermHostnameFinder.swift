@@ -8,21 +8,16 @@
 import Foundation
 
 class iTermHostnameFinder: SSHHostnameFinder {
-    private let configs: () -> [NMSSHConfig]
+    private let configFiles: () -> [SSHConfigFile]
 
-    /// `configs` supplies the parsed ssh config files in precedence order. It is called on
-    /// each lookup so edits to the files take effect without restarting.
-    init(configs: @escaping () -> [NMSSHConfig] = { iTermSSHHelpers.configs() }) {
-        self.configs = configs
+    /// `configFiles` supplies the ssh config files to read, in precedence order. It is called
+    /// on each lookup, and the files are reread each time, so edits take effect immediately.
+    init(configFiles: @escaping () -> [SSHConfigFile] = { iTermSSHHelpers.defaultConfigFiles() }) {
+        self.configFiles = configFiles
     }
 
     func sshHostname(forHost host: String) -> String {
-        for config in configs() {
-            if let hostConfig = config.hostConfig(forHost: host),
-               let hostname = hostConfig.hostname {
-                return hostname
-            }
-        }
-        return host
+        let resolver = iTermSSHHelpers.resolver(forFiles: configFiles())
+        return resolver.hostConfig(forHost: host, user: nil, port: nil).hostname ?? host
     }
 }

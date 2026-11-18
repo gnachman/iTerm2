@@ -7,20 +7,23 @@
 
 #import <Foundation/Foundation.h>
 
-@class NMSSHConfig;
+@class NMSSHConfigFile;
+@class NMSSHConfigResolver;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermSSHHelpers : NSObject
 
-// Parses the ssh config files iTerm2 consults, in precedence order.
-+ (NSArray<NMSSHConfig *> *)configs;
+// The ssh config files iTerm2 consults, in precedence order: iTerm2's own ssh_config,
+// ~/.ssh/config, then the system files.
++ (NSArray<NMSSHConfigFile *> *)defaultConfigFiles;
 
-// The files `configs` reads, in precedence order.
-+ (NSArray<NSString *> *)defaultConfigPaths;
+// Resolves settings from defaultConfigFiles. Each lookup rereads the files, so edits take
+// effect immediately.
++ (NMSSHConfigResolver *)resolver;
 
-// Parses each file in `paths` that exists, skipping any that can't be read.
-+ (NSArray<NMSSHConfig *> *)configsAtPaths:(NSArray<NSString *> *)paths;
+// Resolves settings from `files`, logging problems in them with DLog.
++ (NMSSHConfigResolver *)resolverForFiles:(NSArray<NMSSHConfigFile *> *)files NS_SWIFT_NAME(resolver(forFiles:));
 
 @end
 

@@ -2,9 +2,9 @@
 //  SSHConfigLookupTests.swift
 //  ModernTests
 //
-//  How iTerm2 combines several ssh config files: iTermSSHHelpers loads them, SCP merges them
-//  through NMSSHSession, and the SSH integration resolves hostnames (and so SSHIdentity) with
-//  iTermHostnameFinder. Everything here reads fixture files from a temporary directory; nothing
+//  How iTerm2 uses its ssh config files: iTermSSHHelpers lists them and makes a resolver that
+//  reads them as one pass, SCP builds an NMSSHSession from what it resolves, and the SSH
+//  integration resolves hostnames (and so SSHIdentity) with iTermHostnameFinder. Everything here reads fixture files from a temporary directory; nothing
 //  reads the real ~/.ssh or /etc/ssh, and nothing connects to a server.
 //
 
@@ -35,37 +35,42 @@ final class SSHConfigLookupTests: XCTestCase {
         return root.appendingPathComponent(name).path
     }
 
+    private func files(_ paths: [String]) -> [SSHConfigFile] {
+        return paths.map { SSHConfigFile(path: $0, isUserConfig: true) }
+    }
+
     private func finder(_ paths: [String]) -> iTermHostnameFinder {
-        return iTermHostnameFinder(configs: { iTermSSHHelpers.configs(atPaths: paths) })
+        return iTermHostnameFinder(configFiles: { self.files(paths) })
     }
 
     // MARK: - iTermSSHHelpers
 
-    func testDefaultConfigPathsInPrecedenceOrder() {
-        let paths = iTermSSHHelpers.defaultConfigPaths()
-        XCTAssertEqual(paths.count, 4)
-        XCTAssertTrue(paths[0].hasSuffix("/ssh_config"), paths[0])
-        XCTAssertEqual(paths[1], ("~/.ssh/config" as NSString).expandingTildeInPath)
-        XCTAssertEqual(paths[2], "/etc/ssh/ssh_config")
-        XCTAssertEqual(paths[3], "/etc/ssh_config")
+    func testDefaultConfigFilesInPrecedenceOrder() {
+        let files = iTermSSHHelpers.defaultConfigFiles()
+        XCTAssertEqual(files.count, 4)
+        XCTAssertTrue(files[0].path.hasSuffix("/ssh_config"), files[0].path)
+        XCTAssertEqual(files[1].path, ("~/.ssh/config" as NSString).expandingTildeInPath)
+        XCTAssertEqual(files[2].path, "/etc/ssh/ssh_config")
+        XCTAssertEqual(files[3].path, "/etc/ssh_config")
+        XCTAssertEqual(files.map(\.isUserConfig), [true, true, false, false])
     }
 
-    /// Missing files, empty paths, and files that aren't UTF-8 are skipped; the rest load in order.
-    func testConfigsSkipUnreadableFilesAndKeepOrder() throws {
-        let first = try write("first", "Host *\n    Hostname first.example.com\n")
+    /// Missing files, empty paths, and files that aren't UTF-8 don't stop the others from
+    /// being read, and the first file to set a value wins.
+    func testUnreadableFilesDoNotStopOthers() throws {
         let notUTF8 = root.appendingPathComponent("binary").path
         try Data([0x48, 0x6f, 0x73, 0x74, 0x20, 0xff, 0xfe, 0x0a]).write(to: URL(fileURLWithPath: notUTF8))
-        let second = try write("second", "Host *\n    Hostname second.example.com\n")
+        let first = try write("first", "Host *\n    Hostname first.example.com\n")
+        let second = try write("second", "Host *\n    Hostname second.example.com\n    Port 2222\n")
 
-        let configs = iTermSSHHelpers.configs(atPaths: [first, missingPath("missing"), "", notUTF8, second])
-        XCTAssertEqual(configs.map { $0.hostConfig(forHost: "x")?.hostname },
-                       ["first.example.com", "second.example.com"])
+        let config = iTermSSHHelpers.resolver(forFiles: files([missingPath("missing"), "", notUTF8, first, second]))
+            .hostConfig(forHost: "x", user: nil, port: nil)
+        XCTAssertEqual(config.hostname, "first.example.com")
+        XCTAssertEqual(config.port, 2222)
     }
 
-    func testEmptyFileLoadsAsEmptyConfig() throws {
-        let configs = iTermSSHHelpers.configs(atPaths: [try write("empty", "")])
-        XCTAssertEqual(configs.count, 1)
-        XCTAssertEqual(configs.first?.hostConfigs.count, 0)
+    func testEmptyFileContributesNothing() throws {
+        XCTAssertEqual(finder([try write("empty", "")]).sshHostname(forHost: "web"), "web")
     }
 
     // MARK: - iTermHostnameFinder
@@ -149,18 +154,19 @@ final class SSHConfigLookupTests: XCTestCase {
 
     // MARK: - NMSSHSession (SCP)
 
+    /// Builds a session the way SCPFile does.
     private func session(host: String,
                          paths: [String],
                          defaultPort: Int = 22,
                          defaultUsername: String = "defaultuser") -> NMSSHSession {
+        let hostConfig = iTermSSHHelpers.resolver(forFiles: files(paths)).hostConfig(forHost: host, user: nil, port: nil)
         return NMSSHSession(host: host,
-                            configs: iTermSSHHelpers.configs(atPaths: paths),
+                            hostConfig: hostConfig,
                             withDefaultPort: defaultPort,
                             defaultUsername: defaultUsername)
     }
 
-    /// SCP merges every file with first-value-wins, unlike iTermHostnameFinder, which stops at
-    /// the first file with a HostName.
+    /// SCP reads every file as one pass, with the first value winning.
     func testSessionMergesAcrossFiles() throws {
         let user = try write("user", "Host web\n    Port 2222\n")
         let system = try write("system", """

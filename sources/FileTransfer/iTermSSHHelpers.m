@@ -11,39 +11,36 @@
 #import "NSFileManager+iTerm.h"
 
 #import <NMSSH/NMSSH.h>
+#import <NMSSH/NMSSH-Swift.h>
 
 @implementation iTermSSHHelpers
 
-+ (NSArray<NMSSHConfig *> *)configs {
-    return [self configsAtPaths:[self defaultConfigPaths]];
-}
-
-+ (NSArray<NSString *> *)defaultConfigPaths {
++ (NSArray<NMSSHConfigFile *> *)defaultConfigFiles {
     NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
-    return @[ [appSupport stringByAppendingPathComponent:@"ssh_config"] ?: @"",
-              [@"~/.ssh/config" stringByExpandingTildeInPath] ?: @"",
-              @"/etc/ssh/ssh_config",
-              @"/etc/ssh_config" ];
+    NSMutableArray<NMSSHConfigFile *> *files = [NSMutableArray array];
+    NSString *iTermConfig = [appSupport stringByAppendingPathComponent:@"ssh_config"];
+    if (iTermConfig.length) {
+        [files addObject:[[NMSSHConfigFile alloc] initWithPath:iTermConfig isUserConfig:YES]];
+    }
+    NSString *userConfig = [@"~/.ssh/config" stringByExpandingTildeInPath];
+    if (userConfig.length) {
+        [files addObject:[[NMSSHConfigFile alloc] initWithPath:userConfig isUserConfig:YES]];
+    }
+    [files addObject:[[NMSSHConfigFile alloc] initWithPath:@"/etc/ssh/ssh_config" isUserConfig:NO]];
+    [files addObject:[[NMSSHConfigFile alloc] initWithPath:@"/etc/ssh_config" isUserConfig:NO]];
+    return files;
 }
 
-+ (NSArray<NMSSHConfig *> *)configsAtPaths:(NSArray<NSString *> *)paths {
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSMutableArray *configs = [NSMutableArray array];
-    for (NSString *path in paths) {
-        if (path.length == 0) {
-            DLog(@"Zero length path in configs paths %@", paths);
-            continue;
-        }
-        if ([fileManager fileExistsAtPath:path]) {
-            NMSSHConfig *config = [NMSSHConfig configFromFile:path];
-            if (config) {
-                [configs addObject:config];
-            } else {
-                XLog(@"Could not parse config file at %@", path);
-            }
-        }
-    }
-    return configs;
++ (NMSSHConfigResolver *)resolver {
+    return [self resolverForFiles:[self defaultConfigFiles]];
+}
+
++ (NMSSHConfigResolver *)resolverForFiles:(NSArray<NMSSHConfigFile *> *)files {
+    NMSSHConfigResolver *resolver = [[NMSSHConfigResolver alloc] initWithFiles:files];
+    resolver.logHandler = ^(NSString *message) {
+        DLog(@"ssh config: %@", message);
+    };
+    return resolver;
 }
 
 @end

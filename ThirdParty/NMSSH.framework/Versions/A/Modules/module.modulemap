@@ -4,3 +4,7 @@ framework module NMSSH {
 
   module * { export * }
 }
+
+module NMSSH.Swift {
+  header "NMSSH-Swift.h"
+}

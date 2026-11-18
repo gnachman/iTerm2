@@ -25,11 +25,18 @@
 			yggeElDuCNbnSt9rzx0JRygVOm1DpK5v8jqN38evE20=
 			</data>
 		</dict>
+		<key>Headers/NMSSH-Swift.h</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			RjU/mhjeMnrbX5YkNis1OzsSrK1lRvmGzqIEQ+d4Rns=
+			</data>
+		</dict>
 		<key>Headers/NMSSH.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			tqp7UQjc7P7mRFTSWHLD4s5O543cq5I2QUtWsQQS23k=
+			Zp42GOE59oMIPXuHhKiCzXt7Plph7ecN2Yz+8HFCajw=
 			</data>
 		</dict>
 		<key>Headers/NMSSHChannel.h</key>
@@ -44,13 +51,6 @@
 			<key>hash2</key>
 			<data>
 			CV9O5ZU06cPSFpEm84+JpTemgWtaIgeTLBxFcovn1fY=
-			</data>
-		</dict>
-		<key>Headers/NMSSHConfig.h</key>
-		<dict>
-			<key>hash2</key>
-			<data>
-			F+uMN0eeNk8nJXBWIVLh3iDuMwSkDF4J1UYK6zEjYVQ=
 			</data>
 		</dict>
 		<key>Headers/NMSSHHostConfig.h</key>
@@ -71,7 +71,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			aIMW19jAkE9M45erl9tf5jVh1i3NnCbBCwNTGHtrnkg=
+			mlBKS9lbYg7e8b98uzPI7DUjy4Fn7+AFAK1znVdmi6U=
 			</data>
 		</dict>
 		<key>Headers/NMSSHSessionDelegate.h</key>
@@ -95,11 +95,67 @@
 			GtTbIx8lG+HX8cdW9wmNNZrKKtLBIb9K1MVY4Z0PUMg=
 			</data>
 		</dict>
+		<key>Modules/NMSSH.swiftmodule/Project/arm64-apple-macos.swiftsourceinfo</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			rGqVW8u+f1fMgOkQwLz1qs7j5v0yLnUCURQleLVr8hs=
+			</data>
+		</dict>
+		<key>Modules/NMSSH.swiftmodule/Project/x86_64-apple-macos.swiftsourceinfo</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			5PTBA3QoTKNJdhBpdfTkPr+J9fULpo+eCwNH+E8PZn4=
+			</data>
+		</dict>
+		<key>Modules/NMSSH.swiftmodule/arm64-apple-macos.abi.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Qnesa0n4URGWAopawg9bGx36dUwkYV00BoCJ8LFzlyg=
+			</data>
+		</dict>
+		<key>Modules/NMSSH.swiftmodule/arm64-apple-macos.swiftdoc</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			2z6OqllWD9JP+9TtR6G2pAoAMknBa8lKHCq+15n8I04=
+			</data>
+		</dict>
+		<key>Modules/NMSSH.swiftmodule/arm64-apple-macos.swiftmodule</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			H+v98psnnZEA+/k2Xbb3p3acfyqoUfTXMbIYWqSr0Vw=
+			</data>
+		</dict>
+		<key>Modules/NMSSH.swiftmodule/x86_64-apple-macos.abi.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Qnesa0n4URGWAopawg9bGx36dUwkYV00BoCJ8LFzlyg=
+			</data>
+		</dict>
+		<key>Modules/NMSSH.swiftmodule/x86_64-apple-macos.swiftdoc</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			5ZauHO7tRMRtprkqrbw8AhwJvi5qPLx/4x9m2vlwbfo=
+			</data>
+		</dict>
+		<key>Modules/NMSSH.swiftmodule/x86_64-apple-macos.swiftmodule</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			4xwrAKUOab1mxba4b1jF6J5paN5HkZqUxZJVx0B88cA=
+			</data>
+		</dict>
 		<key>Modules/module.modulemap</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			hnwMuV6LBl1gM1GpTPfCAS3mUde3fOp6Bqtf86Sr50M=
+			lTfUV+dLLIAfbgLXcdI2eRDcZznnFu29oL66VMl05rA=
 			</data>
 		</dict>
 		<key>Resources/Info.plist</key>

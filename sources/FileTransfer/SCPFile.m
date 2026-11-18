@@ -9,7 +9,7 @@
 #import "SCPFile.h"
 #import "iTermUserDefaults.h"
 #import <NMSSH/NMSSH.h>
-#import <NMSSH/NMSSHConfig.h>
+#import <NMSSH/NMSSH-Swift.h>
 #import <NMSSH/NMSSHHostConfig.h>
 #import <NMSSH/libssh2.h>
 #include <errno.h>
@@ -310,11 +310,6 @@ static NSError *SCPFileError(NSString *description) {
 
 
 // This runs in a thread
-+ (NSArray<NMSSHConfig *> *)configs {
-    return [iTermSSHHelpers configs];
-}
-
-// This runs in a thread
 - (NSString *)filenameByExpandingMetasyntacticVariables:(NSString *)filename {
     filename = [filename stringByExpandingTildeInPath];
     NSDictionary *substitutions =
@@ -388,10 +383,16 @@ static NSError *SCPFileError(NSString *description) {
         self.session.delegate = self;
         effectivePort = self.session.port.intValue;
     } else {
-        RLog(@"Create seession to hostname=%@ configs=%@ port=%@ username=%@",
-             [self hostname], [SCPFile configs], @([self port]), self.path.username);
+        // The config's User and Port take precedence over the path's, so they're passed as
+        // defaults rather than to the resolver.
+        NMSSHHostConfig *hostConfig = [[iTermSSHHelpers resolver] hostConfigForHost:[self hostname]
+                                                                               user:nil
+                                                                               port:nil];
+        RLog(@"Create session to hostname=%@ port=%@ username=%@ resolved hostname=%@ port=%@ user=%@",
+             [self hostname], @([self port]), self.path.username,
+             hostConfig.hostname, hostConfig.port, hostConfig.user);
         self.session = [[NMSSHSession alloc] initWithHost:[self hostname]
-                                                  configs:[SCPFile configs]
+                                               hostConfig:hostConfig
                                           withDefaultPort:[self port]
                                           defaultUsername:self.path.username];
         effectivePort = self.session.port.intValue;

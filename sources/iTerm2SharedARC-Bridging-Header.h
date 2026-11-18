@@ -205,7 +205,7 @@
 #import "iTermLineBlockArray.h"
 #import "MovePaneController.h"
 #import <NMSSH/NMSSH.h>
-#import <NMSSH/NMSSHConfig.h>
+#import <NMSSH/NMSSH-Swift.h>
 #import <NMSSH/NMSSHHostConfig.h>
 #import "NSAlert+iTerm.h"
 #import "NSAppearance+iTerm.h"
