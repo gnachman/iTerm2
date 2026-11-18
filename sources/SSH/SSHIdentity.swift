@@ -31,6 +31,10 @@ public class SSHIdentity: NSObject, Codable {
         }
 
         var compactDescription: String {
+            return compactDescription(hostname: hostname)
+        }
+
+        func compactDescription(hostname: String) -> String {
             let hostport: String
             if port == 22 {
                 hostport = hostname
@@ -100,6 +104,29 @@ public class SSHIdentity: NSObject, Codable {
 
     public var stringIdentifier: String {
         return state.compactDescription
+    }
+
+    /// Whether `identifier` may be what stringIdentifier was for this identity before iTerm2
+    /// read ssh config the way ssh does. Only the hostname could differ: it was the host as
+    /// typed when only an included or matched block gives it a HostName, and a HostName kept
+    /// its capitalization where it is now lowercased.
+    func mayHaveHadStringIdentifier(_ identifier: String) -> Bool {
+        let marker = "\u{1}"
+        let template = state.compactDescription(hostname: marker)
+        guard let range = template.range(of: marker) else {
+            return false
+        }
+        let prefix = template[..<range.lowerBound]
+        let suffix = template[range.upperBound...]
+        guard identifier.count > prefix.count + suffix.count,
+              identifier.hasPrefix(prefix),
+              identifier.hasSuffix(suffix) else {
+            return false
+        }
+        let hostname = String(identifier.dropFirst(prefix.count).dropLast(suffix.count))
+        return [state.hostname, state.host].contains {
+            $0.caseInsensitiveCompare(hostname) == .orderedSame
+        }
     }
 
     public init?(stringIdentifier: String, hostnameFinder: SSHHostnameFinder)  {

@@ -130,6 +130,56 @@ final class IT2HostGrantTests: XCTestCase {
         XCTAssertNotNil(store.grant(forHost: "v@h"))
     }
 
+    // MARK: - Grants recorded before ssh config Include and Match were honored
+
+    /// "web" reached as alice, which the config now resolves to web.example.com.
+    private let webIdentity = SSHIdentity(host: "web", hostname: "web.example.com",
+                                          username: "it2-test-alice", port: 22)
+
+    private func store(withGrantFor host: String) -> IT2HostGrantStore {
+        let store = IT2HostGrantStore(backing: MemoryBacking())
+        store.add(IT2HostGrant(host: host, id: "1", secretSHA256: "aa", granted: Date()))
+        return store
+    }
+
+    // Before, a HostName that only an Include or Match supplied was invisible, so the key used
+    // the host as typed.
+    func testFallsBackToTheHostAsTyped() {
+        XCTAssertEqual(store(withGrantFor: "it2-test-alice@web").grant(for: webIdentity)?.id, "1")
+    }
+
+    // Before, a HostName kept its capitalization; now it is lowercased, as ssh does.
+    func testFallsBackToADifferentlyCapitalizedHostname() {
+        XCTAssertEqual(store(withGrantFor: "it2-test-alice@Web.Example.COM").grant(for: webIdentity)?.id, "1")
+    }
+
+    func testTheCurrentKeyWins() {
+        let store = store(withGrantFor: "it2-test-alice@web")
+        store.add(IT2HostGrant(host: webIdentity.stringIdentifier, id: "2", secretSHA256: "bb", granted: Date()))
+        XCTAssertEqual(store.grant(for: webIdentity)?.id, "2")
+    }
+
+    // Only the hostname may differ: another user, port, or host is a different grant.
+    func testTheFallbackKeepsUserPortAndHost() {
+        for host in ["it2-test-bob@web",
+                     "IT2-TEST-ALICE@web",
+                     "it2-test-alice@web port 2222",
+                     "it2-test-alice@other",
+                     "it2-test-alice@",
+                     "web"] {
+            XCTAssertNil(store(withGrantFor: host).grant(for: webIdentity), host)
+        }
+    }
+
+    func testRekeyMovesTheGrantToItsCurrentKey() throws {
+        let store = store(withGrantFor: "it2-test-alice@web")
+        let grant = try XCTUnwrap(store.grant(for: webIdentity))
+        store.rekey(grant, to: webIdentity.stringIdentifier)
+        XCTAssertEqual(store.all.map(\.host), [webIdentity.stringIdentifier])
+        XCTAssertEqual(store.grant(forHost: webIdentity.stringIdentifier)?.id, "1")
+        XCTAssertEqual(store.grant(forHost: webIdentity.stringIdentifier)?.secretSHA256, "aa")
+    }
+
     // Corrupt or foreign data in the default must not crash or invent grants.
     func testCorruptStorageYieldsNoGrants() {
         let backing = MemoryBacking()

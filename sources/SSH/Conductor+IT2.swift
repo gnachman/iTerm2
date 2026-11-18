@@ -814,7 +814,7 @@ extension Conductor {
             }
             // A host the user chose to always allow: read its half of the grant back before
             // bothering them. Only when that fails do we ask.
-            if let grant = Conductor.hostGrantStore.grant(forHost: self.sshIdentity.stringIdentifier),
+            if let grant = Conductor.hostGrantStore.grant(for: self.sshIdentity),
                let home = self.homeDirectory {
                 // Hold the seal while the file is read, so a match can resolve it and a teardown
                 // in the meantime can fail it closed. No announcement is on screen yet, so the
@@ -836,6 +836,9 @@ extension Conductor {
                         return
                     }
                     if verified {
+                        // A grant found under an older key for this host moves to its current
+                        // one, so later connections find it directly.
+                        Conductor.hostGrantStore.rekey(grant, to: self.sshIdentity.stringIdentifier)
                         self.resolveIT2Authorization(true, persist: true)
                         return
                     }
@@ -912,7 +915,8 @@ extension Conductor {
         let host = sshIdentity.stringIdentifier
         let token = IT2GrantToken.mint()
         // This Mac's previous grant for the host, which the new one replaces there too.
-        let previous = Conductor.hostGrantStore.grant(forHost: host)?.id
+        let previousGrant = Conductor.hostGrantStore.grant(for: sshIdentity)
+        let previous = previousGrant?.id
         framerExecPythonStatements(statements: IT2GrantToken.remoteWriteStatements(id: token.id,
                                                                                    secret: token.secret,
                                                                                    replacing: previous)) { [weak self] ok, output in
@@ -921,6 +925,9 @@ extension Conductor {
                 RLog("Could not write the it2 grant to the remote host")
                 self?.DLog("it2 grant write to \(host) failed: \(output)")
                 return
+            }
+            if let previousGrant, previousGrant.host != host {
+                Conductor.hostGrantStore.remove(host: previousGrant.host)
             }
             Conductor.hostGrantStore.add(IT2HostGrant(host: host,
                                                       id: token.id,
@@ -1005,13 +1012,12 @@ extension Conductor {
     // passed the gate (e.g. a running `monitor --follow`) are unaffected by a revoke; only
     // subsequent commands see the new decision. Must be called on the main thread.
     @objc func setIT2AuthorizationFromMenu(_ granted: Bool) {
-        let host = sshIdentity.stringIdentifier
-        if !granted && Conductor.hostGrantStore.grant(forHost: host) != nil {
+        if !granted, let grant = Conductor.hostGrantStore.grant(for: sshIdentity) {
             // Otherwise an always-allow grant would re-allow this host on its very next
             // connection, and switching it off here would seem not to have worked. Revoke
             // rather than just forget it, as Settings does, so other live connections to the
             // host that the grant let in ask again instead of carrying on without it.
-            Conductor.hostGrantStore.revoke(host: host)
+            Conductor.hostGrantStore.revoke(host: grant.host)
         }
         it2Authorized = granted
         // No-op when no prompt is pending; otherwise dismisses the on-screen announcement and

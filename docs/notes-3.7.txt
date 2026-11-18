@@ -1,5 +1,14 @@
 Version TBD (unreleased; built off master)
 
+Improvements:
+- Downloading and uploading files with scp and
+  the SSH integration now read your ssh config
+  the way ssh does, including Include and Match
+  lines, so hosts set up by tools like Lima
+  resolve correctly. Match exec blocks never
+  apply, because iTerm2 won’t run commands from
+  your config. Issue 13219.
+
 Bug Fixes:
 - A floating Session Note could be drawn behind
   the Clippings panel. It now stays on top.

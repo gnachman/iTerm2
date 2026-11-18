@@ -533,10 +533,11 @@ final class ConductorIT2CommandTests: XCTestCase {
     /// verifier is consulted.
     @MainActor
     private func conductorWithGrant(verifies: Bool,
-                                    home: String? = "/home/u") -> (Conductor, FakeIT2AuthDelegate, XCTestExpectation) {
+                                    home: String? = "/home/u",
+                                    key: ((Conductor) -> String)? = nil) -> (Conductor, FakeIT2AuthDelegate, XCTestExpectation) {
         let store = IT2HostGrantStore(backing: MemoryGrantBacking())
         let conductor = makeConductor()
-        store.add(IT2HostGrant(host: conductor.sshIdentity.stringIdentifier,
+        store.add(IT2HostGrant(host: key?(conductor) ?? conductor.sshIdentity.stringIdentifier,
                                id: "id", secretSHA256: "hash", granted: Date()))
         Conductor.hostGrantStoreForTesting = store
         let consulted = expectation(description: "verifier consulted")
@@ -569,6 +570,24 @@ final class ConductorIT2CommandTests: XCTestCase {
         XCTAssertEqual(granted, true)
         XCTAssertFalse(delegate.hasPendingPrompt(guid: conductor.guid), "no prompt for a granted host")
         XCTAssertEqual(conductor.it2Authorized, true, "cached for the rest of the connection")
+    }
+
+    // A grant recorded under the key the host had before ssh config was read the way ssh does
+    // (here, a differently capitalized hostname) still lets it in, and moves to the current key.
+    @MainActor
+    func testAGrantUnderAnOlderKeyAllowsAndIsRekeyed() throws {
+        defer { clearGrantSeams() }
+        let (conductor, delegate, consulted) = conductorWithGrant(verifies: true,
+                                                                  key: { $0.sshIdentity.stringIdentifier.uppercased() })
+        let current = conductor.sshIdentity.stringIdentifier
+        try XCTSkipIf(current.uppercased() == current, "the hostname has no letters to recapitalize")
+        var granted: Bool?
+        conductor.authorizeIT2 { granted = $0 }
+        wait(for: [consulted], timeout: 2)
+        pumpMain()
+        XCTAssertEqual(granted, true)
+        XCTAssertFalse(delegate.hasPendingPrompt(guid: conductor.guid))
+        XCTAssertEqual(Conductor.hostGrantStore.all.map(\.host), [current])
     }
 
     // The file is gone, the host was rebuilt, or it does not match: fall back to asking rather
