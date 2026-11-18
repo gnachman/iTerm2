@@ -1,0 +1,6 @@
+framework module NMSSH {
+  umbrella header "NMSSH.h"
+  export *
+
+  module * { export * }
+}

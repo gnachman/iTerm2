@@ -95,6 +95,13 @@
 			GtTbIx8lG+HX8cdW9wmNNZrKKtLBIb9K1MVY4Z0PUMg=
 			</data>
 		</dict>
+		<key>Modules/module.modulemap</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			hnwMuV6LBl1gM1GpTPfCAS3mUde3fOp6Bqtf86Sr50M=
+			</data>
+		</dict>
 		<key>Resources/Info.plist</key>
 		<dict>
 			<key>hash2</key>
