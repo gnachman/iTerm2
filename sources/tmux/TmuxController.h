@@ -371,6 +371,9 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 // Re-reads one window's layout and applies it as a %layout-change would. tmux 3.2 sends no
 // %layout-change when swap-pane moves a pane between windows.
 - (void)refreshLayoutOfWindow:(int)windowId;
+// Runs block without telling tmux about changes to the active pane or window, for changes that
+// mirror tmux's own state.
+- (void)suppressActivityChanges:(void (^ NS_NOESCAPE)(void))block;
 // Adopts the workgroups on the server; nil until the initial windows are open.
 @property(nonatomic, readonly) iTermTmuxWorkgroupAttacher *workgroupAttacher;
 - (void)setLayoutInWindow:(int)window toLayout:(NSString *)layout;

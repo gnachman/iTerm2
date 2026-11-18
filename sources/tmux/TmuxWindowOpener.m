@@ -137,12 +137,12 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
                                                  callingSelector:@selector(appendRequestsForNode:toArray:)
                                                         onTarget:self
                                                       withObject:cmdList];
-    if (self.zoomed.boolValue) {
+    if (self.zoomed.boolValue && ![self canKeepZoom]) {
         // Unzoom the window because there's no way to tell which window pane is zoomed in tmux 2.1.
-        // I submitted a patch to tmux (commit 531869bd92f0daff3cc3c3cc0ab273846f411dc8) to correct
-        // this. Once a fixed version of tmux is ubiquitous, I can improve this by respecting the
-        // tmux server's initial setting of the zoomed flag. This is a race condition because
-        // another client could change the window's zoom status at the same time, causing a mess.
+        // tmux 2.2 and later send the visible layout, which names the zoomed pane, so with tmux
+        // 3.3 and later the window stays zoomed (see -keepZoomOfNewWindowIfPossible). This is a
+        // race condition because another client could change the window's zoom status at the same
+        // time, causing a mess.
         [cmdList addObject:[self dictToToggleZoomForWindow]];
     }
     DLog(@"Depth-first search of parse tree gives command list %@", cmdList);
@@ -258,6 +258,24 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
                          responseSelector:@selector(requestDidComplete)
                            responseObject:nil
                                     flags:kTmuxGatewayCommandShouldTolerateErrors];
+}
+
+// A window that is zoomed in tmux opens unzoomed. When tmux says which pane is zoomed, ask for the
+// layout again so the zoom is applied as it is when another client zooms the window. Older tmux
+// doesn't say, so -openWindows: unzooms the window in tmux instead.
+// tmux 2.2 and later name the zoomed pane in the visible layout, but with tmux 2.8 a pane zoomed
+// this way kept stale content from before the zoom until its program redrew. tmux 3.3 is the
+// oldest version where keeping the zoom was tested to work.
+- (BOOL)canKeepZoom {
+    return self.visibleLayout.length > 0 && [gateway_ versionAtLeastDecimalNumberWithString:@"3.3"];
+}
+
+- (void)keepZoomOfNewWindowIfPossibleWithVisibleParseTree:(NSDictionary *)visibleParseTree {
+    if (!self.zoomed.boolValue || !visibleParseTree || ![self canKeepZoom]) {
+        return;
+    }
+    DLog(@"Window %d is zoomed in tmux. Refresh its layout to zoom it here.", windowIndex_);
+    [controller_ refreshLayoutOfWindow:windowIndex_];
 }
 
 - (NSDictionary *)dictToToggleZoomForWindow {
@@ -646,6 +664,7 @@ static int OctalValue(const char *bytes) {
             // screen).
             DLog(@"Calling windowDidResize: in case the window was smaller than we'd hoped");
             [controller_ windowDidResize:term];
+            [self keepZoomOfNewWindowIfPossibleWithVisibleParseTree:visibleParseTree];
 
             // Check the window flags
             NSString *windowId = [NSString stringWithFormat:@"%d", windowIndex_];

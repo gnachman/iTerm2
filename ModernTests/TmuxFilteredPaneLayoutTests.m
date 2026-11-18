@@ -306,4 +306,19 @@
                                  zoomed:@YES]);
 }
 
+// Right after attaching to a window that is already zoomed, the tab's active pane isn't
+// necessarily the one tmux zoomed. The zoomed pane must be the one shown, so it becomes active.
+- (void)testZoomedLayoutActivatesTheZoomedPane {
+    PTYSession *standIn = nil;
+    NSArray<PTYSession *> *panes = nil;
+    PTYTab *tab = [self tabWithFilteredPaneTwo:&standIn panes:&panes];
+    XCTAssertEqual(tab.activeSession, standIn);
+    [tab setTmuxLayout:[self parseTreeForLayout:@"abcd,80x24,0,0{26x24,0,0,0,26x24,27,0,1,26x24,54,0,2}"]
+         visibleLayout:[self parseTreeForLayout:@"abcd,80x24,0,0,1"]
+        tmuxController:_controller
+                zoomed:@YES];
+    XCTAssertEqual(tab.activeSession, panes[1]);
+    XCTAssertTrue(tab.hasMaximizedPane);
+}
+
 @end

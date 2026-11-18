@@ -6975,6 +6975,16 @@ typedef struct {
         shouldZoom = zoomed.boolValue;
     }
     PTYSession *const zoomedSession = shouldZoom ? [self tmuxZoomedSessionInVisibleParseTree:visibleParseTree] : nil;
+    if (zoomedSession && zoomedSession != activeSession_ && ![self sessionIsFloating:activeSession_]) {
+        // tmux zooms its active pane, but this tab may not know which pane that is yet, as right
+        // after attaching to a window that is already zoomed. Follow tmux so the zoomed pane is
+        // the one shown. A float can be active over the zoom, so leave that alone. tmux already
+        // has this pane selected, so don't tell it.
+        DLog(@"Make zoomed session %@ active in place of %@", zoomedSession, activeSession_);
+        [tmuxController suppressActivityChanges:^{
+            [self setActiveSession:zoomedSession];
+        }];
+    }
     // Predict what -maximize will pick once the junior session is active and _tmuxZoomedSession is
     // updated below.
     PTYSession *const sessionKeepingGrid =
