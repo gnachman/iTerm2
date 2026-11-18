@@ -628,3 +628,7 @@ Bug Fixes:
   Option-clicking the green button, could leave
   a gap above the terminal and fail to resize
   the session to fit. Issue 13213.
+- In tmux integration, Control, Shift, and
+  Option were dropped from Home and End, so
+  Control-Home arrived as plain Home. Issue
+  13220.

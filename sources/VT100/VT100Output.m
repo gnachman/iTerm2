@@ -262,7 +262,10 @@ typedef enum {
 }
 
 - (NSData *)keyHome:(unsigned int)modflag screenlikeTerminal:(BOOL)screenlike {
-    if (screenlike) {
+    // tmux spells an unmodified Home as CSI 1 ~ (issue 3748). A modified Home
+    // must keep its modifier, as CSI 1 ; mod H below, which is also what tmux
+    // sends for it (issue 13220).
+    if (screenlike && [self cursorModifierParamForEventModifierFlags:modflag] == 0) {
         const char *bytes = "\033[1~";
         return [NSData dataWithBytes:bytes length:strlen(bytes)];
     }
@@ -275,7 +278,10 @@ typedef enum {
 }
 
 - (NSData *)keyEnd:(unsigned int)modflag screenlikeTerminal:(BOOL)screenlike {
-    if (screenlike) {
+    // tmux spells an unmodified End as CSI 4 ~ (issue 3748). A modified End
+    // must keep its modifier, as CSI 1 ; mod F below, which is also what tmux
+    // sends for it (issue 13220).
+    if (screenlike && [self cursorModifierParamForEventModifierFlags:modflag] == 0) {
         const char *bytes = "\033[4~";
         return [NSData dataWithBytes:bytes length:strlen(bytes)];
     }
