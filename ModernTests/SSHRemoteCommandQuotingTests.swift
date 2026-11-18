@@ -19,7 +19,7 @@ final class SSHRemoteCommandQuotingTests: XCTestCase {
             // Single quotes are a correct %q-equivalent quoting for these tests.
             "'" + arg.replacingOccurrences(of: "'", with: "'\\''") + "'"
         }.joined(separator: " ")
-        return ParsedSSHArguments(sent, booleanArgs: "", hostnameFinder: iTermHostnameFinder())
+        return ParsedSSHArguments(sent, booleanArgs: "", hostnameFinder: iTermHostnameFinder(configs: { [] }))
     }
 
     /// Exactly what it2ssh sends: bash's `printf "%q "` of its arguments.
@@ -33,7 +33,7 @@ final class SSHRemoteCommandQuotingTests: XCTestCase {
         let data = out.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
         return ParsedSSHArguments(String(decoding: data, as: UTF8.self),
-                                  booleanArgs: "", hostnameFinder: iTermHostnameFinder())
+                                  booleanArgs: "", hostnameFinder: iTermHostnameFinder(configs: { [] }))
     }
 
     // %q writes a newline, a tab or other control characters as $'…' quoting. A command with a

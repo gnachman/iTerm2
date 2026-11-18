@@ -15,12 +15,19 @@
 @implementation iTermSSHHelpers
 
 + (NSArray<NMSSHConfig *> *)configs {
+    return [self configsAtPaths:[self defaultConfigPaths]];
+}
+
++ (NSArray<NSString *> *)defaultConfigPaths {
+    NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
+    return @[ [appSupport stringByAppendingPathComponent:@"ssh_config"] ?: @"",
+              [@"~/.ssh/config" stringByExpandingTildeInPath] ?: @"",
+              @"/etc/ssh/ssh_config",
+              @"/etc/ssh_config" ];
+}
+
++ (NSArray<NMSSHConfig *> *)configsAtPaths:(NSArray<NSString *> *)paths {
     NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSString *appSupport = [fileManager applicationSupportDirectory];
-    NSArray *paths = @[ [appSupport stringByAppendingPathComponent:@"ssh_config"] ?: @"",
-                        [@"~/.ssh/config" stringByExpandingTildeInPath] ?: @"",
-                        @"/etc/ssh/ssh_config",
-                        @"/etc/ssh_config" ];
     NSMutableArray *configs = [NSMutableArray array];
     for (NSString *path in paths) {
         if (path.length == 0) {

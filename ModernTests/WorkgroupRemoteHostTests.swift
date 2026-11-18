@@ -40,7 +40,7 @@ final class WorkgroupRemoteHostTests: XCTestCase {
     func testReplacedArgumentsRoundTrip() {
         let rebuilt = ParsedSSHArguments.sshargs("-l me host ls -l", booleanArgs: "",
                                                  replacingCommandWith: "claude 'review; this'")
-        let parsed = ParsedSSHArguments(rebuilt, booleanArgs: "", hostnameFinder: iTermHostnameFinder())
+        let parsed = ParsedSSHArguments(rebuilt, booleanArgs: "", hostnameFinder: iTermHostnameFinder(configs: { [] }))
         XCTAssertEqual(parsed.username, "me")
         XCTAssertEqual(parsed.host, "host")
         XCTAssertEqual(parsed.commandLine, "claude 'review; this'")
@@ -75,7 +75,7 @@ final class WorkgroupRemoteHostTests: XCTestCase {
         let launch = remote.launchPlan(remoteCommand: "git diff")
         XCTAssertEqual(launch.jumps.count, 1)
         XCTAssertEqual(launch.jumps[0].initialDirectory, "/srv/repo", "starts in the leader's directory")
-        let parsed = ParsedSSHArguments(launch.firstHopArguments, booleanArgs: "", hostnameFinder: iTermHostnameFinder())
+        let parsed = ParsedSSHArguments(launch.firstHopArguments, booleanArgs: "", hostnameFinder: iTermHostnameFinder(configs: { [] }))
         XCTAssertEqual(parsed.host, "host")
         XCTAssertEqual(launch.jumps[0].sshargs, launch.firstHopArguments)
         // The command runs under /bin/sh whatever the login shell is.
@@ -92,7 +92,7 @@ final class WorkgroupRemoteHostTests: XCTestCase {
         XCTAssertEqual(launch.jumps.count, 2)
         XCTAssertEqual(launch.firstHopArguments, "'bastion'")
         XCTAssertEqual(launch.jumps[0].initialDirectory, "/home/me")
-        let last = ParsedSSHArguments(launch.jumps[1].sshargs, booleanArgs: "", hostnameFinder: iTermHostnameFinder())
+        let last = ParsedSSHArguments(launch.jumps[1].sshargs, booleanArgs: "", hostnameFinder: iTermHostnameFinder(configs: { [] }))
         XCTAssertEqual(last.host, "internal")
         XCTAssertEqual(last.port, 2200)
         XCTAssertEqual(last.commandLine, WorkgroupRemoteHost.peerRemoteCommand("git diff"))
@@ -103,7 +103,7 @@ final class WorkgroupRemoteHostTests: XCTestCase {
     func testEmptyCommandIsAnInteractiveShell() {
         let launch = WorkgroupRemoteHost(hops: [hop("host claude")], directory: "/srv", sshConfig: nil)
             .launchPlan(remoteCommand: "")
-        let parsed = ParsedSSHArguments(launch.firstHopArguments, booleanArgs: "", hostnameFinder: iTermHostnameFinder())
+        let parsed = ParsedSSHArguments(launch.firstHopArguments, booleanArgs: "", hostnameFinder: iTermHostnameFinder(configs: { [] }))
         XCTAssertEqual(parsed.commandLine, "")
         XCTAssertEqual(launch.jumps[0].initialDirectory, "/srv")
     }
@@ -113,7 +113,7 @@ final class WorkgroupRemoteHostTests: XCTestCase {
         let command = "claude 'review this;\nit'\\''s fine'"
         let launch = WorkgroupRemoteHost(hops: [hop("host")], directory: nil, sshConfig: nil)
             .launchPlan(remoteCommand: command)
-        let parsed = ParsedSSHArguments(launch.firstHopArguments, booleanArgs: "", hostnameFinder: iTermHostnameFinder())
+        let parsed = ParsedSSHArguments(launch.firstHopArguments, booleanArgs: "", hostnameFinder: iTermHostnameFinder(configs: { [] }))
         XCTAssertEqual(parsed.commandLine, WorkgroupRemoteHost.peerRemoteCommand(command))
         XCTAssertEqual(try runPeerScript(shell: "/bin/sh", rc: nil, command: "printf '%s' " + command.replacingOccurrences(of: "claude ", with: "")),
                        "review this;\nit's fine")
