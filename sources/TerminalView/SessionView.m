@@ -1181,15 +1181,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             return;
         }
     }
-    // The floating session note should always render above the toolbar (which
-    // hosts the peer mode switcher). Both are added via this method, so without
-    // explicit ordering their relative z-order would depend on insertion order.
-    if (aView == _toolbarView && _sessionNoteView && [self.subviews containsObject:_sessionNoteView]) {
+    // The floating session note should always render above every other view
+    // added via this method (the toolbar, right gutter panels such as
+    // clippings, their dividers, etc.). Those may be (re-)added after the note,
+    // so without explicit ordering they would land on top of it.
+    if (aView != _sessionNoteView && _sessionNoteView && [self.subviews containsObject:_sessionNoteView]) {
         [self addSubview:aView positioned:NSWindowBelow relativeTo:_sessionNoteView];
-        return;
-    }
-    if (aView == _sessionNoteView && _toolbarView && [self.subviews containsObject:_toolbarView]) {
-        [self addSubview:aView positioned:NSWindowAbove relativeTo:_toolbarView];
         return;
     }
     if (_dropDownFindViewController.view && [self.subviews containsObject:_dropDownFindViewController.view]) {

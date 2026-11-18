@@ -1,1 +1,5 @@
 Version TBD (unreleased; built off master)
+
+Bug Fixes:
+- A floating Session Note could be drawn behind
+  the Clippings panel. It now stays on top.
