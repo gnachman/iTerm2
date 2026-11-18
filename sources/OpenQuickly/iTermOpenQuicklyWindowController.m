@@ -20,7 +20,6 @@
 #import "iTermWarning.h"
 #import "DebugLogging.h"
 #import "NSAppearance+iTerm.h"
-#import "NSColor+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSWindow+iTerm.h"
@@ -142,7 +141,8 @@
     [_previewPanel teardown];
     [_model removeAllItems];
     [_table reloadData];
-    self.window.appearance = [NSAppearance it_appearanceForCurrentTheme];
+    PTYSession *session = [[iTermController sharedInstance] currentTerminal].currentSession;
+    self.window.appearance = [NSAppearance it_appearanceForSessionBackgroundColor:session.effectiveUnprocessedBackgroundColor];
     // Mirror iTermProfileHotKey's floating-panel collection behavior. Notably:
     // (1) FullScreenAuxiliary lets the panel appear over fullscreen windows of
     // other apps, (2) Transient is omitted because transient windows "do not
