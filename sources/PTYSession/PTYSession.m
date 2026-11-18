@@ -2209,6 +2209,22 @@ ITERM_WEAKLY_REFERENCEABLE
     return [session retain];
 }
 
+// Whether the arrangement records how the session's program was launched (command, substitutions,
+// and so on) so restoration can reuse it instead of recomputing the command from the profile. Very
+// old arrangements predate these keys. The environment is not required: arrangements encoded without
+// contents omit it on purpose, and restoration then launches with an empty one (issue 13216).
++ (BOOL)arrangementHasSavedProgramData:(NSDictionary *)arrangement {
+    NSDictionary *program = [NSDictionary castFrom:arrangement[SESSION_ARRANGEMENT_PROGRAM]];
+    NSString *type = program[kProgramType];
+    if (![type isEqualToString:kProgramTypeShellLauncher] &&
+        ![type isEqualToString:kProgramTypeCommand] &&
+        ![type isEqualToString:kProgramTypeCustomShell]) {
+        return NO;
+    }
+    return (arrangement[SESSION_ARRANGEMENT_IS_UTF_8] != nil &&
+            arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS] != nil);
+}
+
 + (PTYSession *)sessionFromArrangement:(NSDictionary *)arrangement
                                  named:(NSString *)arrangementName
                                 inView:(SessionView *)sessionView
@@ -2409,7 +2425,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [aSession loadInitialColorTableAndResetCursorGuide];
     aSession.delegate = delegate;
 
-    BOOL haveSavedProgramData = YES;
+    const BOOL haveSavedProgramData = [self arrangementHasSavedProgramData:arrangement];
     if ([arrangement[SESSION_ARRANGEMENT_PROGRAM] isKindOfClass:[NSDictionary class]]) {
         NSDictionary *dict = arrangement[SESSION_ARRANGEMENT_PROGRAM];
         if ([dict[kProgramType] isEqualToString:kProgramTypeShellLauncher]) {
@@ -2419,11 +2435,7 @@ ITERM_WEAKLY_REFERENCEABLE
         } else if ([dict[kProgramType] isEqualToString:kProgramTypeCustomShell]) {
             aSession.program = [ITAddressBookMgr shellLauncherCommandWithCustomShell:dict[kCustomShell]];
             aSession.customShell = dict[kCustomShell];
-        } else {
-            haveSavedProgramData = NO;
         }
-    } else {
-        haveSavedProgramData = NO;
     }
     if (arrangement[SESSION_ARRANGEMENT_PENDING_JUMPS]) {
         aSession->_pendingJumps = [[[NSArray castFrom:arrangement[SESSION_ARRANGEMENT_PENDING_JUMPS]] mapWithBlock:^id _Nullable(id  _Nonnull data) {
@@ -2433,14 +2445,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
     if (arrangement[SESSION_ARRANGEMENT_ENVIRONMENT]) {
         aSession.environment = arrangement[SESSION_ARRANGEMENT_ENVIRONMENT];
-    } else {
-        haveSavedProgramData = NO;
     }
 
     if (arrangement[SESSION_ARRANGEMENT_IS_UTF_8]) {
         aSession.isUTF8 = [arrangement[SESSION_ARRANGEMENT_IS_UTF_8] boolValue];
-    } else {
-        haveSavedProgramData = NO;
     }
 
     aSession.shortLivedSingleUse = [arrangement[SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE] boolValue];
@@ -2452,8 +2460,6 @@ ITERM_WEAKLY_REFERENCEABLE
 
     if (arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]) {
         aSession.substitutions = arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS];
-    } else {
-        haveSavedProgramData = NO;
     }
 
     if (arrangement[SESSION_ARRANGEMENT_REUSABLE_COOKIE]) {
@@ -7974,7 +7980,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             return anObject.dictionaryValue;
         }];
     }
-    if (includeContents) {
+    // Duplication never leaves memory, so keep the environment for it even without contents.
+    if (includeContents || [options[PTYSessionArrangementOptionsForDuplication] boolValue]) {
         result[SESSION_ARRANGEMENT_ENVIRONMENT] = self.environment ?: @{};
     }
     result[SESSION_ARRANGEMENT_IS_UTF_8] = @(self.isUTF8);

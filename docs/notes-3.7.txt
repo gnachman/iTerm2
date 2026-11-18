@@ -238,6 +238,10 @@ Improvements:
   hang.
 
 Bug Fixes:
+- Duplicate Tab and restoring a saved window
+  arrangement lost the values you entered for a
+  profile command’s $$VARIABLE$$ prompts.
+  Fixed.
 - With “Restrict alternate mouse scroll to
   vertical scrolling” on in Settings > Profiles >
   Terminal, scrolling a full-screen app like vim

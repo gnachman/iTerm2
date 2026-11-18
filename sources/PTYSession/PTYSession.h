@@ -975,6 +975,7 @@ backgroundColor:(nullable NSColor *)backgroundColor;
                                  forObjectType:(iTermObjectType)objectType
                             partialAttachments:(nullable NSDictionary *)partialAttachments
                                        options:(nullable NSDictionary *)options;
++ (BOOL)arrangementHasSavedProgramData:(NSDictionary *)arrangement;
 
 - (nullable PTYSession *)newSessionForChannelID:(NSString *)channelID command:(NSString *)command;
 
