@@ -1675,6 +1675,8 @@ CA
                 <outlet property="_harmonize256" destination="iuq-9l-xMR" id="20V-Im-ADa"/>
                 <outlet property="_hdrCursor" destination="zI8-aW-nUw" id="iHd-rC-ur0"/>
                 <outlet property="_hdrCursorBrightness" destination="hCs-Sl-Dr2" id="hCo-Ut-Lt4"/>
+                <outlet property="_hdrText" destination="JYO-qE-w5j" id="Bqb-88-TqV"/>
+                <outlet property="_hdrTextBrightness" destination="fCn-Pi-J53" id="zo1-bg-XWz"/>
                 <outlet property="_hueVisualization" destination="GVg-ue-xgc" id="foU-uf-ty5"/>
                 <outlet property="_imeCursorColor" destination="P9A-ht-5mp" id="Kf9-gv-ZlY"/>
                 <outlet property="_imeCursorColorLabel" destination="tnd-Ng-cWZ" id="hQb-xO-xyO"/>
@@ -2652,6 +2654,18 @@ CA
                                         <outlet property="nextKeyView" destination="4896" id="3y0-Wd-en9"/>
                                     </connections>
                                 </button>
+                                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="JYO-qE-w5j" customClass="iTermSettingsCheckbox">
+                                    <rect key="frame" x="445" y="675" width="211" height="18"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <string key="toolTip">When enabled, and when the current display can use HDR (High Dynamic Range), text in the focused pane is drawn brighter than any white that normally appears in an application. Only applies over a dark background.</string>
+                                    <buttonCell key="cell" type="check" title="HDR text in focused pane" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="mNa-4S-Lio">
+                                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                        <font key="font" metaFont="system"/>
+                                    </buttonCell>
+                                    <connections>
+                                        <action selector="settingChanged:" target="p8i-eM-oBc" id="quo-3i-0iP"/>
+                                    </connections>
+                                </button>
                                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2285" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="177" y="784" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -3243,6 +3257,21 @@ CA
                                             <sliderCell key="cell" continuous="YES" alignment="left" minValue="2" maxValue="16" doubleValue="16" tickMarkPosition="above" numberOfTickMarks="15" allowsTickMarkValuesOnly="YES" sliderType="linear" id="hCc-Ce-Ll3"/>
                                             <connections>
                                                 <action selector="settingChanged:" target="p8i-eM-oBc" id="hCa-Ct-Nn5"/>
+                                            </connections>
+                                        </slider>
+                                    </subviews>
+                                </customView>
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Hxx-vG-kv3" customClass="iTermSlider">
+                                    <rect key="frame" x="470" y="647" width="186" height="20"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <subviews>
+                                        <slider verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fCn-Pi-J53" userLabel="Horizontal Slider - HDR Text Brightness">
+                                            <rect key="frame" x="-2" y="-6" width="190" height="28"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <string key="toolTip">Brightness of HDR text, as a multiple of normal white. Dim colors get brighter by the same factor. The display shows at most what its HDR headroom allows.</string>
+                                            <sliderCell key="cell" continuous="YES" alignment="left" minValue="1.5" maxValue="8" doubleValue="3" tickMarkPosition="above" numberOfTickMarks="14" allowsTickMarkValuesOnly="YES" sliderType="linear" id="E1Z-rF-pkH"/>
+                                            <connections>
+                                                <action selector="settingChanged:" target="p8i-eM-oBc" id="CEG-MH-Wtz"/>
                                             </connections>
                                         </slider>
                                     </subviews>

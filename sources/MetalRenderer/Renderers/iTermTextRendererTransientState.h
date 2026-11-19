@@ -34,6 +34,9 @@ NS_ASSUME_NONNULL_BEGIN
 // cell but draws over the previous cell, only takes the cursor color inside
 // the cursor. Must be set before rows are added. Issue 13203.
 @property (nonatomic) iTermTextCursorInfo cursorTextInfo;
+// HDR text boost for this frame; see iTermTextHDRInfo. Defaults to zeros, which
+// the renderer treats as no boost.
+@property (nonatomic) iTermTextHDRInfo hdrTextInfo;
 
 // `count` contiguous visual columns starting at `firstColumn` on `row` are
 // covered by the box cursor. `colors` gives their normal text colors. `count`

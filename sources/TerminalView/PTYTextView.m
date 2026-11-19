@@ -2081,6 +2081,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     helper.useSmartCursorColor = _drawingHelper.useSmartCursorColor;
     helper.hdrCursorEnabled = _drawingHelper.hdrCursorEnabled;
     helper.hdrCursorBrightness = _drawingHelper.hdrCursorBrightness;
+    helper.hdrTextEnabled = _drawingHelper.hdrTextEnabled;
+    helper.hdrTextBrightness = _drawingHelper.hdrTextBrightness;
 
     if (forOffscreen) {
         // Offscreen rendering: disable all interactive features
@@ -2767,6 +2769,30 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
 - (CGFloat)hdrCursorBrightness {
     return _drawingHelper.hdrCursorBrightness;
+}
+
+- (void)setHdrTextEnabled:(BOOL)value {
+    if (_drawingHelper.hdrTextEnabled == value) {
+        return;
+    }
+    _drawingHelper.hdrTextEnabled = value;
+    [self requestDelegateRedraw];
+}
+
+- (BOOL)hdrTextEnabled {
+    return _drawingHelper.hdrTextEnabled;
+}
+
+- (void)setHdrTextBrightness:(CGFloat)value {
+    if (_drawingHelper.hdrTextBrightness == value) {
+        return;
+    }
+    _drawingHelper.hdrTextBrightness = value;
+    [self requestDelegateRedraw];
+}
+
+- (CGFloat)hdrTextBrightness {
+    return _drawingHelper.hdrTextBrightness;
 }
 
 - (void)setMinimumContrast:(double)value {

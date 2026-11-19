@@ -942,13 +942,27 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (void)setHdrCursorEnabled:(BOOL)hdrCursorEnabled {
     _hdrCursorEnabled = hdrCursorEnabled;
+    [self updateHDRState];
+}
+
+- (void)setHdrTextEnabled:(BOOL)hdrTextEnabled {
+    _hdrTextEnabled = hdrTextEnabled;
+    [self updateHDRState];
+}
+
+- (BOOL)wantsHDRFramebuffer {
+    return _hdrCursorEnabled || _hdrTextEnabled;
+}
+
+- (void)updateHDRState {
     // The engager engages/releases EDR based on this. Its layer work is cheap and
-    // can update live.
-    _hdrEngager.enabled = hdrCursorEnabled;
+    // can update live. Both HDR features draw in both renderers, so either one
+    // keeps EDR engaged.
+    _hdrEngager.enabled = self.wantsHDRFramebuffer;
     // The metal view's EDR engagement is a layer property that can update live;
     // its pixel format cannot, so a format change is handled separately by
     // rebuilding the driver (PTYSession -> bounceMetal). Keep the live part synced.
-    _metalView.wantsHDR = hdrCursorEnabled;
+    _metalView.wantsHDR = self.wantsHDRFramebuffer;
 }
 
 - (void)installHDREngager {
@@ -961,7 +975,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     // can react live when the setting is flipped on for an existing session.
     // Keeping it also means tearing down the Metal view never drops EDR.
     _hdrEngager = [[iTermHDREngager alloc] initWithFrame:NSMakeRect(0, 0, 1, 1)];
-    _hdrEngager.enabled = _hdrCursorEnabled;
+    _hdrEngager.enabled = self.wantsHDRFramebuffer;
     [self insertSubview:_hdrEngager atIndex:_contentViewIndex];
 }
 
@@ -1029,10 +1043,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 #else
     _metalView.layer.opaque = YES;
 #endif
-    _metalView.wantsHDR = _hdrCursorEnabled;
-    if (_hdrCursorEnabled) {
-        // Make the layer fp16 so the cursor can exceed reference white. Must match
-        // the driver's framebufferPixelFormat below.
+    const BOOL wantsHDRFramebuffer = self.wantsHDRFramebuffer;
+    _metalView.wantsHDR = wantsHDRFramebuffer;
+    if (wantsHDRFramebuffer) {
+        // Make the layer fp16 so the cursor and text can exceed reference white.
+        // Must match the driver's framebufferPixelFormat below.
         [_metalView enableHDR];
     }
     // The metal view's color space is managed by iTermMTKView.preferredColorspace
@@ -1056,7 +1071,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     // Start the metal driver going. It will receive delegate calls from iTermMTKView that kick off
     // frame rendering.
     _driver = [[iTermMetalDriver alloc] initWithDevice:_metalView.device
-                                framebufferPixelFormat:iTermMetalFramebufferPixelFormat(_hdrCursorEnabled)];
+                                framebufferPixelFormat:iTermMetalFramebufferPixelFormat(wantsHDRFramebuffer)];
     _driver.dataSource = dataSource;
     [_driver metalView:_metalView drawableSizeWillChange:_metalView.drawableSize];
     _metalView.delegate = _driver;
