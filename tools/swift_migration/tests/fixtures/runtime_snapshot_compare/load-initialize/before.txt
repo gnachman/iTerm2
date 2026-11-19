@@ -1,0 +1,15 @@
+# Objective-C runtime snapshot, format 3
+architecture arm64
+build-configuration Development
+build-variant ASan
+class RuntimeSnapshotPortLoadObjCFixture
+  language objc
+  superclass NSObject
+  image ModernTests
+  ivar-arc-flag unknown
+  strong-ivar-layout
+  weak-ivar-layout
+  class-method +initialize types=v16@0:8 also-implemented-by=+NSObject
+  class-method +load types=v16@0:8 also-implemented-by=+NSObject
+  instance-method -method types=v16@0:8
+end class RuntimeSnapshotPortLoadObjCFixture

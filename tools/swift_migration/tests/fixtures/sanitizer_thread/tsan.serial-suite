@@ -1,0 +1,200 @@
+==================
+WARNING: ThreadSanitizer: data race (pid=96268)
+  Read of size 8 at 0x00707593b1d0 by main thread:
+    #0 -[VT100Grid currentDate] <null> (iTerm2.debug.dylib:arm64+0xb12ea8)
+    #1 -[VT100Grid markCharsDirty:inRectFrom:to:] <null> (iTerm2.debug.dylib:arm64+0xaf1e0c)
+    #2 -[VT100Grid markAllCharsDirty:updateTimestamps:] <null> (iTerm2.debug.dylib:arm64+0xaf23a8)
+    #3 -[VT100ScreenState mergeFrom:] <null> (iTerm2.debug.dylib:arm64+0x14ecf64)
+    #4 -[VT100Screen restoreState:] <null> (iTerm2.debug.dylib:arm64+0x7ba3d8)
+    #5 FakeSession.screenRestore(_:) VT100ScreenTests.swift:2554 (ModernTests:arm64+0x2cf4100)
+    #6 @objc FakeSession.screenRestore(_:) /<compiler-generated> (ModernTests:arm64+0x2cf41a8)
+    #7 -[VT100ScreenMutableState reallyPerformBlockWithJoinedThreads:delegate:topmost:] <null> (iTerm2.debug.dylib:arm64+0x11fe4dc)
+    #8 __57-[VT100ScreenMutableState performBlockWithJoinedThreads:]_block_invoke <null> (iTerm2.debug.dylib:arm64+0x11fd348)
+    #9 __56-[VT100ScreenMutableState performSynchroDanceWithBlock:]_block_invoke <null> (iTerm2.debug.dylib:arm64+0x11fd95c)
+    #10 thunk for @callee_unowned @convention(block) () -> () <null> (iTerm2.debug.dylib:arm64+0x21c5e74)
+    #11 partial apply for thunk for @callee_unowned @convention(block) () -> () <null> (iTerm2.debug.dylib:arm64+0x2c14eec)
+    #12 TokenExecutorImpl.whilePaused(_:onExecutorQueue:) <null> (iTerm2.debug.dylib:arm64+0x2bf78b0)
+    #13 TokenExecutor.whilePaused(_:) <null> (iTerm2.debug.dylib:arm64+0x2bf064c)
+    #14 @objc TokenExecutor.whilePaused(_:) <null> (iTerm2.debug.dylib:arm64+0x2bf0704)
+    #15 -[VT100ScreenMutableState performSynchroDanceWithBlock:] <null> (iTerm2.debug.dylib:arm64+0x11fd764)
+    #16 -[VT100ScreenMutableState performBlockWithJoinedThreads:] <null> (iTerm2.debug.dylib:arm64+0x11fd1c8)
+    #17 -[VT100Screen performBlockWithJoinedThreads:] <null> (iTerm2.debug.dylib:arm64+0x7b9bd8)
+    #18 FlagAcrossWritesTests.isDWCRight(_:_:) FlagAcrossWritesTests.swift:77 (ModernTests:arm64+0xf44098)
+    #19 implicit closure #8 in FlagAcrossWritesTests.testSkinToneWidensNarrowBaseAcrossWrites() /<compiler-generated> (ModernTests:arm64+0xf5ba14)
+    #20 partial apply for implicit closure #8 in FlagAcrossWritesTests.testSkinToneWidensNarrowBaseAcrossWrites() /<compiler-generated> (ModernTests:arm64+0xf5baa4)
+    #21 closure #1 in XCTAssertEqual<A>(_:_:_:file:line:) <null> (libXCTestSwiftSupport.dylib:arm64e+0x6b9c8)
+    #22 @objc FlagAcrossWritesTests.testSkinToneWidensNarrowBaseAcrossWrites() /<compiler-generated> (ModernTests:arm64+0xf5be14)
+    #23 __invoking___ <null> (CoreFoundation:arm64e+0x60670)
+    #24 start <null> (dyld:arm64e+0x31e7c)
+
+  Previous write of size 8 at 0x00707593b1d0 by thread T40:
+    #0 -[VT100Grid setCurrentDate:] <null> (iTerm2.debug.dylib:arm64+0xb12f20)
+    #1 -[VT100ScreenMutableState tokenExecutorShouldQueueTokens] <null> (iTerm2.debug.dylib:arm64+0x121a838)
+    #2 TokenExecutorImpl.execute() <null> (iTerm2.debug.dylib:arm64+0x2bfc594)
+    #3 closure #1 in TokenExecutorImpl.schedule() <null> (iTerm2.debug.dylib:arm64+0x2bf6b80)
+    #4 partial apply for closure #1 in TokenExecutorImpl.schedule() <null> (iTerm2.debug.dylib:arm64+0x2c15710)
+    #5 thunk for @escaping @callee_guaranteed @Sendable () -> () <null> (iTerm2.debug.dylib:arm64+0x170f4)
+    #6 __tsan::invoke_and_release_block(void*) <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x8cf98)
+    #7 _dispatch_client_callout <null> (libdispatch.dylib:arm64e+0x1b59c)
+
+  Location is heap block of size 224 at 0x00707593b100 allocated by main thread:
+    #0 calloc <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x67ff4)
+    #1 _malloc_type_calloc_outlined <null> (libsystem_malloc.dylib:arm64e+0x1ee44)
+    #2 -[VT100ScreenMutableState initWithSideEffectPerformer:] <null> (iTerm2.debug.dylib:arm64+0x1197f80)
+    #3 -[VT100Screen initWithOptionalMutationQueue:ownsQueue:] <null> (iTerm2.debug.dylib:arm64+0x7a7328)
+    #4 -[VT100Screen init] <null> (iTerm2.debug.dylib:arm64+0x7a70f0)
+    #5 @nonobjc VT100Screen.init() /<compiler-generated> (ModernTests:arm64+0x5a7978)
+    #6 VT100Screen.__allocating_init() NSObject.h (ModernTests:arm64+0x57889c)
+    #7 FlagAcrossWritesTests.makeScreen() FlagAcrossWritesTests.swift:36 (ModernTests:arm64+0xf42938)
+    #8 FlagAcrossWritesTests.testSkinToneWidensNarrowBaseAcrossWrites() FlagAcrossWritesTests.swift:589 (ModernTests:arm64+0xf5aa60)
+    #9 @objc FlagAcrossWritesTests.testSkinToneWidensNarrowBaseAcrossWrites() /<compiler-generated> (ModernTests:arm64+0xf5be14)
+    #10 __invoking___ <null> (CoreFoundation:arm64e+0x60670)
+    #11 start <null> (dyld:arm64e+0x31e7c)
+
+  Thread T40 (tid=34785465, running) is a GCD worker thread
+
+SUMMARY: ThreadSanitizer: data race (iTerm2.debug.dylib:arm64+0xb12ea8) in -[VT100Grid currentDate]+0x40
+==================
+==================
+WARNING: ThreadSanitizer: data race (pid=96268)
+  Read of size 8 at 0x00706b2db2f0 by main thread:
+    #0 -[VT100Grid currentDate] <null> (iTerm2.debug.dylib:arm64+0xb12ea8)
+    #1 -[VT100Grid markCharsDirty:inRectFrom:to:] <null> (iTerm2.debug.dylib:arm64+0xaf1e0c)
+    #2 -[VT100Grid markAllCharsDirty:updateTimestamps:] <null> (iTerm2.debug.dylib:arm64+0xaf23a8)
+    #3 -[VT100ScreenState mergeFrom:] <null> (iTerm2.debug.dylib:arm64+0x14ecf64)
+    #4 -[VT100Screen restoreState:] <null> (iTerm2.debug.dylib:arm64+0x7ba3d8)
+    #5 FakeSession.screenRestore(_:) VT100ScreenTests.swift:2554 (ModernTests:arm64+0x2cf4100)
+    #6 @objc FakeSession.screenRestore(_:) /<compiler-generated> (ModernTests:arm64+0x2cf41a8)
+    #7 -[VT100ScreenMutableState reallyPerformBlockWithJoinedThreads:delegate:topmost:] <null> (iTerm2.debug.dylib:arm64+0x11fe4dc)
+    #8 __57-[VT100ScreenMutableState performBlockWithJoinedThreads:]_block_invoke <null> (iTerm2.debug.dylib:arm64+0x11fd348)
+    #9 __56-[VT100ScreenMutableState performSynchroDanceWithBlock:]_block_invoke <null> (iTerm2.debug.dylib:arm64+0x11fd95c)
+    #10 thunk for @callee_unowned @convention(block) () -> () <null> (iTerm2.debug.dylib:arm64+0x21c5e74)
+    #11 partial apply for thunk for @callee_unowned @convention(block) () -> () <null> (iTerm2.debug.dylib:arm64+0x2c14eec)
+    #12 TokenExecutorImpl.whilePaused(_:onExecutorQueue:) <null> (iTerm2.debug.dylib:arm64+0x2bf78b0)
+    #13 TokenExecutor.whilePaused(_:) <null> (iTerm2.debug.dylib:arm64+0x2bf064c)
+    #14 @objc TokenExecutor.whilePaused(_:) <null> (iTerm2.debug.dylib:arm64+0x2bf0704)
+    #15 -[VT100ScreenMutableState performSynchroDanceWithBlock:] <null> (iTerm2.debug.dylib:arm64+0x11fd764)
+    #16 -[VT100ScreenMutableState performBlockWithJoinedThreads:] <null> (iTerm2.debug.dylib:arm64+0x11fd1c8)
+    #17 -[VT100Screen performBlockWithJoinedThreads:] <null> (iTerm2.debug.dylib:arm64+0x7b9bd8)
+    #18 FlagAcrossWritesTests.isDWCRight(_:_:) FlagAcrossWritesTests.swift:77 (ModernTests:arm64+0xf44098)
+    #19 implicit closure #7 in FlagAcrossWritesTests.testWriteBoundaryDoesNotChangeResultForVS16() /<compiler-generated> (ModernTests:arm64+0xf4db84)
+    #20 partial apply for implicit closure #7 in FlagAcrossWritesTests.testWriteBoundaryDoesNotChangeResultForVS16() /<compiler-generated> (ModernTests:arm64+0xf4dc14)
+    #21 closure #1 in XCTAssertEqual<A>(_:_:_:file:line:) <null> (libXCTestSwiftSupport.dylib:arm64e+0x6b9c8)
+    #22 @objc FlagAcrossWritesTests.testWriteBoundaryDoesNotChangeResultForVS16() /<compiler-generated> (ModernTests:arm64+0xf4dec4)
+    #23 __invoking___ <null> (CoreFoundation:arm64e+0x60670)
+    #24 start <null> (dyld:arm64e+0x31e7c)
+
+  Previous write of size 8 at 0x00706b2db2f0 by thread T73:
+    #0 -[VT100Grid setCurrentDate:] <null> (iTerm2.debug.dylib:arm64+0xb12f20)
+    #1 -[VT100ScreenMutableState tokenExecutorShouldQueueTokens] <null> (iTerm2.debug.dylib:arm64+0x121a838)
+    #2 TokenExecutorImpl.execute() <null> (iTerm2.debug.dylib:arm64+0x2bfc594)
+    #3 closure #1 in TokenExecutorImpl.schedule() <null> (iTerm2.debug.dylib:arm64+0x2bf6b80)
+    #4 partial apply for closure #1 in TokenExecutorImpl.schedule() <null> (iTerm2.debug.dylib:arm64+0x2c15710)
+    #5 thunk for @escaping @callee_guaranteed @Sendable () -> () <null> (iTerm2.debug.dylib:arm64+0x170f4)
+    #6 __tsan::invoke_and_release_block(void*) <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x8cf98)
+    #7 _dispatch_client_callout <null> (libdispatch.dylib:arm64e+0x1b59c)
+
+  Location is heap block of size 224 at 0x00706b2db220 allocated by main thread:
+    #0 calloc <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x67ff4)
+    #1 _malloc_type_calloc_outlined <null> (libsystem_malloc.dylib:arm64e+0x1ee44)
+    #2 -[VT100ScreenMutableState initWithSideEffectPerformer:] <null> (iTerm2.debug.dylib:arm64+0x1197f80)
+    #3 -[VT100Screen initWithOptionalMutationQueue:ownsQueue:] <null> (iTerm2.debug.dylib:arm64+0x7a7328)
+    #4 -[VT100Screen init] <null> (iTerm2.debug.dylib:arm64+0x7a70f0)
+    #5 @nonobjc VT100Screen.init() /<compiler-generated> (ModernTests:arm64+0x5a7978)
+    #6 VT100Screen.__allocating_init() NSObject.h (ModernTests:arm64+0x57889c)
+    #7 FlagAcrossWritesTests.makeScreen() FlagAcrossWritesTests.swift:36 (ModernTests:arm64+0xf42938)
+    #8 FlagAcrossWritesTests.testWriteBoundaryDoesNotChangeResultForVS16() FlagAcrossWritesTests.swift:269 (ModernTests:arm64+0xf4d080)
+    #9 @objc FlagAcrossWritesTests.testWriteBoundaryDoesNotChangeResultForVS16() /<compiler-generated> (ModernTests:arm64+0xf4dec4)
+    #10 __invoking___ <null> (CoreFoundation:arm64e+0x60670)
+    #11 start <null> (dyld:arm64e+0x31e7c)
+
+  Thread T73 (tid=34809614, running) is a GCD worker thread
+
+SUMMARY: ThreadSanitizer: data race (iTerm2.debug.dylib:arm64+0xb12ea8) in -[VT100Grid currentDate]+0x40
+==================
+==================
+WARNING: ThreadSanitizer: data race (pid=96268)
+  Read of size 8 at 0x007260524e20 by thread T231:
+    #0 __61-[iTermMetalDriver finishDrawingWithCommandBuffer:frameData:]_block_invoke_2.448 <null> (iTerm2.debug.dylib:arm64+0x1325a10)
+    #1 MTLDispatchListApply <null> (Metal:arm64e+0x1ff40)
+
+  Previous write of size 8 at 0x007260524e20 by thread T243:
+    #0 __copy_helper_block_e8_32s40s48b <null> (iTerm2.debug.dylib:arm64+0xaea100)
+    #1 _call_copy_helpers_excp <null> (libsystem_blocks.dylib:arm64e+0x1394)
+    #2 -[iTermMetalFrameData measureTimeForStat:ofBlock:] <null> (iTerm2.debug.dylib:arm64+0xbcc6f4)
+    #3 -[iTermMetalDriver finishDrawingWithCommandBuffer:frameData:] <null> (iTerm2.debug.dylib:arm64+0x132475c)
+    #4 -[iTermMetalDriver enqueueDrawCallsForFrameData:commandBuffer:] <null> (iTerm2.debug.dylib:arm64+0x1310970)
+    #5 __62-[iTermMetalDriver performPrivateQueueSetupForFrameData:view:]_block_invoke_2.331 <null> (iTerm2.debug.dylib:arm64+0x130a18c)
+    #6 -[iTermMetalFrameData measureTimeForStat:ofBlock:] <null> (iTerm2.debug.dylib:arm64+0xbcc6f4)
+    #7 -[iTermMetalFrameData enqueueDrawCallsWithBlock:] <null> (iTerm2.debug.dylib:arm64+0xbd0d20)
+    #8 -[iTermMetalDriver performPrivateQueueSetupForFrameData:view:] <null> (iTerm2.debug.dylib:arm64+0x1309acc)
+    #9 __57-[iTermMetalDriver reallyDrawInMTKView:startToStartTime:]_block_invoke <null> (iTerm2.debug.dylib:arm64+0x1308250)
+    #10 __61-[iTermMetalFrameData dispatchToPrivateQueue:forPreparation:]_block_invoke <null> (iTerm2.debug.dylib:arm64+0xbcccc8)
+    #11 __tsan::invoke_and_release_block(void*) <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x8cf98)
+    #12 _dispatch_client_callout <null> (libdispatch.dylib:arm64e+0x1b59c)
+
+  Location is heap block of size 56 at 0x007260524e00 allocated by thread T243:
+    #0 malloc <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x67d68)
+    #1 _malloc_type_malloc_outlined <null> (libsystem_malloc.dylib:arm64e+0x1edb0)
+    #2 -[iTermMetalFrameData measureTimeForStat:ofBlock:] <null> (iTerm2.debug.dylib:arm64+0xbcc6f4)
+    #3 -[iTermMetalDriver finishDrawingWithCommandBuffer:frameData:] <null> (iTerm2.debug.dylib:arm64+0x132475c)
+    #4 -[iTermMetalDriver enqueueDrawCallsForFrameData:commandBuffer:] <null> (iTerm2.debug.dylib:arm64+0x1310970)
+    #5 __62-[iTermMetalDriver performPrivateQueueSetupForFrameData:view:]_block_invoke_2.331 <null> (iTerm2.debug.dylib:arm64+0x130a18c)
+    #6 -[iTermMetalFrameData measureTimeForStat:ofBlock:] <null> (iTerm2.debug.dylib:arm64+0xbcc6f4)
+    #7 -[iTermMetalFrameData enqueueDrawCallsWithBlock:] <null> (iTerm2.debug.dylib:arm64+0xbd0d20)
+    #8 -[iTermMetalDriver performPrivateQueueSetupForFrameData:view:] <null> (iTerm2.debug.dylib:arm64+0x1309acc)
+    #9 __57-[iTermMetalDriver reallyDrawInMTKView:startToStartTime:]_block_invoke <null> (iTerm2.debug.dylib:arm64+0x1308250)
+    #10 __61-[iTermMetalFrameData dispatchToPrivateQueue:forPreparation:]_block_invoke <null> (iTerm2.debug.dylib:arm64+0xbcccc8)
+    #11 __tsan::invoke_and_release_block(void*) <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x8cf98)
+    #12 _dispatch_client_callout <null> (libdispatch.dylib:arm64e+0x1b59c)
+
+  Thread T231 (tid=34975604, running) is a GCD worker thread
+
+  Thread T243 (tid=34975636, running) is a GCD worker thread
+
+SUMMARY: ThreadSanitizer: data race (iTerm2.debug.dylib:arm64+0x1325a10) in __61-[iTermMetalDriver finishDrawingWithCommandBuffer:frameData:]_block_invoke_2.448+0x58
+==================
+==================
+WARNING: ThreadSanitizer: data race (pid=96268)
+  Read of size 8 at 0x007260524e28 by thread T231:
+    #0 __61-[iTermMetalDriver finishDrawingWithCommandBuffer:frameData:]_block_invoke_2.448 <null> (iTerm2.debug.dylib:arm64+0x1325a24)
+    #1 MTLDispatchListApply <null> (Metal:arm64e+0x1ff40)
+
+  Previous write of size 8 at 0x007260524e28 by thread T243:
+    #0 __copy_helper_block_e8_32s40s48b <null> (iTerm2.debug.dylib:arm64+0xaea13c)
+    #1 _call_copy_helpers_excp <null> (libsystem_blocks.dylib:arm64e+0x1394)
+    #2 -[iTermMetalFrameData measureTimeForStat:ofBlock:] <null> (iTerm2.debug.dylib:arm64+0xbcc6f4)
+    #3 -[iTermMetalDriver finishDrawingWithCommandBuffer:frameData:] <null> (iTerm2.debug.dylib:arm64+0x132475c)
+    #4 -[iTermMetalDriver enqueueDrawCallsForFrameData:commandBuffer:] <null> (iTerm2.debug.dylib:arm64+0x1310970)
+    #5 __62-[iTermMetalDriver performPrivateQueueSetupForFrameData:view:]_block_invoke_2.331 <null> (iTerm2.debug.dylib:arm64+0x130a18c)
+    #6 -[iTermMetalFrameData measureTimeForStat:ofBlock:] <null> (iTerm2.debug.dylib:arm64+0xbcc6f4)
+    #7 -[iTermMetalFrameData enqueueDrawCallsWithBlock:] <null> (iTerm2.debug.dylib:arm64+0xbd0d20)
+    #8 -[iTermMetalDriver performPrivateQueueSetupForFrameData:view:] <null> (iTerm2.debug.dylib:arm64+0x1309acc)
+    #9 __57-[iTermMetalDriver reallyDrawInMTKView:startToStartTime:]_block_invoke <null> (iTerm2.debug.dylib:arm64+0x1308250)
+    #10 __61-[iTermMetalFrameData dispatchToPrivateQueue:forPreparation:]_block_invoke <null> (iTerm2.debug.dylib:arm64+0xbcccc8)
+    #11 __tsan::invoke_and_release_block(void*) <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x8cf98)
+    #12 _dispatch_client_callout <null> (libdispatch.dylib:arm64e+0x1b59c)
+
+  Location is heap block of size 56 at 0x007260524e00 allocated by thread T243:
+    #0 malloc <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x67d68)
+    #1 _malloc_type_malloc_outlined <null> (libsystem_malloc.dylib:arm64e+0x1edb0)
+    #2 -[iTermMetalFrameData measureTimeForStat:ofBlock:] <null> (iTerm2.debug.dylib:arm64+0xbcc6f4)
+    #3 -[iTermMetalDriver finishDrawingWithCommandBuffer:frameData:] <null> (iTerm2.debug.dylib:arm64+0x132475c)
+    #4 -[iTermMetalDriver enqueueDrawCallsForFrameData:commandBuffer:] <null> (iTerm2.debug.dylib:arm64+0x1310970)
+    #5 __62-[iTermMetalDriver performPrivateQueueSetupForFrameData:view:]_block_invoke_2.331 <null> (iTerm2.debug.dylib:arm64+0x130a18c)
+    #6 -[iTermMetalFrameData measureTimeForStat:ofBlock:] <null> (iTerm2.debug.dylib:arm64+0xbcc6f4)
+    #7 -[iTermMetalFrameData enqueueDrawCallsWithBlock:] <null> (iTerm2.debug.dylib:arm64+0xbd0d20)
+    #8 -[iTermMetalDriver performPrivateQueueSetupForFrameData:view:] <null> (iTerm2.debug.dylib:arm64+0x1309acc)
+    #9 __57-[iTermMetalDriver reallyDrawInMTKView:startToStartTime:]_block_invoke <null> (iTerm2.debug.dylib:arm64+0x1308250)
+    #10 __61-[iTermMetalFrameData dispatchToPrivateQueue:forPreparation:]_block_invoke <null> (iTerm2.debug.dylib:arm64+0xbcccc8)
+    #11 __tsan::invoke_and_release_block(void*) <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x8cf98)
+    #12 _dispatch_client_callout <null> (libdispatch.dylib:arm64e+0x1b59c)
+
+  Thread T231 (tid=34975604, running) is a GCD worker thread
+
+  Thread T243 (tid=34975636, running) is a GCD worker thread
+
+SUMMARY: ThreadSanitizer: data race (iTerm2.debug.dylib:arm64+0x1325a24) in __61-[iTermMetalDriver finishDrawingWithCommandBuffer:frameData:]_block_invoke_2.448+0x6c
+==================
+ThreadSanitizer: reported 4 warnings
+ThreadSanitizer: reported 4 warnings

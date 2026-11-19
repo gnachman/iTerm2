@@ -1,0 +1,22 @@
+==================
+WARNING: ThreadSanitizer: data race (pid=53739)
+  Write of size 4 at 0x0001295d2b5c by main thread:
+    #0 -[SanitizerProbeTests testDataRaceProbe] SanitizerProbeTests.m:103 (ModernTests:arm64+0x149890)
+    #1 __invoking___ <null> (CoreFoundation:arm64e+0x60670)
+    #2 start <null> (dyld:arm64e+0x31e7c)
+
+  Previous write of size 4 at 0x0001295d2b5c by thread T18:
+    #0 SanitizerProbeWriter SanitizerProbeTests.m:47 (ModernTests:arm64+0x149dd4)
+
+  Location is global 'gSanitizerProbeRacyValue' at 0x0001295d2b5c (ModernTests+0x3ddab5c)
+
+  Thread T18 (tid=33649806, finished) created by main thread at:
+    #0 pthread_create <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x33bac)
+    #1 -[SanitizerProbeTests testDataRaceProbe] SanitizerProbeTests.m:100 (ModernTests:arm64+0x1493d8)
+    #2 __invoking___ <null> (CoreFoundation:arm64e+0x60670)
+    #3 start <null> (dyld:arm64e+0x31e7c)
+
+SUMMARY: ThreadSanitizer: data race SanitizerProbeTests.m:103 in -[SanitizerProbeTests testDataRaceProbe]
+==================
+ThreadSanitizer: reported 1 warnings
+ThreadSanitizer: reported 1 warnings

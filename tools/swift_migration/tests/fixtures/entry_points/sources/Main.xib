@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0">
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="iTermWidget">
+            <connections>
+                <outlet property="button" destination="7" id="o1"/>
+                <outlet property="delegate" destination="9" id="o2"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <menuItem title="Bigger" id="m1">
+            <connections>
+                <action selector="biggerFont:" target="-1" id="a1"/>
+            </connections>
+        </menuItem>
+        <button id="7">
+            <connections>
+                <action selector="biggerFont:" target="-2" id="a2"/>
+                <binding destination="-2" name="value" keyPath="fooBar" id="b1"/>
+                <binding destination="-2" name="enabled" keyPath="model.fooBar" id="b2"/>
+            </connections>
+        </button>
+        <customView id="9" customClass="iTermWidget" customModule="iTerm2SharedARC">
+            <userDefinedRuntimeAttributes>
+                <userDefinedRuntimeAttribute type="string" keyPath="fooBar" value="biggerFont:"/>
+            </userDefinedRuntimeAttributes>
+        </customView>
+        <textField id="11">
+            <connections>
+                <action selector="go" target="9" id="a3"/>
+                <outlet property="delegate" destination="9" id="o3"/>
+            </connections>
+        </textField>
+    </objects>
+</document>

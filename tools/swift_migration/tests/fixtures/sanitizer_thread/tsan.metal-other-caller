@@ -1,0 +1,43 @@
+==================
+WARNING: ThreadSanitizer: data race (pid=96268)
+  Read of size 8 at 0x007260524e20 by thread T231:
+    #0 __61-[iTermMetalDriver finishDrawingWithCommandBuffer:frameData:]_block_invoke_2.448 <null> (iTerm2.debug.dylib:arm64+0x1325a10)
+    #1 MTLDispatchListApply <null> (Metal:arm64e+0x1ff40)
+
+  Previous write of size 8 at 0x007260524e20 by thread T243:
+    #0 __copy_helper_block_e8_32s40s48b <null> (iTerm2.debug.dylib:arm64+0xaea100)
+    #1 _call_copy_helpers_excp <null> (libsystem_blocks.dylib:arm64e+0x1394)
+    #2 -[iTermMetalFrameData measureTimeForStat:ofBlock:] <null> (iTerm2.debug.dylib:arm64+0xbcc6f4)
+    #3 -[iTermMetalDriver enqueueDrawCallsForFrameData:commandBuffer:] <null> (iTerm2.debug.dylib:arm64+0x1310970)
+    #4 -[iTermMetalDriver enqueueDrawCallsForFrameData:commandBuffer:] <null> (iTerm2.debug.dylib:arm64+0x1310970)
+    #5 __62-[iTermMetalDriver performPrivateQueueSetupForFrameData:view:]_block_invoke_2.331 <null> (iTerm2.debug.dylib:arm64+0x130a18c)
+    #6 -[iTermMetalFrameData measureTimeForStat:ofBlock:] <null> (iTerm2.debug.dylib:arm64+0xbcc6f4)
+    #7 -[iTermMetalFrameData enqueueDrawCallsWithBlock:] <null> (iTerm2.debug.dylib:arm64+0xbd0d20)
+    #8 -[iTermMetalDriver performPrivateQueueSetupForFrameData:view:] <null> (iTerm2.debug.dylib:arm64+0x1309acc)
+    #9 __57-[iTermMetalDriver reallyDrawInMTKView:startToStartTime:]_block_invoke <null> (iTerm2.debug.dylib:arm64+0x1308250)
+    #10 __61-[iTermMetalFrameData dispatchToPrivateQueue:forPreparation:]_block_invoke <null> (iTerm2.debug.dylib:arm64+0xbcccc8)
+    #11 __tsan::invoke_and_release_block(void*) <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x8cf98)
+    #12 _dispatch_client_callout <null> (libdispatch.dylib:arm64e+0x1b59c)
+
+  Location is heap block of size 56 at 0x007260524e00 allocated by thread T243:
+    #0 malloc <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x67d68)
+    #1 _malloc_type_malloc_outlined <null> (libsystem_malloc.dylib:arm64e+0x1edb0)
+    #2 -[iTermMetalFrameData measureTimeForStat:ofBlock:] <null> (iTerm2.debug.dylib:arm64+0xbcc6f4)
+    #3 -[iTermMetalDriver finishDrawingWithCommandBuffer:frameData:] <null> (iTerm2.debug.dylib:arm64+0x132475c)
+    #4 -[iTermMetalDriver enqueueDrawCallsForFrameData:commandBuffer:] <null> (iTerm2.debug.dylib:arm64+0x1310970)
+    #5 __62-[iTermMetalDriver performPrivateQueueSetupForFrameData:view:]_block_invoke_2.331 <null> (iTerm2.debug.dylib:arm64+0x130a18c)
+    #6 -[iTermMetalFrameData measureTimeForStat:ofBlock:] <null> (iTerm2.debug.dylib:arm64+0xbcc6f4)
+    #7 -[iTermMetalFrameData enqueueDrawCallsWithBlock:] <null> (iTerm2.debug.dylib:arm64+0xbd0d20)
+    #8 -[iTermMetalDriver performPrivateQueueSetupForFrameData:view:] <null> (iTerm2.debug.dylib:arm64+0x1309acc)
+    #9 __57-[iTermMetalDriver reallyDrawInMTKView:startToStartTime:]_block_invoke <null> (iTerm2.debug.dylib:arm64+0x1308250)
+    #10 __61-[iTermMetalFrameData dispatchToPrivateQueue:forPreparation:]_block_invoke <null> (iTerm2.debug.dylib:arm64+0xbcccc8)
+    #11 __tsan::invoke_and_release_block(void*) <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x8cf98)
+    #12 _dispatch_client_callout <null> (libdispatch.dylib:arm64e+0x1b59c)
+
+  Thread T231 (tid=34975604, running) is a GCD worker thread
+
+  Thread T243 (tid=34975636, running) is a GCD worker thread
+
+SUMMARY: ThreadSanitizer: data race (iTerm2.debug.dylib:arm64+0x1325a10) in __61-[iTermMetalDriver finishDrawingWithCommandBuffer:frameData:]_block_invoke_2.448+0x58
+==================
+ThreadSanitizer: reported 1 warnings

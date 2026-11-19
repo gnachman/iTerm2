@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document>
+  <objects>
+    <customObject id="5" customClass="Bound"/>
+    <button id="6">
+      <connections>
+        <binding destination="5" name="enabled" keyPath="hasSelection" id="7"/>
+      </connections>
+    </button>
+  </objects>
+</document>

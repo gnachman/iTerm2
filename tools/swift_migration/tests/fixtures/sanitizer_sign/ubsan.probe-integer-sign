@@ -1,0 +1,21 @@
+/Users/example/iterm2/sources/Probe/SignProbe.m:11:17: runtime error: implicit conversion from type 'NSUInteger' (aka 'unsigned long') of value 9223372036854775807 (64-bit, unsigned) to type 'int' changed the value to -1 (32-bit, signed)
+    #0 0x000104a54ca8 in main SignProbe.m:11
+    #1 0x00018c1ffe7c in start+0x1a1c (dyld:arm64e+0x31e7c)
+
+SUMMARY: UndefinedBehaviorSanitizer: implicit-signed-integer-truncation-or-sign-change /Users/example/iterm2/sources/Probe/SignProbe.m:11:17 
+/Users/example/iterm2/sources/Probe/SignProbe.m:6:41: runtime error: implicit conversion from type 'NSInteger' (aka 'long') of value -1 (64-bit, signed) to type 'NSUInteger' (aka 'unsigned long') changed the value to 18446744073709551615 (64-bit, unsigned)
+    #0 0x000104a54be4 in -[P idx:] SignProbe.m:6
+    #1 0x000104a54d14 in main SignProbe.m:12
+    #2 0x00018c1ffe7c in start+0x1a1c (dyld:arm64e+0x31e7c)
+
+SUMMARY: UndefinedBehaviorSanitizer: implicit-integer-sign-change /Users/example/iterm2/sources/Probe/SignProbe.m:6:41 
+/Users/example/iterm2/sources/Probe/SignProbe.m:14:29: runtime error: implicit conversion from type 'long long' of value -5 (64-bit, signed) to type 'unsigned short' changed the value to 65531 (16-bit, unsigned)
+    #0 0x000104a54d68 in main SignProbe.m:14
+    #1 0x00018c1ffe7c in start+0x1a1c (dyld:arm64e+0x31e7c)
+
+SUMMARY: UndefinedBehaviorSanitizer: implicit-signed-integer-truncation /Users/example/iterm2/sources/Probe/SignProbe.m:14:29 
+/Users/example/iterm2/sources/Probe/SignProbeCxx.mm:2:73: runtime error: implicit conversion from type 'int' of value -1 (32-bit, signed) to type 'size_t' (aka 'unsigned long') changed the value to 18446744073709551615 (64-bit, unsigned)
+    #0 0x000100ce07c4 in main SignProbeCxx.mm:2
+    #1 0x00018c1ffe7c in start+0x1a1c (dyld:arm64e+0x31e7c)
+
+SUMMARY: UndefinedBehaviorSanitizer: implicit-integer-sign-change /Users/example/iterm2/sources/Probe/SignProbeCxx.mm:2:73 

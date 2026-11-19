@@ -1,0 +1,44 @@
+1784231971.062934 iTermUntitledWindowStateMachine.m:61 (-[iTermUntitledWindowStateMachine didFinishInitialization]): untitled: didFinishInitialization <iTermUntitledWindowStateMachine: 0x6030000fdc60 windowRestorationComplete=1 disableInitialWindow=0 initializationComplete=0 wantsWindow=1>
+1784231971.063148 CompanionPairingController.swift:218 (logPairingState(context:)): Companion pairing state (launch): pairedPID=nil identityKey=false phoneStatic=false roomSecret=false pushSecret=false relayConfigured=true
+Test Suite 'All tests' started at 2026-07-16 12:59:32.537.
+Test Suite 'ModernTests.xctest' started at 2026-07-16 12:59:32.538.
+Test Suite 'AIBackslashEscapesTests' started at 2026-07-16 12:59:32.538.
+Test Case '-[ModernTests.AIBackslashEscapesTests test_bmpUnicode_decodes]' started.
+Test Case '-[ModernTests.AIBackslashEscapesTests test_bmpUnicode_decodes]' passed (0.002 seconds).
+Test Case '-[ModernTests.AIBackslashEscapesTests test_bmpUnicode_nonHex_throws]' started.
+Test Case '-[ModernTests.AIBackslashEscapesTests test_bmpUnicode_nonHex_throws]' passed (0.001 seconds).
+Test Case '-[ModernTests.AIBackslashEscapesTests test_bmpUnicode_truncated_throws]' started.
+Test Case '-[ModernTests.AIBackslashEscapesTests test_bmpUnicode_truncated_throws]' passed (0.001 seconds).
+Test Suite 'AIBackslashEscapesTests' passed at 2026-07-16 12:59:32.566.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.004 (0.005) seconds
+Test Suite 'AILiveHarness' started at 2026-07-16 12:59:32.876.
+Test Case '-[ModernTests.AILiveHarness test_anthropic_chatReload_orphan_nonStreaming]' started.
+/Users/example/git/iterm2-alt/AILiveHarness/AILiveHarness.swift:78: -[ModernTests.AILiveHarness test_anthropic_chatReload_orphan_nonStreaming] : Test skipped - Live AI harness is opt-in. Run tools/run_ai_live.sh.
+Test Case '-[ModernTests.AILiveHarness test_anthropic_chatReload_orphan_nonStreaming]' skipped (0.003 seconds).
+Test Case '-[ModernTests.AILiveHarness test_anthropic_chatReload_orphan_streaming]' started.
+/Users/example/git/iterm2-alt/AILiveHarness/AILiveHarness.swift:78: -[ModernTests.AILiveHarness test_anthropic_chatReload_orphan_streaming] : Test skipped - Live AI harness is opt-in. Run tools/run_ai_live.sh.
+Test Case '-[ModernTests.AILiveHarness test_anthropic_chatReload_orphan_streaming]' skipped (0.002 seconds).
+Test Suite 'AILiveHarness' passed at 2026-07-16 12:59:33.313.
+	 Executed 2 tests, with 2 tests skipped and 0 failures (0 unexpected) in 0.005 (0.006) seconds
+Test Suite 'AISafetyRefusalParserTests' started at 2026-07-16 12:59:33.512.
+Test Case '-[ModernTests.AISafetyRefusalParserTests testEachNonStreamingFixtureProducesNonEmptyMessage]' started.
+1784231973.516499 CompletionsAnthropic.swift:634 (parse(data:)): RESPONSE:
+Test Case '-[ModernTests.AISafetyRefusalParserTests testEachNonStreamingFixtureProducesNonEmptyMessage]' passed (0.018 seconds).
+Test Case '-[ModernTests.AISafetyRefusalParserTests testEachStreamingFixtureProducesNonEmptyMessage]' started.
+Test Case '-[ModernTests.AISafetyRefusalParserTests testEachStreamingFixtureProducesNonEmptyMessage]' passed (6.360 seconds).
+Test Suite 'AISafetyRefusalParserTests' passed at 2026-07-16 12:59:39.891.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 6.378 (6.379) seconds
+Test Suite 'ModernTests.xctest' passed at 2026-07-16 13:00:21.649.
+	 Executed 7 tests, with 2 tests skipped and 0 failures (0 unexpected) in 6.389 (6.401) seconds
+Test Suite 'All tests' passed at 2026-07-16 13:00:21.652.
+	 Executed 7 tests, with 2 tests skipped and 0 failures (0 unexpected) in 6.389 (6.405) seconds
+2026-07-16 13:00:38.542 xcodebuild[46231:48198727] [MT] IDETestOperationsObserverDebug: 70.709 elapsed -- Testing started completed.
+2026-07-16 13:00:38.542 xcodebuild[46231:48198727] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-07-16 13:00:38.542 xcodebuild[46231:48198727] [MT] IDETestOperationsObserverDebug: 70.709 sec, +70.709 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/example/Library/Developer/Xcode/DerivedData/iTerm2-fkoydrefveohihheofikkimdwpid/Logs/Test/Test-ModernTests-2026.07.16_12-57-57--0700.xcresult
+
+[1m** TEST SUCCEEDED ** [166.728 sec]
+
+[0m

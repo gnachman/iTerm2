@@ -1,0 +1,21 @@
+/Users/example/iterm2/sources/VT100/VT100Grid.m:2556:22: runtime error: implicit conversion from type 'unichar' (aka 'unsigned short') of value 8239 (16-bit, unsigned) to type 'char' changed the value to 47 (8-bit, signed)
+    #0 0x00010c85ce88 in -[VT100Grid compactLineDump]+0xdc (iTerm2.debug.dylib:arm64+0x6f0e88)
+    #1 0x00010c653200 in -[VT100Screen compactLineDumpWithHistory]+0xb8 (iTerm2.debug.dylib:arm64+0x4e7200)
+    #2 0x00011d706d90 in VT100ScreenTests.testClearScreenAndMoveCursorSurvivesRestorationWithBanner() VT100ScreenTests.swift:632
+    #3 0x00011d707a78 in @objc VT100ScreenTests.testClearScreenAndMoveCursorSurvivesRestorationWithBanner() /<compiler-generated>
+
+SUMMARY: UndefinedBehaviorSanitizer: implicit-signed-integer-truncation /Users/example/iterm2/sources/VT100/VT100Grid.m:2556:22 
+/Users/example/iterm2/sources/ScreenChar/ScreenChar.m:421:16: runtime error: implicit conversion from type 'NSStringEncoding' (aka 'unsigned long') of value 2483028224 (64-bit, unsigned) to type 'int' changed the value to -1811939072 (32-bit, signed)
+    #0 0x00010ca75090 in CharArrayToString+0x34 (iTerm2.debug.dylib:arm64+0x909090)
+    #1 0x00010ca74fd8 in ScreenCharArrayToStringWithInteriorNulsAsSpaces+0x598 (iTerm2.debug.dylib:arm64+0x908fd8)
+    #2 0x00010ca7349c in ScreenCharArrayToString+0x3c (iTerm2.debug.dylib:arm64+0x90749c)
+    #3 0x00010ca733f8 in -[iTermStringLine initWithScreenChars:length:]+0x114 (iTerm2.debug.dylib:arm64+0x9073f8)
+
+SUMMARY: UndefinedBehaviorSanitizer: implicit-signed-integer-truncation /Users/example/iterm2/sources/ScreenChar/ScreenChar.m:421:16 
+/Users/example/iterm2/sources/VT100/VT100Grid.m:2609:22: runtime error: implicit conversion from type 'unichar' (aka 'unsigned short') of value 9496 (16-bit, unsigned) to type 'char' changed the value to 24 (8-bit, signed)
+    #0 0x00010c85dd6c in -[VT100Grid compactLineDumpWithContinuationMarks]+0xdc (iTerm2.debug.dylib:arm64+0x6f1d6c)
+    #1 0x00010c6532dc in -[VT100Screen compactLineDumpWithDividedHistoryAndContinuationMarks]+0xb8 (iTerm2.debug.dylib:arm64+0x4e72dc)
+    #2 0x00011d71e498 in VT100ScreenTests.testGang_lineDrawingMode() VT100ScreenTests.swift:1685
+    #3 0x00011d71efc0 in @objc VT100ScreenTests.testGang_lineDrawingMode() /<compiler-generated>
+
+SUMMARY: UndefinedBehaviorSanitizer: implicit-signed-integer-truncation /Users/example/iterm2/sources/VT100/VT100Grid.m:2609:22 

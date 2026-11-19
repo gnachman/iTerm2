@@ -1,0 +1,78 @@
+Test Suite 'Selected tests' started at 2026-11-20 00:28:54.798.
+Test Suite 'ModernTests.xctest' started at 2026-11-20 00:28:54.799.
+Test Suite 'SanitizerProbeTests' started at 2026-11-20 00:28:54.799.
+Test Case '-[SanitizerProbeTests testDataRaceProbe]' started.
+/Users/example/iterm2/ModernTests/SanitizerProbeTests.m:63: -[SanitizerProbeTests testDataRaceProbe] : Test skipped - Set ITERM2_SANITIZER_PROBE=thread (tools/swift_migration/sanitizer_tests.sh --probe) to run this probe
+Test Case '-[SanitizerProbeTests testDataRaceProbe]' skipped (0.003 seconds).
+Test Case '-[SanitizerProbeTests testImplicitTruncationProbe]' started.
+/Users/example/iterm2/ModernTests/SanitizerProbeTests.m:63: -[SanitizerProbeTests testImplicitTruncationProbe] : Test skipped - Set ITERM2_SANITIZER_PROBE=integer (tools/swift_migration/sanitizer_tests.sh --probe) to run this probe
+Test Case '-[SanitizerProbeTests testImplicitTruncationProbe]' skipped (0.002 seconds).
+Test Case '-[SanitizerProbeTests testNullabilityProbe]' started.
+/Users/example/iterm2/ModernTests/SanitizerProbeTests.m:72:5: runtime error: null pointer passed as argument 1, which is declared to never be null
+/Users/example/iterm2/ModernTests/SanitizerProbeTests.m:34:66: note: _Nonnull type annotation specified here
+    #0 0x00011846140c in -[SanitizerProbeTests testNullabilityProbe] SanitizerProbeTests.m:72
+    #1 0x00018c675670 in __invoking___+0x90 (CoreFoundation:arm64e+0x60670)
+    #2 0x00018c6754fc in -[NSInvocation invoke]+0x1a4 (CoreFoundation:arm64e+0x604fc)
+    #3 0x000101097f38 in +[XCTFailableInvocation invokeStandardConventionInvocation:completion:]+0x40 (XCTestCore:arm64e+0x1ff38)
+
+SUMMARY: UndefinedBehaviorSanitizer: invalid-null-argument /Users/example/iterm2/ModernTests/SanitizerProbeTests.m:72:5 
+iTerm2(14130,0x1f20fff80) malloc: adding guard pages for large allocator blocks
+iTerm2(14130,0x1f20fff80) malloc: enabling scribbling to detect mods to free blocks
+iTerm2(14130) MallocStackLogging: could not tag MSL-related memory as no_footprint, so those pages will be included in process footprint - No such file or directory (2)
+iTerm2(14130) MallocStackLogging: recording malloc (and VM allocation) stacks using lite mode
+1795163341.080458 iTermTestHostIsolation.swift:74 (suiteName(forBase:pid:nonce:paths:isAlive:)): Removed state of 1 earlier test hosts for suite iterm2-tests
+1795163341.225440 SecureUserDefaults.swift:554 (isOnNonUnixFilesystem(atPath:)): Filesystem type of /Users/example/Library/Application Support/iterm2-tests.14130-4109485450 is apfs
+1795163341.248466 iTermBrowserGateway.swift:196 (verifyApp(bundleID:teamID:)): Found app at: /Users/example/Downloads/iTermBrowserPlugin.app
+2026-11-20 00:29:01.257720-0800 iTerm2[14130:33305894] [Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-20 00:29:01.258777-0800 iTerm2[14130:33305894] [Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-20 00:29:01.258794-0800 iTerm2[14130:33305894] [Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-20 00:29:01.258803-0800 iTerm2[14130:33305894] [Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-20 00:29:01.261531-0800 iTerm2[14130:33305894] [Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-20 00:29:01.261549-0800 iTerm2[14130:33305894] [Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-20 00:29:01.261612-0800 iTerm2[14130:33305894] [Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-20 00:29:01.261626-0800 iTerm2[14130:33305894] [Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-20 00:29:01.261634-0800 iTerm2[14130:33305894] [Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-20 00:29:01.261640-0800 iTerm2[14130:33305894] [Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-20 00:29:01.261647-0800 iTerm2[14130:33305894] [Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-20 00:29:01.263076-0800 iTerm2[14130:33305894] [Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-20 00:29:01.264087-0800 iTerm2[14130:33305894] [Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+1795163341.287444 iTermSlowOperationGateway.m:598 (-[iTermSlowOperationGateway fetchUserShellWithCompletion:]): fetchUserShell: gateway not ready
+1795163346.054625 iTermDynamicProfileManager.m:110 (-[iTermDynamicProfileManager init]): Watching files: {(
+)}, folders: {(
+    "/Users/example/Library/Application Support/iterm2-tests.14130-4109485450/DynamicProfiles"
+)}
+1795163346.057778 iTermDynamicProfileManager.m:323 (-[iTermDynamicProfileManager reallyReloadDynamicProfiles]): Reloading dynamic profiles from /Users/example/Library/Application Support/iterm2-tests.14130-4109485450/DynamicProfiles
+1795163346.060245 iTermUntitledWindowStateMachine.m:55 (-[iTermUntitledWindowStateMachine didFinishRestoringWindows]): untitled: windowRestorationDidComplete <iTermUntitledWindowStateMachine: 0x773258f630 windowRestorationComplete=0 disableInitialWindow=0 initializationComplete=0 wantsWindow=0>
+1795163346.068132 InputSourceForcer.swift:62 (begin()): Begin input source forcing
+2026-11-20 00:29:06.486197-0800 iTerm2[14130:33305666] ApplePersistenceIgnoreState: Existing state will not be touched. New state will be written to /var/folders/jk/2nklbh0x5ksc192jsm9nhnhc0000gn/T/com.googlecode.iterm2.savedState
+1795163346.493575 iTermApplicationDelegate.m:1262 (-[iTermApplicationDelegate applicationOpenUntitledFile:]): finishedLaunching=0 openArrangementAtStartup=0 openNoWindowsAtStartup=0 alwaysOpenWindowAtStartup=0
+1795163346.541162 iTermApplicationDelegate.m:1671 (-[iTermApplicationDelegate applicationDidFinishLaunching:]): Previous shutdown was clean: NO
+1795163346.548380 AIModelCatalogUpdater.swift:117 (performPeriodicCheck()): Automatic AI model updates are turned off; skipping periodic check
+1795163346.549433 OrchestratorClient.swift:502 (markReady()): Session restoration complete; releasing 0 deferred watcher reconciliations
+1795163346.746343 iTermUntitledWindowStateMachine.m:61 (-[iTermUntitledWindowStateMachine didFinishInitialization]): untitled: didFinishInitialization <iTermUntitledWindowStateMachine: 0x773258f630 windowRestorationComplete=1 disableInitialWindow=0 initializationComplete=0 wantsWindow=1>
+
+Restarting after unexpected exit, crash, or test timeout; summary will include totals from previous launches.
+
+Test Suite 'Selected tests' started at 2026-11-20 00:29:06.778.
+Test Suite 'ModernTests.xctest' started at 2026-11-20 00:29:06.779.
+Test Suite 'SanitizerProbeTests' started at 2026-11-20 00:29:06.779.
+Test Case '-[SanitizerProbeTests testSignedOverflowProbe]' started.
+/Users/example/iterm2/ModernTests/SanitizerProbeTests.m:63: -[SanitizerProbeTests testSignedOverflowProbe] : Test skipped - Set ITERM2_SANITIZER_PROBE=integer (tools/swift_migration/sanitizer_tests.sh --probe) to run this probe
+Test Case '-[SanitizerProbeTests testSignedOverflowProbe]' skipped (0.003 seconds).
+Test Suite 'SanitizerProbeTests' passed at 2026-11-20 00:29:06.784.
+	 Executed 1 test, with 1 test skipped and 0 failures (0 unexpected) in 0.003 (0.004) seconds
+Test Suite 'ModernTests.xctest' passed at 2026-11-20 00:29:06.784.
+	 Executed 1 test, with 1 test skipped and 0 failures (0 unexpected) in 0.003 (0.005) seconds
+Test Suite 'Selected tests' passed at 2026-11-20 00:29:06.785.
+	 Executed 1 test, with 1 test skipped and 0 failures (0 unexpected) in 0.003 (0.006) seconds
+2026-11-20 00:29:13.485 xcodebuild[12496:33287280] [MT] IDETestOperationsObserverDebug: 25.191 elapsed -- Testing started completed.
+2026-11-20 00:29:13.485 xcodebuild[12496:33287280] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-11-20 00:29:13.485 xcodebuild[12496:33287280] [MT] IDETestOperationsObserverDebug: 25.191 sec, +25.191 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/example/Library/Developer/Xcode/DerivedData/iTerm2-fkoydrefveohihheofikkimdwpid/Logs/Test/Test-ModernTests-2026.11.20_00-28-48--0800.xcresult
+
+Failing tests:
+	-[SanitizerProbeTests testNullabilityProbe]
+
+** TEST EXECUTE FAILED **

@@ -1,0 +1,6 @@
+Copied over fixtures/minirepo by the scope tests in test_inventory.py
+(ScopeOverlayRepo in inventory_testlib.py): files in the directories that
+README.md section 2 added to the migration's scope, with two Xcode projects
+of their own, and sources/SharedWithTests.m, which the scope tests add to the
+fixture's iTerm2SharedARC target and to a test bundle. Line counts are
+asserted by the tests; change them together.

@@ -1,0 +1,10 @@
+# A second fixture runtime method list for test_entry_points.py, as if converted by sdk_selectors.py --runtime-methods-from-headers from dumped headers of an older OS release.
+# os: macOS 98.0 (98A1)
+# kind: dumped-headers
+# source: fixture
+# columns: C<TAB>class<TAB>superclass (empty for a root class), M<TAB>class<TAB>+|-<TAB>selector
+C	NSObject	
+C	NSResponder	NSObject
+C	NSView	NSResponder
+M	NSObject	-	_underscoredUnusedMethod
+# end: C=3 M=1

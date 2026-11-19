@@ -1,0 +1,38 @@
+[
+  {
+    "name": "ColorPicker",
+    "project": "ColorPicker/ColorPicker.xcodeproj",
+    "targets": [
+      "ColorPicker"
+    ],
+    "configuration": "Debug",
+    "settings": [],
+    "note": "ColorPicker.framework, prebuilt and embedded in the app (ColorPicker/Makefile builds it in Release). In the migration's scope."
+  },
+  {
+    "name": "CoreParse",
+    "project": "submodules/CoreParse/CoreParse.xcodeproj",
+    "targets": [
+      "CoreParse"
+    ],
+    "configuration": "Debug",
+    "settings": [
+      "VALID_ARCHS=$(ARCHS)"
+    ],
+    "note": "CoreParse.framework, which the app embeds, is built by the main Makefile from submodules/CoreParse; outside the scope (submodules), captured so that its sends to the app's delegates are parsed. Its project lists no arm64 in VALID_ARCHS (the Makefile passes it), hence the setting.",
+    "stale_copy": "ThirdParty/CoreParse"
+  },
+  {
+    "name": "SignedArchive",
+    "project": "SignedArchive/SignedArchive.xcodeproj",
+    "targets": [
+      "sign",
+      "verify",
+      "extract",
+      "resign"
+    ],
+    "configuration": "Debug",
+    "settings": [],
+    "note": "The command line tools of SignedArchive/ (in the scope); the app's own build compiles the SignedArchive framework's files, so that target is not kept."
+  }
+]

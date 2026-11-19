@@ -1,0 +1,4 @@
+module LocalMod {
+    header "LocalMod.h"
+    export *
+}

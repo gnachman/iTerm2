@@ -1,0 +1,2 @@
+@interface FixtureProxy : NSProxy
+@end

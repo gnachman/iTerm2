@@ -1,0 +1,31 @@
+[
+  {
+    "testIdentifier": "PerformanceTests/testGang_fastPathPerformance()",
+    "testIdentifierURL": "test://com.apple.xcode/iTerm2/PerformanceTests/PerformanceTests/testGang_fastPathPerformance",
+    "testRuns": [
+      {
+        "testPlanConfiguration": {"configurationId": "1", "configurationName": "Test Scheme Action"},
+        "device": {"deviceId": "x", "deviceName": "My Mac"},
+        "metrics": [
+          {"displayName": "Time", "unitOfMeasurement": "s", "measurements": [0.11, 0.1, 0.105],
+           "identifier": "com.apple.XCTPerformanceMetric_WallClockTime", "polarity": "prefers smaller"}
+        ]
+      }
+    ]
+  },
+  {
+    "testIdentifier": "MigrationBaselineTests/testMemoryScrollbackFill()",
+    "testRuns": [
+      {
+        "testPlanConfiguration": {"configurationId": "1", "configurationName": "Test Scheme Action"},
+        "device": {"deviceId": "x", "deviceName": "My Mac"},
+        "metrics": [
+          {"displayName": "Memory Peak Physical", "unitOfMeasurement": "kB", "measurements": [52000, 52100, 51900],
+           "identifier": "com.apple.dt.XCTMetric_Memory.physical_peak", "polarity": "prefers smaller"},
+          {"displayName": "Throughput", "unitOfMeasurement": "items", "measurements": [2, 2],
+           "identifier": "x", "polarity": "prefers larger"}
+        ]
+      }
+    ]
+  }
+]

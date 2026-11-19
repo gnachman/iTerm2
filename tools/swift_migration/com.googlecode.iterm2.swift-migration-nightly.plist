@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  launchd user agent that starts the Swift migration orchestrator at local
+  midnight. A template: __REPO__ stands for the owner's checkout (the
+  script runs from there and only reads it), __CLONE__ for the nightly
+  clone made by tools/swift_migration/nightly_clone.sh setup (the session
+  works there), and __HOME__ for the owner's home directory. Install and
+  uninstall instructions are in the header of
+  tools/swift_migration/nightly_start.sh. Nothing installs this
+  automatically.
+
+  PATH mirrors where the owner's login shell finds the programs the run
+  uses (zsh -lic 'command -v NAME', 2026-11-20): claude, git, tmux and brew
+  in /opt/homebrew/bin; python3 in the python.org framework (the
+  migration's Python tools, whose environment macOS lets deadline_run.py
+  read); ruby for tools/*.rb in /opt/homebrew/opt/ruby/bin; xcodebuild,
+  expect, make, swift, clang and caffeinate in /usr/bin. nightly_start.sh
+  checks that each resolves and logs the paths. PYTHON runs the tools
+  themselves with the python.org interpreter rather than the script's
+  default /usr/bin/python3 (Xcode's, a platform binary whose environment
+  macOS hides from the sweep). LANG gives tmux and Claude
+  Code a UTF-8 locale (launchd sets none); tmux sets TERM in its pane, and
+  `new-session -d` needs no terminal. The log goes to ~/Library/Logs, which
+  always exists; NIGHTLY_LAUNCHD_LOG repeats its path so that the script
+  can print it.
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.googlecode.iterm2.swift-migration-nightly</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/bash</string>
+		<string>__REPO__/tools/swift_migration/nightly_start.sh</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>__REPO__</string>
+	<key>StartCalendarInterval</key>
+	<dict>
+		<key>Hour</key>
+		<integer>0</integer>
+		<key>Minute</key>
+		<integer>0</integer>
+	</dict>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/opt/homebrew/opt/ruby/bin:/Library/Frameworks/Python.framework/Versions/3.9/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+		<key>NIGHTLY_CLONE</key>
+		<string>__CLONE__</string>
+		<key>PYTHON</key>
+		<string>/Library/Frameworks/Python.framework/Versions/3.9/bin/python3</string>
+		<key>LANG</key>
+		<string>en_US.UTF-8</string>
+		<key>NIGHTLY_LAUNCHD_LOG</key>
+		<string>__HOME__/Library/Logs/iterm2-swift-migration-nightly.log</string>
+	</dict>
+	<key>StandardOutPath</key>
+	<string>__HOME__/Library/Logs/iterm2-swift-migration-nightly.log</string>
+	<key>StandardErrorPath</key>
+	<string>__HOME__/Library/Logs/iterm2-swift-migration-nightly.log</string>
+</dict>
+</plist>

@@ -1,0 +1,21 @@
+# UBSan runtime suppressions for the nullability mode of
+# tools/swift_migration/sanitizer_tests.sh (without --collect). A report that
+# matches a line here does not abort the test host and is not printed.
+#
+# Every entry is a known violation that has not been triaged yet
+# (docs/swift-migration/nullability.md section 7: a wrong annotation, or a
+# real bug to log). Triage removes the entry. Do not add an entry to make a
+# test pass without recording the report for triage.
+#
+# Format: <check>:<pattern>, one per line, where <check> is a UBSan check
+# name (nullability-arg, nullability-return, nullability-assign) and
+# <pattern> matches the function name, source file or module of the
+# reporting frame; * is a wildcard. See the UBSan documentation, "Runtime
+# suppressions".
+
+# No entries. The five found on 2026-11-20 while building this mode fired
+# while the test host launched, before any test ran: three for
+# sources/Language/iTermVariables.m (nil passed to
+# valueByUnwrappingWeakVariables: and strongArrayFromWeakArray:), removed when
+# unit nullability-n7-expression-language made those claims nullable, and two
+# for iTermScriptsMenuController, removed by unit nullability-n4-scripts.

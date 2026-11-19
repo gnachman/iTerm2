@@ -1,0 +1,25 @@
+# Objective-C runtime snapshot, format 3
+architecture arm64
+build-configuration Development
+build-variant ASan
+class RuntimeSnapshotPortAtomicObjCFixture
+  language objc
+  superclass NSObject
+  image ModernTests
+  ivar-arc-flag set
+  strong-ivar-layout 0100
+  weak-ivar-layout
+  ivar _atomicCount types=q ownership=scalar layout=
+  ivar _atomicObject types=@"NSObject" ownership=strong layout=s
+  ivar _atomicRect types={CGRect="origin"{CGPoint="x"d"y"d}"size"{CGSize="width"d"height"d}} ownership=struct-or-cxx-object layout=
+  instance-method -.cxx_destruct types=v16@0:8
+  instance-method -atomicCount types=q16@0:8
+  instance-method -atomicObject types=@16@0:8
+  instance-method -atomicRect types={CGRect={CGPoint=dd}{CGSize=dd}}16@0:8
+  instance-method -setAtomicCount: types=v24@0:8q16
+  instance-method -setAtomicObject: types=v24@0:8@16
+  instance-method -setAtomicRect: types=v48@0:8{CGRect={CGPoint=dd}{CGSize=dd}}16
+  instance-property atomicCount type=q ownership=assign atomic ivar=_atomicCount raw=Tq,V_atomicCount
+  instance-property atomicObject type=@"NSObject" ownership=strong atomic ivar=_atomicObject raw=T@"NSObject",&,V_atomicObject
+  instance-property atomicRect type={CGRect={CGPoint=dd}{CGSize=dd}} ownership=assign atomic ivar=_atomicRect raw=T{CGRect={CGPoint=dd}{CGSize=dd}},V_atomicRect
+end class RuntimeSnapshotPortAtomicObjCFixture

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<key>NSPrincipalClass</key>
+	<string>iTermWidget</string>
+	<key>NSServices</key>
+	<array>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict><key>default</key><string>Open Thing</string></dict>
+			<key>NSMessage</key><string>openThing</string>
+		</dict>
+	</array>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>NSDocumentClass</key>
+			<string>iTermSubWidget</string>
+		</dict>
+	</array>
+</dict>
+</plist>

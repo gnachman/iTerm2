@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0">
+    <objects>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <menuItem title="Bigger" id="d1">
+            <connections>
+                <action selector="biggerFont:" target="-1" id="d2"/>
+            </connections>
+        </menuItem>
+    </objects>
+</document>

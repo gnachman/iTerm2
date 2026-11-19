@@ -1,0 +1,5 @@
+Testing started
+Test suite 'MigrationBaselineTests' started on 'My Mac - iTerm2 (48839)'
+Test case 'MigrationBaselineTests.testParseThroughput()' passed on 'My Mac - iTerm2 (48839)' (0.242 seconds)
+Test case 'PerformanceTests.testGang_fastPathPerformance()' failed on 'My Mac - iTerm2 (58166)' (4.691 seconds)
+** TEST EXECUTE FAILED **

@@ -1,0 +1,2 @@
+@interface ConditionalThing : NSObject
+@end

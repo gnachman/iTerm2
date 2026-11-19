@@ -1,0 +1,31 @@
+PruneExplicitPrecompiledModules /Users/example/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules
+
+Testing started
+Test suite 'LineBlockTests' started on 'My Mac - iTerm2 (15892)'
+Test case 'LineBlockTests.testAllLinesAreEmptyWhenEntriesZeroLength()' passed on 'My Mac - iTerm2 (15892)' (0.003 seconds)
+Test case 'LineBlockTests.testAppendAfterRemoveLastRawLine()' passed on 'My Mac - iTerm2 (15892)' (0.002 seconds)
+Test suite 'LegacyManualAIModelHeadersTests' started on 'My Mac - iTerm2 (15892)'
+Test case '-[LegacyManualAIModelHeadersTests testLegacyModelCarriesGlobalHeaders]' passed on 'My Mac - iTerm2 (15892)' (0.014 seconds)
+Test case '-[LegacyManualAIModelHeadersTests testLegacyModelHasNoHeadersWhenGlobalHeadersDisabled]' passed on 'My Mac - iTerm2 (15892)' (0.004 seconds)
+Test suite 'UvProvisionerLiveTests' started on 'My Mac - iTerm2 (15892)'
+Test case 'UvProvisionerLiveTests.testFetchManifestDownloadVerifyInstall()' skipped on 'My Mac - iTerm2 (15892)' (0.002 seconds)
+Test case 'UvProvisionerLiveTests.testProvisionFullEnvironmentEndToEnd()' skipped on 'My Mac - iTerm2 (15892)' (0.001 seconds)
+Test suite 'ProcessCollectionTests' started on 'My Mac - iTerm2 (16026)'
+Test suite 'FramerFlowTwoHopSimulationTests' started on 'My Mac - iTerm2 (16023)'
+Test case 'FramerFlowTwoHopSimulationTests.testAJitteryOuterHopStillBoundsCtrlC()' passed on 'My Mac - iTerm2 (16023)' (10.601 seconds)
+Test case 'ProcessCollectionTests.testProcessTableSnapshotMatchesPerPidLookupForSelf()' passed on 'My Mac - iTerm2 (16026)' (32.978 seconds)
+Test case 'FramerFlowTwoHopSimulationTests.testANestedFloodRecoversWhenAJitteryOuterHopSpeedsUp()' passed on 'My Mac - iTerm2 (16023)' (249.212 seconds)
+Test case 'FramerFlowTwoHopSimulationTests.testANestedFloodRecoversWhenTheOuterHopSpeedsUpAtAnyMoment()' passed on 'My Mac - iTerm2 (16023)' (114.301 seconds)
+Test case 'FramerFlowTwoHopSimulationTests.testASlowOuterHopBoundsCtrlCAtTheInnerHost()' passed on 'My Mac - iTerm2 (16023)' (20.214 seconds)
+Test case 'FramerFlowTwoHopSimulationTests.testTheCostPerByteIsSteadyOnAJitteryHop()' passed on 'My Mac - iTerm2 (16023)' (3.479 seconds)
+Test case 'FramerFlowTwoHopSimulationTests.testTheInnerWindowIsSteadyBehindASlowOuterHop()' passed on 'My Mac - iTerm2 (16023)' (1.459 seconds)
+2026-11-12 23:42:21.998 xcodebuild[13524:123613491] [MT] IDETestOperationsObserverDebug: 510.829 elapsed -- Testing started completed.
+2026-11-12 23:42:21.998 xcodebuild[13524:123613491] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-11-12 23:42:21.998 xcodebuild[13524:123613491] [MT] IDETestOperationsObserverDebug: 510.829 sec, +510.829 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/example/Library/Developer/Xcode/DerivedData/iTerm2-fkoydrefveohihheofikkimdwpid/Logs/Test/Test-ModernTests-2026.11.12_23-32-21--0800.xcresult
+
+[1m** TEST SUCCEEDED ** [607.604 sec]
+
+[0m

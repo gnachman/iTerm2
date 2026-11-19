@@ -1,0 +1,5 @@
+cp -f xcstrings/Localizable.xcstrings sources/Localizable.xcstrings
+echo "Using PATH for build: /opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+Using PATH for build: /opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+cp plists/dev-iTerm2.plist plists/iTerm2.plist
+xcodebuild -scheme iTerm2 -configuration Development -destination 'platform=macOS' -skipPackagePluginValidation   SYMROOT="/Users/example/git/iterm2-alt/Build" && \

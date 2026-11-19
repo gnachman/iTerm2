@@ -1,0 +1,359 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 54;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		B0000000000000000000F001 /* Foo.m in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000F001 /* Foo.m */; };
+		B0000000000000000000F002 /* Bar.m in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000F002 /* Bar.m */; };
+		B0000000000000000000F003 /* FooSub.m in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000F003 /* FooSub.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
+		B0000000000000000000F004 /* Hot.mm in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000F004 /* Hot.mm */; };
+		B0000000000000000000F005 /* Util.c in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000F005 /* Util.c */; };
+		B0000000000000000000F006 /* PSMThing.m in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000F006 /* PSMThing.m */; };
+		B0000000000000000000F007 /* Swifty.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000F007 /* Swifty.swift */; };
+		B0000000000000000000F008 /* Gen.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000F008 /* Gen.pbobjc.m */; };
+		B0000000000000000000F009 /* Multi.m in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000F009 /* Multi.m */; };
+		B0000000000000000000F00A /* Multi+Extra.m in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000F00A /* Multi+Extra.m */; };
+		B0000000000000000000F00B /* Hazardous.m in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000F00B /* Hazardous.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		B0000000000000000000F00C /* Base.m in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000F00C /* Base.m */; };
+		B0000000000000000000F00D /* NSString+Fixture.m in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000F00D /* NSString+Fixture.m */; };
+		B000000000000000000000E1 /* Window.m in Sources */ = {isa = PBXBuildFile; fileRef = F000000000000000000000E1 /* Window.m */; };
+		B000000000000000000000F1 /* Foo+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = F000000000000000000000F1 /* Foo+Scripting.m */; };
+		B000000000000000000000G1 /* Nonnull.m in Sources */ = {isa = PBXBuildFile; fileRef = F000000000000000000000G1 /* Nonnull.m */; };
+		B000000000000000000000H1 /* Family.m in Sources */ = {isa = PBXBuildFile; fileRef = F000000000000000000000H1 /* Family.m */; };
+		B000000000000000000000I1 /* iTermThing.m in Sources */ = {isa = PBXBuildFile; fileRef = F000000000000000000000I1 /* iTermThing.m */; };
+		B000000000000000000000J1 /* Bound.m in Sources */ = {isa = PBXBuildFile; fileRef = F000000000000000000000J1 /* Bound.m */; };
+		B000000000000000000000K1 /* ServerMain.c in Sources */ = {isa = PBXBuildFile; fileRef = F000000000000000000000K1 /* ServerMain.c */; };
+		B000000000000000000000U2 /* Util.c in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000F005 /* Util.c */; };
+		B00000000000000000000N00 /* Conditional.m in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000N00 /* Conditional.m */; };
+		B00000000000000000000N01 /* Proxy.m in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000N01 /* Proxy.m */; };
+		B00000000000000000000N02 /* ProxyChild.m in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000N02 /* ProxyChild.m */; };
+		B00000000000000000000N03 /* Forwarder.m in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000N03 /* Forwarder.m */; };
+		B00000000000000000000N04 /* Swizzle.m in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000N04 /* Swizzle.m */; };
+		B00000000000000000000N05 /* Reflect.m in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000N05 /* Reflect.m */; };
+		B00000000000000000000N06 /* Lookup.m in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000N06 /* Lookup.m */; };
+		B00000000000000000000N07 /* Loader.m in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000N07 /* Loader.m */; };
+		B00000000000000000000N08 /* Assoc.m in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000N08 /* Assoc.m */; };
+		B00000000000000000000N09 /* Broken.m in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000N09 /* Broken.m */; };
+		B00000000000000000000N10 /* Owner.m in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000N10 /* Owner.m */; };
+		B00000000000000000000N11 /* Plugin.m in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000N11 /* Plugin.m */; };
+		B00000000000000000000N12 /* PluginImpl.m in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000N12 /* PluginImpl.m */; };
+		B00000000000000000000P00 /* iTermThing+Extra.m in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000P00 /* iTermThing+Extra.m */; };
+		B00000000000000000000P01 /* Mixed.mm in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000P01 /* Mixed.mm */; };
+		B00000000000000000000P02 /* Plain.mm in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000P02 /* Plain.mm */; };
+		B00000000000000000000Q01 /* Buttons.m in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000Q01 /* Buttons.m */; };
+		B00000000000000000000Q02 /* ButtonStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000Q02 /* ButtonStyle.m */; };
+		B00000000000000000000Q03 /* LocalGlobal.m in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000Q03 /* LocalGlobal.m */; };
+		B00000000000000000000Q04 /* Atomic.m in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000Q04 /* Atomic.m */; };
+		B00000000000000000000Q05 /* PTYTab+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000Q05 /* PTYTab+Scripting.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		F0000000000000000000F001 /* Foo.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Foo.m; sourceTree = "<group>"; };
+		F0000000000000000000F002 /* Bar.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Bar.m; sourceTree = "<group>"; };
+		F0000000000000000000F003 /* FooSub.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FooSub.m; sourceTree = "<group>"; };
+		F0000000000000000000F004 /* Hot.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = Hot.mm; path = VT100/Hot.mm; sourceTree = "<group>"; };
+		F0000000000000000000F005 /* Util.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sources/Util.c; sourceTree = SOURCE_ROOT; };
+		F0000000000000000000F006 /* PSMThing.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PSMThing.m; sourceTree = "<group>"; };
+		F0000000000000000000F007 /* Swifty.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Swifty.swift; sourceTree = "<group>"; };
+		F0000000000000000000F008 /* Gen.pbobjc.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = proto/Gen.pbobjc.m; sourceTree = "<group>"; };
+		F0000000000000000000F009 /* Multi.m */ = {isa = PBXFileReference; path = Multi.m; sourceTree = "<group>"; };
+		F0000000000000000000F00A /* Multi+Extra.m */ = {isa = PBXFileReference; path = "Multi+Extra.m"; sourceTree = "<group>"; };
+		F0000000000000000000F00B /* Hazardous.m */ = {isa = PBXFileReference; path = Hazardous.m; sourceTree = "<group>"; };
+		F0000000000000000000F00C /* Base.m */ = {isa = PBXFileReference; path = Base.m; sourceTree = "<group>"; };
+		F0000000000000000000F00D /* NSString+Fixture.m */ = {isa = PBXFileReference; path = "NSString+Fixture.m"; sourceTree = "<group>"; };
+		F000000000000000000000E1 /* Window.m */ = {isa = PBXFileReference; path = "Window.m"; sourceTree = "<group>"; };
+		F000000000000000000000F1 /* Foo+Scripting.m */ = {isa = PBXFileReference; path = "Foo+Scripting.m"; sourceTree = "<group>"; };
+		F000000000000000000000G1 /* Nonnull.m */ = {isa = PBXFileReference; path = "Nonnull.m"; sourceTree = "<group>"; };
+		F000000000000000000000H1 /* Family.m */ = {isa = PBXFileReference; path = "Family.m"; sourceTree = "<group>"; };
+		F000000000000000000000I1 /* iTermThing.m */ = {isa = PBXFileReference; path = "iTermThing.m"; sourceTree = "<group>"; };
+		F000000000000000000000J1 /* Bound.m */ = {isa = PBXFileReference; path = "Bound.m"; sourceTree = "<group>"; };
+		F000000000000000000000K1 /* ServerMain.c */ = {isa = PBXFileReference; path = "ServerMain.c"; sourceTree = "<group>"; };
+		F00000000000000000000N00 /* Conditional.m */ = {isa = PBXFileReference; path = "Conditional.m"; sourceTree = "<group>"; };
+		F00000000000000000000N01 /* Proxy.m */ = {isa = PBXFileReference; path = "Proxy.m"; sourceTree = "<group>"; };
+		F00000000000000000000N02 /* ProxyChild.m */ = {isa = PBXFileReference; path = "ProxyChild.m"; sourceTree = "<group>"; };
+		F00000000000000000000N03 /* Forwarder.m */ = {isa = PBXFileReference; path = "Forwarder.m"; sourceTree = "<group>"; };
+		F00000000000000000000N04 /* Swizzle.m */ = {isa = PBXFileReference; path = "Swizzle.m"; sourceTree = "<group>"; };
+		F00000000000000000000N05 /* Reflect.m */ = {isa = PBXFileReference; path = "Reflect.m"; sourceTree = "<group>"; };
+		F00000000000000000000N06 /* Lookup.m */ = {isa = PBXFileReference; path = "Lookup.m"; sourceTree = "<group>"; };
+		F00000000000000000000N07 /* Loader.m */ = {isa = PBXFileReference; path = "Loader.m"; sourceTree = "<group>"; };
+		F00000000000000000000N08 /* Assoc.m */ = {isa = PBXFileReference; path = "Assoc.m"; sourceTree = "<group>"; };
+		F00000000000000000000N09 /* Broken.m */ = {isa = PBXFileReference; path = "Broken.m"; sourceTree = "<group>"; };
+		F00000000000000000000N10 /* Owner.m */ = {isa = PBXFileReference; path = "Owner.m"; sourceTree = "<group>"; };
+		F00000000000000000000N11 /* Plugin.m */ = {isa = PBXFileReference; path = "Plugin.m"; sourceTree = "<group>"; };
+		F00000000000000000000N12 /* PluginImpl.m */ = {isa = PBXFileReference; path = "PluginImpl.m"; sourceTree = "<group>"; };
+		F00000000000000000000P00 /* iTermThing+Extra.m */ = {isa = PBXFileReference; path = "iTermThing+Extra.m"; sourceTree = "<group>"; };
+		F00000000000000000000P01 /* Mixed.mm */ = {isa = PBXFileReference; path = "Mixed.mm"; sourceTree = "<group>"; };
+		F00000000000000000000P02 /* Plain.mm */ = {isa = PBXFileReference; path = "Plain.mm"; sourceTree = "<group>"; };
+		F00000000000000000000Q01 /* Buttons.m */ = {isa = PBXFileReference; path = "Buttons.m"; sourceTree = "<group>"; };
+		F00000000000000000000Q02 /* ButtonStyle.m */ = {isa = PBXFileReference; path = "ButtonStyle.m"; sourceTree = "<group>"; };
+		F00000000000000000000Q03 /* LocalGlobal.m */ = {isa = PBXFileReference; path = "LocalGlobal.m"; sourceTree = "<group>"; };
+		F00000000000000000000Q04 /* Atomic.m */ = {isa = PBXFileReference; path = "Atomic.m"; sourceTree = "<group>"; };
+		F00000000000000000000Q05 /* PTYTab+Scripting.m */ = {isa = PBXFileReference; path = "PTYTab+Scripting.m"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		R0000000000000000000000A /* ModernTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ModernTests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXGroup section */
+		G0000000000000000000000A = {
+			isa = PBXGroup;
+			children = (
+				G0000000000000000000000B /* sources */,
+				G0000000000000000000000C /* PSM */,
+				R0000000000000000000000A /* ModernTests */,
+			);
+			sourceTree = "<group>";
+		};
+		G0000000000000000000000B /* sources */ = {
+			isa = PBXGroup;
+			children = (
+				F0000000000000000000F001 /* Foo.m */,
+				F0000000000000000000F002 /* Bar.m */,
+				F0000000000000000000F003 /* FooSub.m */,
+				F0000000000000000000F004 /* Hot.mm */,
+				F0000000000000000000F005 /* Util.c */,
+				F0000000000000000000F007 /* Swifty.swift */,
+				F0000000000000000000F008 /* Gen.pbobjc.m */,
+				F0000000000000000000F009 /* Multi.m */,
+				F0000000000000000000F00A /* Multi+Extra.m */,
+				F0000000000000000000F00B /* Hazardous.m */,
+				F0000000000000000000F00C /* Base.m */,
+				F0000000000000000000F00D /* NSString+Fixture.m */,
+				F000000000000000000000E1 /* Window.m */,
+				F000000000000000000000F1 /* Foo+Scripting.m */,
+				F000000000000000000000G1 /* Nonnull.m */,
+				F000000000000000000000H1 /* Family.m */,
+				F000000000000000000000I1 /* iTermThing.m */,
+				F000000000000000000000J1 /* Bound.m */,
+				F000000000000000000000K1 /* ServerMain.c */,
+				F00000000000000000000P00 /* iTermThing+Extra.m */,
+				F00000000000000000000P01 /* Mixed.mm */,
+				F00000000000000000000P02 /* Plain.mm */,
+				F00000000000000000000N00 /* Conditional.m */,
+				F00000000000000000000N01 /* Proxy.m */,
+				F00000000000000000000N02 /* ProxyChild.m */,
+				F00000000000000000000N03 /* Forwarder.m */,
+				F00000000000000000000N04 /* Swizzle.m */,
+				F00000000000000000000N05 /* Reflect.m */,
+				F00000000000000000000N06 /* Lookup.m */,
+				F00000000000000000000N07 /* Loader.m */,
+				F00000000000000000000N08 /* Assoc.m */,
+				F00000000000000000000N09 /* Broken.m */,
+				F00000000000000000000N10 /* Owner.m */,
+				F00000000000000000000N11 /* Plugin.m */,
+				F00000000000000000000N12 /* PluginImpl.m */,
+				F00000000000000000000Q01 /* Buttons.m */,
+				F00000000000000000000Q02 /* ButtonStyle.m */,
+				F00000000000000000000Q03 /* LocalGlobal.m */,
+				F00000000000000000000Q04 /* Atomic.m */,
+				F00000000000000000000Q05 /* PTYTab+Scripting.m */,
+			);
+			path = sources;
+			sourceTree = "<group>";
+		};
+		G0000000000000000000000C /* PSM */ = {
+			isa = PBXGroup;
+			children = (
+				F0000000000000000000F006 /* PSMThing.m */,
+			);
+			name = PSM;
+			path = ThirdParty/PSMTabBarControl/source;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		T00000000000000000000001 /* iTerm2Shared */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = L00000000000000000000001;
+			buildPhases = (
+				S00000000000000000000001 /* Sources */,
+			);
+			name = iTerm2Shared;
+			productType = "com.apple.product-type.library.static";
+		};
+		T00000000000000000000002 /* iTerm2SharedARC */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = L00000000000000000000002;
+			buildPhases = (
+				S00000000000000000000002 /* Sources */,
+			);
+			name = iTerm2SharedARC;
+			productType = "com.apple.product-type.library.static";
+		};
+		T00000000000000000000003 /* pidinfo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = L00000000000000000000004;
+			buildPhases = (
+				S00000000000000000000003 /* Sources */,
+			);
+			name = pidinfo;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		P00000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = L00000000000000000000003;
+			mainGroup = G0000000000000000000000A;
+			targets = (
+				T00000000000000000000001 /* iTerm2Shared */,
+				T00000000000000000000002 /* iTerm2SharedARC */,
+				T00000000000000000000003 /* pidinfo */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		S00000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+				B0000000000000000000F001 /* Foo.m in Sources */,
+				B0000000000000000000F003 /* FooSub.m in Sources */,
+				B0000000000000000000F005 /* Util.c in Sources */,
+				B0000000000000000000F006 /* PSMThing.m in Sources */,
+				B0000000000000000000F008 /* Gen.pbobjc.m in Sources */,
+			);
+		};
+		S00000000000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+				B0000000000000000000F002 /* Bar.m in Sources */,
+				B0000000000000000000F004 /* Hot.mm in Sources */,
+				B0000000000000000000F007 /* Swifty.swift in Sources */,
+				B0000000000000000000F009 /* Multi.m in Sources */,
+				B0000000000000000000F00A /* Multi+Extra.m in Sources */,
+				B0000000000000000000F00B /* Hazardous.m in Sources */,
+				B0000000000000000000F00C /* Base.m in Sources */,
+				B0000000000000000000F00D /* NSString+Fixture.m in Sources */,
+				B000000000000000000000E1 /* Window.m in Sources */,
+				B00000000000000000000P00 /* iTermThing+Extra.m in Sources */,
+				B00000000000000000000P01 /* Mixed.mm in Sources */,
+				B00000000000000000000P02 /* Plain.mm in Sources */,
+				B00000000000000000000N00 /* Conditional.m in Sources */,
+				B00000000000000000000N01 /* Proxy.m in Sources */,
+				B00000000000000000000N02 /* ProxyChild.m in Sources */,
+				B00000000000000000000N03 /* Forwarder.m in Sources */,
+				B00000000000000000000N04 /* Swizzle.m in Sources */,
+				B00000000000000000000N05 /* Reflect.m in Sources */,
+				B00000000000000000000N06 /* Lookup.m in Sources */,
+				B00000000000000000000N07 /* Loader.m in Sources */,
+				B00000000000000000000N08 /* Assoc.m in Sources */,
+				B00000000000000000000N09 /* Broken.m in Sources */,
+				B00000000000000000000N10 /* Owner.m in Sources */,
+				B00000000000000000000N11 /* Plugin.m in Sources */,
+				B00000000000000000000N12 /* PluginImpl.m in Sources */,
+				B000000000000000000000F1 /* Foo+Scripting.m in Sources */,
+				B000000000000000000000G1 /* Nonnull.m in Sources */,
+				B000000000000000000000H1 /* Family.m in Sources */,
+				B000000000000000000000I1 /* iTermThing.m in Sources */,
+				B000000000000000000000J1 /* Bound.m in Sources */,
+				B00000000000000000000Q01 /* Buttons.m in Sources */,
+				B00000000000000000000Q02 /* ButtonStyle.m in Sources */,
+				B00000000000000000000Q03 /* LocalGlobal.m in Sources */,
+				B00000000000000000000Q04 /* Atomic.m in Sources */,
+				B00000000000000000000Q05 /* PTYTab+Scripting.m in Sources */,
+			);
+		};
+		S00000000000000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+				B000000000000000000000K1 /* ServerMain.c in Sources */,
+				B000000000000000000000U2 /* Util.c in Sources */,
+			);
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		C00000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = NO;
+				GCC_PREFIX_HEADER = sources/Fixture.pch;
+			};
+			name = Debug;
+		};
+		C00000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = NO;
+			};
+			name = Release;
+		};
+		C00000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
+				GCC_PREFIX_HEADER = "$(SRCROOT)/sources/Fixture.pch";
+				OTHER_LDFLAGS = (
+					"-ObjC",
+					"-lz",
+				);
+			};
+			name = Debug;
+		};
+		C00000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
+				GCC_PREFIX_HEADER = sources/Fixture.pch;
+			};
+			name = Release;
+		};
+		C00000000000000000000006 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
+			};
+			name = Debug;
+		};
+		C00000000000000000000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = "FOO=\"bar\"";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		L00000000000000000000001 = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C00000000000000000000001 /* Debug */,
+				C00000000000000000000002 /* Release */,
+			);
+		};
+		L00000000000000000000002 = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C00000000000000000000003 /* Debug */,
+				C00000000000000000000004 /* Release */,
+			);
+		};
+		L00000000000000000000003 = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C00000000000000000000005 /* Debug */,
+			);
+		};
+		L00000000000000000000004 = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C00000000000000000000006 /* Debug */,
+			);
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = P00000000000000000000001 /* Project object */;
+}

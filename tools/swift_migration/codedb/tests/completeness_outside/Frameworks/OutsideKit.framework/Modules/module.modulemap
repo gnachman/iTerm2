@@ -1,0 +1,4 @@
+framework module OutsideKit {
+    header "OutsideKit.h"
+    export *
+}

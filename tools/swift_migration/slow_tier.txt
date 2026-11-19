@@ -1,0 +1,321 @@
+# The slow test tier: the tests the fast tier leaves out. Every other test
+# of ModernTests is in the fast tier, which tools/swift_migration/fast_tests.sh
+# runs (docs/swift-migration/test-speed.md section 2, test-tiers.md). The full
+# suite runs everything, these included.
+#
+# Format: "Class" or "Class/testMethod", white space, the reason (required).
+# tools/swift_migration/test_tiers.py reads it ("skip-args" turns it into
+# xcodebuild -skip-testing: arguments; "budget" reports stale entries and the
+# fast tier's tests that are still at or over one second; "propose" prints
+# lines for those; "propose-removals" lists timing entries that no longer
+# take a second). Moving a test here is allowed and is visible in this
+# file's diff (test-speed.md section 3); it does not fix the test.
+#
+# The timings are the per-test median and maximum over 21 full-suite runs of
+# 2026-11-20 with the address sanitizer (tools/run_tests.expect -parallel),
+# from test_tiers.py; test-tiers.md lists the logs. The fast tier runs
+# without the sanitizer, where many of these tests are faster, so the timing
+# entries are expected to shrink once enough runs of fast_tests.sh --no-skip
+# exist (test-tiers.md section 3).
+
+# The framer two-hop simulations. The owner's decision (owner-queue.md Q22)
+# covers the two slowest tests of the suite; the other eight are here by the
+# one-second rule like the entries at the end of this file.
+FramerFlowTwoHopSimulationTests/testANestedFloodRecoversWhenAJitteryOuterHopSpeedsUp  owner decision (owner-queue.md Q22): one of the two slowest tests; median 224.329 s, max 270.949 s in 21 asan runs
+FramerFlowTwoHopSimulationTests/testANestedFloodRecoversWhenTheOuterHopSpeedsUpAtAnyMoment  owner decision (owner-queue.md Q22): one of the two slowest tests; median 98.388 s, max 122.293 s in 21 asan runs
+FramerFlowTwoHopSimulationTests/testASlowOuterHopBoundsCtrlCAtTheInnerHost  ceiling: median 17.323 s, max 22.039 s in 21 asan runs
+FramerFlowTwoHopSimulationTests/testAJitteryOuterHopStillBoundsCtrlC  ceiling: median 10.000 s, max 12.681 s in 21 asan runs
+FramerFlowTwoHopSimulationTests/testFloodsOnBothHostsShareTheOuterHop  one second: median 7.303 s, max 9.408 s in 21 asan runs
+FramerFlowTwoHopSimulationTests/testAFloodAfterTypingOverASlowInnerHopUsesTheHop  one second: median 3.190 s, max 3.971 s in 21 asan runs
+FramerFlowTwoHopSimulationTests/testTheCostPerByteIsSteadyOnAJitteryHop  one second: median 3.132 s, max 4.264 s in 21 asan runs
+FramerFlowTwoHopSimulationTests/testASlowInnerHopBoundsCtrlCAtTheInnerHost  one second: median 1.637 s, max 2.060 s in 21 asan runs
+FramerFlowTwoHopSimulationTests/testANestedFloodResumesPromptlyAfterAnOuterStall  one second: median 1.368 s, max 1.705 s in 21 asan runs
+FramerFlowTwoHopSimulationTests/testTheInnerWindowIsSteadyBehindASlowOuterHop  one second: median 1.256 s, max 1.708 s in 21 asan runs
+
+# Fails in any build outside Build/ (bugs.md, "RuntimeSnapshotTests expects
+# the normal test build directory"), and fast_tests.sh builds in
+# tmp/sanitizers/plain.
+RuntimeSnapshotTests/testHeaderRecordsArchitectureAndConfiguration  fails outside Build/ (bugs.md); the fast tier builds elsewhere
+
+# Put windows on screen and skip themselves unless ITERM2_ONSCREEN_TESTS=1
+# (ModernTests/OnscreenTestGate.swift); every test of these classes was
+# skipped in all 21 runs. Listed so that the fast tier stays off screen even
+# when the variable is set.
+FloatingPaneAPITests  on screen: skipped unless ITERM2_ONSCREEN_TESTS=1
+FloatingPaneBuiltInFunctionTests  on screen: skipped unless ITERM2_ONSCREEN_TESTS=1
+FloatingPaneCommandTests  on screen: skipped unless ITERM2_ONSCREEN_TESTS=1
+FloatingPaneDropTests  on screen: skipped unless ITERM2_ONSCREEN_TESTS=1
+FloatingPaneLayoutTests  on screen: skipped unless ITERM2_ONSCREEN_TESTS=1
+FloatingPaneMaximizeTests  on screen: skipped unless ITERM2_ONSCREEN_TESTS=1
+FloatingPaneMouseTests  on screen: skipped unless ITERM2_ONSCREEN_TESTS=1
+FloatingPaneOcclusionTests  on screen: skipped unless ITERM2_ONSCREEN_TESTS=1
+FloatingPanePersistenceTests  on screen: skipped unless ITERM2_ONSCREEN_TESTS=1
+FloatingPaneWindowOperationTests  on screen: skipped unless ITERM2_ONSCREEN_TESTS=1
+NSAlert_iTermTests  on screen: skipped unless ITERM2_ONSCREEN_TESTS=1
+PTYTabContainerTests  on screen: skipped unless ITERM2_ONSCREEN_TESTS=1
+PTYTabFloatingPaneModelTests  on screen: skipped unless ITERM2_ONSCREEN_TESTS=1
+PTYTabTiledSessionsTests  on screen: skipped unless ITERM2_ONSCREEN_TESTS=1
+SetTabLayoutResizeTests  on screen: skipped unless ITERM2_ONSCREEN_TESTS=1
+SplitPaneStaleTargetTests  on screen: skipped unless ITERM2_ONSCREEN_TESTS=1
+TabBarVisibilityWindowSizeTests  on screen: skipped unless ITERM2_ONSCREEN_TESTS=1
+TerminalWindowAutoLayoutFloorTests  on screen: skipped unless ITERM2_ONSCREEN_TESTS=1
+TerminalWindowTestFixtureTests  on screen: skipped unless ITERM2_ONSCREEN_TESTS=1
+ToolStatusShortcutReloadTests  on screen: skipped unless ITERM2_ONSCREEN_TESTS=1
+
+# Over the ceiling (median 10 s or more: test-speed.md section 2 says such a
+# test fails the gate) or at or over one second (test-speed.md section 2:
+# the fast tier is everything except tests that take a second or more, and a
+# test over one second needs a reason or goes to the slow tier). None of
+# these has a recorded reason yet. Generated with
+#   test_tiers.py propose --slow-tier tools/swift_migration/slow_tier.txt LOG ...
+# from the 21 logs. The ceiling tests are the work list of test-tiers.md
+# section 4: they are to be fixed, not left here.
+SmartSelectionTranslationLayoutTests/testLinksFit  ceiling: median 41.054 s, max 50.201 s in 21 asan runs
+ManualAIModelEditorCredentialPopupWidthTests/testTranslatedAutomaticChoicesFit  ceiling: median 40.882 s, max 52.169 s in 21 asan runs
+PSMTabGroupDragInvariantTests/testEveryPairOfItems  ceiling: median 27.494 s, max 35.113 s in 21 asan runs
+SmartSelectionTranslationLayoutTests/testRegexLabelFits  ceiling: median 12.281 s, max 39.875 s in 21 asan runs
+ShellIntegrationInstallerStepsLayoutTests/testStepsFitInEveryLanguage  ceiling: median 11.816 s, max 20.501 s in 21 asan runs
+SmartSelectionTranslationLayoutTests/testBottomRowFits  one second: median 9.310 s, max 11.538 s in 21 asan runs
+FramerFlowSimulationTests/testWatchingTheControllerDoesNotChangeWhatItDoes  one second: median 8.928 s, max 10.706 s in 21 asan runs
+AISafetyRefusalParserTests/testEachStreamingFixtureProducesNonEmptyMessage  one second: median 7.484 s, max 9.170 s in 21 asan runs
+TmuxDividerMoverPropertyTests/testNonFiniteAndExtremeMeasurementsDoNotCrash  one second: median 7.438 s, max 8.959 s in 21 asan runs
+TwoTierTokenQueueTests/testTokensAddedDuringFirstAccessAreNotLost  one second: median 6.426 s, max 10.855 s in 21 asan runs
+ManualAIModelEditorTranslationLayoutTests/testFetchModelsButtonFitsEveryTitle  one second: median 6.410 s, max 11.282 s in 21 asan runs
+TmuxDividerMoverPropertyTests/testDividerMovesMonotonically  one second: median 6.252 s, max 7.881 s in 21 asan runs
+ManualAIModelEditorKeyHintLayoutTests/testEveryTranslatedHintFitsTheEditor  one second: median 6.163 s, max 9.901 s in 21 asan runs
+TokenExecutorPermitTests/testWaiterInCopyModePassesThePermitOn  one second: median 6.091 s, max 6.181 s in 21 asan runs
+ManualAIModelEditorTranslationLayoutTests/testTranslatedTitlesFit  one second: median 6.045 s, max 8.961 s in 21 asan runs
+TmuxDividerMoverPropertyTests/testArbitraryMeasurementsGiveValidLayouts  one second: median 5.818 s, max 7.449 s in 21 asan runs
+TmuxDividerMoverPropertyTests/testAnyReachableLayoutRoundTrips  one second: median 5.807 s, max 7.936 s in 21 asan runs
+PSMTabGroupDragTests/testStillMouseBeforeParentChipSettlesWhenDraggingCollapsedSubgroup  one second: median 5.762 s, max 21.725 s in 21 asan runs
+ShellIntegrationInstallerButtonLayoutTests/testInternetFreePageBottomButtonsFit  one second: median 5.727 s, max 9.572 s in 21 asan runs
+PTYSessionSelectedCommandSearchTests/testDeselectingByTypingSearchesEverythingWithoutSelectingAResult  one second: median 5.610 s, max 22.849 s in 21 asan runs
+HotkeySettingsLabelLayoutTests/testLabelsFitEveryTranslation  one second: median 5.160 s, max 12.756 s in 21 asan runs
+ShellIntegrationInstallerStepsLayoutTests/testGermanNushellStepsNeedMoreThanTheNibHeight  one second: median 5.160 s, max 10.621 s in 21 asan runs
+ToolStatusCellViewJobExitTests/test_jobExitAfterReconfigureUpdatesTheRow  one second: median 5.160 s, max 5.263 s in 21 asan runs
+SwiftyStringTextFieldRenameTests/test_renameAfterReuseUpdatesTheField  one second: median 5.079 s, max 5.255 s in 21 asan runs
+TokenExecutorPermitTests/testSessionFreedWhileWaitingLeavesTheLine  one second: median 5.073 s, max 5.180 s in 21 asan runs
+ProgramStatusDisplayRecordTests/testBatchOfNewRecordsAndClearsIsHandled  one second: median 5.047 s, max 6.182 s in 21 asan runs
+TaskIOMonitorCharacterizationTests/testStress  one second: median 4.853 s, max 11.536 s in 21 asan runs
+TaskIOMonitorCharacterizationTests/testBlockedReadDoesNotStallOtherTasks  one second: median 4.698 s, max 8.633 s in 21 asan runs
+ShellIntegrationInstallerFirstPageLayoutTests/testLearnMoreLinksUseTheLabelFont  one second: median 4.430 s, max 9.062 s in 21 asan runs
+LocalizationFormatSpecifierParityTests/testTranslationsPreserveFormatArgumentCount  one second: median 4.404 s, max 8.073 s in 21 asan runs
+FlowControlMonitorViewTests/testEveryConnectionGetsASection  one second: median 4.253 s, max 5.991 s in 21 asan runs
+SwiftyStringTextFieldRenameTests/test_recycledFieldFollowsTheNewSession  one second: median 4.074 s, max 4.203 s in 21 asan runs
+TokenExecutorPermitTests/testIdlePermitGoesWhereItIsNeeded  one second: median 4.065 s, max 4.269 s in 21 asan runs
+TokenExecutorPermitTests/testSessionFreedWhileHoldingAnIdlePermitGivesItUp  one second: median 4.060 s, max 4.350 s in 21 asan runs
+TokenExecutorPermitTests/testSessionWaitsForAPermitAndRunsWhenOneFrees  one second: median 4.049 s, max 4.154 s in 21 asan runs
+TokenExecutorPermitTests/testSessionThatRunsOutOfTokensKeepsItsPermitIdle  one second: median 4.048 s, max 4.126 s in 21 asan runs
+UKCrashReporterExplanationLayoutTests/testEveryExplanationFits  one second: median 3.999 s, max 20.187 s in 21 asan runs
+PSMTabGroupNestedDropSettlingTests/testStillMouseAtEndOfSubgroupAndParentSettles  one second: median 3.823 s, max 8.084 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testWholeInstallWithTheDotfileReturnsToTheUserShell  one second: median 3.572 s, max 3.692 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testWholeInstallTypesOnlyShortLines  one second: median 3.496 s, max 18.143 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testWholeInstallTypesOnlyShortLines  one second: median 3.274 s, max 3.528 s in 21 asan runs
+TmuxDividerMoverPropertyTests/testParseTreeIsNotModified  one second: median 3.200 s, max 3.959 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testWholeInstallWithTheDotfileReturnsToTheUserShell  one second: median 3.141 s, max 3.431 s in 21 asan runs
+FramerPaneJobManagerTests/testInputSizeAndKillGoToThePane  one second: median 3.126 s, max 16.657 s in 21 asan runs
+TokenExecutorPermitTests/testExecutionOnTheMainThreadStillNeedsAPermit  one second: median 3.105 s, max 4.268 s in 21 asan runs
+ToolStatusCellViewJobExitTests/test_jobExitWithoutStatusChangeUpdatesTheRow  one second: median 3.064 s, max 3.191 s in 21 asan runs
+SwiftyStringTextFieldRenameTests/test_renameUpdatesTheField  one second: median 3.048 s, max 3.163 s in 21 asan runs
+TokenExecutorPermitTests/testWaiterWithDiscardedTokensDoesNotKeepThePermit  one second: median 3.048 s, max 3.194 s in 21 asan runs
+TokenExecutorPermitTests/testWaiterWithoutADelegateDoesNotKeepThePermit  one second: median 3.047 s, max 3.183 s in 21 asan runs
+TokenExecutorPermitTests/testTokensArrivingAfterTheQueueWasFoundEmptyStillNeedAPermit  one second: median 3.045 s, max 3.253 s in 21 asan runs
+TokenExecutorPermitTests/testPauseThatBeginsDuringAJoinGivesUpThePermitAfterIt  one second: median 3.044 s, max 3.127 s in 21 asan runs
+TokenExecutorPermitTests/testPauseOtherThanAJoinGivesUpThePermit  one second: median 3.043 s, max 3.149 s in 21 asan runs
+TokenExecutorPermitTests/testJoiningASessionWaitingForAPermitDoesNotWait  one second: median 3.042 s, max 3.190 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testSendAgainWhileTypingTheArchiveReturnsToTheUserShell  one second: median 3.019 s, max 3.140 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testSecondSendAgainAfterTheArchiveEndedDoesNotStopTyping  one second: median 3.016 s, max 18.801 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testSendAgainWhileTypingTheArchiveInstalls  one second: median 3.012 s, max 3.233 s in 21 asan runs
+ChatFindBarViewLayoutTests/testModePopupVisibilityDoesNotDependOnCounterText  one second: median 2.949 s, max 4.176 s in 21 asan runs
+It2sshEndSSHAnswerTests/testBareControlCEndsTheWaitAndReturnsSSHStatus  one second: median 2.792 s, max 8.846 s in 21 asan runs
+ExecutionPermitsTests/testParkingNeverStrandsAWaiterOrExceedsTheCap  one second: median 2.784 s, max 3.507 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testWholeInstallSendsBothHereDocumentsAndExitsTheHelper  one second: median 2.741 s, max 2.923 s in 21 asan runs
+FramerFlowSimulationTests/testAFastPathStaysBusyAndUnderTheCap  one second: median 2.738 s, max 3.403 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testSendAgainWhileTypingTheArchiveReturnsToTheUserShell  one second: median 2.617 s, max 2.775 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testSecondSendAgainAfterTheArchiveEndedDoesNotStopTyping  one second: median 2.610 s, max 2.844 s in 21 asan runs
+ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testWholeInstallWithTheDotfileReturnsToTheUserShell  one second: median 2.574 s, max 2.806 s in 21 asan runs
+ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testWholeInstallTypesOnlyShortLines  one second: median 2.519 s, max 2.755 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testSendAgainWhileTypingTheArchiveInstalls  one second: median 2.498 s, max 2.732 s in 21 asan runs
+RemoteGitStateParityTests/testAheadAndBehindUpstream  one second: median 2.494 s, max 2.897 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testWholeInstallSendsBothHereDocumentsAndExitsTheHelper  one second: median 2.433 s, max 2.675 s in 21 asan runs
+ShellIntegrationInstallerFirstPageLayoutTests/testUtilitiesFitInEveryLanguage  one second: median 2.413 s, max 7.933 s in 21 asan runs
+RemoteGitStateParityTests/testCherryPickAndRevertInProgress  one second: median 2.385 s, max 3.113 s in 21 asan runs
+RuntimeSnapshotTests/testParserAcceptsWriterOutput  one second: median 2.307 s, max 3.003 s in 21 asan runs
+RemoteGitStateParityTests/testAgainstABase  one second: median 2.235 s, max 3.934 s in 21 asan runs
+It2gitParityTests/testAheadAndBehindUpstream  one second: median 2.188 s, max 3.332 s in 21 asan runs
+PeriodicSchedulerRateLimitedTests/testSuccessiveFlushesRespectMinimumInterval  one second: median 2.116 s, max 2.129 s in 21 asan runs
+ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testSecondSendAgainAfterTheArchiveEndedDoesNotStopTyping  one second: median 2.116 s, max 2.318 s in 21 asan runs
+PSMTabGroupDragInvariantTests/testFieldLayouts  one second: median 2.082 s, max 2.557 s in 21 asan runs
+SwiftyStringTextFieldRenameTests/test_asyncOnlyReadIsObserved  one second: median 2.068 s, max 2.125 s in 21 asan runs
+PeriodicSchedulerDeferredTests/testSoonerDeferredRequestSupersedesArmedOne  one second: median 2.061 s, max 2.099 s in 21 asan runs
+PeriodicSchedulerDeferredTests/testExpeditePullsInAnArmedDeferredFlush  one second: median 2.060 s, max 2.068 s in 21 asan runs
+TokenExecutorPermitTests/testSessionYieldsAtTheEndOfItsSliceEvenIfAJoinPausesIt  one second: median 2.036 s, max 2.150 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testCancelStopsTypingTheArchive  one second: median 2.031 s, max 2.098 s in 21 asan runs
+TokenExecutorPermitTests/testInjectedTokensRunBeforeYielding  one second: median 2.031 s, max 2.143 s in 21 asan runs
+TokenExecutorPermitTests/testSessionYieldsAtTheEndOfItsSliceToAWaiter  one second: median 2.031 s, max 2.152 s in 21 asan runs
+ShellIntegrationInstallerButtonLayoutTests/testInternetFreePagePreviewCommandButtonsFit  one second: median 2.013 s, max 89.753 s in 21 asan runs
+ShellIntegrationOfflineDashInstallerTests/testWholeInstallTypesOnlyShortLines  one second: median 1.992 s, max 2.275 s in 21 asan runs
+KittyDnDOfferTests/testOversizedImageIsRejectedWithEFBIG  one second: median 1.991 s, max 2.713 s in 21 asan runs
+ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testSendAgainWhileTypingTheArchiveInstalls  one second: median 1.990 s, max 2.144 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testDiscoveryAfterLeavingThePageWhileTypingTheArchiveAsksTheUserShell  one second: median 1.990 s, max 2.076 s in 21 asan runs
+ChatFindBarModeWidthTests/testModeWidthFitsEveryLanguage  one second: median 1.989 s, max 4.264 s in 21 asan runs
+It2gitParityTests/testCherryPickAndRevertInProgress  one second: median 1.987 s, max 2.792 s in 21 asan runs
+LocalizationHygieneTests/testNoLiveEscapeSequenceInCatalogValues  one second: median 1.975 s, max 3.035 s in 21 asan runs
+FramerFlowSimulationTests/testCtrlCStaysPromptWhenAFastLinkSuddenlySlows  one second: median 1.952 s, max 2.430 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testCancelWhileTypingTheArchiveReturnsToTheUserShell  one second: median 1.940 s, max 2.046 s in 21 asan runs
+ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testSendAgainWhileTypingTheArchiveReturnsToTheUserShell  one second: median 1.927 s, max 2.129 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testDiscoveryInsideLeftoverHelpersDoesNotReportBash  one second: median 1.912 s, max 2.020 s in 21 asan runs
+FramerFlowSimulationTests/testAQuietSessionHasNoQueueingDelay  one second: median 1.905 s, max 2.442 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testDiscoveryDoesNotWaitForeverForThePreviousInstaller  one second: median 1.902 s, max 2.028 s in 21 asan runs
+ShellIntegrationOfflineDashInstallerTests/testWholeInstallWithTheDotfileReturnsToTheUserShell  one second: median 1.896 s, max 2.209 s in 21 asan runs
+ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testWholeInstallSendsBothHereDocumentsAndExitsTheHelper  one second: median 1.874 s, max 2.237 s in 21 asan runs
+RemoteGitStateParityTests/testMergeConflict  one second: median 1.871 s, max 3.692 s in 21 asan runs
+FramerFlowSimulationTests/testAFloodOfMixedFramesRecoversWhenTheLinkSpeedsUpAgain  one second: median 1.858 s, max 2.356 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testDiscoveryInsideLeftoverHelpersDoesNotReportBash  one second: median 1.833 s, max 1.969 s in 21 asan runs
+ProfileBoolSettingPickerTests/testOnOffChangeWithClosedDropdownKeepsKeyAndUpdatesValue  one second: median 1.824 s, max 12.716 s in 21 asan runs
+ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testDiscoveryInsideLeftoverHelpersDoesNotReportBash  one second: median 1.817 s, max 1.928 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testCancelStopsTypingTheArchive  one second: median 1.757 s, max 2.322 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testCancelBeforeTheHelpersPromptTypesNothingIfTheyDoNotPromptInTime  one second: median 1.747 s, max 2.433 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testSendAgainWhileWritingTheScriptReturnsToTheUserShell  one second: median 1.746 s, max 1.884 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testCancelStopsTypingOnlyWhileShReadsAFile  one second: median 1.744 s, max 1.881 s in 21 asan runs
+ExecutionPermitsTests/testNeverMoreHoldersThanTheCap  one second: median 1.739 s, max 2.864 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testCancelWhileTypingTheArchiveReturnsToTheUserShell  one second: median 1.735 s, max 2.398 s in 21 asan runs
+ShellIntegrationOfflineDashInstallerTests/testDiscoveryInsideLeftoverHelpersDoesNotReportBash  one second: median 1.701 s, max 1.824 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testDiscoveryDoesNotWaitForeverForThePreviousInstaller  one second: median 1.701 s, max 2.270 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testDiscoveryAfterLeavingThePageWhileTypingTheArchiveAsksTheUserShell  one second: median 1.668 s, max 2.055 s in 21 asan runs
+ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testCancelBeforeTheHelpersPromptTypesNothingIfTheyDoNotPromptInTime  one second: median 1.655 s, max 1.850 s in 21 asan runs
+PasteSpecialTranslationLayoutTests/testMinimumDurationTitleFits  one second: median 1.643 s, max 2.063 s in 21 asan runs
+ShellIntegrationOfflineDashInstallerTests/testCancelBeforeTheHelpersPromptTypesNothingIfTheyDoNotPromptInTime  one second: median 1.641 s, max 1.753 s in 21 asan runs
+SetTabStatusTriggerSuggestionPriorityTests/testEveryLocalizationSuggestionMapsToAMatchableWireValue  one second: median 1.637 s, max 15.868 s in 21 asan runs
+OllamaRequestBuilderTests/test_imageTokenEstimate_boundedByPixelArea_notBase64Length  one second: median 1.633 s, max 2.089 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testCancelBeforeTheHelpersPromptTypesNothingIfTheyDoNotPromptInTime  one second: median 1.630 s, max 1.817 s in 21 asan runs
+TmuxDividerMoverPropertyTests/testExactMeasurementsGiveBackTheSameLayout  one second: median 1.630 s, max 1.962 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testInstallUtilitiesSendsTheArchiveToAReaderWithoutALineEditor  one second: median 1.626 s, max 1.852 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testCancelStopsTypingOnlyWhileShReadsAFile  one second: median 1.626 s, max 1.720 s in 21 asan runs
+RemoteGitStateParityTests/testConflictWhosePathHoldsANewline  one second: median 1.622 s, max 2.028 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testInstallUtilitiesSendsTheArchiveAndExitsTheHelper  one second: median 1.613 s, max 1.734 s in 21 asan runs
+RemoteGitStateParityTests/testRebaseInProgress  one second: median 1.605 s, max 2.825 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testSendAgainWhileWritingTheScriptReturnsToTheUserShell  one second: median 1.558 s, max 1.904 s in 21 asan runs
+ShellIntegrationOfflineDashInstallerTests/testSecondSendAgainAfterTheArchiveEndedDoesNotStopTyping  one second: median 1.552 s, max 1.797 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testInstallUtilitiesReportsFailureWhenTheArchiveDoesNotExtract  one second: median 1.536 s, max 1.665 s in 21 asan runs
+TmuxRestoredGatewayTests/testCancelledDelayedWritesWriteNothing  one second: median 1.522 s, max 1.569 s in 21 asan runs
+TagsToggleButtonLocalizationTests/testTagsButtonTitlesFit  one second: median 1.498 s, max 3.751 s in 21 asan runs
+ChatForkedTitleTests/testCrossLanguageForkReplacesSuffix  one second: median 1.495 s, max 5.353 s in 21 asan runs
+It2gitParityTests/testRebaseInProgress  one second: median 1.491 s, max 2.262 s in 21 asan runs
+FramerFlowControllerTests/testTypingNeitherDrainsNorChangesTheWindow  one second: median 1.487 s, max 2.005 s in 21 asan runs
+ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testDiscoveryDoesNotWaitForeverForThePreviousInstaller  one second: median 1.463 s, max 1.590 s in 21 asan runs
+ShellIntegrationOfflineDashInstallerTests/testWholeInstallSendsBothHereDocumentsAndExitsTheHelper  one second: median 1.456 s, max 1.574 s in 21 asan runs
+ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testDiscoveryAfterLeavingThePageWhileTypingTheArchiveAsksTheUserShell  one second: median 1.449 s, max 1.593 s in 21 asan runs
+It2gitParityTests/testMergeConflict  one second: median 1.435 s, max 1.823 s in 21 asan runs
+JapaneseUserTerminologyTests/testJapaneseUsesLongFormOfUser  one second: median 1.432 s, max 2.487 s in 21 asan runs
+It2gitParityTests/testConflictWhosePathHoldsANewline  one second: median 1.431 s, max 1.981 s in 21 asan runs
+StatusPriorityPopoverLayoutTests/testCheckboxesFit  one second: median 1.427 s, max 45.689 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testInstallUtilitiesSendsTheArchiveToAReaderWithoutALineEditor  one second: median 1.425 s, max 1.579 s in 21 asan runs
+SetProfileBooleanTriggerTests/testConfiguredTriggerParameterTextNamesOnOrOff  one second: median 1.421 s, max 12.860 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testSendAgainBeforeTheHelpersPromptReturnsToTheUserShell  one second: median 1.419 s, max 1.578 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testInstallUtilitiesSendsTheArchiveAndExitsTheHelper  one second: median 1.418 s, max 1.613 s in 21 asan runs
+XibCatalogGapLocalizationTests/testPtBRProfileTagsLabelMatchesTagsButton  one second: median 1.407 s, max 1.918 s in 21 asan runs
+SettingsFindFocusesSearchFieldTests/testFindIsHandledBySettingsAndFocusesSearchField  one second: median 1.406 s, max 16.191 s in 21 asan runs
+ShellIntegrationOfflineDashInstallerTests/testSendAgainWhileTypingTheArchiveReturnsToTheUserShell  one second: median 1.397 s, max 1.583 s in 21 asan runs
+ShellIntegrationOfflineDashInstallerTests/testSendAgainWhileTypingTheArchiveInstalls  one second: median 1.363 s, max 1.575 s in 21 asan runs
+ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testCancelStopsTypingTheArchive  one second: median 1.336 s, max 1.430 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testSendAgainBeforeTheHelpersPromptReturnsToTheUserShell  one second: median 1.335 s, max 1.460 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testInstallUtilitiesReportsFailureWhenTheArchiveDoesNotExtract  one second: median 1.330 s, max 1.445 s in 21 asan runs
+RemoteGitStateParityTests/testDetachedHead  one second: median 1.320 s, max 1.928 s in 21 asan runs
+ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testCancelWhileTypingTheArchiveReturnsToTheUserShell  one second: median 1.308 s, max 1.439 s in 21 asan runs
+MarkdownPortholeRenderingTests/testTypographySampleDraws  one second: median 1.306 s, max 1.732 s in 21 asan runs
+ChineseCustomHeaderTerminologyTests/testCustomHeaderTermIsConsistent  one second: median 1.269 s, max 1.909 s in 21 asan runs
+GermanFormalAddressTests/testGermanDoesNotUseInformalAddress  one second: median 1.266 s, max 2.380 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testDiscoveryAfterLeavingThePageBeforeTheHelpersPromptAsksTheUserShell  one second: median 1.262 s, max 1.283 s in 21 asan runs
+ProfilesWindowSplitButtonTests/testSplitButtonStringsAreTranslated  one second: median 1.255 s, max 1.853 s in 21 asan runs
+BrowserBasicAuthLocalizationTests/testBasicAuthStringsAreTranslated  one second: median 1.254 s, max 2.091 s in 21 asan runs
+AITitleComponentLocalizationTests/testMenuItemMatchesNameQuotedByAdvancedSetting  one second: median 1.252 s, max 2.100 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testDiscoveryAfterCancelBeforeTheHelpersPromptAsksTheUserShell  one second: median 1.249 s, max 1.366 s in 21 asan runs
+ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testSendAgainWhileWritingTheScriptReturnsToTheUserShell  one second: median 1.234 s, max 1.349 s in 21 asan runs
+DonateCallToActionWidthTests/testEveryOfferedCallToActionIsWithinTheLimit  one second: median 1.230 s, max 2.219 s in 21 asan runs
+ProfileBoolSettingCatalogTests/testEntriesPopulatedWithoutOpeningPreferences  one second: median 1.223 s, max 13.612 s in 21 asan runs
+TabGroupSubgroupDragOutTests/testTearOff  one second: median 1.223 s, max 5.432 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testWriteScriptWritesTheWholeScript  one second: median 1.220 s, max 1.338 s in 21 asan runs
+FoldSearchEngineTests/testCancelStopsSearch  one second: median 1.213 s, max 1.277 s in 21 asan runs
+RemoteGitStateParityTests/testBisect  one second: median 1.212 s, max 1.488 s in 21 asan runs
+ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testCancelStopsTypingOnlyWhileShReadsAFile  one second: median 1.211 s, max 1.343 s in 21 asan runs
+BrowserErrorPageLocalizationTests/testStringsAreTranslated  one second: median 1.209 s, max 2.132 s in 21 asan runs
+ContextMenuHexBytesPluralTests/testUtf8BytesHasPluralVariations  one second: median 1.205 s, max 5.766 s in 21 asan runs
+BrowserScriptingPermissionsColumnWidthTests/testColumnsFitEveryLanguage  one second: median 1.200 s, max 2.193 s in 21 asan runs
+TabGroupSubgroupDragOutTests/testDropInAnotherWindow  one second: median 1.198 s, max 37.547 s in 21 asan runs
+ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testInstallUtilitiesSendsTheArchiveAndExitsTheHelper  one second: median 1.192 s, max 1.324 s in 21 asan runs
+RemoteGitStateParityTests/testPureRenameAndRenameWithEdit  one second: median 1.191 s, max 1.835 s in 21 asan runs
+SessionStatusHelpLocalizationTests/testEveryTranslationDescribesOSC7501  one second: median 1.188 s, max 2.346 s in 21 asan runs
+ShellIntegrationOfflineXonshInstallerTests/testWholeInstallReturnsToXonsh  one second: median 1.184 s, max 1.556 s in 21 asan runs
+iTermGitClientTests/testAheadAndBehindBothCount  one second: median 1.182 s, max 1.695 s in 21 asan runs
+LocalizationHygieneTests/testNoStrayOKCancelButtonKeys  one second: median 1.179 s, max 1.687 s in 21 asan runs
+WorkgroupSessionModeLocalizationTests/testModeTitlesAreTranslated  one second: median 1.178 s, max 2.778 s in 21 asan runs
+ChineseTypeVerbTranslationTests/testCockpitTypeAtHintsUseTheVerb  one second: median 1.177 s, max 2.195 s in 21 asan runs
+PasteSpecialTranslationLayoutTests/testCheckboxTitlesFit  one second: median 1.174 s, max 2.348 s in 21 asan runs
+PreferenceControlWiringTests/testEveryDefinedControlSendsSettingChanged  one second: median 1.167 s, max 9.207 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testCancelWhileWritingTheScriptReturnsToTheUserShellWhenTheUserTypes  one second: median 1.167 s, max 1.400 s in 21 asan runs
+ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testDiscoveryAfterLeavingThePageBeforeTheHelpersPromptAsksTheUserShell  one second: median 1.165 s, max 1.182 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testCancelWhileWritingTheScriptReturnsToTheUserShell  one second: median 1.164 s, max 1.298 s in 21 asan runs
+OrchestrationBubbleLocalizationTests/testStringsAreTranslated  one second: median 1.162 s, max 1.850 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testCancelBeforeTheScriptIsTypedDoesNotStopTyping  one second: median 1.162 s, max 1.491 s in 21 asan runs
+FramerFlowSimulationTests/testAFloodRecoversWhenTheLinkSpeedsUpAgain  one second: median 1.161 s, max 1.433 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testCancelBeforeTheScriptIsTypedDoesNotStopTyping  one second: median 1.159 s, max 1.275 s in 21 asan runs
+AITitleComponentLocalizationTests/testTitleComponentStringsAreTranslated  one second: median 1.157 s, max 1.639 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testCancelWhileWritingTheScriptReturnsToTheUserShell  one second: median 1.156 s, max 1.272 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testCancelWhileWritingTheScriptReturnsToTheUserShellWhenTheUserTypes  one second: median 1.156 s, max 1.263 s in 21 asan runs
+SetProfileBooleanTriggerTests/testSetProfileSettingStringsAreTranslated  one second: median 1.152 s, max 1.850 s in 21 asan runs
+OrchestrationBubbleLocalizationTests/testToolBubblesAndSettingPickerAreTranslated  one second: median 1.149 s, max 1.379 s in 21 asan runs
+ShellIntegrationOfflineDashInstallerTests/testDiscoveryDoesNotWaitForeverForThePreviousInstaller  one second: median 1.148 s, max 1.408 s in 21 asan runs
+LocalizationHygieneTests/testSignatureVerifiedBodyUsesOpeningQuote  one second: median 1.146 s, max 1.481 s in 21 asan runs
+ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testDiscoveryAfterCancelBeforeTheHelpersPromptAsksTheUserShell  one second: median 1.146 s, max 1.261 s in 21 asan runs
+SwapSessionPaneTitleTests/testSwappingFromAOnePaneTabIntoASplitTabUpdatesTitleBars  one second: median 1.143 s, max 4.306 s in 21 asan runs
+WindowMenuLocalizationTests/testTabContextMenuStringsAreTranslated  one second: median 1.143 s, max 5.294 s in 21 asan runs
+ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testSendAgainBeforeTheHelpersPromptReturnsToTheUserShell  one second: median 1.141 s, max 1.229 s in 21 asan runs
+JapaneseUserTerminologyTests/testUnknownUserNameIsTranslated  one second: median 1.136 s, max 1.482 s in 21 asan runs
+ShellIntegrationOfflineDashInstallerTests/testDiscoveryAfterLeavingThePageWhileTypingTheArchiveAsksTheUserShell  one second: median 1.134 s, max 1.270 s in 21 asan runs
+iTermGitClientTests/testBehindCountsRemoteCommitsNotPulled  one second: median 1.121 s, max 1.551 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testCancelBeforeTheHelpersPromptExitsThemOnceTheyPrompt  one second: median 1.116 s, max 1.325 s in 21 asan runs
+ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testInstallUtilitiesSendsTheArchiveToAReaderWithoutALineEditor  one second: median 1.114 s, max 1.236 s in 21 asan runs
+ShellIntegrationOfflineDashInstallerTests/testSendAgainWhileWritingTheScriptReturnsToTheUserShell  one second: median 1.114 s, max 1.242 s in 21 asan runs
+LocalizationHygieneTests/testSmartSelectionNoteKeysCoverEveryPlistRule  one second: median 1.112 s, max 1.430 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testWriteScriptWritesTheWholeScript  one second: median 1.112 s, max 1.245 s in 21 asan runs
+It2gitParityTests/testAgainstABase  one second: median 1.105 s, max 2.559 s in 21 asan runs
+ManualAIModelEditorKeyHintLayoutTests/testEveryHintFitsTwoLinesInSettings  one second: median 1.104 s, max 1.518 s in 21 asan runs
+ShellIntegrationOfflineDashInstallerTests/testSendAgainBeforeTheHelpersPromptReturnsToTheUserShell  one second: median 1.104 s, max 16.809 s in 21 asan runs
+iTermBrowserPageSaverTests/testBasicPageSaving  one second: median 1.101 s, max 24.737 s in 21 asan runs
+PasteSpecialTranslationLayoutTests/testTabRadioTitlesFit  one second: median 1.089 s, max 1.671 s in 21 asan runs
+RemoteGitStateParityTests/testStagedUnstagedAndBoth  one second: median 1.087 s, max 1.991 s in 21 asan runs
+LocalizationHygieneTests/testPtBRCoverageForCodeReferencedKeys  one second: median 1.082 s, max 1.231 s in 21 asan runs
+ShellIntegrationInstallerButtonLayoutTests/testSecondPageChoiceButtonsFit  one second: median 1.079 s, max 11.893 s in 21 asan runs
+TabGroupSubgroupDragOutTests/testParentDroppedInAnotherWindowKeepsSubgroup  one second: median 1.069 s, max 9.005 s in 21 asan runs
+It2gitParityTests/testDetachedHead  one second: median 1.064 s, max 1.401 s in 21 asan runs
+AIPluginClientLifetimeTests/testCancelledRequestFreesItsObjects  one second: median 1.063 s, max 21.172 s in 3 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testCancelWhileTypingTheScriptStopsTypingIt  one second: median 1.063 s, max 1.177 s in 21 asan runs
+FramerExecFileTests/testExistingDirectoryIsReused  one second: median 1.061 s, max 9.986 s in 21 asan runs
+SSHRecoveryBoundaryTests/testTheBoundaryArrivesWithoutMoreOutput  one second: median 1.058 s, max 1.260 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testInstallUtilitiesDoesNotTypeTheArchiveWhenShCannotReceiveIt  one second: median 1.057 s, max 1.169 s in 21 asan runs
+RemoteGitStateParityTests/testUpstreamThatIsGone  one second: median 1.048 s, max 8.387 s in 21 asan runs
+ShellIntegrationOfflineTcshFromZshInstallerTests/testDiscoveryAfterCancelBeforeTheHelpersPromptAsksTheUserShell  one second: median 1.047 s, max 1.246 s in 21 asan runs
+AIPluginClientLifetimeTests/testCompletedStreamingRequestFreesItsObjects  one second: median 1.045 s, max 1.266 s in 21 asan runs
+AIPluginClientLifetimeTests/testCallCancelledBeforeTransferStartsFreesItsObjects  one second: median 1.041 s, max 13.530 s in 21 asan runs
+ProgramStatusReportBatchTests/testBatchMatchesApplyingEveryReport  one second: median 1.034 s, max 1.997 s in 21 asan runs
+TaskIOCharacterizationWithChildReaperTests/testDeallocatingACoprocessClosesItsPipes  one second: median 1.031 s, max 1.077 s in 21 asan runs
+RemoteGitStateParityTests/testTypeChangeAgainstABase  one second: median 1.030 s, max 1.384 s in 21 asan runs
+RemoteGitStateParityTests/testIntentToAdd  one second: median 1.028 s, max 1.318 s in 21 asan runs
+StatusPriorityPopoverLayoutTests/testPopoverViewFitsTranslations  one second: median 1.026 s, max 38.376 s in 21 asan runs
+TaskIOCharacterizationTests/testDeallocatingACoprocessClosesItsPipes  one second: median 1.025 s, max 1.497 s in 21 asan runs
+ShellIntegrationOfflineDashInstallerTests/testDiscoveryAfterCancelBeforeTheHelpersPromptAsksTheUserShell  one second: median 1.022 s, max 1.092 s in 21 asan runs
+ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testInstallUtilitiesReportsFailureWhenTheArchiveDoesNotExtract  one second: median 1.020 s, max 1.127 s in 21 asan runs
+TaskIOMonitorCharacterizationTests/testDeallocatingACoprocessClosesItsPipes  one second: median 1.019 s, max 1.129 s in 21 asan runs
+TokenExecutorPermitTests/testJoinOfASessionPausedForAnotherReasonDoesNotExecuteAfterward  one second: median 1.018 s, max 1.042 s in 21 asan runs
+TokenExecutorPermitTests/testSessionStillYieldsAfterAJoin  one second: median 1.018 s, max 1.058 s in 21 asan runs
+TokenExecutorPermitTests/testJoiningOneSessionLeavesAnotherExecuting  one second: median 1.017 s, max 1.042 s in 21 asan runs
+TokenExecutorPermitTests/testSessionPausedForAJoinKeepsItsPermit  one second: median 1.017 s, max 1.085 s in 21 asan runs
+It2gitParityTests/testBisect  one second: median 1.016 s, max 2.041 s in 21 asan runs
+ConductorKeystrokeOrderTests/testReturnAfterPasteReachesRemoteAfterWholePasteForEveryReplyTiming  one second: median 1.011 s, max 2.049 s in 21 asan runs
+ShellIntegrationOfflineDashInstallerTests/testCancelWhileTypingTheArchiveReturnsToTheUserShell  one second: median 1.011 s, max 1.141 s in 21 asan runs
+RemoteGitStateParityTests/testDeletedInWorkdirAndStagedDelete  one second: median 1.009 s, max 1.264 s in 21 asan runs
+TabGroupRestoreValidationTests/testGroupSinceMovedToAnotherWindowIsDropped  one second: median 1.006 s, max 22.855 s in 21 asan runs
+WorkgroupUsageTests/test_runCommand_timeoutKillsChildHoldingStdout  one second: median 1.006 s, max 1.010 s in 21 asan runs
+iTermBufferedCommandRunnerTests/test_timeout_killsProcessGroupHoldingThePipe  one second: median 1.006 s, max 1.343 s in 21 asan runs
+RemoteGitStateParityTests/testWorkTreeRenameOfAnIntentToAddFile  one second: median 1.004 s, max 1.757 s in 21 asan runs

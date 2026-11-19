@@ -1,0 +1,15 @@
+# Objective-C runtime snapshot, format 3
+architecture arm64
+build-configuration Development
+build-variant ASan
+class C
+  language objc
+  superclass NSObject
+  image ModernTests
+  ivar-arc-flag set
+  strong-ivar-layout
+  weak-ivar-layout
+  instance-method -getCount: types=v24@0:8^i16
+  instance-method -init types=@16@0:8 also-implemented-by=-NSObject
+  instance-method -initWithFrame: types=@48@0:8{CGRect={CGPoint=dd}{CGSize=dd}}16
+end class C

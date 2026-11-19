@@ -1,0 +1,14 @@
+2026-11-20 00:25:18.608209-0800 iTerm2[5984:33258929] [Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-20 00:25:18.608216-0800 iTerm2[5984:33258929] [Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-20 00:25:18.609738-0800 iTerm2[5984:33258929] [Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+2026-11-20 00:25:18.610726-0800 iTerm2[5984:33258929] [Security] __delegate_identifier__:Performance Diagnostics__:::____message__:This method should not be called on the main thread as it may lead to UI unresponsiveness.
+1795163118.636006 iTermSlowOperationGateway.m:598 (-[iTermSlowOperationGateway fetchUserShellWithCompletion:]): fetchUserShell: gateway not ready
+[1m/Users/example/iterm2/sources/Language/iTermVariables.m:422:103:[1m[31m runtime error: [1m[0m[1mnull pointer passed as argument 1, which is declared to never be null[1m[0m
+[1m/Users/example/iterm2/sources/Language/iTermVariables.m:219:39:[1m[30m note: [1m[0m_Nonnull type annotation specified here[1m[0m
+    #0 0x00010b39eff0 in -[iTermVariables setValue:forVariableNamed:withSideEffects:weak:]+0x35c (iTerm2.debug.dylib:arm64+0x10eaff0)
+    #1 0x00010b39bf4c in -[iTermVariables setValue:forVariableNamed:weak:]+0xa8 (iTerm2.debug.dylib:arm64+0x10e7f4c)
+    #2 0x00010aae2fd0 in -[iTermVariableScope setValue:forVariableNamed:weak:]+0x13c (iTerm2.debug.dylib:arm64+0x82efd0)
+    #3 0x00010aae2e60 in -[iTermVariableScope setValue:forVariableNamed:]+0x80 (iTerm2.debug.dylib:arm64+0x82ee60)
+
+SUMMARY: UndefinedBehaviorSanitizer: invalid-null-argument /Users/example/iterm2/sources/Language/iTermVariables.m:422:103 
+2026-11-20 00:25:36.635 xcodebuild[5878:33258073] [MT] IDETestOperationsObserverDebug: 20.326 elapsed -- Testing started completed.

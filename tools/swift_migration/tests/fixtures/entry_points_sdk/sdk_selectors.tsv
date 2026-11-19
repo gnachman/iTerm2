@@ -1,0 +1,13 @@
+# Fixture SDK declarations for test_entry_points.py, in the interim format sdk_selectors.py writes.
+# columns: kind container +|- selector framework [flags]
+protocol	NSWindowDelegate	-	windowDidResize:	AppKit	optional
+protocol	NSComboBoxDelegate	-	comboBoxSelectionDidChange:	AppKit	optional
+protocol	NSServicesMenuRequestor	-	readSelectionFromPasteboard:	AppKit	optional
+class	NSWindow	-	selectNextTab:	AppKit	action
+class	NSWindow	-	canBecomeMainWindow	AppKit
+class	NSResponder	-	cursorUpdate:	AppKit
+protocol	NSOutlineViewDataSource	-	outlineView:numberOfChildrenOfItem:	AppKit	optional
+category	NSObject(NSNibAwaking)	-	awakeFromNib	AppKit
+class	NSObject	-	init	Foundation
+protocol	NSObject	-	class	objc
+class	DOMHTMLInputElement	-	setFiles:	WebKit

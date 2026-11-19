@@ -1,0 +1,33 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 54;
+	objects = {
+		B1 /* CPKThing.m in Sources */ = {isa = PBXBuildFile; fileRef = F1 /* CPKThing.m */; };
+		B2 /* CPKThingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = F2 /* CPKThingTests.m */; };
+		B3 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = F3 /* AppDelegate.m */; };
+		B4 /* DemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4 /* DemoView.swift */; };
+		F1 /* CPKThing.m */ = {isa = PBXFileReference; path = CPKThing.m; sourceTree = "<group>"; };
+		F2 /* CPKThingTests.m */ = {isa = PBXFileReference; path = CPKThingTests.m; sourceTree = "<group>"; };
+		F3 /* AppDelegate.m */ = {isa = PBXFileReference; path = AppDelegate.m; sourceTree = "<group>"; };
+		F4 /* DemoView.swift */ = {isa = PBXFileReference; path = DemoView.swift; sourceTree = "<group>"; };
+		G0 = {isa = PBXGroup; children = ( G1, G2, G3 ); sourceTree = "<group>"; };
+		G1 /* ColorPicker */ = {isa = PBXGroup; children = ( F1 ); path = ColorPicker; sourceTree = "<group>"; };
+		G2 /* ColorPickerTests */ = {isa = PBXGroup; children = ( F2 ); path = ColorPickerTests; sourceTree = "<group>"; };
+		G3 /* ColorPickerDemo */ = {isa = PBXGroup; children = ( F3, F4 ); path = ColorPickerDemo; sourceTree = "<group>"; };
+		S1 = {isa = PBXSourcesBuildPhase; files = ( B1 ); };
+		S2 = {isa = PBXSourcesBuildPhase; files = ( B2 ); };
+		S3 = {isa = PBXSourcesBuildPhase; files = ( B3, B4 ); };
+		T1 /* ColorPicker */ = {isa = PBXNativeTarget; buildConfigurationList = L1; buildPhases = ( S1 ); name = ColorPicker; productType = "com.apple.product-type.framework"; };
+		T2 /* ColorPickerTests */ = {isa = PBXNativeTarget; buildConfigurationList = L1; buildPhases = ( S2 ); name = ColorPickerTests; productType = "com.apple.product-type.bundle.unit-test"; };
+		T3 /* ColorPickerDemo */ = {isa = PBXNativeTarget; buildConfigurationList = L1; buildPhases = ( S3 ); name = ColorPickerDemo; productType = "com.apple.product-type.application"; };
+		P1 /* Project object */ = {isa = PBXProject; buildConfigurationList = L0; mainGroup = G0; targets = ( T1, T2, T3 ); };
+		C0 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = { }; name = Debug; };
+		C1 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = { CLANG_ENABLE_OBJC_ARC = YES; }; name = Debug; };
+		L0 = {isa = XCConfigurationList; buildConfigurations = ( C0 ); };
+		L1 = {isa = XCConfigurationList; buildConfigurations = ( C1 ); };
+	};
+	rootObject = P1 /* Project object */;
+}

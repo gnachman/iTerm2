@@ -1,0 +1,7 @@
+// !$*UTF8*$!
+{
+			buildSettings = {
+				INFOPLIST_KEY_NSPrincipalClass = iTermWidget;
+				PRODUCT_NAME = Helper;
+			};
+}

@@ -1,0 +1,18 @@
+# Objective-C runtime snapshot, format 3
+architecture arm64
+build-configuration Development
+build-variant ASan
+class RuntimeSnapshotPortInitObjCFixture
+  language objc
+  superclass NSObject
+  image ModernTests
+  ivar-arc-flag set
+  strong-ivar-layout
+  weak-ivar-layout
+  ivar _count types=q ownership=scalar layout=
+  instance-method -count types=q16@0:8
+  instance-method -init types=@16@0:8 also-implemented-by=-NSObject
+  instance-method -initWithCount: types=@24@0:8q16
+  instance-method -setCount: types=v24@0:8q16
+  instance-property count type=q ownership=assign nonatomic ivar=_count raw=Tq,N,V_count
+end class RuntimeSnapshotPortInitObjCFixture

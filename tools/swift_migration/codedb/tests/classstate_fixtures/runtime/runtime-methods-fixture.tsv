@@ -1,0 +1,8 @@
+# Fixture: a run-time method list, as sdk_selectors.py --runtime-methods writes one.
+# os: macOS 99.0 (FIXTURE)
+# kind: live
+# columns: C<TAB>class<TAB>superclass (empty for a root class), M<TAB>class<TAB>+|-<TAB>selector
+C	Root	
+M	Root	-	setPair:
+M	Root	-	capacity
+# end: C=1 M=2

@@ -1,0 +1,68 @@
+Test Suite 'All tests' started at 2026-06-14 10:53:48.044.
+Test Suite 'ModernTests.xctest' started at 2026-06-14 10:53:48.045.
+Test Suite 'AIBackslashEscapesTests' started at 2026-06-14 10:53:48.045.
+Test Case '-[ModernTests.AIBackslashEscapesTests test_bmpUnicode_decodes]' started.
+Test Case '-[ModernTests.AIBackslashEscapesTests test_bmpUnicode_decodes]' passed (0.002 seconds).
+Test Case '-[ModernTests.AIBackslashEscapesTests test_bmpUnicode_nonHex_throws]' started.
+Test Case '-[ModernTests.AIBackslashEscapesTests test_bmpUnicode_nonHex_throws]' passed (0.001 seconds).
+Test Suite 'AIBackslashEscapesTests' passed at 2026-06-14 10:53:48.069.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.003 (0.004) seconds
+Test Suite 'AILiveHarness' started at 2026-06-14 10:53:48.171.
+Test Case '-[ModernTests.AILiveHarness test_attachmentMatrix_openaiResponses_yamlAsUnknown]' started.
+2026-06-14 11:01:47.217186-0700 iTerm2[12283:15555016] [] nw_protocol_instance_set_output_handler Not calling remove_input_handler on 0x6120007525c0:udp
+[live] openai/responses+VS yamlAsUnknown: expected=accept+probe actual=accept+probe
+Test Case '-[ModernTests.AILiveHarness test_attachmentMatrix_openaiResponses_yamlAsUnknown]' passed (1.342 seconds).
+Test Case '-[ModernTests.AILiveHarness test_chat_orphanToolResponseAfterStop_doesNotOrphanQueuedMessage]' started.
+2026-06-14 11:01:48.571343-0700 iTerm2[12283:15555014] [] nw_protocol_instance_set_output_handler Not calling remove_input_handler on 0x6120008a7240:udp
+2026-06-14 11:01:51.332507-0700 iTerm2[12283:15549604] [] nw_protocol_instance_set_output_handler Not calling remove_input_handler on 0x612000921dc0:udp
+2026-06-14 11:01:53.358602-0700 iTerm2[12283:15528057] [general] *** Assertion failure in -[XCTestExpectation fulfill], XCTestExpectation.m:127
+freed pointer was not the last allocationiTerm2(15323,0x1f2e518c0) malloc: adding guard pages for large allocator blocks
+iTerm2(15323,0x1f2e518c0) malloc: enabling scribbling to detect mods to free blocks
+2026-06-14 11:02:06.120605-0700 iTerm2[15323:259] COMPANIONRELAY resumePairedListeningIfNeeded called [bridge=false acceptTask=false pairedPID=nil gate=consentNeeded]
+2026-06-14 11:02:06.121010-0700 iTerm2[15323:259] COMPANIONRELAY resume: SKIP (AI gate not allowed) [bridge=false acceptTask=false pairedPID=nil gate=consentNeeded]
+
+Restarting after unexpected exit, crash, or test timeout; summary will include totals from previous launches.
+
+Test Suite 'Selected tests' started at 2026-06-14 11:02:07.020.
+Test Suite 'ModernTests.xctest' started at 2026-06-14 11:02:07.020.
+Test Suite 'AILiveHarness' started at 2026-06-14 11:02:07.021.
+Test Case '-[ModernTests.AILiveHarness test_chat_stopThenSend_secondMessageStillDispatches]' started.
+Test Case '-[ModernTests.AILiveHarness test_chat_stopThenSend_secondMessageStillDispatches]' passed (14.181 seconds).
+Test Case '-[ModernTests.AILiveHarness test_gemini_smoke_streaming]' started.
+/Users/example/git/iterm2-alt/AILiveHarness/AILiveDriver.swift:252: error: -[ModernTests.AILiveHarness test_gemini_smoke_streaming] : Asynchronous wait failed: Exceeded timeout of 120 seconds, with unfulfilled expectations: "live AI gemini-3.1-pro-preview [stream=true]".
+/Users/example/git/iterm2-alt/AILiveHarness/AILiveHarness.swift:233: error: -[ModernTests.AILiveHarness test_gemini_smoke_streaming] : failed - [gemini/gemini-3.1-pro-preview/smoke/stream=true] provider failure: request cancelled
+Test Case '-[ModernTests.AILiveHarness test_gemini_smoke_streaming]' failed (126.028 seconds).
+Test Suite 'AILiveHarness' failed at 2026-06-14 11:30:42.406.
+	 Executed 2 tests, with 2 failures (0 unexpected) in 140.209 (140.215) seconds
+Test Suite 'CharsetPerformanceTests' started at 2026-06-14 11:30:49.050.
+Test Case '-[ModernTests.CharsetPerformanceTests testPerf_ascii]' started.
+/Users/example/git/iterm2-alt/ModernTests/CharsetTests.swift:809: Test Case '-[ModernTests.CharsetPerformanceTests testPerf_ascii]' measured [Time, seconds] average: 0.007, relative standard deviation: 72.671%, values: [0.020338, 0.008620, 0.004461, 0.005883, 0.004353, 0.004371, 0.004395, 0.004430, 0.004350, 0.004408], performanceMetricID:com.apple.XCTPerformanceMetric_WallClockTime, baselineName: "", baselineAverage: , polarity: prefers smaller, maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.100, maxStandardDeviation: 0.100
+Test Case '-[ModernTests.CharsetPerformanceTests testPerf_ascii]' passed (0.323 seconds).
+Test Suite 'CharsetPerformanceTests' passed at 2026-06-14 11:30:50.374.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.323 (0.324) seconds
+Test Suite 'iTermGitClientTests' started at 2026-06-14 11:31:11.084.
+Test Case '-[iTermGitClientTests testAheadAndBehindBothCount]' started.
+Test Case '-[iTermGitClientTests testAheadAndBehindBothCount]' passed (1.791 seconds).
+Test Case '-[iTermGitClientTests testAheadBehindZeroWhenInSyncWithUpstream]' started.
+Test Case '-[iTermGitClientTests testAheadBehindZeroWhenInSyncWithUpstream]' passed (0.713 seconds).
+Test Suite 'iTermGitClientTests' passed at 2026-06-14 11:31:25.723.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 2.504 (2.510) seconds
+Test Suite 'ModernTests.xctest' failed at 2026-06-14 11:31:27.490.
+	 Executed 5 tests, with 2 failures (0 unexpected) in 143.036 (143.050) seconds
+Test Suite 'Selected tests' failed at 2026-06-14 11:31:27.493.
+	 Executed 5 tests, with 2 failures (0 unexpected) in 143.036 (143.052) seconds
+2026-06-14 11:31:36.513 xcodebuild[9292:15502408] [MT] IDETestOperationsObserverDebug: 2270.605 elapsed -- Testing started completed.
+2026-06-14 11:31:36.513 xcodebuild[9292:15502408] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-06-14 11:31:36.513 xcodebuild[9292:15502408] [MT] IDETestOperationsObserverDebug: 2270.605 sec, +2270.605 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/example/Library/Developer/Xcode/DerivedData/iTerm2-fkoydrefveohihheofikkimdwpid/Logs/Test/Test-ModernTests-2026.06.14_10-52-37--0700.xcresult
+
+Failing tests:
+	AILiveHarness.test_chat_orphanToolResponseAfterStop_doesNotOrphanQueuedMessage()
+	AILiveHarness.test_gemini_smoke_streaming()
+	AILiveHarness.test_gemini_smoke_streaming()
+
+[1m[31m** TEST FAILED **
+
+[0mEXIT=65

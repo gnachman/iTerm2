@@ -1,0 +1,5 @@
+#define FIXTURE_PREFIX_LOADED 1
+
+#ifdef __OBJC__
+#import "Buttons.h"
+#endif

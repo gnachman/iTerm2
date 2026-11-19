@@ -1,0 +1,32 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+		F0000000000000000000000A /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000001A /* App.swift */; };
+		F0000000000000000000000B /* Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000001B /* Shared.swift */; };
+		F0000000000000000000000C /* Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000001B /* Shared.swift */; };
+		F0000000000000000000001A /* App.swift */ = {isa = PBXFileReference; path = App.swift; sourceTree = "<group>"; };
+		F0000000000000000000001B /* Shared.swift */ = {isa = PBXFileReference; path = Shared.swift; sourceTree = "<group>"; };
+		F0000000000000000000002A /* Root */ = {isa = PBXGroup; children = (F0000000000000000000003A, F0000000000000000000003B, F0000000000000000000004A, F0000000000000000000004B, ); sourceTree = "<group>"; };
+		F0000000000000000000003A /* sources */ = {isa = PBXGroup; children = (F0000000000000000000001A, F0000000000000000000001B, F0000000000000000000004C, ); path = sources; sourceTree = "<group>"; };
+		F0000000000000000000003B /* other */ = {isa = PBXGroup; children = (F0000000000000000000004D, ); path = other; sourceTree = SOURCE_ROOT; };
+		F0000000000000000000004C /* Nested */ = {isa = PBXFileSystemSynchronizedRootGroup; path = Nested; sourceTree = "<group>"; };
+		F0000000000000000000004D /* Deep */ = {isa = PBXFileSystemSynchronizedRootGroup; path = Deep; sourceTree = "<group>"; };
+		F0000000000000000000004A /* Tests */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (F0000000000000000000005A, F0000000000000000000005C, ); path = Tests; sourceTree = "<group>"; };
+		F0000000000000000000004B /* Helpers */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (F0000000000000000000005B, ); path = Helpers; sourceTree = "<group>"; };
+		F0000000000000000000005A /* Exceptions for Tests */ = {isa = PBXFileSystemSynchronizedBuildFileExceptionSet; membershipExceptions = (NotATest.swift, ); target = F0000000000000000000006B /* AppTests */; };
+		F0000000000000000000005C /* Copy phase exceptions */ = {isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet; buildPhase = F0000000000000000000007B; membershipExceptions = (Frozen.swift, ); target = F0000000000000000000006B /* AppTests */; };
+		F0000000000000000000005B /* Exceptions for Helpers */ = {isa = PBXFileSystemSynchronizedBuildFileExceptionSet; membershipExceptions = (AlsoInApp.swift, ); target = F0000000000000000000006A /* App */; };
+		F0000000000000000000006A /* App */ = {isa = PBXNativeTarget; buildConfigurationList = F0000000000000000000009A; buildPhases = (F0000000000000000000007A, ); name = App; productType = "com.apple.product-type.application"; };
+		F0000000000000000000006B /* AppTests */ = {isa = PBXNativeTarget; buildConfigurationList = F0000000000000000000009A; buildPhases = (F0000000000000000000007B, ); fileSystemSynchronizedGroups = (F0000000000000000000004A, F0000000000000000000004B, F0000000000000000000004C, F0000000000000000000004D, ); name = AppTests; productType = "com.apple.product-type.bundle.unit-test"; };
+		F0000000000000000000007A /* Sources */ = {isa = PBXSourcesBuildPhase; files = (F0000000000000000000000A, F0000000000000000000000B, ); };
+		F0000000000000000000007B /* Sources */ = {isa = PBXSourcesBuildPhase; files = (F0000000000000000000000C, ); };
+		F0000000000000000000008A /* Project object */ = {isa = PBXProject; buildConfigurationList = F0000000000000000000009A; mainGroup = F0000000000000000000002A; targets = (F0000000000000000000006A, F0000000000000000000006B, ); };
+		F0000000000000000000009A = {isa = XCConfigurationList; buildConfigurations = (F000000000000000000000AA, ); };
+		F000000000000000000000AA = {isa = XCBuildConfiguration; buildSettings = {SWIFT_VERSION = 5.0; }; name = Debug; };
+	};
+	rootObject = F0000000000000000000008A /* Project object */;
+}

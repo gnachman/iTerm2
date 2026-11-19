@@ -1,0 +1,4 @@
+module plainlib {
+    header "plainlib.h"
+    export *
+}

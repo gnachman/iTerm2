@@ -1,0 +1,25 @@
+Testing started
+Test suite 'iTermWarningKeyEquivalentTests' started on 'My Mac - iTerm2 (98945)'
+Test case 'iTermWarningKeyEquivalentTests.testAutomaticShortcutDoesNotRepeatAnExplicitOne()' passed on 'My Mac - iTerm2 (98945)' (0.015 seconds)
+Test case 'iTermWarningKeyEquivalentTests.testAutomaticShortcutsSkipSystemStandardLetters()' passed on 'My Mac - iTerm2 (98945)' (0.017 seconds)
+Test case 'iTermWarningKeyEquivalentTests.testBuildingTheAlertDoesNotChangeTheActionsKeyEquivalents()' passed on 'My Mac - iTerm2 (98945)' (0.009 seconds)
+Test suite 'WorkgroupModelThreadSafetyTests' started on 'My Mac - iTerm2 (98945)'
+
+
+*** No test output for 300 seconds. The run looks hung. ***
+
+*** Test hosts at the time of the stall (full stacks in /Users/example/git/iterm2-alt/tmp/test-stall-20261119-021144.txt):
+***   pid 98906 state=S FramerFlowTwoHopSimulationTests.simulate(pathA:pathB:seconds:warmup:host2:host1PaneFloodsFrom:perHop:capsInner:carrierOfFirstLine:eachStep:)
+***   pid 98941 state=S implicit closure #1 in StatusPriorityPopoverLayoutTests.catalog() 
+***   pid 98942 state=S BrowserViewSourceTests.waitForLoad(of:in:file:line:) 
+***   pid 98943 state=S MarkdownPortholeRenderingTests.render(_:) 
+***   pid 98944 state=S (no test frame on the main thread)
+***   pid 98945 state=S WorkgroupModelThreadSafetyTests.testReadingOffMainWhileMainReplacesTheList() 
+***   pid 98946 state=S BrowserPopupUserContentControllerTests.evaluate(_:in:) 
+***   pid 98947 state=S @nonobjc SCPFile.init() 
+***   pid 98948 state=S -[TmuxFilteredPaneLayoutTests tmuxSessionForPane:] 
+***   pid 98949 state=S (no test frame on the main thread)
+
+*** Killing the run. ***
+
+exit=1

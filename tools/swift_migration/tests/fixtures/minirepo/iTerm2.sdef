@@ -1,0 +1,8 @@
+<dictionary>
+  <suite name="iTerm2">
+    <class name="foo" code="fooo"><cocoa class="Foo"/>
+      <property name="title" code="titl"><cocoa key="title"/></property>
+      <responds-to command="foo"><cocoa method="handleFooCommand:"/></responds-to>
+    </class>
+  </suite>
+</dictionary>

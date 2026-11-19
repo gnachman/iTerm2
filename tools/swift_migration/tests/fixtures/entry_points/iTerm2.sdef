@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<dictionary title="Fixture">
+  <suite name="Fixture Suite" code="Fixt">
+    <class name="widget" code="Wdgt" plural="widgets">
+      <cocoa class="iTermWidget"/>
+      <property name="foo bar" code="Foob" type="text"/>
+      <property name="tty" code="Ttty" type="text" access="r">
+        <cocoa key="button"/>
+      </property>
+      <element type="widget">
+        <cocoa key="subWidgets"/>
+      </element>
+      <responds-to command="enlarge">
+        <cocoa method="biggerFont:"/>
+      </responds-to>
+    </class>
+    <command name="enlarge" code="FixtEnlg">
+      <cocoa class="iTermSubWidget"/>
+    </command>
+    <class name="window" code="cwin" plural="windows">
+      <cocoa class="iTermScriptingWindow"/>
+      <property name="frontmost" code="pisf" type="boolean" access="r">
+        <cocoa key="scriptFrontmost"/>
+      </property>
+      <responds-to command="select">
+        <cocoa method="handleSelectCommand:"/>
+      </responds-to>
+    </class>
+  </suite>
+</dictionary>

@@ -1,0 +1,71 @@
+/Users/example/iterm2/sources/Language/iTermVariables.m:422:103: runtime error: null pointer passed as argument 1, which is declared to never be null
+/Users/example/iterm2/sources/Language/iTermVariables.m:219:39: note: _Nonnull type annotation specified here
+    #0 0x00010b3f3784 in -[iTermVariables setValue:forVariableNamed:withSideEffects:weak:]+0x378 (iTerm2.debug.dylib:arm64+0x1127784)
+    #1 0x00010b3f0578 in -[iTermVariables setValue:forVariableNamed:weak:]+0xb0 (iTerm2.debug.dylib:arm64+0x1124578)
+    #2 0x00010ab13768 in -[iTermVariableScope setValue:forVariableNamed:weak:]+0x140 (iTerm2.debug.dylib:arm64+0x847768)
+    #3 0x00010ab135f4 in -[iTermVariableScope setValue:forVariableNamed:]+0x84 (iTerm2.debug.dylib:arm64+0x8475f4)
+
+SUMMARY: UndefinedBehaviorSanitizer: invalid-null-argument /Users/example/iterm2/sources/Language/iTermVariables.m:422:103 
+/Users/example/iterm2/sources/Language/iTermVariables.m:442:77: runtime error: null pointer passed as argument 1, which is declared to never be null
+/Users/example/iterm2/sources/Language/iTermVariables.m:219:39: note: _Nonnull type annotation specified here
+    #0 0x00010b3f3ca4 in -[iTermVariables setValue:forVariableNamed:withSideEffects:weak:]+0x898 (iTerm2.debug.dylib:arm64+0x1127ca4)
+    #1 0x00010b3f0578 in -[iTermVariables setValue:forVariableNamed:weak:]+0xb0 (iTerm2.debug.dylib:arm64+0x1124578)
+    #2 0x00010ab13768 in -[iTermVariableScope setValue:forVariableNamed:weak:]+0x140 (iTerm2.debug.dylib:arm64+0x847768)
+    #3 0x00010ab135f4 in -[iTermVariableScope setValue:forVariableNamed:]+0x84 (iTerm2.debug.dylib:arm64+0x8475f4)
+
+SUMMARY: UndefinedBehaviorSanitizer: invalid-null-argument /Users/example/iterm2/sources/Language/iTermVariables.m:442:77 
+/Users/example/iterm2/sources/Language/iTermVariables.m:353:80: runtime error: null pointer passed as argument 1, which is declared to never be null
+/Users/example/iterm2/sources/Language/iTermVariables.m:365:55: note: _Nonnull type annotation specified here
+    #0 0x00010b3f2ba4 in -[iTermVariables didChangeTerminalValueWithPath:]+0x9c (iTerm2.debug.dylib:arm64+0x1126ba4)
+    #1 0x00010b3f3ea4 in -[iTermVariables setValue:forVariableNamed:withSideEffects:weak:]+0xa98 (iTerm2.debug.dylib:arm64+0x1127ea4)
+    #2 0x00010b3f0578 in -[iTermVariables setValue:forVariableNamed:weak:]+0xb0 (iTerm2.debug.dylib:arm64+0x1124578)
+    #3 0x00010ab13768 in -[iTermVariableScope setValue:forVariableNamed:weak:]+0x140 (iTerm2.debug.dylib:arm64+0x847768)
+
+SUMMARY: UndefinedBehaviorSanitizer: invalid-null-argument /Users/example/iterm2/sources/Language/iTermVariables.m:353:80 
+/Users/example/iterm2/sources/Language/iTermVariables.m:358:43: runtime error: null pointer passed as argument 1, which is declared to never be null
+/Users/example/iterm2/sources/Language/iTermVariables.m:365:55: note: _Nonnull type annotation specified here
+    #0 0x00010b3f2d5c in -[iTermVariables didChangeTerminalValueWithPath:]+0x254 (iTerm2.debug.dylib:arm64+0x1126d5c)
+    #1 0x00010b3f3ea4 in -[iTermVariables setValue:forVariableNamed:withSideEffects:weak:]+0xa98 (iTerm2.debug.dylib:arm64+0x1127ea4)
+    #2 0x00010b3f0578 in -[iTermVariables setValue:forVariableNamed:weak:]+0xb0 (iTerm2.debug.dylib:arm64+0x1124578)
+    #3 0x00010ab13768 in -[iTermVariableScope setValue:forVariableNamed:weak:]+0x140 (iTerm2.debug.dylib:arm64+0x847768)
+
+SUMMARY: UndefinedBehaviorSanitizer: invalid-null-argument /Users/example/iterm2/sources/Language/iTermVariables.m:358:43 
+/Users/example/iterm2/sources/Language/iTermVariables.m:328:80: runtime error: null pointer passed as argument 1, which is declared to never be null
+/Users/example/iterm2/sources/Language/iTermVariables.m:365:55: note: _Nonnull type annotation specified here
+    #0 0x00010b3f229c in -[iTermVariables didChangeNonterminalValueWithPath:]+0x9c (iTerm2.debug.dylib:arm64+0x112629c)
+    #1 0x00010b3f3b3c in -[iTermVariables setValue:forVariableNamed:withSideEffects:weak:]+0x730 (iTerm2.debug.dylib:arm64+0x1127b3c)
+    #2 0x00010b3f0578 in -[iTermVariables setValue:forVariableNamed:weak:]+0xb0 (iTerm2.debug.dylib:arm64+0x1124578)
+    #3 0x00010ab13768 in -[iTermVariableScope setValue:forVariableNamed:weak:]+0x140 (iTerm2.debug.dylib:arm64+0x847768)
+
+SUMMARY: UndefinedBehaviorSanitizer: invalid-null-argument /Users/example/iterm2/sources/Language/iTermVariables.m:328:80 
+/Users/example/iterm2/sources/Language/iTermVariables.m:334:43: runtime error: null pointer passed as argument 1, which is declared to never be null
+/Users/example/iterm2/sources/Language/iTermVariables.m:365:55: note: _Nonnull type annotation specified here
+    #0 0x00010b3f2490 in -[iTermVariables didChangeNonterminalValueWithPath:]+0x290 (iTerm2.debug.dylib:arm64+0x1126490)
+    #1 0x00010b3f3b3c in -[iTermVariables setValue:forVariableNamed:withSideEffects:weak:]+0x730 (iTerm2.debug.dylib:arm64+0x1127b3c)
+    #2 0x00010b3f0578 in -[iTermVariables setValue:forVariableNamed:weak:]+0xb0 (iTerm2.debug.dylib:arm64+0x1124578)
+    #3 0x00010ab13768 in -[iTermVariableScope setValue:forVariableNamed:weak:]+0x140 (iTerm2.debug.dylib:arm64+0x847768)
+
+SUMMARY: UndefinedBehaviorSanitizer: invalid-null-argument /Users/example/iterm2/sources/Language/iTermVariables.m:334:43 
+/Users/example/iterm2/sources/API/iTermScriptsMenuController.m:471:5: runtime error: null pointer returned from function declared to never return null
+    #0 0x00010b280fdc in -[iTermScriptsMenuController scriptItems]+0x4a0 (iTerm2.debug.dylib:arm64+0xfb4fdc)
+    #1 0x00010b282db4 in -[iTermScriptsMenuController addMenuItemsTo:]+0x38 (iTerm2.debug.dylib:arm64+0xfb6db4)
+    #2 0x00010b27ea3c in -[iTermScriptsMenuController build]+0x58 (iTerm2.debug.dylib:arm64+0xfb2a3c)
+    #3 0x00010a924010 in -[iTermApplicationDelegate buildScriptMenu:]+0x38 (iTerm2.debug.dylib:arm64+0x658010)
+
+SUMMARY: UndefinedBehaviorSanitizer: invalid-null-return /Users/example/iterm2/sources/API/iTermScriptsMenuController.m:471:5 
+/Users/example/iterm2/sources/API/iTermScriptsMenuController.m:610:38: runtime error: null pointer passed as argument 1, which is declared to never be null
+/Users/example/iterm2/sources/API/iTermScriptsMenuController.m:614:64: note: _Nonnull type annotation specified here
+    #0 0x00010b282dd4 in -[iTermScriptsMenuController addMenuItemsTo:]+0x58 (iTerm2.debug.dylib:arm64+0xfb6dd4)
+    #1 0x00010b27ea3c in -[iTermScriptsMenuController build]+0x58 (iTerm2.debug.dylib:arm64+0xfb2a3c)
+    #2 0x00010a924010 in -[iTermApplicationDelegate buildScriptMenu:]+0x38 (iTerm2.debug.dylib:arm64+0x658010)
+    #3 0x00010a914980 in -[iTermApplicationDelegate applicationWillFinishLaunching:]+0x938 (iTerm2.debug.dylib:arm64+0x648980)
+
+SUMMARY: UndefinedBehaviorSanitizer: invalid-null-argument /Users/example/iterm2/sources/API/iTermScriptsMenuController.m:610:38 
+/Users/example/iterm2/ModernTests/SanitizerProbeTests.m:72:5: runtime error: null pointer passed as argument 1, which is declared to never be null
+/Users/example/iterm2/ModernTests/SanitizerProbeTests.m:34:66: note: _Nonnull type annotation specified here
+    #0 0x00011a29140c in -[SanitizerProbeTests testNullabilityProbe] SanitizerProbeTests.m:72
+    #1 0x00018c675670 in __invoking___+0x90 (CoreFoundation:arm64e+0x60670)
+    #2 0x00018c6754fc in -[NSInvocation invoke]+0x1a4 (CoreFoundation:arm64e+0x604fc)
+    #3 0x000103c6ff38 in +[XCTFailableInvocation invokeStandardConventionInvocation:completion:]+0x40 (XCTestCore:arm64e+0x1ff38)
+
+SUMMARY: UndefinedBehaviorSanitizer: invalid-null-argument /Users/example/iterm2/ModernTests/SanitizerProbeTests.m:72:5 

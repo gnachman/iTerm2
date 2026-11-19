@@ -1,0 +1,26 @@
+# Objective-C runtime snapshot, format 3
+architecture arm64
+build-configuration Development
+build-variant ASan
+class RuntimeSnapshotPortAtomicObjCFixture
+  language swift
+  superclass NSObject
+  image ModernTests
+  ivar-arc-flag set
+  strong-ivar-layout
+  weak-ivar-layout
+  ivar atomicCountStorage types= ownership=swift layout=
+  ivar atomicObjectStorage types= ownership=swift layout=
+  ivar atomicRectStorage types= ownership=swift layout=
+  instance-method -.cxx_destruct types=v16@0:8
+  instance-method -atomicCount types=q16@0:8
+  instance-method -atomicObject types=@16@0:8
+  instance-method -atomicRect types={CGRect={CGPoint=dd}{CGSize=dd}}16@0:8
+  instance-method -init types=@16@0:8 also-implemented-by=-NSObject
+  instance-method -setAtomicCount: types=v24@0:8q16
+  instance-method -setAtomicObject: types=v24@0:8@16
+  instance-method -setAtomicRect: types=v48@0:8{CGRect={CGPoint=dd}{CGSize=dd}}16
+  instance-property atomicCount type=q ownership=assign nonatomic ivar= raw=Tq,N
+  instance-property atomicObject type=@"NSObject" ownership=strong nonatomic ivar= raw=T@"NSObject",N,&
+  instance-property atomicRect type={CGRect={CGPoint=dd}{CGSize=dd}} ownership=assign nonatomic ivar= raw=T{CGRect={CGPoint=dd}{CGSize=dd}},N
+end class RuntimeSnapshotPortAtomicObjCFixture

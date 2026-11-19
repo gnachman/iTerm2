@@ -1,0 +1,95 @@
+==================
+WARNING: ThreadSanitizer: thread leak (pid=11)
+  Thread T1 (tid=123, finished) created by main thread at:
+    #0 pthread_create <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x1)
+    #1 -[Foo start] <null> (iTerm2.debug.dylib:arm64+0x10)
+
+SUMMARY: ThreadSanitizer: thread leak (iTerm2.debug.dylib:arm64+0x10) in -[Foo start]
+==================
+==================
+WARNING: ThreadSanitizer: lock-order-inversion (potential deadlock) (pid=11)
+  Cycle in lock order graph: M0 (0x000100) => M1 (0x000200) => M0
+
+  Mutex M1 acquired here while holding mutex M0 in main thread:
+    #0 pthread_mutex_lock <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x1)
+    #1 -[Foo lockB] <null> (iTerm2.debug.dylib:arm64+0x20)
+
+  Mutex M0 acquired here while holding mutex M1 in thread T2:
+    #0 pthread_mutex_lock <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x1)
+    #1 -[Foo lockA] <null> (iTerm2.debug.dylib:arm64+0x30)
+
+SUMMARY: ThreadSanitizer: lock-order-inversion (potential deadlock) (iTerm2.debug.dylib:arm64+0x20) in -[Foo lockB]
+==================
+==================
+WARNING: ThreadSanitizer: heap-use-after-free (pid=11)
+  Read of size 8 at 0x7b0400000000 by thread T3:
+    #0 -[Foo use] <null> (iTerm2.debug.dylib:arm64+0x40)
+
+  Previous write of size 8 at 0x7b0400000000 by main thread:
+    #0 free <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x2)
+    #1 -[Foo dealloc] <null> (iTerm2.debug.dylib:arm64+0x50)
+
+SUMMARY: ThreadSanitizer: heap-use-after-free (iTerm2.debug.dylib:arm64+0x40) in -[Foo use]
+==================
+==================
+WARNING: ThreadSanitizer: signal-unsafe call inside of a signal (pid=11)
+    #0 malloc <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x3)
+    #1 handler <null> (iTerm2.debug.dylib:arm64+0x60)
+
+SUMMARY: ThreadSanitizer: signal-unsafe call inside of a signal (iTerm2.debug.dylib:arm64+0x60) in handler
+==================
+==================
+WARNING: ThreadSanitizer: destroy of a locked mutex (pid=11)
+    #0 pthread_mutex_destroy <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x4)
+    #1 -[Foo teardown] <null> (iTerm2.debug.dylib:arm64+0x70)
+
+  and:
+    #0 pthread_mutex_lock <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x1)
+    #1 -[Foo lockA] <null> (iTerm2.debug.dylib:arm64+0x30)
+
+  Mutex M0 (0x000100) created at:
+    #0 pthread_mutex_init <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x5)
+
+SUMMARY: ThreadSanitizer: destroy of a locked mutex (iTerm2.debug.dylib:arm64+0x70) in -[Foo teardown]
+==================
+==================
+WARNING: ThreadSanitizer: data race (pid=11)
+  Atomic write of size 8 at 0x0001 by thread T4:
+    #0 -[Foo atomicSet] <null> (iTerm2.debug.dylib:arm64+0x80)
+
+  Previous atomic read of size 8 at 0x0001 by main thread:
+    #0 -[Foo atomicGet] <null> (iTerm2.debug.dylib:arm64+0x90)
+
+  As if synchronized via sleep:
+    #0 nanosleep <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x6)
+    #1 -[Foo sleepy] <null> (iTerm2.debug.dylib:arm64+0xa0)
+
+  Location is global 'gFoo' of size 8 at 0x000100001 (iTerm2.debug.dylib+0x1234)
+
+  Mutex M5 (0x000300) created at:
+    #0 pthread_mutex_init <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x5)
+    #1 -[Foo initLock] <null> (iTerm2.debug.dylib:arm64+0xb0)
+
+  Thread T4 (tid=5, running) created by main thread at:
+    #0 pthread_create <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x1)
+    #1 -[Foo spawn] <null> (iTerm2.debug.dylib:arm64+0xc0)
+
+SUMMARY: ThreadSanitizer: data race (iTerm2.debug.dylib:arm64+0x80) in -[Foo atomicSet]
+==================
+==================
+WARNING: ThreadSanitizer: data race (pid=11)
+  Write of size 8 at 0x0002 by thread T5:
+    #0 memset <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x7)
+    #1 closure #2 in Bar.baz() <null> (iTerm2.debug.dylib:arm64+0xd0)
+
+  Previous write of size 8 at 0x0002 by main thread:
+    [failed to restore the stack]
+
+  Location is stack of thread T5.
+
+SUMMARY: ThreadSanitizer: data race (iTerm2.debug.dylib:arm64+0xd0) in closure #2 in Bar.baz()
+==================
+==================
+WARNING: ThreadSanitizer: data race (pid=11)
+  Write of size 8 at 0x0003 by thread T6:
+    #0 -[Foo trunc] <null> (iTerm2.debug.dylib:arm64+0xe0)

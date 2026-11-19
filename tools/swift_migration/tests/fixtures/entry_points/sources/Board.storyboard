@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0">
+    <scenes>
+        <scene sceneID="s1">
+            <objects>
+                <viewController id="vc1" customClass="iTermSubWidget" sceneMemberID="viewController">
+                    <connections>
+                        <action selector="contextMenuActionOpen:" target="fr1" id="a9"/>
+                    </connections>
+                </viewController>
+                <customObject id="fr1" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
+            </objects>
+        </scene>
+    </scenes>
+</document>

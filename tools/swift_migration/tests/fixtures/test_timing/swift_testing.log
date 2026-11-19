@@ -1,0 +1,21 @@
+Test Suite 'All tests' started at 2026-07-16 12:58:00.015.
+Test Suite 'CompanionCorePackageTests.xctest' started at 2026-07-16 12:58:00.017.
+Test Suite 'CanonicalEncodingTests' started at 2026-07-16 12:58:00.017.
+Test Case '-[CompanionProtocolTests.CanonicalEncodingTests test_crossLanguageVector]' started.
+Test Case '-[CompanionProtocolTests.CanonicalEncodingTests test_crossLanguageVector]' passed (0.002 seconds).
+Test Case '-[CompanionProtocolTests.CanonicalEncodingTests test_domainSeparation]' started.
+Test Case '-[CompanionProtocolTests.CanonicalEncodingTests test_domainSeparation]' passed (0.000 seconds).
+Test Case '-[CompanionProtocolTests.CanonicalEncodingTests test_emptyFieldsAreDistinguished]' started.
+Test Case '-[CompanionProtocolTests.CanonicalEncodingTests test_emptyFieldsAreDistinguished]' passed (0.000 seconds).
+Test Case '-[CompanionProtocolTests.CanonicalEncodingTests test_isUnambiguous_acrossFieldBoundaries]' started.
+Test Case '-[CompanionProtocolTests.CanonicalEncodingTests test_isUnambiguous_acrossFieldBoundaries]' passed (0.000 seconds).
+Test Suite 'CanonicalEncodingTests' passed at 2026-07-16 12:58:00.020.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+Test Suite 'CompanionCorePackageTests.xctest' passed at 2026-07-16 12:58:00.452.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+Test Suite 'All tests' passed at 2026-07-16 12:58:00.452.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+􀟈  Test run started.
+􀄵  Testing Library Version: 1902
+􀄵  Target Platform: arm64e-apple-macos14.0
+􁁛  Test run with 0 tests in 0 suites passed after 0.001 seconds.

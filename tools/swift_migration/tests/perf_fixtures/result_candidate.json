@@ -1,0 +1,173 @@
+{
+ "arch": "arm64",
+ "commit": "0000000000000000000000000000000000000000",
+ "commit_dirty": false,
+ "configuration": "Deployment",
+ "created": "2026-11-21T10:00:00Z",
+ "is_baseline": false,
+ "label": "not a baseline: candidate",
+ "machine": {
+  "chip": "Apple M4 Max",
+  "efficiency_cores": 4,
+  "logical_cpus": 16,
+  "memory_bytes": 68719476736,
+  "model": "Mac16,6",
+  "os_build": "26A428",
+  "os_version": "27.0",
+  "performance_cores": 12,
+  "xcode": "Xcode 27.0 Build version 27A100"
+ },
+ "machine_state": {
+  "after": {
+   "build_processes": {},
+   "cpu_speed_limit": null,
+   "energy_mode": "High Power",
+   "load_average": [
+    1.2,
+    1.5,
+    1.8
+   ],
+   "logical_cpus": 16,
+   "low_power_mode": false,
+   "memory_free_percent": 70,
+   "power_source": "AC Power",
+   "quiet": true,
+   "reasons": [],
+   "swap_used_mb": 0.0,
+   "thermal_warning": false
+  },
+  "before": {
+   "build_processes": {},
+   "cpu_speed_limit": null,
+   "energy_mode": "High Power",
+   "load_average": [
+    1.2,
+    1.5,
+    1.8
+   ],
+   "logical_cpus": 16,
+   "low_power_mode": false,
+   "memory_free_percent": 70,
+   "power_source": "AC Power",
+   "quiet": true,
+   "reasons": [],
+   "swap_used_mb": 0.0,
+   "thermal_warning": false
+  }
+ },
+ "scenarios": {
+  "app.stress_normal_1tab": {
+   "metrics": {
+    "iterations_per_sec": {
+     "better": "higher",
+     "samples": [
+      9190,
+      9310,
+      9240,
+      9270,
+      9220
+     ],
+     "unit": "iterations/s"
+    },
+    "rss_peak": {
+     "better": "lower",
+     "samples": [
+      270000,
+      271000,
+      269500,
+      270500,
+      270200
+     ],
+     "unit": "kB"
+    }
+   },
+   "reason": "",
+   "source": "fixture",
+   "status": "ok"
+  },
+  "draw.attributed_strings_mono": {
+   "metrics": {
+    "time_per_frame": {
+     "better": "lower",
+     "samples": [
+      10,
+      11,
+      10,
+      12,
+      10,
+      30,
+      10,
+      11,
+      10,
+      10
+     ],
+     "unit": "ms"
+    }
+   },
+   "reason": "",
+   "source": "fixture",
+   "status": "ok"
+  },
+  "memory.scrollback_fill_20k": {
+   "metrics": {
+    "process_peak_footprint": {
+     "better": "lower",
+     "samples": [
+      250000.0
+     ],
+     "unit": "kB"
+    }
+   },
+   "reason": "",
+   "source": "fixture",
+   "status": "ok"
+  },
+  "parse.mixed_1mb": {
+   "metrics": {
+    "time": {
+     "better": "lower",
+     "samples": [
+      0.06,
+      0.06119999999999999,
+      0.0588,
+      0.06,
+      0.0624,
+      0.06,
+      0.06119999999999999,
+      0.0588,
+      0.06,
+      0.06
+     ],
+     "unit": "s"
+    }
+   },
+   "reason": "",
+   "source": "fixture",
+   "status": "ok"
+  },
+  "screen.gang_fast_path": {
+   "metrics": {
+    "time": {
+     "better": "lower",
+     "samples": [
+      0.1,
+      0.1,
+      0.1,
+      0.1,
+      0.1,
+      0.1,
+      0.1,
+      0.1,
+      0.1,
+      0.1
+     ],
+     "unit": "s"
+    }
+   },
+   "reason": "",
+   "source": "fixture",
+   "status": "ok"
+  }
+ },
+ "schema": "iterm2-migration-perf/1"
+}

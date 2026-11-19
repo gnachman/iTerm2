@@ -1,0 +1,25 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test-without-building -xctestrun /x/PerformanceTests.xctestrun -destination platform=macOS,arch=arm64
+
+Test Suite 'Selected tests' started at 2026-11-20 18:00:00.000.
+Test Suite 'PerformanceTests.xctest' started at 2026-11-20 18:00:00.001.
+Test Suite 'PerformanceTests' started at 2026-11-20 18:00:00.002.
+Test Case '-[PerformanceTests.PerformanceTests testGang_fastPathPerformance]' started.
+/x/PerformanceTests/PerformanceTests.swift:57: Test Case '-[PerformanceTests.PerformanceTests testGang_fastPathPerformance]' measured [Time, seconds] average: 0.104, relative standard deviation: 3.162%, values: [0.110000, 0.100000, 0.105000, 0.101000, 0.104000, 0.099000, 0.108000, 0.103000, 0.102000, 0.106000], performanceMetricID:com.apple.XCTPerformanceMetric_WallClockTime, baselineName: "", baselineAverage: , polarity: prefers smaller, maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.100, maxStandardDeviation: 0.100
+Test Case '-[PerformanceTests.PerformanceTests testGang_fastPathPerformance]' passed (1.234 seconds).
+Test Suite 'PerformanceTests' passed at 2026-11-20 18:00:01.300.
+Test Case '-[PerformanceTests.MigrationBaselineTests testMemoryScrollbackFill]' started.
+/x/PerformanceTests/MigrationBaselineTests.swift:250: Test Case '-[PerformanceTests.MigrationBaselineTests testMemoryScrollbackFill]' measured [Memory Peak Physical, kB] average: 52012.300, relative standard deviation: 1.000%, values: [52000.000000, 52100.000000, 51900.000000], performanceMetricID:com.apple.dt.XCTMetric_Memory.physical_peak, baselineName: "", baselineAverage: , polarity: prefers smaller, maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.000, maxStandardDeviation: 0.000
+/x/PerformanceTests/MigrationBaselineTests.swift:250: Test Case '-[PerformanceTests.MigrationBaselineTests testMemoryScrollbackFill]' measured [Clock Monotonic Time, s] average: 1.500, relative standard deviation: 2.000%, values: [1.400000, 1.500000, 1.600000], performanceMetricID:com.apple.dt.XCTMetric_Clock.time.monotonic, baselineName: "", baselineAverage: , polarity: prefers smaller, maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.000, maxStandardDeviation: 0.000
+[MigrationPerf] {"better":"lower","metric":"live_malloc_blocks","scenario":"memory.scrollback_fill_20k","unit":"count","values":[1000,1010,990]}
+[MigrationPerf] {"better":"lower","metric":"process_peak_footprint","scenario":"memory.scrollback_fill_20k","unit":"kB","values":[250000.5]}
+[MigrationPerf] not json at all
+Test Case '-[PerformanceTests.MigrationBaselineTests testMemoryScrollbackFill]' passed (5.000 seconds).
+Test Case '-[PerformanceTests.MigrationBaselineTests testParseThroughput]' started.
+[MigrationPerf] {"better":"lower","metric":"time","scenario":"parse.mixed_1mb","unit":"s","values":[0.05,0.051,0.049,0.05,0.052]}
+Test Case '-[PerformanceTests.MigrationBaselineTests testParseThroughput]' passed (0.300 seconds).
+
+Test session results, code coverage, and logs:
+	/x/Logs/Test/Test-PerformanceTests.xcresult
+
+** TEST EXECUTE SUCCEEDED **

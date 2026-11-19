@@ -1,0 +1,27 @@
+# Fixture runtime method list for test_entry_points.py, in the format sdk_selectors.py --runtime-methods writes.
+# os: macOS 99.1 (99A123)
+# kind: live
+# frameworks: AppKit, Foundation
+# columns: C<TAB>class<TAB>superclass (empty for a root class), M<TAB>class<TAB>+|-<TAB>selector
+C	NSObject	
+C	NSResponder	NSObject
+C	NSView	NSResponder
+C	NSScrollView	NSView
+C	NSWindow	NSResponder
+C	NSPanel	NSWindow
+C	NSViewController	NSResponder
+M	NSObject	-	description
+M	NSObject	+	alloc
+M	NSScrollView	-	allowedPocketEdges
+M	NSResponder	-	_usesCustomDrawing
+M	NSObject	+	plainUnusedMethod
+C	NSFixtureUnrelated	NSObject
+M	NSView	-	fixtureOwnHook
+M	NSResponder	-	fixtureAncestorHook
+M	NSScrollView	-	fixtureSubclassHook
+M	NSScrollView	+	fixtureClassKindHook
+M	NSFixtureUnrelated	-	fixtureInformalSelector
+M	NSView	+	fixtureRootHook
+C	NSFixtureUnrelated2	NSObject
+M	NSFixtureUnrelated2	-	fixtureKeyword:selector:
+# end: C=9 M=12

@@ -1,0 +1,69 @@
+# Objective-C runtime snapshot, format 3
+architecture arm64
+build-configuration Development
+build-variant ASan
+class RuntimeSnapshotPortObjCFixture
+  language objc
+  superclass NSObject
+  image ModernTests
+  ivar-arc-flag set
+  strong-ivar-layout 21111200
+  weak-ivar-layout 3100
+  protocol NSCopying
+  protocol RuntimeSnapshotPortFixtureProtocol
+  ivar _copiedString types=@"NSString" ownership=strong layout=s
+  ivar _count types=q ownership=scalar layout=
+  ivar _enabled types=B ownership=scalar layout=
+  ivar _frame types={CGRect="origin"{CGPoint="x"d"y"d}"size"{CGSize="width"d"height"d}} ownership=struct-or-cxx-object layout=
+  ivar _handler types=@? ownership=strong layout=s
+  ivar _privateCounter types=q ownership=scalar layout=
+  ivar _readonlyString types=@"NSString" ownership=strong layout=s
+  ivar _strongObject types=@"NSObject" ownership=strong layout=s
+  ivar _visible types=B ownership=scalar layout=
+  ivar _weakObject types=@"NSObject" ownership=weak layout=w
+  class-method +classValue types=q16@0:8
+  class-method +fixtureWithCount: types=@24@0:8q16
+  instance-method -.cxx_destruct types=v16@0:8
+  instance-method -categoryMethod types=@16@0:8
+  instance-method -charValue types=c16@0:8
+  instance-method -copiedString types=@16@0:8
+  instance-method -copyWithZone: types=@24@0:8^{_NSZone=}16
+  instance-method -count types=q16@0:8
+  instance-method -describeWithPrefix:count: types=@32@0:8@16q24
+  instance-method -enabled types=B16@0:8
+  instance-method -frame types={CGRect={CGPoint=dd}{CGSize=dd}}16@0:8
+  instance-method -handler types=@?16@0:8
+  instance-method -init types=@16@0:8 also-implemented-by=-NSObject
+  instance-method -initWithCount: types=@24@0:8q16
+  instance-method -intValue types=i16@0:8
+  instance-method -isReady types=B16@0:8
+  instance-method -isVisible types=B16@0:8
+  instance-method -protocolMethod types=v16@0:8
+  instance-method -readonlyString types=@16@0:8
+  instance-method -rectByInsetting: types={CGRect={CGPoint=dd}{CGSize=dd}}24@0:8d16
+  instance-method -setCopiedString: types=v24@0:8@16
+  instance-method -setCount: types=v24@0:8q16
+  instance-method -setEnabled: types=v20@0:8B16
+  instance-method -setFrame: types=v48@0:8{CGRect={CGPoint=dd}{CGSize=dd}}16
+  instance-method -setHandler: types=v24@0:8@?16
+  instance-method -setStrongObject: types=v24@0:8@16
+  instance-method -setVisible: types=v20@0:8B16
+  instance-method -setWeakObject: types=v24@0:8@16
+  instance-method -strongObject types=@16@0:8
+  instance-method -takeBlock: types=v24@0:8@?16
+  instance-method -weakObject types=@16@0:8
+  class-property classValue type=q ownership=assign nonatomic readonly ivar= raw=Tq,R,N
+  instance-property copiedString type=@"NSString" ownership=copy nonatomic ivar=_copiedString raw=T@"NSString",C,N,V_copiedString
+  instance-property count type=q ownership=assign nonatomic ivar=_count raw=Tq,N,V_count
+  instance-property debugDescription type=@"NSString" ownership=copy atomic readonly optional ivar= raw=T@"NSString",?,R,C
+  instance-property description type=@"NSString" ownership=copy atomic readonly ivar= raw=T@"NSString",R,C
+  instance-property enabled type=B ownership=assign nonatomic ivar=_enabled raw=TB,N,V_enabled
+  instance-property frame type={CGRect={CGPoint=dd}{CGSize=dd}} ownership=assign nonatomic ivar=_frame raw=T{CGRect={CGPoint=dd}{CGSize=dd}},N,V_frame
+  instance-property handler type=@? ownership=copy nonatomic ivar=_handler raw=T@?,C,N,V_handler
+  instance-property hash type=Q ownership=assign atomic readonly ivar= raw=TQ,R
+  instance-property readonlyString type=@"NSString" ownership=unrecorded nonatomic readonly ivar=_readonlyString raw=T@"NSString",R,N,V_readonlyString
+  instance-property strongObject type=@"NSObject" ownership=strong nonatomic ivar=_strongObject raw=T@"NSObject",&,N,V_strongObject
+  instance-property superclass type=# ownership=unrecorded atomic readonly ivar= raw=T#,R
+  instance-property visible type=B ownership=assign nonatomic getter=isVisible ivar=_visible raw=TB,N,GisVisible,V_visible
+  instance-property weakObject type=@"NSObject" ownership=weak nonatomic ivar=_weakObject raw=T@"NSObject",W,N,V_weakObject
+end class RuntimeSnapshotPortObjCFixture

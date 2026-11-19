@@ -1,0 +1,24 @@
+Testing started
+Test suite 'PTYSessionEndedMessageTests' started on 'My Mac - iTerm2 (47824)'
+Test case 'PTYSessionEndedMessageTests.testFullScreenIsNotRearranged()' passed on 'My Mac - iTerm2 (47824)' (0.040 seconds)
+Test case 'PTYSessionEndedMessageTests.testShortOutputMovesToTheBottomOfTheScreen()' failed on 'My Mac - iTerm2 (47824)' (0.088 seconds)
+Test case 'PTYSessionEndedMessageTests.testTextBelowTheCursorIsKept()' passed on 'My Mac - iTerm2 (47824)' (0.173 seconds)
+Test suite 'AsyncFilterTemporaryLineTests' started on 'My Mac - iTerm2 (47827)'
+Test case 'AsyncFilterTemporaryLineTests.testCancelStopsProcessing()' passed on 'My Mac - iTerm2 (47827)' (0.050 seconds)
+Test case 'AsyncFilterTemporaryLineTests.testOnCompleteCallback()' failed on 'My Mac - iTerm2 (47827)' (0.020 seconds)
+2026-11-18 20:39:07.616 xcodebuild[47467:147151134] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-11-18 20:39:07.616 xcodebuild[47467:147151134] [MT] IDETestOperationsObserverDebug: 434.226 sec, +434.226 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/example/Library/Developer/Xcode/DerivedData/iTerm2-fkoydrefveohihheofikkimdwpid/Logs/Test/Test-ModernTests-2026.11.18_20-31-35--0800.xcresult
+
+Failing tests:
+	PTYSessionEndedMessageTests.testShortOutputMovesToTheBottomOfTheScreen()
+	AsyncFilterTemporaryLineTests.testOnCompleteCallback()
+
+[1m[31m** TEST FAILED **
+
+[0m
+*** Tests failed. A parallel run reports only the test NAME;
+*** re-run without -parallel to see the assertion and its line. ***
+

@@ -1,0 +1,34 @@
+# Clang sanitizer ignore list for the sanitizer builds of the Objective-C to
+# Swift migration (docs/swift-migration/phase0.md section 4). It is passed to
+# every C, Objective-C, C++ and Objective-C++ compile with
+# -fsanitize-ignorelist= by tools/swift_migration/sanitizer_tests.sh and
+# tools/swift_migration/sanitizer_app.sh.
+#
+# A matching file is compiled without sanitizer checks, so code outside the
+# migration's scope does not drown the reports. The rest of the owner's code
+# is instrumented: sources/, ThirdParty/PSMTabBarControl/, SignedArchive/,
+# pidinfo/, iTerm2SandboxedWorker/, ShellLauncher/ and ModernTests/.
+# (BetterFontPicker, ColorPicker and SearchableComboListView are prebuilt,
+# checked-in frameworks: the app build does not compile them at all.)
+#
+# Patterns match the absolute path clang is given, anywhere in it, so the
+# scripts refuse to run in a checkout whose own path has a directory named
+# submodules, ThirdParty or Companion (san_check_root_path in
+# sanitizer_common.sh). With Apple clang 21 the
+# last matching entry wins, so the =sanitize line below puts
+# ThirdParty/PSMTabBarControl back after the ThirdParty/ line excludes it.
+# Entries without a [section] apply to every sanitizer.
+
+# Third-party code.
+src:*/submodules/*
+src:*/ThirdParty/*
+src:*/ThirdParty/PSMTabBarControl/*=sanitize
+
+# Swift package checkouts that contain C (Yams's CYaml).
+src:*/SourcePackages/checkouts/*
+
+# The companion app's package (CNoise), which is not part of the migration.
+src:*/Companion/*
+
+# Generated protobuf code, which the migration does not port.
+src:*/sources/proto/*.pbobjc.m

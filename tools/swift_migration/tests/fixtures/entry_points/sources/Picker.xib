@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0">
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="NSObject"/>
+        <customObject id="5" customClass="iTermXibComboOwner"/>
+        <comboBox id="6">
+            <connections>
+                <outlet property="delegate" destination="5" id="o1"/>
+                <binding destination="5" name="value" keyPath="self.wobbleKey" id="b1"/>
+            </connections>
+        </comboBox>
+    </objects>
+</document>

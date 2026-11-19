@@ -1,0 +1,14 @@
+/Users/example/iterm2/ModernTests/SanitizerProbeTests.m:88:22: runtime error: implicit conversion from type 'int' of value 74565 (32-bit, signed) to type 'uint8_t' (aka 'unsigned char') changed the value to 69 (8-bit, unsigned)
+    #0 0x00011b631cd8 in -[SanitizerProbeTests testImplicitTruncationProbe] SanitizerProbeTests.m:88
+    #1 0x00018c675670 in __invoking___+0x90 (CoreFoundation:arm64e+0x60670)
+    #2 0x00018c6754fc in -[NSInvocation invoke]+0x1a4 (CoreFoundation:arm64e+0x604fc)
+    #3 0x000105a4ff38 in +[XCTFailableInvocation invokeStandardConventionInvocation:completion:]+0x40 (XCTestCore:arm64e+0x1ff38)
+
+SUMMARY: UndefinedBehaviorSanitizer: implicit-signed-integer-truncation /Users/example/iterm2/ModernTests/SanitizerProbeTests.m:88:22 
+/Users/example/iterm2/ModernTests/SanitizerProbeTests.m:79:11: runtime error: signed integer overflow: 2147483647 + 1 cannot be represented in type 'int'
+    #0 0x00011b6318e4 in -[SanitizerProbeTests testSignedOverflowProbe] SanitizerProbeTests.m:79
+    #1 0x00018c675670 in __invoking___+0x90 (CoreFoundation:arm64e+0x60670)
+    #2 0x00018c6754fc in -[NSInvocation invoke]+0x1a4 (CoreFoundation:arm64e+0x604fc)
+    #3 0x000105a4ff38 in +[XCTFailableInvocation invokeStandardConventionInvocation:completion:]+0x40 (XCTestCore:arm64e+0x1ff38)
+
+SUMMARY: UndefinedBehaviorSanitizer: signed-integer-overflow /Users/example/iterm2/ModernTests/SanitizerProbeTests.m:79:11 

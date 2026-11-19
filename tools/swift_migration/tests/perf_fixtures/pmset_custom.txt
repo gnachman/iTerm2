@@ -1,0 +1,12 @@
+Battery Power:
+ Sleep On Power Button 1
+ lowpowermode         0
+ standby              1
+ powermode            1
+ disksleep            10
+AC Power:
+ Sleep On Power Button 1
+ lowpowermode         0
+ standby              1
+ powermode            2
+ disksleep            10

@@ -1,0 +1,33 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 54;
+	objects = {
+		B1 /* SIGThing.m in Sources */ = {isa = PBXBuildFile; fileRef = F1 /* SIGThing.m */; };
+		B2 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = F2 /* main.m */; };
+		B4 /* SIGShared.c in Sources */ = {isa = PBXBuildFile; fileRef = F4 /* SIGShared.c */; };
+		B5 /* SIGShared.c in Sources */ = {isa = PBXBuildFile; fileRef = F4 /* SIGShared.c */; };
+		F1 /* SIGThing.m */ = {isa = PBXFileReference; path = SIGThing.m; sourceTree = "<group>"; };
+		F2 /* main.m */ = {isa = PBXFileReference; path = main.m; sourceTree = "<group>"; };
+		F3 /* main.c */ = {isa = PBXFileReference; path = main.c; sourceTree = "<group>"; };
+		F4 /* SIGShared.c */ = {isa = PBXFileReference; path = SIGShared.c; sourceTree = "<group>"; };
+		G0 = {isa = PBXGroup; children = ( G1, G2, G3 ); sourceTree = "<group>"; };
+		G1 /* SignedArchive */ = {isa = PBXGroup; children = ( F1, F4 ); path = SignedArchive; sourceTree = "<group>"; };
+		G2 /* sign */ = {isa = PBXGroup; children = ( F2 ); path = sign; sourceTree = "<group>"; };
+		G3 /* resign */ = {isa = PBXGroup; children = ( F3 ); path = resign; sourceTree = "<group>"; };
+		S1 = {isa = PBXSourcesBuildPhase; files = ( B1, B4 ); };
+		S2 = {isa = PBXSourcesBuildPhase; files = ( B2, B5 ); };
+		T1 /* SignedArchive */ = {isa = PBXNativeTarget; buildConfigurationList = L1; buildPhases = ( S1 ); name = SignedArchive; productType = "com.apple.product-type.library.static"; };
+		T2 /* sign */ = {isa = PBXNativeTarget; buildConfigurationList = L2; buildPhases = ( S2 ); name = sign; productType = "com.apple.product-type.tool"; };
+		P1 /* Project object */ = {isa = PBXProject; buildConfigurationList = L0; mainGroup = G0; targets = ( T1, T2 ); };
+		C0 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = { }; name = Debug; };
+		C1 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = { GCC_PREFIX_HEADER = "$(SRCROOT)/SignedArchive/SIG-Prefix.pch"; }; name = Debug; };
+		C2 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = { CLANG_ENABLE_OBJC_ARC = YES; SWIFT_OBJC_BRIDGING_HEADER = "sign/sign-Bridging-Header.h"; }; name = Debug; };
+		L0 = {isa = XCConfigurationList; buildConfigurations = ( C0 ); };
+		L1 = {isa = XCConfigurationList; buildConfigurations = ( C1 ); };
+		L2 = {isa = XCConfigurationList; buildConfigurations = ( C2 ); };
+	};
+	rootObject = P1 /* Project object */;
+}

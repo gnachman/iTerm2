@@ -1,0 +1,33 @@
+Using test suite: com.iterm2.stress-test (isolated preferences for reproducible tests)
+Multi-Tab Stress Test
+=====================
+App: /x/Build/Deployment/iTerm2.app
+Version: 3.6.0
+Power Source: AC Power
+Energy Mode: High Power/High Performance
+Duration: 20s
+Tab counts: 1
+Synchronized start: true
+Mode: normal
+Load script: stress_load.py
+
+Run 1: 1 tab(s), 20s duration
+Synchronized start enabled (sync dir: /tmp/iterm2-perf-sync.NtR95s)
+Found iTerm2 PID: 14927
+Launching 1 tabs, each running stress test for 20 seconds...
+Waiting for all tabs to signal ready...
+All 1 tabs ready.
+Starting profiler for 25 seconds...
+Sending go signal...
+All tabs completed. Waiting for profiler...
+
+============================================================
+Iteration Summary
+============================================================
+  Total iterations: 185460
+  Tabs: 1
+  Duration: 20s
+  Rate: 9273 iterations/sec
+============================================================
+
+Shutting down test iTerm2 (PID 14927)...

@@ -1,0 +1,25 @@
+You are currently using your subscription to power your Claude Code usage
+
+Current week (all models): 54% used · resets Nov 21 at 12pm (America/Los_Angeles)
+Current week (Fable): 33% used · resets Nov 21 at 12pm (America/Los_Angeles)
+
+What's contributing to your usage?
+Approximate · sessions on this machine only · shares overlap
+
+Last 24h · 8300 requests · 34 sessions
+  83%  Review sessions active over many hours · whole sessions with requests in 8 or more separate hours
+  70%  Start fresh when you switch tasks · run /clear
+  69%  Check which model "general-purpose" subagents use
+  27%  Run fewer sessions at once · up to 9 at once
+  11%  Read ~/git/iterm2-alt/tools/swift_migration/codedb/codedb.py in parts · up to 26k tokens, 20 times
+  Top skills: /code-review 1%
+  Top subagents: general-purpose 69%
+
+Last 7d · 26520 requests · 90 sessions
+  88%  Review sessions active over many hours · whole sessions with requests in 8 or more separate hours
+  60%  Start fresh when you switch tasks · run /clear
+  50%  Check which model "general-purpose" subagents use
+  27%  Run fewer sessions at once · up to 9 at once
+  15%  Save workflows for big tasks · 624 agents ran, mostly in ~/git/iterm2-alt3
+  Top skills: /code-review 1%
+  Top subagents: general-purpose 50%, workflow-subagent 15%

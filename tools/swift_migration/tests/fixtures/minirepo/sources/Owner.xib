@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0">
+    <objects>
+        <customObject id="-2" userLabel="File's Owner">
+            <connections>
+                <outlet property="label" destination="10" id="c1"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customView id="10" customClass="OwnerBadge">
+            <userDefinedRuntimeAttributes>
+                <userDefinedRuntimeAttribute type="string" keyPath="badgeText" value="x"/>
+            </userDefinedRuntimeAttributes>
+        </customView>
+        <button id="11">
+            <connections>
+                <action selector="press:" target="-2" id="c2"/>
+                <action selector="fixtureZoom:" target="-1" id="c3"/>
+                <binding destination="-2" name="value" keyPath="title" id="c4"/>
+            </connections>
+        </button>
+    </objects>
+</document>

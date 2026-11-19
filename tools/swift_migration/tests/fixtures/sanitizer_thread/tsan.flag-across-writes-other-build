@@ -1,0 +1,116 @@
+==================
+WARNING: ThreadSanitizer: data race (pid=22932)
+  Read of size 8 at 0x00010f923c30 by main thread:
+    #0 -[VT100Grid currentDate] <null> (iTerm2.debug.dylib:arm64+0xb12334)
+    #1 -[VT100Grid markCharsDirty:inRectFrom:to:] <null> (iTerm2.debug.dylib:arm64+0xaf1298)
+    #2 -[VT100Grid markAllCharsDirty:updateTimestamps:] <null> (iTerm2.debug.dylib:arm64+0xaf1834)
+    #3 -[VT100ScreenState mergeFrom:] <null> (iTerm2.debug.dylib:arm64+0x14ea4a8)
+    #4 -[VT100Screen restoreState:] <null> (iTerm2.debug.dylib:arm64+0x7b9a1c)
+    #5 FakeSession.screenRestore(_:) VT100ScreenTests.swift:2554 (ModernTests:arm64+0x2d66434)
+    #6 @objc FakeSession.screenRestore(_:) /<compiler-generated> (ModernTests:arm64+0x2d664dc)
+    #7 -[VT100ScreenMutableState reallyPerformBlockWithJoinedThreads:delegate:topmost:] <null> (iTerm2.debug.dylib:arm64+0x11fbc10)
+    #8 __57-[VT100ScreenMutableState performBlockWithJoinedThreads:]_block_invoke <null> (iTerm2.debug.dylib:arm64+0x11faa7c)
+    #9 __56-[VT100ScreenMutableState performSynchroDanceWithBlock:]_block_invoke <null> (iTerm2.debug.dylib:arm64+0x11fb090)
+    #10 thunk for @callee_unowned @convention(block) () -> () <null> (iTerm2.debug.dylib:arm64+0x21c1cdc)
+    #11 partial apply for thunk for @callee_unowned @convention(block) () -> () <null> (iTerm2.debug.dylib:arm64+0x2c10d54)
+    #12 TokenExecutorImpl.whilePaused(_:onExecutorQueue:) <null> (iTerm2.debug.dylib:arm64+0x2bf3718)
+    #13 TokenExecutor.whilePaused(_:) <null> (iTerm2.debug.dylib:arm64+0x2bec4b4)
+    #14 @objc TokenExecutor.whilePaused(_:) <null> (iTerm2.debug.dylib:arm64+0x2bec56c)
+    #15 -[VT100ScreenMutableState performSynchroDanceWithBlock:] <null> (iTerm2.debug.dylib:arm64+0x11fae98)
+    #16 -[VT100ScreenMutableState performBlockWithJoinedThreads:] <null> (iTerm2.debug.dylib:arm64+0x11fa8fc)
+    #17 -[VT100Screen performBlockWithJoinedThreads:] <null> (iTerm2.debug.dylib:arm64+0x7b921c)
+    #18 FlagAcrossWritesTests.isDWCRight(_:_:) FlagAcrossWritesTests.swift:77 (ModernTests:arm64+0xfa46a0)
+    #19 implicit closure #8 in FlagAcrossWritesTests.testSkinToneWidensNarrowBaseAcrossWrites() /<compiler-generated> (ModernTests:arm64+0xfbc01c)
+    #20 partial apply for implicit closure #8 in FlagAcrossWritesTests.testSkinToneWidensNarrowBaseAcrossWrites() /<compiler-generated> (ModernTests:arm64+0xfbc0ac)
+    #21 closure #1 in XCTAssertEqual<A>(_:_:_:file:line:) <null> (libXCTestSwiftSupport.dylib:arm64e+0x6b9c8)
+    #22 @objc FlagAcrossWritesTests.testSkinToneWidensNarrowBaseAcrossWrites() /<compiler-generated> (ModernTests:arm64+0xfbc41c)
+    #23 __invoking___ <null> (CoreFoundation:arm64e+0x60670)
+    #24 start <null> (dyld:arm64e+0x31e7c)
+
+  Previous write of size 8 at 0x00010f923c30 by thread T17:
+    #0 -[VT100Grid setCurrentDate:] <null> (iTerm2.debug.dylib:arm64+0xb123ac)
+    #1 -[VT100ScreenMutableState tokenExecutorShouldQueueTokens] <null> (iTerm2.debug.dylib:arm64+0x1217f6c)
+    #2 TokenExecutorImpl.execute() <null> (iTerm2.debug.dylib:arm64+0x2bf83fc)
+    #3 closure #1 in TokenExecutorImpl.schedule() <null> (iTerm2.debug.dylib:arm64+0x2bf29e8)
+    #4 partial apply for closure #1 in TokenExecutorImpl.schedule() <null> (iTerm2.debug.dylib:arm64+0x2c11578)
+    #5 thunk for @escaping @callee_guaranteed @Sendable () -> () <null> (iTerm2.debug.dylib:arm64+0x170f4)
+    #6 __tsan::invoke_and_release_block(void*) <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x8cf98)
+    #7 _dispatch_client_callout <null> (libdispatch.dylib:arm64e+0x1b59c)
+
+  Location is heap block of size 224 at 0x00010f923b60 allocated by main thread:
+    #0 calloc <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x67ff4)
+    #1 _malloc_type_calloc_outlined <null> (libsystem_malloc.dylib:arm64e+0x1ee44)
+    #2 -[VT100ScreenMutableState initWithSideEffectPerformer:] <null> (iTerm2.debug.dylib:arm64+0x11956b4)
+    #3 -[VT100Screen initWithOptionalMutationQueue:ownsQueue:] <null> (iTerm2.debug.dylib:arm64+0x7a696c)
+    #4 -[VT100Screen init] <null> (iTerm2.debug.dylib:arm64+0x7a6734)
+    #5 @nonobjc VT100Screen.init() /<compiler-generated> (ModernTests:arm64+0x56b300)
+    #6 VT100Screen.__allocating_init() NSObject.h (ModernTests:arm64+0x53c1c4)
+    #7 FlagAcrossWritesTests.makeScreen() FlagAcrossWritesTests.swift:36 (ModernTests:arm64+0xfa2f40)
+    #8 FlagAcrossWritesTests.testSkinToneWidensNarrowBaseAcrossWrites() FlagAcrossWritesTests.swift:589 (ModernTests:arm64+0xfbb068)
+    #9 @objc FlagAcrossWritesTests.testSkinToneWidensNarrowBaseAcrossWrites() /<compiler-generated> (ModernTests:arm64+0xfbc41c)
+    #10 __invoking___ <null> (CoreFoundation:arm64e+0x60670)
+    #11 start <null> (dyld:arm64e+0x31e7c)
+
+  Thread T17 (tid=49640853, running) is a GCD worker thread
+
+SUMMARY: ThreadSanitizer: data race (iTerm2.debug.dylib:arm64+0xb12334) in -[VT100Grid currentDate]+0x40
+==================
+==================
+WARNING: ThreadSanitizer: data race (pid=22932)
+  Read of size 8 at 0x00010f929730 by main thread:
+    #0 -[VT100Grid currentDate] <null> (iTerm2.debug.dylib:arm64+0xb12334)
+    #1 -[VT100Grid markCharsDirty:inRectFrom:to:] <null> (iTerm2.debug.dylib:arm64+0xaf1298)
+    #2 -[VT100Grid markAllCharsDirty:updateTimestamps:] <null> (iTerm2.debug.dylib:arm64+0xaf1834)
+    #3 -[VT100ScreenState mergeFrom:] <null> (iTerm2.debug.dylib:arm64+0x14ea4a8)
+    #4 -[VT100Screen restoreState:] <null> (iTerm2.debug.dylib:arm64+0x7b9a1c)
+    #5 FakeSession.screenRestore(_:) VT100ScreenTests.swift:2554 (ModernTests:arm64+0x2d66434)
+    #6 @objc FakeSession.screenRestore(_:) /<compiler-generated> (ModernTests:arm64+0x2d664dc)
+    #7 -[VT100ScreenMutableState reallyPerformBlockWithJoinedThreads:delegate:topmost:] <null> (iTerm2.debug.dylib:arm64+0x11fbc10)
+    #8 __57-[VT100ScreenMutableState performBlockWithJoinedThreads:]_block_invoke <null> (iTerm2.debug.dylib:arm64+0x11faa7c)
+    #9 __56-[VT100ScreenMutableState performSynchroDanceWithBlock:]_block_invoke <null> (iTerm2.debug.dylib:arm64+0x11fb090)
+    #10 thunk for @callee_unowned @convention(block) () -> () <null> (iTerm2.debug.dylib:arm64+0x21c1cdc)
+    #11 partial apply for thunk for @callee_unowned @convention(block) () -> () <null> (iTerm2.debug.dylib:arm64+0x2c10d54)
+    #12 TokenExecutorImpl.whilePaused(_:onExecutorQueue:) <null> (iTerm2.debug.dylib:arm64+0x2bf3718)
+    #13 TokenExecutor.whilePaused(_:) <null> (iTerm2.debug.dylib:arm64+0x2bec4b4)
+    #14 @objc TokenExecutor.whilePaused(_:) <null> (iTerm2.debug.dylib:arm64+0x2bec56c)
+    #15 -[VT100ScreenMutableState performSynchroDanceWithBlock:] <null> (iTerm2.debug.dylib:arm64+0x11fae98)
+    #16 -[VT100ScreenMutableState performBlockWithJoinedThreads:] <null> (iTerm2.debug.dylib:arm64+0x11fa8fc)
+    #17 -[VT100Screen performBlockWithJoinedThreads:] <null> (iTerm2.debug.dylib:arm64+0x7b921c)
+    #18 FlagAcrossWritesTests.isDWCRight(_:_:) FlagAcrossWritesTests.swift:77 (ModernTests:arm64+0xfa46a0)
+    #19 implicit closure #7 in FlagAcrossWritesTests.testWriteBoundaryDoesNotChangeResultForVS16() /<compiler-generated> (ModernTests:arm64+0xfae18c)
+    #20 partial apply for implicit closure #7 in FlagAcrossWritesTests.testWriteBoundaryDoesNotChangeResultForVS16() /<compiler-generated> (ModernTests:arm64+0xfae21c)
+    #21 closure #1 in XCTAssertEqual<A>(_:_:_:file:line:) <null> (libXCTestSwiftSupport.dylib:arm64e+0x6b9c8)
+    #22 @objc FlagAcrossWritesTests.testWriteBoundaryDoesNotChangeResultForVS16() /<compiler-generated> (ModernTests:arm64+0xfae4cc)
+    #23 __invoking___ <null> (CoreFoundation:arm64e+0x60670)
+    #24 start <null> (dyld:arm64e+0x31e7c)
+
+  Previous write of size 8 at 0x00010f929730 by thread T12:
+    #0 -[VT100Grid setCurrentDate:] <null> (iTerm2.debug.dylib:arm64+0xb123ac)
+    #1 -[VT100ScreenMutableState tokenExecutorShouldQueueTokens] <null> (iTerm2.debug.dylib:arm64+0x1217f6c)
+    #2 TokenExecutorImpl.execute() <null> (iTerm2.debug.dylib:arm64+0x2bf83fc)
+    #3 closure #1 in TokenExecutorImpl.schedule() <null> (iTerm2.debug.dylib:arm64+0x2bf29e8)
+    #4 partial apply for closure #1 in TokenExecutorImpl.schedule() <null> (iTerm2.debug.dylib:arm64+0x2c11578)
+    #5 thunk for @escaping @callee_guaranteed @Sendable () -> () <null> (iTerm2.debug.dylib:arm64+0x170f4)
+    #6 __tsan::invoke_and_release_block(void*) <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x8cf98)
+    #7 _dispatch_client_callout <null> (libdispatch.dylib:arm64e+0x1b59c)
+
+  Location is heap block of size 224 at 0x00010f929660 allocated by main thread:
+    #0 calloc <null> (libclang_rt.tsan_osx_dynamic.dylib:arm64e+0x67ff4)
+    #1 _malloc_type_calloc_outlined <null> (libsystem_malloc.dylib:arm64e+0x1ee44)
+    #2 -[VT100ScreenMutableState initWithSideEffectPerformer:] <null> (iTerm2.debug.dylib:arm64+0x11956b4)
+    #3 -[VT100Screen initWithOptionalMutationQueue:ownsQueue:] <null> (iTerm2.debug.dylib:arm64+0x7a696c)
+    #4 -[VT100Screen init] <null> (iTerm2.debug.dylib:arm64+0x7a6734)
+    #5 @nonobjc VT100Screen.init() /<compiler-generated> (ModernTests:arm64+0x56b300)
+    #6 VT100Screen.__allocating_init() NSObject.h (ModernTests:arm64+0x53c1c4)
+    #7 FlagAcrossWritesTests.makeScreen() FlagAcrossWritesTests.swift:36 (ModernTests:arm64+0xfa2f40)
+    #8 FlagAcrossWritesTests.testWriteBoundaryDoesNotChangeResultForVS16() FlagAcrossWritesTests.swift:269 (ModernTests:arm64+0xfad688)
+    #9 @objc FlagAcrossWritesTests.testWriteBoundaryDoesNotChangeResultForVS16() /<compiler-generated> (ModernTests:arm64+0xfae4cc)
+    #10 __invoking___ <null> (CoreFoundation:arm64e+0x60670)
+    #11 start <null> (dyld:arm64e+0x31e7c)
+
+  Thread T12 (tid=49640845, running) is a GCD worker thread
+
+SUMMARY: ThreadSanitizer: data race (iTerm2.debug.dylib:arm64+0xb12334) in -[VT100Grid currentDate]+0x40
+==================
+ThreadSanitizer: reported 2 warnings
+ThreadSanitizer: reported 2 warnings
