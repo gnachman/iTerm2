@@ -1,0 +1,9 @@
+// Makes the Objective-C runtime snapshot fixtures visible to Swift in
+// ModernTests, which has no bridging header. A bridging header is not an
+// option there: the target imports iTerm2SharedARC, which has its own, and
+// adding one makes every C type from the app ambiguous. SWIFT_INCLUDE_PATHS
+// for ModernTests points at this directory.
+module RuntimeSnapshotFixtures {
+    header "RuntimeSnapshotFixtures.h"
+    export *
+}

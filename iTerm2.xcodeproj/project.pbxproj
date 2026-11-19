@@ -25053,6 +25053,10 @@
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_INCLUDE_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/ModernTests/RuntimeSnapshotFixtures",
+				);
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/iTerm2";
@@ -25140,6 +25144,10 @@
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_INCLUDE_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/ModernTests/RuntimeSnapshotFixtures",
+				);
 				SWIFT_VERSION = 5.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/iTerm2";
 				USER_HEADER_SEARCH_PATHS = (
@@ -25226,6 +25234,10 @@
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_INCLUDE_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/ModernTests/RuntimeSnapshotFixtures",
+				);
 				SWIFT_VERSION = 5.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/iTerm2";
 				USER_HEADER_SEARCH_PATHS = (
@@ -25312,6 +25324,10 @@
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_INCLUDE_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/ModernTests/RuntimeSnapshotFixtures",
+				);
 				SWIFT_VERSION = 5.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/iTerm2";
 				USER_HEADER_SEARCH_PATHS = (
