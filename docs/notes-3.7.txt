@@ -1,5 +1,13 @@
 Version TBD (unreleased; built off master)
 
+New Features:
+- On an HDR display, text in the focused pane
+  can glow brighter than normal white so it
+  stands out, even in bright light. Turn on
+  “HDR text in focused pane” in Settings >
+  Profiles > Colors. It only applies over a
+  dark background.
+
 Improvements:
 - Downloading and uploading files with scp and
   the SSH integration now read your ssh config

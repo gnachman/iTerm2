@@ -123,6 +123,11 @@ typedef struct {
     iTermMetalCursorInfo *_cursorInfo;
     NSTimeInterval _timeSinceCursorMoved;
 
+    // HDR text: linear brightness multiplier for this frame's text (1 = off) and
+    // the display's potential EDR headroom, which caps it.
+    float _hdrTextGain;
+    float _hdrTextHeadroom;
+
     // Geometry
     CGRect _documentVisibleRect;
     NSRect _adjustedDocumentVisibleRect;
@@ -240,6 +245,7 @@ typedef struct {
     [textView smearCursorIfNeededWithDrawingHelper:drawingHelper];
 
     [self loadCursorInfoWithDrawingHelper:drawingHelper textView:textView];
+    [self loadHDRTextWithDrawingHelper:drawingHelper textView:textView];
     [self loadBackgroundImageWithGlue:glue];
     [self loadMarkedTextWithDrawingHelper:drawingHelper];
     [self loadIndicatorsFromTextView:textView drawingHelper:drawingHelper];
@@ -350,6 +356,22 @@ typedef struct {
     return [_configuration->_colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessedBackgroundColor];
 
 }
+// Decide whether this frame's text is drawn as HDR. Only the focused pane (the
+// active session in the key window, the same test the cursor uses to decide
+// between a filled and a hollow box) is boosted, so switching tabs, panes, or
+// apps moves the glow with focus.
+- (void)loadHDRTextWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
+                            textView:(PTYTextView *)textView {
+    const CGFloat potentialEDR = textView.window.screen.maximumPotentialExtendedDynamicRangeColorComponentValue;
+    const BOOL focused = (_configuration->_isInKeyWindow && _configuration->_textViewIsActiveSession);
+    _hdrTextHeadroom = MAX(1.0, potentialEDR);
+    _hdrTextGain = [iTermCursor hdrTextGainForRequestedBrightness:drawingHelper.hdrTextBrightness
+                                                   profileEnabled:drawingHelper.hdrTextEnabled
+                                                          focused:focused
+                                                       background:[drawingHelper defaultBackgroundColor]
+                                                potentialHeadroom:potentialEDR];
+}
+
 - (void)loadCursorInfoWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
                                textView:(PTYTextView *)textView {
     const CGFloat potentialEDR = textView.window.screen.maximumPotentialExtendedDynamicRangeColorComponentValue;
@@ -1009,6 +1031,16 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 // Private queue
 - (nullable iTermMetalCursorInfo *)metalDriverCursorInfo {
     return _cursorInfo;
+}
+
+// Private queue
+- (float)metalDriverHDRTextGain {
+    return _hdrTextGain;
+}
+
+// Private queue
+- (float)metalDriverHDRTextHeadroom {
+    return _hdrTextHeadroom;
 }
 
 // Private queue

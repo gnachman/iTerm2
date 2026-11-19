@@ -504,6 +504,8 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 @property(nonatomic, assign) BOOL useSmartCursorColor;
 @property(nonatomic, assign) BOOL hdrCursorEnabled;
 @property(nonatomic, assign) CGFloat hdrCursorBrightness;
+@property(nonatomic, assign) BOOL hdrTextEnabled;
+@property(nonatomic, assign) CGFloat hdrTextBrightness;
 
 // Transparency level. 0 to 1.
 @property(nonatomic, assign) double transparency;

@@ -130,6 +130,8 @@
 #define KEY_CURSOR_BOOST           @"Cursor Boost"
 #define KEY_HDR_CURSOR             @"HDR Cursor"
 #define KEY_HDR_CURSOR_BRIGHTNESS  @"HDR Cursor Brightness"
+#define KEY_HDR_TEXT               @"HDR Text"
+#define KEY_HDR_TEXT_BRIGHTNESS    @"HDR Text Brightness"
 #define KEY_USE_CURSOR_GUIDE       @"Use Cursor Guide"
 #define KEY_CURSOR_GUIDE_COLOR     @"Cursor Guide Color"
 #define KEY_BADGE_COLOR            @"Badge Color"

@@ -933401,6 +933401,18 @@
         }
       }
     },
+    "ProfilesColors.HDRTextBrightness" : {
+      "comment" : "Display name for the slider that sets the brightness of HDR text, used by settings search",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "HDR text brightness"
+          }
+        }
+      }
+    },
     "ProfilesColors.ImportPreset" : {
       "comment" : "Menu item to import a color preset",
       "extractionState" : "extracted_with_value",

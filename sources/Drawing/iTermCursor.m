@@ -14,6 +14,9 @@
 #import "iTermVirtualOffset.h"
 
 const CGFloat iTermHDRCursorMaximumBrightness = 16.0;
+const CGFloat iTermHDRTextDefaultBrightness = 3.0;
+const CGFloat iTermHDRTextMinimumBrightness = 1.5;
+const CGFloat iTermHDRTextMaximumBrightness = 8.0;
 
 @interface iTermUnderlineCursor : iTermCursor
 @end
@@ -243,7 +246,62 @@ const CGFloat iTermHDRCursorMaximumBrightness = 16.0;
     return 1.055 * pow(linear, 1.0 / 2.4) - 0.055;
 }
 
++ (CGFloat)hdrTextGainForRequestedBrightness:(CGFloat)requested
+                              profileEnabled:(BOOL)profileEnabled
+                                     focused:(BOOL)focused
+                                  background:(NSColor *)backgroundColor
+                           potentialHeadroom:(CGFloat)headroom {
+    if (!profileEnabled || !focused || headroom <= 1) {
+        return 1.0;
+    }
+    // Brightening the foreground only adds contrast over a dark background.
+    if (!backgroundColor.isDark) {
+        return 1.0;
+    }
+    return MAX(1.0, MIN(MIN(requested, headroom), iTermHDRTextMaximumBrightness));
+}
+
 @end
+
+#pragma mark - HDR text color
+
+// sRGB transfer function, encoded to linear light. Like the shader, negative
+// values are treated as 0 and values above 1 follow the same curve.
+static CGFloat iTermHDRTextLinearFromEncoded(CGFloat encoded) {
+    const CGFloat c = MAX(encoded, 0);
+    if (c <= 0.04045) {
+        return c / 12.92;
+    }
+    return pow((c + 0.055) / 1.055, 2.4);
+}
+
+// Inverse of iTermHDRTextLinearFromEncoded.
+static CGFloat iTermHDRTextEncodedFromLinear(CGFloat linear) {
+    const CGFloat l = MAX(linear, 0);
+    if (l <= 0.0031308) {
+        return l * 12.92;
+    }
+    return 1.055 * pow(l, 1.0 / 2.4) - 0.055;
+}
+
+iTermHDRTextColor iTermHDRTextBoostedColor(iTermHDRTextColor encoded, CGFloat gain, CGFloat headroom) {
+    if (!(gain > 1)) {
+        return encoded;
+    }
+    const CGFloat red = iTermHDRTextLinearFromEncoded(encoded.red);
+    const CGFloat green = iTermHDRTextLinearFromEncoded(encoded.green);
+    const CGFloat blue = iTermHDRTextLinearFromEncoded(encoded.blue);
+    const CGFloat peak = MAX(red, MAX(green, blue));
+    CGFloat effectiveGain = gain;
+    if (peak > 0) {
+        effectiveGain = MIN(gain, MAX(1.0, MAX(headroom, 1.0) / peak));
+    }
+    return (iTermHDRTextColor){
+        .red = iTermHDRTextEncodedFromLinear(red * effectiveGain),
+        .green = iTermHDRTextEncodedFromLinear(green * effectiveGain),
+        .blue = iTermHDRTextEncodedFromLinear(blue * effectiveGain)
+    };
+}
 
 @implementation iTermCopyModeCursor
 

@@ -79,6 +79,7 @@ static BOOL gMonochromeText;
     iTermMetalBufferPool *_dimensionsPool;
     iTermMetalBufferPool *_textInfoPool;
     iTermMetalBufferPool *_cursorInfoPool;
+    iTermMetalBufferPool *_hdrInfoPool;
     iTermMetalMixedSizeBufferPool *_piuPool;
 }
 
@@ -198,6 +199,7 @@ static BOOL gMonochromeText;
         _dimensionsPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermTextureDimensions)];
         _textInfoPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertexTextInfoStruct)];
         _cursorInfoPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermTextCursorInfo)];
+        _hdrInfoPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermTextHDRInfo)];
 
         // Allow the pool to reserve up to this many bytes. Work backward to find the largest number
         // of buffers we are OK with keeping permanently allocated. By having enough characters on
@@ -436,6 +438,20 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
                                                                 checkIfChanged:YES];
     cursorInfoBuffer.label = @"Text cursor info";
 
+    // Bound for every draw because the monochrome text fragment shaders always
+    // read it. A gain of 1 (or the zeroed default) leaves colors unchanged.
+    iTermTextHDRInfo hdrInfo = tState.hdrTextInfo;
+    if (!(hdrInfo.gain > 1)) {
+        hdrInfo.gain = 1;
+    }
+    if (!(hdrInfo.headroom >= 1)) {
+        hdrInfo.headroom = 1;
+    }
+    id<MTLBuffer> hdrInfoBuffer = [_hdrInfoPool requestBufferFromContext:tState.poolContext
+                                                               withBytes:&hdrInfo
+                                                          checkIfChanged:YES];
+    hdrInfoBuffer.label = @"Text HDR info";
+
     [tState enumerateDraws:^(const iTermTextPIU *pius,
                              NSInteger instances,
                              id<MTLTexture> texture,
@@ -512,7 +528,8 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
             tState.pipelineState = [self->_cellRenderer pipelineState];
             NSDictionary *fragmentBuffers;
             fragmentBuffers = @{ @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer,
-                                 @(iTermFragmentInputIndexTextCursor): cursorInfoBuffer };
+                                 @(iTermFragmentInputIndexTextCursor): cursorInfoBuffer,
+                                 @(iTermFragmentInputIndexTextHDR): hdrInfoBuffer };
             [self->_cellRenderer drawWithTransientState:tState
                                           renderEncoder:frameData.renderEncoder
                                        numberOfVertices:6

@@ -1654,6 +1654,25 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
            normalTextColors:cursorInfo.normalTextColors];
 }
 
+// Tells the text renderer how much to brighten this frame's text. Only nonzero
+// work when the framebuffer is fp16: with an 8-bit framebuffer anything above
+// reference white would just clip, so the gain is forced to 1 there.
+- (void)configureHDRTextForTextState:(iTermTextRendererTransientState *)textState
+                           frameData:(iTermMetalFrameData *)frameData {
+    iTermTextHDRInfo info;
+    memset(&info, 0, sizeof(info));
+    info.gain = 1;
+    info.headroom = 1;
+    if (_framebufferPixelFormat == MTLPixelFormatRGBA16Float) {
+        const float gain = [frameData.perFrameState metalDriverHDRTextGain];
+        if (gain > 1) {
+            info.gain = gain;
+            info.headroom = MAX(1, [frameData.perFrameState metalDriverHDRTextHeadroom]);
+        }
+    }
+    textState.hdrTextInfo = info;
+}
+
 // The meaning of drawOffscreenCommandLine is:
 //   nil - just draw
 //   @YES - draw only first line
@@ -1693,6 +1712,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
     [self configureCursorTextForTextState:textState
                                 frameData:frameData
                  drawOffscreenCommandLine:drawOffscreenCommandLine.boolValue];
+    [self configureHDRTextForTextState:textState frameData:frameData];
     textState.suppressedTopHeight = suppressedTopHeight;
     [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
         NSRange markedRangeOnLine = NSMakeRange(NSNotFound, 0);

@@ -100,6 +100,8 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet NSButton *_useSmartCursorColor;
     IBOutlet NSButton *_hdrCursor;
     IBOutlet NSSlider *_hdrCursorBrightness;
+    IBOutlet NSButton *_hdrText;
+    IBOutlet NSSlider *_hdrTextBrightness;
     IBOutlet NSButton *_useThemeMarkColors;
     IBOutlet NSButton *_useActivePaneBorder;
     IBOutlet iTermSettingsColorWell *_activePaneBorderColor;
@@ -285,6 +287,17 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
                    relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() { [weakSelf updateColorControlsEnabled]; };
+
+    info = [self defineControl:_hdrText
+                           key:KEY_HDR_TEXT
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() { [weakSelf updateColorControlsEnabled]; };
+
+    [self defineControl:_hdrTextBrightness
+                    key:KEY_HDR_TEXT_BRIGHTNESS
+            displayName:NSLocalizedStringWithDefaultValue(@"ProfilesColors.HDRTextBrightness", nil, [NSBundle mainBundle], @"HDR text brightness", @"Display name for the slider that sets the brightness of HDR text, used by settings search")
+                   type:kPreferenceInfoTypeSlider];
 
     [self defineControl:_hdrCursorBrightness
                     key:KEY_HDR_CURSOR_BRIGHTNESS
@@ -475,6 +488,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     _underlineColor.enabled = [self boolForKey:KEY_USE_UNDERLINE_COLOR];
     _activePaneBorderColor.enabled = [self boolForKey:KEY_USE_ACTIVE_PANE_BORDER];
     _hdrCursorBrightness.enabled = [self boolForKey:KEY_HDR_CURSOR];
+    _hdrTextBrightness.enabled = [self boolForKey:KEY_HDR_TEXT];
 
     const BOOL smartCursorColorSelected = [self boolForKey:KEY_SMART_CURSOR_COLOR];
     const BOOL shouldEnableSmartCursorColor = ([self intForKey:KEY_CURSOR_TYPE] == CURSOR_BOX);
