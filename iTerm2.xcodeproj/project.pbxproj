@@ -34,6 +34,7 @@
 		0277DCA424D4359E736F9E65 /* CompanionAlertBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D8B8B423791410F363E9D3A /* CompanionAlertBridge.swift */; };
 		02B907EBABFCDE0B68A178AF /* iTermDockBadgeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1179CD897A4780286BB29AAC /* iTermDockBadgeController.swift */; };
 		0332201C625EE2E12BEAFA81 /* WorkgroupPeerSegmentedControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37E989D59E1FC6B8DAF227C7 /* WorkgroupPeerSegmentedControl.swift */; };
+		0347906987A4A75F814BC895 /* iTermHDRText.m in Sources */ = {isa = PBXBuildFile; fileRef = 5483F0633B9805F30B2280D9 /* iTermHDRText.m */; };
 		035F0DC62B0099E102FBDF19 /* iTermAsyncStringConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB2AE5DA2AD1C35F1397A53D /* iTermAsyncStringConversion.swift */; };
 		037739337EBEA62A59866733 /* iTermSplitTreeRebuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C811516EBB14A113E1C7B83 /* iTermSplitTreeRebuilder.swift */; };
 		047F9FF7F36F4A0B6D673493 /* PSMTabSearchHighlight.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1EE5D0AF72EBA03C0F8BB1 /* PSMTabSearchHighlight.swift */; };
@@ -96,6 +97,7 @@
 		1BFBB3321CE135F38982FE4C /* BrowserBasicAuthCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CA27E15A56D5394054C3AF3 /* BrowserBasicAuthCoordinator.swift */; };
 		1C5952B8EE10C4F56EDE22CF /* iTermColorScopeVariables.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BD1228010A8F684D7D8946B /* iTermColorScopeVariables.swift */; };
 		1CB63D4DF23B1FBCF31F2E17 /* PTYSessionClipping+Formatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72358FF17E45A546F9E56504 /* PTYSessionClipping+Formatting.swift */; };
+		1CE12245FEDA465105212ED8 /* iTermHDRText.h in Sources */ = {isa = PBXBuildFile; fileRef = 48979E229A4FED6FD583CDE4 /* iTermHDRText.h */; };
 		1D027C111CD1867000B0FBFF /* iTermColorPresets.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D027C0F1CD1867000B0FBFF /* iTermColorPresets.h */; };
 		1D0318281A42563A00932107 /* iTermImageWell.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0318261A42563A00932107 /* iTermImageWell.h */; };
 		1D0318291A42563A00932107 /* iTermImageWell.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0318261A42563A00932107 /* iTermImageWell.h */; };
@@ -5844,6 +5846,7 @@
 		479FDFE9C0F424FEC10526EC /* iTermCursorSlideAnimator.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = iTermCursorSlideAnimator.m; path = sources/Drawing/iTermCursorSlideAnimator.m; sourceTree = SOURCE_ROOT; };
 		482874524A0A29E2213D9CB9 /* AgentConversationResume.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AgentConversationResume.swift; sourceTree = "<group>"; };
 		4836A8DAE973FFD820A3513A /* ChatBlobAssembler.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChatBlobAssembler.swift; sourceTree = "<group>"; };
+		48979E229A4FED6FD583CDE4 /* iTermHDRText.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermHDRText.h; sourceTree = "<group>"; };
 		490F2382F49288FB53C839C0 /* ShortcutCommands.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ShortcutCommands.swift; path = it2cli/Sources/it2core/Commands/ShortcutCommands.swift; sourceTree = "<group>"; };
 		492BD49DF191574CBABE660D /* iTermTabTitleFrameFingerprint.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermTabTitleFrameFingerprint.m; sourceTree = "<group>"; };
 		49A6E4081211CC6000D9AD6F /* Compatability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Compatability.h; sourceTree = "<group>"; };
@@ -6105,6 +6108,7 @@
 		53FF981F209283BE008688D7 /* template_basic_daemon.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = template_basic_daemon.py; path = sources/template_basic_daemon.py; sourceTree = "<group>"; };
 		53FF9823209283D2008688D7 /* template_pyenv_daemon.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = template_pyenv_daemon.py; path = sources/template_pyenv_daemon.py; sourceTree = "<group>"; };
 		544DE26ED3DEC7F0C9157832 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/iTermAdvancedGPUSettingsWindowController.xcstrings; sourceTree = "<group>"; };
+		5483F0633B9805F30B2280D9 /* iTermHDRText.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermHDRText.m; sourceTree = "<group>"; };
 		549AB34D98B0F7595015C26B /* iTermAutoresizingFloorAuditor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermAutoresizingFloorAuditor.swift; sourceTree = "<group>"; };
 		551CEFF56A53034E3FC7598A /* CCGitBaseSelectorItem.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CCGitBaseSelectorItem.swift; sourceTree = "<group>"; };
 		55709E18A1109F8DFD044E17 /* CompanionPairingController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionPairingController.swift; sourceTree = "<group>"; };
@@ -14606,6 +14610,8 @@
 				A6D1C41F286192F600B68526 /* TextClipDrawing.swift */,
 				BA3FEA75E047934A369B50AA /* iTermCursorBlinkFadeAnimator.m */,
 				8A2C1B2F615C047DFEEA6404 /* iTermCursorBlinkFadeAnimator.h */,
+				5483F0633B9805F30B2280D9 /* iTermHDRText.m */,
+				48979E229A4FED6FD583CDE4 /* iTermHDRText.h */,
 			);
 			path = Drawing;
 			sourceTree = "<group>";
@@ -21240,6 +21246,8 @@
 				A6FEA2711CF2C8EE00376F28 /* iTermProfileHotKey.m in Sources */,
 				A6C763E61B45C70100E3C992 /* SCEvents.m in Sources */,
 				B0DBAA2AED68CD2C26771677 /* PSMTabGroupChipView.m in Sources */,
+				0347906987A4A75F814BC895 /* iTermHDRText.m in Sources */,
+				1CE12245FEDA465105212ED8 /* iTermHDRText.h in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

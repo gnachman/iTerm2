@@ -24,6 +24,7 @@
 #import "iTermCoreTextLineRenderingHelper.h"
 #import "iTermFindCursorView.h"
 #import "iTermGraphicsUtilities.h"
+#import "iTermHDRText.h"
 #import "iTermImageInfo.h"
 #import "iTermIndicatorsHelper.h"
 #import "iTermMutableAttributedStringBuilder.h"
@@ -146,6 +147,11 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     NSFont *_cachedFont;
     CGFontRef _cgFont;
 
+    // HDR text for the current draw: the linear brightness multiplier (1 for normal
+    // text) and the display's potential headroom. Set by -updateHDRTextGain.
+    CGFloat _hdrTextGain;
+    CGFloat _hdrTextHeadroom;
+
     // Last position of blinking cursor
     VT100GridCoord _oldCursorPosition;
 
@@ -200,6 +206,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     self = [super init];
     if (self) {
         _hdrCursorBrightness = iTermHDRCursorMaximumBrightness;
+        _hdrTextBrightness = iTermHDRTextDefaultBrightness;
         iTermPreciseTimerStatsInit(&_stats[TIMER_TOTAL_DRAW_RECT], "Total drawRect");
         iTermPreciseTimerStatsInit(&_stats[TIMER_CONSTRUCT_BACKGROUND_RUNS], "Construct BG runs");
         iTermPreciseTimerStatsInit(&_stats[TIMER_DRAW_BACKGROUND], "Draw BG");
@@ -282,6 +289,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                         rectCount:(NSInteger)rectCount
                     virtualOffset:(CGFloat)virtualOffset {
     DLog(@"begin drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
+    [self updateHDRTextGain];
     _debug = [iTermAdvancedSettingsModel showDirtyRectsInLegacyRenderer];
     if (_debug) {
         [[NSColor redColor] set];
@@ -2132,6 +2140,14 @@ NSArray<iTermBoxedBackgroundColorRun *> *iTermCombineBackgroundRunsForUnprocesse
                         virtualOffset:(CGFloat)virtualOffset
                         lineAttribute:(iTermLineAttribute)lineAttribute {
     _currentLineAttribute = lineAttribute;
+    // HDR text only brightens text over a dark background. The default
+    // background was checked in -updateHDRTextGain; this checks the run's own
+    // background (a selection, reverse video, or an app-painted color), as the
+    // GPU renderer does per cell.
+    const CGFloat savedHDRTextGain = _hdrTextGain;
+    if (_hdrTextGain > 1 && backgroundColor && !backgroundColor.isDark) {
+        _hdrTextGain = 1;
+    }
     const NSPoint point = initialPoint;
     VT100GridCoord origin = initialOrigin;
     NSInteger start = 0;
@@ -2168,6 +2184,7 @@ NSArray<iTermBoxedBackgroundColorRun *> *iTermCombineBackgroundRunsForUnprocesse
         origin.x += numCellsDrawn;
 
     }
+    _hdrTextGain = savedHDRTextGain;
 }
 
 - (void)drawBoxDrawingCharacter:(UTF32Char)theCharacter
@@ -2200,6 +2217,22 @@ NSArray<iTermBoxedBackgroundColorRun *> *iTermCombineBackgroundRunsForUnprocesse
                                                          offset:CGPointZero
                                                           color:color
                                        useNativePowerlineGlyphs:self.useNativePowerlineGlyphs];
+    // Box-drawing characters are text too, and the GPU renderer boosts them.
+    // Grouped because their strokes overlap where lines join. The context is
+    // translated so the character's cell starts at the origin.
+    const CGRect cellBounds = CGRectInset(CGRectMake(0, 0, cellSize.width, cellSize.height), -2, -2);
+    [self drawHDRTextBoostForColor:color
+                         inContext:ctx.CGContext
+                       groupBounds:cellBounds
+                              draw:^(CGColorRef boostColor) {
+        [iTermBoxDrawingBezierCurveFactory drawCodeInCurrentContext:theCharacter
+                                                           cellSize:cellSize
+                                                              scale:self.isRetina ? 2.0 : 1.0
+                                                           isPoints:YES
+                                                             offset:CGPointZero
+                                                              color:boostColor
+                                           useNativePowerlineGlyphs:self.useNativePowerlineGlyphs];
+    }];
     [ctx restoreGraphicsState];
 }
 
@@ -2395,15 +2428,38 @@ NSArray<iTermBoxedBackgroundColorRun *> *iTermCombineBackgroundRunsForUnprocesse
     } else {
         CGContextShowGlyphsAtPositions(ctx, glyphs, points, length);
 
+        const CGAffineTransform boldTextMatrix = CGAffineTransformMake(1.0,  0.0,
+                                                                       m21, vScale,
+                                                                       x + (antiAlias ? _antiAliasedShift : 1),
+                                                                       y);
         if (fakeBold) {
             // If anti-aliased, drawing twice at the same position makes the strokes thicker.
             // If not anti-alised, draw one pixel to the right.
-            CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
-                                                              m21, vScale,
-                                                              x + (antiAlias ? _antiAliasedShift : 1),
-                                                              y));
+            CGContextSetTextMatrix(ctx, boldTextMatrix);
 
             CGContextShowGlyphsAtPositions(ctx, glyphs, points, length);
+        }
+        if (_hdrTextGain > 1 && !(CTFontGetSymbolicTraits((CTFontRef)font) & kCTFontTraitColorGlyphs)) {
+            const CGAffineTransform textMatrix = CGAffineTransformMake(1.0,  0.0,
+                                                                       m21, vScale,
+                                                                       x, y);
+            const CGGlyph *glyphPointer = glyphs;
+            const CGPoint *pointPointer = points;
+            // Fake bold draws the glyphs twice, overlapping.
+            const CGRect groupBounds = fakeBold ? iTermHDRTextGlyphBounds((__bridge CTFontRef)font,
+                                                                          glyphs,
+                                                                          points,
+                                                                          length,
+                                                                          textMatrix,
+                                                                          boldTextMatrix.tx - textMatrix.tx) : CGRectNull;
+            [self drawHDRTextBoostForColor:color inContext:ctx groupBounds:groupBounds draw:^(CGColorRef boostColor) {
+                CGContextSetTextMatrix(ctx, textMatrix);
+                CGContextShowGlyphsAtPositions(ctx, glyphPointer, pointPointer, length);
+                if (fakeBold) {
+                    CGContextSetTextMatrix(ctx, boldTextMatrix);
+                    CGContextShowGlyphsAtPositions(ctx, glyphPointer, pointPointer, length);
+                }
+            }];
         }
     }
 #if 0
@@ -2641,6 +2697,9 @@ NSArray<iTermBoxedBackgroundColorRun *> *iTermCombineBackgroundRunsForUnprocesse
     }
 
     NSData *drawInCellIndex = attributes[iTermDrawInCellIndexAttribute];
+    // The fill color the glyphs are drawn in, for the HDR text boost. A merged
+    // multi-color string changes it per span below.
+    __block CGColorRef currentFillColor = cgColor;
     // Does the string carry more than one foreground color? Runs that differ
     // only in color are merged into one string so Arabic shaping survives a
     // selection or SGR boundary; those need per-span fills below. The CTLine
@@ -2717,6 +2776,7 @@ NSArray<iTermBoxedBackgroundColorRun *> *iTermCombineBackgroundRunsForUnprocesse
                         if (spanColor) {
                             CGContextSetFillColorWithColor(cgContext, spanColor);
                             CGContextSetStrokeColorWithColor(cgContext, spanColor);
+                            currentFillColor = spanColor;
                         }
                     }
                     CTFontDrawGlyphs(runFont, buffer + spanStart, (NSPoint *)(positions + spanStart), spanLength, cgContext);
@@ -2724,6 +2784,30 @@ NSArray<iTermBoxedBackgroundColorRun *> *iTermCombineBackgroundRunsForUnprocesse
                         CGContextTranslateCTM(cgContext, antiAlias ? _antiAliasedShift : 1, 0);
                         CTFontDrawGlyphs(runFont, buffer + spanStart, (NSPoint *)(positions + spanStart), spanLength, cgContext);
                         CGContextTranslateCTM(cgContext, antiAlias ? -_antiAliasedShift : -1, 0);
+                    }
+                    // Color glyphs (emoji) keep their own colors, as in the GPU renderer.
+                    if (_hdrTextGain > 1 && !(CTFontGetSymbolicTraits(runFont) & kCTFontTraitColorGlyphs)) {
+                        const size_t boostStart = spanStart;
+                        const size_t boostLength = spanLength;
+                        // A double strike draws the glyphs twice, overlapping.
+                        const CGRect groupBounds =
+                        doubleStrike ? iTermHDRTextGlyphBounds(runFont,
+                                                               buffer + boostStart,
+                                                               (const CGPoint *)(positions + boostStart),
+                                                               boostLength,
+                                                               CGContextGetTextMatrix(cgContext),
+                                                               antiAlias ? _antiAliasedShift : 1) : CGRectNull;
+                        [self drawHDRTextBoostForColor:currentFillColor
+                                             inContext:cgContext
+                                           groupBounds:groupBounds
+                                                  draw:^(CGColorRef boostColor) {
+                            CTFontDrawGlyphs(runFont, buffer + boostStart, (NSPoint *)(positions + boostStart), boostLength, cgContext);
+                            if (doubleStrike) {
+                                CGContextTranslateCTM(cgContext, antiAlias ? _antiAliasedShift : 1, 0);
+                                CTFontDrawGlyphs(runFont, buffer + boostStart, (NSPoint *)(positions + boostStart), boostLength, cgContext);
+                                CGContextTranslateCTM(cgContext, antiAlias ? -_antiAliasedShift : -1, 0);
+                            }
+                        }];
                     }
                     spanStart += spanLength;
                 }
@@ -3153,8 +3237,44 @@ BOOL iTermDecodeKittyUnicodePlaceholder(const screen_char_t *c,
                                        rect:(NSRect)rawRect
                                     context:(CGContextRef)ctx
                               virtualOffset:(CGFloat)virtualOffset {
-    const NSRect rect = NSRectSubtractingVirtualOffset(rawRect, virtualOffset);
     CGColorRef cgColor = color.CGColor;
+    [self drawUnderlineOrStrikethroughOfCGColor:cgColor
+                                  wantUnderline:wantUnderline
+                                          style:underlineStyle
+                                           font:font
+                                           rect:rawRect
+                                        context:ctx
+                                  virtualOffset:virtualOffset];
+    // Underlines and strikethroughs get the HDR text boost too, as in the GPU
+    // renderer. Grouped only for curly underlines, whose two dashed strokes
+    // overlap; the other styles never paint a pixel twice. Every style is drawn
+    // within the cell rect's height, give or take a stroke.
+    CGRect groupBounds = CGRectNull;
+    if (underlineStyle == NSUnderlineStyleThick) {
+        const NSRect rect = NSRectSubtractingVirtualOffset(rawRect, virtualOffset);
+        groupBounds = CGRectInset(CGRectMake(rect.origin.x, rect.origin.y, rect.size.width, _cellSize.height),
+                                  -2,
+                                  -_cellSize.height / 2);
+    }
+    [self drawHDRTextBoostForColor:cgColor inContext:ctx groupBounds:groupBounds draw:^(CGColorRef boostColor) {
+        [self drawUnderlineOrStrikethroughOfCGColor:boostColor
+                                      wantUnderline:wantUnderline
+                                              style:underlineStyle
+                                               font:font
+                                               rect:rawRect
+                                            context:ctx
+                                      virtualOffset:virtualOffset];
+    }];
+}
+
+- (void)drawUnderlineOrStrikethroughOfCGColor:(CGColorRef)cgColor
+                                wantUnderline:(BOOL)wantUnderline
+                                        style:(NSUnderlineStyle)underlineStyle
+                                         font:(NSFont *)font
+                                         rect:(NSRect)rawRect
+                                      context:(CGContextRef)ctx
+                                virtualOffset:(CGFloat)virtualOffset {
+    const NSRect rect = NSRectSubtractingVirtualOffset(rawRect, virtualOffset);
     iTermShapeBuilder *shapeBuilder = [[iTermShapeBuilder alloc] init];
     shapeBuilder.enableEndcap = NO;
 
@@ -4226,6 +4346,125 @@ typedef struct {
     return cursorInfo.rect;
 }
 
+#pragma mark - HDR text
+
+// User-space bounds of `count` glyphs drawn at `positions` (text space) with
+// `textMatrix`, widened by `extraWidth` for a double strike drawn that far to
+// the right. For the HDR text boost's transparency layer, so it is padded to
+// cover antialiasing and font smoothing.
+static CGRect iTermHDRTextGlyphBounds(CTFontRef font,
+                                      const CGGlyph *glyphs,
+                                      const CGPoint *positions,
+                                      size_t count,
+                                      CGAffineTransform textMatrix,
+                                      CGFloat extraWidth) {
+    if (count == 0) {
+        return CGRectNull;
+    }
+    const CGRect glyphBox = CTFontGetBoundingRectsForGlyphs(font,
+                                                            kCTFontOrientationDefault,
+                                                            glyphs,
+                                                            NULL,
+                                                            count);
+    CGFloat minX = positions[0].x;
+    CGFloat maxX = positions[0].x;
+    CGFloat minY = positions[0].y;
+    CGFloat maxY = positions[0].y;
+    for (size_t i = 1; i < count; i++) {
+        minX = MIN(minX, positions[i].x);
+        maxX = MAX(maxX, positions[i].x);
+        minY = MIN(minY, positions[i].y);
+        maxY = MAX(maxY, positions[i].y);
+    }
+    const CGRect textSpaceBounds = CGRectMake(minX + glyphBox.origin.x,
+                                              minY + glyphBox.origin.y,
+                                              maxX - minX + glyphBox.size.width + MAX(0, extraWidth),
+                                              maxY - minY + glyphBox.size.height);
+    const CGFloat padding = 2;
+    return CGRectInset(CGRectApplyAffineTransform(textSpaceBounds, textMatrix), -padding, -padding);
+}
+
+// Decides once per draw whether to brighten text and by how much, with the same
+// rule and inputs as the GPU renderer (see iTermMetalPerFrameState).
+- (void)updateHDRTextGain {
+    const CGFloat potentialEDR = _delegate.enclosingScrollView.window.screen.maximumPotentialExtendedDynamicRangeColorComponentValue;
+    _hdrTextHeadroom = MAX(1.0, potentialEDR);
+    _hdrTextGain = iTermHDRTextGain(_hdrTextBrightness,
+                                    _hdrTextEnabled,
+                                    (_isInKeyWindow && _textViewIsActiveSession),
+                                    [self defaultBackgroundColor],
+                                    potentialEDR);
+}
+
+// Call after drawing glyphs or lines normally in `color` to brighten them to the
+// HDR text color (iTermHDRTextBoostedColor). The difference is added in one
+// plusLighter pass with the same coverage as the normal draw, so antialiased
+// edges land where a single draw in the brighter color would put them, as in the
+// GPU renderer. The difference can exceed 1.0, so it is expressed in the
+// extended-range version of the color's space; in the normal space it would be
+// clamped to 1.0 when set on the context. `draw` repeats the normal drawing with
+// the context's fill and stroke colors, or with `boostColor` where it takes a
+// color. When `draw` paints shapes that overlap (a double strike, box drawing),
+// pass in `groupBounds` a rect in the current user space that contains
+// everything `draw` paints. The pass is then drawn into a transparency layer of
+// that size and added once, so overlaps get the color once per pixel. Keep the
+// rect tight: the layer is an offscreen buffer of that size. Pass CGRectNull
+// when the shapes don't overlap.
+- (void)drawHDRTextBoostForColor:(CGColorRef)color
+                       inContext:(CGContextRef)ctx
+                     groupBounds:(CGRect)groupBounds
+                            draw:(void (NS_NOESCAPE ^)(CGColorRef boostColor))draw {
+    if (!(_hdrTextGain > 1) || color == NULL) {
+        return;
+    }
+    CGColorSpaceRef colorSpace = CGColorGetColorSpace(color);
+    if (CGColorSpaceGetModel(colorSpace) != kCGColorSpaceModelRGB ||
+        CGColorGetNumberOfComponents(color) != 4) {
+        return;
+    }
+    const CGFloat *components = CGColorGetComponents(color);
+    const iTermSRGBColor boosted =
+        iTermHDRTextBoostedColor((iTermSRGBColor){ components[0], components[1], components[2] },
+                                 _hdrTextGain,
+                                 _hdrTextHeadroom);
+    const CGFloat difference[4] = {
+        MAX(0, boosted.r - components[0]),
+        MAX(0, boosted.g - components[1]),
+        MAX(0, boosted.b - components[2]),
+        components[3]
+    };
+    // Differences this small can't be seen.
+    const CGFloat epsilon = 1.0 / 1024.0;
+    if (difference[0] <= epsilon && difference[1] <= epsilon && difference[2] <= epsilon) {
+        return;
+    }
+    CGColorSpaceRef extendedColorSpace = CGColorSpaceCreateExtended(colorSpace);
+    if (!extendedColorSpace) {
+        DLog(@"No extended-range version of %@; skipping HDR text boost", colorSpace);
+        return;
+    }
+    CGColorRef boostColor = CGColorCreate(extendedColorSpace, difference);
+    CGColorSpaceRelease(extendedColorSpace);
+    CGContextSaveGState(ctx);
+    CGContextSetBlendMode(ctx, kCGBlendModePlusLighter);
+    CGContextSetFillColorWithColor(ctx, boostColor);
+    CGContextSetStrokeColorWithColor(ctx, boostColor);
+    if (!CGRectIsNull(groupBounds)) {
+        // The layer is composited with plusLighter when it ends; inside it,
+        // overlapping shapes combine normally.
+        CGContextBeginTransparencyLayerWithRect(ctx, groupBounds, NULL);
+        CGContextSaveGState(ctx);
+        CGContextSetBlendMode(ctx, kCGBlendModeNormal);
+        draw(boostColor);
+        CGContextRestoreGState(ctx);
+        CGContextEndTransparencyLayer(ctx);
+    } else {
+        draw(boostColor);
+    }
+    CGContextRestoreGState(ctx);
+    CGColorRelease(boostColor);
+}
+
 - (BOOL)isFocused {
     return ((_isInKeyWindow && _textViewIsActiveSession) || _shouldDrawFilledInCursor);
 }
@@ -4674,6 +4913,10 @@ typedef struct {
                 virtualOffset:(CGFloat)virtualOffset {
     NSGraphicsContext *context = [NSGraphicsContext currentContext];
     [context saveGraphicsState];
+    // The character on a filled cursor takes the cursor's text color and is not
+    // HDR text, as in the GPU renderer.
+    const CGFloat savedHDRTextGain = _hdrTextGain;
+    _hdrTextGain = 1;
 
     int row = coord.y + _numberOfScrollbackLines;
     int width = doubleWidth ? 2 : 1;
@@ -4740,6 +4983,7 @@ typedef struct {
     if (boldLine) {
         free(boldLine);
     }
+    _hdrTextGain = savedHDRTextGain;
     [context restoreGraphicsState];
 }
 

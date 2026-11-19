@@ -22,6 +22,47 @@ static float4 iTermAlphaVectorForTextColor(float4 textColor) {
     }
 }
 
+#pragma mark - HDR text
+
+// sRGB transfer function (encoded -> linear light), valid for the extended range
+// too. Both branches are evaluated; select() keeps the one that applies, so the
+// pow of a near-zero base in the unused branch is harmless.
+static float3 iTermSRGBToLinear(float3 encoded) {
+    const float3 c = max(encoded, float3(0));
+    const float3 low = c / 12.92;
+    const float3 high = powr((c + 0.055) / 1.055, float3(2.4));
+    return select(high, low, c <= 0.04045);
+}
+
+// Inverse of iTermSRGBToLinear. Values above 1 encode to above 1, which the fp16
+// extended-range framebuffer shows brighter than reference white.
+static float3 iTermLinearToSRGB(float3 linear) {
+    const float3 l = max(linear, float3(0));
+    const float3 low = l * 12.92;
+    const float3 high = 1.055 * powr(l, float3(1.0 / 2.4)) - 0.055;
+    return select(high, low, l <= 0.0031308);
+}
+
+// Brightens a text color for HDR text. The gain is applied in linear light so
+// "3x" means three times the light, like the HDR cursor's brightness. If the
+// brightest channel would pass the display's headroom, the whole color is scaled
+// down together instead of letting that channel clip, so the hue stays the same.
+// `eligible` is the glyph's iTermTextPIU.hdrEligible; 0 (a light cell background)
+// leaves the color unchanged.
+static float3 iTermHDRBoostTextColor(float3 encoded, float eligible, constant iTermTextHDRInfo *hdrInfo) {
+    const float gain = hdrInfo->gain;
+    if (gain <= 1.0 || eligible == 0.0) {
+        return encoded;
+    }
+    const float3 linear = iTermSRGBToLinear(encoded);
+    const float peak = max(linear.x, max(linear.y, linear.z));
+    float effectiveGain = gain;
+    if (peak > 0.0) {
+        effectiveGain = min(gain, max(1.0, hdrInfo->headroom / peak));
+    }
+    return iTermLinearToSRGB(linear * effectiveGain);
+}
+
 // Is a fragment at `gridPosition` inside the cell under a filled box cursor?
 static bool iTermTextIsUnderCursor(float2 gridPosition,
                                    constant iTermTextCursorInfo *cursorInfo) {
@@ -64,6 +105,7 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
     out.underlineStyle = perInstanceUniforms[iid].underlineStyle;
     out.underlineColor = perInstanceUniforms[iid].underlineColor;
     out.alphaVector = iTermAlphaVectorForTextColor(out.textColor);
+    out.hdrEligible = perInstanceUniforms[iid].hdrEligible;
     out.flags = textInfo->flags;
     out.predecessorWasUnderlined = (iid > 0 &&
                                     perInstanceUniforms[iid - 1].offset.y == perInstanceUniforms[iid].offset.y &&
@@ -152,6 +194,7 @@ iTermTextVertexShaderMonochrome(uint vertexID [[ vertex_id ]],
     out.textColor = perInstanceUniforms[iid].textColor;
     out.alphaVector = iTermAlphaVectorForTextColor(out.textColor);
     out.gridPosition = vertexArray[vertexID].position.xy + perInstanceUniforms[iid].offset.xy;
+    out.hdrEligible = perInstanceUniforms[iid].hdrEligible;
 
     return out;
 }
@@ -325,16 +368,21 @@ iTermTextFragmentShaderMonochrome(iTermTextVertexFunctionOutputMonochrome in [[s
                                   texture2d<float> texture [[ texture(iTermTextureIndexPrimary) ]],
                                   texture2d<float> drawable [[ texture(iTermTextureIndexBackground) ]],
                                   constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]],
-                                  constant iTermTextCursorInfo *cursorInfo [[ buffer(iTermFragmentInputIndexTextCursor) ]]) {
+                                  constant iTermTextCursorInfo *cursorInfo [[ buffer(iTermFragmentInputIndexTextCursor) ]],
+                                  constant iTermTextHDRInfo *hdrInfo [[ buffer(iTermFragmentInputIndexTextHDR) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
 
     float4 textureColor = texture.sample(textureSampler, in.textureCoordinate);
     float4 result = in.textColor;
+    // Glyph weight comes from the original color (via the vertex shader), so HDR
+    // text keeps the same stroke weight as normal text.
     float4 alphaVector = in.alphaVector;
     if (iTermTextIsUnderCursor(in.gridPosition, cursorInfo)) {
         result = cursorInfo->color;
         alphaVector = iTermAlphaVectorForTextColor(result);
+    } else {
+        result.xyz = iTermHDRBoostTextColor(result.xyz, in.hdrEligible, hdrInfo);
     }
     result.w = dot(textureColor, alphaVector);
     result.xyz *= result.w;
@@ -346,7 +394,9 @@ fragment float4
 iTermTextFragmentShaderMonochromeUnderlinedEmoji(iTermTextVertexFunctionOutput in [[stage_in]],
                                                  texture2d<float> texture [[ texture(iTermTextureIndexPrimary) ]],
                                                  texture2d<float> drawable [[ texture(iTermTextureIndexBackground) ]],
-                                                 constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]]) {
+                                                 constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]],
+                                                 constant iTermTextCursorInfo *cursorInfo [[ buffer(iTermFragmentInputIndexTextCursor) ]],
+                                                 constant iTermTextHDRInfo *hdrInfo [[ buffer(iTermFragmentInputIndexTextHDR) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
 
@@ -393,8 +443,14 @@ iTermTextFragmentShaderMonochromeUnderlinedEmoji(iTermTextVertexFunctionOutput i
                                                                   (in.flags & iTermTextVertexInfoFlagsSolidUnderlines) != 0,
                                                                   in.predecessorWasUnderlined,
                                                                   in.successorWillBeUnderlined);
+    // The emoji keeps its own colors, but its underline is text-colored and
+    // gets the HDR boost, as in MonochromeUnderlined.
+    float4 underlineColor = in.underlineColor;
+    if (!iTermTextIsUnderCursor(in.gridPosition, cursorInfo)) {
+        underlineColor.xyz = iTermHDRBoostTextColor(underlineColor.xyz, in.hdrEligible, hdrInfo);
+    }
     float4 result = mix(textureColor,
-                       in.underlineColor,
+                       underlineColor,
                        max(strikethroughWeight, underlineWeight));
     result.xyz *= result.w;
     return result;
@@ -406,7 +462,8 @@ iTermTextFragmentShaderMonochromeUnderlined(iTermTextVertexFunctionOutput in [[s
                                             texture2d<float> texture [[ texture(iTermTextureIndexPrimary) ]],
                                             texture2d<float> drawable [[ texture(iTermTextureIndexBackground) ]],
                                             constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]],
-                                            constant iTermTextCursorInfo *cursorInfo [[ buffer(iTermFragmentInputIndexTextCursor) ]]) {
+                                            constant iTermTextCursorInfo *cursorInfo [[ buffer(iTermFragmentInputIndexTextCursor) ]],
+                                            constant iTermTextHDRInfo *hdrInfo [[ buffer(iTermFragmentInputIndexTextHDR) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
 
@@ -454,15 +511,19 @@ iTermTextFragmentShaderMonochromeUnderlined(iTermTextVertexFunctionOutput in [[s
                                                                   in.successorWillBeUnderlined);
 
     float4 recoloredTextColor = in.textColor;
+    float4 underlineColor = in.underlineColor;
     float4 alphaVector = in.alphaVector;
     if (iTermTextIsUnderCursor(in.gridPosition, cursorInfo)) {
         recoloredTextColor = cursorInfo->color;
         alphaVector = iTermAlphaVectorForTextColor(recoloredTextColor);
+    } else {
+        recoloredTextColor.xyz = iTermHDRBoostTextColor(recoloredTextColor.xyz, in.hdrEligible, hdrInfo);
+        underlineColor.xyz = iTermHDRBoostTextColor(underlineColor.xyz, in.hdrEligible, hdrInfo);
     }
     recoloredTextColor.w = dot(textureColor, alphaVector);
 
     float4 result = mix(recoloredTextColor,
-                       in.underlineColor,
+                       underlineColor,
                        max(strikethroughWeight, underlineWeight));
     result.xyz *= result.w;
     return result;

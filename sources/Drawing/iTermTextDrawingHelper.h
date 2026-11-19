@@ -183,6 +183,15 @@ extern const CGFloat iTermCursorGuideAlphaThreshold;
 // in units of reference white. Clamped to the display's headroom when drawn.
 @property(nonatomic) CGFloat hdrCursorBrightness;
 
+// The profile's HDR-text hint (KEY_HDR_TEXT). When on, the focused pane's text is
+// drawn brighter than white on a display with EDR headroom and a dark background.
+// Both renderers draw it.
+@property(nonatomic) BOOL hdrTextEnabled;
+
+// The profile's requested HDR text brightness (KEY_HDR_TEXT_BRIGHTNESS), in units
+// of reference white. Clamped to the display's headroom when drawn.
+@property(nonatomic) CGFloat hdrTextBrightness;
+
 // When YES, a blinking cursor fades smoothly in and out (with dwell times at
 // the extremes) instead of toggling abruptly. The durations and curves below
 // are honored only when this is YES.

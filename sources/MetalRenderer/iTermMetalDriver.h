@@ -188,6 +188,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (nullable iTermMetalCursorInfo *)metalDriverCursorInfo;
 
+// Linear brightness multiplier for this frame's text, 1 for normal text. Above 1
+// only when HDR text applies (profile KEY_HDR_TEXT, focused pane, dark
+// background, display headroom).
+- (float)metalDriverHDRTextGain;
+// The display's potential EDR headroom (>= 1). The text shader scales a color
+// down as a whole so no channel goes past this, which keeps hues intact.
+- (float)metalDriverHDRTextHeadroom;
+
 - (nullable NSDictionary<NSNumber *, iTermCharacterBitmap *> *)metalImagesForGlyphKey:(iTermMetalGlyphKey *)glyphKey
                                                                           asciiOffset:(CGSize)asciiOffset
                                                                                  size:(CGSize)size

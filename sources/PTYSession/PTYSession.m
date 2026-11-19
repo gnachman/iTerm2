@@ -6438,14 +6438,21 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     self.textview.hdrCursorEnabled = hdrCursorEnabled;
     self.textview.hdrCursorBrightness = [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_HDR_CURSOR_BRIGHTNESS, aDict, dark)
                                                                    inProfile:aDict];
-    if (_view.hdrCursorEnabled != hdrCursorEnabled) {
-        _view.hdrCursorEnabled = hdrCursorEnabled;
-        // The metal framebuffer pixel format is fp16 only when the HDR cursor is
-        // on, and it is baked into the driver's pipeline states at creation time.
-        // So a change while metal is active needs a driver rebuild; bounceMetal
-        // tears the tab's metal views down and rebuilds them with the new
-        // per-session format. The legacy renderer reads the setting per draw and
-        // needs no rebuild.
+    const BOOL hdrTextEnabled = [iTermProfilePreferences boolForKey:iTermAmendedColorKey(KEY_HDR_TEXT, aDict, dark)
+                                                          inProfile:aDict];
+    self.textview.hdrTextEnabled = hdrTextEnabled;
+    self.textview.hdrTextBrightness = [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_HDR_TEXT_BRIGHTNESS, aDict, dark)
+                                                                 inProfile:aDict];
+    const BOOL hadHDRFramebuffer = _view.wantsHDRFramebuffer;
+    _view.hdrCursorEnabled = hdrCursorEnabled;
+    _view.hdrTextEnabled = hdrTextEnabled;
+    if (_view.wantsHDRFramebuffer != hadHDRFramebuffer) {
+        // The metal framebuffer pixel format is fp16 only when the HDR cursor or
+        // HDR text is on, and it is baked into the driver's pipeline states at
+        // creation time. So a change while metal is active needs a driver
+        // rebuild; bounceMetal tears the tab's metal views down and rebuilds them
+        // with the new per-session format. The legacy renderer reads the setting
+        // per draw and needs no rebuild.
         if (_useMetal) {
             [self.delegate sessionRebuildMetal];
         }

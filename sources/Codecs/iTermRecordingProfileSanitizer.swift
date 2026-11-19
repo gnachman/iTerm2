@@ -33,6 +33,8 @@ class iTermRecordingProfileSanitizer: NSObject {
         KEY_CURSOR_BOOST,
         KEY_HDR_CURSOR,
         KEY_HDR_CURSOR_BRIGHTNESS,
+        KEY_HDR_TEXT,
+        KEY_HDR_TEXT_BRIGHTNESS,
         KEY_USE_ACTIVE_PANE_BORDER,
 
         // Fonts

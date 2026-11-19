@@ -13,6 +13,7 @@
 #import "iTermSubpixelModelBuilder.h"
 #import "iTermTexturePage.h"
 #import "iTermTexturePageCollection.h"
+#import "NSColor+iTerm.h"
 #import "NSMutableData+iTerm.h"
 
 #include <map>
@@ -411,7 +412,8 @@ NS_INLINE iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU
                                                                     iTermASCIITextureOffset offset,
                                                                     vector_float4 textColor,
                                                                     iTermMetalGlyphAttributesUnderline underlineStyle,
-                                                                    vector_float4 underlineColor) {
+                                                                    vector_float4 underlineColor,
+                                                                    float hdrEligible) {
     piu->offset = simd_make_float2(visualColumn * cellWidth + asciiOffset.width,
                                    asciiOffset.height);
     const int index = iTermASCIITextureIndexOfCode(code, offset);
@@ -420,6 +422,7 @@ NS_INLINE iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU
     piu->textColor = textColor;
     piu->underlineStyle = underlineStyle;
     piu->underlineColor = underlineColor;
+    piu->hdrEligible = hdrEligible;
     return piu;
 }
 
@@ -444,6 +447,14 @@ static inline vector_float4 iTermPIUTextColor(int visualColumn,
         return cursorNormalTextColors[i];
     }
     return attributes[visualColumn].foregroundColor;
+}
+
+// iTermTextPIU.hdrEligible for a glyph in `visualColumn`: HDR text only
+// brightens text over a dark cell background, using the same test as
+// -[NSColor isDark], which the legacy renderer applies per background run.
+static inline float iTermPIUHDREligible(int visualColumn,
+                                        const iTermMetalGlyphAttributes *attributes) {
+    return SIMDPerceivedBrightness(attributes[visualColumn].backgroundColor) < 0.5 ? 1 : 0;
 }
 
 - (void)setCursorRow:(int)row
@@ -495,6 +506,7 @@ static inline vector_float4 iTermPIUTextColor(int visualColumn,
 
     iTermMetalGlyphAttributesUnderline underlineStyle = suppressUnderlines ? iTermMetalGlyphAttributesUnderlineNone : attributes[visualColumn].underlineStyle;
     const vector_float4 textColor = iTermPIUTextColor(visualColumn, _cursorFirstColumn, _cursorColumnCountOnRow, _cursorNormalTextColors, attributes);
+    const float hdrEligible = iTermPIUHDREligible(visualColumn, attributes);
     if (!suppressUnderlines && inMarkedRange) {
         // Marked range gets a yellow underline.
         underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
@@ -513,7 +525,8 @@ static inline vector_float4 iTermPIUTextColor(int visualColumn,
                                                     iTermASCIITextureOffsetCenter,
                                                     textColor,
                                                     underlineStyle,
-                                                    underlineColor);
+                                                    underlineColor,
+                                                    hdrEligible);
         return;
     }
     // Pre-10.14, ASCII glyphs can get chopped up into multiple parts. This is necessary so subpixel AA will work right.
@@ -531,7 +544,8 @@ static inline vector_float4 iTermPIUTextColor(int visualColumn,
                                                     iTermASCIITextureOffsetLeft,
                                                     textColor,
                                                     iTermMetalGlyphAttributesUnderlineNone,
-                                                    underlineColor);
+                                                    underlineColor,
+                                                    hdrEligible);
     }
 
     // Add PIU for center part, which is always present
@@ -546,7 +560,8 @@ static inline vector_float4 iTermPIUTextColor(int visualColumn,
                                                 iTermASCIITextureOffsetCenter,
                                                 textColor,
                                                 underlineStyle,
-                                                underlineColor);
+                                                underlineColor,
+                                                hdrEligible);
     // Add PIU for right overflow
     if (parts & iTermASCIITexturePartsRight) {
 
@@ -561,7 +576,8 @@ static inline vector_float4 iTermPIUTextColor(int visualColumn,
                                                     iTermASCIITextureOffsetRight,
                                                     textColor,
                                                     iTermMetalGlyphAttributesUnderlineNone,
-                                                    underlineColor);
+                                                    underlineColor,
+                                                    hdrEligible);
     }
 }
 
@@ -726,6 +742,7 @@ typedef struct {
         piu->textureOffset = simd_make_float2(origin.x * reciprocal_atlas_size.x,
                                               origin.y * reciprocal_atlas_size.y);
         piu->textColor = iTermPIUTextColor(visualIndex, _cursorFirstColumn, _cursorColumnCountOnRow, _cursorNormalTextColors, attributes);
+        piu->hdrEligible = iTermPIUHDREligible(visualIndex, attributes);
         if (suppressUnderlines) {
             piu->underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
             piu->underlineColor = simd_make_float4(0, 0, 0, 0);

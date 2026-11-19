@@ -52,6 +52,12 @@ New Features:
   section for each status, or in a section for
   each working directory. The window’s own tab order doesn’t
   change.
+- On an HDR display, text in the focused pane
+  can glow brighter than normal white so it
+  stands out, even in bright light. Turn on
+  “HDR text in focused pane” in Settings >
+  Profiles > Colors. It only applies over a
+  dark background.
 
 Improvements:
 - Saving a window arrangement can remember

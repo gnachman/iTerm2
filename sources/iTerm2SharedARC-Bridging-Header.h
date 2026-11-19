@@ -18,6 +18,7 @@
 #import "iTermBuiltInFunctions.h"
 #import "NSJSONSerialization+iTerm.h"
 #import "iTermCursor.h"
+#import "iTermHDRText.h"
 #import "iTermCache.h"
 #import "iTermColorMap.h"
 #import "iTermCommandRunner.h"

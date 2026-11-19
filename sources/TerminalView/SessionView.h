@@ -272,6 +272,17 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 // baked into pipeline states); PTYSession does that via -bounceMetal.
 @property (nonatomic) BOOL hdrCursorEnabled;
 
+// The session's per-profile HDR-text setting (KEY_HDR_TEXT). Like
+// hdrCursorEnabled it keeps EDR engaged and makes the metal framebuffer fp16, so
+// changing it while the metal renderer is active also requires a driver rebuild.
+// The text is only actually brightened in the focused pane; see
+// iTermHDRTextGain().
+@property (nonatomic) BOOL hdrTextEnabled;
+
+// YES when either HDR feature is on. This decides the metal pixel format and
+// whether the HDR engager holds EDR.
+@property (nonatomic, readonly) BOOL wantsHDRFramebuffer;
+
 @property (nonatomic) VT100ScreenProgress progress;
 @property (nonatomic) BOOL enableProgressBars;
 @property (nonatomic) BOOL showInlineProgressBar;

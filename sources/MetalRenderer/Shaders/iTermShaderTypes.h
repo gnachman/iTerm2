@@ -32,7 +32,8 @@ typedef enum {
     iTermFragmentInputIndexAlpha = 5,  // float4 pointer. Used by transparent windows on 10.14
     iTermFragmentInputIndexColor = 6,  // float4. Gives color for letterboxes/pillarboxes
     iTermFragmentBufferIndexScale = 7,  // backing scale factor float
-    iTermFragmentInputIndexTextCursor = 8  // Points at iTermTextCursorInfo
+    iTermFragmentInputIndexTextCursor = 8,  // Points at iTermTextCursorInfo
+    iTermFragmentInputIndexTextHDR = 9  // Points at iTermTextHDRInfo
 } iTermFragmentBufferIndex;
 
 // AND with mask to remove strikethrough bit
@@ -93,6 +94,11 @@ typedef struct iTermTextPIU {
 
     // What kind of underline to draw. The offset is provided in iTermTextureDimensions.
     iTermMetalGlyphAttributesUnderline underlineStyle;
+
+    // 1 if the cell's background is dark enough for HDR text to brighten this
+    // glyph, else 0. See iTermTextHDRInfo. (It fits in padding before
+    // underlineColor, so it doesn't make the struct bigger.)
+    float hdrEligible;
 
     // Color for underline, if one is to be drawn
     vector_float4 underlineColor;
@@ -165,6 +171,19 @@ typedef struct {
     // Nonzero when `rect` and `color` are valid.
     int enabled;
 } iTermTextCursorInfo;
+
+// HDR text. The text fragment shaders multiply a glyph's color, in linear light,
+// by `gain` so it can render brighter than reference white. 1 means no boost.
+// Glyphs whose PIU has hdrEligible == 0 (a light cell background) are not
+// boosted.
+// The framebuffer is fp16 in an extended sRGB-curve color space whenever gain can
+// exceed 1, so the result is re-encoded with the sRGB transfer function.
+typedef struct {
+    float gain;
+    // The display's potential EDR headroom. A boosted color is scaled down as a
+    // whole so its largest channel stays at or below this, keeping its hue.
+    float headroom;
+} iTermTextHDRInfo;
 
 // A box cursor is at most two cells wide, so while sliding it overlaps at most
 // three columns.
