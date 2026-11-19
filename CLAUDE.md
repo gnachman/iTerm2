@@ -22,7 +22,8 @@
 - Localizing user-visible strings — how to wrap them, what to leave in English, the complete-sentence-not-injected-fragment rule, format specifiers, and plurals (including the `localizedStringWithFormat:` and single-argument rules): see `docs/localization.md`. Read it before adding or changing localizable strings.
 - Use iTermWarning, not NSAlert. iTermWarning alerts can be shown and answered from the iTerm2 Buddy mobile client; an NSAlert leaves the phone stuck. Describe accessory fields with remoteInputs, and mark buttons that only work at the Mac (file panels, other windows, web pages) as notOfferedRemotely.
 - Never `git add` submodules without express written permission.
-- Don't include AI-generated markdown files (summaries, plans, etc.) in commits — only ship code.
+- Don't include AI-generated markdown files (summaries, plans, etc.) in commits. Only ship code. Exception: files under docs/swift-migration/ are part of the Objective-C to Swift migration process and are committed (see docs/swift-migration/README.md).
+- Before doing any Objective-C to Swift migration work, read docs/swift-migration/README.md.
 - Avoid duplicate expressions; hoist shared computations into a named `const` before branching.
 - Don't change defaults silently.
 - Use [iTermUserDefaults userDefaults] instead of [NSUserDefaults standardUserDefaults]
