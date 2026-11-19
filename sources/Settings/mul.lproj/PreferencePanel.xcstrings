@@ -124657,6 +124657,270 @@
         }
       }
     },
+    "Abh-LD-N61.ibShadowedToolTip" : {
+      "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Shows an iTerm2 icon in the menu bar, followed by the text below. It is always shown while iTerm2 is excluded from the Dock so you can get back to Settings.\"; ObjectID = \"Abh-LD-N61\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra una icona de l’iTerm2 a la barra de menús, seguida del text de sota. Es mostra sempre mentre l’iTerm2 està exclòs del Dock perquè puguis tornar a la configuració."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobrazuje ikonu iTerm2 v řádku nabídek a za ní text níže. Zobrazuje se vždy, když je iTerm2 vyřazen z Docku, abyste se mohli vrátit do nastavení."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Viser et iTerm2-symbol i menulinjen efterfulgt af teksten nedenfor. Det vises altid, mens iTerm2 er udeladt fra Dock, så du kan komme tilbage til indstillingerne."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt ein iTerm2-Symbol in der Menüleiste an, gefolgt vom Text darunter. Es wird immer angezeigt, solange iTerm2 aus dem Dock ausgeblendet ist, damit Sie zu den Einstellungen zurückkehren können."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εμφανίζει ένα εικονίδιο του iTerm2 στη γραμμή μενού, ακολουθούμενο από το παρακάτω κείμενο. Εμφανίζεται πάντα όσο το iTerm2 είναι εκτός Dock, ώστε να μπορείτε να επιστρέψετε στις Ρυθμίσεις."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Shows an iTerm2 icon in the menu bar, followed by the text below. It is always shown while iTerm2 is excluded from the Dock so you can get back to Settings."
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows an iTerm2 icon in the menu bar, followed by the text below. It is always shown while iTerm2 is excluded from the Dock so you can get back to Settings."
+          }
+        },
+        "en-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows an iTerm2 icon in the menu bar, followed by the text below. It is always shown while iTerm2 is excluded from the Dock so you can get back to Settings."
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows an iTerm2 icon in the menu bar, followed by the text below. It is always shown while iTerm2 is excluded from the Dock so you can get back to Settings."
+          }
+        },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows an iTerm2 icon in the menu bar, followed by the text below. It is always shown while iTerm2 is excluded from the Dock so you can get back to Settings."
+          }
+        },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows an iTerm2 icon in the menu bar, followed by the text below. It is always shown while iTerm2 is excluded from the Dock so you can get back to Settings."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muestra un icono de iTerm2 en la barra de menús, seguido del texto de abajo. Se muestra siempre mientras iTerm2 está excluido del Dock para que puedas volver a Ajustes."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muestra un ícono de iTerm2 en la barra de menús, seguido del texto de abajo. Se muestra siempre mientras iTerm2 está excluido del Dock para que puedas volver a Configuración."
+          }
+        },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muestra un ícono de iTerm2 en la barra de menús, seguido del texto de abajo. Se muestra siempre mientras iTerm2 está excluido del Dock para que puedas volver a Configuración."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näyttää iTerm2-kuvakkeen valikkorivillä ja sen perässä alla olevan tekstin. Kuvake näkyy aina, kun iTerm2 ei ole Dockissa, jotta pääset takaisin asetuksiin."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Affiche une icône d’iTerm2 dans la barre des menus, suivie du texte ci-dessous. Elle est toujours affichée lorsque iTerm2 est exclu du Dock, pour que vous puissiez revenir aux réglages."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Affiche une icône d’iTerm2 dans la barre des menus, suivie du texte ci-dessous. Elle est toujours affichée lorsque iTerm2 est exclu du Dock, pour que vous puissiez revenir aux paramètres."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "मेन्यू बार में iTerm2 का आइकॉन और उसके बाद नीचे दिया गया टेक्स्ट दिखाता है। जब iTerm2 डॉक से बाहर रखा गया हो, तब यह हमेशा दिखता है ताकि आप सेटिंग्स पर वापस जा सकें।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikazuje ikonu iTerm2 u traci s izbornicima, a iza nje tekst ispod. Uvijek se prikazuje dok je iTerm2 izostavljen iz Docka kako biste se mogli vratiti u postavke."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Megjelenít egy iTerm2-ikont a menüsoron, utána az alábbi szöveggel. Mindig látható, amíg az iTerm2 nem szerepel a Dockban, hogy vissza tudjon térni a beállításokhoz."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menampilkan ikon iTerm2 di bar menu, diikuti teks di bawah. Ikon selalu ditampilkan saat iTerm2 tidak ada di Dock agar Anda bisa kembali ke Pengaturan."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra un’icona di iTerm2 nella barra dei menu, seguita dal testo sottostante. Viene sempre mostrata quando iTerm2 è escluso dal Dock, così puoi tornare alle impostazioni."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メニューバーにiTerm2のアイコンと、その後ろに下のテキストを表示します。iTerm2をDockに表示しない設定のときは、設定に戻れるように常に表示されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "메뉴 막대에 iTerm2 아이콘과 그 뒤에 아래 텍스트를 표시합니다. iTerm2가 Dock에서 제외된 동안에는 설정으로 돌아갈 수 있도록 항상 표시됩니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menunjukkan ikon iTerm2 dalam bar menu, diikuti teks di bawah. Ikon sentiasa ditunjukkan semasa iTerm2 dikecualikan daripada Dock supaya anda boleh kembali ke Tetapan."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Viser et iTerm2-symbol i menylinjen, etterfulgt av teksten nedenfor. Det vises alltid mens iTerm2 er utelatt fra Dock, slik at du kan komme tilbake til innstillingene."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toont een iTerm2-symbool in de menubalk, gevolgd door de tekst hieronder. Het wordt altijd getoond zolang iTerm2 niet in het Dock staat, zodat je terug kunt naar de instellingen."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokazuje ikonę iTerm2 na pasku menu, a za nią tekst poniżej. Jest zawsze widoczna, gdy iTerm2 nie jest wyświetlany w Docku, aby można było wrócić do ustawień."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra um ícone do iTerm2 na barra de menus, seguido do texto abaixo. Ele é sempre mostrado enquanto o iTerm2 está fora do Dock, para que você possa voltar aos Ajustes."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra um ícone do iTerm2 na barra de menus, seguido do texto abaixo. É sempre mostrado enquanto o iTerm2 está excluído da Dock, para que possa voltar às Definições."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afișează o pictogramă iTerm2 în bara de meniu, urmată de textul de mai jos. Este afișată întotdeauna cât timp iTerm2 este exclus din Dock, ca să puteți reveni la Configurări."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показывает значок iTerm2 в строке меню, а за ним текст ниже. Он всегда отображается, пока iTerm2 скрыт из Dock, чтобы вы могли вернуться в настройки."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobrazuje ikonu iTerm2 v lište menu a za ňou text nižšie. Zobrazuje sa vždy, keď je iTerm2 vylúčený z Docku, aby ste sa mohli vrátiť do nastavení."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaže ikono iTerm2 v menijski vrstici, ki ji sledi spodnje besedilo. Prikazana je vedno, ko je iTerm2 izključen iz Docka, da se lahko vrnete v nastavitve."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visar en iTerm2-symbol i menyraden följd av texten nedan. Den visas alltid medan iTerm2 inte visas i Dock så att du kan ta dig tillbaka till inställningarna."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงไอคอน iTerm2 ในแถบเมนู ตามด้วยข้อความด้านล่าง ไอคอนจะแสดงเสมอขณะที่ iTerm2 ไม่แสดงใน Dock เพื่อให้คุณกลับไปที่การตั้งค่าได้"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menü çubuğunda bir iTerm2 simgesi ve ardından aşağıdaki metni gösterir. iTerm2 Dock’ta gösterilmediği sürece, Ayarlar’a geri dönebilmeniz için her zaman gösterilir."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показує іконку iTerm2 у смузі меню, а за нею текст нижче. Вона завжди відображається, поки iTerm2 виключено з Dock, щоб ви могли повернутися до параметрів."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị biểu tượng iTerm2 trên thanh menu, theo sau là văn bản bên dưới. Biểu tượng luôn hiển thị khi iTerm2 không có trong Dock để bạn có thể quay lại Cài đặt."
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在菜单栏中显示 iTerm2 图标，后面跟着下方的文本。当 iTerm2 不在 Dock 中显示时，它总会显示，方便你回到设置。"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在選單列中顯示 iTerm2 圖像，後面接著下方的文字。當 iTerm2 不在 Dock 中顯示時，它會一直顯示，方便你返回設定。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在菜单栏中显示 iTerm2 图标，后面跟着下方的文本。当 iTerm2 不在 Dock 中显示时，它总会显示，方便你回到设置。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在選單列中顯示 iTerm2 圖像，後面接著下方的文字。當 iTerm2 不在 Dock 中顯示時，它會一直顯示，讓你可以回到設定。"
+          }
+        }
+      }
+    },
     "ACB-I9-bi4.title" : {
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Unicode:\"; ObjectID = \"ACB-I9-bi4\";",
       "extractionState" : "extracted_with_value",
@@ -127293,6 +127557,270 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "即時重播："
+          }
+        }
+      }
+    },
+    "aPS-UF-qCJ.title" : {
+      "comment" : "Class = \"NSButtonCell\"; title = \"Show a list of tabs with a preview while cycling through tabs\"; ObjectID = \"aPS-UF-qCJ\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra una llista de pestanyes amb previsualització en recórrer-les"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobrazit seznam panelů s náhledem při procházení panelů"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vis en liste over faner med forhåndsvisning, når du navigerer"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beim Durchblättern der Tabs eine Liste mit Vorschau anzeigen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εμφάνιση λίστας καρτελών με προεπισκόπηση κατά την κυκλική εναλλαγή καρτελών"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show a list of tabs with a preview while cycling through tabs"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show a list of tabs with a preview while cycling through tabs"
+          }
+        },
+        "en-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show a list of tabs with a preview while cycling through tabs"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show a list of tabs with a preview while cycling through tabs"
+          }
+        },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show a list of tabs with a preview while cycling through tabs"
+          }
+        },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show a list of tabs with a preview while cycling through tabs"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar una lista de pestañas con vista previa al recorrerlas"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar una lista de pestañas con vista previa al recorrerlas"
+          }
+        },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar una lista de pestañas con vista previa al recorrerlas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä välilehtiluettelo ja esikatselu välilehtiä kierrettäessä"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher la liste des onglets avec un aperçu en les parcourant"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher la liste des onglets avec un aperçu en les parcourant"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "टैब घुमाते समय प्रीव्यू के साथ टैब की सूची दिखाएँ"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži popis kartica s pregledom pri kruženju karticama"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lapok listájának megjelenítése előnézettel a lapok körbejárásakor"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tampilkan daftar tab dengan pratinjau saat memutar tab"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra un elenco dei pannelli con anteprima mentre li scorri"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タブを切り替えるときに、プレビュー付きでタブの一覧を表示"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "탭을 순환할 때 미리보기와 함께 탭 목록 보기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tunjukkan senarai tab dengan pratonton semasa mengitar tab"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vis en liste over faner med forhåndsvisning når du blar"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon een lijst met tabbladen en een voorvertoning bij het doorlopen"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż listę kart z podglądem podczas przełączania kart"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar lista de abas com pré-visualização ao percorrer as abas"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar lista de separadores com pré-visualização ao percorrer os separadores"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afișați o listă de file cu previzualizare la parcurgerea filelor"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показывать список вкладок с предпросмотром при циклическом переключении вкладок"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť zoznam tabov s náhľadom pri cyklickom prepínaní tabov"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži seznam zavihkov s predogledom med kroženjem po zavihkih"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visa en lista över flikar med förhandsvisning när du bläddrar"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงรายการแถบพร้อมตัวอย่างขณะวนแถบ"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sekmeler arasında dolaşırken önizlemeli sekme listesi göster"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показувати список вкладок із попереднім переглядом під час перебирання вкладок"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị danh sách tab kèm bản xem trước khi chuyển vòng qua các tab"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "循环切换标签页时显示带预览的标签页列表"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "循環切換分頁時顯示含預覽的分頁列表"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "循环切换标签页时显示带预览的标签页列表"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "循環切換標籤頁時顯示含預覽的標籤頁列表"
           }
         }
       }
@@ -180614,7 +181142,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Werkzeuggürtel öffnen"
+            "value" : "Werkzeugkasten öffnen"
           }
         },
         "el" : {
@@ -206197,6 +206725,270 @@
         }
       }
     },
+    "loD-uv-86f.title" : {
+      "comment" : "Class = \"NSTextFieldCell\"; title = \"Sessions processing output at once:\"; ObjectID = \"loD-uv-86f\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessions que processen sortida alhora:"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relace zpracovávající výstup současně:"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessioner, der behandler output samtidig:"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gleichzeitig Ausgabe verarbeitende Sitzungen:"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Συνεδρίες που επεξεργάζονται έξοδο ταυτόχρονα:"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sessions processing output at once:"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessions processing output at once:"
+          }
+        },
+        "en-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessions processing output at once:"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessions processing output at once:"
+          }
+        },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessions processing output at once:"
+          }
+        },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessions processing output at once:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesiones que procesan salida a la vez:"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesiones que procesan salida a la vez:"
+          }
+        },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesiones que procesan salida a la vez:"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yhtä aikaa tulostetta käsittelevät istunnot:"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessions traitant la sortie simultanément :"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessions traitant la sortie simultanément :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "एक साथ आउटपुट प्रोसेस करने वाले सत्र :"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesije koje istodobno obrađuju izlaz:"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Egyszerre kimenetet feldolgozó munkamenetek:"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesi yang memproses output sekaligus:"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessioni che elaborano l’output contemporaneamente:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同時に出力を処理するセッション数:"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "동시에 출력을 처리하는 세션 수:"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesi yang memproses output serentak:"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Økter som behandler utdata samtidig:"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessies die tegelijk uitvoer verwerken:"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesje przetwarzające wyjście jednocześnie:"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessões processando saída ao mesmo tempo:"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessões a processar saída em simultâneo:"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesiuni care procesează ieșirea simultan:"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сеансов, одновременно обрабатывающих вывод:"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relácie spracúvajúce výstup súčasne:"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seje, ki hkrati obdelujejo izhod:"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessioner som bearbetar utdata samtidigt:"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เซสชั่นที่ประมวลผลเอาต์พุตพร้อมกัน:"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aynı anda çıktı işleyen oturumlar:"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сеансів, що одночасно обробляють вивід:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Số phiên xử lý đầu ra cùng lúc:"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同时处理输出的会话数："
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同時處理輸出的工作階段數目："
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同时处理输出的会话数："
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同時處理輸出的工作階段數量："
+          }
+        }
+      }
+    },
     "Loo-aN-wrn.title" : {
       "comment" : "Class = \"NSButtonCell\"; title = \"Show offscreen command line at top of session\"; ObjectID = \"Loo-aN-wrn\";",
       "extractionState" : "extracted_with_value",
@@ -224413,6 +225205,270 @@
         }
       }
     },
+    "Oyq-yX-gkj.title" : {
+      "comment" : "Class = \"NSTextFieldCell\"; title = \"Control-Tab Switcher:\"; ObjectID = \"Oyq-yX-gkj\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selector Control-Tab:"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přepínač Control-Tab:"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ctrl-Tab-skifter:"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Control-Tab-Umschalter:"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εναλλάκτης Control-Tab:"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Control-Tab Switcher:"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Control-Tab Switcher:"
+          }
+        },
+        "en-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Control-Tab Switcher:"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Control-Tab Switcher:"
+          }
+        },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Control-Tab Switcher:"
+          }
+        },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Control-Tab Switcher:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selector Control-Tab:"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selector Control-Tab:"
+          }
+        },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selector Control-Tab:"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ctrl-Tab-vaihdin:"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélecteur Contrôle-Tab :"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélecteur Contrôle-Tab :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कंट्रोल-टैब स्विचर :"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izmjenjivač Control-Tab:"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Control-Tab lapváltó:"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pengalih Control-Tab:"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selettore Controllo-Tab:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Control-Tabスイッチャー:"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Control-Tab 전환기:"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Penukar Control-Tab:"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kontroll-Tab-veksler:"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Control-Tab-wisselaar:"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przełącznik Control-Tab:"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alternador Control-Tab:"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alternador Control-Tab:"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comutatorul Control-Tab:"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Переключатель Control-Tab:"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prepínač Control-Tab:"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preklopnik Control-Tab:"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kontroll-tabb-växlare:"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตัวสลับ Control-Tab:"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Control-Tab Değiştirici:"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перемикач Control-Tab:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bộ chuyển Control-Tab:"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Control-Tab切换器："
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Control-Tab 切換器："
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Control-Tab切换器："
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Control-Tab 切換器："
+          }
+        }
+      }
+    },
     "oyU-HC-L0R.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Meta\"; ObjectID = \"oyU-HC-L0R\";",
       "extractionState" : "extracted_with_value",
@@ -225993,6 +227049,270 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "⌘ 右 Command"
+          }
+        }
+      }
+    },
+    "peF-rz-Vml.ibShadowedToolTip" : {
+      "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"When Cycle Tabs Forward or Cycle Tabs Backward is bound to a key with a modifier, such as Control-Tab, holding the modifier shows the window’s tabs, most recently used first, with a preview of the highlighted tab. Release the modifier to switch to it.\"; ObjectID = \"peF-rz-Vml\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quan “Recorre les pestanyes cap endavant” o “Recorre les pestanyes cap enrere” està assignat a una combinació de tecles amb una tecla de modificació, com ara Control-Tab, si mantens premuda la tecla de modificació es mostren les pestanyes de la finestra, de la més recent a la menys recent, amb una previsualització de la ressaltada. Deixa anar la tecla de modificació per canviar-hi."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Když je akce „Procházet panely vpřed“ nebo „Procházet panely zpět“ přiřazena klávese s modifikátorem, například Control-Tab, podržením modifikační klávesy se zobrazí panely okna seřazené od naposledy použitého, s náhledem zvýrazněného panelu. Uvolněte modifikační klávesu a přepnete se na něj."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Når “Naviger frem gennem faner” eller “Naviger tilbage gennem faner” er knyttet til en tastkombination med en kombitast, f.eks. Ctrl-Tab, vises vinduets faner, når du holder kombitasten nede, de senest brugte først, med en forhåndsvisning af den fremhævede fane. Slip kombitasten for at skifte til den."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn „Tabs vorwärts durchblättern“ oder „Tabs rückwärts durchblättern“ einer Tastenkombination mit Modifikator wie Control-Tab zugewiesen ist, werden beim Halten des Modifikators die Tabs des Fensters angezeigt, die zuletzt verwendeten zuerst, mit einer Vorschau des hervorgehobenen Tabs. Lassen Sie den Modifikator los, um zu diesem Tab zu wechseln."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Όταν η «Κυκλική εναλλαγή καρτελών προς τα εμπρός» ή η «Κυκλική εναλλαγή καρτελών προς τα πίσω» έχει αντιστοιχιστεί σε συνδυασμό με πλήκτρο τροποποίησης, όπως το Control-Tab, κρατώντας πατημένο το πλήκτρο τροποποίησης εμφανίζονται οι καρτέλες του παραθύρου, ξεκινώντας από την πιο πρόσφατα χρησιμοποιημένη, με προεπισκόπηση της επισημασμένης καρτέλας. Αφήστε το πλήκτρο τροποποίησης για να μεταβείτε σε αυτήν."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When Cycle Tabs Forward or Cycle Tabs Backward is bound to a key with a modifier, such as Control-Tab, holding the modifier shows the window’s tabs, most recently used first, with a preview of the highlighted tab. Release the modifier to switch to it."
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When Cycle Tabs Forward or Cycle Tabs Backwards is bound to a key with a modifier, such as Control-Tab, holding the modifier shows the window’s tabs, most recently used first, with a preview of the highlighted tab. Release the modifier to switch to it."
+          }
+        },
+        "en-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When Cycle Tabs Forward or Cycle Tabs Backward is bound to a key with a modifier, such as Control-Tab, holding the modifier shows the window’s tabs, most recently used first, with a preview of the highlighted tab. Release the modifier to switch to it."
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When Cycle Tabs Forward or Cycle Tabs Backwards is bound to a key with a modifier, such as Control-Tab, holding the modifier shows the window’s tabs, most recently used first, with a preview of the highlighted tab. Release the modifier to switch to it."
+          }
+        },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When Cycle Tabs Forward or Cycle Tabs Backwards is bound to a key with a modifier, such as Control-Tab, holding the modifier shows the window’s tabs, most recently used first, with a preview of the highlighted tab. Release the modifier to switch to it."
+          }
+        },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When Cycle Tabs Forward or Cycle Tabs Backward is bound to a key with a modifier, such as Control-Tab, holding the modifier shows the window’s tabs, most recently used first, with a preview of the highlighted tab. Release the modifier to switch to it."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuando “Recorrer pestañas hacia adelante” o “Recorrer pestañas hacia atrás” está asignado a una combinación de teclas con un modificador, como Control-Tab, al mantener pulsado el modificador se muestran las pestañas de la ventana, de la usada más recientemente a la menos reciente, con una vista previa de la resaltada. Suelta el modificador para cambiar a ella."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuando “Recorrer pestañas hacia adelante” o “Recorrer pestañas hacia atrás” está asignado a una combinación de teclas con un modificador, como Control-Tab, al mantener presionado el modificador se muestran las pestañas de la ventana, de la usada más recientemente a la menos reciente, con una vista previa de la resaltada. Suelta el modificador para cambiar a ella."
+          }
+        },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuando “Recorrer pestañas hacia adelante” o “Recorrer pestañas hacia atrás” está asignado a una combinación de teclas con un modificador, como Control-Tab, al mantener presionado el modificador se muestran las pestañas de la ventana, de la usada más recientemente a la menos reciente, con una vista previa de la resaltada. Suelta el modificador para cambiar a ella."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kun ”Kierrä välilehtiä eteenpäin” tai ”Kierrä välilehtiä taaksepäin” on määritetty muuntonäppäimen sisältävään näppäinyhdistelmään, kuten Ctrl-Tab, muuntonäppäimen pitäminen alhaalla näyttää ikkunan välilehdet viimeksi käytetystä alkaen sekä esikatselun korostetusta välilehdestä. Vaihda siihen vapauttamalla muuntonäppäin."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lorsque « Parcourir les onglets vers l’avant » ou « Parcourir les onglets vers l’arrière » est associé à une combinaison de touches comportant un modificateur, comme Contrôle-Tab, maintenir le modificateur enfoncé affiche les onglets de la fenêtre, du plus récemment utilisé au plus ancien, avec un aperçu de celui qui est en surbrillance. Relâchez le modificateur pour basculer vers celui-ci."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lorsque « Parcourir les onglets vers l’avant » ou « Parcourir les onglets vers l’arrière » est associé à une combinaison de touches comportant un modificateur, comme Contrôle-Tab, maintenir le modificateur enfoncé affiche les onglets de la fenêtre, du plus récemment utilisé au plus ancien, avec un aperçu de celui qui est en surbrillance. Relâchez le modificateur pour basculer vers celui-ci."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "जब “टैब आगे की ओर साइकल करें” या “टैब पीछे की ओर साइकल करें” किसी मॉडिफ़ायर वाली की (जैसे कंट्रोल-टैब) से जुड़ा हो, तो मॉडिफ़ायर दबाए रखने पर विंडो के टैब दिखते हैं, सबसे हाल में उपयोग किया गया पहले, और हाइलाइट किए गए टैब का प्रीव्यू भी दिखता है। उस टैब पर स्विच करने के लिए मॉडिफ़ायर छोड़ दें।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kada je radnja “Kruži karticama unaprijed” ili “Kruži karticama unatrag” dodijeljena tipki s modifikatorom, poput Control-Tab, držanje modifikatora prikazuje kartice prozora, počevši od posljednje korištene, s pregledom istaknute kartice. Otpustite modifikator da biste se prebacili na nju."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ha a „Lapok körbejárása előre” vagy a „Lapok körbejárása visszafelé” művelet módosítóbillentyűs billentyűkombinációhoz (például Control-Tab) van rendelve, a módosító lenyomva tartásakor megjelennek az ablak lapjai a legutóbb használttal kezdve, a kijelölt lap előnézetével. Engedje fel a módosítót, hogy átváltson rá."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jika “Putar Tab Maju” atau “Putar Tab Mundur” dipetakan ke tombol dengan pengubah, misalnya Control-Tab, menahan pengubah akan menampilkan tab jendela, yang terakhir digunakan lebih dulu, beserta pratinjau tab yang disorot. Lepaskan pengubah untuk beralih ke tab tersebut."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quando “Scorri pannelli in avanti” o “Scorri pannelli all’indietro” è assegnato a una combinazione di tasti con un modificatore, come Controllo-Tab, tenendo premuto il modificatore vengono mostrati i pannelli della finestra, dal più recente al meno recente, con un’anteprima di quello evidenziato. Rilascia il modificatore per passarvi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「タブを順に切り替え」または「タブを逆順に切り替え」がControl-Tabのような修飾キー付きのキーに割り当てられている場合、修飾キーを押している間、ウインドウのタブが最近使用した順に表示され、ハイライトされたタブのプレビューも表示されます。修飾キーを離すと、そのタブに切り替わります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“탭 앞으로 순환” 또는 “탭 역방향 순환”이 Control-Tab처럼 보조 키가 포함된 키에 할당되어 있으면, 보조 키를 누르고 있는 동안 윈도우의 탭이 최근 사용 순으로 표시되고 강조된 탭의 미리보기도 함께 표시됩니다. 보조 키를 놓으면 해당 탭으로 전환됩니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apabila “Kitar Tab ke Depan” atau “Kitar Tab ke Belakang” diikat pada kekunci dengan pengubah suai, seperti Control-Tab, menahan pengubah suai akan menunjukkan tab tetingkap, yang terbaharu digunakan dahulu, dengan pratonton tab yang diserlahkan. Lepaskan pengubah suai untuk bertukar kepada tab itu."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Når «Bla framover gjennom faner» eller «Bla bakover gjennom faner» er tilordnet en tastekombinasjon med en spesialtast, for eksempel Kontroll-Tab, vises fanene i vinduet når du holder spesialtasten nede, de sist brukte først, med en forhåndsvisning av den uthevede fanen. Slipp spesialtasten for å bytte til den."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als ‘Doorloop tabbladen voorwaarts’ of ‘Doorloop tabbladen achterwaarts’ is toegewezen aan een toetscombinatie met een speciale toets, zoals Control-Tab, zie je de tabbladen van het venster als je de speciale toets ingedrukt houdt, de laatst gebruikte eerst, met een voorvertoning van het gemarkeerde tabblad. Laat de speciale toets los om ernaartoe te wisselen."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gdy akcja „Przełączaj karty do przodu” lub „Przełączaj karty wstecz” jest przypisana do klawisza z modyfikatorem, np. Control-Tab, przytrzymanie modyfikatora pokazuje karty okna, od ostatnio używanej, z podglądem zaznaczonej karty. Zwolnij modyfikator, aby przełączyć się na nią."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quando “Percorrer abas para frente” ou “Percorrer abas para trás” estiver associado a uma tecla com modificador, como Control-Tab, manter o modificador pressionado mostra as abas da janela, começando pela usada mais recentemente, com uma pré-visualização da aba destacada. Solte o modificador para mudar para ela."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quando “Percorrer separadores para a frente” ou “Percorrer separadores para trás” está associado a uma tecla com modificador, como Control-Tab, manter o modificador premido mostra os separadores da janela, começando pelo usado mais recentemente, com uma pré-visualização do separador realçado. Solte o modificador para mudar para ele."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Când „Parcurgeți filele înainte” sau „Parcurgeți filele înapoi” este atribuită unei taste cu modificator, cum ar fi Control-Tab, menținerea apăsată a modificatorului afișează filele ferestrei, începând cu cea folosită cel mai recent, cu o previzualizare a filei evidențiate. Eliberați modificatorul pentru a comuta la ea."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Когда действие «Циклически переключать вкладки вперёд» или «Циклически переключать вкладки назад» назначено клавише с модификатором, например Control-Tab, при удержании модификатора показываются вкладки окна, начиная с последней использованной, с предпросмотром выделенной вкладки. Отпустите модификатор, чтобы переключиться на неё."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keď je akcia „Cyklicky prepínať taby dopredu“ alebo „Cyklicky prepínať taby dozadu“ priradená klávesu s modifikátorom, napríklad Control-Tab, podržaním modifikačného klávesu sa zobrazia taby okna zoradené od naposledy použitého, s náhľadom zvýrazneného tabu. Uvoľnite modifikačný kláves a prepnete sa naň."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ko je dejanje »Kroži po zavihkih naprej« ali »Kroži po zavihkih nazaj« dodeljeno tipki z modifikatorjem, na primer Control-Tab, pridržanje modifikacijske tipke prikaže zavihke okna, začenši z nazadnje uporabljenim, s predogledom označenega zavihka. Spustite modifikacijsko tipko, da preklopite nanj."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "När ”Bläddra bland flikar framåt” eller ”Bläddra bland flikar bakåt” är kopplat till en tangentkombination med en modifierartangent, till exempel kontroll-tabb, visas fönstrets flikar när du håller ned modifierartangenten, de senast använda först, med en förhandsvisning av den markerade fliken. Släpp modifierartangenten för att växla till den."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เมื่อกำหนด “วนแถบไปข้างหน้า” หรือ “วนแถบย้อนกลับ” ให้กับปุ่มที่มีปุ่มปรับค่า เช่น Control-Tab การกดปุ่มปรับค่าค้างไว้จะแสดงแถบของหน้าต่าง โดยเรียงจากแถบที่ใช้ล่าสุดก่อน พร้อมตัวอย่างของแถบที่ไฮไลต์อยู่ ปล่อยปุ่มปรับค่าเพื่อสลับไปยังแถบนั้น"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“Sekmeler Arasında İleri Dolaş” veya “Sekmeler Arasında Geri Dolaş”, Control-Tab gibi değiştirici tuş içeren bir tuşa atandığında, değiştirici tuşu basılı tutmak pencerenin sekmelerini en son kullanılan önce olacak şekilde, vurgulanan sekmenin önizlemesiyle birlikte gösterir. O sekmeye geçmek için değiştirici tuşu bırakın."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Коли дію «Перебирати вкладки вперед» або «Перебирати вкладки назад» призначено клавіші з модифікатором, наприклад Control-Tab, утримання модифікатора показує вкладки вікна, починаючи з останньої використаної, з попереднім переглядом виділеної вкладки. Відпустіть модифікатор, щоб перейти до неї."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khi “Chuyển tab tiếp theo (vòng)” hoặc “Chuyển tab trước đó (vòng)” được gán cho một phím có phím bổ trợ, chẳng hạn Control-Tab, việc giữ phím bổ trợ sẽ hiển thị các tab của cửa sổ, tab dùng gần đây nhất trước, kèm bản xem trước của tab đang được tô sáng. Nhả phím bổ trợ để chuyển sang tab đó."
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当“向前循环切换标签页”或“向后循环切换标签页”绑定到带修饰键的按键（例如Control-Tab）时，按住修饰键会按最近使用的顺序显示窗口的标签页，并显示高亮标签页的预览。松开修饰键即可切换到该标签页。"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "當「向前循環切換分頁」或「向後循環切換分頁」對應至含變更鍵的按鍵（例如 Control-Tab）時，按住變更鍵會按最近使用的次序顯示視窗的分頁，並顯示反白分頁的預覽。放開變更鍵即可切換至該分頁。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当“向前循环切换标签页”或“向后循环切换标签页”绑定到带修饰键的按键（例如 Control-Tab）时，按住修饰键会按最近使用顺序显示窗口中的标签页，并显示所高亮标签页的预览。松开修饰键即可切换到该标签页。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "當「向前循環切換標籤頁」或「向後循環切換標籤頁」對應到含變更鍵的按鍵（例如 Control-Tab）時，按住變更鍵會依最近使用的順序顯示視窗的標籤頁，並顯示反白標籤頁的預覽。放開變更鍵即可切換到該標籤頁。"
           }
         }
       }
@@ -282609,6 +283929,270 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "括號貼上會告知相容的 App，文字是透過貼上操作而非鍵入插入的。某些程式會藉此特別處理貼上的內容，例如不自動縮排。"
+          }
+        }
+      }
+    },
+    "y26-8Y-H7P.title" : {
+      "comment" : "Class = \"NSButtonCell\"; title = \"Automatic\"; ObjectID = \"y26-8Y-H7P\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automàtic"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automaticky"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisk"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αυτόματα"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Automatic"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatic"
+          }
+        },
+        "en-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatic"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatic"
+          }
+        },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatic"
+          }
+        },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatic"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automático"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automático"
+          }
+        },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automático"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automaattinen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatique"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatique"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्वचालित"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatski"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatikus"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otomatis"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatico"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "자동"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatik"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisk"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatycznie"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automático"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automático"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automat"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Автоматически"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automaticky"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Samodejno"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatiskt"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "อัตโนมัติ"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otomatik"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Автоматично"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tự động"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動"
           }
         }
       }
