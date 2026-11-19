@@ -24,7 +24,7 @@ tips = [
       },
     {
       "title": "Undo Close",
-      "body": "If you close a session, tab, or window by accident you can undo it with “Edit > Undo” (⌘Z). By default you have five seconds to undo, but you can adjust that timeout in “Prefs > Profiles > Session.”"
+      "body": "If you close a session, tab, or window by accident you can bring it back with “Shell > Undo Close” (⇧⌘T). By default you have five seconds to undo, but you can adjust that timeout in “Settings > Profiles > Session.”"
       },
     {
       "title": "Annotations",
@@ -527,6 +527,86 @@ tips = [
         "body": "When connected via SSH Integration, use \"Shell > ssh > Download Files\" to browse and download files from the remote host without opening a new connection. Files on SSH hosts also appear in file open/save dialogs!"
         },
 
+    {
+      "title": "Floating Panes",
+      "body": "Shell > New Floating Pane with Current Profile opens a pane that floats above a tab’s split panes. Drag its title bar to move it and its edges to resize it. To float an existing split pane, use Session > Move Session > Move Session to Floating Pane. Window > Split Pane > Floating Panes has more options."
+      },
+    {
+      "title": "Tab Groups",
+      "body": "Gather related tabs into a named, colored group with Window > Tab > Add Tab to New Group…. A group stays together in the tab bar, can be collapsed to save space, and can be dragged as a unit to another window. Groups can even contain sub-groups."
+      },
+    {
+      "title": "Session Status",
+      "body": "Programs can report whether they are working, waiting on you, done, or failed, and iTerm2 shows it on their tab. Open the Session Status tool in the Toolbelt to see every session’s status in one place and jump to the ones that need your attention."
+      },
+    {
+      "title": "Claude Code Integration",
+      "body": "Choose iTerm2 > Install Claude Code Integration to see whether Claude Code is working, waiting on you, or done right on its tab. A Claude Code workgroup adds a Code Review session that reviews Claude’s changes and can send its findings back to Claude."
+      },
+    {
+      "title": "Workgroups",
+      "body": "A workgroup turns a session into a group of related sessions, such as a main program with a reviewer or a log viewer beside it, each with its own toolbar for switching between them. Set them up in “Settings > Arrangements > Workgroups.”"
+      },
+    {
+      "title": "iTerm2 Buddy",
+      "body": "iTerm2 Buddy is an iPhone app that lets you watch and type into your terminal sessions, answer AI chat permission requests, and get push notifications when a session needs you. Everything is end-to-end encrypted. Pair your phone in iTerm2 > Companion Device Settings."
+      },
+    {
+      "title": "Session Notes",
+      "body": "View > Show Session Note attaches a floating note to the current session. You can drag, resize, and collapse it, and it’s kept across restarts. The Notes tool in the Toolbelt can show or hide them."
+      },
+    {
+      "title": "Fold All",
+      "body": "Edit > Fold All folds all the command output in your history so it stays around without getting in the way."
+      },
+    {
+      "title": "Session Archives",
+      "body": "Save a session’s contents with Shell > Archives > Save Archive of Current Session… and bring it back later with Restore Archive…. A profile setting can archive sessions automatically when they close."
+      },
+    {
+      "title": "Screenshots with Redactions",
+      "body": "Session > Make Screenshot… captures the terminal and lets you highlight or redact parts of it before you save or share it."
+      },
+    {
+      "title": "Pinned Tabs",
+      "body": "Right-click a tab and choose “Pin Tab” to keep it in place and protect it from being reordered."
+      },
+    {
+      "title": "Lock Layout and Location",
+      "body": "Window > Lock Layout protects a window’s tabs and panes from being added, closed, or rearranged by accident. Window > Lock Location returns a window to its place if anything moves it, even after its display disconnects and comes back."
+      },
+    {
+      "title": "Cockpit",
+      "body": "Window > Cockpit shows all your sessions in one place. The composer at its bottom sends a command to many sessions at once: type @ to pick sessions, tabs, or windows, then type the command."
+      },
+    {
+      "title": "Control-Tab Switcher",
+      "body": "Turn on the Control-Tab Switcher in “Settings > Appearance > Tabs.” Then holding Control while pressing Tab shows the window’s tabs, most recently used first, with a preview of the highlighted one. Release Control to switch."
+      },
+    {
+      "title": "Suppressed Alerts",
+      "body": "Changed your mind about an alert you told iTerm2 not to show again? iTerm2 > Suppressed Alerts… lists them so you can turn them back on."
+      },
+    {
+      "title": "The it2 Command",
+      "body": "The it2 command lets you control iTerm2 from the shell: create windows and tabs, set a session’s status, read and set variables, send a notification to your phone, and more. It’s available wherever Shell Integration is installed, including hosts reached through SSH Integration. Run “it2 --help” to get started."
+      },
+    {
+      "title": "Prevent Sleep",
+      "body": "A setting in “Settings > Profiles > Session” keeps your Mac awake while a session with that profile exists. Pair it with a “Set Profile Setting” trigger to stay awake only while a long-running job is active."
+      },
+    {
+      "title": "Bind Settings to Expressions",
+      "body": "Right-click a color or checkbox in Settings and choose “Bind to Expression” to compute its value from an expression, such as a user-defined variable. The setting updates whenever the value changes."
+      },
+    {
+      "title": "AI Providers",
+      "body": "AI Chat works with OpenAI, Anthropic, Gemini, DeepSeek, Grok, and models on your own computer through Ollama, and you can configure more than one at once. Set them up in “Settings > General > AI.”"
+      },
+    {
+      "title": "Tabs on the Side",
+      "body": "Tabs can go on the left or right side of the window, which leaves room for long titles. Change “Tab bar location” in “Settings > Appearance > Tabs.”"
+      },
   ]
 
 

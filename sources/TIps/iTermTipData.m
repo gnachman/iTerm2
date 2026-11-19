@@ -32,7 +32,7 @@
                         kTipUrlKey: @"https://iterm2.com/shell_integration.html" },
 
             @"0004": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0004.Title", nil, [NSBundle mainBundle], @"Undo Close", @"Tip of the day title, id 0004"),
-                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0004.Body", nil, [NSBundle mainBundle], @"If you close a session, tab, or window by accident you can undo it with “Edit > Undo” (⌘Z). By default you have five seconds to undo, but you can adjust that timeout in “Settings > Profiles > Session.”", @"Tip of the day body, id 0004") },
+                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0004.Body", nil, [NSBundle mainBundle], @"If you close a session, tab, or window by accident you can bring it back with “Shell > Undo Close” (⇧⌘T). By default you have five seconds to undo, but you can adjust that timeout in “Settings > Profiles > Session.”", @"Tip of the day body, id 0004") },
 
             @"0005": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0005.Title", nil, [NSBundle mainBundle], @"Annotations", @"Tip of the day title, id 0005"),
                          kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0005.Body", nil, [NSBundle mainBundle], @"Want to mark up your scrollback history? Right click on a selection and choose “Annotate Selection” to add a personal note to it. Use “View > Show Annotations” to show or hide them, and look in “Edit > Marks and Annotations” for more things you can do.", @"Tip of the day body, id 0005") },
@@ -415,6 +415,66 @@
 
             @"0123": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0123.Title", nil, [NSBundle mainBundle], @"SSH File Browser", @"Tip of the day title, id 0123"),
                         kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0123.Body", nil, [NSBundle mainBundle], @"When connected via SSH Integration, use “Shell > ssh > Download Files” to browse and download files from the remote host without opening a new connection. Files on SSH hosts also appear in file open/save dialogs!", @"Tip of the day body, id 0123") },
+
+            @"0124": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0124.Title", nil, [NSBundle mainBundle], @"Floating Panes", @"Tip of the day title, id 0124"),
+                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0124.Body", nil, [NSBundle mainBundle], @"Shell > New Floating Pane with Current Profile opens a pane that floats above a tab’s split panes. Drag its title bar to move it and its edges to resize it. To float an existing split pane, use Session > Move Session > Move Session to Floating Pane. Window > Split Pane > Floating Panes has more options.", @"Tip of the day body, id 0124") },
+
+            @"0125": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0125.Title", nil, [NSBundle mainBundle], @"Tab Groups", @"Tip of the day title, id 0125"),
+                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0125.Body", nil, [NSBundle mainBundle], @"Gather related tabs into a named, colored group with Window > Tab > Add Tab to New Group…. A group stays together in the tab bar, can be collapsed to save space, and can be dragged as a unit to another window. Groups can even contain sub-groups.", @"Tip of the day body, id 0125") },
+
+            @"0126": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0126.Title", nil, [NSBundle mainBundle], @"Session Status", @"Tip of the day title, id 0126"),
+                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0126.Body", nil, [NSBundle mainBundle], @"Programs can report whether they are working, waiting on you, done, or failed, and iTerm2 shows it on their tab. Open the Session Status tool in the Toolbelt to see every session’s status in one place and jump to the ones that need your attention.", @"Tip of the day body, id 0126") },
+
+            @"0127": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0127.Title", nil, [NSBundle mainBundle], @"Claude Code Integration", @"Tip of the day title, id 0127"),
+                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0127.Body", nil, [NSBundle mainBundle], @"Choose iTerm2 > Install Claude Code Integration to see whether Claude Code is working, waiting on you, or done right on its tab. A Claude Code workgroup adds a Code Review session that reviews Claude’s changes and can send its findings back to Claude.", @"Tip of the day body, id 0127") },
+
+            @"0128": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0128.Title", nil, [NSBundle mainBundle], @"Workgroups", @"Tip of the day title, id 0128"),
+                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0128.Body", nil, [NSBundle mainBundle], @"A workgroup turns a session into a group of related sessions, such as a main program with a reviewer or a log viewer beside it, each with its own toolbar for switching between them. Set them up in “Settings > Arrangements > Workgroups.”", @"Tip of the day body, id 0128") },
+
+            @"0129": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0129.Title", nil, [NSBundle mainBundle], @"iTerm2 Buddy", @"Tip of the day title, id 0129"),
+                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0129.Body", nil, [NSBundle mainBundle], @"iTerm2 Buddy is an iPhone app that lets you watch and type into your terminal sessions, answer AI chat permission requests, and get push notifications when a session needs you. Everything is end-to-end encrypted. Pair your phone in iTerm2 > Companion Device Settings.", @"Tip of the day body, id 0129") },
+
+            @"0130": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0130.Title", nil, [NSBundle mainBundle], @"Session Notes", @"Tip of the day title, id 0130"),
+                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0130.Body", nil, [NSBundle mainBundle], @"View > Show Session Note attaches a floating note to the current session. You can drag, resize, and collapse it, and it’s kept across restarts. The Notes tool in the Toolbelt can show or hide them.", @"Tip of the day body, id 0130") },
+
+            @"0131": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0131.Title", nil, [NSBundle mainBundle], @"Fold All", @"Tip of the day title, id 0131"),
+                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0131.Body", nil, [NSBundle mainBundle], @"Edit > Fold All folds all the command output in your history so it stays around without getting in the way.", @"Tip of the day body, id 0131") },
+
+            @"0132": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0132.Title", nil, [NSBundle mainBundle], @"Session Archives", @"Tip of the day title, id 0132"),
+                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0132.Body", nil, [NSBundle mainBundle], @"Save a session’s contents with Shell > Archives > Save Archive of Current Session… and bring it back later with Restore Archive…. A profile setting can archive sessions automatically when they close.", @"Tip of the day body, id 0132") },
+
+            @"0133": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0133.Title", nil, [NSBundle mainBundle], @"Screenshots with Redactions", @"Tip of the day title, id 0133"),
+                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0133.Body", nil, [NSBundle mainBundle], @"Session > Make Screenshot… captures the terminal and lets you highlight or redact parts of it before you save or share it.", @"Tip of the day body, id 0133") },
+
+            @"0134": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0134.Title", nil, [NSBundle mainBundle], @"Pinned Tabs", @"Tip of the day title, id 0134"),
+                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0134.Body", nil, [NSBundle mainBundle], @"Right-click a tab and choose “Pin Tab” to keep it in place and protect it from being reordered.", @"Tip of the day body, id 0134") },
+
+            @"0135": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0135.Title", nil, [NSBundle mainBundle], @"Lock Layout and Location", @"Tip of the day title, id 0135"),
+                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0135.Body", nil, [NSBundle mainBundle], @"Window > Lock Layout protects a window’s tabs and panes from being added, closed, or rearranged by accident. Window > Lock Location returns a window to its place if anything moves it, even after its display disconnects and comes back.", @"Tip of the day body, id 0135") },
+
+            @"0136": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0136.Title", nil, [NSBundle mainBundle], @"Cockpit", @"Tip of the day title, id 0136"),
+                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0136.Body", nil, [NSBundle mainBundle], @"Window > Cockpit shows all your sessions in one place. The composer at its bottom sends a command to many sessions at once: type @ to pick sessions, tabs, or windows, then type the command.", @"Tip of the day body, id 0136") },
+
+            @"0137": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0137.Title", nil, [NSBundle mainBundle], @"Control-Tab Switcher", @"Tip of the day title, id 0137"),
+                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0137.Body", nil, [NSBundle mainBundle], @"Turn on the Control-Tab Switcher in “Settings > Appearance > Tabs.” Then holding Control while pressing Tab shows the window’s tabs, most recently used first, with a preview of the highlighted one. Release Control to switch.", @"Tip of the day body, id 0137") },
+
+            @"0138": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0138.Title", nil, [NSBundle mainBundle], @"Suppressed Alerts", @"Tip of the day title, id 0138"),
+                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0138.Body", nil, [NSBundle mainBundle], @"Changed your mind about an alert you told iTerm2 not to show again? iTerm2 > Suppressed Alerts… lists them so you can turn them back on.", @"Tip of the day body, id 0138") },
+
+            @"0139": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0139.Title", nil, [NSBundle mainBundle], @"The it2 Command", @"Tip of the day title, id 0139"),
+                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0139.Body", nil, [NSBundle mainBundle], @"The it2 command lets you control iTerm2 from the shell: create windows and tabs, set a session’s status, read and set variables, send a notification to your phone, and more. It’s available wherever Shell Integration is installed, including hosts reached through SSH Integration. Run “it2 --help” to get started.", @"Tip of the day body, id 0139") },
+
+            @"0140": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0140.Title", nil, [NSBundle mainBundle], @"Prevent Sleep", @"Tip of the day title, id 0140"),
+                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0140.Body", nil, [NSBundle mainBundle], @"A setting in “Settings > Profiles > Session” keeps your Mac awake while a session with that profile exists. Pair it with a “Set Profile Setting” trigger to stay awake only while a long-running job is active.", @"Tip of the day body, id 0140") },
+
+            @"0141": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0141.Title", nil, [NSBundle mainBundle], @"Bind Settings to Expressions", @"Tip of the day title, id 0141"),
+                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0141.Body", nil, [NSBundle mainBundle], @"Right-click a color or checkbox in Settings and choose “Bind to Expression” to compute its value from an expression, such as a user-defined variable. The setting updates whenever the value changes.", @"Tip of the day body, id 0141") },
+
+            @"0142": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0142.Title", nil, [NSBundle mainBundle], @"AI Providers", @"Tip of the day title, id 0142"),
+                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0142.Body", nil, [NSBundle mainBundle], @"AI Chat works with OpenAI, Anthropic, Gemini, DeepSeek, Grok, and models on your own computer through Ollama, and you can configure more than one at once. Set them up in “Settings > General > AI.”", @"Tip of the day body, id 0142") },
+
+            @"0143": @{ kTipTitleKey: NSLocalizedStringWithDefaultValue(@"Tip.0143.Title", nil, [NSBundle mainBundle], @"Tabs on the Side", @"Tip of the day title, id 0143"),
+                        kTipBodyKey: NSLocalizedStringWithDefaultValue(@"Tip.0143.Body", nil, [NSBundle mainBundle], @"Tabs can go on the left or right side of the window, which leaves room for long titles. Change “Tab bar location” in “Settings > Appearance > Tabs.”", @"Tip of the day body, id 0143") },
 
 // IMPORTANT: When updating this, also update it2tip
             };
