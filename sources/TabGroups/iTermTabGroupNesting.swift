@@ -118,9 +118,9 @@ final class iTermTabGroupNesting: NSObject {
     }
 
     // The groups that break the one-level rule: each has a parent and is itself
-    // some group's parent, or is nested in itself. Making each of them top-level
-    // restores the rule; their own sub-groups stay nested under them. Listed once
-    // each, in tab order. `parentIDs[i]` must be nil when `groupIDs[i]` is.
+    // some group's parent, or is nested in itself. Listed once each, in tab
+    // order; nestingDepthRepairs says how to fix them. `parentIDs[i]` must be
+    // nil when `groupIDs[i]` is.
     static func groupsViolatingNestingDepth(groupIDs: [String?],
                                             parentIDs: [String?]) -> [String] {
         it_assert(groupIDs.count == parentIDs.count, "parallel arrays required")
@@ -137,9 +137,70 @@ final class iTermTabGroupNesting: NSObject {
         return result
     }
 
-    @objc(groupsViolatingNestingDepthWithGroupIDs:parentIDs:)
-    static func groupsViolatingNestingDepth(groupIDs: [Any], parentIDs: [Any]) -> [String] {
-        return groupsViolatingNestingDepth(groupIDs: groupIDs.map { $0 as? String },
-                                           parentIDs: parentIDs.map { $0 as? String })
+    // Moves that bring a hierarchy deeper than one level back to the rule, to be
+    // applied in order: every tab in `groupID` gets `newParentID` as its parent
+    // (nil makes the group top-level). A violator normally becomes top-level,
+    // keeping its sub-groups. But a parent with no direct tabs exists only on
+    // its sub-groups' tabs, so if the violator is the last thing in its parent,
+    // promoting it would erase the parent's name and color. Then the violator
+    // stays put and its own sub-groups move up beside it instead.
+    static func nestingDepthRepairs(groupIDs: [String?],
+                                    parentIDs: [String?]) -> [iTermTabGroupNestingRepair] {
+        it_assert(groupIDs.count == parentIDs.count, "parallel arrays required")
+        var parents = parentIDs
+        var result = [iTermTabGroupNestingRepair]()
+        func move(_ groupID: String, to newParentID: String?) {
+            for i in groupIDs.indices where groupIDs[i] == groupID {
+                parents[i] = newParentID
+            }
+            result.append(iTermTabGroupNestingRepair(groupID: groupID, newParentID: newParentID))
+        }
+        // Each step un-nests some tabs or moves some up a level, so this is
+        // ample. The bound only guards against a hang on input I didn't foresee.
+        for _ in 0...(2 * groupIDs.count) {
+            guard let violator = groupsViolatingNestingDepth(groupIDs: groupIDs, parentIDs: parents).first,
+                  let i = groupIDs.firstIndex(of: violator),
+                  let parentID = parents[i] else {
+                break
+            }
+            let parentOutlivesPromotion = groupIDs.indices.contains {
+                groupIDs[$0] == parentID || (parents[$0] == parentID && groupIDs[$0] != violator)
+            }
+            if parentID == violator || parentOutlivesPromotion {
+                move(violator, to: nil)
+                continue
+            }
+            var children = [String]()
+            for j in groupIDs.indices where parents[j] == violator {
+                if let child = groupIDs[j], child != violator, !children.contains(child) {
+                    children.append(child)
+                }
+            }
+            for child in children {
+                move(child, to: parentID)
+            }
+        }
+        return result
+    }
+
+    @objc(nestingDepthRepairsWithGroupIDs:parentIDs:)
+    static func nestingDepthRepairs(groupIDs: [Any], parentIDs: [Any]) -> [iTermTabGroupNestingRepair] {
+        return nestingDepthRepairs(groupIDs: groupIDs.map { $0 as? String },
+                                   parentIDs: parentIDs.map { $0 as? String })
+    }
+}
+
+@objc(iTermTabGroupNestingRepair)
+final class iTermTabGroupNestingRepair: NSObject {
+    @objc let groupID: String
+    @objc let newParentID: String?
+
+    init(groupID: String, newParentID: String?) {
+        self.groupID = groupID
+        self.newParentID = newParentID
+    }
+
+    override var description: String {
+        return "\(groupID)→\(newParentID ?? "top level")"
     }
 }

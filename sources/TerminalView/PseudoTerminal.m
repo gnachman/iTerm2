@@ -9754,9 +9754,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     NSArray *groupIDs = nil;
     NSArray *parentIDs = nil;
     [self getTabGroupIDs:&groupIDs parentIDs:&parentIDs];
-    NSArray<NSString *> *violators = [iTermTabGroupNesting groupsViolatingNestingDepthWithGroupIDs:groupIDs
-                                                                                         parentIDs:parentIDs];
-    if (violators.count == 0) {
+    NSArray<iTermTabGroupNestingRepair *> *repairs =
+        [iTermTabGroupNesting nestingDepthRepairsWithGroupIDs:groupIDs parentIDs:parentIDs];
+    if (repairs.count == 0) {
         return NO;
     }
     NSMutableArray<NSString *> *hierarchy = [NSMutableArray array];
@@ -9767,14 +9767,37 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }];
     // This only happens when there is a bug, so the stack trace is affordable
     // and is the best clue to which operation caused it.
-    RLog(@"tabGroup: nesting deeper than one level after %@; making %@ top-level. parent/group per tab: [%@]\n%@",
+    RLog(@"tabGroup: nesting deeper than one level after %@; moving %@. parent/group per tab: [%@]\n%@",
          context,
-         [violators componentsJoinedByString:@", "],
+         [repairs componentsJoinedByString:@", "],
          [hierarchy componentsJoinedByString:@", "],
          [[NSThread callStackSymbols] componentsJoinedByString:@"\n"]);
-    for (PTYTab *tab in [self tabs]) {
-        if (tab.tabGroupID && [violators containsObject:tab.tabGroupID]) {
-            [tab clearTabGroupParent];
+    for (iTermTabGroupNestingRepair *repair in repairs) {
+        NSString *parentID = repair.newParentID;
+        // A move under a parent copies its definition from a tab that already
+        // carries it. The planner only moves a group under a parent that some
+        // other tab is in, so the carrier exists.
+        PTYTab *parentCarrier = nil;
+        if (parentID) {
+            for (PTYTab *aTab in [self tabs]) {
+                if ([aTab isInTabGroup:parentID]) {
+                    parentCarrier = aTab;
+                    break;
+                }
+            }
+        }
+        for (PTYTab *tab in [self tabs]) {
+            if (![tab.tabGroupID isEqualToString:repair.groupID]) {
+                continue;
+            }
+            if (!parentCarrier) {
+                [tab clearTabGroupParent];
+                continue;
+            }
+            tab.tabGroupParentID = parentID;
+            tab.tabGroupParentName = [parentCarrier nameOfTabGroup:parentID];
+            tab.tabGroupParentColor = [parentCarrier colorOfTabGroup:parentID];
+            tab.tabGroupParentCollapsed = [parentCarrier isTabGroupCollapsed:parentID];
         }
     }
     return YES;

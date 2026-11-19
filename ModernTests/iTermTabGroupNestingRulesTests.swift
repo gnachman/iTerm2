@@ -124,4 +124,53 @@ final class iTermTabGroupNestingRulesTests: XCTestCase {
     func testEachViolatorIsReportedOnceInTabOrder() {
         XCTAssertEqual(violations(["A/B", "B/C", "A/B", "C/D", "B/C"]), ["B", "C"])
     }
+
+    // Applies the planned repairs and renders the tabs as "parent/group".
+    private func repaired(_ tabs: [String]) -> [String] {
+        let (groupIDs, initialParents) = split(tabs)
+        var parentIDs = initialParents
+        for repair in iTermTabGroupNesting.nestingDepthRepairs(groupIDs: groupIDs, parentIDs: parentIDs) {
+            for i in groupIDs.indices where groupIDs[i] == repair.groupID {
+                parentIDs[i] = repair.newParentID
+            }
+        }
+        XCTAssertEqual(iTermTabGroupNesting.groupsViolatingNestingDepth(groupIDs: groupIDs, parentIDs: parentIDs), [])
+        return zip(groupIDs, parentIDs).map { groupID, parentID in
+            guard let groupID else { return "-" }
+            return parentID.map { "\($0)/\(groupID)" } ?? groupID
+        }
+    }
+
+    func testValidNestingNeedsNoRepair() {
+        let (groupIDs, parentIDs) = split(["P", "P/C", "-", "S/T"])
+        XCTAssertTrue(iTermTabGroupNesting.nestingDepthRepairs(groupIDs: groupIDs, parentIDs: parentIDs).isEmpty)
+    }
+
+    func testViolatorBecomesTopLevelWhenItsParentHasDirectTabs() {
+        XCTAssertEqual(repaired(["Q/F", "Q/F", "S", "S/Q", "-"]),
+                       ["Q/F", "Q/F", "S", "Q", "-"])
+    }
+
+    func testViolatorBecomesTopLevelWhenItsParentHasAnotherSubgroup() {
+        XCTAssertEqual(repaired(["S/Q", "Q/F", "S/R"]),
+                       ["Q", "Q/F", "S/R"])
+    }
+
+    // S has no direct tabs and Q is its only sub-group, so promoting Q would
+    // leave no tab carrying S's name and color. F moves up under S instead.
+    func testLastSubgroupOfParentWithoutDirectTabsKeepsTheParentAlive() {
+        XCTAssertEqual(repaired(["S/Q", "Q/F", "Q/F"]),
+                       ["S/Q", "S/F", "S/F"])
+    }
+
+    func testGroupNestedInItselfBecomesTopLevel() {
+        XCTAssertEqual(repaired(["G/G", "-"]), ["G", "-"])
+    }
+
+    // C first moves up under A to keep A alive, then A has B as well, so C
+    // can go top-level with D under it.
+    func testChainIsFlattenedWithoutLosingAnyGroup() {
+        XCTAssertEqual(repaired(["A/B", "B/C", "C/D"]),
+                       ["A/B", "C", "C/D"])
+    }
 }
