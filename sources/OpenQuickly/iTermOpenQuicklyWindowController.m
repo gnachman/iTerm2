@@ -63,6 +63,13 @@
     // Suppresses tableViewSelectionDidChange:'s work while -update is already
     // refreshing the preview itself.
     BOOL _suppressSelectionPreviewUpdates;
+    // Frame the window is animating toward, or NSZeroRect when no resize
+    // animation is in flight. The preview is positioned against this so it
+    // doesn't latch onto an intermediate frame mid-animation.
+    NSRect _resizeTargetFrame;
+    // Incremented for each resize animation so a superseded animation's
+    // completion handler can tell it is stale.
+    NSInteger _resizeGeneration;
 }
 
 + (instancetype)sharedInstance {
@@ -157,14 +164,15 @@
     // in the background, so the panel ends up hidden behind other apps on
     // subsequent shows.
     self.window.level = NSMainMenuWindowLevel - 2;
-    // Set the window's frame to be table-less initially.
-    [self.window setFrame:[self frame] display:YES animate:NO];
+    // Set the window's frame to be table-less initially. This also stops any
+    // resize animation left over from the previous presentation.
+    [self cancelResizeAnimationSettingFrame:[self frame]];
     [_textField selectText:nil];
     // The alpha 0 -> 1 fade is only needed when iTerm2 is in the background:
     // on macOS 26 the alpha transition is what forces the window server to
     // actually paint a non-activating panel brought up from another app.
     // When iTerm2 is already active, skip it so it doesn't race with the
-    // setFrame:display:animate:YES height animation in -resizeWindowAnimatedToFrame:.
+    // height animation in -resizeWindowAnimatedToFrame:.
     NSRunningApplication *frontmost = NSWorkspace.sharedWorkspace.frontmostApplication;
     const BOOL inBackground = (frontmost != nil &&
                                ![frontmost isEqual:NSRunningApplication.currentApplication]);
@@ -213,21 +221,74 @@
 }
 
 - (void)resizeWindowAnimatedToFrame:(NSValue *)frame {
-    NSRect parentFrame = frame.rectValue;
-    [self.window setFrame:parentFrame display:YES animate:YES];
-    if (_previewPanel.visible) {
-        // setFrame:display:animate:YES on the borderless NSPanel doesn't reliably
-        // animate the resize, so snap directly to the new frame after the parent's
-        // animation completes.
-        [_previewPanel repositionForParentFrame:parentFrame];
+    const NSRect parentFrame = frame.rectValue;
+    const NSInteger generation = ++_resizeGeneration;
+    NSWindow *window = self.window;
+    const NSTimeInterval duration = [window animationResizeTime:parentFrame];
+    if (duration <= 0) {
+        _resizeTargetFrame = NSZeroRect;
+        [self setFrameStoppingAnimation:parentFrame];
+        [self resizeAnimationDidFinishToFrame:parentFrame];
+    } else {
+        // Use an explicit animation rather than setFrame:display:animate:YES,
+        // whose timing curve is fixed at ease-in-ease-out.
+        _resizeTargetFrame = parentFrame;
+        __weak __typeof(self) weakSelf = self;
+        [NSAnimationContext runAnimationGroup:^(NSAnimationContext *context) {
+            context.duration = duration;
+            context.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
+            [window.animator setFrame:parentFrame display:YES];
+        } completionHandler:^{
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf || strongSelf->_resizeGeneration != generation) {
+                // A newer resize superseded this one.
+                return;
+            }
+            strongSelf->_resizeTargetFrame = NSZeroRect;
+            [strongSelf resizeAnimationDidFinishToFrame:parentFrame];
+        }];
     }
     _suppressSelectionPreviewUpdates = NO;
-    // setFrame:display:animate:YES pumps the run loop while it blocks, so the
-    // user can click a different row mid-animation. Catch up if the selection
-    // changed while notifications were being suppressed.
+    // Catch up if the selection changed while notifications were being
+    // suppressed.
     if (_table.selectedRow != _previewRefreshedForRow) {
         [self refreshPreview];
     }
+}
+
+// Sets the window's frame through a zero-duration animator group. A plain
+// -setFrame:display: doesn't stop an animator-driven frame animation that is
+// already running, so that animation could later overwrite this frame.
+- (void)setFrameStoppingAnimation:(NSRect)frame {
+    NSWindow *window = self.window;
+    [NSAnimationContext runAnimationGroup:^(NSAnimationContext *context) {
+        context.duration = 0;
+        [window.animator setFrame:frame display:YES];
+    }];
+}
+
+// Stops any in-flight resize animation, invalidates its completion handler,
+// and forgets its target frame.
+- (void)cancelResizeAnimationSettingFrame:(NSRect)frame {
+    _resizeGeneration += 1;
+    _resizeTargetFrame = NSZeroRect;
+    [self setFrameStoppingAnimation:frame];
+}
+
+- (void)resizeAnimationDidFinishToFrame:(NSRect)parentFrame {
+    if (_previewPanel.visible) {
+        // The borderless preview panel doesn't animate along with the parent,
+        // so snap it to the new frame once the parent's animation completes.
+        [_previewPanel repositionForParentFrame:parentFrame];
+    }
+}
+
+// The frame the window has or is animating toward.
+- (NSRect)settledWindowFrame {
+    if (!NSEqualRects(_resizeTargetFrame, NSZeroRect)) {
+        return _resizeTargetFrame;
+    }
+    return self.window.frame;
 }
 
 // Returns the window frame. It's a fixed 170px below the top of the screen and
@@ -308,7 +369,7 @@
         [_previewPanel showForSession:session
                                 title:session.name ?: @""
                                detail:[self previewDetailForSession:session]
-                          parentFrame:self.window.frame
+                          parentFrame:[self settledWindowFrame]
                          parentWindow:self.window];
     } else {
         [_previewPanel hide];
@@ -318,6 +379,7 @@
 // Bound to the close button.
 - (IBAction)close:(id)sender {
     [_previewPanel teardown];
+    [self cancelResizeAnimationSettingFrame:self.window.frame];
     // Use orderOut, not close. -close on a non-activating panel can leave the
     // window in a state where the window-server refuses to re-elevate it on
     // subsequent shows from a background app (iTermProfileHotKey's floating
@@ -603,6 +665,7 @@
 
 - (void)windowDidResignKey:(NSNotification *)notification {
     [_previewPanel teardown];
+    [self cancelResizeAnimationSettingFrame:self.window.frame];
     [self.window orderOut:nil];
 }
 
