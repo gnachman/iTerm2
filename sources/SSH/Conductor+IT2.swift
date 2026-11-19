@@ -814,32 +814,37 @@ extension Conductor {
             }
             // A host the user chose to always allow: read its half of the grant back before
             // bothering them. Only when that fails do we ask.
-            if let grant = Conductor.hostGrantStore.grant(for: self.sshIdentity),
-               let home = self.homeDirectory {
+            let grants = Conductor.hostGrantStore.grants(for: self.sshIdentity)
+            if !grants.isEmpty, let home = self.homeDirectory {
                 // Hold the seal while the file is read, so a match can resolve it and a teardown
                 // in the meantime can fail it closed. No announcement is on screen yet, so the
                 // orphan-dismissal hazard described below does not apply until one is presented.
                 self.it2AuthSeal = seal
                 Task { @MainActor [weak self] in
+                    for grant in grants {
+                        guard let self else {
+                            return
+                        }
+                        let verified: Bool
+                        if let verifier = Conductor.hostGrantVerifierForTesting {
+                            verified = await verifier(grant, home)
+                        } else {
+                            verified = await self.hostGrantVerifies(grant, home: home)
+                        }
+                        // Resolved while reading (torn down, say): nothing left to decide, and
+                        // no prompt should appear for a connection that is gone.
+                        guard self.it2AuthSeal != nil else {
+                            return
+                        }
+                        if verified {
+                            // A grant found under an older key for this host moves to its
+                            // current one, so later connections find it directly.
+                            Conductor.hostGrantStore.rekey(grant, to: self.sshIdentity.stringIdentifier)
+                            self.resolveIT2Authorization(true, persist: true)
+                            return
+                        }
+                    }
                     guard let self else {
-                        return
-                    }
-                    let verified: Bool
-                    if let verifier = Conductor.hostGrantVerifierForTesting {
-                        verified = await verifier(grant, home)
-                    } else {
-                        verified = await self.hostGrantVerifies(grant, home: home)
-                    }
-                    // Resolved while reading (torn down, say): nothing left to decide, and no
-                    // prompt should appear for a connection that is gone.
-                    guard self.it2AuthSeal != nil else {
-                        return
-                    }
-                    if verified {
-                        // A grant found under an older key for this host moves to its current
-                        // one, so later connections find it directly.
-                        Conductor.hostGrantStore.rekey(grant, to: self.sshIdentity.stringIdentifier)
-                        self.resolveIT2Authorization(true, persist: true)
                         return
                     }
                     guard let delegate = self.delegate else {
@@ -914,9 +919,10 @@ extension Conductor {
     func mintHostGrant() {
         let host = sshIdentity.stringIdentifier
         let token = IT2GrantToken.mint()
-        // This Mac's previous grant for the host, which the new one replaces there too.
-        let previousGrant = Conductor.hostGrantStore.grant(for: sshIdentity)
-        let previous = previousGrant?.id
+        // This Mac's previous grant for the host, which the new one replaces there too. Only
+        // the one under the current key is known to be this host's: a grant that verifies is
+        // rekeyed at once, and one still under an older key may be another host's.
+        let previous = Conductor.hostGrantStore.grant(forHost: host)?.id
         framerExecPythonStatements(statements: IT2GrantToken.remoteWriteStatements(id: token.id,
                                                                                    secret: token.secret,
                                                                                    replacing: previous)) { [weak self] ok, output in
@@ -925,9 +931,6 @@ extension Conductor {
                 RLog("Could not write the it2 grant to the remote host")
                 self?.DLog("it2 grant write to \(host) failed: \(output)")
                 return
-            }
-            if let previousGrant, previousGrant.host != host {
-                Conductor.hostGrantStore.remove(host: previousGrant.host)
             }
             Conductor.hostGrantStore.add(IT2HostGrant(host: host,
                                                       id: token.id,
@@ -1012,17 +1015,49 @@ extension Conductor {
     // passed the gate (e.g. a running `monitor --follow`) are unaffected by a revoke; only
     // subsequent commands see the new decision. Must be called on the main thread.
     @objc func setIT2AuthorizationFromMenu(_ granted: Bool) {
-        if !granted, let grant = Conductor.hostGrantStore.grant(for: sshIdentity) {
-            // Otherwise an always-allow grant would re-allow this host on its very next
-            // connection, and switching it off here would seem not to have worked. Revoke
-            // rather than just forget it, as Settings does, so other live connections to the
-            // host that the grant let in ask again instead of carrying on without it.
-            Conductor.hostGrantStore.revoke(host: grant.host)
+        if !granted {
+            let key = sshIdentity.stringIdentifier
+            if Conductor.hostGrantStore.grant(forHost: key) != nil {
+                // Otherwise an always-allow grant would re-allow this host on its very next
+                // connection, and switching it off here would seem not to have worked. Revoke
+                // rather than just forget it, as Settings does, so other live connections to
+                // the host that the grant let in ask again instead of carrying on without it.
+                Conductor.hostGrantStore.revoke(host: key)
+            }
+            removeOwnGrantsUnderOlderKeys()
         }
         it2Authorized = granted
         // No-op when no prompt is pending; otherwise dismisses the on-screen announcement and
         // fulfills the shared promise so every concurrent it2 command unblocks with `granted`.
         resolveIT2Authorization(granted, persist: true)
+    }
+
+    /// Removes grants filed under a key this host may have had before ssh config Include and
+    /// Match were honored that this host verifies, so they can't let its next connection in.
+    /// They are not rekeyed until a connection verifies one, so switching it2 off before that
+    /// would otherwise leave them. Others may be other hosts' and are left alone.
+    private func removeOwnGrantsUnderOlderKeys() {
+        let key = sshIdentity.stringIdentifier
+        let candidates = Conductor.hostGrantStore.grants(for: sshIdentity).filter { $0.host != key }
+        guard !candidates.isEmpty, let home = homeDirectory else {
+            return
+        }
+        Task { @MainActor [weak self] in
+            for grant in candidates {
+                guard let self else {
+                    return
+                }
+                let verified: Bool
+                if let verifier = Conductor.hostGrantVerifierForTesting {
+                    verified = await verifier(grant, home)
+                } else {
+                    verified = await self.hostGrantVerifies(grant, home: home)
+                }
+                if verified {
+                    Conductor.hostGrantStore.remove(host: grant.host)
+                }
+            }
+        }
     }
 
     // Activate the it2 CLI proxy for this session: mint the auth nonce + a remote

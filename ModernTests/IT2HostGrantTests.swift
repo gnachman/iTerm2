@@ -159,16 +159,55 @@ final class IT2HostGrantTests: XCTestCase {
         XCTAssertEqual(store.grant(for: webIdentity)?.id, "2")
     }
 
-    // Only the hostname may differ: another user, port, or host is a different grant.
+    // Another user, port, or host is a different grant. (No user, or port 22, can be the old
+    // form of a user or port the config supplies; see testFallsBackPastAConfigSuppliedPortAndUser.)
     func testTheFallbackKeepsUserPortAndHost() {
         for host in ["it2-test-bob@web",
                      "IT2-TEST-ALICE@web",
                      "it2-test-alice@web port 2222",
                      "it2-test-alice@other",
                      "it2-test-alice@",
-                     "web"] {
+                     "other"] {
             XCTAssertNil(store(withGrantFor: host).grant(for: webIdentity), host)
         }
+    }
+
+    // Before, a Port or User the config supplied was ignored: the old key had no user and
+    // port 22.
+    func testFallsBackPastAConfigSuppliedPortAndUser() {
+        let lima = SSHIdentity(host: "lima-a", hostname: "127.0.0.1", username: "it2-test-alice", port: 60022)
+        XCTAssertEqual(store(withGrantFor: "lima-a").grant(for: lima)?.id, "1")
+        XCTAssertEqual(store(withGrantFor: "127.0.0.1").grant(for: lima)?.id, "1")
+        XCTAssertNil(store(withGrantFor: "lima-a port 60023").grant(for: lima))
+        XCTAssertNil(store(withGrantFor: "it2-test-bob@lima-a").grant(for: lima))
+    }
+
+    // Two hosts that once had the same key: each is offered every candidate, its own first, so
+    // the host can verify the one that is really its own.
+    func testEveryCandidateIsOffered() {
+        let store = IT2HostGrantStore(backing: MemoryBacking())
+        let limaA = SSHIdentity(host: "lima-a", hostname: "127.0.0.1", username: nil, port: 60022)
+        let limaB = SSHIdentity(host: "lima-b", hostname: "127.0.0.1", username: nil, port: 60023)
+        store.add(IT2HostGrant(host: "127.0.0.1", id: "shared", secretSHA256: "aa", granted: Date()))
+        store.add(IT2HostGrant(host: "lima-b", id: "b", secretSHA256: "bb", granted: Date()))
+        store.add(IT2HostGrant(host: limaA.stringIdentifier, id: "a", secretSHA256: "cc", granted: Date()))
+        XCTAssertEqual(store.grants(for: limaA).map(\.id), ["a", "shared"])
+        XCTAssertEqual(store.grants(for: limaB).map(\.id), ["shared", "b"])
+    }
+
+    // After both hosts migrate, each has its own record and neither displaces the other.
+    func testHostsSharingAHostNameKeepSeparateGrants() throws {
+        let store = IT2HostGrantStore(backing: MemoryBacking())
+        let limaA = SSHIdentity(host: "lima-a", hostname: "127.0.0.1", username: nil, port: 60022)
+        let limaB = SSHIdentity(host: "lima-b", hostname: "127.0.0.1", username: nil, port: 60023)
+        store.add(IT2HostGrant(host: "lima-a", id: "a", secretSHA256: "aa", granted: Date()))
+        store.add(IT2HostGrant(host: "lima-b", id: "b", secretSHA256: "bb", granted: Date()))
+        store.rekey(try XCTUnwrap(store.grant(for: limaA)), to: limaA.stringIdentifier)
+        XCTAssertEqual(store.grant(for: limaB)?.id, "b", "lima-a's migration leaves lima-b's alone")
+        store.rekey(try XCTUnwrap(store.grant(for: limaB)), to: limaB.stringIdentifier)
+        XCTAssertEqual(store.grant(forHost: limaA.stringIdentifier)?.id, "a")
+        XCTAssertEqual(store.grant(forHost: limaB.stringIdentifier)?.id, "b")
+        XCTAssertEqual(store.all.count, 2)
     }
 
     func testRekeyMovesTheGrantToItsCurrentKey() throws {

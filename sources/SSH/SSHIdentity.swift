@@ -7,8 +7,32 @@
 
 import Foundation
 
+/// Where ssh config sends a connection to a host.
+public struct SSHDestination: Equatable {
+    /// The host name to connect to: the configured HostName, or the host itself.
+    public var hostname: String
+    /// From the config. Nil when it gives none or when an explicit one was passed in.
+    public var user: String?
+    /// From the config. Nil when it gives none or when an explicit one was passed in.
+    public var port: Int?
+
+    public init(hostname: String, user: String? = nil, port: Int? = nil) {
+        self.hostname = hostname
+        self.user = user
+        self.port = port
+    }
+}
+
 public protocol SSHHostnameFinder: AnyObject {
-    func sshHostname(forHost host: String) -> String
+    /// Where `host` leads. `user` and `port` are explicit ones (ssh's -l and -p), which win
+    /// over the config and can affect which blocks match.
+    func sshDestination(forHost host: String, user: String?, port: Int?) -> SSHDestination
+}
+
+extension SSHHostnameFinder {
+    func sshHostname(forHost host: String) -> String {
+        return sshDestination(forHost: host, user: nil, port: nil).hostname
+    }
 }
 
 public class SSHIdentity: NSObject, Codable {
@@ -31,10 +55,6 @@ public class SSHIdentity: NSObject, Codable {
         }
 
         var compactDescription: String {
-            return compactDescription(hostname: hostname)
-        }
-
-        func compactDescription(hostname: String) -> String {
             let hostport: String
             if port == 22 {
                 hostport = hostname
@@ -52,10 +72,13 @@ public class SSHIdentity: NSObject, Codable {
         let username: String?
         let port: Int
 
+        /// ssh arguments that reach this host again. They name the host as typed, not the
+        /// resolved hostname, so ssh applies that host's config block again (IdentityFile,
+        /// host key checking and so on, which hosts written by Lima and the like rely on).
         var commandLine: String {
             let parts = [username.map { "-l \($0)" },
                          port == 22 ? nil : "-p \(port)",
-                         "\(hostname)"].compactMap { $0 }
+                         host.isEmpty ? hostname : host].compactMap { $0 }
             return parts.joined(separator: " ")
         }
     }
@@ -107,26 +130,36 @@ public class SSHIdentity: NSObject, Codable {
     }
 
     /// Whether `identifier` may be what stringIdentifier was for this identity before iTerm2
-    /// read ssh config the way ssh does. Only the hostname could differ: it was the host as
-    /// typed when only an included or matched block gives it a HostName, and a HostName kept
-    /// its capitalization where it is now lowercased.
+    /// read ssh config the way ssh does. The hostname could differ: it was the host as typed
+    /// when only an included or matched block gives it a HostName, and a HostName kept its
+    /// capitalization where it is now lowercased. The user and port could differ too: they
+    /// came only from the command line, so a user or port the config supplies was absent
+    /// (no user, port 22).
     func mayHaveHadStringIdentifier(_ identifier: String) -> Bool {
         let marker = "\u{1}"
-        let template = state.compactDescription(hostname: marker)
-        guard let range = template.range(of: marker) else {
-            return false
+        for username in Set([state.username, nil]) {
+            for port in Set([state.port, 22]) {
+                let template = State(host: state.host, hostname: marker, username: username, port: port)
+                    .compactDescription
+                guard let range = template.range(of: marker) else {
+                    continue
+                }
+                let prefix = template[..<range.lowerBound]
+                let suffix = template[range.upperBound...]
+                guard identifier.count > prefix.count + suffix.count,
+                      identifier.hasPrefix(prefix),
+                      identifier.hasSuffix(suffix) else {
+                    continue
+                }
+                let hostname = String(identifier.dropFirst(prefix.count).dropLast(suffix.count))
+                if [state.hostname, state.host].contains(where: {
+                    $0.caseInsensitiveCompare(hostname) == .orderedSame
+                }) {
+                    return true
+                }
+            }
         }
-        let prefix = template[..<range.lowerBound]
-        let suffix = template[range.upperBound...]
-        guard identifier.count > prefix.count + suffix.count,
-              identifier.hasPrefix(prefix),
-              identifier.hasSuffix(suffix) else {
-            return false
-        }
-        let hostname = String(identifier.dropFirst(prefix.count).dropLast(suffix.count))
-        return [state.hostname, state.host].contains {
-            $0.caseInsensitiveCompare(hostname) == .orderedSame
-        }
+        return false
     }
 
     public init?(stringIdentifier: String, hostnameFinder: SSHHostnameFinder)  {

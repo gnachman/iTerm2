@@ -226,8 +226,14 @@ struct ParsedSSHArguments: Codable, CustomDebugStringConvertible {
         commandLine = commandArgs.joined(separator: " ")
         commandArgs = BashWordSplitter.words(commandLine)
         host = destination ?? ""
-        hostname = hostnameFinder.sshHostname(forHost: host)
-        username = preferredUser ?? paramArgs.value(for: .loginName)
-        port = preferredPort ?? paramArgs.value(for: .port).map { Int($0) } ?? 22
+        // Like ssh, an explicit user or port beats the config's.
+        let explicitUser = preferredUser ?? paramArgs.value(for: .loginName)
+        let explicitPort = preferredPort ?? paramArgs.value(for: .port).flatMap { Int($0) }
+        let sshDestination = hostnameFinder.sshDestination(forHost: host,
+                                                           user: explicitUser,
+                                                           port: explicitPort)
+        hostname = sshDestination.hostname
+        username = explicitUser ?? sshDestination.user
+        port = explicitPort ?? sshDestination.port ?? 22
     }
 }

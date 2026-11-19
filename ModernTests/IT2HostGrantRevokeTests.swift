@@ -28,6 +28,7 @@ final class IT2HostGrantRevokeTests: XCTestCase {
             }
             registered = []
             Conductor.hostGrantStoreForTesting = nil
+            Conductor.hostGrantVerifierForTesting = nil
         }
         super.tearDown()
     }
@@ -151,6 +152,73 @@ final class IT2HostGrantRevokeTests: XCTestCase {
 
         XCTAssertEqual(switched.it2Authorized, false)
         XCTAssertEqual(sibling.it2Authorized, true)
+    }
+
+    // MARK: - Grants under keys from before ssh config Include and Match were honored
+
+    /// Two live connections whose hosts differ only in capitalization. The uppercase one's
+    /// current key is one the lowercase one may have had (a HostName used to keep its case),
+    /// so its grant is a candidate for the lowercase one without being its own, like a Lima
+    /// host's grant left under the 127.0.0.1 key another Lima host used to share.
+    private func connectionsSharingAnOldKey(store: IT2HostGrantStore) -> (switched: Conductor, other: Conductor) {
+        let host = uniqueHost()
+        let switched = registeredConductor(host: host)
+        let other = registeredConductor(host: host.uppercased())
+        store.add(IT2HostGrant(host: other.sshIdentity.stringIdentifier, id: "aaaa",
+                               secretSHA256: "hash", granted: Date()))
+        XCTAssertEqual(store.grants(for: switched.sshIdentity).map(\.id), ["aaaa"],
+                       "the other host's grant is a candidate for this one")
+        return (switched, other)
+    }
+
+    // Switching it2 off must not revoke a candidate this host doesn't verify: it may be
+    // another host's, and that host and its live connections must keep their grant.
+    func testDenyingFromTheMenuLeavesAnotherHostsGrantUnderAnOldKey() {
+        let store = IT2HostGrantStore(backing: RevokeMemoryBacking())
+        Conductor.hostGrantStoreForTesting = store
+        let (switched, other) = connectionsSharingAnOldKey(store: store)
+        other.it2Authorized = true
+        switched.homeDirectory = "/home/u"
+        let checked = expectation(description: "candidate checked")
+        Conductor.hostGrantVerifierForTesting = { _, _ in
+            checked.fulfill()
+            return false
+        }
+
+        switched.setIT2AuthorizationFromMenu(false)
+        wait(for: [checked], timeout: 2)
+        pumpMainQueue()
+
+        XCTAssertEqual(store.grant(forHost: other.sshIdentity.stringIdentifier)?.id, "aaaa")
+        XCTAssertEqual(other.it2Authorized, true, "the other host's connection is untouched")
+        XCTAssertEqual(switched.it2Authorized, false)
+    }
+
+    // But a candidate this host does verify is its own, not yet moved to its current key.
+    // Left in place, it would let the next connection in after it2 was switched off.
+    func testDenyingFromTheMenuRemovesThisHostsOwnGrantUnderAnOldKey() {
+        let store = IT2HostGrantStore(backing: RevokeMemoryBacking())
+        Conductor.hostGrantStoreForTesting = store
+        let (switched, other) = connectionsSharingAnOldKey(store: store)
+        switched.homeDirectory = "/home/u"
+        let checked = expectation(description: "candidate checked")
+        Conductor.hostGrantVerifierForTesting = { _, _ in
+            checked.fulfill()
+            return true
+        }
+
+        switched.setIT2AuthorizationFromMenu(false)
+        wait(for: [checked], timeout: 2)
+        pumpMainQueue()
+
+        XCTAssertNil(store.grant(forHost: other.sshIdentity.stringIdentifier))
+        XCTAssertTrue(store.grants(for: switched.sshIdentity).isEmpty)
+    }
+
+    private func pumpMainQueue() {
+        let drained = expectation(description: "main queue drained")
+        DispatchQueue.main.async { drained.fulfill() }
+        wait(for: [drained], timeout: 2)
     }
 
     func testAllowingFromTheMenuKeepsTheGrant() {

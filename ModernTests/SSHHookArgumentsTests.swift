@@ -13,7 +13,9 @@ import XCTest
 
 final class SSHHookArgumentsTests: XCTestCase {
     private final class FakeHostnameFinder: SSHHostnameFinder {
-        func sshHostname(forHost host: String) -> String { host }
+        func sshDestination(forHost host: String, user: String?, port: Int?) -> SSHDestination {
+            SSHDestination(hostname: host)
+        }
     }
 
     private func parsed(_ normalized: String) -> ParsedSSHArguments {

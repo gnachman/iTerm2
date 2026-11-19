@@ -136,9 +136,9 @@ final class SSHConfigLookupTests: XCTestCase {
         XCTAssertEqual(parsed.identity.stringIdentifier, "web")
     }
 
-    /// Only HostName comes from the config: the identity's port and user come from the command
-    /// line or default to 22 and none. OpenSSH would connect with the config's Port and User.
-    func testIdentityIgnoresConfigPortAndUser() throws {
+    /// When a HostName applies, the identity also takes the config's Port and User, as ssh
+    /// connects with them. That keeps apart hosts that share a HostName.
+    func testIdentityTakesConfigPortAndUserWithHostName() throws {
         let path = try write("config", """
             Host web
                 Hostname web.example.com
@@ -147,9 +147,63 @@ final class SSHConfigLookupTests: XCTestCase {
 
             """)
         let parsed = ParsedSSHArguments("web", booleanArgs: "", hostnameFinder: finder([path]))
-        XCTAssertEqual(parsed.identity.port, 22)
-        XCTAssertNil(parsed.identity.username)
-        XCTAssertEqual(parsed.identity.stringIdentifier, "web.example.com")
+        XCTAssertEqual(parsed.identity.port, 2222)
+        XCTAssertEqual(parsed.identity.username, "alice")
+        XCTAssertEqual(parsed.identity.stringIdentifier, "alice@web.example.com port 2222")
+    }
+
+    /// An explicit -p, -l or user@ beats the config's, as with ssh.
+    func testExplicitPortAndUserBeatTheConfig() throws {
+        let path = try write("config", """
+            Host web
+                Hostname web.example.com
+                Port 2222
+                User alice
+
+            """)
+        let parsed = ParsedSSHArguments("-p 2200 bob@web", booleanArgs: "", hostnameFinder: finder([path]))
+        XCTAssertEqual(parsed.identity.stringIdentifier, "bob@web.example.com port 2200")
+        let withL = ParsedSSHArguments("-l carol web", booleanArgs: "", hostnameFinder: finder([path]))
+        XCTAssertEqual(withL.identity.stringIdentifier, "carol@web.example.com port 2222")
+    }
+
+    /// Without a HostName, the host is already distinct by name, so its identity keeps the
+    /// command line's port and user, as before.
+    func testIdentityIgnoresConfigPortAndUserWithoutHostName() throws {
+        let path = try write("config", "Host web\n    Port 2222\n    User alice\n")
+        let parsed = ParsedSSHArguments("web", booleanArgs: "", hostnameFinder: finder([path]))
+        XCTAssertEqual(parsed.identity.stringIdentifier, "web")
+    }
+
+    /// Lima, OrbStack, Colima and Vagrant write hosts that all have HostName 127.0.0.1 and
+    /// differ only in Port. Included, each must still get its own identity.
+    func testIncludedHostsSharingAHostNameStayDistinct() throws {
+        let limaA = try write("lima-a.config", "Host lima-a\n    HostName 127.0.0.1\n    Port 60022\n")
+        let limaB = try write("lima-b.config", "Host lima-b\n    HostName 127.0.0.1\n    Port 60023\n")
+        let config = try write("config", "Include \(limaA)\nInclude \(limaB)\n")
+        let a = ParsedSSHArguments("lima-a", booleanArgs: "", hostnameFinder: finder([config])).identity
+        let b = ParsedSSHArguments("lima-b", booleanArgs: "", hostnameFinder: finder([config])).identity
+        XCTAssertEqual(a.stringIdentifier, "127.0.0.1 port 60022")
+        XCTAssertEqual(b.stringIdentifier, "127.0.0.1 port 60023")
+        XCTAssertNotEqual(a, b)
+    }
+
+    /// A split pane reconnects with the identity's commandLine. It names the host as typed so
+    /// ssh applies that host's block again: an included Lima host's IdentityFile and host key
+    /// settings would be lost connecting to 127.0.0.1 directly.
+    func testCommandLineNamesTheHostAsTyped() throws {
+        let lima = try write("lima.config", """
+            Host lima-a
+                HostName 127.0.0.1
+                Port 60022
+                User alice
+                IdentityFile ~/.lima/_config/user
+
+            """)
+        let config = try write("config", "Include \(lima)\n")
+        let identity = ParsedSSHArguments("lima-a", booleanArgs: "", hostnameFinder: finder([config])).identity
+        XCTAssertEqual(identity.hostname, "127.0.0.1")
+        XCTAssertEqual(identity.commandLine, "-l alice -p 60022 lima-a")
     }
 
     // MARK: - NMSSHSession (SCP)

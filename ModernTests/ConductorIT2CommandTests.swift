@@ -590,6 +590,88 @@ final class ConductorIT2CommandTests: XCTestCase {
         XCTAssertEqual(Conductor.hostGrantStore.all.map(\.host), [current])
     }
 
+    // When the first candidate grant doesn't verify, the next is tried before asking, and the
+    // one that verifies takes over the current key.
+    @MainActor
+    func testALaterCandidateGrantIsTriedBeforePrompting() throws {
+        defer { clearGrantSeams() }
+        let store = IT2HostGrantStore(backing: MemoryGrantBacking())
+        let conductor = makeConductor()
+        let current = conductor.sshIdentity.stringIdentifier
+        try XCTSkipIf(current.uppercased() == current, "the hostname has no letters to recapitalize")
+        store.add(IT2HostGrant(host: current, id: "stale", secretSHA256: "hash", granted: Date()))
+        store.add(IT2HostGrant(host: current.uppercased(), id: "good", secretSHA256: "hash", granted: Date()))
+        Conductor.hostGrantStoreForTesting = store
+        var tried = [String]()
+        let done = expectation(description: "both verified")
+        done.expectedFulfillmentCount = 2
+        Conductor.hostGrantVerifierForTesting = { grant, _ in
+            tried.append(grant.id)
+            done.fulfill()
+            return grant.id == "good"
+        }
+        let delegate = FakeIT2AuthDelegate()
+        conductor.delegate = delegate
+        conductor.homeDirectory = "/home/u"
+        var granted: Bool?
+        conductor.authorizeIT2 { granted = $0 }
+        wait(for: [done], timeout: 2)
+        pumpMain()
+        XCTAssertEqual(tried, ["stale", "good"])
+        XCTAssertEqual(granted, true)
+        XCTAssertFalse(delegate.hasPendingPrompt(guid: conductor.guid))
+        XCTAssertEqual(store.all.map(\.id), ["good"])
+        XCTAssertEqual(store.grant(forHost: current)?.id, "good")
+    }
+
+    // Always Allow replaces only this host's grant under its current key. A candidate under an
+    // old key may be another host's (here, a host whose name differs only in capitalization,
+    // which a HostName used to keep): it is neither removed from this Mac nor named as the
+    // file to remove on this host.
+    @MainActor
+    func testMintingLeavesAnotherHostsGrantUnderAnOldKey() throws {
+        defer { clearGrantSeams() }
+        let host = "mint-\(UUID().uuidString.lowercased().prefix(8))"
+        let store = IT2HostGrantStore(backing: MemoryGrantBacking())
+        Conductor.hostGrantStoreForTesting = store
+        let conductor = Conductor(host, boolArgs: "", dcsID: "dcs", clientUniqueID: "cid",
+                                  varsToSend: [:], clientVars: [:], initialDirectory: nil,
+                                  shouldInjectShellIntegration: false, parent: nil)
+        let delegate = FakeIT2AuthDelegate()
+        conductor.delegate = delegate
+        let otherKey = host.uppercased()
+        store.add(IT2HostGrant(host: otherKey, id: "aaaa", secretSHA256: "hash", granted: Date()))
+        XCTAssertEqual(store.grants(for: conductor.sshIdentity).map(\.id), ["aaaa"])
+
+        conductor.mintHostGrant()
+        let inFlight: [Conductor.ExecutionContext]
+        switch conductor.state {
+        case .willExecutePipeline(let contexts):
+            inFlight = contexts
+        case .executingPipeline(let context, let pending):
+            inFlight = [context] + pending
+        case .ground, .unhooked, .recovery, .recovered:
+            inFlight = []
+        }
+        let write = try XCTUnwrap((inFlight + conductor.queue).last(where: { context in
+            if case .framerExecPythonStatements = context.command {
+                return true
+            }
+            return false
+        }))
+        guard case .framerExecPythonStatements(let statements) = write.command else {
+            return XCTFail("not a write")
+        }
+        XCTAssertFalse(statements.contains("aaaa"), "the other host's file is not removed here")
+        XCTAssertFalse(statements.contains("os.remove"))
+        try conductor.update(executionContext: write, result: .end(0))
+        pumpMain()
+
+        XCTAssertEqual(store.grant(forHost: otherKey)?.id, "aaaa")
+        XCTAssertNotNil(store.grant(forHost: conductor.sshIdentity.stringIdentifier))
+        XCTAssertEqual(store.all.count, 2)
+    }
+
     // The file is gone, the host was rebuilt, or it does not match: fall back to asking rather
     // than denying outright.
     @MainActor

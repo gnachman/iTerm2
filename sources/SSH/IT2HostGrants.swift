@@ -171,14 +171,20 @@ final class IT2HostGrantStore {
         return all.first { $0.host == host }
     }
 
-    /// The grant for `identity`, or failing that one recorded under a key the identity may
-    /// have had before ssh config Include and Match were honored (see
-    /// SSHIdentity.mayHaveHadStringIdentifier). The host must still verify it, so this only
-    /// widens which record is tried; the caller rekeys it once it does.
-    func grant(for identity: SSHIdentity) -> IT2HostGrant? {
+    /// The grants that may be `identity`'s, best first: the one filed under its key, then
+    /// any filed under a key it may have had before ssh config Include and Match were honored
+    /// (see SSHIdentity.mayHaveHadStringIdentifier). Several hosts can have had the same old
+    /// key, so the host must still verify each; the caller rekeys the one it does.
+    func grants(for identity: SSHIdentity) -> [IT2HostGrant] {
         let grants = all
         let key = identity.stringIdentifier
-        return grants.first { $0.host == key } ?? grants.first { identity.mayHaveHadStringIdentifier($0.host) }
+        return grants.filter { $0.host == key }
+            + grants.filter { $0.host != key && identity.mayHaveHadStringIdentifier($0.host) }
+    }
+
+    /// The best of grants(for:).
+    func grant(for identity: SSHIdentity) -> IT2HostGrant? {
+        return grants(for: identity).first
     }
 
     /// Files `grant` under `host` in place of the key it was recorded under.
