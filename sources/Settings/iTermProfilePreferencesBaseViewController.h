@@ -31,6 +31,10 @@
 
 - (void)setObject:(NSObject *)value forKey:(NSString *)key withSideEffects:(BOOL)sideEffects;
 
+// Sets values and removes keys, all at once (one notification posted). A
+// removed key goes back to its default.
+- (void)setObjectsFromDictionary:(NSDictionary *)dictionary removingKeys:(NSArray<NSString *> *)keysToRemove;
+
 // Update controls' values after the selected profile changes.
 - (void)reloadProfile;
 

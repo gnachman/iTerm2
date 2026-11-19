@@ -24,6 +24,9 @@
 - (BOOL)iTermTabBarWindowIsFullScreen;
 - (BOOL)iTermTabBarCanDragWindow;
 - (BOOL)iTermTabBarShouldHideBacking;
+// The cell height the window's rich tab content needs with this style, or 0
+// when it's off.
+- (CGFloat)iTermTabBarMinimumRichContentTabHeightForStyle:(id<PSMTabStyle>)style;
 @optional
 - (void)iTermTabBarDidUpdateProgressBars;
 

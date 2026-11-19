@@ -58,6 +58,10 @@ NS_ASSUME_NONNULL_BEGIN
          sideEffectsAllowed:(BOOL)sideEffectsAllowed
                  completion:(void (^)(iTermExpressionEvaluator *evaluator))completion;
 
+// How an interpolated string shows a value: strings as is, numbers as
+// numbers, arrays as [a, b], null as nothing, and anything else as JSON.
++ (NSString *)stringFromJSONObject:(nullable id)jsonObject;
+
 @end
 
 NS_ASSUME_NONNULL_END

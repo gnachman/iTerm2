@@ -13,8 +13,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSAttributedString *)attributedStringWithTextAlignment:(NSTextAlignment)textAlignment;
 
+// Parses lightweight HTML: <b>, <i>, <u>, and <font color="#rrggbb">, plus
+// the entities iterm2.escape_html() produces. attributes apply to all text.
 + (instancetype)newAttributedStringWithHTML:(NSString *)html
-                                 attributes:(NSDictionary *)attributes;
+                                 attributes:(NSDictionary *)attributes
+    NS_SWIFT_NAME(fromLightweightHTML(_:attributes:));
 
 @end
 

@@ -45,6 +45,8 @@ typedef NS_OPTIONS(NSUInteger, PTYTabState) {
 - (void)tabDidChangeTmuxLayout:(PTYTab *)tab;
 - (void)tab:(PTYTab *)tab didSetMetalEnabled:(BOOL)useMetal;
 - (void)tabSessionDidChangeBackgroundColor:(PTYTab *)tab;
+// The tab's rich content lines (-psmTabRichLines) changed.
+- (void)tabDidChangeRichContent:(PTYTab *)tab;
 - (void)tabDidChangeGraphic:(PTYTab *)tab
                  shouldShow:(BOOL)shouldShow
                       image:(NSImage *)image;

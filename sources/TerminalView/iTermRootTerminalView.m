@@ -79,6 +79,11 @@ const CGFloat kDivisionViewHeight = 1;
 
 const NSInteger iTermRootTerminalViewWindowNumberLabelMargin = 6;
 const NSInteger iTermRootTerminalViewWindowNumberLabelWidth = 40;
+// Space required between a window number under the stoplight buttons and the
+// bottom of the tab bar.
+static const CGFloat iTermRootTerminalViewWindowNumberLabelBelowStoplightsMargin = 4;
+// Moves a window number under the stoplight buttons right to line up with them.
+static const CGFloat iTermRootTerminalViewWindowNumberLabelBelowStoplightsIndent = 7;
 // Deemphasizes the window number.
 static const CGFloat iTermRootTerminalViewWindowNumberLabelAlpha = 0.75;
 // Padding after the compact proxy icon when no window number follows it.
@@ -459,7 +464,7 @@ typedef struct {
 - (void)mouseUp:(NSEvent *)event {
     if (!_windowTitleLabel.hidden && event.clickCount == 2) {
         const NSPoint point = [self convertPoint:event.locationInWindow fromView:nil];
-        const CGFloat titleBarHeight = _tabBarControl.height;
+        const CGFloat titleBarHeight = [self topStripHeight];
         NSRect rect = NSMakeRect(0, self.bounds.size.height - titleBarHeight, self.bounds.size.width, titleBarHeight);
         if (NSPointInRect(point, rect)) {
             [self.window it_titleBarDoubleClick];
@@ -599,7 +604,7 @@ typedef struct {
     const PSMTabPosition tabPosition = [iTermPreferences intForKey:kPreferenceKeyTabPosition];
     const CGFloat tabBarHeight = ((tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab)
                                   ? iTermRootTerminalViewVerticalTabBarStripHeight
-                                  : _tabBarControl.height);
+                                  : [self topStripHeight]);
     const CGFloat baselineOffset = -font.descender;
     const CGFloat capHeight = font.capHeight;
     const CGFloat myHeight = self.frame.size.height;
@@ -613,11 +618,44 @@ typedef struct {
     return myHeight - tabBarHeight + (tabBarHeight - capHeight) / 2.0 - baselineOffset - shift;
 }
 
+// A top tab bar made tall by rich tab content has room for the window number
+// under the stoplight buttons. Putting it there lets the tabs start right
+// after the buttons instead of after the number too. Never with the stoplight
+// hotbox, which top tabs don't use: the number would have to leave the hotbox.
+- (BOOL)windowNumberIsBelowStoplightButtons {
+    if (![_delegate rootTerminalViewShowsRichTabContent] ||
+        [_delegate enableStoplightHotbox] ||
+        _tabBarControlOnLoan ||
+        [iTermPreferences intForKey:kPreferenceKeyTabPosition] != PSMTab_TopTab ||
+        ![self tabBarShouldBeVisible] ||
+        [_delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar] ||
+        ![_delegate rootTerminalViewWindowNumberLabelShouldBeVisible]) {
+        return NO;
+    }
+    const NSRect frame = [self frameForWindowNumberLabelBelowStoplightButtons];
+    const CGFloat stripBottom = NSHeight(self.frame) - [self topStripHeight];
+    return NSMinY(frame) >= stripBottom + iTermRootTerminalViewWindowNumberLabelBelowStoplightsMargin;
+}
+
+- (NSRect)frameForWindowNumberLabelBelowStoplightButtons {
+    const NSRect buttons = [self frameForStandardWindowButtons];
+    const CGFloat height = ceil(_windowNumberLabel.fittingSize.height);
+    // The buttons view has its own padding below the buttons. Line the
+    // number's text up with the leftmost button.
+    return [self retinaRoundRect:NSMakeRect(NSMinX(buttons) + iTermRootTerminalViewWindowNumberLabelBelowStoplightsIndent,
+                                            NSMinY(buttons) - height,
+                                            iTermRootTerminalViewWindowNumberLabelWidth,
+                                            height)];
+}
+
 - (NSRect)frameForWindowNumberLabel {
     if (_tabBarControlOnLoan) {
         return NSZeroRect;
     }
     [_windowNumberLabel sizeToFit];
+    if ([self windowNumberIsBelowStoplightButtons]) {
+        return [self frameForWindowNumberLabelBelowStoplightButtons];
+    }
     const CGFloat windowNumberHeight = _windowNumberLabel.frame.size.height;
     const CGFloat x = ([self windowIdentityIsInRightTabBar]
                        ? [self leadingEdgeOfWindowIdentityInRightTabBar] + [self compactProxyIconWidthIncludingMargin]
@@ -685,7 +723,8 @@ typedef struct {
     }
     const CGFloat proxyIconWidth = [self compactProxyIconWidthIncludingMargin];
     const CGFloat afterProxyIcon =
-        ([self.delegate rootTerminalViewWindowNumberLabelShouldBeVisible]
+        (([self.delegate rootTerminalViewWindowNumberLabelShouldBeVisible] &&
+          ![self windowNumberIsBelowStoplightButtons])
          ? (iTermRootTerminalViewWindowNumberLabelMargin * 2 + iTermRootTerminalViewWindowNumberLabelWidth)
          : (proxyIconWidth > 0 ? iTermRootTerminalViewCompactProxyIconExtraPadding : 0));
     return stoplightButtonsWidth + proxyIconWidth + afterProxyIcon;
@@ -917,7 +956,7 @@ typedef struct {
     if (_tabBarControlOnLoan) {
         return NSZeroRect;
     }
-    const CGFloat tabBarHeight = _tabBarControl.height;
+    const CGFloat tabBarHeight = [self topStripHeight];
     const CGFloat baselineOffset = -textField.font.descender;
     const CGFloat capHeight = textField.font.capHeight;
     const CGFloat myHeight = self.frame.size.height;
@@ -1136,8 +1175,18 @@ typedef struct {
     [super flagsChanged:event];
 }
 
+// The height of the strip at the top of the window: the tab bar, or the window
+// title drawn in place of a hidden tab bar. They can differ because rich tab
+// content makes the tab bar taller.
+- (CGFloat)topStripHeight {
+    if ([_delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar]) {
+        return [_delegate rootTerminalViewHeightOfWindowTitleInPlaceOfTabBar:self];
+    }
+    return _tabBarControl.height;
+}
+
 - (NSRect)frameForTitleBackgroundView {
-    const CGFloat height = [_delegate rootTerminalViewHeightOfTabBar:self];
+    const CGFloat height = [self topStripHeight];
     return NSMakeRect(0,
                       self.frame.size.height - height,
                       self.frame.size.width,
@@ -1911,6 +1960,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 
     // Title in tab bar
     inputs.drawWindowTitleInPlaceOfTabBar = [self.delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar];
+    inputs.windowTitleInPlaceOfTabBarHeight = [self.delegate rootTerminalViewHeightOfWindowTitleInPlaceOfTabBar:self];
 
     return inputs;
 }
@@ -1919,6 +1969,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     if (!_tabBarControlOnLoan) {
         self.tabBarControl.hidden = YES;
     }
+    [self.delegate rootTerminalViewDidLayOutHiddenTabBar];
     if ([self.delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar]) {
         [self layoutSubviewsTopTabBarVisible:NO forWindow:thisWindow];
         return;
@@ -2131,6 +2182,9 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 }
 
 - (void)layoutWindowPaneDecorations {
+    // Whether the window number fits under the stoplight buttons depends on
+    // its font, and the window name's width depends on that.
+    [self updateWindowNumberFont];
     // Must precede the tab bar insets, which reserve room for whatever this
     // leaves in the label.
     [self updateWindowNameBesideTabsText];
@@ -2140,8 +2194,6 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
                                  subtitle:_windowTitleLabel.subtitle
                                      icon:_windowTitleLabel.windowIcon];
     }
-
-    [self updateWindowNumberFont];
 
     const BOOL enableStoplightHotbox = [self.delegate enableStoplightHotbox];
     const BOOL windowIdentityIsInRightTabBar = [self windowIdentityIsInRightTabBar];
@@ -2584,6 +2636,10 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     if ([_delegate respondsToSelector:@selector(iTermTabBarDidUpdateProgressBars)]) {
         [_delegate iTermTabBarDidUpdateProgressBars];
     }
+}
+
+- (CGFloat)iTermTabBarMinimumRichContentTabHeightForStyle:(id<PSMTabStyle>)style {
+    return [_delegate iTermTabBarMinimumRichContentTabHeightForStyle:style];
 }
 
 - (BOOL)iTermTabBarShouldHideBacking {

@@ -127,9 +127,11 @@ embedded in arrangements under Bookmark / Initial Profile)
   Profile Filename, Custom Locale, Bound Hosts, Jobs to Ignore, Snippets
   Filter, tmux Pane Title
   Nested: Triggers, Smart Selection Rules, Keyboard Map, Touch Bar Map,
-          SSH, Semantic History, Status Bar Layout, Bindings
+          SSH, Semantic History, Status Bar Layout, Bindings, Tab Content Lines
   Kept (NOT sensitive): Custom Command / Custom Directory / AWDS *Option
-          (enums), colors, fonts, sizes, GUIDs, hotkey codes.
+          (enums), colors, fonts, sizes, GUIDs, hotkey codes, Show Rich Tab
+          Content, Tab Content Layout (line identifiers and sizes), Tab
+          Content Maximum Lines.
   Labels (aggressive only): Name, Description, Tags, Title Function.
 
 TRIGGERS (profile "Triggers")
@@ -163,7 +165,7 @@ WINDOW ARRANGEMENTS -> session dicts (SESSION_ARRANGEMENT_*)
             AutoLog File Name, Filter, Browser Target,
             Code Review Last Prompt, Agent Conversation (deep),
             Bookmark (profile), Workgroup (recursed),
-            Key Labels / Key Labels Stack, Tab Status.Status Text,
+            Key Labels / Key Labels Stack, Tab Status.Status Text, Tab Status.Detail Text,
             deprecated Session Name / Session Window Title / Session Default
             Name
   Directory tracker (iTermSessionDirectoryTracker, flat in the session dict):
@@ -245,6 +247,7 @@ CONTENT_KEYS = {
     "Key Labels": REDACT_V,               # OSC 1337 SetKeyLabel text (dict/stack)
     "Key Labels Stack": REDACT_V,
     "Status Text": REDACT_V,              # tab status text set by a program
+    "Detail Text": REDACT_V,              # tab status detail set by a program
     # Deprecated session-arrangement name keys (still present in old plists).
     "Session Name": REDACT_V,
     "Session Window Title": REDACT_V,
@@ -365,6 +368,7 @@ CONTENT_KEYS = {
     "Badge Text": REDACT_V,
     "MenuBarItemString": REDACT_V,  # menu bar item interpolated string
     "Subtitle": REDACT_V,
+    "Tab Content Lines": REDACT_V,  # rich tab content: interpolated strings per line
     "Custom Window Title": REDACT_V,
     "Custom Tab Title": REDACT_V,
     "Title Override": REDACT_V,

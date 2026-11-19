@@ -17,12 +17,19 @@
 @implementation iTermProfilePreferencesBaseViewController
 
 - (void)setObjectsFromDictionary:(NSDictionary *)dictionary {
-    for (NSString *key in dictionary.allKeys) {
+    [self setObjectsFromDictionary:dictionary removingKeys:@[]];
+}
+
+- (void)setObjectsFromDictionary:(NSDictionary *)dictionary removingKeys:(NSArray<NSString *> *)keysToRemove {
+    for (NSString *key in [dictionary.allKeys arrayByAddingObjectsFromArray:keysToRemove]) {
         [self.delegate profilePreferencesViewController:self willSetObjectWithKey:key];
     }
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [_delegate profilePreferencesCurrentModel];
-    [iTermProfilePreferences setObjectsFromDictionary:dictionary inProfile:profile model:model];
+    [iTermProfilePreferences setObjectsFromDictionary:dictionary
+                                         removingKeys:keysToRemove
+                                            inProfile:profile
+                                                model:model];
 }
 
 - (NSObject *)objectForKey:(NSString *)key {

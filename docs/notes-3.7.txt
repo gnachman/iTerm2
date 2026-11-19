@@ -31,6 +31,22 @@ New Features:
   the restored session offers to resume the
   conversation. Resume All resumes every one at
   once. Issue 13171.
+- Tabs can show several lines of information,
+  such as the directory, the running job, and
+  its status. Turn on “Show rich tab content” in
+  Settings > Profiles > Window, then click Rich
+  Tab Content… to choose the lines. It applies
+  to windows created with that profile. A
+  collapsed tab group shows its tabs’ lines
+  combined.
+- A new built-in function,
+  iterm2.escape_html(string:), makes text safe
+  to use in HTML, such as an HTML tab title.
+- A vertical tab bar has a search field at the
+  top. Typing in it hides tabs whose title,
+  lines, or tab group name don’t match. Return
+  selects the first match and Esc shows every
+  tab again.
 
 Improvements:
 - Tab groups look quieter in the Minimal theme.
@@ -62,6 +78,17 @@ Improvements:
   scrollback with Shell Integration. Saving
   window state for restoration now skips what
   hasn’t changed and writes less to disk.
+- HTML tab titles, and text that scripts show
+  in the status bar, can color text with
+  <font color=#rrggbb>, and understand &gt;,
+  &quot;, and &#39;.
+- A collapsed tab group shows an icon when one
+  of its tabs needs attention, such as a status
+  dot, a bell, or new output.
+- A tab’s context menu can snooze it, as the
+  Session Status tool can snooze a session: its
+  status dims and it stops asking for attention
+  until the status changes.
 
 Bug Fixes:
 - When a program turned on light/dark mode

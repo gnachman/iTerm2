@@ -325,6 +325,7 @@ static NSString *const iTermBindingOwnerPalette = @"palette";
         funcs.colorKeys = [NSSet setWithArray:color];
 
         NSArray *booleans = @[
+            KEY_SHOW_RICH_TAB_CONTENT,
             KEY_USE_CURSOR_GUIDE COLORS_LIGHT_MODE_SUFFIX,
             KEY_USE_CURSOR_GUIDE COLORS_DARK_MODE_SUFFIX,
             KEY_USE_CURSOR_GUIDE,
@@ -435,6 +436,7 @@ static NSString *const iTermBindingOwnerPalette = @"palette";
             KEY_INSTANT_REPLAY,
         ];
         NSArray *number = @[
+            KEY_TAB_CONTENT_MAXIMUM_LINES,
             KEY_MINIMUM_CONTRAST COLORS_LIGHT_MODE_SUFFIX,
             KEY_MINIMUM_CONTRAST COLORS_DARK_MODE_SUFFIX,
             KEY_MINIMUM_CONTRAST,
@@ -503,9 +505,11 @@ static NSString *const iTermBindingOwnerPalette = @"palette";
         NSArray *stringArrays = @[ KEY_TAGS, KEY_JOBS, KEY_BOUND_HOSTS, KEY_SNIPPETS_FILTER,
                                     KEY_BROWSER_EXTENSION_ACTIVE_IDS ];
         NSArray *dictArrays = @[ KEY_HOTKEY_ALTERNATE_SHORTCUTS, KEY_TRIGGERS, KEY_SMART_SELECTION_RULES,
+                                 KEY_TAB_CONTENT_LAYOUT,
                                  ];
         NSArray *dict = @[ KEY_STATUS_BAR_LAYOUT, KEY_SESSION_HOTKEY, KEY_SEMANTIC_HISTORY,
-                           KEY_KEYBOARD_MAP, KEY_TOUCHBAR_MAP, KEY_SSH_CONFIG, KEY_BINDINGS];
+                           KEY_KEYBOARD_MAP, KEY_TOUCHBAR_MAP, KEY_SSH_CONFIG, KEY_BINDINGS,
+                           KEY_TAB_CONTENT_LINES];
 
         NSMutableDictionary *validationBlocks = [NSMutableDictionary dictionary];
         NSMutableDictionary *conversionBlocks = [NSMutableDictionary dictionary];
@@ -728,6 +732,10 @@ static NSString *const iTermBindingOwnerPalette = @"palette";
             KEY_SUBTITLE:                                           @"Subtitle shown below profile name in Open Quickly",
             KEY_INITIAL_URL:                                        @"Initial URL for Browser profile type",
             KEY_SSH_CONFIG:                                         @"SSH connection configuration dictionary",
+            KEY_TAB_CONTENT_LINES:                                  @"Per-line overrides of rich tab content",
+            KEY_SHOW_RICH_TAB_CONTENT:                              @"Show rich tab content in windows created with this profile",
+            KEY_TAB_CONTENT_LAYOUT:                                 @"Lines of rich tab content, in order, with their sizes",
+            KEY_TAB_CONTENT_MAXIMUM_LINES:                          @"Most lines of rich tab content a tab shows (0 for no limit)",
             KEY_FOREGROUND_COLOR:                                   @"Default text color",
             KEY_BACKGROUND_COLOR:                                   @"Terminal background color",
             KEY_BOLD_COLOR:                                         @"Color for bold text",
@@ -970,6 +978,10 @@ static NSString *const iTermBindingOwnerPalette = @"palette";
                   KEY_SUBTITLE: @"",
                   KEY_INITIAL_URL: @"iterm2-about:welcome",
                   KEY_SSH_CONFIG: @{},
+                  KEY_TAB_CONTENT_LINES: @{},
+                  KEY_SHOW_RICH_TAB_CONTENT: @NO,
+                  KEY_TAB_CONTENT_LAYOUT: [NSNull null],
+                  KEY_TAB_CONTENT_MAXIMUM_LINES: @0,
 
                   // Note: these defaults aren't used, except for link color, cursor guide color, and match color, because they are always specified.
                   KEY_FOREGROUND_COLOR:    [[NSColor colorWithCalibratedRed:0.733 green:0.733 blue:0.733 alpha:1] dictionaryValue],
@@ -1455,7 +1467,14 @@ static NSString *const iTermBindingOwnerPalette = @"palette";
 + (void)setObjectsFromDictionary:(NSDictionary *)dictionary
                        inProfile:(Profile *)profile
                            model:(ProfileModel *)model {
-    [model setObjectsFromDictionary:dictionary inProfile:profile];
+    [self setObjectsFromDictionary:dictionary removingKeys:@[] inProfile:profile model:model];
+}
+
++ (void)setObjectsFromDictionary:(NSDictionary *)dictionary
+                    removingKeys:(NSArray<NSString *> *)keysToRemove
+                       inProfile:(Profile *)profile
+                           model:(ProfileModel *)model {
+    [model setObjectsFromDictionary:dictionary removingKeys:keysToRemove inProfile:profile];
     [self commitModel:model];
 }
 

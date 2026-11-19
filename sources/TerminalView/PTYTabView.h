@@ -29,6 +29,21 @@
 #import "PSMTabBarControl.h"
 
 @protocol iTermSwipeHandler;
+@class PTYTabView;
+
+// Implemented by the window controller of a window with a PTYTabView.
+@protocol iTermTabViewReplacementProviding<NSObject>
+// The tab to select when the selected one is removed, or nil for the usual
+// neighbor. towardTheLeft is the direction the user prefers.
+- (NSTabViewItem *)tabView:(PTYTabView *)tabView
+            replacementForRemovedTabViewItem:(NSTabViewItem *)tabViewItem
+                               towardTheLeft:(BOOL)towardTheLeft;
+// A removal that asked for a replacement is done.
+- (void)tabViewDidFinishRemovingTabViewItem:(PTYTabView *)tabView;
+// The tabs Ctrl-Tab cycling may go to, or nil for all of them. A tab bar
+// search limits it to the tabs shown.
+- (NSSet<NSTabViewItem *> *)tabViewItemsToCycleAmongInTabView:(PTYTabView *)tabView;
+@end
 
 // An NSTabView offers the tab bar control and a view in which one of several NSTabViewItem objects
 // (each of which has an associated NSView) is displayed. This subclass doesn't draw the control;
@@ -48,10 +63,20 @@
 // Select tab relative to current one.
 - (void)nextTab:(id)sender;
 - (void)previousTab:(id)sender;
+// Select the adjacent tab, wrapping around at the ends.
+- (void)selectNextTabWrapping;
+- (void)selectPreviousTabWrapping;
 
 // Handle cycle forwards/cycle backwards actions, often bound to ctrl-tab and ctrl-shift-tab.
 - (void)cycleKeyDownWithModifiers:(NSUInteger)modifierFlags forwards:(BOOL)forwards;
+// Whether Ctrl-Tab (or the like) is held, stepping through tabs.
+@property(nonatomic, readonly) BOOL isCyclingWithModifierPressed;
+// Whether the tab switcher overlay is open for the current cycle.
+@property(nonatomic, readonly) BOOL isShowingSwitcher;
 - (void)cycleFlagsChanged:(NSUInteger)modifierFlags;
 - (void)cycleForwards:(BOOL)forwards;
+// Call when the tabs the controller lets cycling go to may have changed, such
+// as when a tab bar search changes, so an open switcher lists the right tabs.
+- (void)tabViewItemsToCycleAmongDidChange;
 
 @end

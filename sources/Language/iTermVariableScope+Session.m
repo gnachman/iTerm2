@@ -409,4 +409,20 @@
     [self setValue:status forVariableNamed:iTermVariableKeyStatus];
 }
 
+- (NSString *)statusColor {
+    return [self valueForVariableName:iTermVariableKeyStatusColor];
+}
+
+- (void)setStatusColor:(NSString *)statusColor {
+    [self setValue:statusColor forVariableNamed:iTermVariableKeyStatusColor];
+}
+
+- (NSString *)statusDetail {
+    return [self valueForVariableName:iTermVariableKeyStatusDetail];
+}
+
+- (void)setStatusDetail:(NSString *)statusDetail {
+    [self setValue:statusDetail forVariableNamed:iTermVariableKeyStatusDetail];
+}
+
 @end

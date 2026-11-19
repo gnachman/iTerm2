@@ -126,6 +126,10 @@ extern NSString *const iTermProfileModelDidCreateTmuxProfileNotification;
 - (Profile*)setObject:(id)object forKey:(NSString*)key inBookmark:(Profile*)bookmark;
 - (Profile*)setObject:(id)object forKey:(NSString*)key inBookmark:(Profile*)bookmark sideEffects:(BOOL)sideEffects;
 - (Profile *)setObjectsFromDictionary:(NSDictionary *)dictionary inProfile:(Profile *)bookmark;
+// Also removes keysToRemove.
+- (Profile *)setObjectsFromDictionary:(NSDictionary *)dictionary
+                         removingKeys:(NSArray<NSString *> *)keysToRemove
+                            inProfile:(Profile *)profile;
 - (void)setDefaultByGuid:(NSString*)guid;
 - (void)moveGuid:(NSString*)guid toRow:(int)row;
 - (void)rebuildMenus;

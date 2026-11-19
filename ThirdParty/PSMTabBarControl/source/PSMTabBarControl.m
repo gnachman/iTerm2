@@ -165,6 +165,11 @@ static const NSTimeInterval PSMTabBarSpringLoadingDelay = 0.6;
     // The tab a drag is resting over, which will be selected if it stays there. Not retained: it
     // is checked against _cells before use.
     PSMTabBarCell *_springLoadingCell;
+    // Where the last spring-load fired. Selecting a tab can move the others,
+    // as during a search, so another tab may now be under the mouse. Don't
+    // spring-load it until the mouse moves.
+    NSPoint _springLoadedPoint;
+    BOOL _haveSpringLoadedPoint;
 
     // A tab drag entered while locked to another tab bar, so it was refused. It is
     // let in once it unlocks.
@@ -208,6 +213,12 @@ static const NSTimeInterval PSMTabBarSpringLoadingDelay = 0.6;
     CGFloat _collapseVerticalCellX;
     CGFloat _collapseVerticalCellWidth;
     CGFloat _collapseVerticalGap;   // divider gap: slot advance minus drawn height
+    // From the last committed horizontal layout: the narrowest chip that
+    // shares the tabs' width, or 0 if none. A chip gets MAX(own, share), so
+    // MAX(own, this) is any sharing chip's width. For sizing such chips when no
+    // laid-out tab is around to copy (see
+    // -settledWidthOfCollapsedTabGroupChipWithWidth:cells:).
+    CGFloat _lastSharedTabWidth;
 
     // vertical tab resizing
     BOOL _resizing;
@@ -243,7 +254,11 @@ static const NSTimeInterval PSMTabBarSpringLoadingDelay = 0.6;
     BOOL _haveInitialDragLocation;
     NSPoint _initialDragLocation;
     BOOL _didDrag;
+    // A drag that began on a group chip was refused; swallow the rest of it.
+    BOOL _chipDragRefused;
     BOOL _closeClicked;
+    // Covers the whole bar, to learn when the pointer leaves it.
+    NSTrackingArea *_pointerTrackingArea;
 
     // iTerm2 additions
     NSUInteger _modifier;
@@ -451,6 +466,13 @@ static const NSTimeInterval PSMTabBarSpringLoadingDelay = 0.6;
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [_topAccessoryView release];
+    [_searchHighlightQuery release];
+    [_pointerIsInsideForTesting release];
+    if (_pointerTrackingArea) {
+        [self removeTrackingArea:_pointerTrackingArea];
+        [_pointerTrackingArea release];
+    }
     [NSObject cancelPreviousPerformRequestsWithTarget:self
                                              selector:@selector(springLoadingTimerDidFire)
                                                object:nil];
@@ -625,6 +647,7 @@ static const NSTimeInterval PSMTabBarSpringLoadingDelay = 0.6;
 - (void)setOrientation:(PSMTabBarOrientation)value {
     PSMTabBarOrientation lastOrientation = _orientation;
     _orientation = value;
+    [self layoutTopAccessoryView];
 
     if (_tabBarWidth < 10) {
         _tabBarWidth = 120;
@@ -1726,6 +1749,7 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
 
 - (void)setFrame:(NSRect)frame {
     [super setFrame:frame];
+    [self layoutTopAccessoryView];
     // A resize moves the trailing edge of the scroll region, so accessories need re-clipping against
     // it rather than waiting for the next -update:. The cells have NOT been laid out for the new size
     // yet, though -- that happens in the -_setupCells: to come -- so an accessory that measures as
@@ -1734,6 +1758,57 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
     // -_setupCells: can undo.
     [self syncTabProgressBars];
     [self clipAccessoriesToScrollRegionRemovingInvisible:NO];
+}
+
+#pragma mark - Top accessory
+
+- (void)setInsets:(NSEdgeInsets)insets {
+    _insets = insets;
+    [self layoutTopAccessoryView];
+}
+
+- (void)setTopAccessoryView:(NSView *)view {
+    if (view == _topAccessoryView) {
+        return;
+    }
+    [_topAccessoryView removeFromSuperview];
+    [_topAccessoryView release];
+    _topAccessoryView = [view retain];
+    if (view) {
+        [self addSubview:view];
+    }
+    [self layoutTopAccessoryView];
+}
+
+- (void)setSearchHighlightQuery:(NSString *)query {
+    if (query == _searchHighlightQuery || [query isEqualToString:_searchHighlightQuery]) {
+        return;
+    }
+    [_searchHighlightQuery release];
+    _searchHighlightQuery = [query copy];
+    [self setNeedsDisplay:YES];
+}
+
+- (void)setTopAccessoryBandHeight:(CGFloat)height {
+    _topAccessoryBandHeight = height;
+    [self layoutTopAccessoryView];
+}
+
+- (void)layoutTopAccessoryView {
+    if (!_topAccessoryView) {
+        return;
+    }
+    _topAccessoryView.hidden = (_orientation != PSMTabBarVerticalOrientation);
+    if (_topAccessoryView.hidden) {
+        return;
+    }
+    const CGFloat margin = 8;
+    const CGFloat height = NSHeight(_topAccessoryView.frame);
+    const CGFloat bandTop = _insets.top - _topAccessoryBandHeight;
+    _topAccessoryView.frame = NSMakeRect(_insets.left + margin,
+                                         bandTop + round((_topAccessoryBandHeight - height) / 2.0),
+                                         MAX(0, NSWidth(self.bounds) - _insets.left - _insets.right - 2 * margin),
+                                         height);
 }
 
 #pragma mark - Scrollable tab bar
@@ -1774,8 +1849,8 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
     return [self frame].size.width - rightMargin;
 }
 
-// Height of one vertical cell. Every cell in a vertical bar is the same height. (Horizontal cells have
-// variable widths, so there is no equivalent.)
+// Height of one vertical tab cell. Every tab in a vertical bar is the same height; a group header can be
+// shorter (see -heightOfTabGroupChipCell:). (Horizontal cells have variable widths, so there is no equivalent.)
 - (CGFloat)verticalCellHeight {
     return [self genericCellRectWithOverflow:_showAddTabButton].size.height;
 }
@@ -1859,7 +1934,8 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
     const NSInteger index = [_cells indexOfObjectPassingTest:^BOOL(PSMTabBarCell *cell, NSUInteger i, BOOL *stop) {
         return [[cell representedObject] isEqualTo:[self->_tabView selectedTabViewItem]];
     }];
-    if (index == NSNotFound) {
+    // A hidden tab, as during a search, has no place to scroll to.
+    if (index == NSNotFound || [[_cells objectAtIndex:index] isCollapsedHidden]) {
         return;
     }
     const BOOL vertical = [self isVerticalOrientation];
@@ -2109,11 +2185,12 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
             // clip), so nothing lands in the overflow menu -- the scroll wheel reaches them instead.
             // Group chip cells are short; everything else uses the tab height.
             CGFloat totalHeight = 0;
-            for (PSMTabBarCell *cell in _cells) {
+            for (int i = 0; i < cellCount; ++i) {
+                PSMTabBarCell *cell = _cells[i];
                 if (cell.isCollapsedHidden) {
                     continue;  // hidden by a collapsed group: no height
                 }
-                totalHeight += cell.isTabGroupChip ? [self heightOfTabGroupChipCell:cell] : tabHeight;
+                totalHeight += cell.isTabGroupChip ? [self heightOfTabGroupChipCellAtIndex:i] : tabHeight;
             }
             _scrollContentExtent = [[self style] topMarginForTabBarControl] + totalHeight;
             [self clampScrollOffset];
@@ -2123,7 +2200,7 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
                 if (_cells[i].isCollapsedHidden) {
                     continue;  // zero height: keep this origin but don't advance
                 }
-                currentOrigin += _cells[i].isTabGroupChip ? [self heightOfTabGroupChipCell:_cells[i]] : tabHeight;
+                currentOrigin += _cells[i].isTabGroupChip ? [self heightOfTabGroupChipCellAtIndex:i] : tabHeight;
             }
         } else {
             for (int i = 0; i < cellCount; ++i) {
@@ -2132,7 +2209,7 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
                     [newOrigins addObject:@(currentOrigin)];
                     continue;
                 }
-                const CGFloat h = _cells[i].isTabGroupChip ? [self heightOfTabGroupChipCell:_cells[i]] : tabHeight;
+                const CGFloat h = _cells[i].isTabGroupChip ? [self heightOfTabGroupChipCellAtIndex:i] : tabHeight;
                 if (currentOrigin + h <= [self frame].size.height) {
                     [newOrigins addObject:@(currentOrigin)];
                     currentOrigin += h;
@@ -2144,13 +2221,10 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
                     // currentOrigin and overlap the overflow control): pop past any
                     // trailing collapsed members to the last real origin.
                     if ([newOrigins count] > 0 && [self frame].size.height - currentOrigin < h) {
-                        while (newOrigins.count > 0 &&
-                               _cells[newOrigins.count - 1].isCollapsedHidden) {
-                            [newOrigins removeLastObject];
-                        }
-                        if (newOrigins.count > 0) {
-                            [newOrigins removeLastObject];
-                        }
+                        [PSMTabBarControl reclaimRowForOverflowButtonInOrigins:newOrigins
+                                                                           end:currentOrigin
+                                                                     available:[self frame].size.height
+                                                                     rowHeight:tabHeight];
                     }
                     break;
                 }
@@ -2462,8 +2536,9 @@ static CGFloat PSMCollapseEase(CGFloat t) {
 // Vertical collapse/expand. A vertical bar's cells are a uniform-width column
 // stacked by origin; only the member heights change. -adjustedCellRect: would
 // clobber a partial height, so the frames are set directly here (no tracking
-// rects -- a full layout at -finish restores them). No chip-width delta exists
-// (the vertical chip is always one tab row tall), so this is a straight height
+// rects -- a full layout at -finish restores them). Chips interpolate too: a
+// collapsed chip showing rich content lines is taller than an expanded one (see
+// -heightOfTabGroupChipCell:collapsed:). It's still a straight height
 // interpolation with no first-member remap.
 - (void)startVerticalCollapseAnimation {
     if (_animationTimer) {
@@ -2494,10 +2569,21 @@ static CGFloat PSMCollapseEase(CGFloat t) {
     // slot minus the divider gap.
     NSMutableArray<NSNumber *> *start = [NSMutableArray arrayWithCapacity:_cells.count];
     NSMutableArray<NSNumber *> *target = [NSMutableArray arrayWithCapacity:_cells.count];
-    for (PSMTabBarCell *cell in _cells) {
-        const CGFloat fullSlot = cell.isTabGroupChip ? [self heightOfTabGroupChipCell:cell] : tabHeight;
-        [start addObject:@((NSHeight(cell.frame) > 0) ? fullSlot : 0.0)];
-        [target addObject:@(cell.isCollapsedHidden ? 0.0 : fullSlot)];
+    for (NSInteger i = 0; i < (NSInteger)_cells.count; i++) {
+        PSMTabBarCell *cell = _cells[i];
+        if (cell.isTabGroupChip) {
+            // A collapsed chip can be taller than an expanded one (see
+            // -heightOfTabGroupChipCell:collapsed:), so it grows or shrinks
+            // too. Start from the slot it has now: its drawn height plus the
+            // divider gap.
+            const PSMTabGroupRun run = [self tabGroupRunAfterChipAtIndex:i];
+            const BOOL isCollapsed = run.memberCount > 0 && run.allCollapsed;
+            [start addObject:@((NSHeight(cell.frame) > 0) ? NSHeight(cell.frame) + _collapseVerticalGap : 0.0)];
+            [target addObject:@(cell.isCollapsedHidden ? 0.0 : [self heightOfTabGroupChipCell:cell collapsed:isCollapsed])];
+            continue;
+        }
+        [start addObject:@((NSHeight(cell.frame) > 0) ? tabHeight : 0.0)];
+        [target addObject:@(cell.isCollapsedHidden ? 0.0 : tabHeight)];
     }
     [_collapseStartWidths release];
     _collapseStartWidths = [start copy];
@@ -2544,7 +2630,14 @@ static CGFloat PSMCollapseEase(CGFloat t) {
         // cell one divider-gap shorter, so the settled frames are reproduced
         // exactly at the end and static cells never move.
         const CGFloat drawnH = MAX(0.0, slot - _collapseVerticalGap);
-        [_cells[i] setFrame:NSMakeRect(_collapseVerticalCellX, origin, _collapseVerticalCellWidth, drawnH)];
+        if (drawnH <= 0 && _cells[i].isCollapsedHidden) {
+            // Nothing left to show, as with members of groups that were
+            // already collapsed. Match the settled layout's empty frame so it
+            // doesn't look sized.
+            [_cells[i] setFrame:NSMakeRect(_collapseVerticalCellX, origin, 0, 0)];
+        } else {
+            [_cells[i] setFrame:NSMakeRect(_collapseVerticalCellX, origin, _collapseVerticalCellWidth, drawnH)];
+        }
         origin += slot;
     }
     [self setNeedsDisplay:YES];
@@ -2637,7 +2730,7 @@ typedef struct {
     NSInteger memberCount;
     BOOL allCollapsed;   // every member is collapsed-hidden
     BOOL anyCollapsed;   // at least one member is collapsed-hidden
-    BOOL anySized;       // at least one member has a nonzero-width frame (mid-slide)
+    BOOL anySized;       // at least one member has a nonzero-size frame (mid-slide)
 } PSMTabGroupRun;
 
 - (PSMTabGroupRun)tabGroupRunAfterChipAtIndex:(NSInteger)chipIndex {
@@ -2672,7 +2765,7 @@ typedef struct {
         } else {
             run.allCollapsed = NO;
         }
-        if (NSWidth(c.frame) > 0) {
+        if (NSWidth(c.frame) > 0 && NSHeight(c.frame) > 0) {
             run.anySized = YES;
         }
     }
@@ -2707,9 +2800,59 @@ typedef struct {
     id<PSMTabGroup> group = [self.tabGroupDataSource tabGroupWithIdentifier:identifier];
     NSString *name = group ? group.name : @"";
     if (collapsed && memberCount > 0) {
-        return [self collapsedChipCellWidthForGroupName:name memberCount:memberCount nested:nested];
+        const CGFloat width = [self collapsedChipCellWidthForGroupName:name memberCount:memberCount nested:nested];
+        if (![self tabGroupsShowRichContent]) {
+            return width;
+        }
+        // The chip also shows its members' rich content lines, so it's sized
+        // like a tab. When tabs share one width, the layout gives the chip that
+        // width too (see -tabGroupChipSharesTabWidthAtIndex:), with this as its
+        // minimum. Otherwise it fits its lines.
+        if (!self.sizeCellsToFit) {
+            return width;
+        }
+        NSArray<PSMTabRichLine *> *lines = [self richLinesForTabGroupIdentifier:identifier];
+        if (lines.count == 0 || ![self.style respondsToSelector:@selector(tabGroupCollapsedChipWidthForRichLines:)]) {
+            return width;
+        }
+        const CGFloat linesWidth = [self.style tabGroupCollapsedChipWidthForRichLines:lines];
+        return MAX(width, MIN(linesWidth, self.cellMaxWidth));
     }
     return [self chipCellWidthForGroupName:name];
+}
+
+// Whether the chip at `index` takes the same width as a tab on a horizontal
+// bar: a collapsed chip showing rich content lines stands in for its tabs, so
+// when tabs share one width it gets that width too (at least its own), rather
+// than having a width reserved for it.
+- (BOOL)tabGroupChipSharesTabWidthAtIndex:(NSInteger)index {
+    if (self.sizeCellsToFit || ![_cells[index] isTabGroupChip] || ![self tabGroupsShowRichContent]) {
+        return NO;
+    }
+    const PSMTabGroupRun run = [self tabGroupRunAfterChipAtIndex:index];
+    return run.memberCount > 0 && run.allCollapsed;
+}
+
+- (CGFloat)settledWidthOfCollapsedTabGroupChipWithWidth:(CGFloat)width
+                                                  cells:(NSArray<PSMTabBarCell *> *)cells {
+    if (self.sizeCellsToFit || ![self tabGroupsShowRichContent]) {
+        return width;
+    }
+    // Tabs share one width, so any laid-out tab has it.
+    for (PSMTabBarCell *cell in cells) {
+        if (!cell.isTabGroupChip && !cell.isPlaceholder && !cell.isPinned && !cell.isCollapsedHidden &&
+            !cell.isInOverflowMenu && NSWidth(cell.frame) > 0) {
+            return MAX(width, NSWidth(cell.frame));
+        }
+    }
+    // None to copy, as in a bar of collapsed groups: use the committed layout's.
+    if (_lastSharedTabWidth > 0) {
+        return MAX(width, _lastSharedTabWidth);
+    }
+    if ([self tabBarIsScrollable]) {
+        return MAX(width, _scrollableTabWidth);
+    }
+    return width;
 }
 
 - (CGFloat)widthOfTabGroupChipCell:(PSMTabBarCell *)cell {
@@ -2805,16 +2948,78 @@ typedef struct {
     return chipWidth + perTab * (CGFloat)tabCount;
 }
 
+// Removes cells from the end of a vertical bar's origins until a full row is
+// free below them for the overflow button. Collapsed members have no height,
+// so removing one frees nothing; a group header can be shorter than a row.
+// `end` is where the last cell ends.
++ (void)reclaimRowForOverflowButtonInOrigins:(NSMutableArray<NSNumber *> *)origins
+                                         end:(CGFloat)end
+                                   available:(CGFloat)available
+                                   rowHeight:(CGFloat)rowHeight {
+    while (origins.count > 0 && available - end < rowHeight) {
+        end = origins.lastObject.doubleValue;
+        [origins removeLastObject];
+    }
+}
+
 // Height reserved for a group chip cell on a vertical bar (style-aware, like
 // -widthOfTabGroupChipCell: for horizontal).
 - (CGFloat)heightOfTabGroupChipCell:(PSMTabBarCell *)cell {
+    const NSInteger idx = [_cells indexOfObject:cell];
+    if (idx == NSNotFound) {
+        return [self heightOfTabGroupChipCell:cell collapsed:NO];
+    }
+    return [self heightOfTabGroupChipCellAtIndex:idx];
+}
+
+// Index-based so layout loops, which have the index in hand, don't rescan.
+- (CGFloat)heightOfTabGroupChipCellAtIndex:(NSInteger)index {
+    const PSMTabGroupRun run = [self tabGroupRunAfterChipAtIndex:index];
+    return [self heightOfTabGroupChipCell:_cells[index]
+                                collapsed:(run.memberCount > 0 && run.allCollapsed)];
+}
+
+- (BOOL)tabGroupsShowRichContent {
+    id<PSMTabGroupDataSource> dataSource = self.tabGroupDataSource;
+    return ([dataSource respondsToSelector:@selector(tabGroupsShowRichContent)] &&
+            [dataSource tabGroupsShowRichContent]);
+}
+
+- (CGFloat)heightOfTabGroupChipCell:(PSMTabBarCell *)cell collapsed:(BOOL)collapsed {
+    // A collapsed chip showing its members' rich content lines below its name
+    // takes a whole row, like the tabs it stands for.
+    if (collapsed && [self tabGroupsShowRichContent]) {
+        // Taller, if the style's name band and the lines need more room than
+        // a tab's height (which counts the title and subtitle lines the chip
+        // doesn't show) leaves.
+        // The lines' text doesn't affect the height, so size with lines that
+        // describe the layout rather than combining the members' content.
+        const CGFloat row = [self verticalCellHeight];
+        id<PSMTabGroupDataSource> dataSource = self.tabGroupDataSource;
+        NSArray<PSMTabRichLine *> *lines =
+            [dataSource respondsToSelector:@selector(tabGroupRichLinesForSizing)] ? [dataSource tabGroupRichLinesForSizing] : nil;
+        if (lines.count == 0 ||
+            ![self.style respondsToSelector:@selector(tabGroupCollapsedChipHeightForRichLines:headerHeight:)]) {
+            return row;
+        }
+        const CGFloat header = [self heightOfTabGroupChipCell:cell collapsed:NO];
+        return MAX(row, ceil([self.style tabGroupCollapsedChipHeightForRichLines:lines headerHeight:header]));
+    }
     // A style that draws its own run decoration renders the chip as a one-row
     // header band, so on a vertical bar it should be exactly as tall as a normal
     // tab row. Using the style's name-based height (sized for the horizontal
-    // name capsule) would make the header dwarf the tabs.
+    // name capsule) would make the header dwarf the tabs. Rows made taller for
+    // rich tab content are an exception: the header holds only the name, so it
+    // stays the style's normal row height rather than leaving a band of group
+    // color under the name.
     if ([self.style respondsToSelector:@selector(usesExternalTabGroupDecoration)] &&
         [self.style usesExternalTabGroupDecoration]) {
-        return [self verticalCellHeight];
+        const CGFloat rowHeight = [self verticalCellHeight];
+        const CGFloat normalHeight = ([self.style respondsToSelector:@selector(verticalTabGroupHeaderHeight)]
+                                      ? self.style.verticalTabGroupHeaderHeight
+                                      : self.style.tabBarHeight);
+        // A style with no opinion reports 0.
+        return normalHeight > 0 ? MIN(rowHeight, normalHeight) : rowHeight;
     }
     id<PSMTabGroup> group = [self.tabGroupDataSource tabGroupWithIdentifier:cell.tabGroupIdentifier];
     NSString *name = group ? group.name : @"";
@@ -2844,6 +3049,9 @@ typedef struct {
             width = 0;  // hidden by a collapsed group; keeps index alignment
         } else if (cell.isTabGroupChip) {
             width = [self widthOfTabGroupChipCellAtIndex:cellIdx];
+            if ([self tabGroupChipSharesTabWidthAtIndex:cellIdx]) {
+                width = MAX(width, scrollableWidth);
+            }
         } else if (cell.isPinned) {
             width = _pinnedTabWidth;
         } else if (uniform) {
@@ -2968,13 +3176,22 @@ typedef struct {
 
     CGFloat reserved = 0;  // fixed width for chip + pinned cells
     NSInteger tabCount = 0;
+    // Chips that share the tabs' width (see -tabGroupChipSharesTabWidthAtIndex:),
+    // with their own minimum widths.
+    NSMutableDictionary<NSNumber *, NSNumber *> *sharingChipWidths = [NSMutableDictionary dictionary];
     for (NSInteger cellIdx = 0; cellIdx < (NSInteger)_cells.count; cellIdx++) {
         PSMTabBarCell *cell = _cells[cellIdx];
         if (cell.isCollapsedHidden) {
             continue;  // hidden by a collapsed group: no reserved width, not a tab
         }
         if (cell.isTabGroupChip) {
-            reserved += [self widthOfTabGroupChipCellAtIndex:cellIdx];
+            const CGFloat chipWidth = [self widthOfTabGroupChipCellAtIndex:cellIdx];
+            if ([self tabGroupChipSharesTabWidthAtIndex:cellIdx]) {
+                sharingChipWidths[@(cellIdx)] = @(chipWidth);
+                tabCount++;
+            } else {
+                reserved += chipWidth;
+            }
         } else if (cell.isPinned) {
             reserved += _pinnedTabWidth;
         } else {
@@ -2983,7 +3200,10 @@ typedef struct {
     }
 
     CGFloat perTab = 0;
-    if (tabCount > 0) {
+    // A sharing chip never goes below its own width. When the tabs' share is
+    // less, it reserves its own width instead, and the tabs split what's left.
+    // Each pass moves at least one chip, so this ends.
+    while (tabCount > 0) {
         perTab = MAX(0, available - reserved - totalSpacing) / (CGFloat)tabCount;
         if (!self.stretchCellsToFit) {
             // Match the no-chips path: when not stretching, cells grow to their
@@ -2993,6 +3213,20 @@ typedef struct {
             perTab = MIN(perTab, self.cellOptimumWidth);
         }
         perTab = MAX(self.cellMinWidth, perTab);
+        NSMutableArray<NSNumber *> *wider = [NSMutableArray array];
+        for (NSNumber *key in sharingChipWidths) {
+            if (sharingChipWidths[key].doubleValue > perTab) {
+                [wider addObject:key];
+            }
+        }
+        if (wider.count == 0) {
+            break;
+        }
+        for (NSNumber *key in wider) {
+            reserved += sharingChipWidths[key].doubleValue;
+            [sharingChipWidths removeObjectForKey:key];
+            tabCount--;
+        }
     }
 
     NSMutableArray<NSNumber *> *result = [NSMutableArray array];
@@ -3019,6 +3253,9 @@ typedef struct {
         CGFloat width;
         if (cell.isTabGroupChip) {
             width = [self widthOfTabGroupChipCellAtIndex:cellIdx];
+            if ([self tabGroupChipSharesTabWidthAtIndex:cellIdx]) {
+                width = MAX(width, perTab);
+            }
         } else if (cell.isPinned) {
             width = _pinnedTabWidth;
         } else {
@@ -3086,7 +3323,8 @@ typedef struct {
                 continue;
             }
             if (cell.isTabGroupChip) {
-                reserved += [self widthOfTabGroupChipCellAtIndex:i];
+                const CGFloat chipWidth = [self widthOfTabGroupChipCellAtIndex:i];
+                reserved += [self tabGroupChipSharesTabWidthAtIndex:i] ? MAX(chipWidth, minWidth) : chipWidth;
             } else if (cell.isPinned) {
                 reserved += _pinnedTabWidth;
             } else {
@@ -3375,6 +3613,15 @@ typedef struct {
         newValues = regularWidths;
     }
     NSMenu *overflowMenu = [self _setupCells:newValues];
+    if (_orientation == PSMTabBarHorizontalOrientation) {
+        _lastSharedTabWidth = 0;
+        for (NSInteger i = 0; i < (NSInteger)newValues.count && i < (NSInteger)_cells.count; i++) {
+            const CGFloat width = [newValues[i] doubleValue];
+            if (width > 0 && [self tabGroupChipSharesTabWidthAtIndex:i]) {
+                _lastSharedTabWidth = (_lastSharedTabWidth > 0) ? MIN(_lastSharedTabWidth, width) : width;
+            }
+        }
+    }
 
     _lainOutWithOverflow = (overflowMenu != nil || _showAddTabButton);
     if (overflowMenu) {
@@ -3438,6 +3685,18 @@ typedef struct {
     return intercellSpacing * MIN(1.0, MAX(0.0, w / full));
 }
 
+// A hidden cell isn't laid out, but its selection must stay current, both for
+// drawing (state) and for accessibility (the tab state's selected bit).
+- (void)updateSelectionOfHiddenCell:(PSMTabBarCell *)cell {
+    const BOOL selected = [[cell representedObject] isEqualTo:[_tabView selectedTabViewItem]];
+    [cell setState:selected ? NSControlStateValueOn : NSControlStateValueOff];
+    int tabState = [cell tabState] & ~(PSMTab_SelectedMask | PSMTab_LeftIsSelectedMask | PSMTab_RightIsSelectedMask);
+    if (selected) {
+        tabState |= PSMTab_SelectedMask;
+    }
+    [cell setTabState:tabState];
+}
+
 - (NSMenu *)_setupCells:(NSArray *)newValues {
     const int cellCount = [_cells count];
     const int numberOfVisibleCells = [newValues count];
@@ -3482,6 +3741,10 @@ typedef struct {
                 [cell removeCloseButtonTrackingRectFrom:self];
                 [[cell indicator] removeFromSuperview];
                 [cell setIsInOverflowMenu:NO];
+                // Keep its selected state current though it isn't drawn: a
+                // tab bar search can hide the selected tab, and a stale "on"
+                // would make it look selected after another tab is.
+                [self updateSelectionOfHiddenCell:cell];
                 continue;
             }
             // set cell frame
@@ -3492,7 +3755,7 @@ typedef struct {
             } else {
                 cellRect.size.width = [self frame].size.width;
                 // Chip cells reserve their own (style-aware) height; tabs use the generic height.
-                cellRect.size.height = cell.isTabGroupChip ? [self heightOfTabGroupChipCell:cell]
+                cellRect.size.height = cell.isTabGroupChip ? [self heightOfTabGroupChipCellAtIndex:i]
                                                            : generic.size.height;
                 cellRect.origin.y = [[newValues objectAtIndex:i] floatValue];
                 cellRect.origin.x = 0;
@@ -3594,6 +3857,7 @@ typedef struct {
                 // collapse).
                 [cell setIsInOverflowMenu:YES];
                 [[cell indicator] removeFromSuperview];
+                [self updateSelectionOfHiddenCell:cell];
                 continue;
             }
             // set up menu items
@@ -3708,6 +3972,7 @@ typedef struct {
 
 - (void)mouseDown:(NSEvent *)theEvent {
     _didDrag = NO;
+    _chipDragRefused = NO;
 
     // keep for dragging
     [self setLastMouseDownEvent:theEvent];
@@ -3761,6 +4026,9 @@ typedef struct {
 }
 
 - (void)mouseDragged:(NSEvent *)theEvent {
+    if (_chipDragRefused) {
+        return;
+    }
     if ([self lastMouseDownEvent] == nil) {
         if (!_addTabButton.allowDrags) {
             [super mouseDragged:theEvent];
@@ -3826,8 +4094,16 @@ typedef struct {
             const CGFloat dy = currentPoint.y - trackingStartPoint.y;
             if (sqrt(dx * dx + dy * dy) >= self.minimumTabDragDistance) {
                 NSArray<PSMTabBarCell *> *members = [self tabGroupMemberCellsForChip:chip];
-                if (members.count > 0) {
-                    _didDrag = YES;
+                const BOOL allowed = (![[self delegate] respondsToSelector:@selector(tabView:shouldDragTabGroup:)] ||
+                                      [[self delegate] tabView:_tabView shouldDragTabGroup:chip.tabGroupIdentifier]);
+                // A refused drag still isn't a click: don't let mouse-up
+                // toggle the group, and don't let later drag events move the
+                // window instead.
+                _didDrag = YES;
+                if (!(members.count > 0 && allowed)) {
+                    _chipDragRefused = YES;
+                }
+                if (members.count > 0 && allowed) {
                     [[PSMTabDragAssistant sharedDragAssistant] startDraggingGroupWithChip:chip
                                                                                  members:members
                                                                               fromTabBar:self
@@ -3932,6 +4208,9 @@ typedef struct {
 }
 
 - (void)mouseUp:(NSEvent *)theEvent {
+    // A refused chip drag ends here. Reset before any early return so a later
+    // drag that doesn't start with this bar's mouse-down isn't swallowed.
+    _chipDragRefused = NO;
     [self clearPreDragSelection];
     _haveInitialDragLocation = NO;
     if (_resizing) {
@@ -4145,16 +4424,24 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 
 - (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender {
     if ([[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] != NSNotFound) {
+        PSMTabDragAssistant *assistant = [PSMTabDragAssistant sharedDragAssistant];
+        // A drag locked to its own bar can't enter this one yet, so whether
+        // this one would refuse it doesn't matter yet.
+        if (self != [assistant sourceTabBar] && [assistant dragIsLockedToSourceTabBar]) {
+            _tabDragEntryDeferred = YES;
+            return NSDragOperationNone;
+        }
         if ([[self delegate] respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:moveSourceWindow:)] &&
             ![[self delegate] tabView:[[sender draggingSource] tabView]
                 shouldDropTabViewItem:[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject]
                              inTabBar:self
                      moveSourceWindow:nil]) {
-            return NSDragOperationNone;
-        }
-        PSMTabDragAssistant *assistant = [PSMTabDragAssistant sharedDragAssistant];
-        if (self != [assistant sourceTabBar] && [assistant dragIsLockedToSourceTabBar]) {
-            _tabDragEntryDeferred = YES;
+            if (self != [assistant sourceTabBar] || ![assistant draggedTabIsAloneInSourceBar]) {
+                [assistant setRefusingTabBar:self];
+            } else {
+                // It may have become alone mid-drag, after a refusal.
+                [assistant clearRefusingTabBar:self];
+            }
             return NSDragOperationNone;
         }
 
@@ -4177,18 +4464,25 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     PSMTabBarCell *cell = [self cellForPoint:[self convertPoint:[sender draggingLocation] fromView:nil] cellFrame:nil];
 
     if ([[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] != NSNotFound) {
-
+        PSMTabDragAssistant *assistant = [PSMTabDragAssistant sharedDragAssistant];
+        if (self != [assistant sourceTabBar] && [assistant dragIsLockedToSourceTabBar]) {
+            return NSDragOperationNone;
+        }
         if ([[self delegate] respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:moveSourceWindow:)] &&
             ![[self delegate] tabView:[[sender draggingSource] tabView]
                 shouldDropTabViewItem:[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject]
                              inTabBar:self
                      moveSourceWindow:nil]) {
+            if (self != [assistant sourceTabBar] || ![assistant draggedTabIsAloneInSourceBar]) {
+                [assistant setRefusingTabBar:self];
+            } else {
+                // It may have become alone mid-drag, after a refusal.
+                [assistant clearRefusingTabBar:self];
+            }
             return NSDragOperationNone;
         }
-        PSMTabDragAssistant *assistant = [PSMTabDragAssistant sharedDragAssistant];
-        if (self != [assistant sourceTabBar] && [assistant dragIsLockedToSourceTabBar]) {
-            return NSDragOperationNone;
-        }
+        // It may have refused until now, as before a search ended.
+        [assistant clearRefusingTabBar:self];
         if (_tabDragEntryDeferred) {
             _tabDragEntryDeferred = NO;
             [assistant draggingEnteredTabBar:self atPoint:[self freshDragMouseLocation]];
@@ -4197,8 +4491,14 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 
         [assistant draggingUpdatedInTabBar:self atPoint:[self freshDragMouseLocation]];
         return NSDragOperationMove;
-    } else if ([[self delegate] respondsToSelector:@selector(tabView:shouldAcceptDragFromSender:)] &&
-               [[self delegate] tabView:_tabView shouldAcceptDragFromSender:sender]) {
+    } else if ([[self delegate] respondsToSelector:@selector(tabView:shouldAcceptDragFromSender:)]) {
+        if (![[self delegate] tabView:_tabView shouldAcceptDragFromSender:sender]) {
+            // Declined for now (as during a tab bar search). Resting over a
+            // tab still selects it, so the drag can drop into that tab's
+            // content, but don't select whatever tab is under the drag.
+            [self updateSpringLoading];
+            return NSDragOperationNone;
+        }
         [self updateSpringLoading];
         [[PSMTabDragAssistant sharedDragAssistant] draggingUpdatedInTabBar:self atPoint:[self convertPoint:[sender draggingLocation] fromView:nil]];
         return NSDragOperationMove;
@@ -4211,8 +4511,17 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     return NSDragOperationNone;
 }
 
+// A drop the bar declined doesn't reach -performDragOperation:, so stop any
+// pending spring-load here, or it could select a tab after the drag is over.
+- (void)draggingEnded:(id<NSDraggingInfo>)sender {
+    [self cancelSpringLoading];
+    _haveSpringLoadedPoint = NO;
+}
+
 - (void)draggingExited:(id <NSDraggingInfo>)sender {
     [self cancelSpringLoading];
+    _haveSpringLoadedPoint = NO;
+    [[PSMTabDragAssistant sharedDragAssistant] clearRefusingTabBar:self];
     if (_tabDragEntryDeferred) {
         // It was never let in, so there is nothing to exit.
         _tabDragEntryDeferred = NO;
@@ -4230,7 +4539,15 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 // A pane or other non-tab drag that rests over a tab selects that tab, so it can be dropped into
 // that tab's content. Tab drags are not spring-loaded: they rearrange the bar.
 - (void)updateSpringLoading {
-    PSMTabBarCell *cell = [self cellForPoint:[self freshDragMouseLocation] cellFrame:nil];
+    const NSPoint point = [self freshDragMouseLocation];
+    if (_haveSpringLoadedPoint) {
+        // A few points of slop, since a held drag jitters.
+        if (fabs(point.x - _springLoadedPoint.x) < 4 && fabs(point.y - _springLoadedPoint.y) < 4) {
+            return;
+        }
+        _haveSpringLoadedPoint = NO;
+    }
+    PSMTabBarCell *cell = [self cellForPoint:point cellFrame:nil];
     if (cell.isPlaceholder ||
         cell.representedObject == nil ||
         cell.representedObject == [_tabView selectedTabViewItem]) {
@@ -4263,10 +4580,13 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     if (!cell || ![_cells containsObject:cell]) {
         return;
     }
-    if ([self cellForPoint:[self freshDragMouseLocation] cellFrame:nil] != cell) {
+    const NSPoint point = [self freshDragMouseLocation];
+    if ([self cellForPoint:point cellFrame:nil] != cell) {
         DLog(@"The drag left the tab before it sprang");
         return;
     }
+    _springLoadedPoint = point;
+    _haveSpringLoadedPoint = YES;
     NSTabViewItem *item = [cell representedObject];
     if ([[_tabView tabViewItems] containsObject:item]) {
         DLog(@"Spring-load tab %@", item);
@@ -4438,6 +4758,16 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 
 - (void)updateTrackingAreas {
     [super updateTrackingAreas];
+    if (!_pointerTrackingArea) {
+        // In the visible rect, so it follows the bar's size by itself.
+        _pointerTrackingArea = [[NSTrackingArea alloc] initWithRect:NSZeroRect
+                                                            options:(NSTrackingMouseEnteredAndExited |
+                                                                     NSTrackingActiveAlways |
+                                                                     NSTrackingInVisibleRect)
+                                                              owner:self
+                                                           userInfo:nil];
+        [self addTrackingArea:_pointerTrackingArea];
+    }
 
     // Rebuild tracking areas for all visible cells based on their current frames.
     // This ensures tracking areas stay valid after view lifecycle events like
@@ -4488,6 +4818,40 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     }
 
     [self setNeedsDisplay:YES];
+}
+
+- (BOOL)pointerIsInside {
+    if (_pointerIsInsideForTesting) {
+        return _pointerIsInsideForTesting.boolValue;
+    }
+    NSWindow *window = self.window;
+    if (!window.isVisible) {
+        return NO;
+    }
+    const NSPoint screenPoint = [NSEvent mouseLocation];
+    if ([NSWindow windowNumberAtPoint:screenPoint belowWindowWithWindowNumber:0] != window.windowNumber) {
+        return NO;
+    }
+    const NSPoint point = [self convertPoint:[window convertPointFromScreen:screenPoint] fromView:nil];
+    return NSMouseInRect(point, self.visibleRect, self.isFlipped);
+}
+
+- (void)mouseEntered:(NSEvent *)event {
+    if (event.trackingArea == _pointerTrackingArea) {
+        return;
+    }
+    [super mouseEntered:event];
+}
+
+- (void)mouseExited:(NSEvent *)event {
+    if (event.trackingArea == _pointerTrackingArea) {
+        id delegate = self.delegate;
+        if ([delegate respondsToSelector:@selector(tabViewPointerDidLeaveTabBar:)]) {
+            [delegate tabViewPointerDidLeaveTabBar:_tabView];
+        }
+        return;
+    }
+    [super mouseExited:event];
 }
 
 - (void)windowDidMove:(NSNotification *)aNotification {
@@ -4836,6 +5200,37 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 
 - (void)graphicDidChangeForTabWithIdentifier:(id)identifier {
     PSMTabBarCell *cell = [self cellWithIdentifier:identifier];
+    [self setNeedsDisplayInRect:cell.frame];
+}
+
+- (BOOL)showsRichTabContent {
+    id<PSMTabBarControlDelegate> delegate = self.delegate;
+    return ([delegate respondsToSelector:@selector(tabViewShowsRichTabContent:)] &&
+            [delegate tabViewShowsRichTabContent:self.tabView]);
+}
+
+- (void)richContentDidChangeForTabWithIdentifier:(id)identifier {
+    PSMTabBarCell *cell = [self cellWithIdentifier:identifier];
+    if (!cell) {
+        return;
+    }
+    // Where the indicator and close button go can depend on the rich content.
+    // -update: positions the indicator view and the close button's tracking
+    // rect. Move them here too, since this change doesn't otherwise cause an
+    // update.
+    const NSPoint mouseLocation = [self convertPoint:[[self window] pointFromScreenCoords:[NSEvent mouseLocation]]
+                                            fromView:nil];
+    [cell moveCloseButtonTrackingRectTo:[cell closeButtonRectForFrame:cell.frame]
+                                 inView:self
+                          mouseLocation:mouseLocation];
+    PSMProgressIndicator *indicator = cell.indicator;
+    if (indicator.superview == self) {
+        const NSRect frame = [cell indicatorRectForFrame:cell.frame];
+        if (!NSEqualRects(frame, indicator.frame)) {
+            indicator.frame = frame;
+            [self clipAccessoriesToScrollRegionRemovingInvisible:NO];
+        }
+    }
     [self setNeedsDisplayInRect:cell.frame];
 }
 
@@ -5230,6 +5625,42 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     }
 }
 
+- (nullable NSImage *)attentionImageForTabGroupIdentifier:(NSString *)groupID {
+    if (groupID.length == 0) {
+        return nil;
+    }
+    id<PSMTabGroupDataSource> dataSource = self.tabGroupDataSource;
+    if (![dataSource respondsToSelector:@selector(tabGroupAttentionImageWithIdentifier:)]) {
+        return nil;
+    }
+    return [dataSource tabGroupAttentionImageWithIdentifier:groupID];
+}
+
+- (nullable NSArray<PSMTabRichLine *> *)richLinesForTabGroupIdentifier:(NSString *)groupID {
+    if (groupID.length == 0 || ![self tabGroupsShowRichContent]) {
+        return nil;
+    }
+    id<PSMTabGroupDataSource> dataSource = self.tabGroupDataSource;
+    if (![dataSource respondsToSelector:@selector(tabGroupRichLinesWithIdentifier:)]) {
+        return nil;
+    }
+    return [dataSource tabGroupRichLinesWithIdentifier:groupID];
+}
+
+- (void)tabGroupAttentionDidChangeForIdentifier:(NSString *)groupID {
+    if (groupID.length == 0) {
+        return;
+    }
+    for (PSMTabBarCell *cell in _cells) {
+        if (cell.isTabGroupChip && [cell.tabGroupIdentifier isEqualToString:groupID]) {
+            // Styles draw a collapsed chip a little outside its frame (its
+            // outline and drop ring), so redraw a margin around it.
+            [self setNeedsDisplayInRect:NSInsetRect(cell.frame, -4, -4)];
+            return;
+        }
+    }
+}
+
 // The id of the collapsed group the in-flight drag would join if dropped now, or
 // nil. A collapsed group draws no member cells, so the opening-slot affordance is
 // invisible; styles use this to highlight the group's chip as the drop target
@@ -5303,7 +5734,7 @@ static NSRect PSMRunUnionRect(NSRect a, NSRect b) {
             // Exception: while a collapse slide runs, a collapsed member still has
             // a (shrinking) width, so keep it in the run and the outline encloses
             // it as it slides shut -- matching expand's growing outline.
-            if (c.isCollapsedHidden && NSWidth(c.frame) <= 0) {
+            if (c.isHiddenByCollapse) {
                 continue;
             }
             // A drag interleaves placeholder cells between real ones; they're
@@ -5389,6 +5820,11 @@ static NSRect PSMRunUnionRect(NSRect a, NSRect b) {
             continue;
         }
         if (![c continuesRunOfTabGroup:groupID]) {
+            if (c.isHiddenByCollapse) {
+                // Takes no room, as when a tab bar search hides an ungrouped
+                // tab, and its stale origin can sit inside the group.
+                continue;
+            }
             return c;
         }
     }
@@ -5444,10 +5880,14 @@ static NSRect PSMRunUnionRect(NSRect a, NSRect b) {
                 // so this synchronous seeding pass stays O(cells) instead of the
                 // O(cells^2) an -indexOfObject: rescan per chip would reintroduce.
                 frame.size.width = [self widthOfTabGroupChipCellAtIndex:i];
+                if ([self tabGroupChipSharesTabWidthAtIndex:i]) {
+                    frame.size.width = [self settledWidthOfCollapsedTabGroupChipWithWidth:frame.size.width
+                                                                                    cells:_cells];
+                }
             } else {
                 frame.origin.x = reference.origin.x;
                 frame.size.width = reference.size.width;
-                frame.size.height = [self heightOfTabGroupChipCell:chip];
+                frame.size.height = [self heightOfTabGroupChipCellAtIndex:i];
             }
             [chip setFrame:frame];
             break;

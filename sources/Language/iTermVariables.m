@@ -101,6 +101,8 @@ NSString *const iTermVariableKeyShell = @"shell";
 NSString *const iTermVariableKeyUname = @"uname";
 NSString *const iTermVariableKeyIsBroadcastSource = @"isBroadcastSource";
 NSString *const iTermVariableKeyStatus = @"status";
+NSString *const iTermVariableKeyStatusColor = @"statusColor";
+NSString *const iTermVariableKeyStatusDetail = @"statusDetail";
 
 #pragma mark - Window Context
 

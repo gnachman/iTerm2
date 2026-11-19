@@ -65,7 +65,11 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
     // YES while the tab switcher overlay is open. Implies _isCyclingWithModifierPressed.
     BOOL _switcherActive;
 
-    // Index into _tabViewItemsInMRUOrder of the tab that will be selected when the modifiers are
+    // The tabs the switcher lists, in MRU order: those the controller lets cycling go to, plus the
+    // selected tab. Only valid while _switcherActive.
+    NSArray<NSTabViewItem *> *_switcherTabViewItems;
+
+    // Index into _switcherTabViewItems of the tab that will be selected when the modifiers are
     // released. Only valid while _switcherActive.
     NSUInteger _switcherIndex;
 
@@ -156,7 +160,19 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
     // switcher open. The switcher is reloaded below once the tab is gone.
     _removingTabViewItem = YES;
 
-    if (self.selectedTabViewItem == tabViewItemToRemove) {
+    id controller = self.window.windowController;
+    NSTabViewItem *replacement = nil;
+    const BOOL askedForReplacement = (self.selectedTabViewItem == tabViewItemToRemove &&
+                                      [controller conformsToProtocol:@protocol(iTermTabViewReplacementProviding)]);
+    if (askedForReplacement) {
+        // A tab bar search may hide the neighbor.
+        replacement = [controller tabView:self
+             replacementForRemovedTabViewItem:tabViewItemToRemove
+                                towardTheLeft:[iTermAdvancedSettingsModel moveLeftAfterClosingTab]];
+    }
+    if (replacement) {
+        [self selectTabViewItem:replacement];
+    } else if (self.selectedTabViewItem == tabViewItemToRemove) {
         NSArray<NSTabViewItem *> *items = self.tabViewItems;
         NSInteger index = [items indexOfObject:tabViewItemToRemove];
         if (index != NSNotFound) {
@@ -179,6 +195,9 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
     // Remove the item.
     [super removeTabViewItem:tabViewItemToRemove];
     _removingTabViewItem = NO;
+    if (askedForReplacement) {
+        [controller tabViewDidFinishRemovingTabViewItem:self];
+    }
     [self reloadSwitcherKeepingHighlighted:highlighted];
 }
 
@@ -223,37 +242,83 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
     [self selectTabViewItemWithIdentifier:[sender representedObject]];
 }
 
+// The Select Previous and Next Tab menu items send these up the responder
+// chain, which reaches this view before the window controller. The window
+// controller decides, since a tab bar search changes which tabs they visit.
 - (void)previousTab:(id)sender {
+    id controller = self.window.windowController;
+    if ([controller respondsToSelector:@selector(previousTab:)]) {
+        [controller previousTab:sender];
+        return;
+    }
+    [self selectPreviousTabWrapping];
+}
+
+- (void)nextTab:(id)sender {
+    id controller = self.window.windowController;
+    if ([controller respondsToSelector:@selector(nextTab:)]) {
+        [controller nextTab:sender];
+        return;
+    }
+    [self selectNextTabWrapping];
+}
+
+- (void)selectPreviousTabWrapping {
     NSTabViewItem *tabViewItem = [self selectedTabViewItem];
-    [self selectPreviousTabViewItem:sender];
+    [self selectPreviousTabViewItem:nil];
     if (tabViewItem == [self selectedTabViewItem]) {
         [self selectTabViewItemAtIndex:[self numberOfTabViewItems] - 1];
     }
 }
 
-- (void)nextTab:(id)sender {
+- (void)selectNextTabWrapping {
     NSTabViewItem *tabViewItem = [self selectedTabViewItem];
-    [self selectNextTabViewItem:sender];
+    [self selectNextTabViewItem:nil];
     if (tabViewItem == [self selectedTabViewItem]) {
         [self selectTabViewItemAtIndex:0];
     }
 }
 
-- (NSUInteger)MRUIndexAfter:(NSUInteger)theIndex forwards:(BOOL)forwards {
+- (NSUInteger)indexAfter:(NSUInteger)theIndex forwards:(BOOL)forwards count:(NSUInteger)count {
     if (forwards) {
         theIndex++;
-        if (theIndex >= [_tabViewItemsInMRUOrder count]) {
+        if (theIndex >= count) {
             theIndex = 0;
         }
     } else {
         NSInteger temp = theIndex;
         temp--;
         if (temp < 0) {
-            temp = [_tabViewItemsInMRUOrder count] - 1;
+            temp = count - 1;
         }
         theIndex = temp;
     }
     return theIndex;
+}
+
+// The tabs cycling may go to, or nil for all of them.
+- (NSSet<NSTabViewItem *> *)tabViewItemsToCycleAmong {
+    id controller = self.window.windowController;
+    if ([controller conformsToProtocol:@protocol(iTermTabViewReplacementProviding)]) {
+        return [controller tabViewItemsToCycleAmongInTabView:self];
+    }
+    return nil;
+}
+
+// The MRU list limited to the tabs cycling may go to, plus the selected tab, where cycling starts.
+- (NSArray<NSTabViewItem *> *)tabViewItemsForSwitcher {
+    NSSet<NSTabViewItem *> *allowed = [self tabViewItemsToCycleAmong];
+    if (!allowed) {
+        return [_tabViewItemsInMRUOrder copy];
+    }
+    NSTabViewItem *selected = self.selectedTabViewItem;
+    NSMutableArray<NSTabViewItem *> *result = [NSMutableArray array];
+    for (NSTabViewItem *item in _tabViewItemsInMRUOrder) {
+        if (item == selected || [allowed containsObject:item]) {
+            [result addObject:item];
+        }
+    }
+    return result;
 }
 
 - (void)cycleForwards:(BOOL)forwards {
@@ -265,10 +330,36 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
     if (theIndex == NSNotFound) {
         theIndex = 0;
     }
-    NSTabViewItem* next = _tabViewItemsInMRUOrder[[self MRUIndexAfter:theIndex forwards:forwards]];
+    // Nil means every tab may be cycled to.
+    NSSet<NSTabViewItem *> *shown = [self tabViewItemsToCycleAmong];
+    NSUInteger nextIndex = theIndex;
+    NSTabViewItem *next = nil;
+    for (NSUInteger tries = 0; tries < _tabViewItemsInMRUOrder.count; tries++) {
+        nextIndex = [self indexAfter:nextIndex forwards:forwards count:_tabViewItemsInMRUOrder.count];
+        NSTabViewItem *candidate = _tabViewItemsInMRUOrder[nextIndex];
+        if (candidate == tabViewItem || !shown || [shown containsObject:candidate]) {
+            next = candidate;
+            break;
+        }
+    }
+    if (!next || next == tabViewItem) {
+        return;
+    }
     // The MRU order won't be changed by cycling until you let up the modifier key in
     // cycleFlagsChanged:.
     [self selectTabViewItem:next];
+}
+
+- (BOOL)isCyclingWithModifierPressed {
+    return _isCyclingWithModifierPressed;
+}
+
+- (BOOL)isShowingSwitcher {
+    return _switcherActive;
+}
+
+- (void)tabViewItemsToCycleAmongDidChange {
+    [self reloadSwitcherKeepingHighlighted:[self switcherHighlightedItem]];
 }
 
 - (void)cycleKeyDownWithModifiers:(NSUInteger)modifierFlags forwards:(BOOL)forwards {
@@ -278,10 +369,22 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
         _isCyclingWithModifierPressed = (_cycleModifierFlags != 0);
         if (_isCyclingWithModifierPressed &&
             // With one tab there is nothing to switch to.
-            _tabViewItemsInMRUOrder.count > 1 &&
+            [self tabViewItemsForSwitcher].count > 1 &&
             self.window != nil &&
             [iTermPreferences boolForKey:kPreferenceKeyShowTabSwitcherWhenCyclingTabs]) {
             [self beginSwitcher];
+        } else if (_isCyclingWithModifierPressed) {
+            // The release of the modifiers arrives as flagsChanged: in the key
+            // window. If this window stops being key, or the app stops being
+            // active, mid-cycle, it never arrives, so end the cycle then.
+            [[NSNotificationCenter defaultCenter] addObserver:self
+                                                     selector:@selector(endPlainCycle)
+                                                         name:NSApplicationDidResignActiveNotification
+                                                       object:nil];
+            [[NSNotificationCenter defaultCenter] addObserver:self
+                                                     selector:@selector(endPlainCycle)
+                                                         name:NSWindowDidResignKeyNotification
+                                                       object:self.window];
         }
     }
     if (_switcherActive) {
@@ -301,9 +404,30 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
             [self commitSwitcherSelection];
             return;
         }
-        _isCyclingWithModifierPressed = NO;
-        // While this looks like a no-op, it has the effect of re-ordering the MRU list.
-        [self selectTabViewItem:[self selectedTabViewItem]];
+        [self endPlainCycle];
+    }
+}
+
+// End a cycle without the switcher overlay: the modifiers were released, or
+// the window or app stopped being key.
+- (void)endPlainCycle {
+    if (!_isCyclingWithModifierPressed || _switcherActive) {
+        return;
+    }
+    _isCyclingWithModifierPressed = NO;
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:NSApplicationDidResignActiveNotification
+                                                  object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:NSWindowDidResignKeyNotification
+                                                  object:nil];
+    // Put the tab the cycle landed on first in the MRU list, as selecting it
+    // with the modifiers up would. Done directly: this can run as the window
+    // closes, when selecting would do more than reorder.
+    NSTabViewItem *selected = [self selectedTabViewItem];
+    if (selected) {
+        [_tabViewItemsInMRUOrder removeObject:selected];
+        [_tabViewItemsInMRUOrder insertObject:selected atIndex:0];
     }
 }
 
@@ -312,7 +436,7 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
 - (NSArray<iTermTabSwitcherItem *> *)switcherItems {
     NSTabViewItem *selected = self.selectedTabViewItem;
     NSMutableArray<iTermTabSwitcherItem *> *items = [NSMutableArray array];
-    for (NSTabViewItem *tabViewItem in _tabViewItemsInMRUOrder) {
+    for (NSTabViewItem *tabViewItem in _switcherTabViewItems) {
         NSDate *lastSeen = (tabViewItem == selected) ? nil : [_lastSelectedDates objectForKey:tabViewItem];
         [items addObject:[[iTermTabSwitcherItem alloc] initWithTabViewItem:tabViewItem lastSeen:lastSeen]];
     }
@@ -320,10 +444,11 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
 }
 
 - (void)beginSwitcher {
-    NSUInteger index = [_tabViewItemsInMRUOrder indexOfObject:[self selectedTabViewItem]];
+    _switcherTabViewItems = [self tabViewItemsForSwitcher];
+    NSUInteger index = [_switcherTabViewItems indexOfObject:[self selectedTabViewItem]];
     _switcherIndex = (index == NSNotFound) ? 0 : index;
     _switcherActive = YES;
-    DLog(@"Begin tab switcher with %@ tabs, modifiers=%@", @(_tabViewItemsInMRUOrder.count), @(_cycleModifierFlags));
+    DLog(@"Begin tab switcher with %@ tabs, modifiers=%@", @(_switcherTabViewItems.count), @(_cycleModifierFlags));
     if (!_switcher) {
         _switcher = [[iTermTabSwitcher alloc] init];
     }
@@ -365,11 +490,11 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
 }
 
 - (void)moveSwitcherSelectionForwards:(BOOL)forwards {
-    [self setSwitcherIndex:[self MRUIndexAfter:_switcherIndex forwards:forwards]];
+    [self setSwitcherIndex:[self indexAfter:_switcherIndex forwards:forwards count:_switcherTabViewItems.count]];
 }
 
 - (void)setSwitcherIndex:(NSInteger)index {
-    if (!_switcherActive || index < 0 || index >= (NSInteger)_tabViewItemsInMRUOrder.count) {
+    if (!_switcherActive || index < 0 || index >= (NSInteger)_switcherTabViewItems.count) {
         return;
     }
     _switcherIndex = index;
@@ -400,11 +525,11 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
 }
 
 - (void)commitSwitcherSelection {
-    if (!_switcherActive || _switcherIndex >= _tabViewItemsInMRUOrder.count) {
+    if (!_switcherActive || _switcherIndex >= _switcherTabViewItems.count) {
         [self cancelSwitcher];
         return;
     }
-    [self endSwitcherSelecting:_tabViewItemsInMRUOrder[_switcherIndex]];
+    [self endSwitcherSelecting:_switcherTabViewItems[_switcherIndex]];
 }
 
 // The one way out of the switcher. Selects `tabViewItem` afterwards if it is not nil.
@@ -414,6 +539,7 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
     }
     DLog(@"End tab switcher selecting %@", tabViewItem);
     _switcherActive = NO;
+    _switcherTabViewItems = nil;
     _isCyclingWithModifierPressed = NO;
     if (_switcherKeyMonitor) {
         [NSEvent removeMonitor:_switcherKeyMonitor];
@@ -444,24 +570,26 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
     if (!_switcherActive) {
         return;
     }
-    if (_tabViewItemsInMRUOrder.count < 2) {
+    NSArray<NSTabViewItem *> *items = [self tabViewItemsForSwitcher];
+    if (items.count < 2) {
         // Nothing left to switch to, such as after closing tabs from the switcher.
         [self cancelSwitcher];
         return;
     }
-    const NSUInteger index = [_tabViewItemsInMRUOrder indexOfObject:highlighted];
-    _switcherIndex = (index == NSNotFound) ? MIN(_switcherIndex, _tabViewItemsInMRUOrder.count - 1) : index;
-    DLog(@"Reload tab switcher with %@ tabs", @(_tabViewItemsInMRUOrder.count));
+    _switcherTabViewItems = items;
+    const NSUInteger index = [_switcherTabViewItems indexOfObject:highlighted];
+    _switcherIndex = (index == NSNotFound) ? MIN(_switcherIndex, _switcherTabViewItems.count - 1) : index;
+    DLog(@"Reload tab switcher with %@ tabs", @(_switcherTabViewItems.count));
     _switcher.avoidedScreenFrame = [self tabBarScreenFrame];
     [_switcher updateWithItems:[self switcherItems] selectedIndex:_switcherIndex];
     [self updatePreviewedTabInTabBar];
 }
 
 - (NSTabViewItem *)switcherHighlightedItem {
-    if (!_switcherActive || _switcherIndex >= _tabViewItemsInMRUOrder.count) {
+    if (!_switcherActive || _switcherIndex >= _switcherTabViewItems.count) {
         return nil;
     }
-    return _tabViewItemsInMRUOrder[_switcherIndex];
+    return _switcherTabViewItems[_switcherIndex];
 }
 
 // Closes the highlighted tab the way its close button would. If no confirmation is needed, the

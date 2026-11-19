@@ -278,9 +278,26 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
         if (tabBarHeight <= 0) {
             tabBarHeight = [self.delegate tabViewDesiredTabBarHeight:self.tabView];
         }
-        self.height = tabBarHeight;
+        self.height = MAX(tabBarHeight, [self richContentHeightFloor]);
     }
     self.showAddTabButton = ![iTermAdvancedSettingsModel removeAddTabButton] && (orientation == PSMTabBarHorizontalOrientation);
+}
+
+// On macOS 26 the style dictates the bar's height in some configurations, and
+// it is reapplied whenever the bar's location is set (every layout). Rich tab
+// content may need it taller; the window's desired height accounts for that,
+// including the insets, so it is the floor. 0 when rich content is off.
+- (CGFloat)richContentHeightFloor {
+    const CGFloat cellHeight = [self.itermTabBarDelegate iTermTabBarMinimumRichContentTabHeightForStyle:self.style];
+    if (cellHeight <= 0) {
+        return 0;
+    }
+    if (self.orientation == PSMTabBarVerticalOrientation) {
+        // A row only needs room for the lines. The window's desired height
+        // also folds in the horizontal bar's height, which a row doesn't need.
+        return cellHeight;
+    }
+    return [self.delegate tabViewDesiredTabBarHeight:self.tabView];
 }
 
 - (void)updateHeightWithDefault:(CGFloat)defaultHeight {
@@ -289,7 +306,7 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
             self.style.orientation = self.orientation;
             const CGFloat styleHeight = self.style.tabBarHeight;
             if (styleHeight > 0) {
-                self.height = styleHeight;
+                self.height = MAX(styleHeight, [self richContentHeightFloor]);
                 return;
             }
         }

@@ -558,6 +558,10 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     return [[[self psmTabControlView] style] desiredWidthOfTabCell:self];
 }
 
+- (BOOL)isHiddenByCollapse {
+    return self.isCollapsedHidden && (NSWidth(self.frame) <= 0 || NSHeight(self.frame) <= 0);
+}
+
 #pragma mark - Drawing
 
 - (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {
@@ -691,6 +695,21 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
                                                        userInfo:userData];
     [view addTrackingArea:area];
     _closeButtonTrackingArea = area;
+}
+
+- (void)moveCloseButtonTrackingRectTo:(NSRect)rect
+                               inView:(NSView *)view
+                        mouseLocation:(NSPoint)mouseLocation {
+    if (!_closeButtonTrackingArea || NSEqualRects(_closeButtonTrackingArea.rect, rect)) {
+        return;
+    }
+    NSDictionary *userInfo = _closeButtonTrackingArea.userInfo;
+    [self removeCloseButtonTrackingRectFrom:view];
+    [self setCloseButtonTrackingRect:rect userData:userInfo assumeInside:NO view:view];
+    const BOOL over = NSMouseInRect(mouseLocation, rect, view.isFlipped);
+    if (over != self.closeButtonOver) {
+        self.closeButtonOver = over;
+    }
 }
 
 #pragma mark - Drag Support

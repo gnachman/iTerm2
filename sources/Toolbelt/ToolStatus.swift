@@ -156,10 +156,12 @@ class ToolStatus: NSView {
     // coalescing contract. Internal (not private) for the same reason
     // resolveSessionForReload is.
     var shortcutReloadCount = 0
-    // Session GUIDs the user has snoozed via the row context menu. Transient
-    // per-tool UI state (not persisted): snoozed rows sink to the bottom and
-    // render dimmed, and auto-un-snooze when their status next changes.
-    private var snoozedSessionIDs = Set<String>()
+    // Snooze is shared with the tab bar and kept by SessionStatusController:
+    // snoozed rows sink to the bottom and render dimmed, and wake when their
+    // status next changes.
+    private func isSnoozed(_ sessionID: String) -> Bool {
+        return SessionStatusController.instance.isSnoozed(sessionID: sessionID)
+    }
     // Holds the memoized lookup result weakly, so a key present with a
     // now-nil session means "was resolved, but that session has since
     // died" — which resolveSessionForReload reports the same as a miss
@@ -291,6 +293,10 @@ class ToolStatus: NSView {
         nc.addObserver(self,
                        selector: #selector(needsShortcutReload(_:)),
                        name: .iTermTabDidChangePositionInWindow,
+                       object: nil)
+        nc.addObserver(self,
+                       selector: #selector(snoozeDidChange(_:)),
+                       name: SessionStatusController.snoozeDidChangeNotification,
                        object: nil)
         nc.addObserver(self,
                        selector: #selector(prioritiesDidChange(_:)),
@@ -828,7 +834,7 @@ private extension ToolStatus {
     /// current ordering. Cheap (the toolbelt is small) and preserves selection
     /// and scroll, unlike a full reloadData(). No-op when nothing is snoozed.
     private func refreshSeparators() {
-        guard !snoozedSessionIDs.isEmpty,
+        guard statuses.contains(where: { $0.snoozed }),
               let tableView = _tableView,
               !displayedRows.isEmpty else {
             return
@@ -885,10 +891,6 @@ private extension ToolStatus {
             statuses = updated
             return .inserted(at: j)
         case .removed:
-            // Drop any snooze so a session whose status later reappears
-            // comes back un-snoozed, and so the set doesn't accumulate
-            // GUIDs of gone sessions.
-            snoozedSessionIDs.remove(key)
             guard let i = statuses.firstIndex(where: { $0.sessionID == key }) else {
                 return .none
             }
@@ -902,9 +904,8 @@ private extension ToolStatus {
                 it_assert(false, "mutateModel(.updated) for \(key) but session is not in statuses; applyModelChange should only route here when inLocal is true")
                 return .none
             }
-            // A status change auto-un-snoozes the row. makeStatus reads the
-            // snooze set, so clear it first to get snoozed == false.
-            snoozedSessionIDs.remove(key)
+            // SessionStatusController has already woken a snoozed session,
+            // so makeStatus gives snoozed == false.
             var updated = statuses
             updated[i] = makeStatus(tabStatus: value!, sessionID: key)
             updated.sort()
@@ -1002,7 +1003,7 @@ private extension ToolStatus {
         }
         return (fromRecords + fromStatuses).map { child in
             var child = child
-            child.snoozed = snoozedSessionIDs.contains(child.sessionID)
+            child.snoozed = isSnoozed(child.sessionID)
             return child
         }
     }
@@ -1312,7 +1313,7 @@ private extension ToolStatus {
     private func makeStatus(tabStatus: iTermSessionTabStatus, sessionID: String) -> Status {
         return Status(tabStatus: tabStatus,
                       sessionID: sessionID,
-                      snoozed: snoozedSessionIDs.contains(sessionID))
+                      snoozed: isSnoozed(sessionID))
     }
 
     func configureCell(_ cell: ToolStatusCellView, for row: Int) {
@@ -1599,29 +1600,38 @@ extension ToolStatus: NSMenuDelegate {
     }
 
     private func allSnoozed(_ sessionIDs: [String]) -> Bool {
-        return !sessionIDs.isEmpty && sessionIDs.allSatisfy { snoozedSessionIDs.contains($0) }
+        return !sessionIDs.isEmpty && sessionIDs.allSatisfy { isSnoozed($0) }
     }
 
+    // The controller announces the change, and snoozeDidChange updates the
+    // list, as it does for a change made in the tab bar.
     private func setSnoozed(_ snoozed: Bool, forSessionIDs sessionIDs: [String]) {
-        let ids = Set(sessionIDs)
-        guard !ids.isEmpty else {
+        SessionStatusController.instance.setSnoozed(snoozed, sessionIDs: sessionIDs)
+    }
+
+    @objc private func snoozeDidChange(_ notification: Notification) {
+        // A status change woke these. That change reaches didChange, which
+        // updates the row after the debounce interval. Reloading now would
+        // show the row awake with its old status, or with none after a
+        // removal, until then.
+        if notification.userInfo?[SessionStatusController.wokenByStatusChangeKey] as? Bool == true {
             return
         }
-        if snoozed {
-            snoozedSessionIDs.formUnion(ids)
-        } else {
-            snoozedSessionIDs.subtract(ids)
+        guard let ids = notification.userInfo?[SessionStatusController.sessionIDsKey] as? Set<String>,
+              statuses.contains(where: { ids.contains($0.sessionID) }) else {
+            return
         }
         // Reflect the new flags on the model, re-sort so snoozed rows sink to
         // the bottom, and reload. A snooze toggle can move rows across the
         // whole list, so a full reload is simpler than animating each move.
         for i in statuses.indices where ids.contains(statuses[i].sessionID) {
-            statuses[i].snoozed = snoozed
+            statuses[i].snoozed = isSnoozed(statuses[i].sessionID)
         }
         statuses.sort()
         rebuildDisplayed()
         _tableView?.reloadData()
         updateSelectionWithoutChangingFirstResponder()
+        updateSnoozeButtonAppearance()
     }
 }
 

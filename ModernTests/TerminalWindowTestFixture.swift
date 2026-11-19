@@ -32,17 +32,20 @@ final class TerminalWindowTestFixture {
     /// closing the window fails the test if the engine enforces a minimum size
     /// or had to break constraints. `profile`, which defaults to the default
     /// profile, is used for the window and for every session the fixture
-    /// makes unless a method is given another.
+    /// makes unless a method is given another. `windowProfile`, if given, is
+    /// the window's instead, and may be empty, as when a window is made for a
+    /// revived session.
     init(windowType: iTermWindowType = .WINDOW_TYPE_NORMAL,
          engageLayoutEngine: Bool = LayoutEngineTestSupport.engageInEveryFixtureWindow,
-         profile customProfile: [AnyHashable: Any]? = nil) {
+         profile customProfile: [AnyHashable: Any]? = nil,
+         windowProfile: [AnyHashable: Any]? = nil) {
         guard let profile = customProfile ?? ProfileModel.sharedInstance().defaultBookmark(),
               let terminal = PseudoTerminal(smartLayout: false,
                                             windowType: windowType,
                                             savedWindowType: windowType,
                                             percentage: iTermPercentage(width: 0, height: 0),
                                             screen: -1,
-                                            profile: profile) else {
+                                            profile: windowProfile ?? profile) else {
             it_fatalError("Could not create a terminal window")
         }
         self.profile = profile

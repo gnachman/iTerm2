@@ -904,10 +904,17 @@ static BOOL iTermProfileArrayFieldDiffers(Profile *a, Profile *b, NSString *key)
 }
 
 - (Profile *)setObjectsFromDictionary:(NSDictionary *)dictionary inProfile:(Profile *)profile {
+    return [self setObjectsFromDictionary:dictionary removingKeys:@[] inProfile:profile];
+}
+
+- (Profile *)setObjectsFromDictionary:(NSDictionary *)dictionary
+                         removingKeys:(NSArray<NSString *> *)keysToRemove
+                            inProfile:(Profile *)profile {
     NSMutableDictionary *newDict = [[profile mutableCopy] autorelease];
     [dictionary enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
         [newDict setObject:obj forKey:key];
     }];
+    [newDict removeObjectsForKeys:keysToRemove];
     NSString *guid = [profile objectForKey:KEY_GUID];
     Profile *newProfile = [NSDictionary dictionaryWithDictionary:newDict];
     [self setBookmark:newProfile withGuid:guid];

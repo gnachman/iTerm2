@@ -91,6 +91,17 @@ extern NSString *const PSMTabDragIsGroupPasteboardType;
 // for now because the drag is locked to `control`; it is replayed if the drag
 // unlocks while the pointer is still outside.
 - (BOOL)shouldDeferDraggingExitFromTabBar:(PSMTabBarControl *)control;
+// The tab bar under the drag refuses the dragged tab (as during a tab bar
+// search), or nil. A release while one does snaps the tab back, rather than
+// tearing it off as a release over no bar would.
+- (void)setRefusingTabBar:(PSMTabBarControl *)control;
+// The drag left `control`, so it no longer refuses it.
+- (void)clearRefusingTabBar:(PSMTabBarControl *)control;
+// Whether the source bar refuses its own tab, as during a tab bar search.
+- (BOOL)sourceTabBarRefusesDrop;
+// Whether the dragged tab is its window's only tab. Its bar declines it, but
+// that isn't a refusal: dragging it moves the window.
+- (BOOL)draggedTabIsAloneInSourceBar;
 - (void)performDragOperation:(id<NSDraggingInfo>)sender;
 - (void)draggedImageEndedAt:(NSPoint)aPoint operation:(NSDragOperation)operation;
 - (void)finishDrag;
@@ -111,6 +122,24 @@ extern NSString *const PSMTabDragIsGroupPasteboardType;
 // into a chips-stripped, placeholder-laden cell list mid-drag. Exposed for
 // unit tests of the slot layout.
 - (void)reinsertDragChipsInTabBar:(PSMTabBarControl *)control;
+
+// Whether the chip at `chipIndex` leads a collapsed group: one whose tabs are
+// all hidden. Exposed for unit tests.
+- (BOOL)chipLeadsCollapsedRunInCells:(NSArray *)cells atIndex:(NSInteger)chipIndex;
+
+// The chip index of the collapsed group beside the group whose chip is at
+// `ci` (direction -1 = before, +1 = after), or NSNotFound. Exposed for unit
+// tests.
+- (NSInteger)collapsedGroupChipAtIndex:(NSInteger)ci
+          adjacentPillChipIndexInCells:(NSArray<PSMTabBarCell *> *)cells
+                             direction:(NSInteger)direction;
+
+// Whether a drop slot at `index` is next to a collapsed group, so it opens
+// only once the drag settles. Exposed for unit tests.
+- (BOOL)placeholderAtIndex:(NSInteger)index isAdjacentToCollapsedRunInCells:(NSArray *)cells;
+
+// Whether the drag is of a whole tab group (by its chip).
+- (BOOL)isDraggingTabGroup;
 
 // With chips present in `control`, the group id the just-dropped cell landed
 // inside, or nil if it landed outside every group. Reads targetCell and

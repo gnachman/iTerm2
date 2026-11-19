@@ -18,6 +18,7 @@
 #import "PSMTabBarControl.h"
 #import <objc/runtime.h>
 #import "SFSymbolEnum/SFSymbolEnum.h"
+#import "iTerm2SharedARC-Swift.h"
 
 #define kPSMMetalObjectCounterRadius 7.0
 #define kPSMMetalCounterMinWidth 20
@@ -220,10 +221,13 @@
     NSRect result;
     result.size = NSMakeSize(kPSMTabBarIconWidth, kPSMTabBarIconWidth);
     result.origin.x = minX - kPSMTabBarCellIconPadding - kPSMTabBarIconWidth;
-    result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0) - 1;
+    CGFloat centeredMinY = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0) - 1;
     if (cell.controlView.window.backingScaleFactor > 1) {
-        result.origin.y += 0.5;
+        centeredMinY += 0.5;
     }
+    result.origin.y = [self minYForAccessoryOfHeight:result.size.height
+                                              inCell:cell
+                                        centeredMinY:centeredMinY];
 
     return result;
 }
@@ -258,9 +262,27 @@
     NSRect result;
     result.size = NSMakeSize(kPSMTabBarIndicatorWidth, kPSMTabBarIndicatorWidth);
     result.origin.x = minX - kPSMTabBarCellIconPadding - kPSMTabBarIndicatorWidth;
-    result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0);
+    result.origin.y = [self minYForAccessoryOfHeight:result.size.height
+                                              inCell:cell
+                                        centeredMinY:cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0)];
 
     return result;
+}
+
+// A tab with rich content lines puts its icons and activity indicator on its
+// first line instead of in its middle, which in a tall tab is between lines.
+// Other tabs use centeredMinY, so they look as they always have.
+- (CGFloat)minYForAccessoryOfHeight:(CGFloat)height
+                             inCell:(PSMTabBarCell *)cell
+                       centeredMinY:(CGFloat)centeredMinY {
+    NSArray<PSMTabRichLine *> *richLines = cell.isPinned ? nil : [self richLinesForCell:cell];
+    if (!richLines) {
+        return centeredMinY;
+    }
+    const CGFloat midY = [PSMTabRichContentRenderer firstLineMidYForLines:richLines
+                                                                   inRect:cell.frame
+                                                                 baseFont:[NSFont systemFontOfSize:self.fontSize]];
+    return round(midY - height / 2.0);
 }
 
 - (NSRect)progressBarRectForTabCell:(PSMTabBarCell *)cell {
@@ -425,8 +447,13 @@
     if (cell.isPinned) {
         return self.tabBar.pinnedTabWidth;
     }
+    // Rich content replaces the title, so fit its widest line instead.
+    NSArray<PSMTabRichLine *> *richLines = [self richLinesForCell:cell];
+    const CGFloat labelWidth = richLines
+        ? [PSMTabRichContentRenderer preferredWidthForLines:richLines baseFont:[NSFont systemFontOfSize:self.fontSize]]
+        : [self widthOfAttributedStringInCell:cell];
     return ceil([self widthOfLeftMatterInCell:cell] +
-                [self widthOfAttributedStringInCell:cell] +
+                labelWidth +
                 [self widthOfRightMatterInCell:cell]);
 }
 
@@ -931,9 +958,9 @@ const void *PSMTabStyleDarkColorKey = "dark";
     }
     // Draw graphic icon (i.e., the app icon, not new-output indicator icon) over close button.
     if (cachedTitle.inputs.graphic) {
-        const CGFloat width = [self drawGraphicWithCellFrame:cellFrame
-                                                       image:cachedTitle.inputs.graphic
-                                                       alpha:1 - closeButtonAlpha];
+        const CGFloat width = [self drawGraphicForCell:cell
+                                                 image:cachedTitle.inputs.graphic
+                                                 alpha:1 - closeButtonAlpha];
         if (_orientation == PSMTabBarHorizontalOrientation) {
             reservedSpace = MAX(reservedSpace, width);
         } else {
@@ -992,6 +1019,26 @@ const void *PSMTabStyleDarkColorKey = "dark";
         [counterString drawInRect:counterStringRect];
     }
 
+    // Rich content replaces the title and subtitle.
+    NSArray<PSMTabRichLine *> *richLines = [self richLinesForCell:cell];
+    if (richLines && !cell.isPinned) {
+        const NSRect richRect = [self richContentRectForCell:cell
+                                               labelPosition:labelPosition
+                                                     hasIcon:drewIcon
+                                                    iconRect:iconRect
+                                               reservedSpace:reservedSpace];
+        NSColor *textColor = [self textColorForCell:cell];
+        [PSMTabRichContentRenderer drawLines:richLines
+                                      inRect:richRect
+                                    baseFont:[NSFont systemFontOfSize:self.fontSize]
+                                   textColor:textColor
+                              secondaryColor:[textColor colorWithAlphaComponent:textColor.alphaComponent * 0.7]
+                                   alignment:NSTextAlignmentLeft
+                             colorAppearance:self.accessoryAppearance
+                                   highlight:self.tabBar.searchHighlightQuery];
+        return;
+    }
+
     // label rect
     CGFloat mainLabelHeight = 0;
     PSMCachedTitle *cachedSubtitle = cell.cachedSubtitle;
@@ -1037,6 +1084,8 @@ const void *PSMTabStyleDarkColorKey = "dark";
             labelRect.origin.x += reservedSpace;
         }
 
+        attributedString = [PSMTabSearchHighlight highlightingAttributedString:attributedString
+                                                                         query:self.tabBar.searchHighlightQuery];
         [attributedString drawInRect:labelRect];
         mainLabelHeight = NSHeight(labelRect);
     }
@@ -1052,6 +1101,40 @@ const void *PSMTabStyleDarkColorKey = "dark";
                labelOffset:labelOffset
            mainLabelHeight:mainLabelHeight];
     }
+}
+
+- (NSRect)richContentRectForCell:(PSMTabBarCell *)cell
+                   labelPosition:(CGFloat)labelPosition
+                         hasIcon:(BOOL)hasIcon
+                        iconRect:(NSRect)iconRect
+                   reservedSpace:(CGFloat)reservedSpace {
+    // Pass no title: the classic title isn't drawn, and its length would
+    // otherwise decide whether reservedSpace is taken out of the width.
+    const CGFloat width = [self widthForLabelInCell:cell
+                                      labelPosition:labelPosition
+                                            hasIcon:hasIcon
+                                           iconRect:iconRect
+                                        cachedTitle:nil
+                                      reservedSpace:0
+                                       boundingSize:NULL
+                                           truncate:NULL];
+    // Stay clear of the close button even while it's hidden, since the lines
+    // are left-aligned rather than centered around it like a single title.
+    const NSRect cellFrame = cell.frame;
+    return NSMakeRect(labelPosition + reservedSpace,
+                      NSMinY(cellFrame),
+                      MAX(0, width - reservedSpace),
+                      NSHeight(cellFrame));
+}
+
+- (NSArray<PSMTabRichLine *> *)richLinesForCell:(PSMTabBarCell *)cell {
+    id tab = [(id)[cell representedObject] identifier];
+    if (![tab respondsToSelector:@selector(psmTabRichLines)]) {
+        return nil;
+    }
+    // No lines draws nothing, so treat it as no rich content.
+    NSArray<PSMTabRichLine *> *lines = [tab psmTabRichLines];
+    return lines.count > 0 ? lines : nil;
 }
 
 - (CGFloat)verticalOffsetForTitleWhenSubtitlePresent {
@@ -1103,14 +1186,19 @@ const void *PSMTabStyleDarkColorKey = "dark";
         labelRect.origin.x += reservedSpace;
     }
 
+    attributedString = [PSMTabSearchHighlight highlightingAttributedString:attributedString
+                                                                     query:self.tabBar.searchHighlightQuery];
     [attributedString drawInRect:labelRect];
 }
 
-- (CGFloat)drawGraphicWithCellFrame:(NSRect)cellFrame
-                              image:(NSImage *)image
-                              alpha:(CGFloat)alpha {
+- (CGFloat)drawGraphicForCell:(PSMTabBarCell *)cell
+                        image:(NSImage *)image
+                        alpha:(CGFloat)alpha {
+    const NSRect cellFrame = cell.frame;
     NSRect rect = NSMakeRect(NSMinX(cellFrame) + 6,
-                             NSMinY(cellFrame) + (NSHeight(cellFrame) - kPSMTabBarIconWidth) / 2.0,
+                             [self minYForAccessoryOfHeight:kPSMTabBarIconWidth
+                                                     inCell:cell
+                                               centeredMinY:NSMinY(cellFrame) + (NSHeight(cellFrame) - kPSMTabBarIconWidth) / 2.0],
                              kPSMTabBarIconWidth,
                              kPSMTabBarIconWidth);
     [image drawInRect:rect fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:alpha respectFlipped:YES hints:nil];
@@ -1292,7 +1380,7 @@ const void *PSMTabStyleDarkColorKey = "dark";
             // A collapsed member is normally skipped, but while a collapse/expand
             // slide is shrinking/growing its width it must draw (width > 0
             // mid-slide; exactly 0 when fully collapsed, skipped again then).
-            const BOOL hiddenByCollapse = (cell.isCollapsedHidden && NSWidth(cell.frame) <= 0);
+            const BOOL hiddenByCollapse = cell.isHiddenByCollapse;
             if (![cell isInOverflowMenu] && !hiddenByCollapse &&
                 NSIntersectsRect(NSInsetRect([cell frame], -1, -1), clipRect)) {
                 if (cell.state == stateToDraw) {
@@ -1335,7 +1423,7 @@ const void *PSMTabStyleDarkColorKey = "dark";
     [self drawDividerBetweenTabBarAndContent:rect bar:bar];
 
     for (PSMTabBarCell *cell in [bar cells]) {
-        const BOOL hiddenByCollapse = (cell.isCollapsedHidden && NSWidth(cell.frame) <= 0);
+        const BOOL hiddenByCollapse = cell.isHiddenByCollapse;
         if (![cell isInOverflowMenu] && !hiddenByCollapse &&
             NSIntersectsRect([cell frame], clipRect) && cell.state == NSControlStateValueOn) {
             [cell drawPostHocDecorationsOnSelectedCell:cell tabBarControl:bar];
@@ -1375,6 +1463,9 @@ static NSRect PSMSquaredSubgroupBox(NSRect box, BOOL horizontal) {
     }
     return box;
 }
+static const CGFloat kPSMSquaredCollapsedAttention = 20;  // room for the attention icon on a collapsed chip
+static const CGFloat kPSMSquaredCollapsedNameBandPad = 4;  // above and below the name, and below the lines, on a collapsed chip with rich content
+static const CGFloat kPSMCollapsedAttentionIconSize = 16;  // side of the attention icon (drawn at the size tabs use)
 
 - (BOOL)usesExternalTabGroupDecoration {
     return YES;
@@ -1456,7 +1547,20 @@ static NSRect PSMSquaredSubgroupBox(NSRect box, BOOL horizontal) {
     // A sub-group's box gives up its trailing inset (PSMSquaredSubgroupBox), so
     // reserve it or the label is truncated.
     const CGFloat inset = nested ? kPSMSquaredSubgroupInset : 0;
-    return textWidth + kPSMSquaredGroupNamePad * 2 + kPSMSquaredCollapsedChevron + inset;
+    return textWidth + kPSMSquaredGroupNamePad * 2 + kPSMSquaredCollapsedAttention + kPSMSquaredCollapsedChevron + inset;
+}
+
+// The name band is as tall as an expanded group's header, so the name stays
+// put when the group collapses.
+- (CGFloat)tabGroupCollapsedChipHeightForRichLines:(NSArray<PSMTabRichLine *> *)lines
+                                      headerHeight:(CGFloat)headerHeight {
+    return headerHeight + [PSMTabRichContentRenderer contentHeightForLines:lines
+                                                                  baseFont:[NSFont systemFontOfSize:self.fontSize]] + kPSMSquaredCollapsedNameBandPad;
+}
+
+- (CGFloat)tabGroupCollapsedChipWidthForRichLines:(NSArray<PSMTabRichLine *> *)lines {
+    return kPSMSquaredGroupNamePad * 2 + [PSMTabRichContentRenderer preferredWidthForLines:lines
+                                                                                  baseFont:[NSFont systemFontOfSize:self.fontSize]];
 }
 
 - (void)drawSquaredCollapsedTabGroupChip:(PSMTabBarCell *)chip
@@ -1471,17 +1575,21 @@ static NSRect PSMSquaredSubgroupBox(NSRect box, BOOL horizontal) {
     NSFont *font = [self squaredGroupNameFont];
     const CGFloat outset = kPSMSquaredGroupOutset;
 
-    NSRect box = NSMakeRect(NSMinX(chip.frame), NSMinY(chip.frame) - outset,
-                            NSWidth(chip.frame), NSHeight(chip.frame) + 2 * outset);
-    box = NSIntersectionRect(box, bar.bounds);
+    // The whole chip, and the part of it within the bar. They differ when a
+    // scrolled bar shows only part of the chip.
+    NSRect fullBox = NSMakeRect(NSMinX(chip.frame), NSMinY(chip.frame) - outset,
+                                NSWidth(chip.frame), NSHeight(chip.frame) + 2 * outset);
+    NSRect box = NSIntersectionRect(fullBox, bar.bounds);
     // Leave the trailing divider (see drawSquaredTabGroupRunHorizontal): the
     // bottom row on a horizontal bar, the right column on a vertical bar.
     // Reducing height on a vertical bar would drop the name band's midY half a
     // point below the expanded run's, so the name jumps at the collapse handoff.
     if (bar.orientation == PSMTabBarHorizontalOrientation) {
         box.size.height = MAX(0, NSHeight(box) - 1);
+        fullBox.size.height = MAX(0, NSHeight(fullBox) - 1);
     } else {
         box.size.width = MAX(0, NSWidth(box) - 1);
+        fullBox.size.width = MAX(0, NSWidth(fullBox) - 1);
     }
     // Center the label and chevron on the box as it is before a sub-group's
     // inset. On a vertical bar the inset comes off the bottom only, which would
@@ -1490,6 +1598,9 @@ static NSRect PSMSquaredSubgroupBox(NSRect box, BOOL horizontal) {
     const CGFloat midY = NSMidY(box);
     if (chip.tabGroupParentIdentifier.length > 0) {
         box = PSMSquaredSubgroupBox(box, bar.orientation == PSMTabBarHorizontalOrientation);
+        // Rich content lines are laid out in the whole chip, and must stay
+        // inside the inset block too.
+        fullBox = PSMSquaredSubgroupBox(fullBox, bar.orientation == PSMTabBarHorizontalOrientation);
     }
     if (NSWidth(box) <= 0 || NSHeight(box) <= 0) {
         return;
@@ -1510,15 +1621,90 @@ static NSRect PSMSquaredSubgroupBox(NSRect box, BOOL horizontal) {
     const CGFloat textHeight = ceil(font.ascender - font.descender);
     const CGFloat pad = kPSMSquaredGroupNamePad;
     const CGFloat chevronW = kPSMSquaredCollapsedChevron;
-    NSRect textRect = NSMakeRect(NSMinX(box) + pad,
-                                 midY - textHeight / 2.0,
-                                 MAX(0, NSWidth(box) - pad * 2 - chevronW),
+    const CGFloat attentionW = kPSMSquaredCollapsedAttention;
+    // With rich content, the members' combined lines go below a band with the
+    // name. On a vertical bar the band is as tall as an expanded group's
+    // header, so the name doesn't move when the group collapses. These are
+    // laid out in the whole chip, so they scroll with it, and clipped to the
+    // part that's showing.
+    NSArray<PSMTabRichLine *> *richLines = [bar richLinesForTabGroupIdentifier:gid];
+    NSRect nameBand = box;
+    if (richLines) {
+        const CGFloat preferred = (bar.orientation == PSMTabBarHorizontalOrientation
+                                   ? textHeight + kPSMSquaredCollapsedNameBandPad * 2
+                                   : [bar heightOfTabGroupChipCell:chip collapsed:NO]);
+        // Give up some of the name's padding before dropping a line. A
+        // vertical chip is made tall enough not to need to (see
+        // -tabGroupCollapsedChipHeightForRichLines:headerHeight:).
+        const CGFloat bandHeight =
+            [PSMTabRichContentRenderer nameBandHeightWithPreferred:preferred
+                                                           minimum:textHeight
+                                                         available:NSMaxY(fullBox) - MAX(NSMinY(chip.frame), NSMinY(fullBox))
+                                                             lines:richLines
+                                                          baseFont:[NSFont systemFontOfSize:self.fontSize]
+                                                     bottomPadding:kPSMSquaredCollapsedNameBandPad];
+        // A sub-group's inset can move the box's top edge below the chip's.
+        const CGFloat bandTop = MAX(NSMinY(chip.frame), NSMinY(fullBox));
+        nameBand = NSMakeRect(NSMinX(fullBox), bandTop, NSWidth(fullBox), MIN(bandHeight, NSMaxY(fullBox) - bandTop));
+    }
+    // Without lines, the name and chevron center on the box as it was before
+    // a sub-group's inset (see midY).
+    const CGFloat nameMidY = richLines ? NSMidY(nameBand) : midY;
+    [NSGraphicsContext saveGraphicsState];
+    NSRectClip(box);
+    NSRect textRect = NSMakeRect(NSMinX(nameBand) + pad,
+                                 nameMidY - textHeight / 2.0,
+                                 MAX(0, NSWidth(nameBand) - pad * 2 - attentionW - chevronW),
                                  textHeight);
-    [label drawInRect:textRect withAttributes:attrs];
+    [[PSMTabSearchHighlight highlightingAttributedString:[[NSAttributedString alloc] initWithString:label attributes:attrs]
+                                                query:bar.searchHighlightQuery] drawInRect:textRect];
+
+    if (richLines) {
+        // Lines sit on the group's color, so they use the label's contrasting
+        // color rather than their own.
+        NSMutableArray<PSMTabRichLine *> *plainLines = [NSMutableArray arrayWithCapacity:richLines.count];
+        for (PSMTabRichLine *line in richLines) {
+            [plainLines addObject:line.lineWithoutColor];
+        }
+        const NSRect linesRect = NSMakeRect(NSMinX(fullBox) + pad,
+                                            NSMaxY(nameBand),
+                                            MAX(0, NSWidth(fullBox) - pad * 2),
+                                            MAX(0, NSMaxY(fullBox) - NSMaxY(nameBand) - kPSMSquaredCollapsedNameBandPad));
+        [PSMTabRichContentRenderer drawLines:plainLines
+                                      inRect:linesRect
+                                    baseFont:[NSFont systemFontOfSize:self.fontSize]
+                                   textColor:textColor
+                              secondaryColor:[textColor colorWithAlphaComponent:textColor.alphaComponent * 0.7]
+                                   alignment:NSTextAlignmentLeft
+                             colorAppearance:nil];
+    }
+
+    // Attention icon for the hidden members, in a slot reserved between the
+    // label and the chevron whether or not there is an icon to show.
+    NSImage *attention = [bar attentionImageForTabGroupIdentifier:gid];
+    if (attention) {
+        const CGFloat side = kPSMCollapsedAttentionIconSize;
+        // Center what's drawn, not the canvas: some icons (new output, bell)
+        // sit off center in theirs.
+        const NSPoint slotCenter = NSMakePoint(NSMaxX(nameBand) - pad - chevronW - attentionW / 2.0, nameMidY);
+        const NSRect iconRect = [PSMIconContentBounds rectCenteringVisibleContentOfImage:attention
+                                                                                 atPoint:slotCenter
+                                                                                    size:side];
+        // The chip is a solid block of the group's color, which can match the
+        // icon (a blue status dot on a blue group) or swamp a glyph chosen for
+        // the window's appearance. A 1pt outline in the window background
+        // color, following the icon's shape, keeps it legible.
+        // Clipped to the chip (above): when a scrolled bar shows only part
+        // of it, the icon must not spill onto the neighboring cell.
+        [PSMIconContentBounds drawImage:attention
+                                 inRect:iconRect
+                           outlineColor:[NSColor windowBackgroundColor]
+                                  width:1];
+    }
 
     // Downward chevron: the collapse affordance.
-    const CGFloat cx = NSMaxX(box) - pad - chevronW / 2.0;
-    const CGFloat cy = midY;
+    const CGFloat cx = NSMaxX(nameBand) - pad - chevronW / 2.0;
+    const CGFloat cy = nameMidY;
     const CGFloat half = 3;
     NSBezierPath *chevron = [NSBezierPath bezierPath];
     [chevron moveToPoint:NSMakePoint(cx - half, cy + half / 2.0)];
@@ -1529,6 +1715,7 @@ static NSRect PSMSquaredSubgroupBox(NSRect box, BOOL horizontal) {
     chevron.lineJoinStyle = NSLineJoinStyleRound;
     [textColor setStroke];
     [chevron stroke];
+    [NSGraphicsContext restoreGraphicsState];
 
     // Squared enclosing outline.
     [groupColor set];
@@ -1621,11 +1808,19 @@ static NSRect PSMSquaredSubgroupBox(NSRect box, BOOL horizontal) {
                                  NSParagraphStyleAttributeName: para };
         const CGFloat textHeight = ceil(font.ascender - font.descender);
         const CGFloat pad = kPSMSquaredGroupNamePad;
-        NSRect textRect = NSMakeRect(NSMinX(solid) + pad,
-                                     NSMidY(solid) - textHeight / 2.0,
-                                     MAX(0, NSWidth(solid) - pad * 2),
+        // On a vertical bar, center the name in a header-sized band at the
+        // top. Mid-slide the chip's slot animates between header and
+        // collapsed heights, and the name must not ride along.
+        NSRect nameRect = solid;
+        if (!horizontal) {
+            nameRect.size.height = MIN(NSHeight(solid), [bar heightOfTabGroupChipCell:chip collapsed:NO]);
+        }
+        NSRect textRect = NSMakeRect(NSMinX(nameRect) + pad,
+                                     NSMidY(nameRect) - textHeight / 2.0,
+                                     MAX(0, NSWidth(nameRect) - pad * 2),
                                      textHeight);
-        [name drawInRect:textRect withAttributes:attrs];
+        [[PSMTabSearchHighlight highlightingAttributedString:[[NSAttributedString alloc] initWithString:name attributes:attrs]
+                                                query:bar.searchHighlightQuery] drawInRect:textRect];
     }
 
     // Squared enclosing outline (1pt) on the trailing-inset box computed above.

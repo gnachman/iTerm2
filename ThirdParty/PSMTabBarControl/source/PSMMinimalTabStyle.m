@@ -10,6 +10,7 @@
 #import "PSMOverflowPopUpButton.h"
 #import "PSMTabBarCell.h"
 #import "PSMTabGroup.h"
+#import "iTermAdvancedSettingsModel.h"
 
 @implementation NSColor(PSMMinimalTabStyle)
 
@@ -726,6 +727,10 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
 - (CGFloat)tabBarHeight {
     return 0;
 }
+
+- (CGFloat)verticalTabGroupHeaderHeight {
+    return [iTermAdvancedSettingsModel compactMinimalTabBarHeight];
+}
 - (void)drawCellBackgroundSelected:(BOOL)selected
                             inRect:(NSRect)cellFrame
                       withTabColor:(NSColor *)tabColor
@@ -863,7 +868,7 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
 - (PSMTabBarCell *)selectedVisibleCell {
     PSMTabBarControl *bar = self.tabBar;
     for (PSMTabBarCell *cell in bar.cells.reverseObjectEnumerator) {
-        if (!cell.isInOverflowMenu && cell.state == NSControlStateValueOn) {
+        if (!cell.isInOverflowMenu && !cell.isCollapsedHidden && cell.state == NSControlStateValueOn) {
             return cell;
         }
     }
@@ -923,7 +928,12 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
 
 - (PSMTabBarCell *)firstVisibleCell {
     PSMTabBarControl *bar = self.tabBar;
-    return bar.cells.firstObject;
+    for (PSMTabBarCell *cell in bar.cells) {
+        if (!cell.isCollapsedHidden) {
+            return cell;
+        }
+    }
+    return nil;
 }
 
 - (PSMTabBarCell *)lastVisibleCell {
@@ -943,7 +953,10 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
 
 - (PSMTabBarCell *)selectedCellInTabBarControl:(PSMTabBarControl *)bar {
     for (PSMTabBarCell *cell in bar.cells) {
-        if (cell.state == NSControlStateValueOn) {
+        // A tab bar search hides a selected tab that doesn't match; draw no
+        // selected tab then, rather than outlining an empty spot. Keep looking
+        // past a hidden one, which may be stale.
+        if (cell.state == NSControlStateValueOn && !cell.isCollapsedHidden) {
             return cell;
         }
     }

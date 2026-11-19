@@ -125,6 +125,11 @@ class iTermRecordingProfileSanitizer: NSObject {
         KEY_ANSWERBACK_STRING,
         KEY_BADGE_FORMAT,
         KEY_SUBTITLE,
+        KEY_TAB_CONTENT_LINES,
+        // The rest of rich tab content. Tabs aren't part of a recording.
+        KEY_SHOW_RICH_TAB_CONTENT,
+        KEY_TAB_CONTENT_LAYOUT,
+        KEY_TAB_CONTENT_MAXIMUM_LINES,
         KEY_TITLE_COMPONENTS,
         KEY_TITLE_FUNC,
         KEY_USE_CUSTOM_TAB_TITLE,

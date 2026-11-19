@@ -45,6 +45,7 @@ extern const NSInteger kPSMStartResizeAnimation;
 
 @class PSMRolloverButton;
 @class PSMTabBarCell;
+@class PSMTabRichLine;
 @class PSMTabBarControl;
 @protocol PSMTabStyle;
 
@@ -102,6 +103,9 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 - (void)setObjectCount:(int)objectCount;
 - (nullable NSImage *)psmTabGraphic;
 - (nullable NSColor *)psmTabStatusSubtitleColor;
+// Rich content lines to draw in place of the title and subtitle, or nil to draw
+// those as usual.
+- (nullable NSArray<PSMTabRichLine *> *)psmTabRichLines;
 @end
 
 @protocol PSMTabBarControlDelegate<NSTabViewDelegate>
@@ -111,6 +115,10 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 - (NSDragOperation)tabView:(NSTabView *)aTabView
     draggingEnteredTabBarForSender:(id<NSDraggingInfo>)tabView;
 - (BOOL)tabView:(NSTabView *)tabView shouldAcceptDragFromSender:(id<NSDraggingInfo>)sender;
+
+// The pointer left the tab bar. A search may hold back changes to what the
+// bar shows while the pointer is over it, so nothing moves under it.
+- (void)tabViewPointerDidLeaveTabBar:(NSTabView *)tabView;
 
 // Return NO to hide every tab's activity indicator, whether it would show
 // the busy state or progress. Defaults to YES. Call
@@ -133,6 +141,8 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 // A single click on a tab group's chip: toggle the group's collapsed state
 // (checked with -respondsToSelector:).
 - (void)tabView:(NSTabView *)aTabView toggleCollapseOfTabGroup:(NSString *)tabGroupIdentifier;
+// Whether dragging a group's chip may start. YES if unimplemented.
+- (BOOL)tabView:(NSTabView *)aTabView shouldDragTabGroup:(NSString *)tabGroupIdentifier;
 
 //Drag and drop methods
 - (BOOL)tabView:(NSTabView *)aTabView shouldDragTabViewItem:(NSTabViewItem *)tabViewItem fromTabBar:(PSMTabBarControl *)tabBarControl;
@@ -203,6 +213,9 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 - (BOOL)tabViewShouldDragWindow:(NSTabView *)tabView event:(NSEvent *)event;
 - (BOOL)tabViewShouldAllowDragOnAddTabButton:(NSTabView *)tabView;
 - (CGFloat)tabViewDesiredTabBarHeight:(NSTabView *)tabView;
+// Whether tabs show rich content (see -psmTabRichLines), which changes their
+// shape in some styles.
+- (BOOL)tabViewShowsRichTabContent:(NSTabView *)tabView;
 
 @end
 
@@ -324,6 +337,22 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 @property(nonatomic, assign) NSEdgeInsets insets;
 @property(nonatomic) CGFloat height;
 
+// A view shown at the top of a vertical bar, such as a search field. It is
+// centered in a band of topAccessoryBandHeight points at the bottom of
+// insets.top, so whoever sets the insets reserves the band by including it.
+// Hidden on a horizontal bar.
+@property(nonatomic, retain, nullable) NSView *topAccessoryView;
+@property(nonatomic) CGFloat topAccessoryBandHeight;
+
+// While a search is active, its query. Styles highlight matches in the text
+// they draw for tabs (see PSMTabSearchHighlight).
+@property(nonatomic, copy, nullable) NSString *searchHighlightQuery;
+
+// Whether the pointer is over the bar, in a window that's frontmost there.
+@property(nonatomic, readonly) BOOL pointerIsInside;
+// For tests: overrides pointerIsInside when not nil.
+@property(nonatomic, retain, nullable) NSNumber *pointerIsInsideForTesting;
+
 - (void)setTabColor:(nullable NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem;
 - (nullable NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
 // Push every tab's group membership at once: identifiers[i] is the group id
@@ -363,6 +392,18 @@ extern const CGFloat PSMTabBarProgressBarHeight;
                                                                        NSInteger memberCount,
                                                                        NSString *groupID))block
     NS_SWIFT_NAME(enumerateCollapsedTabGroupChips(block:));
+
+// The icon a collapsed group's chip shows for its hidden members, from the
+// tabGroupDataSource, or nil. Styles call this while drawing a collapsed chip.
+- (nullable NSImage *)attentionImageForTabGroupIdentifier:(NSString *)groupID;
+
+// The rich content lines a collapsed group's chip shows below its name, from
+// the tabGroupDataSource, or nil to show only the name.
+- (nullable NSArray<PSMTabRichLine *> *)richLinesForTabGroupIdentifier:(NSString *)groupID;
+
+// Call when the attention icon of a group may have changed (a member's icon
+// changed while the group is collapsed). Redraws the group's chip.
+- (void)tabGroupAttentionDidChangeForIdentifier:(NSString *)groupID;
 
 // The id of the collapsed group the in-flight drag would join if dropped now, or
 // nil. Styles highlight that group's chip as the drop target (a collapsed group
@@ -474,8 +515,24 @@ extern const CGFloat PSMTabBarProgressBarHeight;
                                       collapsed:(BOOL)collapsed
                                     memberCount:(NSInteger)memberCount
                                          nested:(BOOL)nested;
-// Height of a vertical group-chip cell (a one-row header band).
+// Removes cells from the end of a vertical bar's origins until `rowHeight` is
+// free between `end` (or the last removed origin) and `available`.
++ (void)reclaimRowForOverflowButtonInOrigins:(NSMutableArray<NSNumber *> *)origins
+                                         end:(CGFloat)end
+                                   available:(CGFloat)available
+                                   rowHeight:(CGFloat)rowHeight;
+// Height of a vertical group-chip cell. An expanded group's chip is a
+// one-row header band. A collapsed chip showing rich content lines is at
+// least a tab row tall, and taller if its lines need it.
 - (CGFloat)heightOfTabGroupChipCell:(PSMTabBarCell *)cell;
+- (CGFloat)heightOfTabGroupChipCell:(PSMTabBarCell *)cell collapsed:(BOOL)collapsed;
+
+// The width a collapsed chip whose own width is `width` gets when laid out
+// among `cells` on a horizontal bar. It differs only when the chip shares the
+// tabs' width because it shows rich content lines. For paths that size a chip
+// outside a full layout, such as a drag.
+- (CGFloat)settledWidthOfCollapsedTabGroupChipWithWidth:(CGFloat)width
+                                                  cells:(NSArray<PSMTabBarCell *> *)cells;
 // Map an NSTabView index to the index of the corresponding tab cell in a
 // cell list that includes chip cells (returns cells.count if past the end).
 + (NSInteger)cellIndexForTabIndex:(NSInteger)tabIndex inCells:(NSArray<PSMTabBarCell *> *)cells;
@@ -519,6 +576,12 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 - (void)setIcon:(nullable NSImage *)icon forTabWithIdentifier:(nullable id)identifier;
 - (void)setObjectCount:(NSInteger)objectCount forTabWithIdentifier:(nullable id)identifier;
 - (void)graphicDidChangeForTabWithIdentifier:(nullable id)identifier;
+// Call when a tab's rich content lines change. Redraws the tab and moves its
+// activity indicator, whose place depends on whether the tab has lines.
+- (void)richContentDidChangeForTabWithIdentifier:(nullable id)identifier;
+
+// Whether the delegate says tabs show rich content.
+@property(nonatomic, readonly) BOOL showsRichTabContent;
 
 - (void)setTabsHaveCloseButtons:(BOOL)tabsHaveCloseButtons;
 // Re-asks the delegate whether to show activity indicators and updates the

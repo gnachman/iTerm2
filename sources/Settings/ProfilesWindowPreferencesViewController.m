@@ -102,6 +102,12 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     IBOutlet NSTextField *_customTabTitle;
     iTermFunctionCallTextFieldDelegate *_customTabTitleDelegate;
     NSString *_lastGuid;
+
+    NSButton *_showRichTabContent;
+    NSButton *_tabContentButton;
+    iTermTabContentEditorWindowController *_tabContentEditor;
+    // Applies the editor's changes as they're made, and undoes them on Cancel.
+    iTermTabContentEditSession *_tabContentEditSession;
 }
 
 - (void)dealloc {
@@ -390,6 +396,7 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
                    displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.BackgroundImageSourceMode", nil, [NSBundle mainBundle], @"Background image source mode", @"Display name for the background-image source mode control.")
                        phrases:@[]
                            key:nil];
+    [self installTabContentButton];
 }
 
 - (NSDictionary *)dictionaryToSaveWindowType:(iTermWindowType)windowType {
@@ -784,6 +791,235 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     sizeRememberingView.originalSize = size;
 }
 
+#pragma mark - Rich Tab Content
+
+// The checkbox's key is in super's, as a defined control. The others are
+// edited in the sheet.
+- (NSArray *)keysForBulkCopy {
+    return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:@[ KEY_TAB_CONTENT_LAYOUT,
+                                                                     KEY_TAB_CONTENT_MAXIMUM_LINES,
+                                                                     KEY_TAB_CONTENT_LINES ]];
+}
+
+// Added in code, in a new row at the bottom of the settings for new windows,
+// under the custom window title: a checkbox that turns rich tab content on,
+// and beside it a button, enabled while it's on, that opens the editor for
+// the lines. Everything above moves up to make room.
+- (void)installTabContentButton {
+    _showRichTabContent = [NSButton checkboxWithTitle:NSLocalizedStringWithDefaultValue(@"Profiles.Window.ShowRichTabContent", nil, [NSBundle mainBundle],
+                                                                                        @"Show rich tab content",
+                                                                                        @"Checkbox in the settings for new windows. When on, tabs in windows created with this profile show several lines of information, such as the directory and the running job.")
+                                               target:self
+                                               action:@selector(settingChanged:)];
+    // A Set Profile Setting trigger or Toggle Setting action changes only a
+    // session's own profile, which no window follows, so it would do nothing.
+    _showRichTabContent.hiddenFromActions = YES;
+    NSString *title = NSLocalizedStringWithDefaultValue(@"Profiles.Window.TabContentButton", nil, [NSBundle mainBundle],
+                                                        @"Rich Tab Content…",
+                                                        @"Button in the settings for new windows that opens the editor for the lines of information tabs show, such as the directory and the running job");
+    _tabContentButton = [NSButton buttonWithTitle:title target:self action:@selector(editTabContent:)];
+
+    // Settings may already have saved the pane's layout to lay it out for
+    // terminal or browser profiles. The row goes into that saved layout, or
+    // the next profile switch would put the section back without room for it.
+    [self.view updateSavedLayoutWithStateStorage:self.internalState block:^{
+        [self layOutTabContentRow];
+    }];
+
+    __weak __typeof(self) weakSelf = self;
+    PreferenceInfo *info = [self defineControl:_showRichTabContent
+                                           key:KEY_SHOW_RICH_TAB_CONTENT
+                                   displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.SearchShowRichTabContent", nil, [NSBundle mainBundle],
+                                                                                 @"Show rich tab content",
+                                                                                 @"Search index display name for the checkbox that turns on rich tab content, where tabs show several lines of information")
+                                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^{
+        [weakSelf updateTabContentButtonEnabled];
+    };
+    [self addViewToSearchIndex:_tabContentButton
+                   displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.SearchTabContent", nil, [NSBundle mainBundle],
+                                                                 @"Rich tab content",
+                                                                 @"Search index display name for the button that opens the rich tab content editor")
+                       phrases:@[ @"Tab content", @"Rich tabs", @"Tab lines", @"Vertical tabs", @"Tab height" ]
+                           key:nil];
+    [self updateTabContentButtonEnabled];
+}
+
+// Adds the checkbox and button in a row at the bottom of the settings for
+// new windows, growing the section to make room.
+- (void)layOutTabContentRow {
+    // Measured in the pane, whose control size metrics (compact on macOS 26)
+    // apply only to views inside it.
+    NSView *section = _settingsForNewWindows;
+    // Under the lowest view already there. In the layout Settings saved,
+    // that's the window title field, at the bottom.
+    CGFloat bottomPadding = NSHeight(section.frame);
+    for (NSView *view in section.subviews) {
+        bottomPadding = MIN(bottomPadding, NSMinY(view.frame));
+    }
+    bottomPadding = MAX(0, floor(bottomPadding));
+    for (NSView *view in @[ _showRichTabContent, _tabContentButton ]) {
+        view.autoresizingMask = _customWindowTitle.autoresizingMask;
+        [section addSubview:view];
+    }
+    [_showRichTabContent sizeToFit];
+    // Fitted to its title, so any translation fits, plus room on each side,
+    // which sizeToFit leaves snug.
+    [_tabContentButton sizeToFit];
+    const CGFloat buttonPadding = 10;
+    [_tabContentButton setFrameSize:NSMakeSize(ceil(NSWidth(_tabContentButton.frame)) + buttonPadding * 2,
+                                               NSHeight(_tabContentButton.frame))];
+
+    const CGFloat gap = 8;
+    // The checkbox lines up with the checkboxes above it, and the button
+    // follows it on the same row, or goes under it if a long translation
+    // leaves no room.
+    const CGFloat x = NSMinX(_useCustomWindowTitle.frame);
+    const CGFloat checkboxHeight = ceil(NSHeight(_showRichTabContent.frame));
+    const CGFloat buttonHeight = ceil(NSHeight(_tabContentButton.frame));
+    const BOOL sideBySide = (x + NSWidth(_showRichTabContent.frame) + gap + NSWidth(_tabContentButton.frame) <=
+                             NSWidth(section.frame) - gap);
+    if (sideBySide) {
+        // On a shared baseline. The section isn't flipped, so each view's
+        // baseline is this far above its bottom edge.
+        const CGFloat checkboxBaseline = checkboxHeight - [self titleBaselineFromTopOfButton:_showRichTabContent];
+        const CGFloat buttonBaseline = buttonHeight - [self titleBaselineFromTopOfButton:_tabContentButton];
+        // The one whose baseline is higher sits at the bottom, and the other
+        // is raised by the difference, rounded so both are on whole points.
+        const CGFloat difference = round(checkboxBaseline - buttonBaseline);
+        const CGFloat checkboxY = MAX(0, -difference);
+        const CGFloat buttonY = MAX(0, difference);
+        const CGFloat rowHeight = ceil(MAX(checkboxY + checkboxHeight, buttonY + buttonHeight));
+        [iTermSettingsSectionGrower growSection:section atBottomBy:rowHeight + gap];
+        [_showRichTabContent setFrameOrigin:NSMakePoint(x, bottomPadding + checkboxY)];
+        [_tabContentButton setFrameOrigin:NSMakePoint(NSMaxX(_showRichTabContent.frame) + gap, bottomPadding + buttonY)];
+    } else {
+        [iTermSettingsSectionGrower growSection:section atBottomBy:checkboxHeight + buttonHeight + gap * 2];
+        [_tabContentButton setFrameOrigin:NSMakePoint(x, bottomPadding)];
+        [_showRichTabContent setFrameOrigin:NSMakePoint(x, bottomPadding + buttonHeight + gap)];
+    }
+}
+
+// Where the button draws its title's baseline, measured down from its top.
+// firstBaselineOffsetFromTop doesn't match the drawing for a frame-based push
+// button, whose frame includes room for its bezel.
+- (CGFloat)titleBaselineFromTopOfButton:(NSButton *)button {
+    const NSRect titleRect = [button.cell titleRectForBounds:button.bounds];
+    const CGFloat top = button.isFlipped ? NSMinY(titleRect) : NSHeight(button.bounds) - NSMaxY(titleRect);
+    return top + button.font.ascender;
+}
+
+- (void)updateTabContentButtonEnabled {
+    _tabContentButton.enabled = [self boolForKey:KEY_SHOW_RICH_TAB_CONTENT];
+}
+
+- (void)editTabContent:(id)sender {
+    Profile *profile = [self.delegate profilePreferencesCurrentProfile];
+    ProfileModel *model = [self.delegate profilePreferencesCurrentModel];
+    NSString *guid = [NSString castFrom:profile[KEY_GUID]];
+    if (!profile || !model || !guid || _tabContentEditor) {
+        return;
+    }
+    // Edits are written as they're made. Say so now if this profile's
+    // changes will be lost (a dynamic profile that isn't rewritable), as the
+    // first edit of any other setting does. The warning runs modally from a
+    // main queue block queued ahead of the one that opens the sheet, and the
+    // main queue waits while it's up, so the sheet opens after it's answered.
+    // Were that to change, AppKit would still queue the sheet behind the
+    // warning's.
+    [self.delegate profilePreferencesViewController:self willSetObjectWithKey:KEY_TAB_CONTENT_LINES];
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf beginEditingTabContentOfProfileWithGUID:guid model:model];
+    });
+}
+
+- (void)beginEditingTabContentOfProfileWithGUID:(NSString *)guid model:(ProfileModel *)model {
+    Profile *profile = [model bookmarkWithGuid:guid];
+    NSWindow *window = self.view.window;
+    if (!profile || !window || _tabContentEditor) {
+        return;
+    }
+    _tabContentEditor = [[iTermTabContentEditorWindowController alloc] initWithProfile:profile];
+    // By GUID, not the selected profile, which can change while the sheet is
+    // up (for example, a dynamic profile reload). Cancel must still undo the
+    // edits, and one profile's settings mustn't be saved into another.
+    _tabContentEditSession = [[iTermTabContentEditSession alloc] initWithEditor:_tabContentEditor
+                                                                           read:^id _Nullable(NSString *key) {
+        return [model bookmarkWithGuid:guid][key];
+    }
+                                                                          write:^(NSDictionary *changes, NSArray<NSString *> *removals) {
+        Profile *current = [model bookmarkWithGuid:guid];
+        if (!current) {
+            DLog(@"Profile %@ is gone. Not storing tab content changes.", guid);
+            return;
+        }
+        // Not through setObjectsFromDictionary:removingKeys:, whose
+        // will-set notice can put up a warning, which can't be shown while
+        // the sheet is up. It was given before the sheet opened.
+        [iTermProfilePreferences setObjectsFromDictionary:changes
+                                             removingKeys:removals
+                                                inProfile:current
+                                                    model:model];
+        if (changes[KEY_SUBTITLE] || [removals containsObject:KEY_SUBTITLE]) {
+            // The subtitle field in General shows this too.
+            [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
+                                                                object:guid];
+        }
+    }];
+    __weak __typeof(self) weakSelf = self;
+    // Changes show in open windows as they're made. Cancel puts them back.
+    _tabContentEditor.changeHandler = ^{
+        [weakSelf.tabContentEditSession apply];
+    };
+    // A sheet's completion handler doesn't run when its window closes with
+    // the sheet up, or when the app quits. Either is a Cancel.
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(tabContentEditorAbandoned:)
+                                                 name:NSWindowWillCloseNotification
+                                               object:window];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(tabContentEditorAbandoned:)
+                                                 name:NSApplicationWillTerminateNotification
+                                               object:nil];
+    [window beginSheet:_tabContentEditor.window completionHandler:^(NSModalResponse returnCode) {
+        [weakSelf tabContentEditorDidEndWithResponse:returnCode];
+    }];
+}
+
+- (iTermTabContentEditSession *)tabContentEditSession {
+    return _tabContentEditSession;
+}
+
+- (void)tabContentEditorAbandoned:(NSNotification *)notification {
+    NSWindow *sheet = _tabContentEditor.window;
+    [self tabContentEditorDidEndWithResponse:NSModalResponseCancel];
+    // Its completion handler finds nothing left to do.
+    if (sheet.sheetParent) {
+        [sheet.sheetParent endSheet:sheet returnCode:NSModalResponseCancel];
+    }
+}
+
+- (void)tabContentEditorDidEndWithResponse:(NSModalResponse)returnCode {
+    if (!_tabContentEditor) {
+        return;
+    }
+    if (returnCode == NSModalResponseOK) {
+        [_tabContentEditSession apply];
+    } else {
+        [_tabContentEditSession revert];
+    }
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:NSWindowWillCloseNotification
+                                                  object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:NSApplicationWillTerminateNotification
+                                                  object:nil];
+    _tabContentEditor.changeHandler = nil;
+    _tabContentEditor = nil;
+    _tabContentEditSession = nil;
+}
+
 #pragma mark - Notifications
 
 // This is also a superclass method.
@@ -795,6 +1031,7 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     [self loadBackgroundImageForCurrentSource];
     [self updateCustomWindowTitleEnabled];
     [self updateCustomTabTitleEnabled];
+    [self updateTabContentButtonEnabled];
     [_customWindowTitle it_removeWarning];
     [_customTabTitle it_removeWarning];
     if (![[self stringForKey:KEY_GUID] isEqual:_lastGuid]) {

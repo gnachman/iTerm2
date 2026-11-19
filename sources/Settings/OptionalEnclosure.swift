@@ -202,6 +202,28 @@ extension NSView {
         return result
     }
 
+    // Settings lays a pane out for terminal or browser profiles from a copy
+    // of its frames saved the first time. To add views or move them after
+    // that, do it in block: it runs on the saved layout, which is then saved
+    // again, views added included, and laid out for the same profiles.
+    @objc(updateSavedLayoutWithStateStorage:block:)
+    func updateSavedLayout(stateStorage: NSMutableDictionary, block: () -> Void) {
+        guard let saved = savedFrames(stateStorage: stateStorage) else {
+            block()
+            return
+        }
+        let configuration = saved.configuration
+        restoreFrames(stateStorage: stateStorage)
+        stateStorage.removeObject(forKey: key)
+        block()
+        _ = setVisibility(forTerminalEnclosures: configuration.terminal,
+                          browserEnclosures: configuration.browser,
+                          hiddenModeEnclosures: configuration.hidden,
+                          sharedProfilesEnclosures: configuration.sharedProfiles,
+                          stateStorage: stateStorage,
+                          shrinkage: nil)
+    }
+
     private class SavedFrames: NSObject {
         struct Configuration: Equatable {
             var terminal = false

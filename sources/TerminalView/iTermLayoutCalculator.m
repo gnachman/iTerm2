@@ -69,7 +69,7 @@ const int kLayoutTabPositionRight = 3;
         outputs.decorationHeightTop += inputs.tabBarHeight;
     } else if (inputs.drawWindowTitleInPlaceOfTabBar) {
         // Compact window with hidden tab bar: leave space for fake title bar
-        outputs.decorationHeightTop += inputs.tabBarHeight;
+        outputs.decorationHeightTop += inputs.windowTitleInPlaceOfTabBarHeight;
     }
 
     // Calculate tabview width (excluding toolbelt)

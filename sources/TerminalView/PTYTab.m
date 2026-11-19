@@ -200,7 +200,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     // Aggregated tab status from highest-priority session.
     iTermSessionTabStatus *_aggregatedTabStatus;
+    // Set while a swap makes the incoming session active. The swap recomputes
+    // the tab's status itself once the tab is consistent.
+    BOOL _activatingSwappedInSession;
     BOOL _tabStatusWaitingProminent;
+    // The kind of the icon -updateIcon last set. See -attentionCandidate.
+    iTermTabIconKind _displayedIconKind;
 
     // Every tab's view. It is the tab view item's view and holds root_. In a native tab root_
     // fills it. In a tmux tab root_ can be smaller than it (see _tmuxContainer).
@@ -618,6 +623,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                      name:name
                                                    object:nil];
     }
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(snoozeDidChange:)
+                                                 name:iTermSessionStatusController.snoozeDidChangeNotification
+                                               object:nil];
     [iTermPreferenceDidChangeNotification subscribe:self selector:@selector(preferenceDidChange:)];
     _tabTitleOverrideSwiftyString = [[iTermSwiftyString alloc] initWithScope:self.variablesScope
                                                                   sourcePath:iTermVariableKeyTabTitleOverrideFormat
@@ -894,8 +903,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)_refreshLabels:(id)sender {
     if ([self activeSession]) {
-        [tabViewItem_ setLabel:[self tabBarLabel]];
+        NSString *label = [self tabBarLabel];
+        const BOOL changed = ![label isEqualToString:tabViewItem_.label];
+        [tabViewItem_ setLabel:label];
         [parentWindow_ setWindowTitle];
+        if (changed) {
+            // A tab bar search may need to show or hide this tab.
+            [self.realParentWindow tabLabelDidChange:self];
+        }
     }
 }
 
@@ -920,23 +935,67 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
-- (void)updateIcon {
+// Which icon this tab shows. A collapsed tab group ranks its members by this
+// (see iTermTabGroupAttention), so it must stay the single source of the
+// precedence -updateIcon uses.
+- (iTermTabIconKind)iconKind {
     if (_aggregatedTabStatus.hasActiveStatus &&
         _aggregatedTabStatus.hasIndicator &&
         iTermUserDefaults.showSessionStatusInTabSubtitle) {
-        [self setIcon:[self tabStatusDotImage]];
-    } else if (_state & kPTYTabDeadState) {
-        [self setIcon:[PTYTab deadImageWithAppearance:self.realParentWindow.window.effectiveAppearance]];
-    } else if (_state & kPTYTabBellState) {
-        [self setIcon:[PTYTab bellImage]];
-    } else if ([iTermPreferences boolForKey:kPreferenceKeyShowNewOutputIndicator] &&
-               (_state & (kPTYTabNewOutputState))) {
-        [self setIcon:[PTYTab imageForNewOutputWithAppearance:self.realParentWindow.window.effectiveAppearance]];
-    } else if ([iTermPreferences boolForKey:kPreferenceKeyShowNewOutputIndicator] &&
-               (_state & kPTYTabIdleState)) {
-        [self setIcon:[PTYTab idleImageWithAppearance:self.realParentWindow.window.effectiveAppearance]];
-    } else {
-        [self setIcon:nil];
+        return iTermTabIconKindStatus;
+    }
+    if (_state & kPTYTabDeadState) {
+        return iTermTabIconKindDead;
+    }
+    if (_state & kPTYTabBellState) {
+        return iTermTabIconKindBell;
+    }
+    const BOOL showNewOutput = [iTermPreferences boolForKey:kPreferenceKeyShowNewOutputIndicator];
+    if (showNewOutput && (_state & kPTYTabNewOutputState)) {
+        return iTermTabIconKindNewOutput;
+    }
+    if (showNewOutput && (_state & kPTYTabIdleState)) {
+        return iTermTabIconKindIdle;
+    }
+    return iTermTabIconKindNone;
+}
+
+// Describes the icon the tab is showing now, which is the one -updateIcon last
+// set. That can differ from -iconKind: changing the new-output preference
+// doesn't redraw existing tabs. A collapsed group ranks members by this and
+// then draws the winner's -icon, so the two must agree.
+- (iTermTabAttentionCandidate *)attentionCandidate {
+    // A snoozed tab's status doesn't ask for attention.
+    const iTermTabIconKind kind = (_displayedIconKind == iTermTabIconKindStatus && self.isSnoozed) ? iTermTabIconKindNone : _displayedIconKind;
+    const NSInteger priority = (kind == iTermTabIconKindStatus) ? _aggregatedTabStatus.priority : 0;
+    return [[iTermTabAttentionCandidate alloc] initWithKind:kind
+                                            statusPriority:priority
+                                                    isDead:(_state & kPTYTabDeadState) != 0
+                                               ringingBell:(_state & kPTYTabBellState) != 0];
+}
+
+- (void)updateIcon {
+    NSAppearance *appearance = self.realParentWindow.window.effectiveAppearance;
+    _displayedIconKind = [self iconKind];
+    switch (_displayedIconKind) {
+        case iTermTabIconKindStatus:
+            [self setIcon:self.isSnoozed ? [self snoozedTabStatusImage] : [self tabStatusDotImage]];
+            break;
+        case iTermTabIconKindDead:
+            [self setIcon:[PTYTab deadImageWithAppearance:appearance]];
+            break;
+        case iTermTabIconKindBell:
+            [self setIcon:[PTYTab bellImage]];
+            break;
+        case iTermTabIconKindNewOutput:
+            [self setIcon:[PTYTab imageForNewOutputWithAppearance:appearance]];
+            break;
+        case iTermTabIconKindIdle:
+            [self setIcon:[PTYTab idleImageWithAppearance:appearance]];
+            break;
+        case iTermTabIconKindNone:
+            [self setIcon:nil];
+            break;
     }
 }
 
@@ -955,6 +1014,65 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
     [self updateIcon];
     [_delegate tabDidChangeTabStatus:self];
+}
+
+- (NSArray<NSString *> *)snoozableSessionIDs {
+    NSMutableArray<NSString *> *ids = [NSMutableArray array];
+    for (PTYSession *session in self.sessions) {
+        if (session.tabStatus.hasActiveStatus) {
+            [ids addObject:session.guid];
+        }
+    }
+    return ids;
+}
+
+- (BOOL)isSnoozed {
+    NSArray<NSString *> *ids = self.snoozableSessionIDs;
+    if (ids.count == 0) {
+        return NO;
+    }
+    iTermSessionStatusController *controller = [iTermSessionStatusController instance];
+    for (NSString *guid in ids) {
+        if (![controller isSnoozedSessionID:guid]) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
+- (void)snoozeDidChange:(NSNotification *)notification {
+    NSSet<NSString *> *ids = notification.userInfo[iTermSessionStatusController.sessionIDsKey];
+    BOOL mine = NO;
+    for (PTYSession *session in self.sessions) {
+        if ([ids containsObject:session.guid]) {
+            mine = YES;
+            break;
+        }
+    }
+    if (!mine) {
+        return;
+    }
+    if ([notification.userInfo[iTermSessionStatusController.wokenByStatusChangeKey] boolValue]) {
+        // The status change that woke the session reaches
+        // sessionTabStatusDidChange: next, which recomputes and may ring.
+        // Recomputing here without ringing would record the new status as
+        // already shown, so that change would never ring.
+        DLog(@"Snooze of %@ ended by a status change; it will update then", self);
+        return;
+    }
+    DLog(@"Snooze changed for %@", self);
+    // Which pane's status the tab shows depends on snooze. This also updates
+    // the icon and redraws a collapsed group that shows this tab's attention.
+    // Snoozing can bring forward a status that has been waiting a while,
+    // which isn't news, so no ring.
+    [self updateAggregatedTabStatusMayRing:NO];
+}
+
+- (NSImage *)snoozedTabStatusImage {
+    // In the color the user chose for the status, as the dot is.
+    iTermSRGBColor srgb = _aggregatedTabStatus.displayIndicatorColor;
+    NSColor *color = [NSColor colorWithSRGBRed:srgb.r green:srgb.g blue:srgb.b alpha:1];
+    return [iTermSessionTabStatus snoozedImageWithColor:color size:16];
 }
 
 - (NSImage *)tabStatusDotImage {
@@ -1101,6 +1219,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [realParentWindow_ closeInstantReplay:self orTerminateSession:NO];
     }
     BOOL changed = session != activeSession_;
+    PTYSession *previous = activeSession_;
     if (changed && updateActivityCounter) {
         [activeSession_ setActivityCounter:@(_activityCounter++)];
         [session setActivityCounter:@(_activityCounter++)];
@@ -1171,8 +1290,18 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     [realParentWindow_ invalidateRestorableState];
 
+    // Focus moving between this tab's panes: the focused pane's status
+    // usually wins, so recompute, without a ring since it isn't news. A swap
+    // recomputes on its own once the tab is consistent, and its incoming
+    // status may ring. When the previous session has left the tab (a pane
+    // closed), the tab recomputes as its membership changes.
+    if (changed && !_activatingSwappedInSession && previous && [self.sessions containsObject:previous]) {
+        [self updateAggregatedTabStatusMayRing:NO];
+    }
     if (changed) {
         [[self realParentWindow] tabActiveSessionDidChange];
+        // Rich content follows the active session.
+        [_delegate tabDidChangeRichContent:self];
         [self.delegate tab:self
         setBackgroundImage:self.activeSession.backgroundImage
                       mode:self.activeSession.backgroundImageMode
@@ -1189,6 +1318,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermCurrentSessionDidChange
                                                         object:activeSession_
                                                       userInfo:nil];
+}
+
+// See _activatingSwappedInSession.
+- (void)activateSwappedInSession:(PTYSession *)session {
+    const BOOL saved = _activatingSwappedInSession;
+    _activatingSwappedInSession = YES;
+    [self setActiveSession:session];
+    _activatingSwappedInSession = saved;
 }
 
 - (void)restoreActiveSessionFirstResponder {
@@ -1469,6 +1606,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     for (PTYSession *session in self.sessions) {
         [session useTransparencyDidChange];
         [session didMoveSession];
+        // The new window may have different rich tab content settings.
+        [session updateTabContent];
     }
 }
 
@@ -2547,6 +2686,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     newSession.liveSession = oldSession;
     activeSession_ = newSession;
+    // Bypasses -setActiveSession:, which is what normally redraws rich content.
+    [_delegate tabDidChangeRichContent:self];
 
     // TODO(georgen): the hidden window can resize itself and the FakeWindow
     // needs to pass that on to the screen. Otherwise the DVR playback into the
@@ -2635,6 +2776,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [parentSplit replaceSubview:oldView with:newView];
     [hiddenLiveViews_ removeObject:newView];
     activeSession_ = liveSession;
+    // Bypasses -setActiveSession:, which is what normally redraws rich content.
+    [_delegate tabDidChangeRichContent:self];
 
     // As in -replaceActiveSessionWithSyntheticSession:, setting newView.frame to
     // an equal-sized oldView.frame skips -resizeSubviewsWithOldSize:, so the live
@@ -7828,7 +7971,7 @@ typedef struct {
         }
         [self.viewToSessionMap removeObjectForKey:existing.view];
     }
-    [self setActiveSession:buried];
+    [self activateSwappedInSession:buried];
     [splitView adjustSubviews];
     [self updatePaneTitles];
     for (PTYSession *session in self.sessions) {
@@ -7939,8 +8082,8 @@ typedef struct {
     [session1Tab.viewToSessionMap setObject:session2 forKey:session2.view];
     [session2Tab.viewToSessionMap setObject:session1 forKey:session1.view];
 
-    [session1Tab setActiveSession:session2];
-    [session2Tab setActiveSession:session1];
+    [session1Tab activateSwappedInSession:session2];
+    [session2Tab activateSwappedInSession:session1];
 
     [session1Superview adjustSubviews];
     [session2Superview adjustSubviews];
@@ -9903,6 +10046,24 @@ backgroundColor:(NSColor *)backgroundColor {
     [self _refreshLabels:nil];
 }
 
+- (iTermTabContentConfiguration *)sessionTabContentConfiguration {
+    return [self.realParentWindow tabContentConfiguration];
+}
+
+- (void)sessionTabContentDidChange:(PTYSession *)session {
+    if (session != self.activeSession) {
+        return;
+    }
+    [_delegate tabDidChangeRichContent:self];
+}
+
+// PSMTabBarControlRepresentedObjectIdentifierProtocol. Rich content follows the
+// active session, including in split panes. nil draws the classic title and
+// subtitle.
+- (NSArray<PSMTabRichLine *> *)psmTabRichLines {
+    return self.activeSession.tabContentLines;
+}
+
 - (void)sessionTabStatusDidChange:(PTYSession *)session {
     DLog(@"sessionTabStatusDidChange: %@", session);
     if ([[iTermStatusPrioritySettings shared] isHighestPriorityFor:session.tabStatus.statusText]) {
@@ -9925,6 +10086,12 @@ backgroundColor:(NSColor *)backgroundColor {
 }
 
 - (void)updateAggregatedTabStatus {
+    [self updateAggregatedTabStatusMayRing:YES];
+}
+
+// mayRing is NO when the change isn't news, as when the user focuses another
+// pane: the ring can go away but not appear.
+- (void)updateAggregatedTabStatusMayRing:(BOOL)mayRing {
     iTermStatusPrioritySettings *settings = [iTermStatusPrioritySettings shared];
     PTYSession *winner = nil;
     // Lower priority value = higher priority. NSIntegerMax = no status.
@@ -9938,13 +10105,31 @@ backgroundColor:(NSColor *)backgroundColor {
     // back to the highest-priority status among the other panes so the subtitle
     // isn't empty. Peers that time-share a pane are not in -sessions (only the
     // swapped-in peer is), so a buried peer never competes here regardless.
+    //
+    // A snoozed status loses to an awake one, even the focused pane's:
+    // otherwise the tab would show the status the user snoozed and hide the
+    // one that's awake. With every status snoozed, the usual rule applies.
+    iTermSessionStatusController *snoozeController = [iTermSessionStatusController instance];
+    BOOL (^snoozed)(PTYSession *) = ^BOOL(PTYSession *session) {
+        return [snoozeController isSnoozedSessionID:session.guid];
+    };
+    BOOL anyAwake = NO;
+    for (PTYSession *session in [self sessions]) {
+        if (session.tabStatus.hasActiveStatus && !snoozed(session)) {
+            anyAwake = YES;
+            break;
+        }
+    }
     PTYSession *active = self.activeSession;
-    if (active.tabStatus.hasActiveStatus) {
+    if (active.tabStatus.hasActiveStatus && (!anyAwake || !snoozed(active))) {
         winner = active;
         winnerPriority = [settings priorityFor:active.tabStatus.statusText];
     } else {
         for (PTYSession *session in [self sessions]) {
             if (!session.tabStatus.hasActiveStatus) {
+                continue;
+            }
+            if (anyAwake && snoozed(session)) {
                 continue;
             }
             NSInteger priority = [settings priorityFor:session.tabStatus.statusText];
@@ -9968,7 +10153,7 @@ backgroundColor:(NSColor *)backgroundColor {
 
     // Update prominent flag — prominent when entering highest priority.
     if (winnerPriority == 0) {
-        if (oldPriority != 0) {
+        if (oldPriority != 0 && mayRing) {
             _tabStatusWaitingProminent = YES;
         }
     } else {

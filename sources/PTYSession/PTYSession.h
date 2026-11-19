@@ -81,6 +81,9 @@ extern NSString *const PTYSessionArrangementOptionsLargeContentProvider;
 extern NSString *const PTYSessionArrangementOptionsInhibitRelaunch;
 
 @class CapturedOutput;
+@class PSMTabRichLine;
+@class iTermTabContentConfiguration;
+@class iTermTabContentSnapshot;
 @class iTermByteBudget;
 @protocol ExternalSearchResultsController;
 @class FakeWindow;
@@ -395,6 +398,10 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 - (BOOL)sessionPasswordManagerWindowIsOpen;
 - (BOOL)sessionShouldDragWindowByPaneTitleBar:(PTYSession *)session;
 - (void)sessionSubtitleDidChange:(PTYSession *)session;
+// The evaluated rich tab content lines changed (see -tabContentLines).
+- (void)sessionTabContentDidChange:(PTYSession *)session;
+// The rich tab content settings of the window the session is in.
+- (nullable iTermTabContentConfiguration *)sessionTabContentConfiguration;
 - (void)sessionTabStatusDidChange:(PTYSession *)session;
 - (void)sessionActivate:(PTYSession *)session;
 
@@ -664,6 +671,15 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // The computed label
 @property(nonatomic, readonly, nullable) NSString *badgeLabel;
 @property(nonatomic, readonly, nullable) NSString *subtitle;
+// Evaluated rich tab content lines, or nil when rich tab content is off.
+@property(nonatomic, readonly, nullable) NSArray<PSMTabRichLine *> *tabContentLines;
+// The same lines segment by segment, for combining a collapsed tab group's
+// members. nil when rich tab content is off.
+@property(nonatomic, readonly, nullable) iTermTabContentSnapshot *tabContentSnapshot;
+
+// Makes rich tab content match the settings of the session's window. Call when
+// they change.
+- (void)updateTabContent;
 @property(nonatomic, readonly, nullable) iTermSessionTabStatus *tabStatus;
 // True while a status from a saved arrangement is being adopted, so the change is a
 // restoration rather than news.

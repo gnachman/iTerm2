@@ -177,6 +177,10 @@ static os_log_t PSMTabDragLog(void) {
     // AppKit reported the pointer leaving the source tab bar while the drag was
     // locked to it. The exit is replayed when the drag unlocks.
     BOOL _deferredSourceTabBarExit;
+    // Not retained; compared only. See -setRefusingTabBar:.
+    PSMTabBarControl *_refusingTabBar;
+    // The not-allowed cursor is up because a bar refuses the drag.
+    BOOL _showingNotAllowedCursor;
 
     NSPoint _lastPolledMouseLocation;
 
@@ -371,6 +375,7 @@ static os_log_t PSMTabDragLog(void) {
 - (void)startDraggingCell:(PSMTabBarCell *)cell
                fromTabBar:(PSMTabBarControl *)control
        withMouseDownEvent:(NSEvent *)event {
+    _refusingTabBar = nil;
     [self setIsDragging:YES];
     [self setSourceTabBar:control];
     [self setDestinationTabBar:control];
@@ -543,6 +548,7 @@ static os_log_t PSMTabDragLog(void) {
                            members:(NSArray<PSMTabBarCell *> *)members
                         fromTabBar:(PSMTabBarControl *)control
                 withMouseDownEvent:(NSEvent *)event {
+    _refusingTabBar = nil;
     if (members.count == 0) {
         return;
     }
@@ -1239,6 +1245,8 @@ static os_log_t PSMTabDragLog(void) {
         ELog(@"Delegate returned no control to add to.");
         [self cancelDrag];
         [[self sourceTabBar] sanityCheck:@"delegate returned no control to add to"];
+        // There's nowhere to move the tab, so it stays where it was.
+        return;
     }
 
     if ([sourceDelegate respondsToSelector:@selector(tabView:willDropTabViewItem:inTabBar:)]) {
@@ -1309,9 +1317,14 @@ static os_log_t PSMTabDragLog(void) {
     } else {
         // _draggedCellIndex was captured in the chip-free world at drag start;
         // strip the mid-drag chips so the snap-back insert lands at that same
-        // index. -finishDrag re-derives chips afterward.
+        // index. -finishDrag re-derives chips afterward. The drop slots go too,
+        // or the index would count them.
+        [self removeAllPlaceholdersFromTabBar:[self sourceTabBar]];
         [[self sourceTabBar] removeAllTabGroupChipCells];
-        [[[self sourceTabBar] cells] insertObject:[self draggedCell] atIndex:[self draggedCellIndex]];
+        // Clamp in case tabs closed during the drag.
+        NSMutableArray *cells = [[self sourceTabBar] cells];
+        const NSUInteger index = MIN((NSUInteger)MAX(0, [self draggedCellIndex]), cells.count);
+        [cells insertObject:[self draggedCell] atIndex:index];
     }
     [[[self sourceTabBar] window] setAlphaValue:1];  // Make the window visible again.
     [[[self sourceTabBar] window] orderFront:nil];
@@ -1344,7 +1357,24 @@ static os_log_t PSMTabDragLog(void) {
         // There was not a successful drop (performDragOperation).
         return;
     }
-    if (_deferredSourceTabBarExit && [self dragIsLockedToSourceTabBar]) {
+    const BOOL releasedNearSourceBar = _deferredSourceTabBarExit && [self dragIsLockedToSourceTabBar];
+    // Right by the source bar with no slot to drop into, as when it refused
+    // the tab and then stopped, snaps back too. Keep in sync with
+    // -releaseWouldSnapBack.
+    if (_refusingTabBar ||
+        (releasedNearSourceBar && ([self sourceTabBarRefusesDrop] || ![self destinationTabBar]))) {
+        // Released over, or right by, a bar that won't take the tab. Put it
+        // back where it was.
+        DLog(@"Drop refused by %p; snapping back", _refusingTabBar ?: [self sourceTabBar]);
+        _deferredSourceTabBarExit = NO;
+        PSMTabBarControl *source = [[[self sourceTabBar] retain] autorelease];
+        [self cancelDrag];
+        [[NSNotificationCenter defaultCenter] postNotificationName:PSMTabDragDidEndNotification object:nil];
+        [self finishDrag];
+        [source sanityCheck:@"draggedImageEndedAt - refused"];
+        return;
+    }
+    if (releasedNearSourceBar) {
         // Released off the source bar but too close to it to mean anything but a
         // reorder. Every other drop target refused the tab, so AppKit calls this a
         // failed drop. Drop the tab into the slot it was tracking instead.
@@ -1415,8 +1445,93 @@ static os_log_t PSMTabDragLog(void) {
     }
 }
 
+- (BOOL)isDraggingTabGroup {
+    return _draggedGroupID != nil;
+}
+
+// Whether a release now would snap back: over a bar that refuses the tab, or
+// right by its own bar while that refuses it (see -draggedImageEndedAt:...).
+- (BOOL)releaseWouldSnapBack {
+    return (_refusingTabBar != nil ||
+            (_deferredSourceTabBarExit &&
+             [self dragIsLockedToSourceTabBar] &&
+             ([self sourceTabBarRefusesDrop] || ![self destinationTabBar])));
+}
+
+// Shows the not-allowed cursor while a release would snap back, so it isn't
+// a surprise, and the closed hand otherwise.
+- (void)updateRefusalCursor {
+    if ([self releaseWouldSnapBack]) {
+        // Set on every update, since something else may have set it since.
+        [[NSCursor operationNotAllowedCursor] set];
+        _showingNotAllowedCursor = YES;
+    } else if (_showingNotAllowedCursor) {
+        _showingNotAllowedCursor = NO;
+        [[NSCursor closedHandCursor] set];
+    }
+}
+
+- (void)setRefusingTabBar:(PSMTabBarControl *)control {
+    if (control == _refusingTabBar) {
+        [self updateRefusalCursor];
+        // Called on every drag update while a bar refuses; act once.
+        return;
+    }
+    _refusingTabBar = control;
+    [self updateRefusalCursor];
+    if (control && _dragViewWindow) {
+        // A release here snaps back, so don't promise a new window.
+        [_fadeTimer invalidate];
+        _fadeTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 30.0
+                                                      target:self
+                                                    selector:@selector(fadeOutDragWindow:)
+                                                    userInfo:nil
+                                                     repeats:YES];
+    }
+    if (control && control == [self destinationTabBar]) {
+        // Don't open a gap in a bar that won't take the tab. Its placeholders
+        // close as if the drag had left it, but there's no tear-off preview:
+        // a release here snaps back.
+        [self setDestinationTabBar:nil];
+        [self setCurrentMouseLoc:NSMakePoint(-1.0, -1.0)];
+        [self resetCollapsedDragTargetingState];
+    }
+}
+
+- (void)clearRefusingTabBar:(PSMTabBarControl *)control {
+    if (_refusingTabBar == control) {
+        _refusingTabBar = nil;
+        [self updateRefusalCursor];
+    }
+}
+
+- (BOOL)draggedTabIsAloneInSourceBar {
+    return [[[self sourceTabBar] tabView] numberOfTabViewItems] <= 1;
+}
+
+// Whether the source bar refuses its own tab, as during a tab bar search: the
+// tab can leave it but not be reordered in it.
+- (BOOL)sourceTabBarRefusesDrop {
+    if ([self draggedTabIsAloneInSourceBar]) {
+        // Declined because there's nowhere to put it, not refused: dragging
+        // a window's only tab moves the window.
+        return NO;
+    }
+    id delegate = [[self sourceTabBar] delegate];
+    return ([delegate respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:moveSourceWindow:)] &&
+            ![delegate tabView:[[self sourceTabBar] tabView]
+         shouldDropTabViewItem:[[self draggedCell] representedObject]
+                      inTabBar:[self sourceTabBar]
+              moveSourceWindow:nil]);
+}
+
 - (void)finishDrag {
     ILog(@"Drag of %p finished from\n%@", [self sourceTabBar], [NSThread callStackSymbols]);
+    _refusingTabBar = nil;
+    if (_showingNotAllowedCursor) {
+        _showingNotAllowedCursor = NO;
+        [[NSCursor arrowCursor] set];
+    }
     _dragScrollBar = nil;
     _dragScrollNudge = 0;
 
@@ -1683,6 +1798,10 @@ static os_log_t PSMTabDragLog(void) {
 #endif
 
 - (void)displayLinkDidFire {
+    if (self.isDragging) {
+        // Entering or leaving the area right by a refusing source bar.
+        [self updateRefusalCursor];
+    }
     if (!self.isDragging || !_dragTabWindow || !_dragWindowOriginInitialized) {
         return;
     }
@@ -1886,8 +2005,8 @@ static os_log_t PSMTabDragLog(void) {
         if ([c isPlaceholder]) {
             continue;
         }
-        if (([c isTabGroupChip] && [self chipLeadsCollapsedRunInCells:cells atIndex:j]) ||
-            [c isCollapsedHidden]) {
+        if ([c isTabGroupChip] ? [self chipLeadsCollapsedRunInCells:cells atIndex:j]
+                               : [self hiddenCell:c atIndex:j isInCollapsedRunInCells:cells]) {
             return YES;
         }
         break;  // a real tab or an expanded group's chip: not collapsed-adjacent
@@ -1898,8 +2017,8 @@ static os_log_t PSMTabDragLog(void) {
         if ([c isPlaceholder]) {
             continue;
         }
-        if (([c isTabGroupChip] && [self chipLeadsCollapsedRunInCells:cells atIndex:j]) ||
-            [c isCollapsedHidden]) {
+        if ([c isTabGroupChip] ? [self chipLeadsCollapsedRunInCells:cells atIndex:j]
+                               : [self hiddenCell:c atIndex:j isInCollapsedRunInCells:cells]) {
             return YES;
         }
         break;
@@ -1907,21 +2026,64 @@ static os_log_t PSMTabDragLog(void) {
     return NO;
 }
 
+// The group that hides a hidden tab cell: its parent when that's collapsed,
+// else its own group. Nil for a tab a search hides outside any group.
+- (NSString *)groupHidingCell:(PSMTabBarCell *)cell {
+    return cell.isTabGroupParentCollapsed ? cell.tabGroupParentIdentifier : cell.tabGroupIdentifier;
+}
+
+// Whether `cell` is a hidden member of a collapsed group (a pill). A tab bar
+// search also hides tabs that are ungrouped, or in a group that shows others;
+// those aren't part of a pill.
+- (BOOL)hiddenCell:(PSMTabBarCell *)cell atIndex:(NSInteger)index isInCollapsedRunInCells:(NSArray *)cells {
+    if (![cell isCollapsedHidden]) {
+        return NO;
+    }
+    NSString *gid = [self groupHidingCell:cell];
+    if (gid.length == 0) {
+        return NO;
+    }
+    for (NSInteger k = index - 1; k >= 0; k--) {
+        PSMTabBarCell *c = cells[k];
+        if ([c isTabGroupChip] && [c.tabGroupIdentifier isEqualToString:gid]) {
+            return [self chipLeadsCollapsedRunInCells:cells atIndex:k];
+        }
+    }
+    return NO;
+}
+
 // YES if the group chip at `chipIndex` heads a COLLAPSED run: its run leads with a
 // collapsed-group front slot (or a collapsed member) before any visible member.
 - (BOOL)chipLeadsCollapsedRunInCells:(NSArray *)cells atIndex:(NSInteger)chipIndex {
+    // Collapsed means every one of the group's tabs is hidden. A tab bar search
+    // can hide some and show others, so the first tab alone doesn't tell.
+    // A tab counts only if hidden by THIS group: a collapsed sub-group's tabs
+    // are hidden though its parent may be expanded.
+    NSString *gid = [cells[chipIndex] tabGroupIdentifier];
     const NSInteger count = (NSInteger)cells.count;
+    BOOL sawMember = NO;
+    BOOL passedSubgroupChip = NO;
     for (NSInteger k = chipIndex + 1; k < count; k++) {
         PSMTabBarCell *c = cells[k];
-        if (c.isCollapsedGroupJoinSlot || [c isCollapsedHidden]) {
-            return YES;
+        if (c.isCollapsedGroupJoinSlot && !passedSubgroupChip) {
+            return YES;  // this group's own front slot marks it collapsed
         }
         if ([c isPlaceholder]) {
             continue;
         }
-        return NO;  // a visible member -> expanded group
+        if (![c continuesRunOfTabGroup:gid]) {
+            break;
+        }
+        if ([c isTabGroupChip]) {
+            passedSubgroupChip = YES;  // a sub-group's chip inside this run
+            continue;
+        }
+        if (![c isCollapsedByTabGroup:gid]) {
+            return NO;  // a member this group doesn't hide -> expanded
+        }
+        sawMember = YES;
     }
-    return NO;
+    return sawMember;
 }
 
 // Along-axis origin (x on a horizontal bar) at which to hit-test a collapsed
@@ -2474,10 +2636,15 @@ static os_log_t PSMTabDragLog(void) {
                 }
             } else if ([c isTabGroupChip]) {
                 fixedTotal += c.frame.size.width;
-                spacingTotal += intercellSpacing;
+                // A hidden cell takes no spacing in the walk below.
+                if (!c.isCollapsedHidden) {
+                    spacingTotal += intercellSpacing;
+                }
             } else {
                 baseTotal += (c.dragBaseWidth > 0 ? c.dragBaseWidth : c.frame.size.width);
-                spacingTotal += intercellSpacing;
+                if (!c.isCollapsedHidden) {
+                    spacingTotal += intercellSpacing;
+                }
             }
         }
         const CGFloat available = [control availableCellWidthWithOverflow:NO];
@@ -2496,12 +2663,19 @@ static os_log_t PSMTabDragLog(void) {
     // the whole first pass is O(n) across non-overlapping runs.)
     BOOL *runCell = calloc(MAX(1, cellCount), sizeof(BOOL));
     BOOL *collapsedAdjacent = calloc(MAX(1, cellCount), sizeof(BOOL));
+    // A chip precedes its members, so remember each chip's answer for them
+    // (see -hiddenCell:atIndex:isInCollapsedRunInCells:).
+    NSMutableDictionary<NSString *, NSNumber *> *chipLeadsCollapsedRun = [NSMutableDictionary dictionary];
     for (NSInteger k = 0; k < cellCount; k++) {
         PSMTabBarCell *ck = cells[k];
         if ([ck isTabGroupChip]) {
             runCell[k] = [self chipLeadsCollapsedRunInCells:cells atIndex:k];
+            if (ck.tabGroupIdentifier.length > 0) {
+                chipLeadsCollapsedRun[ck.tabGroupIdentifier] = @(runCell[k]);
+            }
         } else if (![ck isPlaceholder] && [ck isCollapsedHidden]) {
-            runCell[k] = YES;
+            NSString *gid = [self groupHidingCell:ck];
+            runCell[k] = gid.length > 0 && [chipLeadsCollapsedRun[gid] boolValue];
         }
     }
     NSInteger leftNonPH = -1;
@@ -2585,7 +2759,10 @@ static os_log_t PSMTabDragLog(void) {
             newRect.origin.x = position;
             position += newRect.size.width;
             if (![cell isPlaceholder]) {
-                position += intercellSpacing;
+                // A hidden cell takes no room, as in the bar's own layout.
+                if (!cell.isCollapsedHidden) {
+                    position += intercellSpacing;
+                }
             } else if (fullExtent > 0) {
                 position += intercellSpacing * MIN(1.0, newRect.size.width / fullExtent);
             }
@@ -2593,7 +2770,9 @@ static os_log_t PSMTabDragLog(void) {
             newRect.origin.y = position;
             position += newRect.size.height;
             if (![cell isPlaceholder]) {
-                position += intercellSpacing;
+                if (!cell.isCollapsedHidden) {
+                    position += intercellSpacing;
+                }
             } else if (fullExtent > 0) {
                 position += intercellSpacing * MIN(1.0, newRect.size.height / fullExtent);
             }
@@ -2751,12 +2930,17 @@ static os_log_t PSMTabDragLog(void) {
                                                                    collapsed:collapsedRun
                                                                  memberCount:memberCount
                                                                       nested:(chip.tabGroupParentIdentifier.length > 0)];
+            if (collapsedRun) {
+                // A chip showing rich content lines shares the tabs' width.
+                frame.size.width = [control settledWidthOfCollapsedTabGroupChipWithWidth:frame.size.width
+                                                                                   cells:cells];
+            }
         } else {
             if (!NSIsEmptyRect(reference)) {
                 frame.origin.x = reference.origin.x;
                 frame.size.width = reference.size.width;
             }
-            frame.size.height = [control heightOfTabGroupChipCell:chip];
+            frame.size.height = [control heightOfTabGroupChipCell:chip collapsed:collapsedRun];
         }
         if (chip.isCollapsedHidden) {
             // A sub-group's chip inside a collapsed parent takes no room, as in
@@ -2816,7 +3000,9 @@ static os_log_t PSMTabDragLog(void) {
                 // placeholder anchor before the next group's chip) would inherit the
                 // NEIGHBOR group's collapse state. No own member found -> NO.
                 NSString *chipGid = c.tabGroupIdentifier;
-                BOOL firstMemberCollapsed = NO;
+                // Every member must be hidden by this group: a tab bar search
+                // can hide some of a group's tabs and show others.
+                BOOL allMembersCollapsed = NO;
                 for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
                     PSMTabBarCell *cj = cells[j];
                     if ([cj isPlaceholder]) {
@@ -2830,8 +3016,11 @@ static os_log_t PSMTabDragLog(void) {
                     }
                     // A sub-group's tab is hidden by THIS group only when its
                     // parent (this group) is collapsed.
-                    firstMemberCollapsed = [cj isCollapsedByTabGroup:chipGid];
-                    break;
+                    if (![cj isCollapsedByTabGroup:chipGid]) {
+                        allMembersCollapsed = NO;
+                        break;
+                    }
+                    allMembersCollapsed = YES;
                 }
                 PSMTabBarCell *slot = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:slotFrame
                                                                              expanded:NO
@@ -2843,11 +3032,11 @@ static os_log_t PSMTabDragLog(void) {
                 // the pill (the drag assistant's join target), so the join zone is
                 // exactly the pill -- landing on the slot that opens to the pill's
                 // RIGHT once you advance past it must NOT join.
-                if (firstMemberCollapsed) {
+                if (allMembersCollapsed) {
                     slot.isCollapsedGroupJoinSlot = YES;
                 }
-                RLog(@"tabGroup: reinsert frontSlot for chip gid=%@ firstMemberCollapsed=%d slotFrame=%@",
-                     c.tabGroupIdentifier ?: @"-", (int)firstMemberCollapsed, NSStringFromRect(slotFrame));
+                RLog(@"tabGroup: reinsert frontSlot for chip gid=%@ allMembersCollapsed=%d slotFrame=%@",
+                     c.tabGroupIdentifier ?: @"-", (int)allMembersCollapsed, NSStringFromRect(slotFrame));
                 [withSlots addObject:slot];
             }
             continue;
@@ -3283,7 +3472,8 @@ holdsOwnSlotOfTabGroup:(NSString *)gid {
         NSString *neighborGid = c.isTabGroupParentCollapsed ? c.tabGroupParentIdentifier : c.tabGroupIdentifier;
         for (NSInteger k = j - 1; k >= 0; k--) {
             if ([cells[k] isTabGroupChip] && [cells[k].tabGroupIdentifier isEqualToString:neighborGid]) {
-                return k;
+                // A search can hide this tab while the group shows others.
+                return [self chipLeadsCollapsedRunInCells:cells atIndex:k] ? k : NSNotFound;
             }
         }
         return NSNotFound;

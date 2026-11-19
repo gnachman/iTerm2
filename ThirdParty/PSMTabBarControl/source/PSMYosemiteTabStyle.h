@@ -54,6 +54,15 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 
 - (NSColor *)topLineColorSelected:(BOOL)selected;
 - (BOOL)anyTabHasColor;
+// Where rich content lines are drawn in a cell. Unlike the classic title, it
+// doesn't depend on the title's length.
+- (NSRect)richContentRectForCell:(PSMTabBarCell *)cell
+                   labelPosition:(CGFloat)labelPosition
+                         hasIcon:(BOOL)hasIcon
+                        iconRect:(NSRect)iconRect
+                   reservedSpace:(CGFloat)reservedSpace;
+// Where the status dot or other attention icon goes.
+- (NSRect)iconRectForTabCell:(PSMTabBarCell *)cell;
 - (CGFloat)tabColorBrightness:(PSMTabBarCell *)cell;
 - (NSEdgeInsets)insetsForTabBarDividers;
 - (NSEdgeInsets)backgroundInsetsWithHorizontalOrientation:(BOOL)horizontal;

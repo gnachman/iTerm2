@@ -138,11 +138,12 @@ class TabStatusController: NSObject {
     func clearStatus() -> Bool {
         // An expiration can be armed by a status that set no visible field, so
         // hasActiveStatus alone would let one outlive the clear and resurrect
-        // a status on a session that was explicitly cleared.
+        // a status on a session that was explicitly cleared. Detail can also
+        // be reported without status text, and tabs can show it.
         guard let status = statusIfPresent else {
             return false
         }
-        guard status.hasActiveStatus || hasArmedExpiration else {
+        guard status.hasActiveStatus || status.detailText != nil || hasArmedExpiration else {
             // Nothing is showing, but a count and a turn flag may still be
             // parked. Every caller clears because the program they describe
             // is gone, and they must go with it: Claude Code's own reports

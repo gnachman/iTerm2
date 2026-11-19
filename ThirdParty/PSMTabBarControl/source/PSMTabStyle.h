@@ -86,6 +86,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (CGFloat)tabGroupCollapsedChipCellWidthForName:(NSString *)name
                                      memberCount:(NSInteger)count
                                           nested:(BOOL)nested;
+// Width a collapsed group's chip needs to show these rich content lines (see
+// -[PSMTabBarControl richLinesForTabGroupIdentifier:]), padding included.
+- (CGFloat)tabGroupCollapsedChipWidthForRichLines:(NSArray<PSMTabRichLine *> *)lines;
+// Height a collapsed group's chip needs on a vertical bar to show these lines
+// below its name, where headerHeight is an expanded group's header height.
+- (CGFloat)tabGroupCollapsedChipHeightForRichLines:(NSArray<PSMTabRichLine *> *)lines
+                                      headerHeight:(CGFloat)headerHeight;
 @required
 - (NSRect)objectCounterRectForTabCell:(PSMTabBarCell *)cell;
 - (float)minimumWidthOfTabCell:(PSMTabBarCell *)cell;
@@ -132,6 +139,21 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readonly) NSSize addTabButtonSize;
 @property (nonatomic, readonly) CGFloat tabBarHeight;
+
+@optional
+// The normal height of a group header row in a vertical bar, for styles whose
+// tabBarHeight doesn't give it. Rows made taller for rich tab content don't
+// make the header taller.
+@property (nonatomic, readonly) CGFloat verticalTabGroupHeaderHeight;
+
+// The point size the style draws tab titles at.
+@property (nonatomic, readonly) CGFloat fontSize;
+
+// How much of a tab's height the style spends on chrome, such as a background
+// inset from the cell, beyond what rich tab content lines and their padding
+// need. Tabs are made that much taller.
+@property (nonatomic, readonly) CGFloat richContentChromeHeight;
+@required
 @property (nonatomic) PSMTabBarOrientation orientation;
 
 @end

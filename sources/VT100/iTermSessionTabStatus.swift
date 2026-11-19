@@ -266,6 +266,15 @@ class iTermSessionTabStatus: NSObject {
             state.statusText = newValue
         }
     }
+    // The status text's color as #rrggbb, or nil when there's no status text
+    // or the program gave it no color.
+    @objc var statusTextColorHexString: String? {
+        guard hasStatusTextColor, !(statusText ?? "").isEmpty else {
+            return nil
+        }
+        return SetStatusBuiltInFunction.hexString(statusTextColor)
+    }
+
     @objc var hasStatusTextColor: Bool {
         get {
             state.hasStatusTextColor
@@ -520,6 +529,25 @@ class iTermSessionTabStatus: NSObject {
         }
     }
 
+    /// The icon a snoozed tab shows instead of its dot: a moon in the dot's
+    /// color, dimmed.
+    @objc static func snoozedImage(color: NSColor, size: CGFloat = 16) -> NSImage {
+        let configuration = NSImage.SymbolConfiguration(pointSize: size * 0.7, weight: .semibold)
+            .applying(NSImage.SymbolConfiguration(paletteColors: [color.withAlphaComponent(0.6)]))
+        guard let symbol = NSImage(systemSymbolName: SFSymbol.moonZzz.rawValue,
+                                   accessibilityDescription: nil)?.withSymbolConfiguration(configuration) else {
+            return dotImage(color: color.withAlphaComponent(0.4), size: size)
+        }
+        return NSImage(size: NSSize(width: size, height: size), flipped: false) { rect in
+            let symbolSize = symbol.size
+            symbol.draw(in: NSRect(x: (rect.width - symbolSize.width) / 2,
+                                   y: (rect.height - symbolSize.height) / 2,
+                                   width: symbolSize.width,
+                                   height: symbolSize.height))
+            return true
+        }
+    }
+
     private static let arrangementIndicatorColorKey = "Indicator Color"
     private static let arrangementStatusTextKey = "Status Text"
     private static let arrangementStatusTextColorKey = "Status Text Color"
@@ -619,6 +647,9 @@ class SessionStatusController: NSObject {
     @objc
     private func sessionStatusDidChange(_ notification: Notification) {
         let status = notification.object as! iTermSessionTabStatus
+        // Any change wakes a snoozed session, before observers hear of it so
+        // they see it awake.
+        wake(status.sessionID)
         if status.hasActiveStatus {
             statuses[status.sessionID] = status
         } else {
@@ -629,7 +660,63 @@ class SessionStatusController: NSObject {
     @objc
     private func sessionWillTerminate(_ notification: Notification) {
         let session = notification.object as! PTYSession
+        wake(session.guid)
         statuses.removeValue(forKey: session.guid)
+    }
+
+    // MARK: - Snooze
+
+    /// Posted with the controller as the object when sessions are snoozed or
+    /// woken. userInfo[sessionIDsKey] is the Set<String> of sessions whose
+    /// state changed.
+    @objc static let snoozeDidChangeNotification = Notification.Name("iTermSessionStatusSnoozeDidChange")
+    @objc static let sessionIDsKey = "sessionIDs"
+    /// userInfo key: true when a status change woke the sessions, rather than
+    /// the user. Observers that already react to the status change can skip
+    /// it.
+    @objc static let wokenByStatusChangeKey = "wokenByStatusChange"
+
+    // Sessions the user snoozed, from the session status tool or the tab
+    // bar. Not saved. A snoozed session wakes when its status next changes
+    // or goes away.
+    private var snoozedSessionIDs = Set<String>()
+
+    @objc(isSnoozedSessionID:)
+    func isSnoozed(sessionID: String) -> Bool {
+        return snoozedSessionIDs.contains(sessionID)
+    }
+
+    /// Snoozes or wakes these sessions. A session without a status can't be
+    /// snoozed, since nothing would wake it.
+    @objc(setSnoozed:sessionIDs:)
+    func setSnoozed(_ snoozed: Bool, sessionIDs: [String]) {
+        let changed: Set<String>
+        if snoozed {
+            changed = Set(sessionIDs.filter { statuses[$0] != nil }).subtracting(snoozedSessionIDs)
+            snoozedSessionIDs.formUnion(changed)
+        } else {
+            changed = snoozedSessionIDs.intersection(sessionIDs)
+            snoozedSessionIDs.subtract(changed)
+        }
+        announceSnoozeChange(changed, byStatusChange: false)
+    }
+
+    private func wake(_ sessionID: String) {
+        guard snoozedSessionIDs.remove(sessionID) != nil else {
+            return
+        }
+        announceSnoozeChange([sessionID], byStatusChange: true)
+    }
+
+    private func announceSnoozeChange(_ sessionIDs: Set<String>, byStatusChange: Bool) {
+        guard !sessionIDs.isEmpty else {
+            return
+        }
+        DLog("Snooze changed for \(sessionIDs). Snoozed now: \(snoozedSessionIDs)")
+        NotificationCenter.default.post(name: Self.snoozeDidChangeNotification,
+                                        object: self,
+                                        userInfo: [Self.sessionIDsKey: sessionIDs,
+                                                   Self.wokenByStatusChangeKey: byStatusChange])
     }
 
     func addObserver(_ observer: @escaping NotifyingDictionaryObserver<String, iTermSessionTabStatus>) -> NotifyingDictionaryObserverToken {

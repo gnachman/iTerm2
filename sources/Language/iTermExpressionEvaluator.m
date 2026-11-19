@@ -359,7 +359,7 @@ static NSMutableArray *iTermExpressionEvaluatorGlobalStore(void) {
                 firstError = evaluator.error;
                 [self logError:evaluator.error invocation:invocation];
             } else {
-                NSString *decodedString = [self stringFromJSONObject:evaluator.value];
+                NSString *decodedString = [iTermExpressionEvaluator stringFromJSONObject:evaluator.value];
                 if (self.escapingFunction) {
                     decodedString = self.escapingFunction(decodedString);
                 }
@@ -453,7 +453,7 @@ static NSMutableArray *iTermExpressionEvaluatorGlobalStore(void) {
     }
 }
 
-- (NSString *)stringFromJSONObject:(id)jsonObject {
++ (NSString *)stringFromJSONObject:(id)jsonObject {
     NSString *string = [NSString castFrom:jsonObject];
     if (string) {
         return string;

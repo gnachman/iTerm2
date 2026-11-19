@@ -13,7 +13,7 @@ struct StatusPriorityEntry: Codable, Equatable {
 @objc(iTermStatusPrioritySettings)
 class StatusPrioritySettings: NSObject {
     @objc static let shared = StatusPrioritySettings()
-    static let didChangeNotification = Notification.Name("StatusPrioritySettingsDidChange")
+    @objc static let didChangeNotification = Notification.Name("StatusPrioritySettingsDidChange")
     /// Posted when a color override changes, as soon as it does (at most once
     /// per pass through the run loop), so what is drawn can follow a color
     /// picker live. didChangeNotification follows later, once the change is

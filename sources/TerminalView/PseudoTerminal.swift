@@ -350,9 +350,27 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
         return tabBar.bounds
     }
 
+    // MARK: - Snooze
+
+    // Snoozes every session in the tab that has a status, or wakes them all
+    // if the tab is already snoozed.
+    @objc func toggleSnoozeTab(_ sender: Any?) {
+        guard let menuItem = sender as? NSMenuItem,
+              let tabViewItem = menuItem.representedObject as? NSTabViewItem,
+              let tab = tabViewItem.identifier as? PTYTab else {
+            return
+        }
+        SessionStatusController.instance.setSnoozed(!tab.isSnoozed, sessionIDs: tab.snoozableSessionIDs)
+    }
+
     // MARK: - Pinned Tabs
 
     @objc func togglePinTab(_ sender: Any?) {
+        if isSearchingTabBar() {
+            // It would pin hidden group members, and a tab that matched by
+            // its rich content could vanish. The menu item is disabled.
+            return
+        }
         var tab: PTYTab?
         if let menuItem = sender as? NSMenuItem,
            let tabViewItem = menuItem.representedObject as? NSTabViewItem {

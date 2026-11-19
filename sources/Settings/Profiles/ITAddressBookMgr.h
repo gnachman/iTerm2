@@ -77,6 +77,21 @@
 #define KEY_BADGE_FONT                  @"Badge Font"
 #define KEY_PREVENT_APS                 @"Prevent Automatic Profile Switching"  // Not in regular prefs, only for divorced prefs.
 #define KEY_SUBTITLE                    @"Subtitle"
+// Rich tab content (see TabContentModel.swift). These are window settings:
+// a window follows the profile it was created with, and every tab in it uses
+// that profile's values, whatever profile the tab has.
+// Whether the window's tabs show rich content. Off by default; when off, tabs
+// draw their title and subtitle as before.
+#define KEY_SHOW_RICH_TAB_CONTENT       @"Show Rich Tab Content"
+// The lines tabs show, in order, with their sizes: an array of {id, size,
+// lines}. Absent means the default layout.
+#define KEY_TAB_CONTENT_LAYOUT          @"Tab Content Layout"
+// The most lines of rich content a tab is tall enough for, or 0 for no limit.
+// Lines past the limit are cut off.
+#define KEY_TAB_CONTENT_MAXIMUM_LINES   @"Tab Content Maximum Lines"
+// Per-slot overrides of rich tab content: a dictionary from slot identifier
+// to the fields this profile changes from the built-in defaults.
+#define KEY_TAB_CONTENT_LINES           @"Tab Content Lines"
 #define KEY_SSH_CONFIG                  @"SSH"
 
 // Advanced working directory settings

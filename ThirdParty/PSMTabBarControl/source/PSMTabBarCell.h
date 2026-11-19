@@ -53,6 +53,10 @@
 // draw/count/hit-test/accessibility loop. Unlike isInOverflowMenu it never gets
 // an overflow "..." menu item, so a collapsed member is truly hidden.
 @property(nonatomic, assign) BOOL isCollapsedHidden;
+// A collapsed member that has finished collapsing: zero width in a horizontal
+// bar, zero height in a vertical one. It must not be drawn. Mid-animation it
+// still has some size and draws.
+@property(nonatomic, readonly) BOOL isHiddenByCollapse;
 @property(nonatomic, assign) int currentStep;
 @property(nonatomic, copy) NSString *modifierString;
 @property(nonatomic, retain) NSColor *tabColor;
@@ -158,5 +162,11 @@
                           userData:(NSDictionary *)data
                       assumeInside:(BOOL)flag
                               view:(NSView *)view;
+// Moves the close button's tracking rect, if it has one, to rect, and
+// highlights the button if mouseLocation (in view's coordinates) is over it.
+// Moving it generates no mouse entered or exited events.
+- (void)moveCloseButtonTrackingRectTo:(NSRect)rect
+                               inView:(NSView *)view
+                        mouseLocation:(NSPoint)mouseLocation;
 
 @end

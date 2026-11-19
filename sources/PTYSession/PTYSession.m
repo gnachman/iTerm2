@@ -720,6 +720,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     iTermSwiftyString *_badgeSwiftyString;
     iTermSwiftyString *_autoNameSwiftyString;
     iTermSwiftyString *_subtitleSwiftyString;
+    // Evaluates rich tab content lines. nil while rich tab content is off.
+    iTermTabContentEvaluator *_tabContentEvaluator;
     iTermSwiftyString *_backgroundImageSwiftyString;
 
     // Owns the session's tab status and when a status scoped to an operation
@@ -1404,6 +1406,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_badgeSwiftyString release];
     [_backgroundImageSwiftyString release];
     [_subtitleSwiftyString release];
+    [_tabContentEvaluator invalidate];
+    [_tabContentEvaluator release];
     [_tabStatusController release];
     [_programStatusController release];
     [_programStatusNotifier release];
@@ -1996,6 +2000,13 @@ ITERM_WEAKLY_REFERENCEABLE
             }
             if ([key isEqualToString:iTermVariableKeyIsBroadcastSource]) {
                 // Input broadcasting is not restored.
+                continue;
+            }
+            if ([key isEqualToString:iTermVariableKeyStatusDetail] ||
+                [key isEqualToString:iTermVariableKeyStatusColor]) {
+                // Comes from the tab status, which is restored below and sets
+                // it. A detail saved without a status to go with it would
+                // otherwise come back on its own.
                 continue;
             }
             if ([key isEqualToString:iTermVariableKeySessionID] ||
@@ -4571,6 +4582,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         iTermShortcut *shortcut = [iTermShortcut shortcutWithDictionary:shortcutDictionary];
         [[iTermSessionHotkeyController sharedInstance] setShortcut:shortcut forSession:self];
 
+        // The window's rich tab content settings may have changed meanwhile.
+        [self updateTabContent];
+
         [_view autorelease];  // This balances a retain in -terminate prior to calling -makeTerminationUndoable
         [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionRevivedNotification object:self];
         return YES;
@@ -7122,6 +7136,55 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     _subtitleSwiftyString.swiftyString = subtitleFormat;
 }
 
+#pragma mark - Rich tab content
+
+// The settings of the window this session is in, or nil when it's in none
+// (for example, while buried).
+- (iTermTabContentConfiguration *)tabContentConfiguration {
+    return [self.delegate sessionTabContentConfiguration];
+}
+
+// Creates, updates, or tears down the evaluator for rich tab content lines to
+// match the settings of the window this session is in. The window calls this
+// when they change, and so does the session when it moves to another tab.
+- (void)updateTabContent {
+    iTermTabContentConfiguration *configuration = [self tabContentConfiguration];
+    if (!configuration.enabled) {
+        if (_tabContentEvaluator) {
+            [_tabContentEvaluator invalidate];
+            [_tabContentEvaluator release];
+            _tabContentEvaluator = nil;
+            [self.delegate sessionTabContentDidChange:self];
+        }
+        return;
+    }
+    if (!_tabContentEvaluator) {
+        __weak __typeof(self) weakSelf = self;
+        _tabContentEvaluator = [[iTermTabContentEvaluator alloc] initWithScope:self.variablesScope onChange:^{
+            __typeof(self) strongSelf = weakSelf;
+            [strongSelf.delegate sessionTabContentDidChange:strongSelf];
+        }];
+    }
+    [_tabContentEvaluator updateWithConfiguration:configuration];
+}
+
+- (NSArray<PSMTabRichLine *> *)tabContentLines {
+    // Check the setting too, so the evaluator can never outlive it even if a
+    // change is missed (for example while a session is closed and awaiting
+    // Undo Close).
+    if (![self tabContentConfiguration].enabled) {
+        return nil;
+    }
+    return _tabContentEvaluator.richLines;
+}
+
+- (iTermTabContentSnapshot *)tabContentSnapshot {
+    if (![self tabContentConfiguration].enabled) {
+        return nil;
+    }
+    return _tabContentEvaluator.snapshot;
+}
+
 - (void)setBadgeFormat:(NSString *)badgeFormat {
     // The current format is nil the first time, before there is a badge
     // string. -isEqualToString: is declared nonnull and returns NO for nil.
@@ -7302,6 +7365,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (delegate) {
         [self didAssignDelegate];
     }
+    // A different tab may be in a window with different settings.
+    [self updateTabContent];
 }
 
 - (NSString *)name {
@@ -28315,6 +28380,8 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     // a status that expires on its own has no update to read, and the variable
     // would otherwise keep reporting what the program last said.
     self.variablesScope.status = self.tabStatus.statusText;
+    self.variablesScope.statusDetail = self.tabStatus.detailText;
+    self.variablesScope.statusColor = self.tabStatus.statusTextColorHexString;
     [_delegate sessionTabStatusDidChange:self];
 }
 
@@ -28507,6 +28574,8 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     }
     [[iTermDockBadgeController sharedInstance] sessionDidLeaveWaiting:_guid];
     self.variablesScope.status = nil;
+    self.variablesScope.statusDetail = nil;
+    self.variablesScope.statusColor = nil;
     [_delegate sessionTabStatusDidChange:self];
 }
 

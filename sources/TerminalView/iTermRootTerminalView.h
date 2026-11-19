@@ -45,12 +45,19 @@
 - (BOOL)rootTerminalViewClickableSessionDecorationIntersectsRect:(NSRect)rect;
 - (void)rootTerminalViewDidChangeEffectiveAppearance;
 - (CGFloat)rootTerminalViewHeightOfTabBar:(iTermRootTerminalView *)sender;
+// Height of the window title drawn where a hidden tab bar would be (see
+// -rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar).
+- (CGFloat)rootTerminalViewHeightOfWindowTitleInPlaceOfTabBar:(iTermRootTerminalView *)sender;
 - (CGFloat)rootTerminalViewStoplightButtonsOffset:(iTermRootTerminalView *)sender;
 - (NSColor *)rootTerminalViewTabBarTextColorForTitle;
 - (NSColor *)rootTerminalViewTabBarTextColorForWindowNumber;
 - (NSColor *)rootTerminalViewTabBarBackgroundColorIgnoringTabColor:(BOOL)ignoreTabColor;
 - (BOOL)rootTerminalViewWindowNumberLabelShouldBeVisible;
+// Whether the window's tabs show rich content.
+- (BOOL)rootTerminalViewShowsRichTabContent;
 - (BOOL)rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar;
+// The tab bar was just laid out hidden.
+- (void)rootTerminalViewDidLayOutHiddenTabBar;
 
 // The window name to show beside the tabs, or nil when it should not be shown.
 // Compact and minimal themes have no title bar, so without this the window name

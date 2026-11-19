@@ -605,17 +605,20 @@ final class iTermLayoutCalculatorTest: XCTestCase {
         inputs.tabBarVisible = false  // Tab bar hidden (single tab)
         inputs.tabBarOnLoan = false   // Not in fullscreen
         inputs.drawWindowTitleInPlaceOfTabBar = true  // Compact window draws fake title
-        inputs.tabBarHeight = 28
+        // The fake title bar has its own height. Rich tab content can make
+        // the (hidden) tab bar much taller than a title bar needs to be.
+        inputs.tabBarHeight = 60
+        inputs.windowTitleInPlaceOfTabBarHeight = 28
         inputs.contentViewHeight = 600
 
         let outputs = iTermLayoutCalculator.calculateLayout(with: inputs)
 
-        // Decoration should include tab bar height for the fake title bar
-        XCTAssertEqual(outputs.decorationHeightTop, CGFloat(inputs.tabBarHeight))
+        // Decoration should include the fake title bar's height
+        XCTAssertEqual(outputs.decorationHeightTop, CGFloat(inputs.windowTitleInPlaceOfTabBarHeight))
 
         // Tab view should not extend into the title area
         XCTAssertEqual(outputs.tabViewFrame.size.height,
-                       CGFloat(inputs.contentViewHeight) - CGFloat(inputs.tabBarHeight))
+                       CGFloat(inputs.contentViewHeight) - CGFloat(inputs.windowTitleInPlaceOfTabBarHeight))
     }
 
     /// Test: Non-compact window with hidden tab bar does NOT leave title space

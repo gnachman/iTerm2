@@ -25,6 +25,10 @@ NS_ASSUME_NONNULL_BEGIN
 // The color used to stroke the outline around the selected tab.
 - (NSColor *)outlineColor;
 
+// The selected cell the bar shows, or nil when it's in the overflow menu or
+// hidden (as by a tab bar search that it doesn't match).
+- (nullable PSMTabBarCell *)selectedCellInTabBarControl:(PSMTabBarControl *)bar;
+
 @end
 
 NS_ASSUME_NONNULL_END

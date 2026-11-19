@@ -244,8 +244,15 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         
         var result = NSRect()
         result.size = _closeButton?.size ?? NSZeroSize
-        result.origin.x = cellFrame.origin.x + kSPMTabBarCellInternalXMargin
-        result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0)
+        // A rich tab draws its close button in its graphic's place, on the
+        // first line.
+        if let minY = richAccessoryMinY(cell: cell, height: result.size.height) {
+            result.origin.x = cellFrame.origin.x + Self.richHorizontalInset
+            result.origin.y = minY
+        } else {
+            result.origin.x = cellFrame.origin.x + kSPMTabBarCellInternalXMargin
+            result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0)
+        }
         
         return result
     }
@@ -255,9 +262,63 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     }
     
     @objc func indicatorRect(forTabCell cell: PSMTabBarCell) -> NSRect {
-        return Self.indicatorRect(forTabCell: cell,
-                                  fontSize: fontSize)
+        var result = Self.indicatorRect(forTabCell: cell,
+                                        fontSize: fontSize)
+        if let minY = richAccessoryMinY(cell: cell, height: result.height) {
+            result.origin.x = cell.frame.maxX - Self.richHorizontalInset - result.width
+            result.origin.y = minY
+        }
+        return result
     }
+
+    private func richLines(cell: PSMTabBarCell) -> [PSMTabRichLine]? {
+        let tab = (cell.representedObject as? NSTabViewItem)?.identifier as? PSMTabBarControlRepresentedObjectIdentifierProtocol
+        // No lines draws nothing, so treat it as no rich content.
+        guard let lines = tab?.psmTabRichLines?(), !lines.isEmpty else {
+            return nil
+        }
+        return lines
+    }
+
+    // How far text is drawn below vertically centered, to match the OS's
+    // rendering.
+    private var textShift: CGFloat {
+        return orientation == .verticalOrientation ? 2.0 : 1.0
+    }
+
+    // A tab with rich content lines puts its icons and activity indicator on
+    // its first line instead of in its middle, which in a tall tab is between
+    // lines. Returns the minY that does that for an accessory of the given
+    // height, or nil for other tabs, which keep their centered layout.
+    private func richAccessoryMinY(cell: PSMTabBarCell, height: CGFloat) -> CGFloat? {
+        guard !cell.isPinned, let lines = richLines(cell: cell) else {
+            return nil
+        }
+        let midY = PSMTabRichContentRenderer.firstLineMidY(lines: lines,
+                                                           in: richContentRect(cell: cell, x: cell.frame.minX, width: cell.frame.width),
+                                                           baseFont: NSFont.systemFont(ofSize: fontSize))
+        return round(midY - height / 2.0)
+    }
+
+    // Where rich content lines are drawn: centered in the tab's background,
+    // which is inset from the cell, and lowered like the classic label.
+    func richContentRect(cell: PSMTabBarCell, x: CGFloat, width: CGFloat) -> NSRect {
+        let background = backgroundRect(for: cell.frame)
+        return NSRect(x: x,
+                      y: background.minY + textShift,
+                      width: width,
+                      height: background.height - textShift)
+    }
+
+    // 1 (the cell is shorter than its row; adjustedCellRect) + 3 (the
+    // background is inset from the cell; backgroundRect) + 2 above and 2
+    // below, so the lines don't crowd the rounded corners.
+    @objc var richContentChromeHeight: CGFloat {
+        return 8
+    }
+
+    // A rich tab's margin on each side, clear of its rounded corners.
+    private static let richHorizontalInset: CGFloat = 10
     
     private static func indicatorRect(forTabCell cell: PSMTabBarCell,
                                       fontSize: CGFloat) -> NSRect {
@@ -321,8 +382,16 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         if cell.isPinned {
             return Float(tabBar?.pinnedTabWidth ?? 0)
         }
+        // Rich content replaces the title, so fit its widest line instead.
+        let labelWidth: CGFloat
+        if let richLines = richLines(cell: cell) {
+            labelWidth = PSMTabRichContentRenderer.preferredWidth(lines: richLines,
+                                                                  baseFont: NSFont.systemFont(ofSize: fontSize))
+        } else {
+            labelWidth = widthOfAttributedStringInCell(cell)
+        }
         return Float(ceil(widthOfLeftMatterInCell(cell) +
-                          widthOfAttributedStringInCell(cell) +
+                          labelWidth +
                           widthOfRightMatterInCell(cell)))
     }
     
@@ -425,14 +494,18 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         var frame = rect
         if _orientation == .horizontalOrientation {
             frame.origin.y = containerTopInset
+            frame.size.height = generic.height - 1
         } else {
             frame = frame.insetBy(dx: 4, dy: 0)
+            // A group header row can be shorter than tab rows made tall by
+            // rich tab content, and a collapsed group's chip taller. Keep the
+            // cell's own height so it doesn't overlap its neighbors.
+            frame.size.height = rect.height - 1
         }
-        frame.size.height = generic.height - 1
         return frame
     }
 
-    private func backgroundRect(for cellFrame: NSRect) -> NSRect {
+    func backgroundRect(for cellFrame: NSRect) -> NSRect {
         var rect = cellFrame
         rect.origin.y += 2
         rect.size.height -= 3
@@ -446,8 +519,23 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     /// Stadium corner radius for a drawn pill (`height/2`), so fill, stroke,
     /// tab-color tint, progress ring, and dark-theme cap chrome share one
     /// curvature when cell height changes.
-    private func pillCornerRadius(for rect: NSRect) -> CGFloat {
-        max(0, rect.height / 2.0)
+    // Round ends at the usual tab height. Tabs made taller by rich tab content
+    // get rounded rectangles instead of very round stadiums.
+    func pillCornerRadius(for rect: NSRect) -> CGFloat {
+        max(0, min(rect.height / 2.0, maximumCornerRadius))
+    }
+
+    // Corner radius for a shape drawn `outset` outside a pill (a group's
+    // enclosing pill), so its corners stay concentric with the pill's.
+    private func outsetCornerRadius(for rect: NSRect, outset: CGFloat) -> CGFloat {
+        max(0, min(rect.height / 2.0, maximumCornerRadius + outset))
+    }
+
+    // How round corners can get. Only rich tab content caps it: without it, a
+    // tab bar made tall by a larger default tab bar height keeps the stadium
+    // shapes it always had.
+    var maximumCornerRadius: CGFloat {
+        (tabBar?.showsRichTabContent ?? false) ? Self.richContentMaximumCornerRadius : .greatestFiniteMagnitude
     }
 
     @objc func previewOutlinePath(forTabCell cell: PSMTabBarCell, lineWidth: CGFloat) -> NSBezierPath? {
@@ -539,7 +627,40 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         }
     }
     
-    private func drawDropShadow(cell: PSMTabBarCell) {
+    // Draws image filling rect. When rect is taller than scaledHeight, the
+    // image's top and bottom halves are drawn scaledHeight / 2 tall at
+    // rect's ends and its middle row stretches between them.
+    static func draw(_ image: NSImage, in rect: NSRect, scaledHeight: CGFloat) {
+        guard rect.height > scaledHeight, scaledHeight > 0 else {
+            image.draw(in: rect)
+            return
+        }
+        let size = image.size
+        let half = scaledHeight / 2
+        // Drawn upright either way, so the image's top half goes at the top
+        // as seen, which is minY only in a flipped context.
+        let flipped = NSGraphicsContext.current?.isFlipped ?? false
+        let topRect = NSRect(x: rect.minX, y: flipped ? rect.minY : rect.maxY - half,
+                             width: rect.width, height: half)
+        let bottomRect = NSRect(x: rect.minX, y: flipped ? rect.maxY - half : rect.minY,
+                                width: rect.width, height: half)
+        let middleRect = NSRect(x: rect.minX, y: rect.minY + half,
+                                width: rect.width, height: rect.height - scaledHeight)
+        // Source rects are in the image's own coordinates, origin at the bottom.
+        let pieces = [(topRect, NSRect(x: 0, y: size.height / 2, width: size.width, height: size.height / 2)),
+                      (bottomRect, NSRect(x: 0, y: 0, width: size.width, height: size.height / 2)),
+                      (middleRect, NSRect(x: 0, y: size.height / 2 - 0.5, width: size.width, height: 1))]
+        for (destination, source) in pieces {
+            image.draw(in: destination,
+                       from: source,
+                       operation: .sourceOver,
+                       fraction: 1,
+                       respectFlipped: true,
+                       hints: nil)
+        }
+    }
+    
+    func drawDropShadow(cell: PSMTabBarCell) {
         let scale = cell.controlView?.window?.backingScaleFactor ?? 2.0
         
         switch orientation {
@@ -549,18 +670,23 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             // The drop shadow image is the left side of the shadow.
             // The rightmost 30 pixels include the left portion of a tab.
             let offset = CGFloat(30 / scale)
+            // The images fit a standard tab, whose frame is 1pt shorter.
+            // A tab made taller by rich tab content stretches their middles.
+            let shadowHeight = (tabBar?.showsRichTabContent ?? false)
+                ? max(shadowSize.height, cell.frame.height + 1)
+                : shadowSize.height
             let leftDestinationRect = NSRect(x: cell.frame.minX - shadowSize.width + offset,
                                              y: cell.frame.minY - 0.5,
                                              width: shadowSize.width,
-                                             height: shadowSize.height)
-            leftShadow.draw(in: leftDestinationRect)
+                                             height: shadowHeight)
+            Self.draw(leftShadow, in: leftDestinationRect, scaledHeight: shadowSize.height)
             
             let rightShadow = Self.leftDropShadow
             let rightDestinationRect = NSRect(x: cell.frame.maxX - offset,
                                               y: cell.frame.minY - 0.5,
                                               width: shadowSize.width,
-                                              height: shadowSize.height)
-            rightShadow.draw(in: rightDestinationRect)
+                                              height: shadowHeight)
+            Self.draw(rightShadow, in: rightDestinationRect, scaledHeight: shadowSize.height)
             
             NSColor(displayP3Red: 0, green: 0, blue: 0, alpha: 0.027).set()
             // If the drop shadow image changes you can get the new RGBA values by uncommenting these print statements:
@@ -597,10 +723,10 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         }
     }
 
-    // Drawn pill height inside the horizontal tab-bar container (36pt).
-    // Only `clippingPath` reads this; cell pills use `pillCornerRadius(for:)`.
-    private let barHeight = 28.0
-    private var barRadius: CGFloat { barHeight / 2.0 }
+    // Half the container's height in a standard (36pt) horizontal bar. With
+    // rich tab content, corners never get rounder than this.
+    private static let richContentMaximumCornerRadius = 14.0
+    private static let standardContainerHeight = 28.0
     let containerSideInset = CGFloat(8)
     var containerTopInset: CGFloat {
         tabBar?.insets.top ?? 0.0
@@ -654,11 +780,18 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                               insetY: CGFloat = 0,
                               orientation: PSMTabBarOrientation? = nil) -> NSBezierPath {
         if (orientation ?? _orientation) == .horizontalOrientation {
+            // 28pt, or the bar less its insets when rich tab content makes the
+            // bar taller than that. (Some layouts, such as traditional full
+            // screen, have larger insets and still use 28.)
+            let height = (tabBar?.showsRichTabContent ?? false)
+                ? max(Self.standardContainerHeight,
+                      rect.height - containerTopInset - (tabBar?.insets.bottom ?? 0))
+                : Self.standardContainerHeight
             let container = NSRect(x: containerSideInset - 0.5,
                                    y: containerTopInset,
                                    width: rect.width - containerSideInset * 2 + 1,
-                                   height: barHeight).insetBy(dx: insetX, dy: insetY)
-            let radius = max(0, container.height / 2.0)
+                                   height: height).insetBy(dx: insetX, dy: insetY)
+            let radius = max(0, min(container.height / 2.0, maximumCornerRadius))
             return NSBezierPath(roundedRect: container, xRadius: radius, yRadius: radius)
         } else {
             return NSBezierPath(rect: rect.insetBy(dx: 0, dy: insetY))
@@ -735,7 +868,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             // animation is sliding its width between full and 0 it must be drawn
             // (its width is > 0 mid-slide; it lands at exactly 0 when fully
             // collapsed, at which point it's skipped again).
-            let hiddenByCollapse = cell.isCollapsedHidden && cell.frame.width <= 0
+            let hiddenByCollapse = cell.isHiddenByCollapse
             return !cell.isInOverflowMenu && !hiddenByCollapse &&
                 NSIntersectsRect(dirtyFrame(for: cell), clipRect)
         }
@@ -843,6 +976,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     // own outline already wraps it, so the two outlines stay visibly nested.
     private static let subgroupRunOutset: CGFloat = 0
     private static let collapsedChipChevronWidth: CGFloat = 12  // room for the collapse chevron on a collapsed chip
+    private static let collapsedChipAttentionWidth: CGFloat = 20  // room for the attention icon on a collapsed chip
+    private static let collapsedChipLinesBottomPad: CGFloat = 4  // below rich content lines on a collapsed chip
+    private static let collapsedChipAttentionIconSize: CGFloat = 16  // side of the attention icon (drawn at the size tabs use)
 
     // The one font used for every group name/chip label; the measuring and drawing
     // paths must agree, so both read it from here.
@@ -887,6 +1023,30 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         let font = Self.groupNameFont
         let textWidth = ceil((name as NSString).size(withAttributes: [.font: font]).width)
         return Self.groupNameCapsuleMargin * 2 + textWidth + Self.groupNameCapsulePad * 2 + Self.groupBAreaWidth
+    }
+
+    // Width a collapsed chip needs to show these lines in its capsule.
+    @objc(tabGroupCollapsedChipWidthForRichLines:)
+    func tabGroupCollapsedChipWidth(for lines: [PSMTabRichLine]) -> CGFloat {
+        let textWidth = PSMTabRichContentRenderer.preferredWidth(lines: lines,
+                                                                 baseFont: NSFont.systemFont(ofSize: fontSize))
+        return Self.groupNameCapsuleMargin * 2 + Self.groupNameCapsulePad * 2 + textWidth
+    }
+
+    // The capsule holds the name band, which matches an expanded group's
+    // capsule, and the lines. This allows for the frame being 1pt shorter
+    // than the slot (see adjustedCellRect), the background rect 3pt shorter
+    // than the frame, and the capsule's margins, less the pill's outsets, so
+    // it errs a little generous. headerHeight isn't needed: this style puts
+    // an expanded group's name in a fixed band at the top of its header, not
+    // centered in it, so the name stays put whatever the header's height.
+    @objc(tabGroupCollapsedChipHeightForRichLines:headerHeight:)
+    func tabGroupCollapsedChipHeight(for lines: [PSMTabRichLine], headerHeight: CGFloat) -> CGFloat {
+        let textHeight = ceil(Self.groupNameFont.ascender - Self.groupNameFont.descender)
+        let band = textHeight + Self.groupNameCapsuleVPad * 2
+        let content = PSMTabRichContentRenderer.contentHeight(lines: lines,
+                                                              baseFont: NSFont.systemFont(ofSize: fontSize))
+        return 1 + 1 + Self.groupNameCapsuleMargin * 2 + band + content + Self.collapsedChipLinesBottomPad
     }
 
     @objc func tabGroupChipCellHeight(forName name: String) -> CGFloat {
@@ -992,26 +1152,47 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         // missing its capsule, label, chevron, and outline.
         let capsuleMargin = Self.groupNameCapsuleMargin
         let textHeight = ceil(font.ascender - font.descender)
+        // With rich content, the capsule fills the pill and holds the
+        // members' combined lines below a band with the name, which sits
+        // where a vertical bar's capsule would otherwise be.
+        let richLines = bar.richLines(forTabGroupIdentifier: groupID)
         let capsule: NSRect
-        if bar.orientation == .horizontalOrientation {
+        let nameBand: NSRect
+        if let richLines {
             capsule = pill.insetBy(dx: capsuleMargin, dy: capsuleMargin)
+            // Give up some of the name's padding before dropping a line.
+            let bandHeight = PSMTabRichContentRenderer.nameBandHeight(
+                preferred: textHeight + Self.groupNameCapsuleVPad * 2,
+                minimum: textHeight,
+                available: capsule.height,
+                lines: richLines,
+                baseFont: NSFont.systemFont(ofSize: fontSize),
+                bottomPadding: Self.collapsedChipLinesBottomPad)
+            nameBand = NSRect(x: capsule.minX,
+                              y: capsule.minY,
+                              width: capsule.width,
+                              height: min(capsule.height, bandHeight))
+        } else if bar.orientation == .horizontalOrientation {
+            capsule = pill.insetBy(dx: capsuleMargin, dy: capsuleMargin)
+            nameBand = capsule
         } else {
             let capsuleHeight = textHeight + Self.groupNameCapsuleVPad * 2
             capsule = NSRect(x: pill.minX + capsuleMargin,
                              y: pill.minY + capsuleMargin,
                              width: pill.width - capsuleMargin * 2,
                              height: capsuleHeight)
+            nameBand = capsule
         }
         guard capsule.width > 0, capsule.height > 0 else {
             return
         }
-        let radius = pill.height / 2.0
+        let radius = outsetCornerRadius(for: pill, outset: outset)
 
         // Group-color pill body.
         groupColor.set()
         NSBezierPath(roundedRect: pill.insetBy(dx: 0.5, dy: 0.5), xRadius: radius, yRadius: radius).fill()
 
-        let capsuleRadius = capsule.height / 2.0
+        let capsuleRadius = pillCornerRadius(for: capsule)
         bgColor.set()
         NSBezierPath(roundedRect: capsule, xRadius: capsuleRadius, yRadius: capsuleRadius).fill()
 
@@ -1026,15 +1207,50 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                                                      .paragraphStyle: para]
         let pad = Self.groupNameCapsulePad
         let chevronW = Self.collapsedChipChevronWidth
-        let textRect = NSRect(x: capsule.minX + pad,
-                              y: capsule.midY - textHeight / 2.0,
-                              width: max(0, capsule.width - pad * 2 - chevronW),
+        let attentionW = Self.collapsedChipAttentionWidth
+        let textRect = NSRect(x: nameBand.minX + pad,
+                              y: nameBand.midY - textHeight / 2.0,
+                              width: max(0, nameBand.width - pad * 2 - attentionW - chevronW),
                               height: textHeight)
-        (label as NSString).draw(in: textRect, withAttributes: attrs)
+        PSMTabSearchHighlight.highlighting(NSAttributedString(string: label, attributes: attrs),
+                                           query: tabBar?.searchHighlightQuery).draw(in: textRect)
+
+        if let richLines {
+            let linesRect = NSRect(x: capsule.minX + pad,
+                                   y: nameBand.maxY,
+                                   width: max(0, capsule.width - pad * 2),
+                                   height: max(0, capsule.maxY - nameBand.maxY - Self.collapsedChipLinesBottomPad))
+            PSMTabRichContentRenderer.draw(lines: richLines,
+                                           in: linesRect,
+                                           baseFont: NSFont.systemFont(ofSize: fontSize),
+                                           textColor: textCol,
+                                           secondaryColor: textCol.withAlphaComponent(textCol.alphaComponent * 0.7),
+                                           alignment: .left,
+                                           colorAppearance: accessoryAppearance)
+        }
+
+        // Attention icon for the hidden members, in a slot reserved between the
+        // label and the chevron whether or not there is an icon to show.
+        if let attention = bar.attentionImage(forTabGroupIdentifier: groupID) {
+            let side = Self.collapsedChipAttentionIconSize
+            // Center what's drawn, not the canvas: some icons (new output,
+            // bell) sit off center in theirs.
+            let slotCenter = NSPoint(x: nameBand.maxX - pad - chevronW - attentionW / 2.0,
+                                     y: nameBand.midY)
+            let iconRect = PSMIconContentBounds.rect(centeringVisibleContentOf: attention,
+                                                     at: slotCenter,
+                                                     size: side)
+            attention.draw(in: iconRect,
+                           from: .zero,
+                           operation: .sourceOver,
+                           fraction: 1,
+                           respectFlipped: true,
+                           hints: nil)
+        }
 
         // Downward chevron at the capsule's right edge: the collapse affordance.
-        let cx = capsule.maxX - pad - chevronW / 2.0
-        let cy = capsule.midY
+        let cx = nameBand.maxX - pad - chevronW / 2.0
+        let cy = nameBand.midY
         let half: CGFloat = 3
         let chevron = NSBezierPath()
         chevron.move(to: NSPoint(x: cx - half, y: cy + half / 2.0))
@@ -1079,7 +1295,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         let label = Self.collapsedChipLabel(forName: name, count: count)
         let textWidth = ceil((label as NSString).size(withAttributes: [.font: font]).width)
         return Self.groupNameCapsuleMargin * 2 + Self.groupNameCapsulePad * 2 +
-            textWidth + Self.collapsedChipChevronWidth
+            textWidth + Self.collapsedChipAttentionWidth + Self.collapsedChipChevronWidth
     }
 
     private func drawTabGroupRun(chip: PSMTabBarCell,
@@ -1113,7 +1329,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         guard pill.width > 0, pill.height > 0 else {
             return
         }
-        let radius = pill.height / 2.0
+        let radius = outsetCornerRadius(for: pill, outset: outset)
 
         // Group-color fill for the left of the run: the pill's rounded left cap
         // plus the "B" area, whose RIGHT edge is a concave scoop that hugs the
@@ -1122,7 +1338,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         // the size of the pill that carves the concave right edge.
         let firstVis = firstTab.map { backgroundRect(for: $0.frame) } ?? tabsRect
         let bGap = Self.groupChipToTabGap
-        let tabRadius = firstVis.height / 2.0
+        let tabRadius = pillCornerRadius(for: firstVis)
         // Clip to the first tab's center so the fill stops there, then fill a
         // rounded-left region and carve a concave that follows the first tab's
         // left curve offset by bGap, so the blue hugs the tab (the "( (" shape).
@@ -1152,7 +1368,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         let textWidth = ceil((name as NSString).size(withAttributes: [.font: font]).width)
         let capsulePad = Self.groupNameCapsulePad
         let capsuleHeight = pill.height - capsuleMargin * 2
-        let capsuleRadius = capsuleHeight / 2.0
+        let capsuleRadius = min(capsuleHeight / 2.0, maximumCornerRadius)
         let capsuleWidth = textWidth + capsulePad * 2
         let capsule = NSRect(x: pill.minX + capsuleMargin,
                              y: pill.minY + capsuleMargin,
@@ -1173,7 +1389,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                                   y: capsule.midY - textHeight / 2.0,
                                   width: capsule.width,
                                   height: textHeight)
-            (name as NSString).draw(in: textRect, withAttributes: attrs)
+            PSMTabSearchHighlight.highlighting(NSAttributedString(string: name, attributes: attrs),
+                                           query: tabBar?.searchHighlightQuery).draw(in: textRect)
         }
 
         // Enclosing pill outline (1pt), inset a half point so the stroke is crisp.
@@ -1223,14 +1440,21 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         let firstVis = firstTab.map { backgroundRect(for: $0.frame) } ?? tabsRect
         // Two radii. The enclosing pill's corner radius (top cap + outline) must
         // stay STABLE during a vertical collapse/expand slide, so derive it from
-        // the chip -- always one tab row tall -- not from the first member, whose
-        // height animates 0<->full and would otherwise warp the top cap and the
-        // outline. The concave carve below still hugs the (animating) first tab, so
-        // it uses the member's own radius. At rest the two are equal (chip height
-        // == tab height), so nothing changes visually when settled.
-        let chipHalfHeight = backgroundRect(for: chipFrame).height / 2.0
-        let cornerRadius = chipHalfHeight + outset
-        let tabRadius = firstVis.height / 2.0
+        // the chip's expanded header height -- not from the first member, whose
+        // height animates 0<->full, nor from the chip's frame, whose height
+        // animates too when a collapsed chip shows rich content lines -- either
+        // would warp the top cap and the outline. The concave carve below still
+        // hugs the (animating) first tab, so it uses the member's own radius. At
+        // standard heights the two are equal (chip height == tab height). Rows
+        // made taller for rich tab content keep a shorter header, which differs
+        // from the tabs' capped radius by a point. Mid-slide the run shows only
+        // the name capsule; the collapsed chip's lines appear when it takes over.
+        var headerFrame = chipFrame
+        headerFrame.size.height = min(chipFrame.height,
+                                      bar.height(ofTabGroupChipCell: chip, collapsed: false) - 1)
+        let chipHalfHeight = backgroundRect(for: headerFrame).height / 2.0
+        let cornerRadius = pillCornerRadius(for: backgroundRect(for: headerFrame)) + outset
+        let tabRadius = pillCornerRadius(for: firstVis)
         // Near full collapse the pill gets shorter than twice the (stable) corner
         // radius, so its rounded caps overlap into thin-line artifacts; clamp the
         // radius to half the pill height there.
@@ -1277,7 +1501,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                              y: pill.minY + capsuleMargin,
                              width: pill.width - capsuleMargin * 2,
                              height: capsuleHeight)
-        let capsuleRadius = capsule.height / 2.0
+        let capsuleRadius = pillCornerRadius(for: capsule)
         bgColor.set()
         NSBezierPath(roundedRect: capsule, xRadius: capsuleRadius, yRadius: capsuleRadius).fill()
 
@@ -1293,7 +1517,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                                   y: capsule.midY - textHeight / 2.0,
                                   width: max(0, capsule.width - textInset * 2),
                                   height: textHeight)
-            (name as NSString).draw(in: textRect, withAttributes: attrs)
+            PSMTabSearchHighlight.highlighting(NSAttributedString(string: name, attributes: attrs),
+                                           query: tabBar?.searchHighlightQuery).draw(in: textRect)
         }
 
         // Enclosing pill outline (1pt), inset a half point so the stroke is crisp.
@@ -1530,7 +1755,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         labelRect.size.height = boundingSize.height
         labelRect.size.width = maxWidth
         
-        attributedString.draw(in: labelRect)
+        PSMTabSearchHighlight.highlighting(attributedString, query: tabBar?.searchHighlightQuery).draw(in: labelRect)
     }
     
     private func subtitleWidth(cell: PSMTabBarCell, orientation: PSMTabBarOrientation) -> CGFloat {
@@ -1738,12 +1963,23 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     
     private func widthOfLeftMatterInCell(_ cell: PSMTabBarCell) -> CGFloat {
         var resultWidth: CGFloat = 0.0
-        
+        let rich = richLines(cell: cell) != nil && !cell.isPinned
+
         // left margin
-        resultWidth = kSPMTabBarCellInternalXMargin
+        resultWidth = rich ? Self.richHorizontalInset : kSPMTabBarCellInternalXMargin
         
-        // close button?
-        resultWidth += (_closeButton?.size.width ?? 0) + kPSMTabBarCellPadding
+        // close button? A rich tab draws it in its graphic's place, which it
+        // has only when there's a graphic or close button.
+        if rich {
+            let graphicWidth = cell.cachedTitle?.inputs.graphic == nil ? 0 : kPSMTabBarIconWidth
+            let closeButtonWidth = cell.hasCloseButton ? (_closeButton?.size.width ?? 0) : 0
+            let slotWidth = max(closeButtonWidth, graphicWidth)
+            if slotWidth > 0 {
+                resultWidth += slotWidth + 4
+            }
+        } else {
+            resultWidth += (_closeButton?.size.width ?? 0) + kPSMTabBarCellPadding
+        }
         
         // icon?
         if cell.hasIcon {
@@ -1755,11 +1991,22 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     
     private func widthOfRightMatterInCell(_ cell: PSMTabBarCell) -> CGFloat {
         var resultWidth: CGFloat = 0
-        
-        // object counter?
-        if cell.count > 0 {
+        let rich = richLines(cell: cell) != nil && !cell.isPinned
+
+        // object counter? A classic tab without one keeps room to balance the
+        // close button, since it centers its title. A rich tab doesn't, and
+        // takes only the room drawInterior gives its counter: a gap and the
+        // text, when there's text to show.
+        if rich {
+            if cell.count > 0 {
+                let width = attributedObjectCountValue(forTabCell: cell).size().width
+                if width > 0 {
+                    resultWidth += 4 + width
+                }
+            }
+        } else if cell.count > 0 {
             resultWidth += objectCounterRect(forTabCell: cell).size.width + kPSMTabBarCellPadding
-        } else {
+        } else if !rich {
             resultWidth += (_closeButton?.size.width ?? 0) + kPSMTabBarCellPadding
         }
         
@@ -1769,7 +2016,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         }
         
         // right margin
-        resultWidth += kSPMTabBarCellInternalXMargin
+        resultWidth += rich ? Self.richHorizontalInset : kSPMTabBarCellInternalXMargin
         
         return resultWidth
     }
@@ -1779,7 +2026,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         return ceil(cachedTitle.size.width)
     }
     
-    var fontSize: CGFloat {
+    @objc var fontSize: CGFloat {
         if let tabBar,
            let override = tabBar.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.fontSizeOverride) as? NSNumber {
             return CGFloat(override.doubleValue)
@@ -2116,6 +2363,12 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         }
         let orientation = self.orientation
         let edgePadding = 6.0
+        // Rich content is a block of left-aligned lines, so it starts at the
+        // tab's leading edge, with the icon, counter, and activity indicator
+        // at its trailing edge. A classic horizontal tab centers its title
+        // and the icons beside it.
+        let richLines = cell.isPinned ? nil : self.richLines(cell: cell)
+        let contentGravity: Gravity = (richLines == nil && orientation == .horizontalOrientation) ? .center : .left
         
         let orientationShift = if orientation == .verticalOrientation {
             1.0
@@ -2123,8 +2376,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             0.0
         }
 
-        // Close button or pin indicator
-        if cell.hasCloseButton, !cell.isPinned, let image = _closeButton {
+        // Close button or pin indicator. A rich tab puts its close button in
+        // its graphic's place, below.
+        if richLines == nil, cell.hasCloseButton, !cell.isPinned, let image = _closeButton {
             objects.append(FixedSpacerLO(name: "Leading Spacer", width: edgePadding, priority: Priority.required.rawValue, gravity: .left))
 
             let closeButton = tintedCloseButtonImage(cell: cell)
@@ -2172,11 +2426,53 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                 FixedSpacerLO(name: "Post-pin Spacer", width: 4.0, priority: Priority.required.rawValue, gravity: .left)
             ]))
         } else {
-            objects.append(FixedSpacerLO(name: "Leading Spacer", width: edgePadding, priority: Priority.required.rawValue, gravity: .left))
+            objects.append(FixedSpacerLO(name: "Leading Spacer",
+                                         width: richLines == nil ? edgePadding : Self.richHorizontalInset,
+                                         priority: Priority.required.rawValue,
+                                         gravity: .left))
         }
         
         // Graphic
-        if let image = cell.cachedTitle?.inputs.graphic {
+        if richLines != nil {
+            // Rich content starts at the tab's leading edge. Setting aside
+            // room for a close button before the graphic would leave the
+            // graphic floating away from the edge, so the close button takes
+            // the graphic's place when it shows, as in the Minimal style.
+            let graphic = cell.cachedTitle?.inputs.graphic
+            let closeButtonImage = cell.hasCloseButton ? _closeButton : nil
+            if let slotImage = graphic ?? closeButtonImage {
+                let width = max(graphic == nil ? 0 : kPSMTabBarIconWidth, closeButtonImage?.size.width ?? 0)
+                let closeButton = tintedCloseButtonImage(cell: cell)
+                let closeButtonAlpha = self.closeButtonAlpha(cell: cell, highlightAmount: highlightAmount)
+                // Without a graphic, the slot holds only the close button, which
+                // goes first when the tab is too narrow, as it does classically.
+                let slotPriority = graphic == nil ? Priority.closeButton : Priority.graphic
+                objects.append(GroupLO(name: Name.graphic.rawValue, priority: slotPriority.rawValue, gravity: .left, members: [
+                    ImageLO(name: "Graphic or Close Button", image: slotImage, priority: Priority.required.rawValue, gravity: .left, preferredWidth: width) { resolved in
+                        if let graphic, closeButtonAlpha < 1 {
+                            let rect = NSRect(x: resolved.frame.minX,
+                                              y: self.richAccessoryMinY(cell: cell, height: kPSMTabBarIconWidth) ?? cell.frame.minY,
+                                              width: kPSMTabBarIconWidth,
+                                              height: kPSMTabBarIconWidth)
+                            graphic.draw(in: rect,
+                                         from: .zero,
+                                         operation: .sourceOver,
+                                         fraction: 1 - closeButtonAlpha,
+                                         respectFlipped: true,
+                                         hints: nil)
+                        }
+                        if closeButtonAlpha > 0, let closeButton {
+                            // Where clicks on it land.
+                            closeButton.draw(at: self.closeButtonRect(forTabCell: cell).origin,
+                                             from: NSZeroRect,
+                                             operation: .sourceOver,
+                                             fraction: closeButtonAlpha)
+                        }
+                    },
+                    FixedSpacerLO(name: Name.preLabelSpace.rawValue, width: 4.0, priority: Priority.required.rawValue, gravity: .left)
+                ]))
+            }
+        } else if let image = cell.cachedTitle?.inputs.graphic {
             let drawGraphic: (ResolvedLayout) -> () = { resolved in
                 var rect = resolved.frame
                 rect.origin.y = cell.frame.minY + (cell.frame.height - kPSMTabBarIconWidth) / 2.0 + orientationShift
@@ -2190,7 +2486,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                              hints: nil)
             }
 
-            objects.append(GroupLO(name: Name.graphic.rawValue, priority: Priority.graphic.rawValue, gravity: orientation == .horizontalOrientation ? .center : .left, members: [
+            objects.append(GroupLO(name: Name.graphic.rawValue, priority: Priority.graphic.rawValue, gravity: contentGravity, members: [
                 ImageLO(name: "Graphic", image: image, priority: Priority.required.rawValue, gravity: .left, preferredWidth: kPSMTabBarIconWidth, draw: drawGraphic),
                 FixedSpacerLO(name: Name.preLabelSpace.rawValue, width: 2.0, priority: Priority.required.rawValue, gravity: .left)
             ]))
@@ -2204,13 +2500,35 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         let labelWidth = max(widthOfAttributedStringInCell(cell), subtitleWidth)
         let supportsMultiLineLabels = self.supportsMultiLineLabels
         // Amount to shift text down from vertically centered so that it matches the OS's rendering
-        let textShift = 1.0 + orientationShift
-        if !skipLabel {
+        let textShift = self.textShift
+        if let richLines {
+            // Rich content replaces the title and subtitle.
+            let baseFont = NSFont.systemFont(ofSize: fontSize)
+            let textColor = textColor(for: cell)
+            objects.append(TextLO(name: Name.label.rawValue,
+                                  priority: Priority.required.rawValue,
+                                  minWidth: 8,
+                                  attributedStringWidth: PSMTabRichContentRenderer.preferredWidth(lines: richLines, baseFont: baseFont),
+                                  gravity: contentGravity) { resolved in
+                // richContentRect shifts down like the classic label, to match
+                // the OS's text rendering.
+                PSMTabRichContentRenderer.draw(lines: richLines,
+                                               in: self.richContentRect(cell: cell,
+                                                                        x: resolved.frame.minX,
+                                                                        width: resolved.frame.width),
+                                               baseFont: baseFont,
+                                               textColor: textColor,
+                                               secondaryColor: textColor.withAlphaComponent(textColor.alphaComponent * 0.7),
+                                               alignment: .left,
+                                               colorAppearance: self.accessoryAppearance,
+                                               highlight: self.tabBar?.searchHighlightQuery)
+            })
+        } else if !skipLabel {
             objects.append(TextLO(name: Name.label.rawValue,
                                   priority: Priority.required.rawValue,
                                   minWidth: 8,
                                   attributedStringWidth: labelWidth,
-                                  gravity: orientation == .horizontalOrientation ? .center : .left) { resolved in
+                                  gravity: contentGravity) { resolved in
                 let labelOffset: CGFloat
                 let mainLabelHeight: CGFloat
                 if let cachedTitle = cell.cachedTitle,
@@ -2236,7 +2554,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                     labelOffset = PSMTahoeTabStyle.willDrawSubtitle(cell.cachedSubtitle) ? PSMTahoeTabStyle.verticalOffsetForTitleWhenSubtitlePresent : 0
                     rect.origin.y = cell.frame.origin.y + floor((cell.frame.size.height - boundingSize.height) / 2.0) + labelOffset + textShift
                     rect.size.height = boundingSize.height
-                    drawString.draw(in: rect)
+                    PSMTabSearchHighlight.highlighting(drawString, query: self.tabBar?.searchHighlightQuery).draw(in: rect)
                 } else {
                     labelOffset = 0
                     mainLabelHeight = 0
@@ -2256,14 +2574,16 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
 
         // Icon
         if cell.hasIcon, let icon = icon(cell: cell) {
-            objects.append(GroupLO(name: Name.icon.rawValue, priority: Priority.icon.rawValue, gravity: orientation == .horizontalOrientation ? .center : .left, members: [
+            let iconGravity: Gravity = richLines != nil ? .right : (orientation == .horizontalOrientation ? .center : .left)
+            objects.append(GroupLO(name: Name.icon.rawValue, priority: Priority.icon.rawValue, gravity: iconGravity, members: [
                 FixedSpacerLO(name: "Pre-Icon Space", width: kPSMTabBarCellIconPadding, priority: Priority.required.rawValue, gravity: .left),
                 ImageLO(name: "Icon", image: icon, priority: Priority.required.rawValue, gravity: .left) { resolved in
                     var rect = resolved.frame
                     rect.size.height = kPSMTabBarIconWidth
                     // Vertically center the icon in the cell, then shift down to
                     // match the OS text rendering offset applied to all labels.
-                    rect.origin.y = cell.frame.origin.y + floor((cell.frame.size.height - kPSMTabBarIconWidth) / 2) + textShift
+                    rect.origin.y = self.richAccessoryMinY(cell: cell, height: kPSMTabBarIconWidth) ??
+                        cell.frame.origin.y + floor((cell.frame.size.height - kPSMTabBarIconWidth) / 2) + textShift
                     icon.draw(in: rect,
                               from: NSZeroRect,
                               operation: .sourceOver,
@@ -2271,7 +2591,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                               respectFlipped: true,
                               hints: nil)
                 },
-                FixedSpacerLO(name: "Post-Icon Space", width: 1.0, priority: Priority.required.rawValue, gravity: .left),
+                // A rich tab's icon sits right at its trailing margin, or 4pt
+                // before the counter (Pre-Counter Space).
+                FixedSpacerLO(name: "Post-Icon Space", width: richLines == nil ? 1.0 : 0, priority: Priority.required.rawValue, gravity: .left),
             ]))
         }
         
@@ -2280,7 +2602,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         if cell.count > 0 && !counterString.string.isEmpty {
             let counterStringSize = counterString.size()
             let fontSize = self.fontSize
-            let gravity: Gravity = orientation == .horizontalOrientation ? .center : .right
+            let gravity: Gravity = (richLines == nil && orientation == .horizontalOrientation) ? .center : .right
             objects.append(GroupLO(name: Name.objectCounter.rawValue, priority: Priority.objectCounter.rawValue, gravity: gravity, members: [
                 FixedSpacerLO(name: "Pre-Counter Space", width: 4.0, priority: Priority.required.rawValue, gravity: .left),
                 TextLO(name: "Counter",
@@ -2291,7 +2613,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                     if cell.count > 0 {
                         let myRect = PSMTahoeTabStyle.objectCounterRect(forTabCell: cell, fontSize: fontSize)
                         var rect = resolved.frame
-                        rect.origin.y = myRect.origin.y + floor((myRect.size.height - counterStringSize.height) / 2.0) + textShift
+                        rect.origin.y = self.richAccessoryMinY(cell: cell, height: counterStringSize.height) ??
+                            myRect.origin.y + floor((myRect.size.height - counterStringSize.height) / 2.0) + textShift
                         rect.size.height = counterStringSize.height
                         counterString.draw(in: rect)
                     }
@@ -2300,9 +2623,16 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         }
 
         if !cell.indicator.isHidden {
-            objects.append(FixedSpacerLO(name: "Indicator Space", width: kPSMTabBarIndicatorWidth, priority: Priority.required.rawValue, gravity: .right))
+            // A rich tab keeps the counter or icon off the indicator.
+            objects.append(FixedSpacerLO(name: "Indicator Space",
+                                         width: kPSMTabBarIndicatorWidth + (richLines == nil ? 0 : kPSMTabBarCellPadding),
+                                         priority: Priority.required.rawValue,
+                                         gravity: .right))
         }
-        objects.append(FixedSpacerLO(name: "Trailing Spacer", width: edgePadding + 8.0, priority: Priority.required.rawValue, gravity: .right))
+        objects.append(FixedSpacerLO(name: "Trailing Spacer",
+                                     width: richLines == nil ? edgePadding + 8.0 : Self.richHorizontalInset,
+                                     priority: Priority.required.rawValue,
+                                     gravity: .right))
 
         let layout = NewLayout(objects: objects, enclosingFrame: cell.frame)
         let resolved = layout.resolve(y: cell.frame.minY)
@@ -2439,9 +2769,13 @@ class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
     
     override func drawCellOutline(path: NSBezierPath, rect: NSRect) {
         // Cap images must scale to the pill height so chrome matches the cell
-        // when Default tab bar height changes (left/right tabs).
+        // when Default tab bar height changes (left/right tabs). A pill whose
+        // corners are capped (see maximumCornerRadius) is a rounded rectangle:
+        // the images scale to the height of a pill with that radius, and
+        // their middles stretch to fill the rest.
         let left = Self.leftTabCap
-        let scale = left.size.height > 0 ? rect.height / left.size.height : 1.0
+        let scaledHeight = min(rect.height, pillCornerRadius(for: rect) * 2)
+        let scale = left.size.height > 0 ? scaledHeight / left.size.height : 1.0
         // Clamp so left and right caps never overlap on a narrow tall pill.
         let capWidth = min(left.size.width * scale, rect.width / 2.0)
 
@@ -2458,16 +2792,22 @@ class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
         let leftSeam = snap(rect.minX + capWidth)
         let rightSeam = max(leftSeam, snap(rect.maxX - capWidth))
 
-        left.draw(in: NSRect(x: rect.minX, y: rect.minY,
-                             width: leftSeam - rect.minX, height: rect.height))
+        Self.draw(left,
+                  in: NSRect(x: rect.minX, y: rect.minY,
+                             width: leftSeam - rect.minX, height: rect.height),
+                  scaledHeight: scaledHeight)
 
-        Self.rightTabCap.draw(in: NSRect(x: rightSeam, y: rect.minY,
-                                         width: rect.maxX - rightSeam, height: rect.height))
+        Self.draw(Self.rightTabCap,
+                  in: NSRect(x: rightSeam, y: rect.minY,
+                             width: rect.maxX - rightSeam, height: rect.height),
+                  scaledHeight: scaledHeight)
 
-        Self.tabMid.draw(in: NSRect(x: leftSeam, y: rect.minY,
-                                    width: max(0, rightSeam - leftSeam), height: rect.height))
+        Self.draw(Self.tabMid,
+                  in: NSRect(x: leftSeam, y: rect.minY,
+                             width: max(0, rightSeam - leftSeam), height: rect.height),
+                  scaledHeight: scaledHeight)
     }
-    
+
     private static let leftTabCap: NSImage = {
         Bundle(for: PSMTahoeTabStyle.self).image(forResource: "TahoeDarkLeftTab")!
     }()

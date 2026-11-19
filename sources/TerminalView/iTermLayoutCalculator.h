@@ -60,6 +60,10 @@ typedef struct {
 
     /// Whether to draw window title in place of tab bar
     BOOL drawWindowTitleInPlaceOfTabBar;
+
+    /// Height of the window title drawn in place of the tab bar. It can be
+    /// less than tabBarHeight, which leaves room for rich tab content.
+    CGFloat windowTitleInPlaceOfTabBarHeight;
 } iTermLayoutInputs;
 
 /// Output frame rects from layout calculation.

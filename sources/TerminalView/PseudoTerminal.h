@@ -51,6 +51,9 @@ extern NSString *const iTermSelectedTabDidChange;
 extern NSString *const iTermWindowDidCloseNotification;
 extern NSString *const iTermTabDidCloseNotification;
 extern NSString *const iTermDidCreateTerminalWindowNotification;
+// In a window's saved initial profile: the GUID of the profile whose rich tab
+// content settings the window follows.
+extern NSString *const iTermTabContentFollowedProfileGUIDKey;
 
 // This class is 1:1 with windows. It controls the tabs, the window's fullscreen
 // status, and coordinates resizing of sessions (either session-initiated
@@ -425,6 +428,10 @@ deferringExpansion:(BOOL)deferExpansion;
 // Call after changing the tab order (or a tab's pinned/group state) to repair the
 // tab-group contiguity invariant and re-push membership to the tab bar.
 - (void)tabsDidReorder;
+// Whether the tab bar's search field is being typed in.
+- (BOOL)tabBarSearchFieldHasFocus;
+// Whether the tab bar's search has a query, so it hides tabs that don't match.
+- (BOOL)isSearchingTabBar;
 
 // Updates the window when screen parameters (number of screens, resolutions,
 // etc.) change.

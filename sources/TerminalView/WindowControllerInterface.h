@@ -10,6 +10,7 @@
 @class iTermPopupWindowController;
 @class iTermRestorableSession;
 @class iTermSwiftyStringGraph;
+@class iTermTabContentConfiguration;
 @class PSMTabBarControl;
 @class PTYSession;
 @class PTYTab;
@@ -102,6 +103,10 @@
 // The full interface for a window controller, as seen by objects that treat it
 // like a delegate.
 @protocol iTermWindowController <WindowControllerInterface, PTYTabDelegate>
+
+// Rich tab content settings for every tab in this window, from the profile the
+// window follows.
+@property(nonatomic, readonly) iTermTabContentConfiguration *tabContentConfiguration;
 
 // Whether a floating pane can move into the tab's split pane layout now, and doing it.
 - (BOOL)canDockFloatingSession:(PTYSession *)session;
@@ -285,6 +290,8 @@
 - (PTYTab *)tabForSession:(PTYSession *)session;
 
 - (void)tabTitleDidChange:(PTYTab *)tab;
+// The tab bar label changed. Cheaper than tabTitleDidChange:.
+- (void)tabLabelDidChange:(PTYTab *)tab;
 
 - (void)tabAddSwiftyStringsToGraph:(iTermSwiftyStringGraph *)graph;
 

@@ -13,6 +13,7 @@
 
 @class FakeWindow;
 @class iTermFloatingPaneView;
+@class iTermTabAttentionCandidate;
 @protocol iTermTabScope;
 @class iTermVariables;
 @class iTermVariableScope;
@@ -84,6 +85,19 @@ typedef NS_ENUM(NSInteger, iTermHiddenFloatingPanesActivity) {
 @property(nonatomic, retain) NSImage *icon;
 // Aggregated tab status from all sessions (highest-priority wins)
 @property(nonatomic, readonly) iTermSessionTabStatus *aggregatedTabStatus;
+// How urgently this tab's icon asks for attention. A collapsed tab group shows
+// the icon of its most urgent member.
+@property(nonatomic, readonly) iTermTabAttentionCandidate *attentionCandidate;
+// The sessions in this tab that have a status, which Snooze acts on.
+@property(nonatomic, readonly) NSArray<NSString *> *snoozableSessionIDs;
+// Whether every session in this tab that has a status is snoozed. NO when
+// none has one.
+@property(nonatomic, readonly) BOOL isSnoozed;
+
+// The icon a tab shows after its bell rings.
++ (NSImage *)bellImage;
+// The icon a tab shows after its session ends.
++ (NSImage *)deadImageWithAppearance:(NSAppearance *)appearance;
 @property(nonatomic, readonly) VT100ScreenProgress progress;
 
 // Size we should report to fit the current layout

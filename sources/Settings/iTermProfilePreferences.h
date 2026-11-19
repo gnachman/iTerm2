@@ -32,6 +32,12 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
                        inProfile:(Profile *)profile
                            model:(ProfileModel *)model;
 
+// Also removes keys, so they go back to their defaults.
++ (void)setObjectsFromDictionary:(NSDictionary *)dictionary
+                    removingKeys:(NSArray<NSString *> *)keysToRemove
+                       inProfile:(Profile *)profile
+                           model:(ProfileModel *)model;
+
 + (BOOL)boolForKey:(NSString *)key inProfile:(nullable Profile *)profile;
 + (void)setBool:(BOOL)value
          forKey:(NSString *)key
