@@ -24,6 +24,13 @@ Improvements:
   resolve correctly. Match exec blocks never
   apply, because iTerm2 won’t run commands from
   your config. Issue 13219.
+- You can now choose the colors of session
+  statuses, such as Claude Code’s “working”,
+  “waiting”, and “idle”. In the Session Status
+  tool’s settings, each priority pattern has a
+  Dot and a Text color well. Leave a well empty
+  to keep the color the program chose. Issue
+  13130.
 
 Bug Fixes:
 - A floating Session Note could be drawn behind

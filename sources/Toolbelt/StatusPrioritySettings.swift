@@ -3,12 +3,31 @@ import Foundation
 struct StatusPriorityEntry: Codable, Equatable {
     var pattern: String
     var notify: Bool = false
+    // Colors to draw a matching status in instead of the ones the program
+    // sent, as sRGB #rrggbb. nil keeps the program's color. Overrides change
+    // only how a status is drawn, never what is stored for it.
+    var dotColor: String? = nil
+    var textColor: String? = nil
 }
 
 @objc(iTermStatusPrioritySettings)
 class StatusPrioritySettings: NSObject {
     @objc static let shared = StatusPrioritySettings()
     static let didChangeNotification = Notification.Name("StatusPrioritySettingsDidChange")
+    /// Posted when a color override changes, as soon as it does (at most once
+    /// per pass through the run loop), so what is drawn can follow a color
+    /// picker live. didChangeNotification follows later, once the change is
+    /// saved.
+    static let colorsDidChangeNotification = Notification.Name("StatusPriorityColorsDidChange")
+
+    /// Every notification after which a status may need drawing in different
+    /// colors. Any edit to the list can change that, not only a color edit:
+    /// undo, deleting or reordering entries, or editing a pattern changes
+    /// which entry a status matches first. Observe all of these to keep
+    /// colors current.
+    @objc static var displayColorsNotificationNames: [NSNotification.Name] {
+        [colorsDidChangeNotification, didChangeNotification]
+    }
 
     private static let defaultsKey = "StatusPriorities"
     private static let entriesDefaultsKey = "StatusPriorityEntries"
@@ -49,15 +68,28 @@ class StatusPrioritySettings: NSObject {
 
     private(set) var entries: [StatusPriorityEntry] {
         didSet {
-            save()
+            if !deferringSave {
+                save()
+            }
         }
     }
+
+    // A live color picker changes a color on every mouse move. Saving writes
+    // a synced key and posts didChangeNotification, which re-sorts the
+    // Session Status tool, so color changes are saved once the picking
+    // pauses rather than each time.
+    private var deferringSave = false
+    private var pendingColorSave: Timer?
+    private var colorsDidChangePostScheduled = false
+    private static let colorSaveDelay: TimeInterval = 0.5
 
     var patterns: [String] {
         entries.map { $0.pattern }
     }
 
     private func save() {
+        pendingColorSave?.invalidate()
+        pendingColorSave = nil
         if let data = try? JSONEncoder().encode(entries) {
             iTermUserDefaults.userDefaults().set(data, forKey: Self.entriesDefaultsKey)
         }
@@ -106,6 +138,10 @@ class StatusPrioritySettings: NSObject {
             entries = Self.defaultPatterns.map { StatusPriorityEntry(pattern: $0) }
         }
         super.init()
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(applicationWillTerminate(_:)),
+                                               name: NSApplication.willTerminateNotification,
+                                               object: nil)
         if needsMigration {
             // didSet does not run during init. Write the list directly rather
             // than through save(), whose notification could reach an observer
@@ -206,6 +242,60 @@ class StatusPrioritySettings: NSObject {
         return entries.count
     }
 
+    /// The first entry whose pattern matches the status text, under the same
+    /// lowercased-substring rule as priority(for:).
+    private func entry(matching statusText: String?) -> StatusPriorityEntry? {
+        guard let statusText else {
+            return nil
+        }
+        let lower = statusText.lowercased()
+        return entries.first { entry in
+            let pattern = entry.pattern.lowercased()
+            return !pattern.isEmpty && lower.contains(pattern)
+        }
+    }
+
+    /// The dot color the user chose for statuses like this one, or nil to
+    /// draw the color the program sent. Only the first matching entry counts,
+    /// so a status that matches an entry without a color is not colored by a
+    /// later entry.
+    func dotColorOverride(for statusText: String?) -> iTermSRGBColor? {
+        return entry(matching: statusText)?.dotColor.flatMap(Self.srgbColor(hex:))
+    }
+
+    /// The status text color the user chose for statuses like this one, or
+    /// nil to draw the color the program sent.
+    func textColorOverride(for statusText: String?) -> iTermSRGBColor? {
+        return entry(matching: statusText)?.textColor.flatMap(Self.srgbColor(hex:))
+    }
+
+    /// Parses #rrggbb. Internal for testing.
+    static func srgbColor(hex: String) -> iTermSRGBColor? {
+        guard hex.hasPrefix("#"), hex.count == 7,
+              let value = UInt32(hex.dropFirst(), radix: 16) else {
+            return nil
+        }
+        return iTermSRGBColor(r: Double((value >> 16) & 0xff) / 255.0,
+                              g: Double((value >> 8) & 0xff) / 255.0,
+                              b: Double(value & 0xff) / 255.0)
+    }
+
+    /// Formats a color as sRGB #rrggbb, or nil for no color. Internal for
+    /// testing.
+    static func hexString(_ color: NSColor?) -> String? {
+        guard let srgb = color?.usingColorSpace(.sRGB) else {
+            return nil
+        }
+        func component(_ value: CGFloat) -> Int {
+            return Int((min(1, max(0, value)) * 255).rounded())
+        }
+        // Localization unneeded
+        return String(format: "#%02x%02x%02x",
+                      component(srgb.redComponent),
+                      component(srgb.greenComponent),
+                      component(srgb.blueComponent))
+    }
+
     /// Returns whether a notification should be posted for the given status text.
     @objc func shouldNotify(for statusText: String?) -> Bool {
         guard let statusText else {
@@ -248,6 +338,55 @@ class StatusPrioritySettings: NSObject {
         entries = updated
     }
 
+    func setDotColor(_ color: String?, at index: Int) {
+        updateColors { $0[index].dotColor = color }
+    }
+
+    func setTextColor(_ color: String?, at index: Int) {
+        updateColors { $0[index].textColor = color }
+    }
+
+    /// Writes a color change the save of which is still pending. Internal for
+    /// testing.
+    func flushPendingColorSave() {
+        guard pendingColorSave != nil else {
+            return
+        }
+        save()
+    }
+
+    private func updateColors(_ mutate: (inout [StatusPriorityEntry]) -> ()) {
+        var updated = entries
+        mutate(&updated)
+        guard updated != entries else {
+            return
+        }
+        deferringSave = true
+        entries = updated
+        deferringSave = false
+
+        pendingColorSave?.invalidate()
+        pendingColorSave = Timer.scheduledTimer(withTimeInterval: Self.colorSaveDelay,
+                                                repeats: false) { [weak self] _ in
+            self?.flushPendingColorSave()
+        }
+        guard !colorsDidChangePostScheduled else {
+            return
+        }
+        colorsDidChangePostScheduled = true
+        DispatchQueue.main.async { [weak self] in
+            guard let self else {
+                return
+            }
+            colorsDidChangePostScheduled = false
+            NotificationCenter.default.post(name: Self.colorsDidChangeNotification, object: self)
+        }
+    }
+
+    @objc private func applicationWillTerminate(_ notification: Notification) {
+        flushPendingColorSave()
+    }
+
     func reorder(from sourceIndex: Int, to destinationIndex: Int) {
         var updated = entries
         let item = updated.remove(at: sourceIndex)
@@ -278,9 +417,20 @@ private struct PriorityRow: CRUDRow {
             return .string(entry.pattern)
         case 1:
             return .boolean(entry.notify)
+        case 2:
+            return .color(Self.color(entry.dotColor))
+        case 3:
+            return .color(Self.color(entry.textColor))
         default:
             return .string("")
         }
+    }
+
+    private static func color(_ hex: String?) -> NSColor? {
+        guard let srgb = hex.flatMap(StatusPrioritySettings.srgbColor(hex:)) else {
+            return nil
+        }
+        return NSColor(srgbRed: srgb.r, green: srgb.g, blue: srgb.b, alpha: 1)
     }
 }
 
@@ -357,38 +507,60 @@ private final class StatusPriorityPopover: NSObject {
 }
 
 /// Sizes the priority popover to fit its localized titles. English fits the
-/// minimum size; longer translations widen the popover, the Notify column, or
-/// the instructions. Internal for testing.
+/// minimum size; longer translations widen the popover, the fixed-width
+/// columns, or the instructions. Internal for testing.
 struct StatusPriorityPopoverLayout {
-    static let minimumWidth: CGFloat = 280
+    static let minimumWidth: CGFloat = 320
     static let minimumHeight: CGFloat = 322
     static let margin: CGFloat = 10
     static let minimumNotifyColumnWidth: CGFloat = 44
+    static let minimumColorColumnWidth: CGFloat = 36
+    static let minimumPatternColumnWidth: CGFloat = 120
     static let minimumLabelHeight: CGFloat = 48
     // Room a table header cell needs around its text.
     private static let headerPadding: CGFloat = 10
+    // Generous allowance for the table's intercell spacing and scroller.
+    private static let tableChrome: CGFloat = 24
 
     let width: CGFloat
     let height: CGFloat
     let notifyColumnWidth: CGFloat
+    let colorColumnWidths: [CGFloat]
     let labelHeight: CGFloat
 
-    init(notifyTitle: String, checkboxTitles: [String], instructions: String) {
+    /// The fixed-width columns' total, which is what the pattern column
+    /// does not get.
+    var fixedColumnsWidth: CGFloat {
+        notifyColumnWidth + colorColumnWidths.reduce(0, +)
+    }
+
+    init(notifyTitle: String, colorTitles: [String], checkboxTitles: [String], instructions: String) {
         let widestCheckbox = checkboxTitles.map {
             ceil(NSButton(checkboxWithTitle: $0, target: nil, action: nil).fittingSize.width)
         }.max() ?? 0
-        width = max(Self.minimumWidth, widestCheckbox + 2 * Self.margin)
 
-        let headerCell = NSTableHeaderCell(textCell: notifyTitle)
-        let headerFont = headerCell.font ?? NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
-        let headerTextWidth = (notifyTitle as NSString).size(withAttributes: [.font: headerFont]).width
-        notifyColumnWidth = max(Self.minimumNotifyColumnWidth, ceil(headerTextWidth + Self.headerPadding))
+        notifyColumnWidth = max(Self.minimumNotifyColumnWidth, Self.headerWidth(notifyTitle))
+        colorColumnWidths = colorTitles.map {
+            max(Self.minimumColorColumnWidth, Self.headerWidth($0))
+        }
+        let columnsWidth = Self.minimumPatternColumnWidth + notifyColumnWidth +
+            colorColumnWidths.reduce(0, +) + Self.tableChrome
+        width = max(Self.minimumWidth,
+                    widestCheckbox + 2 * Self.margin,
+                    ceil(columnsWidth + 2 * Self.margin))
 
         let label = Self.makeInstructionsLabel(instructions)
         label.preferredMaxLayoutWidth = width - 2 * Self.margin
         labelHeight = max(Self.minimumLabelHeight, ceil(label.fittingSize.height))
 
         height = Self.minimumHeight + labelHeight - Self.minimumLabelHeight
+    }
+
+    private static func headerWidth(_ title: String) -> CGFloat {
+        let headerCell = NSTableHeaderCell(textCell: title)
+        let headerFont = headerCell.font ?? NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        let textWidth = (title as NSString).size(withAttributes: [.font: headerFont]).width
+        return ceil(textWidth + headerPadding)
     }
 
     static func makeInstructionsLabel(_ text: String) -> NSTextField {
@@ -406,17 +578,21 @@ final class StatusPriorityViewController: NSViewController, CRUDTableViewControl
         var showStatusOnTabs: String
         var mergeWorkgroups: String
         var notify: String
+        var dotColor: String
+        var textColor: String
 
         static var localized: Titles {
             Titles(instructions: String(localized: "StatusPriority.InstructionsLabel", defaultValue: "Statuses are sorted by priority. Items near the top have higher priority. Drag to reorder. Click to edit.", comment: "Instructional label at the top of the status priority settings"),
                    showStatusOnTabs: String(localized: "StatusPriority.ShowStatusOnTabs", defaultValue: "Show status on tabs", comment: "Checkbox in the Session Status settings popover. When on, a session’s status appears on its tab, both as a colored dot and as text in the tab subtitle."),
                    mergeWorkgroups: String(localized: "StatusPriority.MergeWorkgroups", defaultValue: "Merge workgroup statuses", comment: "Checkbox to merge workgroup statuses"),
-                   notify: String(localized: "StatusPriority.NotifyColumn", defaultValue: "Notify", comment: "Title of the Notify table column"))
+                   notify: String(localized: "StatusPriority.NotifyColumn", defaultValue: "Notify", comment: "Title of the Notify table column"),
+                   dotColor: String(localized: "StatusPriority.DotColorColumn", defaultValue: "Dot", comment: "Title of a table column of color wells in the Session Status settings popover. Each well sets the color of the dot drawn next to a status that matches the row’s pattern, in place of the color the program sent. Keep it short: the column is narrow."),
+                   textColor: String(localized: "StatusPriority.TextColorColumn", defaultValue: "Text", comment: "Title of a table column of color wells in the Session Status settings popover. Each well sets the color of the status text for a status that matches the row’s pattern, in place of the color the program sent. Keep it short: the column is narrow."))
         }
     }
 
     private let titles: Titles
-    private var notifyColumnWidth = StatusPriorityPopoverLayout.minimumNotifyColumnWidth
+    private var fixedColumnsWidth = StatusPriorityPopoverLayout.minimumNotifyColumnWidth
 
     init(titles: Titles = .localized) {
         self.titles = titles
@@ -444,10 +620,13 @@ final class StatusPriorityViewController: NSViewController, CRUDTableViewControl
         let subtitleTitle = titles.showStatusOnTabs
         let mergeTitle = titles.mergeWorkgroups
         let notifyTitle = titles.notify
+        let colorTitles = [titles.dotColor, titles.textColor]
         let layout = StatusPriorityPopoverLayout(notifyTitle: notifyTitle,
+                                                 colorTitles: colorTitles,
                                                  checkboxTitles: [subtitleTitle, mergeTitle],
                                                  instructions: instructions)
-        notifyColumnWidth = layout.notifyColumnWidth
+        let notifyColumnWidth = layout.notifyColumnWidth
+        fixedColumnsWidth = layout.fixedColumnsWidth
 
         let width = layout.width
         let height = layout.height
@@ -536,6 +715,22 @@ final class StatusPriorityViewController: NSViewController, CRUDTableViewControl
         notifyColumn.maxWidth = notifyColumnWidth
         tv.addTableColumn(notifyColumn)
 
+        let colorTooltips = [
+            String(localized: "StatusPriority.DotColorTooltip", defaultValue: "Color of the dot for statuses that match this pattern. Leave it empty to use the color the program chose.", comment: "Tooltip for the Dot column of color wells in the Session Status settings popover"),
+            String(localized: "StatusPriority.TextColorTooltip", defaultValue: "Color of the status text for statuses that match this pattern. Leave it empty to use the color the program chose.", comment: "Tooltip for the Text column of color wells in the Session Status settings popover")
+        ]
+        // Localization unneeded
+        let colorIdentifiers = ["DotColor", "TextColor"]
+        for i in 0..<colorTitles.count {
+            let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier(colorIdentifiers[i]))
+            column.title = colorTitles[i]
+            column.headerToolTip = colorTooltips[i]
+            column.width = layout.colorColumnWidths[i]
+            column.minWidth = layout.colorColumnWidths[i]
+            column.maxWidth = layout.colorColumnWidths[i]
+            tv.addTableColumn(column)
+        }
+
         scrollView.documentView = tv
         self.tableView = tv
         container.addSubview(scrollView)
@@ -543,7 +738,9 @@ final class StatusPriorityViewController: NSViewController, CRUDTableViewControl
         let dataProvider = PriorityDataProvider()
         dataProvider.viewController = self
         let schema = CRUDSchema(columns: [CRUDColumn(type: .string),
-                                          CRUDColumn(type: .boolean)],
+                                          CRUDColumn(type: .boolean),
+                                          CRUDColumn(type: .color),
+                                          CRUDColumn(type: .color)],
                                 dataProvider: dataProvider)
         crudController = CRUDTableViewController(tableView: tv,
                                                   addRemove: addRemove,
@@ -558,12 +755,17 @@ final class StatusPriorityViewController: NSViewController, CRUDTableViewControl
         crudController?.reload()
     }
 
+    override func viewWillDisappear() {
+        super.viewWillDisappear()
+        StatusPrioritySettings.shared.flushPendingColorSave()
+    }
+
     override func viewDidLayout() {
         super.viewDidLayout()
         guard let tv = tableView, let scrollView = tv.enclosingScrollView else { return }
         let patternColumn = tv.tableColumns[0]
         let spacing = tv.intercellSpacing.width * CGFloat(tv.numberOfColumns)
-        let newWidth = scrollView.contentSize.width - notifyColumnWidth - spacing
+        let newWidth = scrollView.contentSize.width - fixedColumnsWidth - spacing
         patternColumn.width = newWidth
     }
 
@@ -604,6 +806,20 @@ final class StatusPriorityViewController: NSViewController, CRUDTableViewControl
                                newValue: Bool) {
         crudController?.undoable {
             StatusPrioritySettings.shared.setNotify(newValue, at: row)
+        }
+    }
+
+    func crudColorDidChange(_ sender: CRUDTableViewController<StatusPriorityViewController>,
+                            row: Int,
+                            column: Int,
+                            newValue: NSColor?) {
+        let hex = StatusPrioritySettings.hexString(newValue)
+        crudController?.undoable {
+            if column == 2 {
+                StatusPrioritySettings.shared.setDotColor(hex, at: row)
+            } else {
+                StatusPrioritySettings.shared.setTextColor(hex, at: row)
+            }
         }
     }
 

@@ -96,8 +96,8 @@ final class iTermTabSwitcherItem: NSObject {
         if let status = tab?.aggregatedTabStatus, status.hasActiveStatus {
             statusText = SetTabStatusTrigger.localizedStatusForDisplay(status.statusText)
                 .flatMap { Self.nonEmpty(Self.singleLine($0)) }
-            if status.hasStatusTextColor {
-                let c = status.statusTextColor
+            if status.hasDisplayStatusTextColor {
+                let c = status.displayStatusTextColor
                 statusColor = NSColor(srgbRed: c.r, green: c.g, blue: c.b, alpha: 1)
             } else {
                 statusColor = nil

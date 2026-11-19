@@ -16,6 +16,8 @@ final class StatusPriorityPopoverLayoutTests: XCTestCase {
 
     private struct Titles {
         var notify: String
+        var dotColor: String
+        var textColor: String
         var mergeWorkgroups: String
         var showStatusOnTabs: String
         var instructions: String
@@ -37,9 +39,24 @@ final class StatusPriorityPopoverLayoutTests: XCTestCase {
         return try XCTUnwrap(unit?["value"] as? String, "\(key) \(language)")
     }
 
+    // A string not yet translated falls back to English, as it does in the app.
+    // Not XCTUnwrap: a missing translation is expected here and must not
+    // record a failure.
+    private func valueOrEnglish(_ key: String, language: String, in strings: [String: Any],
+                                english: String) -> String {
+        let entry = strings[key] as? [String: Any]
+        let localizations = entry?["localizations"] as? [String: Any]
+        let unit = (localizations?[language] as? [String: Any])?["stringUnit"] as? [String: Any]
+        return unit?["value"] as? String ?? english
+    }
+
     private func titles(_ language: String) throws -> Titles {
         let strings = try catalog()
         return Titles(notify: try value("StatusPriority.NotifyColumn", language: language, in: strings),
+                      dotColor: valueOrEnglish("StatusPriority.DotColorColumn", language: language, in: strings,
+                                               english: StatusPriorityViewController.Titles.localized.dotColor),
+                      textColor: valueOrEnglish("StatusPriority.TextColorColumn", language: language, in: strings,
+                                                english: StatusPriorityViewController.Titles.localized.textColor),
                       mergeWorkgroups: try value("StatusPriority.MergeWorkgroups", language: language, in: strings),
                       showStatusOnTabs: try value("StatusPriority.ShowStatusOnTabs", language: language, in: strings),
                       instructions: try value("StatusPriority.InstructionsLabel", language: language, in: strings))
@@ -47,6 +64,7 @@ final class StatusPriorityPopoverLayoutTests: XCTestCase {
 
     private func layout(_ titles: Titles) -> StatusPriorityPopoverLayout {
         return StatusPriorityPopoverLayout(notifyTitle: titles.notify,
+                                           colorTitles: [titles.dotColor, titles.textColor],
                                            checkboxTitles: [titles.mergeWorkgroups,
                                                             titles.showStatusOnTabs],
                                            instructions: titles.instructions)
@@ -90,8 +108,8 @@ final class StatusPriorityPopoverLayoutTests: XCTestCase {
     func testPatternColumnKeepsRoom() throws {
         for language in languages {
             let layout = layout(try titles(language))
-            XCTAssertGreaterThanOrEqual(layout.width - 2 * StatusPriorityPopoverLayout.margin - layout.notifyColumnWidth,
-                                        120,
+            XCTAssertGreaterThanOrEqual(layout.width - 2 * StatusPriorityPopoverLayout.margin - layout.fixedColumnsWidth,
+                                        StatusPriorityPopoverLayout.minimumPatternColumnWidth,
                                         language)
         }
     }
@@ -100,6 +118,8 @@ final class StatusPriorityPopoverLayoutTests: XCTestCase {
         let layout = layout(try titles("en"))
         XCTAssertEqual(layout.width, StatusPriorityPopoverLayout.minimumWidth)
         XCTAssertEqual(layout.notifyColumnWidth, StatusPriorityPopoverLayout.minimumNotifyColumnWidth)
+        XCTAssertEqual(layout.colorColumnWidths, [StatusPriorityPopoverLayout.minimumColorColumnWidth,
+                                                  StatusPriorityPopoverLayout.minimumColorColumnWidth])
         XCTAssertEqual(layout.labelHeight, StatusPriorityPopoverLayout.minimumLabelHeight)
         XCTAssertEqual(layout.height, StatusPriorityPopoverLayout.minimumHeight)
     }
@@ -113,7 +133,9 @@ final class StatusPriorityPopoverLayoutTests: XCTestCase {
                 titles: .init(instructions: titles.instructions,
                               showStatusOnTabs: titles.showStatusOnTabs,
                               mergeWorkgroups: titles.mergeWorkgroups,
-                              notify: titles.notify))
+                              notify: titles.notify,
+                              dotColor: titles.dotColor,
+                              textColor: titles.textColor))
             let view = vc.view
             XCTAssertEqual(view.frame.size.width, layout(titles).width, language)
 

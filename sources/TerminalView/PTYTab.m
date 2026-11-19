@@ -612,6 +612,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                              selector:@selector(showSessionStatusInTabSubtitleDidChange:)
                                                  name:iTermShowSessionStatusInTabSubtitleDidChange
                                                object:nil];
+    for (NSNotificationName name in iTermStatusPrioritySettings.displayColorsNotificationNames) {
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(statusColorsDidChange:)
+                                                     name:name
+                                                   object:nil];
+    }
     [iTermPreferenceDidChangeNotification subscribe:self selector:@selector(preferenceDidChange:)];
     _tabTitleOverrideSwiftyString = [[iTermSwiftyString alloc] initWithScope:self.variablesScope
                                                                   sourcePath:iTermVariableKeyTabTitleOverrideFormat
@@ -939,8 +945,20 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [self updateIcon];
 }
 
+// The colors a status is drawn in may have changed: an override was edited
+// (live, while a color picker is open), or the list changed in a way that
+// changes which entry a status matches. Only redraws: the label and window
+// title do not depend on colors.
+- (void)statusColorsDidChange:(NSNotification *)notification {
+    if (!_aggregatedTabStatus.hasActiveStatus) {
+        return;
+    }
+    [self updateIcon];
+    [_delegate tabDidChangeTabStatus:self];
+}
+
 - (NSImage *)tabStatusDotImage {
-    iTermSRGBColor srgb = _aggregatedTabStatus.indicatorColor;
+    iTermSRGBColor srgb = _aggregatedTabStatus.displayIndicatorColor;
     NSColor *dotColor = [NSColor colorWithSRGBRed:srgb.r green:srgb.g blue:srgb.b alpha:1];
     BOOL isDark = [self.realParentWindow.window.effectiveAppearance
                    bestMatchFromAppearancesWithNames:@[NSAppearanceNameDarkAqua]] != nil;
@@ -1492,12 +1510,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (NSColor *)psmTabStatusSubtitleColor {
     if (!_aggregatedTabStatus.hasActiveStatus ||
-        !_aggregatedTabStatus.hasStatusTextColor ||
+        !_aggregatedTabStatus.hasDisplayStatusTextColor ||
         _aggregatedTabStatus.statusText.length == 0 ||
         !iTermUserDefaults.showSessionStatusInTabSubtitle) {
         return nil;
     }
-    iTermSRGBColor c = _aggregatedTabStatus.statusTextColor;
+    iTermSRGBColor c = _aggregatedTabStatus.displayStatusTextColor;
     return [NSColor colorWithSRGBRed:c.r green:c.g blue:c.b alpha:1];
 }
 

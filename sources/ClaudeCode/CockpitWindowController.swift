@@ -2209,7 +2209,7 @@ extension CockpitWindowController {
 
     fileprivate func registerForLiveUpdates() {
         let center = NotificationCenter.default
-        let names: [NSNotification.Name] = [
+        let names: [NSNotification.Name] = StatusPrioritySettings.displayColorsNotificationNames + [
             .PTYSessionCreated,
             .PTYSessionTerminated,
             .iTermSessionWillTerminate,
@@ -2981,10 +2981,10 @@ extension CockpitWindowController {
             return nil
         }
         let color: NSColor
-        if status.hasStatusTextColor {
-            color = Self.nsColor(from: status.statusTextColor)
+        if status.hasDisplayStatusTextColor {
+            color = Self.nsColor(from: status.displayStatusTextColor)
         } else if status.hasIndicator {
-            color = Self.nsColor(from: status.indicatorColor)
+            color = Self.nsColor(from: status.displayIndicatorColor)
         } else {
             color = .secondaryLabelColor
         }

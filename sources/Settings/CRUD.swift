@@ -16,15 +16,19 @@
 // `reload()` or `reloadAll()`. Client-initiated inserts and deletes haven't been implemented yet.
 
 import Foundation
+import ColorPicker
 
 enum CRUDFormatted {
     case string(String)
     case boolean(Bool)
+    // nil shows an empty well.
+    case color(NSColor?)
 }
 
 enum CRUDType {
     case string
     case boolean
+    case color
 }
 
 struct CRUDColumn {
@@ -75,6 +79,12 @@ protocol CRUDTableViewControllerDelegate: AnyObject {
                                column: Int,
                                newValue: Bool)
 
+    // newValue is nil when the user chose no color.
+    func crudColorDidChange(_ sender: CRUDTableViewController<Self>,
+                            row: Int,
+                            column: Int,
+                            newValue: NSColor?)
+
     var crudState: CRUDState { get set }
 }
 
@@ -83,6 +93,11 @@ extension CRUDTableViewControllerDelegate {
                                row: Int,
                                column: Int,
                                newValue: Bool) {}
+
+    func crudColorDidChange(_ sender: CRUDTableViewController<Self>,
+                            row: Int,
+                            column: Int,
+                            newValue: NSColor?) {}
 }
 
 @objc protocol CompetentTableViewDelegate: NSTableViewDelegate {
@@ -299,6 +314,39 @@ class CRUDTableViewController<Delegate: CRUDTableViewControllerDelegate>: NSObje
         delegate?.crudCheckboxDidChange(self, row: row, column: col, newValue: button.state == .on)
     }
 
+    // The well whose picker popover is open, and whether a change made in it
+    // has registered an undo step yet.
+    private weak var colorWellWithOpenPicker: CPKColorWell?
+    private var openPickerRegisteredUndo = false
+
+    @objc
+    func handleColorWell(_ sender: Any) {
+        guard let well = sender as? CPKColorWell else { return }
+        let row = tableView.row(for: well)
+        guard row >= 0, row < schema.dataProvider.count else { return }
+        let column = max(0, tableView.column(for: well))
+        guard colorWellWithOpenPicker === well else {
+            // Drag and drop, or the system color panel: each change stands
+            // on its own.
+            delegate?.crudColorDidChange(self, row: row, column: column, newValue: well.color)
+            return
+        }
+        if openPickerRegisteredUndo {
+            // A later change from the same picker session. Being inside
+            // undoable makes the delegate's own undoable call skip
+            // registering another undo step, so undo restores the color the
+            // well had before the picker opened.
+            inUndoable = true
+            defer {
+                inUndoable = false
+            }
+            delegate?.crudColorDidChange(self, row: row, column: column, newValue: well.color)
+            return
+        }
+        openPickerRegisteredUndo = true
+        delegate?.crudColorDidChange(self, row: row, column: column, newValue: well.color)
+    }
+
     // MARK: - NSTableViewDataSource
 
     func numberOfRows(in tableView: NSTableView) -> Int {
@@ -364,6 +412,52 @@ class CRUDTableViewController<Delegate: CRUDTableViewControllerDelegate>: NSObje
                 checkbox.state = boolValue ? .on : .off
                 checkbox.isEnabled = isEnabled
                 checkbox.tag = row
+            }
+            return cell
+        case .color(let colorValue):
+            let cellID = tableColumn.identifier.rawValue
+            let cell: NSTableCellView
+            if let reused = tableView.makeView(withIdentifier: NSUserInterfaceItemIdentifier(cellID), owner: nil) as? NSTableCellView {
+                cell = reused
+            } else {
+                cell = NSTableCellView()
+                cell.identifier = NSUserInterfaceItemIdentifier(cellID)
+                let wellSize = NSSize(width: min(28, tableColumn.width - 4),
+                                      height: max(12, tableView.rowHeight - 4))
+                if let well = CPKColorWell(frame: NSRect(origin: .zero, size: wellSize),
+                                           colorSpace: .sRGB) {
+                    well.noColorAllowed = true
+                    // Report every change so it shows up live. handleColorWell
+                    // folds the changes made while the picker is open into
+                    // one undo step.
+                    well.isContinuous = true
+                    well.target = self
+                    well.action = #selector(handleColorWell(_:))
+                    well.willOpenPopover = { [weak self, weak well] in
+                        self?.colorWellWithOpenPicker = well
+                        self?.openPickerRegisteredUndo = false
+                    }
+                    well.willClosePopover = { [weak self, weak well] in
+                        if let self, self.colorWellWithOpenPicker === well {
+                            self.colorWellWithOpenPicker = nil
+                        }
+                    }
+                    // Constraints rather than flexible margins: the cell
+                    // starts out zero-sized, and autoresizing a subview with
+                    // all four margins flexible out of a zero-sized superview
+                    // leaves it in the corner instead of the center.
+                    well.translatesAutoresizingMaskIntoConstraints = false
+                    cell.addSubview(well)
+                    NSLayoutConstraint.activate([
+                        well.centerXAnchor.constraint(equalTo: cell.centerXAnchor),
+                        well.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
+                        well.widthAnchor.constraint(equalToConstant: wellSize.width),
+                        well.heightAnchor.constraint(equalToConstant: wellSize.height),
+                    ])
+                }
+            }
+            if let well = cell.subviews.first as? CPKColorWell {
+                well.color = colorValue
             }
             return cell
         }

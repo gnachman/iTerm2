@@ -291,6 +291,31 @@ class iTermSessionTabStatus: NSObject {
         }
     }
 
+    /// The dot color to draw: the one the user chose for statuses like this
+    /// one in the status priority settings, or else the one the program
+    /// sent. Only meaningful when hasIndicator is true. indicatorColor stays
+    /// what the program sent, so arrangements and the API see that.
+    @objc var displayIndicatorColor: iTermSRGBColor {
+        return StatusPrioritySettings.shared.dotColorOverride(for: statusText) ?? indicatorColor
+    }
+
+    /// Whether the status text is drawn in a color of its own: the program
+    /// sent one, or the user chose one for statuses like this one. Unlike
+    /// the dot, which a program that sends no dot color does not get, status
+    /// text is always drawn, so a text color override applies to it even
+    /// when the program sent only text.
+    @objc var hasDisplayStatusTextColor: Bool {
+        return hasStatusTextColor ||
+            StatusPrioritySettings.shared.textColorOverride(for: statusText) != nil
+    }
+
+    /// The status text color to draw, chosen the same way as
+    /// displayIndicatorColor. Only meaningful when hasDisplayStatusTextColor
+    /// is true.
+    @objc var displayStatusTextColor: iTermSRGBColor {
+        return StatusPrioritySettings.shared.textColorOverride(for: statusText) ?? statusTextColor
+    }
+
     @objc var hasActiveStatus: Bool {
         return hasIndicator || statusText != nil
     }

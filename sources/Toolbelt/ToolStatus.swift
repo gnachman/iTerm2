@@ -297,6 +297,10 @@ class ToolStatus: NSView {
                        name: StatusPrioritySettings.didChangeNotification,
                        object: nil)
         nc.addObserver(self,
+                       selector: #selector(statusColorsDidChange(_:)),
+                       name: StatusPrioritySettings.colorsDidChangeNotification,
+                       object: nil)
+        nc.addObserver(self,
                        selector: #selector(programStatusRecordsDidChange(_:)),
                        name: ProgramStatusController.recordsDidChangeNotificationName,
                        object: nil)
@@ -455,6 +459,21 @@ extension ToolStatus {
             relativeTo: settingsButton.bounds,
             of: settingsButton,
             preferredEdge: .maxY)
+    }
+
+    /// A color override changed. This follows a color picker live and
+    /// colors do not affect order, so redraw the visible rows without
+    /// re-sorting. prioritiesDidChange re-sorts once the change is saved.
+    @objc func statusColorsDidChange(_ notification: Notification) {
+        guard let tableView = _tableView else {
+            return
+        }
+        let visible = tableView.rows(in: tableView.visibleRect)
+        guard visible.length > 0 else {
+            return
+        }
+        tableView.reloadData(forRowIndexes: IndexSet(integersIn: visible.lowerBound..<visible.upperBound),
+                             columnIndexes: IndexSet(integersIn: 0..<tableView.numberOfColumns))
     }
 
     @objc func prioritiesDidChange(_ notification: Notification) {
@@ -1331,14 +1350,14 @@ private extension ToolStatus {
 
         var dotImage: NSImage?
         if tabStatus.hasIndicator {
-            let c = tabStatus.indicatorColor
+            let c = tabStatus.displayIndicatorColor
             let color = NSColor(srgbRed: c.r, green: c.g, blue: c.b, alpha: 1)
             dotImage = iTermSessionTabStatus.dotImage(color: color, size: 10, dotDiameter: 6)
         }
 
         var statusColor: NSColor?
-        if tabStatus.hasStatusTextColor {
-            let c = tabStatus.statusTextColor
+        if tabStatus.hasDisplayStatusTextColor {
+            let c = tabStatus.displayStatusTextColor
             statusColor = NSColor(srgbRed: c.r, green: c.g, blue: c.b, alpha: 1)
         }
 
@@ -1383,10 +1402,17 @@ extension ToolStatus {
     }
 
     private func configureChildCell(_ cell: ToolStatusCellView, child: ChildRow, dimmed: Bool) {
-        cell.configureChild(dotImage: Self.dotImage(child.indicatorColor),
+        let settings = StatusPrioritySettings.shared
+        let indicatorColor = child.indicatorColor.map {
+            settings.dotColorOverride(for: child.statusText) ?? $0
+        }
+        // Status text is always drawn, so its override applies even when
+        // the program sent no text color. The dot's applies only to a dot.
+        let statusTextColor = settings.textColorOverride(for: child.statusText) ?? child.statusTextColor
+        cell.configureChild(dotImage: Self.dotImage(indicatorColor),
                             label: child.label,
                             statusText: Self.childStatusText(child),
-                            statusColor: child.statusTextColor.map {
+                            statusColor: statusTextColor.map {
                                 NSColor(srgbRed: $0.r, green: $0.g, blue: $0.b, alpha: 1)
                             },
                             detail: child.detail,
