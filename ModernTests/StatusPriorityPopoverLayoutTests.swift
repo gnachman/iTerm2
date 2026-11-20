@@ -23,13 +23,22 @@ final class StatusPriorityPopoverLayoutTests: XCTestCase {
         var instructions: String
     }
 
+    // The catalog is about 47 MB of JSON; parsing it once per language made each test take
+    // about 40 seconds. It is read once and the parsed strings are shared.
+    private static var cachedCatalog: [String: Any]?
+
     private func catalog() throws -> [String: Any] {
+        if let cached = Self.cachedCatalog {
+            return cached
+        }
         let root = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
         let data = try Data(contentsOf: root.appendingPathComponent("xcstrings/Localizable.xcstrings"))
         let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
-        return try XCTUnwrap(json["strings"] as? [String: Any])
+        let strings = try XCTUnwrap(json["strings"] as? [String: Any])
+        Self.cachedCatalog = strings
+        return strings
     }
 
     private func value(_ key: String, language: String, in strings: [String: Any]) throws -> String {

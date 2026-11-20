@@ -165,14 +165,25 @@ static NSString *ControlText(NSView *view) {
     }
 }
 
-// A translation from the main string catalog, read from the source tree.
-- (NSString *)catalogString:(NSString *)key language:(NSString *)language {
+// The main string catalog, read from the source tree. It is about 47 MB of JSON; parsing it for
+// every lookup made the preview command test take over a minute, so it is parsed once.
+- (NSDictionary *)catalog {
+    static NSDictionary *cached;
+    if (cached) {
+        return cached;
+    }
     NSString *source = [NSString stringWithUTF8String:__FILE__];
     NSString *path = [[[source stringByDeletingLastPathComponent] stringByDeletingLastPathComponent]
                       stringByAppendingPathComponent:@"xcstrings/Localizable.xcstrings"];
     NSData *data = [NSData dataWithContentsOfFile:path];
     XCTAssertNotNil(data, @"%@", path);
-    NSDictionary *catalog = data ? [NSJSONSerialization JSONObjectWithData:data options:0 error:nil] : nil;
+    cached = data ? [NSJSONSerialization JSONObjectWithData:data options:0 error:nil] : nil;
+    return cached;
+}
+
+// A translation from the main string catalog.
+- (NSString *)catalogString:(NSString *)key language:(NSString *)language {
+    NSDictionary *catalog = [self catalog];
     NSString *value = catalog[@"strings"][key][@"localizations"][language][@"stringUnit"][@"value"];
     XCTAssertNotNil(value, @"No %@ for %@", key, language);
     return value ?: @"";
