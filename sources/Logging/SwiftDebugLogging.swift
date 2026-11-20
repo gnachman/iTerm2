@@ -91,15 +91,6 @@ struct RLogRedacted: CustomStringConvertible {
     var description: String { gDebugLogging.boolValue ? "\(full)" : "\(redacted)" }
 }
 
-func XLog(_ messageBlock: @autoclosure () -> String, file: String = #file, line: Int = #line, function: String = #function) {
-    guard gDebugLogging.boolValue else {
-        return
-    }
-    let message = messageBlock()
-    NSLog("\(file):\(line) \(function): \(message)")
-    DebugLogImpl(file.cString(using: .utf8)!, Int32(line), function.cString(using: .utf8)!, message)
-}
-
 class iTermLogger {
     static let instance = iTermLogger()
     private static let logger = Logger(subsystem: "com.iterm2.logger", category: "main")

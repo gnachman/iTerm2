@@ -1098,7 +1098,7 @@ extension iTermBrowserManager {
 #if ITERM_DEBUG
                     NSFuckingLog("%@", "Javascript Console: \(logMessage)")
 #else
-                    XLog("Javascript Console: \(logMessage)")
+                    DLog("Javascript Console: \(logMessage)")
 #endif
                     let id = "#\(identifier)"
                     iTermScriptHistory.sharedInstance().addBrowserLoggingEntryIfNeeded(id)
