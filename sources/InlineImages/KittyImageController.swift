@@ -987,6 +987,28 @@ class KittyImageController: NSObject {
 
         return data
     }
+    // Removes C0 control characters (0x00-0x1F, which includes ESC) and DEL
+    // (0x7F) from a free-text status/error message before it is embedded in a
+    // Kitty graphics protocol response. The response is written to the PTY's
+    // input stream, so any attacker-influenced message (notably error strings
+    // derived from NSError.localizedDescription, which can contain a literal
+    // newline when the offending file path does) must not carry a control
+    // character: a raw newline would be delivered to the shell as if typed,
+    // allowing command injection. Each stripped character becomes a space so
+    // the diagnostic text stays on one readable line.
+    private static func sanitizedResponseMessage(_ string: String) -> String {
+        var result = ""
+        result.unicodeScalars.reserveCapacity(string.unicodeScalars.count)
+        for scalar in string.unicodeScalars {
+            if scalar.value < 0x20 || scalar.value == 0x7f {
+                result.unicodeScalars.append(" ")
+            } else {
+                result.unicodeScalars.append(scalar)
+            }
+        }
+        return result
+    }
+
     func respondToTransmit(_ imageTransmission: KittyImageCommand.ImageTransmission,
                             display: KittyImageCommand.ImageDisplay?,
                             error: String?) {
@@ -1005,7 +1027,7 @@ class KittyImageController: NSObject {
             args.append("p=\(p)")
         }
         let semi = args.isEmpty ? "" : ";"
-        let payload = args.joined(separator: ",") + semi + (error ?? "OK")
+        let payload = args.joined(separator: ",") + semi + (error.map { Self.sanitizedResponseMessage($0) } ?? "OK")
         let message = "\u{1B}_G\(payload)\u{1B}\\"
 
         switch imageTransmission.verbosity {
@@ -1241,7 +1263,7 @@ class KittyImageController: NSObject {
         }()
         let pre = "\u{1B}_G"
         let post = "\u{1B}\\"
-        let errorOrOK = error ?? "OK"
+        let errorOrOK = error.map { Self.sanitizedResponseMessage($0) } ?? "OK"
         let message =
             if parameters.isEmpty {
                 errorOrOK
