@@ -46,11 +46,15 @@ enum KittyDnDMetadata {
     /// Serialize with a deterministic key order: `t` first, then the remaining
     /// keys sorted ascending. Determinism lets tests assert exact bytes.
     ///
-    /// Values are sanitized of CR/LF so the serialized output can never contain
-    /// a 0x0a/0x0d byte regardless of what a value holds. This is the security
-    /// invariant: a metadata value is only ever a number or an echoed MIME type
-    /// (neither of which legitimately contains a newline), so stripping CR/LF is
-    /// both safe and guarantees no control-input injection.
+    /// Values are sanitized of all control characters so the serialized output
+    /// can never contain a control byte regardless of what a value holds. This is
+    /// the security invariant: the reply is written to the PTY input stream, and
+    /// several replies echo request-supplied values verbatim (the query `i`, and
+    /// the raw `Y`/`y` in error replies). A legitimate value is only ever a number
+    /// or an echoed MIME type, but a crafted request can embed a control character
+    /// (e.g. a newline, or a line-accepting key such as ^O) in an echoed value, so
+    /// stripping every control character is what guarantees no control-input
+    /// injection, not just stripping CR/LF.
     static func serialize(_ metadata: [String: String]) -> String {
         var parts: [String] = []
         if let t = metadata["t"] {
@@ -62,13 +66,12 @@ enum KittyDnDMetadata {
         return parts.joined(separator: ":")
     }
 
-    /// Remove CR/LF. Used for both metadata values and the (possibly plain-text)
-    /// payload so a serialized OSC 72 message can never carry a newline.
+    /// Remove every control character. Used for both metadata values and the
+    /// (possibly plain-text) payload so a serialized OSC 72 message can never
+    /// carry a control byte that the shell would interpret as typed input. Shares
+    /// the terminal-report sanitizer with the Kitty image and title-report paths.
     static func sanitize(_ value: String) -> String {
-        guard value.utf8.contains(where: { $0 == 0x0a || $0 == 0x0d }) else {
-            return value
-        }
-        return String(value.unicodeScalars.filter { $0 != "\n" && $0 != "\r" })
+        return (value as NSString).replacingControlCharactersWithSpace()
     }
 }
 

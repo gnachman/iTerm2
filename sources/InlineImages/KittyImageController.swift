@@ -987,26 +987,17 @@ class KittyImageController: NSObject {
 
         return data
     }
-    // Removes C0 control characters (0x00-0x1F, which includes ESC) and DEL
-    // (0x7F) from a free-text status/error message before it is embedded in a
-    // Kitty graphics protocol response. The response is written to the PTY's
-    // input stream, so any attacker-influenced message (notably error strings
-    // derived from NSError.localizedDescription, which can contain a literal
-    // newline when the offending file path does) must not carry a control
-    // character: a raw newline would be delivered to the shell as if typed,
-    // allowing command injection. Each stripped character becomes a space so
-    // the diagnostic text stays on one readable line.
+    // Removes control characters from a free-text status/error message before it
+    // is embedded in a Kitty graphics protocol response. The response is written
+    // to the PTY's input stream, so any attacker-influenced message (notably
+    // error strings derived from NSError.localizedDescription, which can contain
+    // a literal newline when the offending file path does) must not carry a
+    // control character: a raw newline would be delivered to the shell as if
+    // typed, allowing command injection. Uses the shared terminal-report
+    // sanitizer so the Kitty image, Kitty drag-and-drop, and title-report paths
+    // cannot drift apart.
     private static func sanitizedResponseMessage(_ string: String) -> String {
-        var result = ""
-        result.unicodeScalars.reserveCapacity(string.unicodeScalars.count)
-        for scalar in string.unicodeScalars {
-            if scalar.value < 0x20 || scalar.value == 0x7f {
-                result.unicodeScalars.append(" ")
-            } else {
-                result.unicodeScalars.append(scalar)
-            }
-        }
-        return result
+        return (string as NSString).replacingControlCharactersWithSpace()
     }
 
     func respondToTransmit(_ imageTransmission: KittyImageCommand.ImageTransmission,
