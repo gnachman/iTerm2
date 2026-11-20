@@ -2712,7 +2712,7 @@ extension Conductor {
 
     private func execFramer() {
         var path = Bundle(for: Self.self).url(forResource: "framer", withExtension: "py")!
-#if DEBUG
+#if ITERM_DEBUG
         let alt = iTermAdvancedSettingsModel.alternateSSHIntegrationScript()!
         if !alt.isEmpty {
             NSLog("Using \(alt) rather than \(path)")

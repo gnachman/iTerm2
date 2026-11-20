@@ -119,7 +119,7 @@ class TokenExecutor: NSObject {
     }
     @objc var isBackgroundSession = false {
         didSet {
-#if DEBUG
+#if ITERM_DEBUG
             iTermGCD.assertSafe(forMutationQueue: queue)
 #endif
             if isBackgroundSession != oldValue {
@@ -129,7 +129,7 @@ class TokenExecutor: NSObject {
     }
 
     @objc var isExecutingToken: Bool {
-        #if DEBUG
+        #if ITERM_DEBUG
         iTermGCD.assertSafe(forMutationQueue: queue)
         #endif
         return impl.isExecutingToken
@@ -230,7 +230,7 @@ class TokenExecutor: NSObject {
             return
         }
         if highPriority {
-#if DEBUG
+#if ITERM_DEBUG
             iTermGCD.assertSafe(forMutationQueue: queue)
 #endif
             // Re-entrant code path so that the Inject trigger can do its job synchronously
@@ -266,7 +266,7 @@ class TokenExecutor: NSObject {
     @objc
     func rollBackCurrentToken() {
         if gDebugLogging.boolValue { DLog("Roll back current token") }
-#if DEBUG
+#if ITERM_DEBUG
         iTermGCD.assertSafe(forMutationQueue: queue)
 #endif
         impl.rollBackCurrentToken()
@@ -429,7 +429,7 @@ class TokenExecutor: NSObject {
     // Mutation queue, or the main queue in a joined block. Whether tokens or high-priority tasks
     // are waiting to execute.
     var hasPendingWork: Bool {
-#if DEBUG
+#if ITERM_DEBUG
         iTermGCD.assertSafe(forMutationQueue: queue)
 #endif
         return impl.hasPendingWork
@@ -439,7 +439,7 @@ class TokenExecutor: NSObject {
     // that haven't executed yet redraw the prompt and then show the cursor. See
     // PromptRepaintLookahead.
     @objc var queuedTokensRepaintPromptAndShowCursor: Bool {
-#if DEBUG
+#if ITERM_DEBUG
         iTermGCD.assertSafe(forMutationQueue: queue)
 #endif
         return impl.queuedTokensRepaintPromptAndShowCursor
@@ -452,7 +452,7 @@ class TokenExecutor: NSObject {
 
     // Mutation queue, or main while joined. What hasPendingWork found, for test failure messages.
     var pendingWorkDescriptionForTesting: String {
-#if DEBUG
+#if ITERM_DEBUG
         iTermGCD.assertSafe(forMutationQueue: queue)
 #endif
         return impl.pendingWorkDescriptionForTesting
@@ -533,7 +533,7 @@ private class TokenExecutorImpl {
     private static let titleChangeMinimumInterval = 0.1
     @objc var isBackgroundSession = false {
         didSet {
-#if DEBUG
+#if ITERM_DEBUG
             iTermGCD.assertSafe(forMutationQueue: queue)
 #endif
             if isBackgroundSession != oldValue {
@@ -640,14 +640,14 @@ private class TokenExecutorImpl {
     }
 
     private var isPaused: Bool {
-#if DEBUG
+#if ITERM_DEBUG
         assertQueue()
 #endif
         return pauseCount.isPaused || iTermAtomicInt64Get(TokenExecutor.globalPauseCount) > 0
     }
 
     func invalidate() {
-#if DEBUG
+#if ITERM_DEBUG
         assertQueue()
 #endif
         tokenQueue.removeAll()
@@ -691,7 +691,7 @@ private class TokenExecutorImpl {
     func scheduleHighPriorityTask(_ task: @escaping TokenExecutorTask, syncAllowed: Bool) {
         taskQueue.append(task)
         if syncAllowed {
-#if DEBUG
+#if ITERM_DEBUG
             assertQueue()
 #endif
             if executingCount == 0 {
@@ -929,7 +929,7 @@ private class TokenExecutorImpl {
         }
     }
 
-#if DEBUG
+#if ITERM_DEBUG
     private func assertQueue() {
         iTermGCD.assertSafe(forMutationQueue: queue)
     }
@@ -942,7 +942,7 @@ private class TokenExecutorImpl {
 
     private func execute() {
         DLog("execute()")
-#if DEBUG
+#if ITERM_DEBUG
         assertQueue()
 #endif
         if TokenExecutor.enableTimingStats {
@@ -1151,7 +1151,7 @@ private class TokenExecutorImpl {
 
     func rollBackCurrentToken() {
         if gDebugLogging.boolValue { DLog("roll back current token") }
-#if DEBUG
+#if ITERM_DEBUG
         assertQueue()
 #endif
         commit = false
@@ -1180,7 +1180,7 @@ private class TokenExecutorImpl {
 
     private func executeHighPriorityTasks(until stopCondition: () -> Bool) {
         if gDebugLogging.boolValue { DLog("begin") }
-#if DEBUG
+#if ITERM_DEBUG
         assertQueue()
 #endif
         executingCount += 1

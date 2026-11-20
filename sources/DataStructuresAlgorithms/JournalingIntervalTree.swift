@@ -118,7 +118,7 @@ class EventuallyConsistentIntervalTree: IntervalTree {
     @objc(mutateObject:block:)
     func mutate(_ object: IntervalTreeImmutableObject,
                 closure: @escaping (IntervalTreeObject) -> ()) {
-#if DEBUG
+#if ITERM_DEBUG
         super.sanityCheck()
 #endif
         let mutable = object as! IntervalTreeObject
@@ -126,7 +126,7 @@ class EventuallyConsistentIntervalTree: IntervalTree {
         // Bind any unbound RCs the closure attached to the progenitor.
         // (The doppelganger side is handled later by addSideEffect.)
         bindUnresolvedRCsOnProgenitor(mutable)
-#if DEBUG
+#if ITERM_DEBUG
         super.sanityCheck()
 #endif
         addSideEffect(mutable, closure: { doppelganger, _ in
@@ -140,13 +140,13 @@ class EventuallyConsistentIntervalTree: IntervalTree {
     func bulkMutate(_ objects: [IntervalTreeImmutableObject],
                     closure: @escaping (IntervalTreeObject) -> ()) {
         for object in objects {
-#if DEBUG
+#if ITERM_DEBUG
             super.sanityCheck()
 #endif
             let mutable = object as! IntervalTreeObject
             closure(mutable)
             bindUnresolvedRCsOnProgenitor(mutable)
-#if DEBUG
+#if ITERM_DEBUG
             super.sanityCheck()
 #endif
         }
@@ -158,22 +158,22 @@ class EventuallyConsistentIntervalTree: IntervalTree {
     @objc(bulkRemoveObjects:)
     func bulkRemoveObjects(_ objects: [IntervalTreeImmutableObject]) {
         DLog("Will bulk remove. Tree has:\n\(allObjects())")
-#if DEBUG
+#if ITERM_DEBUG
         sanityCheck()
 #endif
         for object in objects {
             let ito = object as! IntervalTreeObject
             DLog("->Will remove \(ito.description). Tree has:\n\(allObjects())")
-#if DEBUG
+#if ITERM_DEBUG
             sanityCheck()
 #endif
             super.remove(ito)
-#if DEBUG
+#if ITERM_DEBUG
             sanityCheck()
 #endif
             DLog("->Did remove \(ito.description). Tree has:\n\(allObjects())")
         }
-#if DEBUG
+#if ITERM_DEBUG
         sanityCheck()
 #endif
         addBulkSideEffect(objects as! [IntervalTreeObject], closure: { i, ito, tree in
@@ -189,12 +189,12 @@ class EventuallyConsistentIntervalTree: IntervalTree {
         let newIntervals = objects.map { closure($0 as! IntervalTreeObject) }
         for (object, interval) in zip(objects, newIntervals) {
             let ito = object as! IntervalTreeObject
-#if DEBUG
+#if ITERM_DEBUG
 super.sanityCheck()
 #endif
             super.remove(ito)
             super.add(ito, with: interval)
-#if DEBUG
+#if ITERM_DEBUG
 super.sanityCheck()
 #endif
         }

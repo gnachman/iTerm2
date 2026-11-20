@@ -399,7 +399,7 @@ final class iTermWorkgroupController: NSObject {
     // it didn't cause. Development builds and the test suite keep the
     // full strictness.
     func checkConsistency() {
-        #if DEBUG
+        #if ITERM_DEBUG
         for (key, instance) in instances {
             it_assert(!instance.didTeardown,
                       "torn-down instance \(key) still registered")

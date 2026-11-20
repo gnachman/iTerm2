@@ -787,7 +787,7 @@ class SearchOperation: Pausable {
         guard let updated else {
             SELog("This shouldn't happen")
             finish()
-#if DEBUG
+#if ITERM_DEBUG
             it_fatalError()
 #else
             return

@@ -220,7 +220,7 @@ extension iTermApplicationDelegate {
                                                                                              font: NSFont.systemFont(ofSize: NSFont.systemFontSize),
                                                                                              paragraphStyle: NSParagraphStyle.default)!)
             } else {
-                #if(DEBUG)
+                #if(ITERM_DEBUG)
                 it_fatalError("Index missing \(tip.identifier)")
                 #endif
             }

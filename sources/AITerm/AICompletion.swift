@@ -347,7 +347,7 @@ class CompletionItem: NSObject {
 
     @objc(initWithValue:detail:kind:valueIsFinal:)
     init(value: String, detail: String?, kind: Kind, valueIsFinal: Bool) {
-        #if DEBUG
+        #if ITERM_DEBUG
         it_assert(!(detail ?? "").contains("<iTermCompletionItem"))
         #endif
         self.value = value

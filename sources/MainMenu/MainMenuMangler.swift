@@ -87,7 +87,7 @@ class MainMenuMangler: NSObject {
         for item in menu.items {
             if let identifier = item.identifier?.rawValue,
                let iconName = iconMap[identifier] {
-                #if(DEBUG)
+                #if(ITERM_DEBUG)
                 if item.hasSubmenu {
                     it_fatalError("Submenus should not have icons: \(identifier)")
                 }
