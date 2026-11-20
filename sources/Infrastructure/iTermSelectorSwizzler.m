@@ -5,26 +5,6 @@ static NSString *const iTermSelectorSwizzlerContexts = @"iTermSelectorSwizzlerCo
 
 @implementation iTermSelectorSwizzler
 
-+ (void)swizzleSelector:(SEL)selector
-              fromClass:(Class)fromClass
-              withBlock:(id)fakeSelectorBlock
-               forBlock:(dispatch_block_t)block {
-    if (!fakeSelectorBlock || !block) {
-        return;
-    }
-
-    Method originalMethod = class_getClassMethod(fromClass, selector)
-        ?: class_getInstanceMethod(fromClass, selector);
-
-    IMP originalMethodImplementation = method_getImplementation(originalMethod);
-    IMP fakeMethodImplementation = imp_implementationWithBlock(fakeSelectorBlock);
-    method_setImplementation(originalMethod, fakeMethodImplementation);
-
-    block();
-
-    method_setImplementation(originalMethod, originalMethodImplementation);
-}
-
 + (IMP)permanentlySwizzleSelector:(SEL)selector
                         fromClass:(Class)fromClass
                         withBlock:(id)replacementBlock {
@@ -123,25 +103,6 @@ static NSString *const iTermSelectorSwizzlerContexts = @"iTermSelectorSwizzlerCo
 
 - (void)addSwizzledSelector:(iTermSwizzledSelector *)swizzledSelector {
   [_swizzledSelectors addObject:swizzledSelector];
-}
-
-@end
-
-@implementation NSObject(Swizzle)
-
-- (IMP)swizzleInstanceMethodSelector:(SEL)selector withBlock:(id)fakeBlock {
-  iTermSelectorSwizzlerContext *context = [iTermSelectorSwizzlerContext currentContext];
-  assert(context);
-  iTermSwizzledSelector *swizzledSelector = [[[iTermSwizzledSelector alloc] init] autorelease];
-  swizzledSelector.originalMethod = class_getInstanceMethod([self class], selector);
-  swizzledSelector.originalMethodImplementation = method_getImplementation(swizzledSelector.originalMethod);
-  if (fakeBlock && context) {
-    [context addSwizzledSelector:swizzledSelector];
-    IMP fakeMethodImplementation = imp_implementationWithBlock(fakeBlock);
-    method_setImplementation(swizzledSelector.originalMethod, fakeMethodImplementation);
-  }
-
-  return swizzledSelector.originalMethodImplementation;
 }
 
 @end

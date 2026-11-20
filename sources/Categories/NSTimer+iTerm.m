@@ -108,11 +108,4 @@
     return timer;
 }
 
-- (void)it_performSelector:(SEL)selector onTarget:(id)target {
-    if (target) {
-        void (*func)(id, SEL, NSTimer *) = (void *)[target methodForSelector:selector];
-        func(target, selector, self);
-    }
-}
-
 @end

@@ -273,16 +273,6 @@ NSPointerArray *gThreads;
     return [[iTermCallback onThread:self block:callback] retain];
 }
 
-- (iTermCallback *)newCallbackWithWeakTarget:(id)target selector:(SEL)selector userInfo:(id)userInfo {
-    __weak id weakTarget = target;
-    return [self newCallbackWithBlock:^(id  _Nonnull state, id  _Nullable value) {
-        [weakTarget it_performNonObjectReturningSelector:selector
-                                              withObject:state
-                                                  object:value
-                                                  object:userInfo];
-    }];
-}
-
 - (void)check {
     [_state check];
 }

@@ -244,12 +244,6 @@ static void (*originalNSThemeZoomWidgetCellShowMenuIMP)(id, SEL, id) = NULL;
     [invocation invoke];
 }
 
-- (void)performSelectorOnMainThread:(SEL)selector withObjects:(NSArray *)objects {
-    [self performSelectorOnMainThread:@selector(performSelectorWithObjects:)
-                           withObject:@[ NSStringFromSelector(selector), objects ]
-                        waitUntilDone:NO];
-}
-
 - (iTermDelayedPerform *)performBlock:(void (^)(void))block afterDelay:(NSTimeInterval)delay {
     iTermDelayedPerform *delayedPerform = [[iTermDelayedPerform alloc] init];
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
