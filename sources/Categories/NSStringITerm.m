@@ -1757,6 +1757,42 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     }];
 }
 
++ (NSCharacterSet *)it_reportUnsafeControlCharacterSet {
+    // Deliberately not +[NSCharacterSet controlCharacterSet], which is Cc plus Cf.
+    // Cf (ZWJ, bidi marks, soft hyphen, tag characters) is harmless to a shell,
+    // and stripping it would mangle emoji sequences and RTL text.
+    static NSCharacterSet *set;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableCharacterSet *mutableSet = [NSMutableCharacterSet characterSetWithRange:NSMakeRange(0, 0x20)];
+        [mutableSet addCharactersInRange:NSMakeRange(0x7F, 0x21)];
+        set = [mutableSet copy];
+    });
+    return set;
+}
+
+static BOOL iTermIsReportUnsafeControlCharacter(unichar c) {
+    return c < 0x20 || (c >= 0x7F && c <= 0x9F);
+}
+
+- (NSString *)stringByReplacingControlCharactersWithSpace {
+    // Every unsafe character is in the BMP, so it is a single UTF-16 unit and can
+    // never be half of a surrogate pair. That lets this work unit by unit, and
+    // replacing one unit with one unit keeps every index stable.
+    const NSUInteger length = self.length;
+    if ([self rangeOfCharacterFromSet:[NSString it_reportUnsafeControlCharacterSet]].location == NSNotFound) {
+        return self;
+    }
+    unichar *buffer = malloc(sizeof(unichar) * length);
+    [self getCharacters:buffer range:NSMakeRange(0, length)];
+    for (NSUInteger i = 0; i < length; i++) {
+        if (iTermIsReportUnsafeControlCharacter(buffer[i])) {
+            buffer[i] = ' ';
+        }
+    }
+    return [[NSString alloc] initWithCharactersNoCopy:buffer length:length freeWhenDone:YES];
+}
+
 - (NSSet *)doubleDollarVariables {
     NSMutableSet *set = [NSMutableSet set];
     NSRange rangeToSearch = NSMakeRange(0, self.length);

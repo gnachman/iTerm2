@@ -243,6 +243,19 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Characters in [0, 31] and 127 get replaced with ?
 - (NSString *)stringByReplacingControlCharactersWithCaretLetter;
 
+// The Unicode Cc category: C0 0x00-0x1F, DEL 0x7F, and C1 0x80-0x9F. Unlike
+// +[NSCharacterSet controlCharacterSet] this excludes Cf (ZWJ, bidi marks, etc.).
++ (NSCharacterSet *)it_reportUnsafeControlCharacterSet;
+
+// Replaces every control character (the Unicode Cc category: C0 0x00-0x1F, DEL
+// 0x7F, and C1 0x80-0x9F) with a space. Format characters (Cf) such as ZWJ and
+// bidi marks are left alone. Use this on any attacker-influenced text
+// that is echoed back to the terminal in a report written to the PTY input
+// stream, where a control character (a newline, or a line-accepting key such as
+// ^O) would be interpreted by the shell as typed input and allow command
+// injection. This is the shared sanitizer for terminal-report paths.
+- (NSString *)stringByReplacingControlCharactersWithSpace;
+
 // Returns the set of $$VARIABLES$$ in the string.
 - (NSSet *)doubleDollarVariables;
 

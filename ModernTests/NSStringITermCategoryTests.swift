@@ -607,4 +607,57 @@ final class NSStringITermCategoryTests: XCTestCase {
     func testReplaceControlCharactersWithCaretLetter_MixOfRegularAndControlCharacters() {
         XCTAssertEqual(caret("12" + char(1) + "34" + char(2) + "56"), "12^A34^B56")
     }
+
+    // MARK: - stringByReplacingControlCharactersWithSpace
+
+    private func spaced(_ string: String) -> String {
+        return (string as NSString).replacingControlCharactersWithSpace()
+    }
+
+    func testReplaceControlCharactersWithSpace_C0DelAndC1() {
+        XCTAssertEqual(spaced("a\u{0}b\nc\u{1b}d\u{7f}e\u{85}f\u{9f}g"), "a b c d e f g")
+    }
+
+    func testReplaceControlCharactersWithSpace_NoControlsReturnsInput() {
+        XCTAssertEqual(spaced("plain text"), "plain text")
+    }
+
+    // An astral format character (U+E0001 is a surrogate pair) right before a
+    // newline must not cause the newline to be skipped.
+    func testReplaceControlCharactersWithSpace_AstralFormatCharacterBeforeNewline() {
+        XCTAssertEqual(spaced("x\u{E0001}\nab"), "x\u{E0001} ab")
+    }
+
+    // A string ending in an astral format character must not crash.
+    func testReplaceControlCharactersWithSpace_EndsInAstralFormatCharacter() {
+        XCTAssertEqual(spaced("a\u{E007F}"), "a\u{E007F}")
+        XCTAssertEqual(spaced("\n\u{E007F}"), " \u{E007F}")
+    }
+
+    // A subdivision flag ends in U+E007F; it must survive intact.
+    func testReplaceControlCharactersWithSpace_SubdivisionFlagUnchanged() {
+        let flag = "\u{1F3F4}\u{E0067}\u{E0062}\u{E0065}\u{E006E}\u{E0067}\u{E007F}"
+        XCTAssertEqual(spaced("title " + flag), "title " + flag)
+    }
+
+    // Format characters (Cf) are not shell threats and must pass through.
+    func testReplaceControlCharactersWithSpace_FormatCharactersUnchanged() {
+        let zwjFamily = "\u{1F468}\u{200D}\u{1F469}"
+        XCTAssertEqual(spaced(zwjFamily), zwjFamily)
+        let rlm = "abc\u{200F}def"
+        XCTAssertEqual(spaced(rlm), rlm)
+        let others = "\u{200B}\u{200E}\u{00AD}\u{FEFF}"
+        XCTAssertEqual(spaced(others), others)
+    }
+
+    func testReportUnsafeControlCharacterSetExcludesFormatCharacters() {
+        let set = NSString.it_reportUnsafeControlCharacterSet()
+        XCTAssertTrue(set.contains(UnicodeScalar(0x0A)!))
+        XCTAssertTrue(set.contains(UnicodeScalar(0x7F)!))
+        XCTAssertTrue(set.contains(UnicodeScalar(0x9F)!))
+        XCTAssertFalse(set.contains(UnicodeScalar(0x20)!))
+        XCTAssertFalse(set.contains(UnicodeScalar(0xA0)!))
+        XCTAssertFalse(set.contains(UnicodeScalar(0x200D)!))
+        XCTAssertFalse(set.contains(UnicodeScalar(0xE0001)!))
+    }
 }

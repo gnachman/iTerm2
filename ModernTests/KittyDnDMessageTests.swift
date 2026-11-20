@@ -160,7 +160,19 @@ final class KittyDnDMessageTests: XCTestCase {
         let bytes = Array(msg.serialized().utf8)
         XCTAssertFalse(bytes.contains(0x0a))
         XCTAssertFalse(bytes.contains(0x0d))
-        XCTAssertEqual(msg.serializedContent(), "t=a:z=abcd")
+        // Control characters are replaced with a space (not removed), so CR+LF
+        // become two spaces.
+        XCTAssertEqual(msg.serializedContent(), "t=a:z=ab  cd")
+    }
+
+    // Every control character, not just CR/LF, must be stripped: a ^O in a
+    // metadata value (e.g. an echoed query id) would otherwise reach the shell.
+    func testMetadataValueAllControlsAreStrippedOnSerialize() {
+        let msg = KittyDnDMessage(metadata: ["t": "q", "i": "x\u{0f}\u{04}\u{09}y"])
+        let content = msg.serializedContent()
+        XCTAssertFalse(content.unicodeScalars.contains { $0.value < 0x20 || $0.value == 0x7f },
+                       "no control character may survive serialization")
+        XCTAssertEqual(content, "t=q:i=x   y")
     }
 
     // A plain-text payload (which could in principle contain a newline) must also
