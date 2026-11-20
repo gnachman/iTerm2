@@ -239,10 +239,15 @@ NSObject *RLogRedact(id full, id redacted);
 
 // YES when this code was compiled with BETA defined (the Development, Beta and Nightly
 // configurations), where ITBetaAssert crashes; NO in Deployment, where it logs and continues.
-// Swift cannot see the BETA macro, so it_betaAssert and the other Swift migration helpers read
-// this instead. It is not const only so that tests can check the Deployment behavior of the
-// Swift helpers; nothing else assigns it.
+// it_betaAssert and the other Swift migration helpers read this to decide whether a failure
+// crashes. Swift has its own BETA compilation condition, which only it_conservativeBetaAssert
+// uses. This is not const only so that tests can check the Deployment behavior of the Swift
+// helpers; nothing else assigns it.
 extern BOOL iTermBetaAssertionsCrash;
+
+// YES when this file was compiled with BETA defined. Unlike iTermBetaAssertionsCrash it never
+// changes. ModernTests compares it with the Swift BETA compilation condition.
+BOOL iTermBetaMacroIsDefined(void);
 
 // Wraps the lock expression of a @synchronized statement:
 //   @synchronized(ITNonnilLock(_lock)) { ... }

@@ -59,6 +59,19 @@ final class SwiftMigrationBetaAssertTests: XCTestCase {
         XCTAssertTrue(iTermBetaAssertionsAreFatal)
     }
 
+    func testSwiftBetaConditionAgreesWithObjectiveCMacro() {
+        // The Swift BETA compilation condition of iTerm2SharedARC and the C BETA macro are set
+        // separately in the project. This checks the configuration the tests are built in; a
+        // disagreement in any configuration also fails to link (see DebugLogging.m).
+        XCTAssertEqual(iTermSwiftBetaConditionIsActive, iTermBetaMacroIsDefined())
+    }
+
+    func testTestBuildHasSwiftBetaCondition() {
+        // Development defines BETA for Swift as it does for C, so it_conservativeBetaAssert is
+        // compiled in.
+        XCTAssertTrue(iTermSwiftBetaConditionIsActive)
+    }
+
     func testPassingAssertionDoesNotReport() {
         let recorder = FailureRecorder()
         var messageEvaluated = false

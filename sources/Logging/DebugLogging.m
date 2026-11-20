@@ -51,6 +51,28 @@ BOOL iTermBetaAssertionsCrash = YES;
 BOOL iTermBetaAssertionsCrash = NO;
 #endif
 
+BOOL iTermBetaMacroIsDefined(void) {
+#if BETA
+    return YES;
+#else
+    return NO;
+#endif
+}
+
+// The BETA macro and Swift's BETA compilation condition are set separately in the project and
+// must agree in every configuration. SwiftMigrationHelpers.swift defines
+// iTermSwiftBetaConditionIsSet only with the condition and iTermSwiftBetaConditionIsNotSet only
+// without it. The pointer below refers to the one that matches the macro; `used` keeps it, and
+// the reference, from being dead-stripped, so a configuration where the two disagree fails to
+// link.
+#if BETA
+extern void iTermSwiftBetaConditionIsSet(void);
+__attribute__((used)) static void (*const iTermSwiftBetaConditionCheck)(void) = iTermSwiftBetaConditionIsSet;
+#else
+extern void iTermSwiftBetaConditionIsNotSet(void);
+__attribute__((used)) static void (*const iTermSwiftBetaConditionCheck)(void) = iTermSwiftBetaConditionIsNotSet;
+#endif
+
 // Keys already emitted by DLogOncePerLoggingSession this logging
 // session. Guarded by GetDebugLogLock(); cleared in StartDebugLogging.
 static NSMutableSet<NSString *> *gOncePerLoggingSessionKeys;

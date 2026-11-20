@@ -7,11 +7,18 @@
 //  assertions.md, and concurrency.md section 2.
 //
 //  Behavior by build:
-//  - Development, Beta and Nightly compile the Objective-C with BETA defined. There a failed
-//    beta assertion, an arithmetic overflow, an out-of-range narrowing and an out-of-range float
-//    conversion all crash through it_fatalError, as ITBetaAssert does.
+//  - Development, Beta and Nightly compile the Objective-C with the BETA macro and this Swift with
+//    the BETA compilation condition. There a failed beta assertion, an arithmetic overflow, an
+//    out-of-range narrowing and an out-of-range float conversion all crash through it_fatalError,
+//    as ITBetaAssert does.
 //  - Deployment (release) logs the failure as ITBetaAssert does and continues. The arithmetic,
-//    narrowing and float helpers return the saturated value.
+//    narrowing and float helpers return the saturated value. it_conservativeBetaAssert compiles
+//    to nothing.
+//
+//  Whether a failure crashes is read at run time from iTermBetaAssertionsCrash, which the
+//  Objective-C sets from the BETA macro, so that tests can check the Deployment policy in a
+//  Development build. Only it_conservativeBetaAssert uses the compile-time condition, because
+//  without BETA it must cost nothing at all.
 //
 //  Each helper that can fail has two entry points. The public one reports failures to
 //  iTermBetaAssertionFailed, which applies the build's policy. The other takes the failure
@@ -41,8 +48,38 @@ var iTermBetaAssertionsAreFatal: Bool {
 
 /// True in builds where ITConservativeBetaAssert is compiled in, which are the same builds.
 var iTermConservativeBetaAssertionsEnabled: Bool {
-    @inline(__always) get { iTermBetaAssertionsAreFatal }
+    @inline(__always) get {
+#if BETA
+        return iTermBetaAssertionsAreFatal
+#else
+        return false
+#endif
+    }
 }
+
+// The BETA compilation condition is set in the project separately from the C macro of the same
+// name, and the two must agree in every configuration. DebugLogging.m refers to
+// iTermSwiftBetaConditionIsSet when the macro is defined and to iTermSwiftBetaConditionIsNotSet
+// when it is not, and only the one matching this condition exists, so a configuration where they
+// disagree fails to link. ModernTests also compares iTermSwiftBetaConditionIsActive with
+// iTermBetaMacroIsDefined().
+#if BETA
+/// Whether this Swift was compiled with the BETA condition.
+let iTermSwiftBetaConditionIsActive = true
+
+/// Exists only with the BETA condition. See above.
+@_cdecl("iTermSwiftBetaConditionIsSet")
+public func iTermSwiftBetaConditionIsSet() {
+}
+#else
+/// Whether this Swift was compiled with the BETA condition.
+let iTermSwiftBetaConditionIsActive = false
+
+/// Exists only without the BETA condition. See above.
+@_cdecl("iTermSwiftBetaConditionIsNotSet")
+public func iTermSwiftBetaConditionIsNotSet() {
+}
+#endif
 
 /// The Swift equivalent of ITBetaAssert. The condition is evaluated in every build. If it is
 /// false: in Development, Beta and Nightly builds this logs and crashes; in Deployment builds it
@@ -76,16 +113,19 @@ func it_betaAssert(_ condition: @autoclosure () -> Bool,
 
 /// The Swift equivalent of ITConservativeBetaAssert, for conditions that cost anything real to
 /// evaluate. In Development, Beta and Nightly builds it behaves like it_betaAssert. In
-/// Deployment builds neither the condition nor the message is evaluated.
+/// Deployment builds it compiles to nothing: neither the condition nor the message is evaluated,
+/// and no load or branch remains.
 @inline(__always)
 func it_conservativeBetaAssert(_ condition: @autoclosure () -> Bool,
                                _ message: @autoclosure () -> String = "",
                                file: StaticString = #file,
                                line: UInt = #line,
                                function: StaticString = #function) {
+#if BETA
     if iTermConservativeBetaAssertionsEnabled && !condition() {
         iTermBetaAssertionFailed(message(), file: file, line: line, function: function)
     }
+#endif
 }
 
 /// it_conservativeBetaAssert with whether it is enabled and the failure handler injected.
