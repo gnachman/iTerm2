@@ -14,6 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 @class NSEvent;
 @class PTYTextView;
 
+// Under ARC a selector that begins with "copy" returns an owned (+1) object. These delegate
+// selectors begin with copyModeHandler, so this attribute takes them out of the copy family.
+// A Swift class that implements or calls them must keep the same ownership convention.
 #define NOT_COPY_FAMILY __attribute__((objc_method_family( none )))
 
 @protocol iTermCopyModeHandlerDelegate<NSObject>

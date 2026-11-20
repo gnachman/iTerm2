@@ -17,6 +17,10 @@ extern const void *PSMTabStyleDarkColorKey;
 
 extern BOOL gDebugLogging;
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
+// A copy of DLog in sources/Logging/DebugLogging.h (PSMRolloverButton.m has a third). A unit
+// gets whichever definition it saw last, and for many app files that is this one. The copies
+// must stay token-identical: changing only one gives a macro-redefined warning, and the units
+// that see the other copy keep the old behavior.
 #define DLog(args...) \
     do { \
         if (gDebugLogging) { \
@@ -25,6 +29,8 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     } while (0)
 
 // __cyclicLog should be an instance of iTermCyclicLog
+// Unlike DLog, the message is formatted on every call, even when debug logging is off, because
+// the cyclic log always records it. Its user is sources/StateRestoration/iTermGraphDatabase.m.
 #define DLogCyclic(__cyclicLog, args...) \
     do { \
         NSString *__formatted = [NSString stringWithFormat:args]; \

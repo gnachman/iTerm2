@@ -9293,7 +9293,7 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
 DLog(args); \
 [logs addObject:[NSString stringWithFormat:args]]; \
 [ProfileModel log:[NSString stringWithFormat:args]]; \
-} while (0)
+} while (0)  // Needs a local NSMutableArray named logs. Evaluates args 2 times, 3 with debug logging on.
 
 - (NSString *)divorceAddressBookEntryFromPreferences {
     Profile *bookmark = [self profile];

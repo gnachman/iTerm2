@@ -153,6 +153,7 @@ CTVectorDefine(NSUInteger);
 CTVectorDefine(WrappedLineInfo);
 CTVectorDefine(iTermAppendItem);
 
+// Evaluates __v twice (the third use is inside sizeof, which does not evaluate it); pass a plain pointer, not an expression with a side effect.
 #define CTVectorGetData(__v) \
 [NSData dataWithBytes:(void *)(__v)->elements length:(__v)->count * sizeof(*(__v)->elements)]
 

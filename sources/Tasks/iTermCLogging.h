@@ -51,6 +51,9 @@ static inline void CDLogImpl(const int level, const char *func, const char *file
 // Unified client-server logging function.
 // If client, writes to the debug log.
 // If server, writes to syslog.
+// Unlike DLog, the arguments are always evaluated: the gDebugLogging check is inside CDLogImpl.
+// In units built with ITERM_SERVER or ITERM_XPC every call goes to syslog whatever
+// gDebugLogging says, and with DEBUG defined (Development) the client drops LOG_DEBUG messages.
 #define FDLog(level, args...) CDLogImpl(level, __FUNCTION__, __FILE__, __LINE__, args)
 
 #endif  // ITERMCELOGGING_H

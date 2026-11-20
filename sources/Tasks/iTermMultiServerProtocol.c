@@ -17,7 +17,7 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
-#define LogToLogFunc(args...) logFunction(__FILE__, __LINE__, __FUNCTION__, args)
+#define LogToLogFunc(args...) logFunction(__FILE__, __LINE__, __FUNCTION__, args)  // Calls the parameter or local named logFunction at each use.
 
 typedef enum iTermMultiServerProtocolError {
     iTermMultiServerProtocolErrorEncodingFailed = -1,

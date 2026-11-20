@@ -130,6 +130,12 @@ static inline id iTermAdvancedSettingsModelInverseTransformString(NSString *valu
 // default: The default value, such as YES or @"foo". Nonnil.
 // transformation: Name of a function (as a token) that converts podtype to id
 // inverseTransformation: Name of a function (as a token) that converts id to podtype
+// Nothing calls advancedSettingsModelDictionary_<name> or load_<name> by name: +enumerateMethods:
+// finds them by prefix in the class's method list, so a port must keep every one as a class
+// method with that selector. The user-defaults key is the name with its first letter capitalized,
+// so renaming a setting renames its stored key. default is evaluated each time the dictionary
+// method runs and each time load_ runs with nothing stored. sAdvancedSetting_<name> is also
+// referenced by name outside the macro (+updateSettingsForUnitTestsIfNeeded).
 #define DEFINE_BOILERPLATE(name, podtype, type, default, category, description, transformation, inverseTransformation) \
 static iTermAdvancedSettingSlot sAdvancedSetting_##name; \
 + (NSDictionary *)advancedSettingsModelDictionary_##name { \
@@ -155,6 +161,9 @@ static iTermAdvancedSettingSlot sAdvancedSetting_##name; \
 
 // See DEFINE_BOILERPLATE.
 // capitalizedName: Same as name but with the first letter capitalized so it looks nice in +setFoo:.
+// The setter writes the key @#capitalizedName, while load_ reads name capitalized at run time by
+// stringByCapitalizingFirstLetter. They are the same key only because every use passes a matching
+// capitalizedName; nothing checks it.
 #define DEFINE_SETTABLE_BOILERPLATE(name, capitalizedName, podtype, type, default, category, description, transformation, inverseTransformation) \
 DEFINE_BOILERPLATE(name, podtype, type, default, category, description, transformation, inverseTransformation) \
 + (void)set##capitalizedName :(podtype)newValue { \
@@ -165,6 +174,10 @@ DEFINE_BOILERPLATE(name, podtype, type, default, category, description, transfor
 
 #if ITERM2_SHARED_ARC
 
+// object_<name> and setFromObject_<capitalizedName>: are named only in the strings this stores in
+// the dictionary; iTermAdvancedSettingsViewController.m turns them into selectors. The values live
+// in the Swift class iTermSecureUserDefaults, whose @objc members defaultValue_<name>, <name> and
+// set<capitalizedName>: have these expansions as their only Objective-C callers.
 #define DEFINE_SECURE_BOILERPLATE(name, capitalizedName, podtype, type, category, description, transformation, inverseTransformation) \
 static iTermAdvancedSettingSlot sAdvancedSetting_##name; \
 + (NSDictionary *)advancedSettingsModelDictionary_##name { \
@@ -218,6 +231,7 @@ DEFINE_SECURE_BOILERPLATE(name, capitalizedName, NSString *, kiTermAdvancedSetti
 #define DEFINE_BOOL(name, theDefault, theCategory, theDescription) \
 DEFINE_BOILERPLATE(name, BOOL, kiTermAdvancedSettingTypeBoolean, theDefault, theCategory, theDescription, iTermAdvancedSettingsModelTransformBool, iTermAdvancedSettingsModelInverseTransformBool)
 
+// Identical to the definition just above. An identical redefinition is legal and changes nothing.
 #define DEFINE_BOOL(name, theDefault, theCategory, theDescription) \
 DEFINE_BOILERPLATE(name, BOOL, kiTermAdvancedSettingTypeBoolean, theDefault, theCategory, theDescription, iTermAdvancedSettingsModelTransformBool, iTermAdvancedSettingsModelInverseTransformBool)
 
@@ -239,6 +253,8 @@ DEFINE_SETTABLE_BOILERPLATE(name, capitalizedName, int, kiTermAdvancedSettingTyp
 #define DEFINE_NONNEGATIVE_INT(name, theDefault, theCategory, theDescription) \
 DEFINE_BOILERPLATE(name, int, kiTermAdvancedSettingTypeInteger, theDefault, theCategory, theDescription, iTermAdvancedSettingsModelTransformNonnegativeInt, iTermAdvancedSettingsModelInverseTransformInt)
 
+// Unused, and it would not compile if used: iTermAdvancedSettingsModelTransformOptionalInt and
+// iTermAdvancedSettingsModelInverseTransformOptionalInt do not exist.
 #define DEFINE_OPTIONAL_INT(name, theDefault, theCategory, theDescription) \
 DEFINE_BOILERPLATE(name, int *, kiTermAdvancedSettingTypeOptionalInteger, theDefault, theCategory, theDescription, iTermAdvancedSettingsModelTransformOptionalInt, iTermAdvancedSettingsModelInverseTransformOptionalInt)
 
@@ -246,6 +262,8 @@ DEFINE_BOILERPLATE(name, int *, kiTermAdvancedSettingTypeOptionalInteger, theDef
 // integer value. theOptions is an NSArray<NSString *> * of option titles; the
 // stored value is the index of the selected title. Because the value is just an
 // int, a setting that used to be DEFINE_BOOL migrates transparently (NO=0, YES=1).
+// This does not expand DEFINE_BOILERPLATE but repeats its hidden contract (methods found by
+// prefix, key from the name, static slot), so a change to one must be mirrored in the other.
 #define DEFINE_INT_ENUM(name, theDefault, theOptions, theCategory, theDescription) \
 static iTermAdvancedSettingSlot sAdvancedSetting_##name; \
 + (NSDictionary *)advancedSettingsModelDictionary_##name { \
@@ -283,6 +301,9 @@ DEFINE_SETTABLE_BOILERPLATE(name, capitalizedName, NSString *, kiTermAdvancedSet
 
 #pragma mark -
 
+// Nothing calls deprecated_<name>: +settingIsDeprecated: builds the selector from the setting's
+// name and tests it with respondsToSelector:, and +enumerateDictionaries: then leaves the setting
+// out of the settings UI. The getter and stored key still work.
 #define DEFINE_DEPRECATED_STRING(name, theDefault, theCategory, theDescription) DEFINE_STRING(name, theDefault, theCategory, theDescription); + (BOOL)deprecated_##name { return YES; }
 // Convenience default value for boolean settings that are on for beta users.
 #if BETA

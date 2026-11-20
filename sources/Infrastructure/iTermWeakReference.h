@@ -69,6 +69,10 @@
 @end
 
 // Use this macro inside a weakly referenceable object's @implementation.
+// It calls autorelease, so it compiles only in files built without ARC. iTermWindowImpl.m is
+// included once per window class, so its single use defines -weakSelf on four classes. A Swift
+// port of a class that uses it must still provide -weakSelf for the iTermWeaklyReferenceable
+// protocol.
 #define ITERM_WEAKLY_REFERENCEABLE \
 - (_Nullable id)weakSelf { \
     return [[[iTermWeakReference alloc] initWithObject:self] autorelease]; \

@@ -34,7 +34,7 @@ static void APSWriteToScriptHistory(id<iTermAutomaticProfileSwitcherDelegate> de
                                        completion:^{}];
 }
 
-#define APSLog(args...) do { DLog(args); APSWriteToScriptHistory(self.delegate, args); } while (0)
+#define APSLog(args...) do { DLog(args); APSWriteToScriptHistory(self.delegate, args); } while (0)  // Needs self.delegate. Evaluates args once, twice with debug logging on.
 
 static NSString *const kProfileKey = @"Profile";
 static NSString *const kOriginalProfileKey = @"Original Profile";

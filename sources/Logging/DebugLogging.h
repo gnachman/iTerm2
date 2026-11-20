@@ -64,6 +64,8 @@ void DLogOncePerLoggingSession(NSString *key, NSString *(^messageBlock)(void));
 
 // I use a variadic macro here because of an apparent compiler bug in XCode 4.2 that thinks a
 // variadic objc call as an argument is not a single value.
+// Unlike DLog, this takes one NSString, not a format, and evaluates it even when debug logging
+// is off (DebugLogImpl checks gDebugLogging only after the argument has been computed).
 #define DebugLog(args...) DebugLogImpl(__FILE__, __LINE__, __FUNCTION__, args)
 
 //#define GENERAL_VERBOSE_LOGGING
@@ -85,6 +87,9 @@ void DLogOncePerLoggingSession(NSString *key, NSString *(^messageBlock)(void));
     } while (0)
 
 // Info log: no private info. Low-volume. Logged to crash reports.
+// The arguments are evaluated once for the crash log and once more for DLog when debug logging
+// is on, so an argument with a side effect runs once or twice. A Swift function evaluates it
+// exactly once, which is equivalent only for arguments without side effects.
 #define ILog(args...) \
     do { \
         DLog(args); \
@@ -92,6 +97,9 @@ void DLogOncePerLoggingSession(NSString *key, NSString *(^messageBlock)(void));
     } while (0)
 
 // Error log: no private info. Low-volume. Logged to crash reports.
+// The arguments are evaluated twice (crash log and NSLog), or three times when debug logging is
+// on (DLog as well). An argument like strerror(errno) is read again after the earlier logging
+// calls, which may have changed errno. A Swift replacement evaluates each argument once.
 #define ELog(args...) \
     do { \
         DLog(args); \
@@ -100,6 +108,9 @@ void DLogOncePerLoggingSession(NSString *key, NSString *(^messageBlock)(void));
     } while (0)
 
 // Private error log. May contain private info. Logged to syslog, but not crash reports.
+// The NSLog half runs whether or not debug logging is on; only the DLog half depends on it, so
+// the arguments are evaluated once or twice. The Swift XLog in SwiftDebugLogging.swift returns
+// early when debug logging is off, so it is not a drop-in replacement for this macro.
 #define XLog(args...) \
     do { \
         DLog(args); \
@@ -127,6 +138,8 @@ void DLogOncePerLoggingSession(NSString *key, NSString *(^messageBlock)(void));
 //   RLog(@"Key up: %@", RLogRedact(event, event.it_redactedDescription));
 NSObject *RLogRedact(id full, id redacted);
 
+// Nothing uses ITAssert, and a use would not compile: it passes two arguments to assert(),
+// which takes one. Code that wants this behavior uses ITAssertWithMessage.
 #define ITAssert(condition) \
   do { \
     if (!(condition)) { \
@@ -144,6 +157,11 @@ NSObject *RLogRedact(id full, id redacted);
 #define ITCriticalErrorCreateAlert [[[NSAlert alloc] init] autorelease]
 #endif
 
+// The break below leaves only this macro's own do/while, never a loop in the caller. Each use
+// has its own static haveAlerted, so the alert appears at most once per call site per launch;
+// a Swift port needs state per call site, not one flag. The first failure turns debug logging
+// on before ELog, so the message arguments are evaluated three times then (once if logging is
+// on for a later failure, zero times if it is off).
 #define ITCriticalError(condition, args...) \
   do { \
     if (!(condition)) { \
@@ -190,6 +208,10 @@ NSObject *RLogRedact(id full, id redacted);
   } while (0)
 #endif
 
+// Which definition applies depends on the target as well as the configuration: the app targets
+// define BETA in Development, Beta and Nightly, but ModernTests and pidinfo do not, so code they
+// compile logs and continues even in a Development build. The message arguments are evaluated
+// only on failure, two or three times (ELog). The Swift form is it_betaAssert.
 #if BETA
 #define ITBetaAssert(condition, args...) \
   do { \
@@ -209,6 +231,9 @@ NSObject *RLogRedact(id full, id redacted);
   } while (0)
 #endif
 
+// Without BETA this expands to nothing: neither the condition nor the message is evaluated, so a
+// condition with a side effect behaves differently by build. it_conservativeBetaAssert keeps
+// that by taking both as autoclosures.
 #if BETA
 #define ITConservativeBetaAssert(condition, args...) \
   do { \
@@ -243,6 +268,10 @@ extern BOOL iTermBetaAssertionsCrash;
     it_nonnilLock_; \
   })
 
+// Crashes in every build: it calls __assert_rtn directly, so NDEBUG does not remove it. The
+// condition's source text is pasted into a format string, so a % in the condition would be read
+// as a format specifier, and args must begin with a string literal. On failure the message
+// arguments are evaluated three or four times; the condition is evaluated once.
 #define ITAssertWithMessage(condition, args...) \
     do { \
         if (!(condition)) { \
