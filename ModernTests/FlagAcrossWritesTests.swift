@@ -18,7 +18,11 @@ import XCTest
 @testable import iTerm2SharedARC
 
 final class FlagAcrossWritesTests: XCTestCase {
-    private var session = FakeSession()
+    /// One fake session per screen, kept alive for the test (a screen holds its delegate
+    /// weakly). A session shared between screens would forward the first screen's
+    /// join-time delegate calls to whichever screen was made last, reading that screen's
+    /// state while its own mutation queue runs.
+    private var sessions = [FakeSession]()
 
     private func makeParser(unicodeVersion: Int = 9) -> VT100Parser {
         let p = VT100Parser()
@@ -34,6 +38,8 @@ final class FlagAcrossWritesTests: XCTestCase {
 
     private func makeScreen() -> VT100Screen {
         let screen = VT100Screen()
+        let session = FakeSession()
+        sessions.append(session)
         session.screen = screen
         screen.delegate = session
         let version = unicodeVersion
@@ -62,6 +68,7 @@ final class FlagAcrossWritesTests: XCTestCase {
             iTermUserDefaults.userDefaults().removeObject(forKey: Self.fullWidthFlagsKey)
         }
         iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
+        sessions.removeAll()
         super.tearDown()
     }
 
