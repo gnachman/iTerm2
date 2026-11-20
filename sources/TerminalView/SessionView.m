@@ -1449,6 +1449,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     rect.origin.y = self.showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
     rect.size.width = NSWidth(_scrollview.documentVisibleRect);
     rect.size.height = NSHeight(_scrollview.documentVisibleRect);
+    if (_centersScrollView) {
+        rect.origin = _scrollview.frame.origin;
+    }
     _legacyView.frame = rect;
 }
 
@@ -2563,6 +2566,16 @@ typedef struct {
                              reservedSpaceOnBottom + proposedSize.height - size.height,
                              size.width,
                              size.height);
+    _scrollViewCenteringOffset = NSZeroPoint;
+    if (_centersScrollView) {
+        const NSPoint uncentered = rect.origin;
+        rect.origin.x = floor((proposedSize.width - size.width) / 2);
+        rect.origin.y = reservedSpaceOnBottom + floor((proposedSize.height - size.height) / 2);
+        // The views that draw the text assume the scroll view is at the top left. They move
+        // by this much to stay on top of it.
+        _scrollViewCenteringOffset = NSMakePoint(rect.origin.x - uncentered.x,
+                                                 rect.origin.y - uncentered.y);
+    }
     DLog(@"updateScrollViewFrame on %p: selfFrame=%@ toolbarView=%p toolbarH=%.1f titleH=%.1f -> scrollview rect=%@ (prevRect=%@)",
          self, NSStringFromRect(self.frame), _toolbarView, toolbarHeight, titleHeight,
          NSStringFromRect(rect), NSStringFromRect([self scrollview].frame));

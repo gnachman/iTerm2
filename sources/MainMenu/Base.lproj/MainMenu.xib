@@ -1862,6 +1862,27 @@ DQ
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="24F-Ft-dce"/>
+                            <menuItem title="Twin" identifier="Twin" id="tWn-Mn-u01">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <menu key="submenu" title="Twin" id="tWn-Mn-u02">
+                                    <items>
+                                        <menuItem title="Open Twin of Current Window" identifier="Twin.Open Twin of Current Window" id="tWn-Mn-u03">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <accessibility identifier="Twin.Open Twin of Current Window"/>
+                                            <connections>
+                                                <action selector="openTwinOfCurrentWindow:" target="-1" id="tWn-Mn-u04"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Read Only" identifier="Twin.Read Only" id="tWn-Mn-u05">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <accessibility identifier="Twin.Read Only"/>
+                                            <connections>
+                                                <action selector="toggleTwinsAreReadOnly:" target="-1" id="tWn-Mn-u06"/>
+                                            </connections>
+                                        </menuItem>
+                                    </items>
+                                </menu>
+                            </menuItem>
                             <menuItem title="Arrangements" identifier="Arrangements" id="OBk-Hd-j3M">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Arrangements" id="7ay-jv-hQe">

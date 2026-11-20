@@ -917,6 +917,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         DLog(@"Set state of %@ from %@ to %@", self, @(before), @(_state));
         [self updateIcon];
         [_delegate tab:self didChangeToState:_state];
+        [self updateTwinTabIndicators];
     }
 }
 
@@ -1555,6 +1556,23 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         DLog(@"Set processing flag of %@ from %@ to %@", self, @(isProcessing_), @(aFlag));
         isProcessing_ = aFlag;
         [_delegate tab:self didChangeProcessingStatus:self.isProcessing];
+        [self updateTwinTabIndicators];
+    }
+}
+
+// The tab that a twin tab copies, or nil when this is not a twin tab.
+- (PTYTab *)twinSourceTab {
+    PTYSession *source = self.activeSession.twinSource;
+    return source ? [[iTermController sharedInstance] tabForSession:source] : nil;
+}
+
+// Makes the tabs that copy this one show its activity indicators.
+- (void)updateTwinTabIndicators {
+    for (PTYSession *session in self.sessions) {
+        PTYSession *twin = session.twin;
+        if (twin) {
+            [[[iTermController sharedInstance] tabForSession:twin] updateLabelAttributes];
+        }
     }
 }
 
@@ -1809,6 +1827,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)updateLabelAttributes {
     DLog(@"PTYTab updateLabelAttributes for tab %d", objectCount_);
+
+    PTYTab *twinSourceTab = [self twinSourceTab];
+    if (twinSourceTab) {
+        // A twin tab shows its source's indicators. Its own sessions' activity says nothing.
+        [self setState:twinSourceTab.state reset:~(NSUInteger)twinSourceTab.state];
+        [self setIsProcessing:twinSourceTab.isProcessing];
+        return;
+    }
 
     if ([[self activeSession] exited]) {
         // Session has terminated.
@@ -3903,6 +3929,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             [iTermFloatingPaneLayout refitFloatingPane:floatingPane session:aSession];
         }
         return !VT100GridSizeEquals(before, VT100GridSizeMake(aSession.columns, aSession.rows));
+    }
+    if (aSession.isTwin && aSession.twinSource) {
+        // A twin's grid is its source's. It fits its view by changing its font.
+        return [aSession twinFitToViewSize:[[aSession view] maximumPossibleScrollViewContentSize]];
     }
     __block BOOL result = NO;
     [aSession resetMode];
@@ -8094,6 +8124,9 @@ typedef struct {
     _pinned = pinned;
     [_delegate tab:self didChangePinnedState:pinned];
     [realParentWindow_ invalidateRestorableState];
+    for (PTYSession *session in self.sessions) {
+        [session updateTwinTab];
+    }
 }
 
 - (BOOL)isPinned {

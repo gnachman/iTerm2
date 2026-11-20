@@ -1,6 +1,9 @@
 #import "PTYSession+ARC.h"
 #import "PTYSession+Private.h"
 #import "PTYSession.h"
+#import <stdatomic.h>
+#import "PseudoTerminal.h"
+#import "PTYTab.h"
 
 #import "CVector.h"
 #import "CaptureTrigger.h"
@@ -650,6 +653,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     // Synthetic sessions are used for "zoom in" and DVR, and their closing cannot be undone.
     BOOL _synthetic;
+    // Bytes handed to the twin's feed queue that the twin has not parsed yet.
+    _Atomic(long long) _twinPendingBytes;
+    dispatch_queue_t _twinFeedQueue;
 
     // Cached advanced setting
     NSTimeInterval _idleTime;
@@ -973,6 +979,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     if (self) {
         DLog(@"Begin initialization of new PTYsession %p", self);
         _autoLogId = arc4random();
+        _twinFeedLock = [[NSLock alloc] init];
+        _twinFeedQueue = dispatch_queue_create("com.iterm2.twin-feed", DISPATCH_QUEUE_SERIAL);
+        _twinSuppressedSideEffects = [[NSCountedSet alloc] init];
         _useAdaptiveFrameRate = [iTermAdvancedSettingsModel useAdaptiveFrameRate];
         _adaptiveFrameRateThroughputThreshold = [iTermAdvancedSettingsModel adaptiveFrameRateThroughputThreshold];
         _idleTime = [iTermAdvancedSettingsModel idleTimeSeconds];
@@ -1293,6 +1302,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 ITERM_WEAKLY_REFERENCEABLE
 
 - (void)dealloc {
+    _twin.twinSource = nil;
+    [_twin release];
+    [_twinFeedLock release];
+    dispatch_release(_twinFeedQueue);
+    [_twinSuppressedSideEffects release];
     [_flowLedger release];
     [_restoreSavedForegroundJobAncestors release];
     [_slowlySentPasteEvents release];
@@ -3140,6 +3154,15 @@ ITERM_WEAKLY_REFERENCEABLE
     // Sync so that we'll have an updated model as we go forward so that, for example, tail find
     // will be sane.
     [self sync];
+    PTYSession *twin = self.twin;
+    if (twin) {
+        // The twin keeps this session's grid and changes its font to fit its own window. Not
+        // now: this can run inside a block that has this session's threads joined, and
+        // resizing the twin joins the twin's.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[[iTermController sharedInstance] tabForSession:twin] fitSessionToCurrentViewSize:twin];
+        });
+    }
     if (!self.delegate || [self.delegate sessionShouldSendWindowSizeIOCTL:self]) {
         [_shell.winSizeController setGridSize:size
                                      viewSize:_screen.viewSize
@@ -4318,9 +4341,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         _tmuxGateway = nil;
     }
     _terminatedAsTmuxClient = wasTmuxClient;
+    _twinStartCancelled = YES;
     BOOL undoable = (![self isTmuxClient] &&
                      !_shouldRestart &&
                      !_synthetic &&
+                     !_isTwin &&
                      ![[iTermController sharedInstance] applicationIsQuitting]);
     self.tmuxMode = TMUX_NONE;
     [_tmuxController release];
@@ -4369,6 +4394,14 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     // variables, and so does closing the rest of the window, so stop observing them now.
     [_eventTriggerEvaluator stopFiring];
     [_delegate removeSession:self];
+
+    // Stop copying bytes in either direction of the twin relationship.
+    self.twin.twinSource = nil;
+    self.twin = nil;
+    if (_twinSource.twin == self) {
+        _twinSource.twin = nil;
+    }
+    _twinSource = nil;
 
     _screen.delegate = nil;
     _screen.intervalTreeObserver = nil;
@@ -4562,6 +4595,25 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         forceEncoding:(BOOL)forceEncoding
          canBroadcast:(BOOL)canBroadcast
             reporting:(BOOL)reporting {
+    if (_isTwin) {
+        // A twin has no program. What the user types in it goes to the live session. Reports
+        // do not: the live session's terminal already sent its own.
+        if (reporting) {
+            [self twinSuppresses:@"report"];
+            return;
+        }
+        if ([[iTermUserDefaults userDefaults] boolForKey:PTYSessionTwinsAreReadOnlyUserDefaultsKey]) {
+            DLog(@"Twins are read only. Drop input.");
+            return;
+        }
+        // Through the live session's front door, so its tmux and SSH routing apply.
+        [_twinSource writeTask:string
+                      encoding:optionalEncoding
+                 forceEncoding:forceEncoding
+                  canBroadcast:canBroadcast
+                     reporting:NO];
+        return;
+    }
     const NSStringEncoding encoding = forceEncoding ? optionalEncoding : _screen.terminalEncoding;
     if (gDebugLogging) {
         NSArray *stack = [NSThread callStackSymbols];
@@ -4885,7 +4937,85 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // This is run in PTYTask's thread. It parses the input here and then queues an async task to run
 // in the main thread to execute the parsed tokens. This blocks when the queue of tokens gets too large.
 - (void)threadedReadTask:(char *)buffer length:(int)length {
+    [_twinFeedLock lock];
     [_screen threadedReadTask:buffer length:length];
+    PTYSession *twin = [self.twin retain];
+    if (twin) {
+        // The twin parses on its own queue. This thread reads for the live session, and on
+        // some configurations for other sessions too, so it must never wait for a twin.
+        static const long long maximumPendingBytes = 32 * 1024 * 1024;
+        const long long pending = atomic_fetch_add(&_twinPendingBytes, length) + length;
+        if (pending > maximumPendingBytes) {
+            atomic_fetch_sub(&_twinPendingBytes, length);
+            self.twin = nil;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self twinDidFallBehind:twin];
+            });
+        } else {
+            NSData *data = [[NSData alloc] initWithBytes:buffer length:length];
+            dispatch_async(_twinFeedQueue, ^{
+                [twin.screen threadedReadTask:(char *)data.bytes length:(int)data.length];
+                atomic_fetch_sub(&self->_twinPendingBytes, (long long)data.length);
+            });
+            [data release];
+        }
+    }
+    [twin release];
+    [_twinFeedLock unlock];
+}
+
+- (long long)twinPendingByteCount {
+    return atomic_load(&_twinPendingBytes);
+}
+
+// Main queue. The twin stopped parsing and too much output is waiting for it. It is no longer
+// a copy of this session, so its window replaces it with a new one.
+- (void)twinDidFallBehind:(PTYSession *)twin {
+    RLog(@"Twin %@ of %@ fell behind. Drop it.", twin, self);
+    if (twin.twinSource == self) {
+        twin.twinSource = nil;
+    }
+    [[PseudoTerminal castFrom:[_delegate realParentWindow]] twinWindowsNeedSync];
+}
+
+NSString *const PTYSessionTwinsAreReadOnlyUserDefaultsKey = @"NoSyncTwinSessionsAreReadOnly";
+
+- (void)copyTerminalStateToTwin:(PTYSession *)twin {
+    __block NSData *unparsed = nil;
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
+        unparsed = [terminal.parser.streamData retain];
+    }];
+    [unparsed autorelease];
+    iTermMutableDictionaryEncoderAdapter *encoder = [iTermMutableDictionaryEncoderAdapter encoder];
+    int linesDropped = 0;
+    [_screen encodeContents:encoder linesDropped:&linesDropped unlimited:YES];
+
+    twin->_screen.terminalEnabled = YES;
+    [twin setSize:_screen.size];
+    [twin setContentsFromLineBufferDictionary:encoder.mutableDictionary
+                     includeRestorationBanner:NO
+                                   reattached:YES
+                                    isArchive:NO
+                         largeContentProvider:nil];
+    [twin->_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                   VT100ScreenMutableState *mutableState,
+                                                   id<VT100ScreenDelegate> delegate) {
+        [mutableState restoreInitialSizeWithDelegate:delegate];
+        if (unparsed.length > 0) {
+            [terminal.parser putStreamData:unparsed.bytes length:(int)unparsed.length];
+        }
+    }];
+}
+
+- (BOOL)twinSuppresses:(NSString *)name {
+    if (!_isTwin) {
+        return NO;
+    }
+    [_twinSuppressedSideEffects addObject:name];
+    DLog(@"Twin %@ does not perform: %@", self, name);
+    return YES;
 }
 
 - (BOOL)taskHasReadCapacity {
@@ -7298,6 +7428,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (BOOL)shouldShowTabGraphic {
+    if (_isTwin && _twinSource) {
+        return [_twinSource shouldShowTabGraphic];
+    }
     return [self shouldShowTabGraphicForProfile:self.profile];
 }
 
@@ -7307,6 +7440,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (NSImage *)tabGraphic {
+    if (_isTwin && _twinSource) {
+        return [_twinSource tabGraphic];
+    }
     return [self tabGraphicForProfile:self.profile];
 }
 
@@ -7862,6 +7998,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self invalidateBlend];
     [[_delegate realParentWindow] invalidateRestorableState];
     [[_delegate realParentWindow] updateTabColors];
+    [self updateTwinTab];
     [_delegate sessionDidUpdatePreferencesFromProfile:self];
     [_nameController setNeedsUpdate];
     _profileDidChange = YES;
@@ -7883,6 +8020,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self invalidateBlend];
     [[_delegate realParentWindow] invalidateRestorableState];
     [[_delegate realParentWindow] updateTabColors];
+    [self updateTwinTab];
     [_delegate sessionDidUpdatePreferencesFromProfile:self];
 }
 
@@ -10116,6 +10254,14 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     if (!machineSupportsMetal) {
         if (reason) {
             *reason = iTermMetalUnavailableReasonNoGPU;
+        }
+        return NO;
+    }
+    if (_isTwin) {
+        // The GPU renderer assumes the scroll view fills the session view. A twin's is
+        // centered in it.
+        if (reason) {
+            *reason = iTermMetalUnavailableReasonDisabled;
         }
         return NO;
     }
@@ -17227,6 +17373,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenResizeToWidth:(int)width height:(int)height {
+    if ([self twinSuppresses:@"window"]) {
+        return;
+    }
     [_delegate sessionInitiatedResize:self width:width height:height];
 }
 
@@ -17528,6 +17677,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)screenPrintStringIfAllowed:(NSString *)string
                         completion:(void (^)(void))completion {
+    if ([self twinSuppresses:@"print"]) {
+        return;
+    }
     // Dispatch because this may show an alert and you can't have a runloop in a side effect.
     dispatch_async(dispatch_get_main_queue(), ^{
         [self reallyTryToPrintString:string];
@@ -17684,6 +17836,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenMoveWindowTopLeftPointTo:(NSPoint)point {
+    if ([self twinSuppresses:@"window"]) {
+        return;
+    }
     if ([_delegate sessionIsFloating:self]) {
         // Screen coordinates mean nothing for a float.
         DLog(@"Ignore moving the window of float %@", self);
@@ -17696,6 +17851,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenSetWindowFrame:(NSRect)frame {
+    if ([self twinSuppresses:@"window"]) {
+        return;
+    }
     if ([_delegate sessionIsFloating:self]) {
         DLog(@"Ignore setting the window frame of float %@", self);
         return;
@@ -17746,6 +17904,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 // If flag is set, miniaturize; otherwise, deminiaturize.
 - (void)screenMiniaturizeWindow:(BOOL)flag {
+    if ([self twinSuppresses:@"window"]) {
+        return;
+    }
     if ([_delegate sessionIsFloating:self]) {
         DLog(@"Ignore miniaturizing the window of float %@", self);
         return;
@@ -17759,6 +17920,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 // If flag is set, bring to front; if not, move to back.
 - (void)screenRaise:(BOOL)flag {
+    if ([self twinSuppresses:@"focus"]) {
+        return;
+    }
     if ([_delegate sessionIsFloating:self] &&
         [_delegate respondsToSelector:@selector(sessionRaiseFloatingPane:toFront:)]) {
         // For a float the pane is the window: raise or lower it among the tab's floats.
@@ -17787,6 +17951,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenSendReportData:(NSData *)data {
+    if ([self twinSuppresses:@"report"]) {
+        return;
+    }
     if (_shell == nil) {
         return;
     }
@@ -17802,6 +17969,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenSendTmuxOSC4Report:(NSData *)report {
+    if ([self twinSuppresses:@"report"]) {
+        return;
+    }
     if (!_tmuxController.shouldHandleOSC4Queries) {
         DLog(@"Not handling osc 4 queries");
         return;  // tmux < 3.6, tmux handles it
@@ -17885,10 +18055,16 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenStartTmuxModeWithDCSIdentifier:(NSString *)dcsID {
+    if ([self twinSuppresses:@"tmux"]) {
+        return;
+    }
     [self startTmuxMode:dcsID];
 }
 
 - (void)screenHandleTmuxInput:(VT100Token *)token {
+    if ([self twinSuppresses:@"tmux"]) {
+        return;
+    }
     [_tmuxGateway executeToken:token];
 }
 
@@ -17897,6 +18073,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenPrintVisibleAreaIfAllowed {
+    if ([self twinSuppresses:@"print"]) {
+        return;
+    }
     if (![self shouldBeginPrinting:YES]) {
         return;
     }
@@ -18439,6 +18618,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenStealFocus {
+    if ([self twinSuppresses:@"focus"]) {
+        return;
+    }
     // Dispatch because you can't have a runloop in a side-effect.
     dispatch_async(dispatch_get_main_queue(), ^{
         [self maybeStealFocus];
@@ -18461,6 +18643,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenSetProfileToProfileNamed:(NSString *)value {
+    if ([self twinSuppresses:@"profile change"]) {
+        return;
+    }
     if (![self.naggingController terminalCanChangeProfile]) {
         return;
     }
@@ -18519,6 +18704,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenSetPasteboard:(NSString *)value {
+    if ([self twinSuppresses:@"clipboard"]) {
+        return;
+    }
     if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
         if ([value isEqualToString:@"ruler"]) {
             [self setPasteboard:NSPasteboardNameGeneral];
@@ -18547,6 +18735,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 // Stop pasting (despite the name)
 - (void)screenCopyBufferToPasteboard {
+    if ([self twinSuppresses:@"clipboard"]) {
+        return;
+    }
     if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
         [self setPasteboard:nil];
     } else {
@@ -18558,6 +18749,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenAppendDataToPasteboard:(NSData *)data {
+    if ([self twinSuppresses:@"clipboard"]) {
+        return;
+    }
     if (_pasteboard == nil) {
         return;
     }
@@ -18572,6 +18766,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenWillReceiveFileNamed:(NSString *)filename ofSize:(NSInteger)size preconfirmed:(BOOL)preconfirmed {
+    if ([self twinSuppresses:@"download"]) {
+        return;
+    }
     [self.download stop];
     [self.download endOfData];
     self.download = [[[TerminalFileDownload alloc] initWithName:filename size:size window:_view.window] autorelease];
@@ -18620,6 +18817,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenRequestUpload:(NSString *)args completion:(void (^)(void))completion {
+    if ([self twinSuppresses:@"upload"]) {
+        completion();
+        return;
+    }
     // Dispatch out of fear that NSOpenPanel might do something funky with ruloops even though it doesn't seem to currently.
     dispatch_async(dispatch_get_main_queue(), ^{
         NSArray<NSString *> *parts = [args componentsSeparatedByString:@";"];
@@ -18755,6 +18956,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenRequestAttention:(VT100AttentionRequestType)request {
+    if ([self twinSuppresses:@"attention"]) {
+        return;
+    }
     switch (request) {
         case VT100AttentionRequestTypeFireworks:
             [_textview showFireworks];
@@ -19292,9 +19496,13 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
     [self setTabColor:color fromEscapeSequence:YES];
     id<WindowControllerInterface> term = [_delegate parentWindow];
     [term updateTabColors];
+    [self updateTwinTab];
 }
 
 - (NSColor *)tabColor {
+    if (_isTwin && _twinSource) {
+        return [_twinSource tabColor];
+    }
     // Cached by loadColorsFromProfile: rather than read from _profile here, for the same reasons
     // as textViewBadgeColor. Before the first colors load no reload has run yet, so reading the
     // live profile is harmless.
@@ -19474,6 +19682,7 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
                                           alpha:1]
    fromEscapeSequence:YES];
     [[_delegate parentWindow] updateTabColors];
+    [self updateTwinTab];
 }
 
 - (void)screenSetTabColorGreenComponentTo:(CGFloat)color {
@@ -19484,6 +19693,7 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
                                           alpha:1]
    fromEscapeSequence:YES];
     [[_delegate parentWindow] updateTabColors];
+    [self updateTwinTab];
 }
 
 - (void)screenSetTabColorBlueComponentTo:(CGFloat)color {
@@ -19494,6 +19704,7 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
                                           alpha:1]
    fromEscapeSequence:YES];
     [[_delegate parentWindow] updateTabColors];
+    [self updateTwinTab];
 }
 
 - (void)screenCurrentHostDidChange:(id<VT100RemoteHostReading>)host
@@ -19887,6 +20098,9 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
 
 - (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters
                                                    payload:(NSString *)payload {
+    if ([self twinSuppresses:@"custom escape sequence"]) {
+        return;
+    }
     if (_eventTriggerEvaluator.hasCustomEscapeSequenceTrigger) {
         NSString *identifier = parameters[@"id"] ?: @"";
         iTermEventCustomEscapeSequenceInfo *info = [[iTermEventCustomEscapeSequenceInfo alloc] initWithIdentifier:identifier
@@ -19961,6 +20175,9 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
 }
 
 - (void)screenReportWindowTitle {
+    if ([self twinSuppresses:@"report"]) {
+        return;
+    }
     if (self.isTmuxClient) {
         return;
     }
@@ -20232,6 +20449,9 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
                            mark:(id<VT100ScreenMarkReading>)mark
               keyReportingFlags:(VT100TerminalKeyReportingFlags)keyReportingFlags
                          paused:(BOOL)paused {
+    if ([self twinSuppresses:@"command history"]) {
+        return;
+    }
     [[self stuckKeyReportingDetector] commandDidStart:command keyReportingFlags:keyReportingFlags];
     if (_eventTriggerEvaluator.hasLongRunningCommandTrigger) {
         [_eventTriggerEvaluator commandStartedWithCommand:command];
@@ -20717,6 +20937,9 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
                           visibly:(BOOL)flashBell
                     showIndicator:(BOOL)showBellIndicator
                             quell:(BOOL)quell {
+    if ([self twinSuppresses:@"bell"]) {
+        return;
+    }
     if ([self shouldIgnoreBellWhichIsAudible:audibleBell
                                      visible:flashBell]) {
         return;
@@ -21295,6 +21518,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)screenTerminalAttemptedPasteboardAccess {
+    if ([self twinSuppresses:@"clipboard"]) {
+        return;
+    }
     [self.textview didCopyToPasteboardWithControlSequence];
     if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
         return;
@@ -21679,6 +21905,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)screenCopyStringToPasteboard:(NSString *)string {
+    if ([self twinSuppresses:@"clipboard"]) {
+        return;
+    }
     [self screenTerminalAttemptedPasteboardAccess];
     // check the configuration
     if (![iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
@@ -21693,6 +21922,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)screenReportPasteboard:(NSString *)pasteboard completion:(void (^)(void))completion {
+    if ([self twinSuppresses:@"clipboard report"]) {
+        completion();
+        return;
+    }
     if (!_pasteboardReporter) {
         _pasteboardReporter = [[iTermPasteboardReporter alloc] init];
         _pasteboardReporter.delegate = self;
@@ -21713,6 +21946,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)screenPostUserNotification:(NSString * _Nonnull)message rich:(BOOL)rich {
+    if ([self twinSuppresses:@"notification"]) {
+        return;
+    }
     NSDictionary<NSString *, NSString *> *decoded = nil;
     if (rich) {
         decoded = [[message it_keyValuePairsSeparatedBy:@";"] mapValuesWithBlock:^id(NSString *key, NSString *encoded) {
@@ -21827,6 +22063,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                      dcsID:(NSString * _Nonnull)dcsID
                                parentDepth:(int)parentDepth
                                 savedState:(NSDictionary *)savedState {
+    if ([self twinSuppresses:@"ssh integration"]) {
+        return;
+    }
     if (![self installSSHConductorWithToken:token
                                    uniqueID:uniqueID
                                    boolArgs:boolArgs
@@ -22364,6 +22603,10 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
 }
 
 - (void)screenOpenURL:(NSURL *)url completion:(void (^)(void))completion {
+    if ([self twinSuppresses:@"open url"]) {
+        completion();
+        return;
+    }
     DLog(@"url=%@", url);
     [self.naggingController openURL:url];
     completion();
@@ -23554,6 +23797,13 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
 }
 
 - (NSSize)sessionViewScrollViewWillResize:(NSSize)proposedSize {
+    if (_isTwin && _twinSource) {
+        // A twin's grid is fixed, so its scroll view is as big as the grid needs. The session
+        // view centers it.
+        const NSSize idealSize = [self idealScrollViewSizeWithStyle:_view.scrollview.scrollerStyle];
+        return NSMakeSize(MIN(proposedSize.width, idealSize.width),
+                          MIN(proposedSize.height, idealSize.height));
+    }
     if ([self isTmuxClient] && ![_delegate sessionBelongsToTmuxTabWhoseSplitsAreBeingDragged]) {
         NSSize idealSize = [self idealScrollViewSizeWithStyle:_view.scrollview.scrollerStyle];
         NSSize maximumSize = NSMakeSize(idealSize.width + _textview.charWidth - 1,
@@ -24830,7 +25080,122 @@ resolveSymlinksInDirectory:(NSString *)directory
     [self.variablesScope setValue:newName forVariableNamed:iTermVariableKeySessionName];
 }
 
+// A twin must have its source's columns and rows, or what programs draw lands in the wrong
+// places. So a twin never takes its grid from its view. It takes the largest font size at which
+// the source's grid fits the view.
+- (BOOL)twinFitToViewSize:(NSSize)viewSize {
+    if (!_isTwin || !_twinSource || _twinFitting) {
+        return NO;
+    }
+    _twinFitting = YES;
+    const VT100GridSize grid = _twinSource.screen.size;
+    const CGFloat availableWidth = viewSize.width - [iTermPreferences sideMargins] * 2;
+    const CGFloat availableHeight = viewSize.height - [iTermPreferences topBottomMargins] * 2;
+    // The profile's spacing. The view's may hold what an earlier fit added.
+    const CGFloat baseHorizontalSpacing = [iTermProfilePreferences doubleForKey:KEY_HORIZONTAL_SPACING inProfile:self.profile];
+    const CGFloat baseVerticalSpacing = [iTermProfilePreferences doubleForKey:KEY_VERTICAL_SPACING inProfile:self.profile];
+    iTermFontTable *currentTable = _textview.fontTable;
+    const CGFloat currentPointSize = currentTable.asciiFont.font.pointSize;
+    const NSSize currentCell = [PTYTextView charSizeForFont:currentTable.fontForCharacterSizeCalculations
+                                          horizontalSpacing:baseHorizontalSpacing
+                                            verticalSpacing:baseVerticalSpacing];
+    const CGFloat scale = MIN(availableWidth / (grid.width * MAX(1.0, currentCell.width)),
+                              availableHeight / (grid.height * MAX(1.0, currentCell.height)));
+    static const CGFloat minimumPointSize = 4;
+    static const CGFloat step = 0.5;
+    CGFloat pointSize = MAX(minimumPointSize, MIN(200, floor(currentPointSize * scale / step) * step));
+    iTermFontTable *table = currentTable;
+    NSSize cell = currentCell;
+    for (int attempt = 0; attempt < 8; attempt++) {
+        table = [currentTable fontTableGrownBy:pointSize - currentPointSize];
+        cell = [PTYTextView charSizeForFont:table.fontForCharacterSizeCalculations
+                          horizontalSpacing:baseHorizontalSpacing
+                            verticalSpacing:baseVerticalSpacing];
+        const BOOL fits = (cell.width * grid.width <= availableWidth &&
+                           cell.height * grid.height <= availableHeight);
+        if (fits || pointSize <= minimumPointSize) {
+            break;
+        }
+        pointSize -= step;
+    }
+
+    // The font moves in steps and the window's shape seldom matches the grid's, so space is
+    // left over. Up to this much of it goes between characters or between lines. More than
+    // that would make text look spread out, so it stays empty around the centered grid.
+    static const CGFloat maximumSpacingGrowth = 1.10;
+    CGFloat horizontalSpacing = baseHorizontalSpacing;
+    CGFloat verticalSpacing = baseVerticalSpacing;
+    const CGFloat horizontalGrowth = availableWidth / MAX(1.0, cell.width * grid.width);
+    const CGFloat verticalGrowth = availableHeight / MAX(1.0, cell.height * grid.height);
+    if (horizontalGrowth > 1 && horizontalGrowth <= maximumSpacingGrowth) {
+        horizontalSpacing = baseHorizontalSpacing * horizontalGrowth;
+    }
+    if (verticalGrowth > 1 && verticalGrowth <= maximumSpacingGrowth) {
+        verticalSpacing = baseVerticalSpacing * verticalGrowth;
+    }
+    for (int attempt = 0; attempt < 20; attempt++) {
+        const NSSize spaced = [PTYTextView charSizeForFont:table.fontForCharacterSizeCalculations
+                                         horizontalSpacing:horizontalSpacing
+                                           verticalSpacing:verticalSpacing];
+        const BOOL tooWide = spaced.width * grid.width > availableWidth;
+        const BOOL tooTall = spaced.height * grid.height > availableHeight;
+        if (!tooWide && !tooTall) {
+            break;
+        }
+        if (tooWide) {
+            horizontalSpacing = MAX(baseHorizontalSpacing, horizontalSpacing - 0.005);
+        }
+        if (tooTall) {
+            verticalSpacing = MAX(baseVerticalSpacing, verticalSpacing - 0.005);
+        }
+    }
+    DLog(@"Twin %@ fits grid %@ in %@ at %@pt spacing %@ x %@",
+         self, VT100GridSizeDescription(grid), NSStringFromSize(viewSize), @(pointSize),
+         @(horizontalSpacing), @(verticalSpacing));
+    const BOOL savedWindowAdjustmentDisabled = _windowAdjustmentDisabled;
+    _windowAdjustmentDisabled = YES;
+    [self setFontTable:table horizontalSpacing:horizontalSpacing verticalSpacing:verticalSpacing];
+    _windowAdjustmentDisabled = savedWindowAdjustmentDisabled;
+    const BOOL gridChanged = !VT100GridSizeEquals(grid, _screen.size);
+    if (gridChanged) {
+        [self setSize:grid];
+    }
+    _view.centersScrollView = YES;
+    [_view updateScrollViewFrame];
+    [_delegate sessionUpdateMetalAllowed];
+    _twinFitting = NO;
+    return gridChanged;
+}
+
+// Makes the twin's tab show this session's title and icon.
+- (void)updateTwinTab {
+    PTYSession *twin = self.twin;
+    if (!twin) {
+        return;
+    }
+    NSString *name = [self.variablesScope valueForVariableName:iTermVariableKeySessionPresentationName];
+    if (name) {
+        [twin sessionNameControllerPresentationNameDidChangeTo:name];
+    }
+    [twin.delegate sessionDidChangeGraphic:twin
+                                shouldShow:self.shouldShowTabGraphic
+                                     image:self.tabGraphic];
+    [[twin.delegate realParentWindow] updateTabColors];
+
+    iTermController *controller = [iTermController sharedInstance];
+    PTYTab *tab = [controller tabForSession:self];
+    PTYTab *twinTab = [controller tabForSession:twin];
+    if (tab && twinTab && twinTab.isPinned != tab.isPinned) {
+        twinTab.pinned = tab.isPinned;
+        [[controller terminalWithTab:twinTab] tabsDidReorder];
+    }
+}
+
 - (void)sessionNameControllerPresentationNameDidChangeTo:(NSString *)presentationName {
+    if (_isTwin && _twinSource) {
+        // A twin has no job or title of its own. It shows its source's.
+        presentationName = [_twinSource.variablesScope valueForVariableName:iTermVariableKeySessionPresentationName] ?: presentationName;
+    }
     [_delegate nameOfSession:self didChangeTo:presentationName];
     [self.view setTitle:presentationName];
 
@@ -24844,6 +25209,7 @@ resolveSymlinksInDirectory:(NSString *)directory
                                                         object:self];
     [self.variablesScope setValue:presentationName forVariableNamed:iTermVariableKeySessionPresentationName];
     [_textview setBadgeLabel:[self badgeLabel]];
+    [self updateTwinTab];
 }
 
 - (void)sessionNameControllerDidChangeWindowTitle {
@@ -24974,6 +25340,7 @@ resolveSymlinksInDirectory:(NSString *)directory
         // case (Automatic icon, non-browser) -tabGraphicForProfile: would only re-run the same
         // deepestForegroundJobForPid + ancestor walk a second time and return this very image.
         [self.delegate sessionDidChangeGraphic:self shouldShow:enabled image:_graphicSource.image];
+        [self updateTwinTab];
     }
 }
 
