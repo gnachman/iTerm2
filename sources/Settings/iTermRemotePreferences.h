@@ -53,6 +53,15 @@ extern NSString *const iTermRemotePreferencesSavedPrefsDidChangeNotification;
             preservedKeys:(NSArray<NSString *> *)preservedKeys
        respectingDefaults:(BOOL)respectDefaults;
 
+// Writes prefs to filename as an XML property list, encoding strings that contain NUL (see
+// iTermPlistNULCodec). Returns the prefs that reading the file back will produce, or nil on
+// failure. Exposed for testing.
++ (nullable NSDictionary *)savePrefs:(NSDictionary *)prefs toFile:(NSString *)filename;
+
+// Reads a property list written by savePrefs:toFile:, decoding strings that contain NUL. Returns nil
+// if the file is missing or malformed.
++ (nullable NSDictionary *)prefsFromFile:(NSString *)filename;
+
 @end
 
 NS_ASSUME_NONNULL_END

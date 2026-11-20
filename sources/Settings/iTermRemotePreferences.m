@@ -368,9 +368,12 @@ respectingTimeoutSetting:(BOOL)respectingTimeoutSetting
         }
 
         remotePrefs = [NSDictionary it_dictionaryWithContentsOfData:data];
+        if (remotePrefs) {
+            remotePrefs = [iTermPlistNULCodec decodedDictionary:remotePrefs];
+        }
     } else {
         RLog(@"Will load dictionary from %@", filename);
-        remotePrefs = [NSDictionary dictionaryWithContentsOfFile:filename];
+        remotePrefs = [iTermRemotePreferences prefsFromFile:filename];
         DLog(@"Did load dictionary from %@", filename);
     }
     if (!remotePrefs.count) {
@@ -581,7 +584,9 @@ static NSDictionary *iTermUserDefaultsDictionary(NSArray<NSString *> *preservedK
 
 // Runs either on a background queue or on the main thread. Synchronous. Returns the saved values.
 static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *filename) {
-    NSData *data = [myDict it_xmlPropertyList];
+    // XML can't hold a NUL, which some values (e.g., the characters of a Ctrl+Space hotkey) contain.
+    NSDictionary *encoded = [iTermPlistNULCodec encodedDictionary:myDict];
+    NSData *data = [encoded it_xmlPropertyList];
     if (!data) {
         DLog(@"Failed to encode %@", myDict);
         return nil;
@@ -592,7 +597,24 @@ static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *
         RLog(@"Failed to save to %@: %@", filename, error);
         return nil;
     }
-    return myDict;
+    if (encoded == myDict) {
+        return myDict;
+    }
+    // Return what reading the file back will produce so later comparisons against it match. It
+    // differs from myDict only if myDict held a stale sidecar or a string with NUL inside an array.
+    return [iTermPlistNULCodec decodedDictionary:encoded];
+}
+
++ (NSDictionary *)savePrefs:(NSDictionary *)prefs toFile:(NSString *)filename {
+    return iTermRemotePreferencesSave(prefs, filename);
+}
+
++ (NSDictionary *)prefsFromFile:(NSString *)filename {
+    NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:filename];
+    if (!dict) {
+        return nil;
+    }
+    return [iTermPlistNULCodec decodedDictionary:dict];
 }
 
 - (NSDictionary *)userDefaultsDictionary {

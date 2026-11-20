@@ -1014,7 +1014,7 @@ private struct SecureUserDefaultsImporterExporter {
         }
         let plist: Any
         do {
-            plist = try PropertyListSerialization.propertyList(from: data, options: [], format: nil)
+            plist = PlistNULCodec.decode(try PropertyListSerialization.propertyList(from: data, options: [], format: nil))
         } catch {
             DLog("\(error) for \(data.stringOrHex)")
             throw ImportExportError.corruptDataFound(String(localized: "ImportExport.InvalidDataFound", defaultValue: "Invalid data found at \(source.path)", comment: "Error shown when imported data is invalid; the placeholder is a file path"))
@@ -1230,7 +1230,10 @@ private struct AutomationAuthImporterExporter {
 
 fileprivate extension Dictionary {
     func saveAsPropertyList(to destination: URL) throws {
-        guard let plistData = try? PropertyListSerialization.data(fromPropertyList: self,
+        // XML can't hold a NUL, which some values (e.g., the characters of a Ctrl+Space hotkey)
+        // contain. The user defaults import reads this back through iTermRemotePreferences, which
+        // decodes it; the secure user defaults import decodes it itself.
+        guard let plistData = try? PropertyListSerialization.data(fromPropertyList: PlistNULCodec.encode(self),
                                                                   format: .xml,
                                                                   options: 0) else {
             throw ImportExportError.bug(String(localized: "ImportExport.FailedToSerializeUserDefaults", defaultValue: "Failed to serialize user defaults", comment: "Error shown when user defaults cannot be serialized during export"))
