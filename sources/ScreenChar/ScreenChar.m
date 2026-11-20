@@ -417,8 +417,7 @@ NSString* CharArrayToString(unichar* charHaystack, int o)
     // LittleEndian seems to work on my x86, and BigEndian works under Rosetta
     // with a ppc-only binary. Oddly, testing for defined(LITTLE_ENDIAN) does
     // not produce the correct results under ppc+Rosetta.
-    int encoding;
-    encoding = NSUTF16LittleEndianStringEncoding;
+    const NSStringEncoding encoding = NSUTF16LittleEndianStringEncoding;
     return [[NSString alloc] initWithBytesNoCopy:charHaystack
                                           length:o * sizeof(unichar)
                                         encoding:encoding

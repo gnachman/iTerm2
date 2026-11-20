@@ -17733,13 +17733,18 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     NSRect screenFrame = [self screenWindowScreenFrame];
     NSRect windowFrame = [self screenWindowFrame];
     NSSize cellSize = [self screenCellSize];
+    // A zero or non-finite cell size (a session with no font metrics) makes
+    // the growth NaN or infinite, and converting that to int is undefined.
+    // Such a dimension does not grow: the answer is the current grid size.
     {
         const CGFloat roomToGrow = screenFrame.size.height - windowFrame.size.height;
-        result.height = _screen.height + roomToGrow / cellSize.height;
+        const CGFloat growth = roomToGrow / cellSize.height;
+        result.height = _screen.height + (isfinite(growth) ? growth : 0);
     }
     {
         const CGFloat roomToGrow = screenFrame.size.width - windowFrame.size.width;
-        result.width = _screen.width + roomToGrow / cellSize.width;
+        const CGFloat growth = roomToGrow / cellSize.width;
+        result.width = _screen.width + (isfinite(growth) ? growth : 0);
     }
     return result;
 }
@@ -17873,7 +17878,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (int)screenWindowIndex {
-    return [[iTermController sharedInstance] indexOfTerminal:(PseudoTerminal *)[_delegate realParentWindow]];
+    const NSUInteger index = [[iTermController sharedInstance] indexOfTerminal:(PseudoTerminal *)[_delegate realParentWindow]];
+    // A window that is not registered gives NSNotFound. Callers treat a
+    // negative index as no window.
+    return index == NSNotFound ? -1 : (int)index;
 }
 
 - (int)screenTabIndex {
