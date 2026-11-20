@@ -222,6 +222,13 @@ NSObject *RLogRedact(id full, id redacted);
 #define ITConservativeBetaAssert(condition, args...)
 #endif
 
+// YES when this code was compiled with BETA defined (the Development, Beta and Nightly
+// configurations), where ITBetaAssert crashes; NO in Deployment, where it logs and continues.
+// Swift cannot see the BETA macro, so it_betaAssert and the other Swift migration helpers read
+// this instead. It is not const only so that tests can check the Deployment behavior of the
+// Swift helpers; nothing else assigns it.
+extern BOOL iTermBetaAssertionsCrash;
+
 #define ITAssertWithMessage(condition, args...) \
     do { \
         if (!(condition)) { \

@@ -44,6 +44,13 @@ static NSUInteger gRetrospectiveLogBytes;
 static const NSUInteger kRetrospectiveLogMaxBytes = 10 * 1024 * 1024;
 
 BOOL gDebugLogging = NO;
+
+#if BETA
+BOOL iTermBetaAssertionsCrash = YES;
+#else
+BOOL iTermBetaAssertionsCrash = NO;
+#endif
+
 // Keys already emitted by DLogOncePerLoggingSession this logging
 // session. Guarded by GetDebugLogLock(); cleared in StartDebugLogging.
 static NSMutableSet<NSString *> *gOncePerLoggingSessionKeys;
