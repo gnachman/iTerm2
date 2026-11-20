@@ -77,13 +77,13 @@
 }
 
 - (void)closeConnection {
-    @synchronized (_lock) {
+    @synchronized (ITNonnilLock(_lock)) {
         _stream = nil;
     }
 }
 
 - (BOOL)sendResponseWithCode:(int)code reason:(NSString *)reason headers:(NSDictionary *)headers {
-    @synchronized(_lock) {
+    @synchronized(ITNonnilLock(_lock)) {
         if (!_stream) {
             return NO;
         }
@@ -273,7 +273,7 @@
     }
 
     iTermStream *stream;
-    @synchronized(_lock) {
+    @synchronized(ITNonnilLock(_lock)) {
         if (!_stream) {
             return NO;
         }
@@ -291,7 +291,7 @@
         } else {
             RLog(@"EOF reached");
         }
-        @synchronized(_lock) {
+        @synchronized(ITNonnilLock(_lock)) {
             _stream = nil;
         }
         return NO;
@@ -306,7 +306,7 @@
     struct timeval timeout;
     struct timeval *timeoutPointer = NULL;
     iTermStream *stream;
-    @synchronized(_lock) {
+    @synchronized(ITNonnilLock(_lock)) {
         if (!_stream) {
             return NO;
         }
@@ -361,7 +361,7 @@
         }
 
         iTermStream *stream;
-        @synchronized(_lock) {
+        @synchronized(ITNonnilLock(_lock)) {
             if (!_stream) {
                 return NO;
             }
@@ -377,7 +377,7 @@
             } else {
                 DLog(@"EOF reached");
             }
-            @synchronized(_lock) {
+            @synchronized(ITNonnilLock(_lock)) {
                 _stream = nil;
             }
             return NO;
@@ -392,7 +392,7 @@
                  completion:(void (^)(bool done,
                                       dispatch_data_t _Nullable data,
                                       int error))completion {
-    @synchronized(_lock) {
+    @synchronized(ITNonnilLock(_lock)) {
         if (_stream) {
             dispatch_io_write(_stream.stream,
                               0,  // offset

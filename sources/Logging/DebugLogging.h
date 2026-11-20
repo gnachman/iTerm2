@@ -229,6 +229,20 @@ NSObject *RLogRedact(id full, id redacted);
 // Swift helpers; nothing else assigns it.
 extern BOOL iTermBetaAssertionsCrash;
 
+// Wraps the lock expression of a @synchronized statement:
+//   @synchronized(ITNonnilLock(_lock)) { ... }
+// @synchronized(nil) runs its block with no lock and no error. This evaluates the expression once,
+// beta-asserts that the result is not nil (crash in Development, Beta and Nightly builds; log in
+// Deployment, which then does what it always did), and yields that same object to lock. See
+// docs/swift-migration/concurrency.md section 2.
+#define ITNonnilLock(lockExpression) \
+  ({ \
+    id it_nonnilLock_ = (lockExpression); \
+    ITBetaAssert(it_nonnilLock_ != nil, @"@synchronized(%s) at %s:%d has a nil lock and runs unprotected", \
+                 #lockExpression, __FILE__, __LINE__); \
+    it_nonnilLock_; \
+  })
+
 #define ITAssertWithMessage(condition, args...) \
     do { \
         if (!(condition)) { \

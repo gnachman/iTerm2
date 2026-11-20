@@ -59,7 +59,7 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
                                          creation:(iTermASCIITexture *(^)(void))creation {
     id key = [self keyForAttributes:attributes descriptor:descriptor device:device];
     iTermASCIITexture *texture;
-    @synchronized(_cache) {
+    @synchronized(ITNonnilLock(_cache)) {
         texture = _cache[key];
         if (!texture) {
             texture = creation();

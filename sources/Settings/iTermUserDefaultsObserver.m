@@ -7,6 +7,7 @@
 
 #import "iTermUserDefaultsObserver.h"
 
+#import "DebugLogging.h"
 #import "iTermUserDefaults.h"
 
 static char iTermAdvancedSettingsModelKVOKey;
@@ -31,7 +32,7 @@ static char iTermAdvancedSettingsModelKVOKey;
 
 - (void)dealloc {
     NSArray<NSString *> *keys;
-    @synchronized (_blocks) {
+    @synchronized (ITNonnilLock(_blocks)) {
         keys = [[_blocks allKeys] copy];
     }
     for (NSString *key in keys) {
@@ -42,7 +43,7 @@ static char iTermAdvancedSettingsModelKVOKey;
 }
 
 - (void)observeKey:(NSString *)key block:(void (^)(void))block {
-    @synchronized (_blocks) {
+    @synchronized (ITNonnilLock(_blocks)) {
         _blocks[key] = [block copy];
     }
     [[iTermUserDefaults userDefaults] addObserver:self
@@ -66,7 +67,7 @@ static char iTermAdvancedSettingsModelKVOKey;
                        context:(void *)context {
     if (context == &iTermAdvancedSettingsModelKVOKey) {
         void (^block)(void);
-        @synchronized (_blocks) {
+        @synchronized (ITNonnilLock(_blocks)) {
             block = _blocks[keyPath];
         }
         if (block) {
@@ -79,7 +80,7 @@ static char iTermAdvancedSettingsModelKVOKey;
 
 - (void)observeAllKeysWithBlock:(void (^)(void))block {
     BOOL needToRegister = NO;
-    @synchronized (_blocks) {
+    @synchronized (ITNonnilLock(_blocks)) {
         if (!_allKeysBlocks) {
             _allKeysBlocks = [NSMutableArray array];
             needToRegister = YES;
@@ -96,7 +97,7 @@ static char iTermAdvancedSettingsModelKVOKey;
 
 - (void)userDefaultsDidChange:(NSNotification *)notification {
     NSArray<void (^)(void)> *snapshot;
-    @synchronized (_blocks) {
+    @synchronized (ITNonnilLock(_blocks)) {
         snapshot = [_allKeysBlocks copy];
     }
     void (^run)(void) = ^{

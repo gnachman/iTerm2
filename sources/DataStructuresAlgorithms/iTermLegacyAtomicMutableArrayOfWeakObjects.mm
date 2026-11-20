@@ -53,7 +53,7 @@ static void iTermLegacyAtomicMutableArrayOfWeakObjectsLockUnlock(void) {
 }
 
 - (void)removeObjectsPassingTest:(BOOL (^)(id anObject))block {
-    @synchronized([iTermLegacyAtomicMutableArrayOfWeakObjects lock]) {
+    @synchronized(ITNonnilLock([iTermLegacyAtomicMutableArrayOfWeakObjects lock])) {
         iTermLegacyAtomicMutableArrayOfWeakObjectsLock();
         @try {
             [_array removeObjectsPassingTest:^(iTermWeakBox *box) {
@@ -69,7 +69,7 @@ static void iTermLegacyAtomicMutableArrayOfWeakObjectsLockUnlock(void) {
 }
 
 - (NSArray *)strongObjects {
-    @synchronized([iTermLegacyAtomicMutableArrayOfWeakObjects lock]) {
+    @synchronized(ITNonnilLock([iTermLegacyAtomicMutableArrayOfWeakObjects lock])) {
         iTermLegacyAtomicMutableArrayOfWeakObjectsLock();
         NSArray *result = [_array mapWithBlock:^(iTermWeakBox *box) { return box.object; }];
         iTermLegacyAtomicMutableArrayOfWeakObjectsLockUnlock();
@@ -78,7 +78,7 @@ static void iTermLegacyAtomicMutableArrayOfWeakObjectsLockUnlock(void) {
 }
 
 - (void)removeAllObjects {
-    @synchronized([iTermLegacyAtomicMutableArrayOfWeakObjects lock]) {
+    @synchronized(ITNonnilLock([iTermLegacyAtomicMutableArrayOfWeakObjects lock])) {
         iTermLegacyAtomicMutableArrayOfWeakObjectsLock();
         [_array removeAllObjects];
         iTermLegacyAtomicMutableArrayOfWeakObjectsLockUnlock();
@@ -86,7 +86,7 @@ static void iTermLegacyAtomicMutableArrayOfWeakObjectsLockUnlock(void) {
 }
 
 - (void)addObject:(id)object {
-    @synchronized([iTermLegacyAtomicMutableArrayOfWeakObjects lock]) {
+    @synchronized(ITNonnilLock([iTermLegacyAtomicMutableArrayOfWeakObjects lock])) {
         iTermLegacyAtomicMutableArrayOfWeakObjectsLock();
         [_array addObject:[iTermWeakBox boxFor:object]];
         iTermLegacyAtomicMutableArrayOfWeakObjectsLockUnlock();
@@ -94,7 +94,7 @@ static void iTermLegacyAtomicMutableArrayOfWeakObjectsLockUnlock(void) {
 }
 
 - (NSUInteger)count {
-    @synchronized([iTermLegacyAtomicMutableArrayOfWeakObjects lock]) {
+    @synchronized(ITNonnilLock([iTermLegacyAtomicMutableArrayOfWeakObjects lock])) {
         iTermLegacyAtomicMutableArrayOfWeakObjectsLock();
         const NSUInteger result = _array.count;
         iTermLegacyAtomicMutableArrayOfWeakObjectsLockUnlock();

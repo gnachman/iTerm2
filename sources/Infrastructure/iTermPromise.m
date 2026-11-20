@@ -130,7 +130,7 @@ NS_DESIGNATED_INITIALIZER;
 
 - (void)fulfill:(id)value {
     assert(value);
-    @synchronized (_lock) {
+    @synchronized (ITNonnilLock(_lock)) {
         assert(_value == nil);
         _value = [iTermOr first:value];
         self.observer(self.value);
@@ -140,7 +140,7 @@ NS_DESIGNATED_INITIALIZER;
 
 - (void)reject:(NSError *)error {
     assert(error);
-    @synchronized (_lock) {
+    @synchronized (ITNonnilLock(_lock)) {
         assert(_value == nil);
         _value = [iTermOr second:error];
         self.observer(self.value);
@@ -248,21 +248,21 @@ typedef void (^iTermPromiseCallback)(iTermOr<id, NSError *> *);
 
 - (void)didFulfill:(id)object {
     DLog(@"fulfill %@", self);
-    @synchronized (_lock) {
+    @synchronized (ITNonnilLock(_lock)) {
         assert(!self.value);
         self.value = [iTermOr first:object];
     }
 }
 
 - (void)didReject:(NSError *)error {
-    @synchronized (_lock) {
+    @synchronized (ITNonnilLock(_lock)) {
         assert(!self.value);
         self.value = [iTermOr second:error];
     }
 }
 
 - (void)setValue:(iTermOr<id, NSError *> *)value {
-    @synchronized (_lock) {
+    @synchronized (ITNonnilLock(_lock)) {
         assert(!_value);
         assert(value);
 
@@ -272,7 +272,7 @@ typedef void (^iTermPromiseCallback)(iTermOr<id, NSError *> *);
 }
 
 - (void)addCallback:(iTermPromiseCallback)callback {
-    @synchronized (_lock) {
+    @synchronized (ITNonnilLock(_lock)) {
         assert(callback);
         assert(_callbacks);
         [_callbacks addObject:[callback copy]];
@@ -282,7 +282,7 @@ typedef void (^iTermPromiseCallback)(iTermOr<id, NSError *> *);
 }
 
 - (void)notify {
-    @synchronized (_lock) {
+    @synchronized (ITNonnilLock(_lock)) {
         id value = self.value;
         if (!value) {
             return;
@@ -296,7 +296,7 @@ typedef void (^iTermPromiseCallback)(iTermOr<id, NSError *> *);
 }
 
 - (iTermPromise *)then:(void (^)(id))block {
-    @synchronized (_lock) {
+    @synchronized (ITNonnilLock(_lock)) {
 
         iTermPromise *next = [iTermPromise promise:^(id<iTermPromiseSeal> seal) {
             [self addCallback:^(iTermOr<id,NSError *> *value) {
@@ -315,7 +315,7 @@ typedef void (^iTermPromiseCallback)(iTermOr<id, NSError *> *);
 }
 
 - (iTermPromise *)catchError:(void (^)(NSError *error))block {
-    @synchronized (_lock) {
+    @synchronized (ITNonnilLock(_lock)) {
         iTermPromise *next = [iTermPromise promise:^(id<iTermPromiseSeal> seal) {
             [self addCallback:^(iTermOr<id,NSError *> *value) {
                 // _lock is held at this point since this is called from -notify.
@@ -355,14 +355,14 @@ static void iTermPromiseRunBlockOnQueue(dispatch_queue_t queue, id parameter, vo
 }
 
 - (BOOL)hasValue {
-    @synchronized (_lock) {
+    @synchronized (ITNonnilLock(_lock)) {
         return self.value != nil;
     }
 }
 
 - (id)maybeValue {
     __block id result = nil;
-    @synchronized (_lock) {
+    @synchronized (ITNonnilLock(_lock)) {
         [self.value whenFirst:^(id  _Nonnull object) {
             result = object;
         } second:^(NSError * _Nonnull object) {
@@ -374,7 +374,7 @@ static void iTermPromiseRunBlockOnQueue(dispatch_queue_t queue, id parameter, vo
 
 - (id)maybeError {
     __block NSError *result = nil;
-    @synchronized (_lock) {
+    @synchronized (ITNonnilLock(_lock)) {
         [self.value whenFirst:^(id  _Nonnull object) {
             result = nil;
         } second:^(NSError * _Nonnull error) {
@@ -392,7 +392,7 @@ static void iTermPromiseRunBlockOnQueue(dispatch_queue_t queue, id parameter, vo
 
 - (iTermOr *)waitWithTimeout:(NSTimeInterval)timeout {
     dispatch_group_t group = dispatch_group_create();
-    @synchronized (_lock) {
+    @synchronized (ITNonnilLock(_lock)) {
         if (self.hasValue) {
             return self.value;
         }
@@ -410,7 +410,7 @@ static void iTermPromiseRunBlockOnQueue(dispatch_queue_t queue, id parameter, vo
             return [iTermOr second:[NSError errorWithDomain:iTermPromiseErrorDomain code:iTermPromiseErrorCodeTimeout userInfo:nil]];
         }
     }
-    @synchronized (_lock) {
+    @synchronized (ITNonnilLock(_lock)) {
         return self.value;
     }
 }
@@ -434,7 +434,7 @@ static void iTermPromiseRunBlockOnQueue(dispatch_queue_t queue, id parameter, vo
 }
 
 - (void)renege {
-    @synchronized (_lock) {
+    @synchronized (ITNonnilLock(_lock)) {
         if (self.value || _waited) {
             return;
         }

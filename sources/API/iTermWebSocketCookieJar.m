@@ -7,6 +7,8 @@
 
 #import "iTermWebSocketCookieJar.h"
 
+#import "DebugLogging.h"
+
 @implementation iTermWebSocketCookieJar {
     NSMutableSet<NSString *> *_cookies;
     // Cookies with an expiration date are reusable until they expire.
@@ -33,7 +35,7 @@
 }
 
 - (BOOL)consumeCookie:(NSString *)cookie {
-    @synchronized(_cookies) {
+    @synchronized(ITNonnilLock(_cookies)) {
         if (![_cookies containsObject:cookie]) {
             return NO;
         }
@@ -75,7 +77,7 @@
 }
 
 - (void)addCookie:(NSString *)cookie {
-    @synchronized(_cookies) {
+    @synchronized(ITNonnilLock(_cookies)) {
         [_cookies addObject:cookie];
     }
 }
@@ -88,7 +90,7 @@
 
 - (NSString *)randomStringForReusableCookieWithDuration:(NSTimeInterval)duration {
     NSString *cookie = [self randomString];
-    @synchronized(_cookies) {
+    @synchronized(ITNonnilLock(_cookies)) {
         [_cookies addObject:cookie];
         _expirationDates[cookie] = [NSDate dateWithTimeIntervalSinceNow:duration];
     }
@@ -96,13 +98,13 @@
 }
 
 - (void)removeCookieExpiration:(NSString *)cookie {
-    @synchronized(_cookies) {
+    @synchronized(ITNonnilLock(_cookies)) {
         [_expirationDates removeObjectForKey:cookie];
     }
 }
 
 - (void)removeCookie:(NSString *)cookie {
-    @synchronized(_cookies) {
+    @synchronized(ITNonnilLock(_cookies)) {
         [_cookies removeObject:cookie];
         [_expirationDates removeObjectForKey:cookie];
     }

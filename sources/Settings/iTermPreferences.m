@@ -1459,7 +1459,7 @@ static NSMutableDictionary<NSString *, void (^)(void)> *sFastCacheRefreshBlocks;
 
 static void iTermPreferencesRefreshFastCachesForKey(NSString *key) {
     void (^block)(void);
-    @synchronized (iTermPreferencesFastCacheLock()) {
+    @synchronized (ITNonnilLock(iTermPreferencesFastCacheLock())) {
         block = sFastCacheRefreshBlocks[key];
     }
     // The block re-acquires the lock around its own read+assign, so we don't
@@ -1489,7 +1489,7 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key) {
     // (non-computed), and this assert keeps it that way.
     ITAssertWithMessage([self computedObjectDictionary][key] == nil,
                         @"Fast accessor installed on computed key %@", key);
-    @synchronized (iTermPreferencesFastCacheLock()) {
+    @synchronized (ITNonnilLock(iTermPreferencesFastCacheLock())) {
         if (!sFastCacheRefreshBlocks) {
             sFastCacheRefreshBlocks = [[NSMutableDictionary alloc] init];
         }
@@ -1502,7 +1502,7 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key) {
 + (BOOL)boolWithCache:(iTermPreferencesBoolCache *)cache {
     dispatch_once(&cache->onceToken, ^{
         [self installFastCacheForKey:cache->key refresh:^{
-            @synchronized (iTermPreferencesFastCacheLock()) {
+            @synchronized (ITNonnilLock(iTermPreferencesFastCacheLock())) {
                 cache->value = [self boolForKey:cache->key];
             }
         }];
@@ -1513,7 +1513,7 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key) {
 + (int)intWithCache:(iTermPreferencesIntCache *)cache {
     dispatch_once(&cache->onceToken, ^{
         [self installFastCacheForKey:cache->key refresh:^{
-            @synchronized (iTermPreferencesFastCacheLock()) {
+            @synchronized (ITNonnilLock(iTermPreferencesFastCacheLock())) {
                 cache->value = [self intForKey:cache->key];
             }
         }];
@@ -1524,7 +1524,7 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key) {
 + (double)doubleWithCache:(iTermPreferencesDoubleCache *)cache {
     dispatch_once(&cache->onceToken, ^{
         [self installFastCacheForKey:cache->key refresh:^{
-            @synchronized (iTermPreferencesFastCacheLock()) {
+            @synchronized (ITNonnilLock(iTermPreferencesFastCacheLock())) {
                 cache->value = [self doubleForKey:cache->key];
             }
         }];

@@ -200,7 +200,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
 - (void)didInterrupt {
     {
         NSArray<iTermGitStateHandlerBox *> *handlers;
-        @synchronized (_gitStateHandlers) {
+        @synchronized (ITNonnilLock(_gitStateHandlers)) {
             handlers = [_gitStateHandlers copy];
             [_gitStateHandlers removeAllObjects];
         }
@@ -213,7 +213,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
     }
     {
         NSArray<iTermGitRecentBranchesBox *> *handlers;
-        @synchronized (_gitRecentBranchFetchCallbacks) {
+        @synchronized (ITNonnilLock(_gitRecentBranchFetchCallbacks)) {
             handlers = [_gitRecentBranchFetchCallbacks copy];
             [_gitRecentBranchFetchCallbacks removeAllObjects];
         }
@@ -439,7 +439,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
                     completion:(void (^)(iTermGitState * _Nullable, BOOL timedOut))completion {
     iTermGitStateHandlerBox *box = [[iTermGitStateHandlerBox alloc] init];
     box.block = completion;
-    @synchronized(_gitStateHandlers) {
+    @synchronized(ITNonnilLock(_gitStateHandlers)) {
         [_gitStateHandlers addObject:box];
     }
     [[_connectionToService remoteObjectProxy] requestGitStateForPath:path
@@ -455,7 +455,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
 - (void)didGetGitState:(iTermGitState *)gitState
               timedOut:(BOOL)timedOut
             completion:(iTermGitStateHandlerBox *)completion {
-    @synchronized (_gitStateHandlers) {
+    @synchronized (ITNonnilLock(_gitStateHandlers)) {
         if (![_gitStateHandlers containsObject:completion]) {
             return;
         }
@@ -471,7 +471,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
                    completion:(void (^)(NSArray<NSString *> *))reply {
     iTermGitRecentBranchesBox *box = [[iTermGitRecentBranchesBox alloc] init];
     box.block = reply;
-    @synchronized(_gitStateHandlers) {
+    @synchronized(ITNonnilLock(_gitStateHandlers)) {
         [_gitRecentBranchFetchCallbacks addObject:box];
     }
     [[_connectionToService remoteObjectProxy] fetchRecentBranchesAt:path
@@ -483,7 +483,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
 
 // Runs on some random queue
 - (void)didGetRecentBranches:(NSArray<NSString *> *)branches box:(iTermGitRecentBranchesBox *)box {
-    @synchronized (_gitRecentBranchFetchCallbacks) {
+    @synchronized (ITNonnilLock(_gitRecentBranchFetchCallbacks)) {
         if (![_gitRecentBranchFetchCallbacks containsObject:box]) {
             return;
         }
