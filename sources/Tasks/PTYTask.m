@@ -77,6 +77,9 @@ static void HandleSigChld(int n) {
     NSMutableIndexSet *_pidsHandedToReaper;
 }
 
+// The getter is in the ProcessInfo category (PTYTask+ProcessInfo.m).
+@dynamic processInfoPID;
+
 - (instancetype)init {
     self = [super init];
     if (self) {
