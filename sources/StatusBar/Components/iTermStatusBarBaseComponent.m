@@ -52,6 +52,14 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
         if (!_class) {
             return nil;
         }
+        // The archive can come from the drag pasteboard, so any application
+        // can name any class here. Accept only status bar components: the
+        // protocol declares +statusBarComponentDefaultKnobs and
+        // -initWithConfiguration:scope:, which are all this factory sends.
+        if (![_class conformsToProtocol:@protocol(iTermStatusBarComponent)]) {
+            DLog(@"Rejecting archived status bar component class %@: it does not conform to iTermStatusBarComponent", className);
+            return nil;
+        }
     }
     return self;
 }
