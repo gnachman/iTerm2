@@ -1611,7 +1611,7 @@ static NSString *const iTermAPIFloatingPanesFirstAwarePythonVersion = @"2.26";
     [entry addOutput:@"❗️ " completion:^{}];
     [entry addOutput:string completion:^{}];
     [entry addOutput:@"\n" completion:^{}];
-    XLog(@"%@", string);
+    RLog(@"%@", string);
 }
 
 #pragma mark - iTermAPIServerDelegate
@@ -2012,7 +2012,7 @@ static NSString *const iTermAPIFloatingPanesFirstAwarePythonVersion = @"2.26";
         subscriptions = _profileChangeSubscriptions;
     } else if (request.notificationType == ITMNotificationType_NotifyOnServerOriginatedRpc) {
         if (![self rpcNotificationRequestIsValid:request connectionKey:connectionKey]) {
-            XLog(@"RPC notification request invalid: %@", request);
+            RLog(@"RPC notification request invalid: %@", request);
             response.status = ITMNotificationResponse_Status_RequestMalformed;
             return response;
         }
@@ -2417,7 +2417,7 @@ static NSString *const iTermAPIFloatingPanesFirstAwarePythonVersion = @"2.26";
                                                    options:NSJSONReadingAllowFragments
                                                      error:&error];
         if (!value || error) {
-            XLog(@"JSON parsing error %@ for value in request %@", error, request);
+            RLog(@"JSON parsing error %@ for value in request %@", error, request);
             error = error ?: [NSError errorWithDomain:iTermAPIHelperErrorDomain
                                                  code:iTermAPIHelperErrorCodeInvalidJSON
                                              userInfo:nil];
@@ -2814,7 +2814,7 @@ static NSString *const iTermAPIFloatingPanesFirstAwarePythonVersion = @"2.26";
                                                options:NSJSONReadingAllowFragments
                                                  error:&error];
     if (!value || error) {
-        XLog(@"JSON parsing error %@ for value in request %@", error, request);
+        RLog(@"JSON parsing error %@ for value in request %@", error, request);
         ITMSetPropertyResponse *response = [[ITMSetPropertyResponse alloc] init];
         response.status = ITMSetPropertyResponse_Status_InvalidValue;
         handler(response);

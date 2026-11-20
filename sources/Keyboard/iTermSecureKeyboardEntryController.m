@@ -178,7 +178,7 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
         OSErr err = EnableSecureEventInput();
         RLog(@"EnableSecureEventInput err=%d", (int)err);
         if (err) {
-            XLog(@"EnableSecureEventInput failed with error %d", (int)err);
+            RLog(@"EnableSecureEventInput failed with error %d", (int)err);
         } else {
             RLog(@"Secure keyboard entry enabled");
             _count += 1;
@@ -187,7 +187,7 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
         OSErr err = DisableSecureEventInput();
         RLog(@"DisableSecureEventInput err=%d", (int)err);
         if (err) {
-            XLog(@"DisableSecureEventInput failed with error %d", (int)err);
+            RLog(@"DisableSecureEventInput failed with error %d", (int)err);
         } else {
             RLog(@"Secure keyboard entry disabled");
             _count -= 1;

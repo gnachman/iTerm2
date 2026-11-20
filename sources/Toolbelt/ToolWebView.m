@@ -28,7 +28,7 @@ static NSString *const iTermToolWebViewLogger = @"logger";
 - (void)userContentController:(WKUserContentController *)userContentController
       didReceiveScriptMessage:(WKScriptMessage *)message {
     if ([message.name isEqualToString:iTermToolWebViewLogger]) {
-        XLog(@"console.log for %@: %@", self.identifier, message.body);
+        RLog(@"console.log for %@: %@", self.identifier, message.body);
     }
 }
 

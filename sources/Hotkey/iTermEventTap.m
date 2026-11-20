@@ -402,7 +402,7 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
                                  (CGEventTapCallBack)iTermEventTapCallback,
                                  (__bridge void *)self);
     if (!_machPort) {
-        XLog(@"CGEventTapCreate failed");
+        RLog(@"CGEventTapCreate failed");
         AppendPinnedDebugLogMessage(@"EventTap", @"CGEventTapCreate failed");
         [[iTermPermissionsHelper accessibility] request];
         goto error;
@@ -412,7 +412,7 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
     AppendPinnedDebugLogMessage(@"EventTap", @"Create runloop source");
     _eventSource = CFMachPortCreateRunLoopSource(NULL, _machPort, 0);
     if (_eventSource == NULL) {
-        XLog(@"CFMachPortCreateRunLoopSource for key down failed.");
+        RLog(@"CFMachPortCreateRunLoopSource for key down failed.");
         AppendPinnedDebugLogMessage(@"EventTap", @"CFMachPortCreateRunLoopSource for key down failed");
         goto error;
     }

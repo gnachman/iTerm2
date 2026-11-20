@@ -268,7 +268,7 @@ static void (^gTransferrableFileNotificationHandlerForTesting)(NSString *, NSStr
 
 - (BOOL)quarantine:(NSString *)path sourceURL:(NSURL *)sourceURL {
     if (!path) {
-        XLog(@"Nil path to quarantine");
+        RLog(@"Nil path to quarantine");
         return NO;
     }
     NSURL *url = [NSURL fileURLWithPath:path];
@@ -281,11 +281,11 @@ static void (^gTransferrableFileNotificationHandlerForTesting)(NSString *, NSStr
                                        forKey:NSURLQuarantinePropertiesKey
                                         error:&error];
         if (!ok) {
-            XLog(@"Get quarantine of %@ failed: %@", path, error);
+            RLog(@"Get quarantine of %@ failed: %@", path, error);
             return NO;
         }
         if (temp && ![temp isKindOfClass:[NSDictionary class]]) {
-            XLog(@"Quarantine of wrong class: %@", NSStringFromClass([temp class]));
+            RLog(@"Quarantine of wrong class: %@", NSStringFromClass([temp class]));
             return NO;
         }
         properties = [[temp ?: @{} mutableCopy] autorelease];
@@ -307,7 +307,7 @@ static void (^gTransferrableFileNotificationHandlerForTesting)(NSString *, NSStr
                                        forKey:NSURLQuarantinePropertiesKey
                                         error:&error];
         if (!ok) {
-            XLog(@"Set quarantine of %@ failed: %@", path, error);
+            RLog(@"Set quarantine of %@ failed: %@", path, error);
             return NO;
         }
     }

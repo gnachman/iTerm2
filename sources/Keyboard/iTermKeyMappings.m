@@ -384,7 +384,7 @@ static NSDictionary *gGlobalKeyMapping;
                 }
                 [self removeMappingAtIndex:i fromProfile:mutableProfile];
             } else {
-                XLog(@"Profile with guid %@ has key mapping referencing guid %@ with keystroke %@ but I can't find it in sorted keys",
+                RLog(@"Profile with guid %@ has key mapping referencing guid %@ with keystroke %@ but I can't find it in sorted keys",
                      profile[KEY_GUID],
                      guid,
                      keystrokeToRemove);

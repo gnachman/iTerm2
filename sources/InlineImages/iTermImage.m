@@ -129,7 +129,7 @@ static const CGFloat kMaxDimension = 10000;
 #ifdef SANDBOXED_WORKER
         NSLog(@"Failed to decode image: %@", exception);
 #else
-        XLog(@"Failed to decode image: %@", exception);
+        RLog(@"Failed to decode image: %@", exception);
 #endif
         return nil;
     }

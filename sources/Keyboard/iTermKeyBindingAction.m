@@ -142,7 +142,7 @@ static NSString *GetProfileName(NSString *guid) {
         case kPTYTextViewSelectionExtensionUnitMark:
             return NSLocalizedStringWithDefaultValue(@"KeyBindingAction.SelectionUnit.ByMark", nil, [NSBundle mainBundle], @"By Mark", @"Selection movement unit shown in a key-binding action name");
     }
-    XLog(@"Unrecognized selection movement unit %@", @(unit));
+    RLog(@"Unrecognized selection movement unit %@", @(unit));
     return @"";
 }
 

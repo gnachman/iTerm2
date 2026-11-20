@@ -3877,11 +3877,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     int height = (size.height - [iTermPreferences topBottomMargins] * 2) / cellSize.height;
     PtyLog(@"fitSessionToCurrentViewSize %@ gives %d rows", [NSValue valueWithSize:size], height);
     if (width <= 0) {
-        XLog(@"WARNING: Session has %d width", width);
+        RLog(@"WARNING: Session has %d width", width);
         width = 1;
     }
     if (height <= 0) {
-        XLog(@"WARNING: Session has %d height", height);
+        RLog(@"WARNING: Session has %d height", height);
         height = 1;
     }
 
@@ -4829,18 +4829,18 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // assert. Bad inputs are always possible.
     NSNumber *sessionId = node[TAB_ARRANGEMENT_ID];
     if (!sessionId) {
-        XLog(@"No session ID in arrangement node %@", node);
+        RLog(@"No session ID in arrangement node %@", node);
         return NO;
     }
 
     SessionView *sessionView = idMap[sessionId];
     if (![sessionView isKindOfClass:[SessionView class]]) {
-        XLog(@"Bogus value in idmap for key %@: %@", sessionId, sessionView);
+        RLog(@"Bogus value in idmap for key %@: %@", sessionId, sessionView);
         return NO;
     }
     PTYSession *session = sessionFinder(sessionView);
     if (!session) {
-        XLog(@"No session for view");
+        RLog(@"No session for view");
         return NO;
     }
     return [encoder encodeDictionaryWithKey:TAB_ARRANGEMENT_SESSION
@@ -8623,7 +8623,7 @@ typedef struct {
             }
         }
         if (!anyChange) {
-            XLog(@"Failed to redistribute quantization error. Change=%d, sizes=%@.", change, sizes);
+            RLog(@"Failed to redistribute quantization error. Change=%d, sizes=%@.", change, sizes);
             return;
         }
     }
@@ -8649,7 +8649,7 @@ typedef struct {
         return YES;
     }
     if ([splitView frame].size.width == 0) {
-        XLog(@"Warning: splitView:resizeSubviewsWithOldSize: resized to 0 width");
+        RLog(@"Warning: splitView:resizeSubviewsWithOldSize: resized to 0 width");
         return YES;
     }
     PtyLog(@"splitView:resizeSubviewsWithOldSize for %p", splitView);
@@ -8786,7 +8786,7 @@ typedef struct {
             if (!anyChanges) {
                 PtyLog(@"splitView:resizeSubviewsWithOldSize - nothing changed in this round");
                 if (fabs(currentSumOfSizes - targetSize) > [[splitView subviews] count]) {
-                    XLog(@"No changes! Ignoring constraints!");
+                    RLog(@"No changes! Ignoring constraints!");
                     if (respectPinning) {
                         return NO;
                     }
@@ -8927,7 +8927,7 @@ typedef struct {
         return;
     }
     if ([root_ frame].size.width == 0) {
-        XLog(@"Warning: splitViewDidResizeSubviews: resized to 0 width");
+        RLog(@"Warning: splitViewDidResizeSubviews: resized to 0 width");
         return;
     }
     PtyLog(@"splitViewDidResizeSubviews notification received. new height is %lf", [root_ frame].size.height);

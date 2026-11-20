@@ -419,7 +419,7 @@
     // These files are written by hand or by scripts, so don't trust the types of anything in them.
     NSArray *entries = [NSArray castFrom:dict[@"Profiles"]];
     if (!entries) {
-        XLog(@"Property list in %@ has no array of entries: %@", filename, dict[@"Profiles"]);
+        RLog(@"Property list in %@ has no array of entries: %@", filename, dict[@"Profiles"]);
         if (dict[@"Profiles"]) {
             [self reportError:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DynamicProfiles.ProfilesNotArray", nil, [NSBundle mainBundle], @"In Dynamic Profiles file %@, the value of “Profiles” must be an array.", @"Error shown when the Profiles value of a dynamic profiles file is not an array; %@ is the file name"),
                                filename]
@@ -917,7 +917,7 @@ static id iTermDynamicProfileByRemovingNulls(id object) {
             NSError *error = nil;
             NSData *data = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted error:&error];
             if (error) {
-                XLog(@"Failed to create JSON data from dictionary %@ with error %@", dict, error);
+                RLog(@"Failed to create JSON data from dictionary %@ with error %@", dict, error);
             }
             return data;
         }

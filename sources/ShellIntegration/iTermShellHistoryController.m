@@ -171,7 +171,7 @@ static NSString *iTermShellIntegrationRemoteHostKey(id<VT100RemoteHostReading> s
     NSManagedObjectModel *managedObjectModel =
         [[[NSManagedObjectModel alloc] initWithContentsOfURL:modelURL] autorelease];
     if (!managedObjectModel) {
-        XLog(@"Failed to initialize managed object model for URL %@", modelURL);
+        RLog(@"Failed to initialize managed object model for URL %@", modelURL);
         return NO;
     }
 
@@ -258,13 +258,13 @@ static NSString *iTermShellIntegrationRemoteHostKey(id<VT100RemoteHostReading> s
         NSError *error = nil;
         NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:fullPath error:&error];
         if (error) {
-            XLog(@"Failed to get attributes of %@: %@", fullPath, error);
+            RLog(@"Failed to get attributes of %@: %@", fullPath, error);
             continue;
         }
 
         NSNumber *permissionsNumber = attributes[NSFilePosixPermissions];
         if (!permissionsNumber) {
-            XLog(@"Couldn't get permissions of file %@. Attributes are: %@", fullPath, attributes);
+            RLog(@"Couldn't get permissions of file %@. Attributes are: %@", fullPath, attributes);
             continue;
         }
 
@@ -276,7 +276,7 @@ static NSString *iTermShellIntegrationRemoteHostKey(id<VT100RemoteHostReading> s
             error = nil;
             [[NSFileManager defaultManager] setAttributes:updatedAttributes ofItemAtPath:fullPath error:&error];
             if (error) {
-                XLog(@"Failed to set attributes of %@ to %@: %@", fullPath, updatedAttributes, error);
+                RLog(@"Failed to set attributes of %@ to %@: %@", fullPath, updatedAttributes, error);
             }
         }
     }

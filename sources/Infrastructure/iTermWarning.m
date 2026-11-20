@@ -1105,7 +1105,7 @@ static BOOL iTermWarningViewHasSelectableText(NSView *view) {
         return pre;
     }
     if (pre < 0 || pre >= mapping.count) {
-        XLog(@"Selected value %@ is out of range for mapping %@", @(pre), mapping);
+        RLog(@"Selected value %@ is out of range for mapping %@", @(pre), mapping);
         return pre;
     }
     return [mapping[pre] integerValue];

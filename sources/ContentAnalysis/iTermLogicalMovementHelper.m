@@ -43,7 +43,7 @@
                                              by:(PTYTextViewSelectionExtensionUnit)unit {
     // Ensure the unit is valid, since it comes from preferences.
     if (![self unitIsValid:unit]) {
-        XLog(@"ERROR: Unrecognized unit enumerated value %@, treating as character.", @(unit));
+        RLog(@"ERROR: Unrecognized unit enumerated value %@, treating as character.", @(unit));
         unit = kPTYTextViewSelectionExtensionUnitCharacter;
     }
 

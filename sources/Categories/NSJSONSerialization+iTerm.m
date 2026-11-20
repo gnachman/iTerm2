@@ -27,7 +27,7 @@
                                 options:0
                                   error:&error];
         if (error) {
-            XLog(@"Failed to json encode value %@: %@", object, error);
+            RLog(@"Failed to json encode value %@: %@", object, error);
             return nil;
         }
     } else if ([object isKindOfClass:[NSString class]]) {

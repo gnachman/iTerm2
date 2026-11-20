@@ -458,14 +458,14 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
                                                        encoding:NSUTF8StringEncoding
                                                           error:&error];
     if (!content) {
-        XLog(@"Beep: %@", error);
+        RLog(@"Beep: %@", error);
         NSBeep();
         return;
     }
 
     id decoded = [NSJSONSerialization it_objectForJsonString:content error:&error];
     if (!decoded) {
-        XLog(@"Beep: %@", error);
+        RLog(@"Beep: %@", error);
         NSBeep();
         return;
     }
@@ -576,7 +576,7 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
     NSString *json = [NSJSONSerialization it_jsonStringForObject:dict];
     [json writeToSaveItem:item completionHandler:^(NSError *error) {
         if (error) {
-            XLog(@"Beep: %@", error);
+            RLog(@"Beep: %@", error);
             NSBeep();
             return;
         }

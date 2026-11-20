@@ -13534,7 +13534,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         }
 
         default:
-            XLog(@"Unknown key action %@", action);
+            RLog(@"Unknown key action %@", action);
             break;
     }
 }
@@ -18530,7 +18530,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             [self setPasteboard:NSPasteboardNameGeneral];
         }
     } else {
-        XLog(@"Clipboard access denied for CopyToClipboard");
+        RLog(@"Clipboard access denied for CopyToClipboard");
     }
 }
 
@@ -18668,7 +18668,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                         return [NSURL fileURLWithPath:[anObject.path stringByDeletingLastPathComponent]];
                     }
                 } else {
-                    XLog(@"Could not find %@", anObject.path);
+                    RLog(@"Could not find %@", anObject.path);
                     return nil;
                 }
             }];
@@ -18882,7 +18882,7 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
     NSString *theFormat = [base64Format stringByBase64DecodingStringWithEncoding:self.encoding];
     iTermParsedExpression *parsedExpression = [iTermExpressionParser parsedExpressionWithInterpolatedString:theFormat scope:self.variablesScope];
     if ([parsedExpression containsAnyFunctionCall]) {
-        XLog(@"Rejected control-sequence provided badge format containing function calls: %@", theFormat);
+        RLog(@"Rejected control-sequence provided badge format containing function calls: %@", theFormat);
         [self showSimpleWarningAnnouncment:NSLocalizedStringWithDefaultValue(@"PTYSession.UnsafeBadgeFormat", nil, [NSBundle mainBundle], @"The application attempted to set the badge to a value that would invoke a function call. For security reasons, this is not allowed and the badge was not updated.", @"Warning that a badge format was rejected because it contained a function call")
                                 identifier:@"UnsaveBadgeFormatRejected"];
         return;
@@ -18891,7 +18891,7 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
         [self setSessionSpecificProfileValues:@{ KEY_BADGE_FORMAT: theFormat }];
         _textview.badgeLabel = [self badgeLabel];
     } else {
-        XLog(@"Badge is not properly base64 encoded: %@", base64Format);
+        RLog(@"Badge is not properly base64 encoded: %@", base64Format);
     }
 }
 
@@ -24700,7 +24700,7 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
         NSString *key = tuple.firstObject;
         id value = tuple.secondObject;
         if (![iTermProfilePreferences valueIsLegal:value forKey:key]) {
-            XLog(@"Value %@ is not legal for key %@", value, key);
+            RLog(@"Value %@ is not legal for key %@", value, key);
             [scriptHistoryEntry addOutput:[NSString stringWithFormat:@"Value %@ is not legal type for key %@\n", value, key]
                                completion:^{}];
             return ITMSetProfilePropertyResponse_Status_RequestMalformed;
@@ -27968,7 +27968,7 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 }
 
 - (void)conductorAbortWithReason:(NSString *)reason {
-    XLog(@"conductor aborted: %@", reason);
+    RLog(@"conductor aborted: %@", reason);
     [self conductorWillDie];
     if (_conductor.parent == nil && _conductor.clientUniqueID.length) {
         // As for a quit: its it2ssh will still print EndSSH and wait for a newline, which

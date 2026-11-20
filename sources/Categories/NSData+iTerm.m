@@ -145,7 +145,7 @@
                 *error = [NSError errorWithDomain:@"com.googlecode.iterm2" code:1 userInfo:@{ @"errorMessage": errorString }];
             }
         } else {
-            XLog(@"Error %s", (const char *)errorMessage.bytes);
+            RLog(@"Error %s", (const char *)errorMessage.bytes);
         }
     }
     [task waitUntilExit];
@@ -310,7 +310,7 @@
     NSError *innerError = nil;
     NSData *data = [NSKeyedArchiver archivedDataWithRootObject:object requiringSecureCoding:YES error:&innerError];
     if (innerError) {
-        XLog(@"Error %@ encoding\n%@", innerError, object);
+        RLog(@"Error %@ encoding\n%@", innerError, object);
     }
     if (error) {
         *error = innerError;
@@ -334,7 +334,7 @@
                                                  fromData:self
                                                     error:&innerError];
     if (innerError) {
-        XLog(@"Error %@ decoding %@", innerError, self);
+        RLog(@"Error %@ decoding %@", innerError, self);
     }
     if (error) {
         *error = innerError;

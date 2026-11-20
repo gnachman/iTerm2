@@ -107,16 +107,6 @@ void DLogOncePerLoggingSession(NSString *key, NSString *(^messageBlock)(void));
         NSLog(args); \
     } while (0)
 
-// Private error log. May contain private info. Logged to syslog, but not crash reports.
-// The NSLog half runs whether or not debug logging is on; only the DLog half depends on it, so
-// the arguments are evaluated once or twice. The Swift XLog in SwiftDebugLogging.swift returns
-// early when debug logging is off, so it is not a drop-in replacement for this macro.
-#define XLog(args...) \
-    do { \
-        DLog(args); \
-        NSLog(args); \
-    } while (0)
-
 // Retrospective log: like DLog, but when debug logging is OFF the message is
 // retained in a byte-bounded in-memory ring (instead of being dropped) so the
 // lead-up to a low-frequency event can be recovered after the fact. The ring is

@@ -263,11 +263,11 @@
 
 - (BOOL)appendFragment:(iTermWebSocketFrame *)fragment {
     if (fragment.opcode != iTermWebSocketOpcodeContinuation) {
-        XLog(@"Fragment opcode not continuation");
+        RLog(@"Fragment opcode not continuation");
         return NO;
     }
     if (!self.fin) {
-        XLog(@"Appending fragment to finished frame");
+        RLog(@"Appending fragment to finished frame");
         return NO;
     }
 

@@ -29,7 +29,7 @@
         _addressFamily = addressFamily;
         _fd = socket(addressFamily, socketType, 0);
         if (_fd < 0) {
-            XLog(@"socket failed with %s", strerror(errno));
+            RLog(@"socket failed with %s", strerror(errno));
             return nil;
         }
     }
@@ -53,7 +53,7 @@
                         (const void *)&optionValue,
                         sizeof(optionValue));
     if (rc) {
-        XLog(@"setsockopt failed with %s", strerror(errno));
+        RLog(@"setsockopt failed with %s", strerror(errno));
     }
 }
 
@@ -62,7 +62,7 @@
         _boundAddress = [address copy];
         return YES;
     } else {
-        XLog(@"bind failed with %s", strerror(errno));
+        RLog(@"bind failed with %s", strerror(errno));
     }
     return NO;
 }
@@ -75,7 +75,7 @@
         return NO;
     }
     if (listen(_fd, backlog) < 0) {
-        XLog(@"listen failed with %s", strerror(errno));
+        RLog(@"listen failed with %s", strerror(errno));
         return NO;
     }
 
@@ -94,7 +94,7 @@
                     if (errno == EINTR || errno == EWOULDBLOCK) {
                         continue;
                     } else {
-                        XLog(@"accept failed with %s", strerror(errno));
+                        RLog(@"accept failed with %s", strerror(errno));
                         return;
                     }
                 }

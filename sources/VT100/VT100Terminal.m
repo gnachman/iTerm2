@@ -4580,9 +4580,9 @@ static NSString *VT100TerminalCompactFloat(CGFloat value) {
             [_delegate terminalRequestUpload:value];
         }
     } else if ([key isEqualToString:@"BeginFile"]) {
-        XLog(@"Deprecated and unsupported code BeginFile received. Use File instead.");
+        RLog(@"Deprecated and unsupported code BeginFile received. Use File instead.");
     } else if ([key isEqualToString:@"EndFile"]) {
-        XLog(@"Deprecated and unsupported code EndFile received. Use File instead.");
+        RLog(@"Deprecated and unsupported code EndFile received. Use File instead.");
     } else if ([key isEqualToString:@"EndCopy"]) {
         if ([_delegate terminalIsTrusted]) {
             [_delegate terminalCopyBufferToPasteboard];

@@ -399,7 +399,7 @@ static NSError *SCPFileError(NSString *description) {
         self.session.delegate = self;
         [self.session connect];
         if (self.stopped) {
-            XLog(@"Stop after connect");
+            RLog(@"Stop after connect");
             [self performOnMainThread:^{
                 [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
             }];
@@ -461,11 +461,11 @@ static NSError *SCPFileError(NSString *description) {
         }
         for (NSString *authType in authTypes) {
             if (self.stopped) {
-                XLog(@"Break out of auth loop because stopped");
+                RLog(@"Break out of auth loop because stopped");
                 break;
             }
             if (!self.session.session) {
-                XLog(@"Break out of auth loop because disconnected");
+                RLog(@"Break out of auth loop because disconnected");
                 break;
             }
             if ([authType isEqualToString:@"password"]) {
@@ -502,7 +502,7 @@ static NSError *SCPFileError(NSString *description) {
                 for (NSString *iteratedKeyPath in keyPaths) {
                     NSString *keyPath = [self filenameByExpandingMetasyntacticVariables:iteratedKeyPath];
                     if (![fileManager fileExistsAtPath:keyPath]) {
-                        XLog(@"No key file at %@", keyPath);
+                        RLog(@"No key file at %@", keyPath);
                         continue;
                     }
                     const BOOL keyIsEncrypted = [self privateKeyIsEncrypted:keyPath];
@@ -528,10 +528,10 @@ static NSError *SCPFileError(NSString *description) {
                             firstAttempt = NO;
                         }
 
-                        XLog(@"Attempting to authenticate with key %@", keyPath);
+                        RLog(@"Attempting to authenticate with key %@", keyPath);
                         NSString *publicKeyPath = [keyPath stringByAppendingString:@".pub"];
                         if (![[NSFileManager defaultManager] fileExistsAtPath:publicKeyPath]) {
-                            XLog(@"Warning: no public key at %@. Trying to authenticate with only a private key.", publicKeyPath);
+                            RLog(@"Warning: no public key at %@. Trying to authenticate with only a private key.", publicKeyPath);
                             publicKeyPath = nil;
                         }
                         [self.session authenticateByPublicKey:publicKeyPath
@@ -539,12 +539,12 @@ static NSError *SCPFileError(NSString *description) {
                                                   andPassword:password];
 
                         if (self.session.isAuthorized) {
-                            XLog(@"Authorized!");
+                            RLog(@"Authorized!");
                             break;
                         }
 
                         if (!self.session.session) {
-                            XLog(@"Disconnected!");
+                            RLog(@"Disconnected!");
                             break;
                         }
 
@@ -553,7 +553,7 @@ static NSError *SCPFileError(NSString *description) {
                             break;
                         }
                         // For encrypted keys, loop back to ask for passphrase again
-                        XLog(@"Wrong passphrase for %@, prompting again", keyPath);
+                        RLog(@"Wrong passphrase for %@, prompting again", keyPath);
                     }
                 }
                 if (self.session.isAuthorized) {
@@ -563,7 +563,7 @@ static NSError *SCPFileError(NSString *description) {
         }
     }
     if (self.stopped) {
-        XLog(@"Stop after auth");
+        RLog(@"Stop after auth");
         [self performOnMainThread:^{
             [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
         }];
@@ -642,7 +642,7 @@ static NSError *SCPFileError(NSString *description) {
                 }
             }];
             if (self.stopped) {
-                XLog(@"Stopping mid-download");
+                RLog(@"Stopping mid-download");
             }
             return !self.stopped;
         }];

@@ -852,7 +852,7 @@ static NSString *const kArrangement = @"Arrangement";
         return NO;
     }
     if (![self.windowController conformsToProtocol:@protocol(iTermGraphCodable)]) {
-        XLog(@"Window controller %@ does not conform to iTermGraphCodable", self.windowController);
+        RLog(@"Window controller %@ does not conform to iTermGraphCodable", self.windowController);
         return NO;
     }
     id<iTermGraphCodable> codable = (id<iTermGraphCodable>)self.windowController;

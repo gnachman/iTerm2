@@ -13422,7 +13422,7 @@ typedef struct {
         // This can happen when scrollers are changing while no monitors are
         // attached (e.g., plug in mouse+keyboard and external display into
         // clamshell simultaneously)
-        XLog(@"* max frame size was not positive; aborting fitWindowToTabSize");
+        RLog(@"* max frame size was not positive; aborting fitWindowToTabSize");
         return result;
     }
     if (winSize.width > maxFrameSize.width ||

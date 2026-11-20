@@ -207,7 +207,7 @@ static void iTermOrphanServerAdopterFindMultiServers(void (^completion)(NSArray<
                                               state:state
                                          completion:completion];
         } error:^(NSError * _Nonnull error) {
-            XLog(@"Orphan server adopter: Failed to connect to %@", filename);
+            RLog(@"Orphan server adopter: Failed to connect to %@", filename);
             completion();
         }];
     }]];

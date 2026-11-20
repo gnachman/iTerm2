@@ -186,7 +186,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
         _inProcessConnectionKeys = [[NSCountedSet alloc] init];
         _unixSocket = [iTermSocket unixDomainSocket];
         if (!_unixSocket) {
-            XLog(@"Failed to create unix socket");
+            RLog(@"Failed to create unix socket");
             return nil;
         }
         _pendingConnections = [NSMutableArray array];
@@ -217,11 +217,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     NSString *lockPath = [iTermAPIServer unixSocketLockPath];
     int fd = open(lockPath.UTF8String, O_RDWR | O_CREAT | O_CLOEXEC, S_IRUSR | S_IWUSR);
     if (fd < 0) {
-        XLog(@"Failed to open API socket lock file %@: %s", lockPath, strerror(errno));
+        RLog(@"Failed to open API socket lock file %@: %s", lockPath, strerror(errno));
         return NO;
     }
     if (flock(fd, LOCK_EX | LOCK_NB) != 0) {
-        XLog(@"Failed to acquire API socket lock at %@ (%s). Another iTerm2 "
+        RLog(@"Failed to acquire API socket lock at %@ (%s). Another iTerm2 "
              @"instance appears to be using this application-support directory; "
              @"refusing to start the API server to avoid clobbering its socket.",
              lockPath, strerror(errno));
@@ -245,7 +245,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     socketAddress = [iTermSocketAddress socketAddressWithPath:path];
     unlink(path.UTF8String);
     if (![_unixSocket bindToAddress:socketAddress]) {
-        XLog(@"Failed to bind");
+        RLog(@"Failed to bind");
         return NO;
     }
     chmod([iTermAPIServer unixSocketPath].UTF8String, (S_IRUSR | S_IWUSR));
@@ -254,7 +254,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
         [self didAcceptConnectionOnFileDescriptor:fd fromAddress:clientAddress euid:euid retries:1];
     }];
     if (!ok) {
-        XLog(@"Failed to listen");
+        RLog(@"Failed to listen");
         return NO;
     }
 
@@ -497,7 +497,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     [self startRequestOnConnection:connection pids:@[] completion:^(BOOL ok, NSString *reason) {
         [self->_pendingConnections removeObject:connection];
         if (!ok) {
-            XLog(@"Reject unix domain socket connection: %@", reason);
+            RLog(@"Reject unix domain socket connection: %@", reason);
             dispatch_async(connection.queue, ^{
                 [connection unauthorized];
             });

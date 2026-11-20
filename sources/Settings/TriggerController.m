@@ -1210,7 +1210,7 @@ NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier"
 
 - (IBAction)removeTrigger:(id)sender {
     if (_tableView.selectedRowIndexes.count == 0) {
-        XLog(@"This shouldn't happen: you pressed the button to remove a trigger but no row is selected");
+        RLog(@"This shouldn't happen: you pressed the button to remove a trigger but no row is selected");
         return;
     }
     NSIndexSet *indexes = [_tableView.selectedRowIndexes copy];

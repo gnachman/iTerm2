@@ -28,7 +28,7 @@
     int fileDescriptor = mkstemps(tempFileNameCString, suffix.length);
 
     if (fileDescriptor == -1) {
-        XLog(@"mkstemps failed with template %s: %s", tempFileNameCString, strerror(errno));
+        RLog(@"mkstemps failed with template %s: %s", tempFileNameCString, strerror(errno));
         free(tempFileNameCString);
         return nil;
     }

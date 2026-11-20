@@ -109,7 +109,7 @@
 
     BOOL result = [_db executeUpdate:sql values:arguments error:&error];
     if (error) {
-        XLog(@"%@ failed: %@", sql, error);
+        RLog(@"%@ failed: %@", sql, error);
     }
 
     if (gDebugLogging) {
@@ -434,7 +434,7 @@ withNonOptionalArguments:(nonnull NSArray *)arguments
                 error:(out NSError * _Nullable __autoreleasing * _Nullable)error {
     BOOL result = [_db executeUpdate:sql values:arguments error:error];
     if (error && *error) {
-        XLog(@"%@ failed: %@", sql, *error);
+        RLog(@"%@ failed: %@", sql, *error);
     }
 
     if (gDebugLogging) {

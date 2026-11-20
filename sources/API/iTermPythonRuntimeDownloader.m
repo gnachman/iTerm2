@@ -904,7 +904,7 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
                                                         attributes:nil
                                                              error:&error];
         if (!ok) {
-            XLog(@"Failed to create %@: %@", container, error);
+            RLog(@"Failed to create %@: %@", container, error);
         }
 
         DLog(@"Will create hard links at %@ to %@", source, destination);
@@ -914,7 +914,7 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
         DLog(@"Done creating hard links. error=%@", error);
         dispatch_async(dispatch_get_main_queue(), ^{
             if (!ok) {
-                XLog(@"Failed to link %@ to %@: %@", source, destination, error);
+                RLog(@"Failed to link %@ to %@: %@", source, destination, error);
                 completion([iTermPythonRuntimeDownloader errorWithCode:iTermInstallPythonStatusGeneralFailure
                                                                 reason:[NSString stringWithFormat:@"Failed to link from %@ to %@: %@", source, destination, error.localizedDescription]]);
                 return;

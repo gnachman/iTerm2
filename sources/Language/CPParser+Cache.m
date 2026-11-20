@@ -101,7 +101,7 @@ static const char CPShiftReduceParserAssociatedObjectCacheKey;
     NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:data error:&error];
     unarchiver.requiresSecureCoding = NO;
     if (!unarchiver) {
-        XLog(@"Cache at %@ busted, re-creating: %@", file, error);
+        RLog(@"Cache at %@ busted, re-creating: %@", file, error);
         return nil;
     }
     return [[self alloc] initWithCoder:unarchiver];
@@ -114,13 +114,13 @@ static const char CPShiftReduceParserAssociatedObjectCacheKey;
                                                error:&error];
 
     if (!grammar) {
-        XLog(@"Failed to create grammar: %@", error);
+        RLog(@"Failed to create grammar: %@", error);
         return nil;
     }
 
     id parser = [self parserWithGrammar:grammar];
     if (!parser) {
-        XLog(@"Failed to create parser");
+        RLog(@"Failed to create parser");
         return nil;
     }
 

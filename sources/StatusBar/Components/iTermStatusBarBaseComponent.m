@@ -448,11 +448,11 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
 }
 
 - (void)itermWebViewJavascriptError:(NSString *)errorText {
-    XLog(@"Unhandled javascript error: %@", errorText);
+    RLog(@"Unhandled javascript error: %@", errorText);
 }
 
 - (void)itermWebViewWillExecuteJavascript:(NSString *)javascript {
-    XLog(@"Unexpected javascript execution: %@", javascript);
+    RLog(@"Unexpected javascript execution: %@", javascript);
 }
 
 - (BOOL)itermWebViewShouldAllowInvocation {

@@ -240,7 +240,7 @@ static NSString *iTermURLStoreGetParamForKey(NSString *params, NSString *key) {
             }
             NSURL *url = [NSURL URLWithString:key.firstObject];
             if (url == nil) {
-                XLog(@"Bogus key not a URL: %@", url);
+                RLog(@"Bogus key not a URL: %@", url);
                 return;
             }
             self->_store[key] = obj;
