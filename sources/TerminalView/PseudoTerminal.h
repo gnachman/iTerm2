@@ -590,6 +590,13 @@ deferringExpansion:(BOOL)deferExpansion;
 - (iTermRestorableSession *)restorableSessionForSession:(PTYSession *)session;
 
 - (void)addSessionInNewTab:(PTYSession *)object;
+
+// Opens a window that shows what this window shows.
+- (IBAction)openTwinOfCurrentWindow:(id)sender;
+// Whether this window shows what another window shows.
+@property(nonatomic, readonly) BOOL isTwinWindow;
+// Call when this window's tabs or its selected tab changed, or a twin in it stopped working.
+- (void)twinWindowsNeedSync;
 // `groupID` is the tab group the drop landed inside (the tab joins it), or
 // nil when the tab arrived outside any group (menu/API moves pass nil).
 - (void)didDonateTab:(PTYTab *)aTab

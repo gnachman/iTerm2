@@ -342,6 +342,11 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (NSSize)compactFrame;
 
 - (void)updateScrollViewFrame;
+// Puts the scroll view in the middle of the space it may use when it is smaller than
+// that space. For a twin session, whose grid does not follow its view.
+@property(nonatomic) BOOL centersScrollView;
+// How far centering moved the scroll view from where it would otherwise be.
+@property(nonatomic, readonly) NSPoint scrollViewCenteringOffset;
 
 // Layout subviews if automatic updates are allowed by the delegate.
 - (void)updateLayout;

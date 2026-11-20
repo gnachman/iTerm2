@@ -73,6 +73,8 @@ extern NSString *const PTYSessionArrangementOptionsForDuplication;
 extern NSString *const PTYSessionArrangementOptionsForceOldCWD;
 extern NSString *const PTYSessionArrangementOptionsUnlimitedHistory;
 extern NSString *const PTYSessionArrangementOptionsArchive;
+// Boolean user default. When set, what the user types in a twin session is dropped.
+extern NSString *const PTYSessionTwinsAreReadOnlyUserDefaultsKey;
 extern NSString *const PTYSessionArrangementOptionsLargeContentProvider;
 // When set, restoration will not launch a replacement program if there is
 // no running program to attach to; the session is finalized showing its
@@ -1431,6 +1433,35 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 - (BOOL)willEnableMetal;
 - (BOOL)metalAllowed:(out nullable iTermMetalUnavailableReason *)reason;
 - (void)injectData:(NSData *)data;
+
+#pragma mark - Twin session
+
+// A twin has no program. It shows what another session shows, from a copy of the bytes that
+// session reads. See PTYSession+Twin.swift.
+@property(nonatomic) BOOL isTwin;
+// Gets a copy of every byte this session reads.
+@property(atomic, retain, nullable) PTYSession *twin;
+// The session a twin copies. Not retained; the source clears it when it terminates.
+@property(nonatomic, assign, nullable) PTYSession *twinSource;
+// Held while bytes are parsed for this session and its twin, so a twin can start between reads.
+@property(nonatomic, readonly) NSLock *twinFeedLock;
+// Side effects a twin did not perform, by name.
+@property(nonatomic, readonly) NSCountedSet<NSString *> *twinSuppressedSideEffects;
+// Whether this session is a twin, which must not perform the named side effect.
+- (BOOL)twinSuppresses:(NSString *)name;
+// Main queue. Copies this session's screen, terminal modes, and the bytes its parser has not
+// finished parsing into `twin`. The caller makes sure no token is waiting to execute.
+- (void)copyTerminalStateToTwin:(PTYSession *)twin;
+// Makes the twin's tab show this session's title and icon.
+- (void)updateTwinTab;
+// For a twin: keeps the source's grid and takes the largest font at which it fits a view of
+// this size. Returns whether the grid changed.
+- (BOOL)twinFitToViewSize:(NSSize)viewSize;
+@property(nonatomic) BOOL twinFitting;
+// Set when this session terminates, so that a twin start still in progress gives up.
+@property(nonatomic, readonly) BOOL twinStartCancelled;
+// Bytes read by this session that its twin has not parsed yet.
+@property(nonatomic, readonly) long long twinPendingByteCount;
 
 // Call this when a session moves to a different tab or window to update the session ID.
 - (void)didMoveSession;

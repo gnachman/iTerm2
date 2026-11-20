@@ -1,0 +1,738 @@
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J[32mtwin[39m % [K[?2004hlls -lG /usr/share/zsh[?2004l
+total 0
+drwxr-xr-x  5 root  wheel  160 Aug 13 05:51 [34m5.9[39;49m[0m
+drwxr-xr-x  2 root  wheel   64 Aug 13 05:51 [34msite-functions[39;49m[0m
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J[32mtwin[39m % [K[?2004hpprintf "\033[1;31mred\033[0m \033[4munder\033[0m\n"[?2004l
+[1;31mred[0m [4munder[0m
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J[32mtwin[39m % [K[?2004hccat sample.txt[?2004l
+line 1: the quick brown fox jumps over the lazy dog 1
+line 2: the quick brown fox jumps over the lazy dog 4
+line 3: the quick brown fox jumps over the lazy dog 9
+line 4: the quick brown fox jumps over the lazy dog 16
+line 5: the quick brown fox jumps over the lazy dog 25
+line 6: the quick brown fox jumps over the lazy dog 36
+line 7: the quick brown fox jumps over the lazy dog 49
+line 8: the quick brown fox jumps over the lazy dog 64
+line 9: the quick brown fox jumps over the lazy dog 81
+line 10: the quick brown fox jumps over the lazy dog 100
+line 11: the quick brown fox jumps over the lazy dog 121
+line 12: the quick brown fox jumps over the lazy dog 144
+line 13: the quick brown fox jumps over the lazy dog 169
+line 14: the quick brown fox jumps over the lazy dog 196
+line 15: the quick brown fox jumps over the lazy dog 225
+line 16: the quick brown fox jumps over the lazy dog 256
+line 17: the quick brown fox jumps over the lazy dog 289
+line 18: the quick brown fox jumps over the lazy dog 324
+line 19: the quick brown fox jumps over the lazy dog 361
+line 20: the quick brown fox jumps over the lazy dog 400
+line 21: the quick brown fox jumps over the lazy dog 441
+line 22: the quick brown fox jumps over the lazy dog 484
+line 23: the quick brown fox jumps over the lazy dog 529
+line 24: the quick brown fox jumps over the lazy dog 576
+line 25: the quick brown fox jumps over the lazy dog 625
+line 26: the quick brown fox jumps over the lazy dog 676
+line 27: the quick brown fox jumps over the lazy dog 729
+line 28: the quick brown fox jumps over the lazy dog 784
+line 29: the quick brown fox jumps over the lazy dog 841
+line 30: the quick brown fox jumps over the lazy dog 900
+line 31: the quick brown fox jumps over the lazy dog 961
+line 32: the quick brown fox jumps over the lazy dog 1024
+line 33: the quick brown fox jumps over the lazy dog 1089
+line 34: the quick brown fox jumps over the lazy dog 1156
+line 35: the quick brown fox jumps over the lazy dog 1225
+line 36: the quick brown fox jumps over the lazy dog 1296
+line 37: the quick brown fox jumps over the lazy dog 1369
+line 38: the quick brown fox jumps over the lazy dog 1444
+line 39: the quick brown fox jumps over the lazy dog 1521
+line 40: the quick brown fox jumps over the lazy dog 1600
+line 41: the quick brown fox jumps over the lazy dog 1681
+line 42: the quick brown fox jumps over the lazy dog 1764
+line 43: the quick brown fox jumps over the lazy dog 1849
+line 44: the quick brown fox jumps over the lazy dog 1936
+line 45: the quick brown fox jumps over the lazy dog 2025
+line 46: the quick brown fox jumps over the lazy dog 2116
+line 47: the quick brown fox jumps over the lazy dog 2209
+line 48: the quick brown fox jumps over the lazy dog 2304
+line 49: the quick brown fox jumps over the lazy dog 2401
+line 50: the quick brown fox jumps over the lazy dog 2500
+line 51: the quick brown fox jumps over the lazy dog 2601
+line 52: the quick brown fox jumps over the lazy dog 2704
+line 53: the quick brown fox jumps over the lazy dog 2809
+line 54: the quick brown fox jumps over the lazy dog 2916
+line 55: the quick brown fox jumps over the lazy dog 3025
+line 56: the quick brown fox jumps over the lazy dog 3136
+line 57: the quick brown fox jumps over the lazy dog 3249
+line 58: the quick brown fox jumps over the lazy dog 3364
+line 59: the quick brown fox jumps over the lazy dog 3481
+line 60: the quick brown fox jumps over the lazy dog 3600
+line 61: the quick brown fox jumps over the lazy dog 3721
+line 62: the quick brown fox jumps over the lazy dog 3844
+line 63: the quick brown fox jumps over the lazy dog 3969
+line 64: the quick brown fox jumps over the lazy dog 4096
+line 65: the quick brown fox jumps over the lazy dog 4225
+line 66: the quick brown fox jumps over the lazy dog 4356
+line 67: the quick brown fox jumps over the lazy dog 4489
+line 68: the quick brown fox jumps over the lazy dog 4624
+line 69: the quick brown fox jumps over the lazy dog 4761
+line 70: the quick brown fox jumps over the lazy dog 4900
+line 71: the quick brown fox jumps over the lazy dog 5041
+line 72: the quick brown fox jumps over the lazy dog 5184
+line 73: the quick brown fox jumps over the lazy dog 5329
+line 74: the quick brown fox jumps over the lazy dog 5476
+line 75: the quick brown fox jumps over the lazy dog 5625
+line 76: the quick brown fox jumps over the lazy dog 5776
+line 77: the quick brown fox jumps over the lazy dog 5929
+line 78: the quick brown fox jumps over the lazy dog 6084
+line 79: the quick brown fox jumps over the lazy dog 6241
+line 80: the quick brown fox jumps over the lazy dog 6400
+line 81: the quick brown fox jumps over the lazy dog 6561
+line 82: the quick brown fox jumps over the lazy dog 6724
+line 83: the quick brown fox jumps over the lazy dog 6889
+line 84: the quick brown fox jumps over the lazy dog 7056
+line 85: the quick brown fox jumps over the lazy dog 7225
+line 86: the quick brown fox jumps over the lazy dog 7396
+line 87: the quick brown fox jumps over the lazy dog 7569
+line 88: the quick brown fox jumps over the lazy dog 7744
+line 89: the quick brown fox jumps over the lazy dog 7921
+line 90: the quick brown fox jumps over the lazy dog 8100
+line 91: the quick brown fox jumps over the lazy dog 8281
+line 92: the quick brown fox jumps over the lazy dog 8464
+line 93: the quick brown fox jumps over the lazy dog 8649
+line 94: the quick brown fox jumps over the lazy dog 8836
+line 95: the quick brown fox jumps over the lazy dog 9025
+line 96: the quick brown fox jumps over the lazy dog 9216
+line 97: the quick brown fox jumps over the lazy dog 9409
+line 98: the quick brown fox jumps over the lazy dog 9604
+line 99: the quick brown fox jumps over the lazy dog 9801
+line 100: the quick brown fox jumps over the lazy dog 10000
+line 101: the quick brown fox jumps over the lazy dog 10201
+line 102: the quick brown fox jumps over the lazy dog 10404
+line 103: the quick brown fox jumps over the lazy dog 10609
+line 104: the quick brown fox jumps over the lazy dog 10816
+line 105: the quick brown fox jumps over the lazy dog 11025
+line 106: the quick brown fox jumps over the lazy dog 11236
+line 107: the quick brown fox jumps over the lazy dog 11449
+line 108: the quick brown fox jumps over the lazy dog 11664
+line 109: the quick brown fox jumps over the lazy dog 11881
+line 110: the quick brown fox jumps over the lazy dog 12100
+line 111: the quick brown fox jumps over the lazy dog 12321
+line 112: the quick brown fox jumps over the lazy dog 12544
+line 113: the quick brown fox jumps over the lazy dog 12769
+line 114: the quick brown fox jumps over the lazy dog 12996
+line 115: the quick brown fox jumps over the lazy dog 13225
+line 116: the quick brown fox jumps over the lazy dog 13456
+line 117: the quick brown fox jumps over the lazy dog 13689
+line 118: the quick brown fox jumps over the lazy dog 13924
+line 119: the quick brown fox jumps over the lazy dog 14161
+line 120: the quick brown fox jumps over the lazy dog 14400
+line 121: the quick brown fox jumps over the lazy dog 14641
+line 122: the quick brown fox jumps over the lazy dog 14884
+line 123: the quick brown fox jumps over the lazy dog 15129
+line 124: the quick brown fox jumps over the lazy dog 15376
+line 125: the quick brown fox jumps over the lazy dog 15625
+line 126: the quick brown fox jumps over the lazy dog 15876
+line 127: the quick brown fox jumps over the lazy dog 16129
+line 128: the quick brown fox jumps over the lazy dog 16384
+line 129: the quick brown fox jumps over the lazy dog 16641
+line 130: the quick brown fox jumps over the lazy dog 16900
+line 131: the quick brown fox jumps over the lazy dog 17161
+line 132: the quick brown fox jumps over the lazy dog 17424
+line 133: the quick brown fox jumps over the lazy dog 17689
+line 134: the quick brown fox jumps over the lazy dog 17956
+line 135: the quick brown fox jumps over the lazy dog 18225
+line 136: the quick brown fox jumps over the lazy dog 18496
+line 137: the quick brown fox jumps over the lazy dog 18769
+line 138: the quick brown fox jumps over the lazy dog 19044
+line 139: the quick brown fox jumps over the lazy dog 19321
+line 140: the quick brown fox jumps over the lazy dog 19600
+line 141: the quick brown fox jumps over the lazy dog 19881
+line 142: the quick brown fox jumps over the lazy dog 20164
+line 143: the quick brown fox jumps over the lazy dog 20449
+line 144: the quick brown fox jumps over the lazy dog 20736
+line 145: the quick brown fox jumps over the lazy dog 21025
+line 146: the quick brown fox jumps over the lazy dog 21316
+line 147: the quick brown fox jumps over the lazy dog 21609
+line 148: the quick brown fox jumps over the lazy dog 21904
+line 149: the quick brown fox jumps over the lazy dog 22201
+line 150: the quick brown fox jumps over the lazy dog 22500
+line 151: the quick brown fox jumps over the lazy dog 22801
+line 152: the quick brown fox jumps over the lazy dog 23104
+line 153: the quick brown fox jumps over the lazy dog 23409
+line 154: the quick brown fox jumps over the lazy dog 23716
+line 155: the quick brown fox jumps over the lazy dog 24025
+line 156: the quick brown fox jumps over the lazy dog 24336
+line 157: the quick brown fox jumps over the lazy dog 24649
+line 158: the quick brown fox jumps over the lazy dog 24964
+line 159: the quick brown fox jumps over the lazy dog 25281
+line 160: the quick brown fox jumps over the lazy dog 25600
+line 161: the quick brown fox jumps over the lazy dog 25921
+line 162: the quick brown fox jumps over the lazy dog 26244
+line 163: the quick brown fox jumps over the lazy dog 26569
+line 164: the quick brown fox jumps over the lazy dog 26896
+line 165: the quick brown fox jumps over the lazy dog 27225
+line 166: the quick brown fox jumps over the lazy dog 27556
+line 167: the quick brown fox jumps over the lazy dog 27889
+line 168: the quick brown fox jumps over the lazy dog 28224
+line 169: the quick brown fox jumps over the lazy dog 28561
+line 170: the quick brown fox jumps over the lazy dog 28900
+line 171: the quick brown fox jumps over the lazy dog 29241
+line 172: the quick brown fox jumps over the lazy dog 29584
+line 173: the quick brown fox jumps over the lazy dog 29929
+line 174: the quick brown fox jumps over the lazy dog 30276
+line 175: the quick brown fox jumps over the lazy dog 30625
+line 176: the quick brown fox jumps over the lazy dog 30976
+line 177: the quick brown fox jumps over the lazy dog 31329
+line 178: the quick brown fox jumps over the lazy dog 31684
+line 179: the quick brown fox jumps over the lazy dog 32041
+line 180: the quick brown fox jumps over the lazy dog 32400
+line 181: the quick brown fox jumps over the lazy dog 32761
+line 182: the quick brown fox jumps over the lazy dog 33124
+line 183: the quick brown fox jumps over the lazy dog 33489
+line 184: the quick brown fox jumps over the lazy dog 33856
+line 185: the quick brown fox jumps over the lazy dog 34225
+line 186: the quick brown fox jumps over the lazy dog 34596
+line 187: the quick brown fox jumps over the lazy dog 34969
+line 188: the quick brown fox jumps over the lazy dog 35344
+line 189: the quick brown fox jumps over the lazy dog 35721
+line 190: the quick brown fox jumps over the lazy dog 36100
+line 191: the quick brown fox jumps over the lazy dog 36481
+line 192: the quick brown fox jumps over the lazy dog 36864
+line 193: the quick brown fox jumps over the lazy dog 37249
+line 194: the quick brown fox jumps over the lazy dog 37636
+line 195: the quick brown fox jumps over the lazy dog 38025
+line 196: the quick brown fox jumps over the lazy dog 38416
+line 197: the quick brown fox jumps over the lazy dog 38809
+line 198: the quick brown fox jumps over the lazy dog 39204
+line 199: the quick brown fox jumps over the lazy dog 39601
+line 200: the quick brown fox jumps over the lazy dog 40000
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J[32mtwin[39m % [K[?2004heecho wide: 日本語 émoji 🙂[?2004l
+wide: 日本語 émoji 🙂
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J[32mtwin[39m % [K[?2004hcclear[?2004l
+[3J[H[2J[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J[32mtwin[39m % [K[?2004hlls -G /usr/bin[?2004l
+[31mAssetCacheLocatorUtil[39;49m[0m       [31mmdfind[39;49m[0m
+[31mAssetCacheManagerUtil[39;49m[0m       [31mmdimport[39;49m[0m
+[31mAssetCacheTetheratorUtil[39;49m[0m    [31mmdls[39;49m[0m
+[31mDeRez[39;49m[0m                       [31mmdutil[39;49m[0m
+[31mGetFileInfo[39;49m[0m                 [31mmemacct[39;49m[0m
+[31mIOAccelMemory[39;49m[0m               [31mmemory_pressure[39;49m[0m
+[31mIOMFB_FDR_Loader[39;49m[0m            [31mmesg[39;49m[0m
+[31mIOSDebug[39;49m[0m                    [31mmg[39;49m[0m
+[31mResMerger[39;49m[0m                   [31mmib2c[39;49m[0m
+[31mRez[39;49m[0m                         [31mmib2c-update[39;49m[0m
+[31mSafeEjectGPU[39;49m[0m                [31mmig[39;49m[0m
+[31mSetFile[39;49m[0m                     [31mmkbom[39;49m[0m
+[31mSplitForks[39;49m[0m                  [31mmkfifo[39;49m[0m
+[31maa[39;49m[0m                          [31mmktemp[39;49m[0m
+[31mactool[39;49m[0m                      [31mmnthome[39;49m[0m
+[31maea[39;49m[0m                         [31mmodelcatalogdump[39;49m[0m
+[31mafclip[39;49m[0m                      [31mmodelmanagerdump[39;49m[0m
+[31mafconvert[39;49m[0m                   [31mmoose-outdated[39;49m[0m
+[31mafhash[39;49m[0m                      [31mmoose-outdated5.34[39;49m[0m
+[31mafida[39;49m[0m                       [31mmore[39;49m[0m
+[31mafinfo[39;49m[0m                      [31mmp2bug[39;49m[0m
+[31mafktool[39;49m[0m                     [31mmpsgraphtool[39;49m[0m
+[31mafplay[39;49m[0m                      [35mnano[39;49m[0m
+[31mafscexpand[39;49m[0m                  [31mnbdst[39;49m[0m
+[31magentxtrap[39;49m[0m                  [31mnc[39;49m[0m
+[31magvtool[39;49m[0m                     [31mncal[39;49m[0m
+[31malias[39;49m[0m                       [31mncctl[39;49m[0m
+[31mapp-sso[39;49m[0m                     [35mncdestroy[39;49m[0m
+[31mapplesingle[39;49m[0m                 [35mncinit[39;49m[0m
+[31mapply[39;49m[0m                       [35mnclist[39;49m[0m
+[31mapropos[39;49m[0m                     [31mncurses5.4-config[39;49m[0m
+[31mar[39;49m[0m                          [31mnet-server[39;49m[0m
+[31march[39;49m[0m                        [31mnet-server5.34[39;49m[0m
+[31marchiveutil[39;49m[0m                 [31mnet-snmp-cert[39;49m[0m
+[31mas[39;49m[0m                          [31mnet-snmp-config[39;49m[0m
+[31masa[39;49m[0m                         [31mnet-snmp-create-v3-user[39;49m[0m
+[31massetutil[39;49m[0m                   [31mnettop[39;49m[0m
+[30m[41mat[39;49m[0m                          [31mnetworkQuality[39;49m[0m
+[31matos[39;49m[0m                        [35mnewaliases[39;49m[0m
+[30m[41matq[39;49m[0m                         [30m[41mnewgrp[39;49m[0m
+[30m[41matrm[39;49m[0m                        [31mnewproc.d[39;49m[0m
+[31matsutil[39;49m[0m                     [31mnfsstat[39;49m[0m
+[31mautomationmodetool[39;49m[0m          [31mnice[39;49m[0m
+[31mautomator[39;49m[0m                   [31mnl[39;49m[0m
+[35mauval[39;49m[0m                       [31mnm[39;49m[0m
+[31mauvaltool[39;49m[0m                   [31mnmedit[39;49m[0m
+[31mavbanalyse[39;49m[0m                  [31mnohup[39;49m[0m
+[31mavbcapture[39;49m[0m                  [31mnotifyutil[39;49m[0m
+[31mavbdiagnose[39;49m[0m                 [31mnscurl[39;49m[0m
+[31mavbutil[39;49m[0m                     [31mnslookup[39;49m[0m
+[31mavconvert[39;49m[0m                   [31mnsupdate[39;49m[0m
+[31mavmediainfo[39;49m[0m                 [31mobjdump[39;49m[0m
+[31mavmetareadwrite[39;49m[0m             [31mocspcheck[39;49m[0m
+[31mawk[39;49m[0m                         [31mod[39;49m[0m
+[31mb64decode[39;49m[0m                   [31modutil[39;49m[0m
+[31mb64encode[39;49m[0m                   [31mopen[39;49m[0m
+[31mbanner[39;49m[0m                      [31mopendiff[39;49m[0m
+[31mbase64[39;49m[0m                      [31mopensnoop[39;49m[0m
+[31mbasename[39;49m[0m                    [31mopenssl[39;49m[0m
+[31mbashbug[39;49m[0m                     [31morbd[39;49m[0m
+[30m[41mbatch[39;49m[0m                       [31mosacompile[39;49m[0m
+[31mbc[39;49m[0m                          [31mosadecompile[39;49m[0m
+[31mbg[39;49m[0m                          [31mosalang[39;49m[0m
+[31mbinhex[39;49m[0m                      [31mosascript[39;49m[0m
+[31mbinhex.pl[39;49m[0m                   [31motool[39;49m[0m
+[31mbinhex5.34.pl[39;49m[0m               [31mpack200[39;49m[0m
+[31mbintrans[39;49m[0m                    [31mpackage-stash-conflicts[39;49m[0m
+[31mbioutil[39;49m[0m                     [31mpackage-stash-conflicts5.34[39;49m[0m
+[31mbison[39;49m[0m                       [31mpagesize[39;49m[0m
+[31mbitesize.d[39;49m[0m                  [31mpagestuff[39;49m[0m
+[31mbm4[39;49m[0m                         [31mpar.pl[39;49m[0m
+[31mbputil[39;49m[0m                      [31mpar5.34.pl[39;49m[0m
+[31mbrctl[39;49m[0m                       [31mparl[39;49m[0m
+[31mbsdtar[39;49m[0m                      [31mparl5.34[39;49m[0m
+[31mbspatch[39;49m[0m                     [31mparldyn[39;49m[0m
+[31mbundle[39;49m[0m                      [31mparldyn5.34[39;49m[0m
+[31mbundler[39;49m[0m                     [31mpasswd[39;49m[0m
+[31mbunzip2[39;49m[0m                     [31mpaste[39;49m[0m
+[31mbzcat[39;49m[0m                       [31mpatch[39;49m[0m
+[35mbzcmp[39;49m[0m                       [31mpathchk[39;49m[0m
+[31mbzdiff[39;49m[0m                      [31mpathopens.d[39;49m[0m
+[31mbzegrep[39;49m[0m                     [31mpbcopy[39;49m[0m
+[31mbzfgrep[39;49m[0m                     [31mpbpaste[39;49m[0m
+[31mbzgrep[39;49m[0m                      [31mpcap-config[39;49m[0m
+[31mbzip2[39;49m[0m                       [31mpcsctest[39;49m[0m
+[31mbzip2recover[39;49m[0m                [31mperl[39;49m[0m
+[35mbzless[39;49m[0m                      [31mperl5.34[39;49m[0m
+[31mbzmore[39;49m[0m                      [31mperlbug[39;49m[0m
+[31mc++[39;49m[0m                         [31mperlbug5.34[39;49m[0m
+[31mc++filt[39;49m[0m                     [31mperldoc[39;49m[0m
+[31mc89[39;49m[0m                         [31mperldoc5.34[39;49m[0m
+[31mc99[39;49m[0m                         [31mperlivp[39;49m[0m
+[31mcaffeinate[39;49m[0m                  [31mperlivp5.34[39;49m[0m
+[31mcal[39;49m[0m                         [31mperlthanks[39;49m[0m
+[31mcalendar[39;49m[0m                    [31mperlthanks5.34[39;49m[0m
+[31mcancel[39;49m[0m                      [31mpgrep[39;49m[0m
+[31mcap_mkdb[39;49m[0m                    [31mpico[39;49m[0m
+[35mcaptoinfo[39;49m[0m                   [31mpiconv[39;49m[0m
+[31mcc[39;49m[0m                          [31mpiconv5.34[39;49m[0m
+[31mcd[39;49m[0m                          [31mpidpersec.d[39;49m[0m
+[31mcerttool[39;49m[0m                    [31mpip3[39;49m[0m
+[31mchflags[39;49m[0m                     [31mpkgbuild[39;49m[0m
+[31mchfn[39;49m[0m                        [31mpkill[39;49m[0m
+[31mchgrp[39;49m[0m                       [31mpl[39;49m[0m
+[31mchpass[39;49m[0m                      [31mpl2pm[39;49m[0m
+[31mchsh[39;49m[0m                        [31mpl2pm5.34[39;49m[0m
+[31mcksum[39;49m[0m                       [31mplockstat[39;49m[0m
+[31mclang[39;49m[0m                       [31mpluginkit[39;49m[0m
+[31mclang++[39;49m[0m                     [31mplutil[39;49m[0m
+[31mclangd[39;49m[0m                      [31mpmset[39;49m[0m
+[31mclear[39;49m[0m                       [31mpod2html[39;49m[0m
+[31mcmp[39;49m[0m                         [31mpod2html5.34[39;49m[0m
+[31mcmpdylib[39;49m[0m                    [31mpod2man[39;49m[0m
+[31mcodecctl[39;49m[0m                    [31mpod2man5.34[39;49m[0m
+[31mcodesign[39;49m[0m                    [31mpod2readme[39;49m[0m
+[31mcodesign_allocate[39;49m[0m           [31mpod2readme5.34[39;49m[0m
+[31mcol[39;49m[0m                         [31mpod2text[39;49m[0m
+[31mcolrm[39;49m[0m                       [31mpod2text5.34[39;49m[0m
+[31mcolumn[39;49m[0m                      [31mpod2usage[39;49m[0m
+[31mcomm[39;49m[0m                        [31mpod2usage5.34[39;49m[0m
+[31mcommand[39;49m[0m                     [31mpodchecker[39;49m[0m
+[31mcompress[39;49m[0m                    [31mpodchecker5.34[39;49m[0m
+[31mcompression_tool[39;49m[0m            [31mpolicytool[39;49m[0m
+[31mconfig_data[39;49m[0m                 [31mpower_report.sh[39;49m[0m
+[31mconfig_data5.34[39;49m[0m             [31mpowermetrics[39;49m[0m
+[31mcorelist[39;49m[0m                    [31mpp[39;49m[0m
+[31mcorelist5.34[39;49m[0m                [31mpp5.34[39;49m[0m
+[31mcpan[39;49m[0m                        [31mppdc[39;49m[0m
+[31mcpan5.34[39;49m[0m                    [31mppdhtml[39;49m[0m
+[31mcpio[39;49m[0m                        [31mppdi[39;49m[0m
+[31mcpp[39;49m[0m                         [31mppdmerge[39;49m[0m
+[31mcpu_profiler.d[39;49m[0m              [31mppdpo[39;49m[0m
+[31mcpuctl[39;49m[0m                      [31mpr[39;49m[0m
+[31mcpuwalk.d[39;49m[0m                   [31mpriclass.d[39;49m[0m
+[31mcrc32[39;49m[0m                       [31mpridist.d[39;49m[0m
+[31mcrc325.34[39;49m[0m                   [31mprintenv[39;49m[0m
+[31mcreatbyproc.d[39;49m[0m               [31mprintf[39;49m[0m
+[31mcrlrefresh[39;49m[0m                  [31mprocsystime[39;49m[0m
+[30m[41mcrontab[39;49m[0m                     [31mproductbuild[39;49m[0m
+[31mcsfdiagnose[39;49m[0m                 [31mproductsign[39;49m[0m
+[31mcsplit[39;49m[0m                      [31mprofiles[39;49m[0m
+[31mcsreq[39;49m[0m                       [31mprove[39;49m[0m
+[31mcsrutil[39;49m[0m                     [31mprove5.34[39;49m[0m
+[31mctags[39;49m[0m                       [31mpsm[39;49m[0m
+[31mctf_insert[39;49m[0m                  [31mptar[39;49m[0m
+[31mcu[39;49m[0m                          [31mptar5.34[39;49m[0m
+[31mcups-config[39;49m[0m                 [31mptardiff[39;49m[0m
+[31mcupstestppd[39;49m[0m                 [31mptardiff5.34[39;49m[0m
+[31mcurl[39;49m[0m                        [31mptargrep[39;49m[0m
+[31mcurl-config[39;49m[0m                 [31mptargrep5.34[39;49m[0m
+[31mcut[39;49m[0m                         [31mpwpolicy[39;49m[0m
+[35mcvaffinity[39;49m[0m                  [31mpython3[39;49m[0m
+[35mcvcp[39;49m[0m                        [35mqlmanage[39;49m[0m
+[35mcvmkdir[39;49m[0m                     [30m[41mquota[39;49m[0m
+[35mcvmkfile[39;49m[0m                    [31mrails[39;49m[0m
+[31mdappprof[39;49m[0m                    [31mrake[39;49m[0m
+[31mdapptrace[39;49m[0m                   [31mranlib[39;49m[0m
+[31mdb_archive[39;49m[0m                  [31mrdma_ctl[39;49m[0m
+[31mdb_checkpoint[39;49m[0m               [31mrdoc[39;49m[0m
+[31mdb_codegen[39;49m[0m                  [31mread[39;49m[0m
+[31mdb_deadlock[39;49m[0m                 [31mreadlink[39;49m[0m
+[31mdb_dump[39;49m[0m                     [31mrenice[39;49m[0m
+[31mdb_hotbackup[39;49m[0m                [35mreset[39;49m[0m
+[31mdb_load[39;49m[0m                     [31mresolveLinks[39;49m[0m
+[31mdb_printlog[39;49m[0m                 [31mrev[39;49m[0m
+[31mdb_recover[39;49m[0m                  [31mri[39;49m[0m
+[31mdb_stat[39;49m[0m                     [31mrmic[39;49m[0m
+[31mdb_upgrade[39;49m[0m                  [31mrmid[39;49m[0m
+[31mdb_verify[39;49m[0m                   [31mrmiregistry[39;49m[0m
+[31mdbicadmin[39;49m[0m                   [31mrpcgen[39;49m[0m
+[31mdbicadmin5.34[39;49m[0m               [31mrs[39;49m[0m
+[31mdbilogstrip[39;49m[0m                 [31mrsync[39;49m[0m
+[31mdbilogstrip5.34[39;49m[0m             [31mruby[39;49m[0m
+[31mdbiprof[39;49m[0m                     [35mrview[39;49m[0m
+[31mdbiprof5.34[39;49m[0m                 [35mrvim[39;49m[0m
+[31mdbiproxy[39;49m[0m                    [31mrwbypid.d[39;49m[0m
+[31mdbiproxy5.34[39;49m[0m                [31mrwbytype.d[39;49m[0m
+[31mdc[39;49m[0m                          [31mrwsnoop[39;49m[0m
+[31mdddiagnose[39;49m[0m                  [35msafaridriver[39;49m[0m
+[31mdebinhex.pl[39;49m[0m                 [31msample[39;49m[0m
+[31mdebinhex5.34.pl[39;49m[0m             [31msampleproc[39;49m[0m
+[31mdefaults[39;49m[0m                    [31msandbox-exec[39;49m[0m
+[31mdelv[39;49m[0m                        [31msay[39;49m[0m
+[31mdemandoc[39;49m[0m                    [31msc_usage[39;49m[0m
+[31mderq[39;49m[0m                        [31mscandeps.pl[39;49m[0m
+[31mdesdp[39;49m[0m                       [31mscandeps5.34.pl[39;49m[0m
+[31mdevicectl[39;49m[0m                   [31mscp[39;49m[0m
+[31mdevmodectl[39;49m[0m                  [31mscreen[39;49m[0m
+[31mdiff[39;49m[0m                        [31mscript[39;49m[0m
+[31mdiff3[39;49m[0m                       [31msdef[39;49m[0m
+[31mdiffstat[39;49m[0m                    [31msdiff[39;49m[0m
+[31mdig[39;49m[0m                         [31msdp[39;49m[0m
+[31mdirname[39;49m[0m                     [35msdx[39;49m[0m
+[31mdispqlen.d[39;49m[0m                  [31msearchdiagnose[39;49m[0m
+[31mdist_package_tool[39;49m[0m           [31msecurity[39;49m[0m
+[31mditto[39;49m[0m                       [31msed[39;49m[0m
+[31mdmc[39;49m[0m                         [31mseeksize.d[39;49m[0m
+[31mdns-sd[39;49m[0m                      [31msegedit[39;49m[0m
+[31mdrutil[39;49m[0m                      [31mseq[39;49m[0m
+[31mdscacheutil[39;49m[0m                 [31mserialver[39;49m[0m
+[31mdscl[39;49m[0m                        [31mservertool[39;49m[0m
+[31mdserr[39;49m[0m                       [31msetregion[39;49m[0m
+[31mdsexport[39;49m[0m                    [31msetuids.d[39;49m[0m
+[31mdsimport[39;49m[0m                    [31msfltool[39;49m[0m
+[31mdsmemberutil[39;49m[0m                [31msftp[39;49m[0m
+[31mdsymutil[39;49m[0m                    [31mshar[39;49m[0m
+[31mdtruss[39;49m[0m                      [31mshasum[39;49m[0m
+[31mdu[39;49m[0m                          [31mshasum5.34[39;49m[0m
+[31mdwarfdump[39;49m[0m                   [31mshazam[39;49m[0m
+[31mdyld_info[39;49m[0m                   [31mshlock[39;49m[0m
+[31mdyld_usage[39;49m[0m                  [31mshortcuts[39;49m[0m
+[31megrep[39;49m[0m                       [31mshowmount[39;49m[0m
+[31menc2xs[39;49m[0m                      [31msigdist.d[39;49m[0m
+[31menc2xs5.34[39;49m[0m                  [31msips[39;49m[0m
+[31mencguess[39;49m[0m                    [31msize[39;49m[0m
+[31mencguess5.34[39;49m[0m                [35mslogin[39;49m[0m
+[31mencode_keychange[39;49m[0m            [31msmbutil[39;49m[0m
+[31menv[39;49m[0m                         [35msnfsdefrag[39;49m[0m
+[31merb[39;49m[0m                         [31msnmp-bridge-mib[39;49m[0m
+[31merrinfo[39;49m[0m                     [31msnmpbulkget[39;49m[0m
+[31meslogger[39;49m[0m                    [31msnmpbulkwalk[39;49m[0m
+[35mex[39;49m[0m                          [31msnmpconf[39;49m[0m
+[31mexecsnoop[39;49m[0m                   [31msnmpdelta[39;49m[0m
+[31mexpand[39;49m[0m                      [31msnmpdf[39;49m[0m
+[31mexpect[39;49m[0m                      [31msnmpget[39;49m[0m
+[31meyapp[39;49m[0m                       [31msnmpgetnext[39;49m[0m
+[31meyapp5.34[39;49m[0m                   [35msnmpinform[39;49m[0m
+[31mfalse[39;49m[0m                       [31msnmpnetstat[39;49m[0m
+[31mfc[39;49m[0m                          [31msnmpset[39;49m[0m
+[31mfddist[39;49m[0m                      [31msnmpstatus[39;49m[0m
+[31mfdesetup[39;49m[0m                    [31msnmptable[39;49m[0m
+[31mfg[39;49m[0m                          [31msnmptest[39;49m[0m
+[31mfgrep[39;49m[0m                       [31msnmptranslate[39;49m[0m
+[31mfile[39;49m[0m                        [31msnmptrap[39;49m[0m
+[31mfilebyproc.d[39;49m[0m                [31msnmpusm[39;49m[0m
+[31mfileproviderctl[39;49m[0m             [31msnmpvacm[39;49m[0m
+[31mfiltercalltree[39;49m[0m              [31msnmpwalk[39;49m[0m
+[31mfind[39;49m[0m                        [31msntp[39;49m[0m
+[31mfindrule[39;49m[0m                    [31msoelim[39;49m[0m
+[31mfindrule5.34[39;49m[0m                [31msort[39;49m[0m
+[31mfinger[39;49m[0m                      [31msourcekit-lsp[39;49m[0m
+[31mfixproc[39;49m[0m                     [31mspfd[39;49m[0m
+[31mflex[39;49m[0m                        [31mspfd5.34[39;49m[0m
+[31mflex++[39;49m[0m                      [31mspfquery[39;49m[0m
+[31mfmt[39;49m[0m                         [31mspfquery5.34[39;49m[0m
+[31mfold[39;49m[0m                        [31msplain[39;49m[0m
+[35mfontrestore[39;49m[0m                 [31msplain5.34[39;49m[0m
+[31mfootprint[39;49m[0m                   [31msplit[39;49m[0m
+[31mfping[39;49m[0m                       [31msqlite3[39;49m[0m
+[31mfs_usage[39;49m[0m                    [31mssh[39;49m[0m
+[31mfunzip[39;49m[0m                      [31mssh-add[39;49m[0m
+[31mfuser[39;49m[0m                       [31mssh-agent[39;49m[0m
+[31mg++[39;49m[0m                         [31mssh-copy-id[39;49m[0m
+[31mgatherheaderdoc[39;49m[0m             [31mssh-keygen[39;49m[0m
+[31mgcc[39;49m[0m                         [31mssh-keyscan[39;49m[0m
+[31mgcore[39;49m[0m                       [31mstapler[39;49m[0m
+[31mgcov[39;49m[0m                        [31mstat[39;49m[0m
+[31mgem[39;49m[0m                         [31mstdbuf[39;49m[0m
+[31mgen_bridge_metadata[39;49m[0m         [31mstreamzip[39;49m[0m
+[31mgencat[39;49m[0m                      [31mstreamzip5.34[39;49m[0m
+[31mgenstrings[39;49m[0m                  [31mstringdups[39;49m[0m
+[31mgetconf[39;49m[0m                     [31mstrings[39;49m[0m
+[31mgetopt[39;49m[0m                      [31mstrip[39;49m[0m
+[31mgetopts[39;49m[0m                     [31mstz[39;49m[0m
+[31mgit[39;49m[0m                         [30m[41msu[39;49m[0m
+[31mgit-receive-pack[39;49m[0m            [30m[41msudo[39;49m[0m
+[31mgit-shell[39;49m[0m                   [31msum[39;49m[0m
+[31mgit-upload-archive[39;49m[0m          [31msw_vers[39;49m[0m
+[31mgit-upload-pack[39;49m[0m             [35mswcutil[39;49m[0m
+[31mgktool[39;49m[0m                      [31mswift[39;49m[0m
+[31mgm4[39;49m[0m                         [31mswift-inspect[39;49m[0m
+[31mgnumake[39;49m[0m                     [31mswiftc[39;49m[0m
+[31mgperf[39;49m[0m                       [31msymbols[39;49m[0m
+[31mgrep[39;49m[0m                        [31msymbolscache[39;49m[0m
+[31mgroups[39;49m[0m                      [31msyscallbypid.d[39;49m[0m
+[31mgunzip[39;49m[0m                      [31msyscallbyproc.d[39;49m[0m
+[31mgzcat[39;49m[0m                       [31msyscallbysysc.d[39;49m[0m
+[31mgzexe[39;49m[0m                       [31msysdiagnose[39;49m[0m
+[31mgzip[39;49m[0m                        [31msyslog[39;49m[0m
+[31mh2ph[39;49m[0m                        [31msyspolicy_check[39;49m[0m
+[31mh2ph5.34[39;49m[0m                    [31msystem-override[39;49m[0m
+[31mh2xs[39;49m[0m                        [31msystemextensionsctl[39;49m[0m
+[31mh2xs5.34[39;49m[0m                    [31mtab2space[39;49m[0m
+[31mhash[39;49m[0m                        [31mtabs[39;49m[0m
+[31mhdid[39;49m[0m                        [31mtail[39;49m[0m
+[31mhdiutil[39;49m[0m                     [31mtailspin[39;49m[0m
+[31mhdxml2manxml[39;49m[0m                [31mtalk[39;49m[0m
+[31mhead[39;49m[0m                        [35mtar[39;49m[0m
+[31mheaderdoc2html[39;49m[0m              [31mtaskinfo[39;49m[0m
+[31mheap[39;49m[0m                        [31mtbtdiagnose[39;49m[0m
+[31mhexdump[39;49m[0m                     [31mtccutil[39;49m[0m
+[31mhidutil[39;49m[0m                     [35mtclsh[39;49m[0m
+[31mhiutil[39;49m[0m                      [35mtclsh8.5[39;49m[0m
+[31mhost[39;49m[0m                        [31mtee[39;49m[0m
+[31mhostinfo[39;49m[0m                    [31mtest-yaml[39;49m[0m
+[31mhotspot.d[39;49m[0m                   [31mtest-yaml5.34[39;49m[0m
+[31mhpmdiagnose[39;49m[0m                 [31mtextutil[39;49m[0m
+[31mhtmltree[39;49m[0m                    [31mtftp[39;49m[0m
+[31mhtmltree5.34[39;49m[0m                [31mthermal[39;49m[0m
+[31mibtool[39;49m[0m                      [31mtic[39;49m[0m
+[31mibv_devices[39;49m[0m                 [31mtidy[39;49m[0m
+[31mibv_devinfo[39;49m[0m                 [31mtidy_changelog[39;49m[0m
+[31mibv_uc_pingpong[39;49m[0m             [31mtidy_changelog5.34[39;49m[0m
+[31miconutil[39;49m[0m                    [31mtiff2icns[39;49m[0m
+[31miconv[39;49m[0m                       [31mtiffutil[39;49m[0m
+[31mictool[39;49m[0m                      [31mtime[39;49m[0m
+[31mid[39;49m[0m                          [31mtimer_analyser.d[39;49m[0m
+[31mimptrace[39;49m[0m                    [31mtimerfires[39;49m[0m
+[31mindent[39;49m[0m                      [31mtimesyncanalyse[39;49m[0m
+[31minfocmp[39;49m[0m                     [35mtkcon[39;49m[0m
+[35minfotocap[39;49m[0m                   [31mtkmib[39;49m[0m
+[31minstall[39;49m[0m                     [31mtkpp[39;49m[0m
+[31minstall_name_tool[39;49m[0m           [31mtkpp5.34[39;49m[0m
+[31minstmodsh[39;49m[0m                   [31mtmdiagnose[39;49m[0m
+[31minstmodsh5.34[39;49m[0m               [31mtmutil[39;49m[0m
+[31miofile.d[39;49m[0m                    [31mtnameserv[39;49m[0m
+[31miofileb.d[39;49m[0m                   [31mtoe[39;49m[0m
+[31miopattern[39;49m[0m                   [30m[41mtop[39;49m[0m
+[31miopending[39;49m[0m                   [31mtops[39;49m[0m
+[31miosnoop[39;49m[0m                     [31mtopsyscall[39;49m[0m
+[31miotop[39;49m[0m                       [31mtopsysproc[39;49m[0m
+[31mip2cc[39;49m[0m                       [31mtouch[39;49m[0m
+[31mip2cc5.34[39;49m[0m                   [31mtput[39;49m[0m
+[31mipcount[39;49m[0m                     [31mtr[39;49m[0m
+[31mipcount5.34[39;49m[0m                 [31mtrace[39;49m[0m
+[31mipcrm[39;49m[0m                       [31mtraptoemail[39;49m[0m
+[31mipcs[39;49m[0m                        [31mtrash[39;49m[0m
+[31miperf3-darwin[39;49m[0m               [31mtreereg[39;49m[0m
+[31mippeveprinter[39;49m[0m               [31mtreereg5.34[39;49m[0m
+[31mippfind[39;49m[0m                     [31mtrimforce[39;49m[0m
+[31mipptool[39;49m[0m                     [31mtrue[39;49m[0m
+[31miptab[39;49m[0m                       [31mtruncate[39;49m[0m
+[31miptab5.34[39;49m[0m                   [31mtrustcachectl[39;49m[0m
+[31mirb[39;49m[0m                         [31mtset[39;49m[0m
+[31mjar[39;49m[0m                         [31mtsort[39;49m[0m
+[31mjarsigner[39;49m[0m                   [31mtty[39;49m[0m
+[31mjava[39;49m[0m                        [31mtype[39;49m[0m
+[31mjavac[39;49m[0m                       [31mul[39;49m[0m
+[31mjavadoc[39;49m[0m                     [31mulimit[39;49m[0m
+[31mjavap[39;49m[0m                       [31mumask[39;49m[0m
+[31mjavaws[39;49m[0m                      [31mumtool[39;49m[0m
+[31mjcmd[39;49m[0m                        [31munalias[39;49m[0m
+[31mjconsole[39;49m[0m                    [31muname[39;49m[0m
+[31mjcontrol[39;49m[0m                    [31muncompress[39;49m[0m
+[31mjdb[39;49m[0m                         [31munexpand[39;49m[0m
+[31mjdeps[39;49m[0m                       [31munifdef[39;49m[0m
+[31mjhsdb[39;49m[0m                       [31munifdefall[39;49m[0m
+[31mjimage[39;49m[0m                      [31muniq[39;49m[0m
+[31mjinfo[39;49m[0m                       [31munits[39;49m[0m
+[31mjjs[39;49m[0m                         [31munpack200[39;49m[0m
+[31mjlink[39;49m[0m                       [31munvis[39;49m[0m
+[31mjmap[39;49m[0m                        [31munzip[39;49m[0m
+[31mjobs[39;49m[0m                        [31munzipsfx[39;49m[0m
+[31mjoin[39;49m[0m                        [31mupdate_dyld_shared_cache[39;49m[0m
+[31mjot[39;49m[0m                         [31mupdate_mcdp29xx[39;49m[0m
+[31mjpackage[39;49m[0m                    [31muptime[39;49m[0m
+[31mjps[39;49m[0m                         [31musbcfwflasher[39;49m[0m
+[31mjq[39;49m[0m                          [31musbdiagnose[39;49m[0m
+[31mjrunscript[39;49m[0m                  [31musdcat[39;49m[0m
+[31mjshell[39;49m[0m                      [31musdchecker[39;49m[0m
+[31mjson_pp[39;49m[0m                     [31musdcrush[39;49m[0m
+[31mjson_pp5.34[39;49m[0m                 [31musdextract[39;49m[0m
+[31mjson_xs[39;49m[0m                     [31musdrecord[39;49m[0m
+[31mjson_xs5.34[39;49m[0m                 [31musdtree[39;49m[0m
+[31mjstack[39;49m[0m                      [31musdzip[39;49m[0m
+[31mjstat[39;49m[0m                       [31musers[39;49m[0m
+[31mjstatd[39;49m[0m                      [31muttype[39;49m[0m
+[31mkcc[39;49m[0m                         [31muucp[39;49m[0m
+[31mkdestroy[39;49m[0m                    [31muudecode[39;49m[0m
+[31mkextutil[39;49m[0m                    [31muuencode[39;49m[0m
+[31mkeychain-access[39;49m[0m             [31muuidgen[39;49m[0m
+[31mkeytool[39;49m[0m                     [31muulog[39;49m[0m
+[31mkgetcred[39;49m[0m                    [31muuname[39;49m[0m
+[31mkill.d[39;49m[0m                      [31muupick[39;49m[0m
+[31mkillall[39;49m[0m                     [31muustat[39;49m[0m
+[31mkinit[39;49m[0m                       [31muuto[39;49m[0m
+[35mklist[39;49m[0m                       [31muux[39;49m[0m
+[31mkmutil[39;49m[0m                      [35mvi[39;49m[0m
+[31mkpasswd[39;49m[0m                     [35mview[39;49m[0m
+[31mkrb5-config[39;49m[0m                 [31mviewdiagnostic[39;49m[0m
+[35mkswitch[39;49m[0m                     [31mvim[39;49m[0m
+[31mktrace[39;49m[0m                      [35mvimdiff[39;49m[0m
+[31mlam[39;49m[0m                         [31mvimtutor[39;49m[0m
+[31mlast[39;49m[0m                        [31mvis[39;49m[0m
+[31mlastcomm[39;49m[0m                    [31mvm_stat[39;49m[0m
+[31mlastwords[39;49m[0m                   [31mvmmap[39;49m[0m
+[31mlatency[39;49m[0m                     [31mvtool[39;49m[0m
+[31mlayerutil[39;49m[0m                   [31mw[39;49m[0m
+[31mld[39;49m[0m                          [31mwait[39;49m[0m
+[35mldapadd[39;49m[0m                     [31mwall[39;49m[0m
+[31mldapcompare[39;49m[0m                 [31mwc[39;49m[0m
+[31mldapdelete[39;49m[0m                  [31mwdutil[39;49m[0m
+[31mldapexop[39;49m[0m                    [31mwhat[39;49m[0m
+[31mldapmodify[39;49m[0m                  [31mwhatis[39;49m[0m
+[31mldapmodrdn[39;49m[0m                  [31mwhereis[39;49m[0m
+[31mldappasswd[39;49m[0m                  [31mwhich[39;49m[0m
+[31mldapsearch[39;49m[0m                  [31mwho[39;49m[0m
+[31mldapurl[39;49m[0m                     [31mwhoami[39;49m[0m
+[31mldapwhoami[39;49m[0m                  [31mwhois[39;49m[0m
+[31mleaks[39;49m[0m                       [35mwish[39;49m[0m
+[31mleave[39;49m[0m                       [31mwish8.5[39;49m[0m
+[31mless[39;49m[0m                        [30m[46mwrite[39;49m[0m
+[31mlessecho[39;49m[0m                    [31mxar[39;49m[0m
+[31mlesskey[39;49m[0m                     [31mxargs[39;49m[0m
+[31mlex[39;49m[0m                         [31mxattr[39;49m[0m
+[31mlibnetcfg[39;49m[0m                   [31mxcdebug[39;49m[0m
+[31mlibnetcfg5.34[39;49m[0m               [31mxcode-select[39;49m[0m
+[31mlibtool[39;49m[0m                     [31mxcodebuild[39;49m[0m
+[31mlipo[39;49m[0m                        [31mxcrun[39;49m[0m
+[31mlldb[39;49m[0m                        [31mxcscontrol[39;49m[0m
+[31mllvm-g++[39;49m[0m                    [31mxcsdiagnose[39;49m[0m
+[31mllvm-gcc[39;49m[0m                    [31mxctrace[39;49m[0m
+[31mloads.d[39;49m[0m                     [31mxed[39;49m[0m
+[31mlocale[39;49m[0m                      [31mxgettext.pl[39;49m[0m
+[31mlocaledef[39;49m[0m                   [31mxgettext5.34.pl[39;49m[0m
+[31mlocate[39;49m[0m                      [31mxip[39;49m[0m
+[31mlockf[39;49m[0m                       [31mxml2-config[39;49m[0m
+[31mlockstat[39;49m[0m                    [31mxml2man[39;49m[0m
+[31mlog[39;49m[0m                         [31mxmlcatalog[39;49m[0m
+[31mlogger[39;49m[0m                      [31mxmllint[39;49m[0m
+[30m[41mlogin[39;49m[0m                       [31mxpath[39;49m[0m
+[31mlogname[39;49m[0m                     [31mxpath5.34[39;49m[0m
+[31mlook[39;49m[0m                        [31mxprotect[39;49m[0m
+[31mlorder[39;49m[0m                      [31mxslt-config[39;49m[0m
+[31mlp[39;49m[0m                          [31mxsltproc[39;49m[0m
+[31mlpoptions[39;49m[0m                   [31mxsubpp[39;49m[0m
+[31mlpq[39;49m[0m                         [31mxsubpp5.34[39;49m[0m
+[31mlpr[39;49m[0m                         [31mxxd[39;49m[0m
+[31mlprm[39;49m[0m                        [35myaa[39;49m[0m
+[31mlpstat[39;49m[0m                      [31myacc[39;49m[0m
+[31mlsappinfo[39;49m[0m                   [31myamlpp-events[39;49m[0m
+[31mlsbom[39;49m[0m                       [31myamlpp-events5.34[39;49m[0m
+[31mlskq[39;49m[0m                        [31myamlpp-highlight[39;49m[0m
+[31mlsm[39;49m[0m                         [31myamlpp-highlight5.34[39;49m[0m
+[31mlsmp[39;49m[0m                        [31myamlpp-load[39;49m[0m
+[31mlsvfs[39;49m[0m                       [31myamlpp-load-dump[39;49m[0m
+[31mlwp-download[39;49m[0m                [31myamlpp-load-dump5.34[39;49m[0m
+[31mlwp-download5.34[39;49m[0m            [31myamlpp-load5.34[39;49m[0m
+[31mlwp-dump[39;49m[0m                    [31myamlpp-parse-emit[39;49m[0m
+[31mlwp-dump5.34[39;49m[0m                [31myamlpp-parse-emit5.34[39;49m[0m
+[31mlwp-mirror[39;49m[0m                  [31myapp[39;49m[0m
+[31mlwp-mirror5.34[39;49m[0m              [31myapp5.34[39;49m[0m
+[31mlwp-request[39;49m[0m                 [31myes[39;49m[0m
+[31mlwp-request5.34[39;49m[0m             [31mzcat[39;49m[0m
+[31mm4[39;49m[0m                          [31mzcmp[39;49m[0m
+[31mmacbinary[39;49m[0m                   [31mzdiff[39;49m[0m
+[31mmacerror[39;49m[0m                    [31mzegrep[39;49m[0m
+[31mmacerror5.34[39;49m[0m                [31mzfgrep[39;49m[0m
+[31mmachine[39;49m[0m                     [31mzforce[39;49m[0m
+[31mmacoserror[39;49m[0m                  [31mzgrep[39;49m[0m
+[31mmail[39;49m[0m                        [31mzip[39;49m[0m
+[35mmailq[39;49m[0m                       [31mzipcloak[39;49m[0m
+[31mmailx[39;49m[0m                       [31mzipdetails[39;49m[0m
+[31mmake[39;49m[0m                        [31mzipdetails5.34[39;49m[0m
+[31mmalloc_history[39;49m[0m              [31mzipgrep[39;49m[0m
+[31mman[39;49m[0m                         [31mzipinfo[39;49m[0m
+[31mmandoc[39;49m[0m                      [31mzipnote[39;49m[0m
+[35mmandoc_soelim[39;49m[0m               [31mzipsplit[39;49m[0m
+[31mmanpath[39;49m[0m                     [31mzless[39;49m[0m
+[31mmcxquery[39;49m[0m                    [31mzmore[39;49m[0m
+[31mmcxrefresh[39;49m[0m                  [31mznew[39;49m[0m
+[31mmddiagnose[39;49m[0m                  [31mzprint[39;49m[0m
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J[32mtwin[39m % [K[?2004hpprintf "tab\tstops\there\n"; tput cup 5 10; echo moved[?2004l
+tab	stops	here
+[6;11Hmoved
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J[32mtwin[39m % [K[?2004hsseq 1 60[?2004l
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+[1m[7m%[27m[1m[0m                                                                                [0m[27m[24m[J[32mtwin[39m % [K[?2004h

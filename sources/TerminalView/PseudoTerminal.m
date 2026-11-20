@@ -2756,7 +2756,8 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
 // tab, and closes the window if there are no tabs left.
 - (void)removeTab:(PTYTab *)aTab {
     RLog(@"Remove tab %@", aTab);
-    if (![aTab isTmuxTab]) {
+    // A twin tab has nothing to undo: its sessions run no program.
+    if (![aTab isTmuxTab] && !aTab.activeSession.isTwin) {
         // Exit synthetic sessions (filter, instant replay, screenshot mode)
         // so the restorable session captures live sessions that can be revived.
         for (PTYSession *session in [aTab sessions]) {
@@ -4696,6 +4697,10 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
 
 - (NSDictionary *)arrangementExcludingTmuxTabs:(BOOL)excludeTmux
                              includingContents:(BOOL)includeContents {
+    if (self.isTwinWindow) {
+        // Saved, a twin window would come back as real terminals.
+        return nil;
+    }
     NSArray<PTYTab *> *tabs = [self tabsToEncodeExcludingTmux:excludeTmux];
     return [self arrangementWithTabs:tabs
                    includingContents:includeContents
@@ -5195,6 +5200,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)windowWillClose:(NSNotification *)aNotification {
+    PseudoTerminal *twinWindow = self.twinWindow;
+    if (twinWindow) {
+        // A twin window has nothing to show without its live window.
+        [gTwinWindows removeObjectForKey:self];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [twinWindow.window close];
+        });
+    }
    RLog(@"windowWillClose %@", self);
     _closing = YES;
     [iTermWindowCornerRadiusDetector windowDidClose:self.window];
@@ -5248,7 +5261,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         // First close any tmux tabs because their closure is not undoable.
         for (PTYTab *tab in [self tabs]) {
             for (PTYSession *session in [tab sessions]) {
-                if (session.isTmuxClient) {
+                // The same goes for twins, which run no program.
+                if (session.isTmuxClient || session.isTwin) {
                     [session terminate];
                 }
             }
@@ -7713,6 +7727,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
+    [self twinWindowsNeedSync];
     RLog(@"Did select tab view %@", tabViewItem);
     [_contentView.tabBarControl setFlashing:YES];
 
@@ -8535,6 +8550,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)tabViewDidChangeNumberOfTabViewItems:(NSTabView *)tabView {
+    [self twinWindowsNeedSync];
     PtyLog(@"%s(%d):-[PseudoTerminal tabViewDidChangeNumberOfTabViewItems]", __FILE__, __LINE__);
     if (self.swipeIdentifier) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
@@ -11105,6 +11121,7 @@ deferringExpansion:(BOOL)deferExpansion {
 }
 
 - (void)tabsDidReorder {
+    [self twinWindowsNeedSync];
     // Nesting is one level deep. Nothing should break that, so a violation here
     // means some operation has a bug: log it, then repair it before the
     // contiguity pass orders tabs by the (repaired) hierarchy.
@@ -11728,6 +11745,256 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
     RLog(@"Live session: %@, synthetic session: %@", oldSession, newSession);
     return newSession;
+}
+
+#pragma mark - Twin window
+
+// Live window -> its twin window. Neither is retained.
+static NSMapTable<PseudoTerminal *, PseudoTerminal *> *gTwinWindows;
+// Set while a twin window is being changed to match its live window, so that those changes are
+// not taken for the user's.
+static BOOL gSyncingTwinWindow;
+
+- (PseudoTerminal *)twinWindow {
+    return [gTwinWindows objectForKey:self];
+}
+
+- (PseudoTerminal *)twinWindowSource {
+    for (PseudoTerminal *live in gTwinWindows) {
+        if ([gTwinWindows objectForKey:live] == self) {
+            return live;
+        }
+    }
+    return nil;
+}
+
+- (BOOL)isTwinWindow {
+    return self.twinWindowSource != nil;
+}
+
+- (BOOL)canMakeTwinOfSession:(PTYSession *)session {
+    return (session != nil &&
+            !session.isTwin &&
+            !session.isBrowserSession &&
+            !session.isTmuxClient &&
+            !session.isTmuxGateway);
+}
+
+// Opens a window that shows what this window shows. Its sessions run no program.
+- (IBAction)openTwinOfCurrentWindow:(id)sender {
+    if (self.twinWindowSource) {
+        DLog(@"Cannot make a twin of a twin window");
+        NSBeep();
+        return;
+    }
+    PseudoTerminal *existing = self.twinWindow;
+    if (existing) {
+        [existing.window makeKeyAndOrderFront:nil];
+        return;
+    }
+    PTYSession *liveSession = self.currentSession;
+    if (![self canMakeTwinOfSession:liveSession]) {
+        DLog(@"Cannot make a twin of %@", liveSession);
+        NSBeep();
+        return;
+    }
+    PseudoTerminal *term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
+                                                             windowType:WINDOW_TYPE_NORMAL
+                                                        savedWindowType:WINDOW_TYPE_NORMAL
+                                                             percentage:iTermPercentageFromProfile(liveSession.profile, WINDOW_TYPE_NORMAL)
+                                                                 screen:-1
+                                                                profile:liveSession.profile] autorelease];
+    if (!term) {
+        return;
+    }
+    [[iTermController sharedInstance] addTerminalWindow:term];
+    if (!gTwinWindows) {
+        gTwinWindows = [[NSMapTable weakToWeakObjectsMapTable] retain];
+    }
+    [gTwinWindows setObject:term forKey:self];
+    RLog(@"Window %@ is a twin of %@", term, self);
+    [self syncTwinWindow];
+    [term fitWindowToTabs];
+    [term.window makeKeyAndOrderFront:nil];
+}
+
+// Adds a tab to this twin window with a twin of `liveSession`.
+- (PTYSession *)addTwinOfSession:(PTYSession *)liveSession atIndex:(NSInteger)index {
+    Profile *profile = liveSession.profile;
+    if (liveSession.isDivorced) {
+        // Two sessions must not share a divorced profile's GUID.
+        profile = [profile dictionaryBySettingObject:[[NSUUID UUID] UUIDString] forKey:KEY_GUID];
+        [[ProfileModel sessionsInstance] addBookmark:profile];
+    }
+    if (![iTermSessionLauncher profileIsWellFormed:profile]) {
+        return nil;
+    }
+    PTYSession *twin = [[[PTYSession alloc] initSynthetic:YES] autorelease];
+    twin.profile = profile;
+    [self addSession:twin inTabAtIndex:@(index)];
+    // A twin has no use for triggers: the live session already ran them.
+    [twin setSessionSpecificProfileValues:@{ KEY_TRIGGERS: @[] }];
+    [twin setSize:liveSession.screen.size];
+    RLog(@"Start twin %@ of %@", twin, liveSession);
+    __weak __typeof(self) weakSelf = self;
+    [liveSession startTwin:twin completion:^(BOOL ok) {
+        RLog(@"Twin started=%@", @(ok));
+        PTYTab *tab = [weakSelf tabForSession:twin];
+        if (!ok) {
+            // A tab that shows nothing is worse than no tab. The next sync tries again.
+            if (tab) {
+                [weakSelf closeTab:tab soft:YES];
+            }
+            return;
+        }
+        [tab fitSessionToCurrentViewSize:twin];
+    }];
+    return twin;
+}
+
+// Call when this window's tabs or its selected tab changed.
+- (void)twinWindowsNeedSync {
+    if (gSyncingTwinWindow || gTwinWindows.count == 0) {
+        return;
+    }
+    if (self.twinWindowSource) {
+        // The user changed the twin window. Not now: the tab view may be in the middle of it.
+        __weak __typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf applyTwinWindowChangesToLiveWindow];
+        });
+        return;
+    }
+    if (!self.twinWindow) {
+        return;
+    }
+    // Not now: the tab view may be in the middle of the change.
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf syncTwinWindow];
+    });
+}
+
+// Selecting a tab view item that is not in the tab view raises an exception.
+- (void)selectTabIfPresent:(PTYTab *)tab {
+    NSTabViewItem *item = tab.tabViewItem;
+    if (item && [_contentView.tabView.tabViewItems containsObject:item]) {
+        [_contentView.tabView selectTabViewItem:item];
+    }
+}
+
+// This is a twin window that the user changed. Does the same to the live window: a tab opened
+// here moves there, and the tab order and the selected tab there become the ones here.
+- (void)applyTwinWindowChangesToLiveWindow {
+    PseudoTerminal *live = self.twinWindowSource;
+    if (!live || gSyncingTwinWindow || _closing) {
+        return;
+    }
+    BOOL movedTab = NO;
+    NSArray<PTYTab *> *tabs = [[self.tabs copy] autorelease];
+    for (NSInteger i = 0; i < tabs.count; i++) {
+        PTYTab *tab = tabs[i];
+        if (tab.activeSession.isTwin || tabs.count < 2) {
+            continue;
+        }
+        // A real session was opened in the twin window. It belongs in the live window.
+        RLog(@"Move tab %@ from twin window to live window", tab);
+        NSTabViewItem *item = [[tab.tabViewItem retain] autorelease];
+        gSyncingTwinWindow = YES;
+        [_contentView.tabView removeTabViewItem:item];
+        gSyncingTwinWindow = NO;
+        [live insertTab:tab atIndex:(int)MIN(i, (NSInteger)live.numberOfTabs)];
+        // What a tab dragged to another window gets: its sessions take the new window's size
+        // and listen to resizes again.
+        [self didDonateTab:tab toWindowController:live joiningGroupWithID:nil];
+        [live selectTabIfPresent:tab];
+        [tab updateLabelAttributes];
+        [live->_contentView.tabBarControl setIsProcessing:tab.isProcessing forTabWithIdentifier:tab];
+        movedTab = YES;
+    }
+    if (movedTab) {
+        // The live window got a tab, so it syncs this window.
+        return;
+    }
+    // The live tabs that have a twin tab here, in this window's order. They keep the places
+    // they hold among the live window's tabs, so a live tab without a twin does not move.
+    NSMutableArray<PTYTab *> *wantedOrder = [NSMutableArray array];
+    for (PTYTab *tab in self.tabs) {
+        PTYTab *liveTab = [live tabForSession:tab.activeSession.twinSource];
+        if (liveTab) {
+            [wantedOrder addObject:liveTab];
+        }
+    }
+    NSMutableArray<NSNumber *> *places = [NSMutableArray array];
+    NSArray<PTYTab *> *liveTabs = [[live.tabs copy] autorelease];
+    for (NSInteger i = 0; i < liveTabs.count; i++) {
+        if ([wantedOrder containsObject:liveTabs[i]]) {
+            [places addObject:@(i)];
+        }
+    }
+    for (NSInteger i = 0; i < wantedOrder.count && i < places.count; i++) {
+        const NSInteger current = [live.tabs indexOfObject:wantedOrder[i]];
+        const NSInteger place = places[i].integerValue;
+        if (current != NSNotFound && current != place) {
+            [live moveTabAtIndex:current toIndex:place];
+        }
+    }
+    PTYTab *liveTab = [live tabForSession:self.currentSession.twinSource];
+    if (liveTab && liveTab != live.currentTab) {
+        [live selectTabIfPresent:liveTab];
+    }
+    [live twinWindowsNeedSync];
+}
+
+// Makes the twin window have one tab per tab of this window, in the same order, with the same
+// tab selected. A twin tab shows the active session of its tab.
+- (void)syncTwinWindow {
+    PseudoTerminal *twinWindow = self.twinWindow;
+    if (!twinWindow || gSyncingTwinWindow) {
+        return;
+    }
+    gSyncingTwinWindow = YES;
+    NSMutableArray<PTYTab *> *wanted = [NSMutableArray array];
+    PTYTab *wantedSelection = nil;
+    for (PTYTab *tab in self.tabs) {
+        PTYSession *liveSession = tab.activeSession;
+        if (![self canMakeTwinOfSession:liveSession]) {
+            continue;
+        }
+        PTYSession *twin = liveSession.twin;
+        PTYTab *twinTab = twin ? [twinWindow tabForSession:twin] : nil;
+        if (!twinTab) {
+            twin = [twinWindow addTwinOfSession:liveSession atIndex:wanted.count];
+            twinTab = twin ? [twinWindow tabForSession:twin] : nil;
+        }
+        if (!twinTab) {
+            continue;
+        }
+        [wanted addObject:twinTab];
+        if (tab == self.currentTab) {
+            wantedSelection = twinTab;
+        }
+    }
+    if (wanted.count == 0) {
+        gSyncingTwinWindow = NO;
+        [twinWindow.window close];
+        return;
+    }
+    for (PTYTab *tab in [[twinWindow.tabs copy] autorelease]) {
+        if (![wanted containsObject:tab]) {
+            [twinWindow closeTab:tab soft:YES];
+        }
+    }
+    for (NSInteger i = 0; i < wanted.count; i++) {
+        const NSInteger current = [twinWindow.tabs indexOfObject:wanted[i]];
+        if (current != NSNotFound && current != i) {
+            [twinWindow moveTabAtIndex:current toIndex:i];
+        }
+    }
+    if (wantedSelection && wantedSelection != twinWindow.currentTab) {
+        [twinWindow selectTabIfPresent:wantedSelection];
+    }
+    gSyncingTwinWindow = NO;
 }
 
 - (void)replaySession:(PTYSession *)oldSession {
@@ -17122,6 +17389,12 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 
     // Don't restore tmux windows since their canonical state is on the server.
     if ([self allTabsAreTmuxTabs]) {
+        [[self ptyWindow] setRestoreState:nil];
+        return NO;
+    }
+
+    // A restored twin window would come back as real terminals.
+    if (self.isTwinWindow) {
         [[self ptyWindow] setRestoreState:nil];
         return NO;
     }

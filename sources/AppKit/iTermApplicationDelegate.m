@@ -456,8 +456,19 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     }
 }
 
+- (IBAction)toggleTwinsAreReadOnly:(id)sender {
+    NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
+    [userDefaults setBool:![userDefaults boolForKey:PTYSessionTwinsAreReadOnlyUserDefaultsKey]
+                   forKey:PTYSessionTwinsAreReadOnlyUserDefaultsKey];
+}
+
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
     const SEL action = [menuItem action];
+    if (action == @selector(toggleTwinsAreReadOnly:)) {
+        const BOOL readOnly = [[iTermUserDefaults userDefaults] boolForKey:PTYSessionTwinsAreReadOnlyUserDefaultsKey];
+        menuItem.state = readOnly ? NSControlStateValueOn : NSControlStateValueOff;
+        return YES;
+    }
     if (action == @selector(newSessionInTabAtIndex:) ||
         action == @selector(newSession:) ||
         action == @selector(newSessionWithSameProfile:)) {
@@ -4405,7 +4416,7 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (NSArray<NSWindow *> *)restorableStateWindows {
     return [[[iTermController sharedInstance] terminals] mapWithBlock:^id(PseudoTerminal *term) {
-        if (term.isHotKeyWindow) {
+        if (term.isHotKeyWindow || term.isTwinWindow) {
             return nil;
         }
         return term.window;
