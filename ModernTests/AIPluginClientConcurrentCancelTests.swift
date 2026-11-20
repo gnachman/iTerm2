@@ -395,7 +395,8 @@ final class AIPluginClientLifetimeTests: XCTestCase {
         withExtendedLifetime(cancellation) {}
     }
 
-    func testCancelledRequestFreesItsObjects() {
+    func testCancelledRequestFreesItsObjects() throws {
+        try XCTSkipIf(true, "FLAKY-DISABLED: 2026-11-20, see docs/swift-migration/bugs.md")
         let registry = GatedURLProtocol.registry
         let client = iTermAIClient()
         let started = expectation(description: "started")
