@@ -63,8 +63,12 @@ hudsucker-ffi/lib/
 
 iTermBrowserPlugin/iTermBrowserPlugin.xcodeproj/project.xcworkspace/xcuserdata/gnachman.xcuserdatad/
 
-# Claude Code local settings
+# Claude Code local settings, at any depth; the migration's agent
+# definitions in the top-level .claude/agents/ are tracked
 .claude/
+!/.claude/
+/.claude/*
+!/.claude/agents/
 EastAsianWidth.txt
 emoji-data.txt
 
