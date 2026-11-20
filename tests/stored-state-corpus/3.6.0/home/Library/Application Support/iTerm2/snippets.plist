@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>snippets</key>
+	<array>
+		<dict>
+			<key>escaping</key>
+			<integer>2</integer>
+			<key>guid</key>
+			<string>7F855D6A-A227-47BB-B6A1-E33677614528</string>
+			<key>tags</key>
+			<array>
+				<string>fake-snippet-tag</string>
+			</array>
+			<key>title</key>
+			<string>Fake Snippet Title</string>
+			<key>value</key>
+			<string>echo fake snippet value</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+	</array>
+</dict>
+</plist>

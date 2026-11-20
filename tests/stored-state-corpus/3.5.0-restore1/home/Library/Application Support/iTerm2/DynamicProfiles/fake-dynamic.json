@@ -1,0 +1,24 @@
+{
+  "Profiles": [
+    {
+      "Name": "Fake Dynamic Parent",
+      "Guid": "FAKE-DYN-PARENT-0001",
+      "Badge Text": "DYN PARENT",
+      "Background Color": {
+        "Red Component": 0.0,
+        "Green Component": 0.2,
+        "Blue Component": 0.1
+      },
+      "Tags": [
+        "fake-dynamic"
+      ]
+    },
+    {
+      "Name": "Fake Dynamic Child",
+      "Guid": "FAKE-DYN-CHILD-0002",
+      "Dynamic Profile Parent Name": "Fake Dynamic Parent",
+      "Badge Text": "DYN CHILD",
+      "Cursor Type": 0
+    }
+  ]
+}

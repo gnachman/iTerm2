@@ -11,6 +11,11 @@ The goal is SURGICAL redaction: we keep the structure (so iTerm2 can still
 load the file) and only replace the values that can contain private data.
 Colors, fonts, sizes, booleans, enums, and GUIDs are left untouched.
 
+Binary and XML plists are accepted, including the XML that a custom
+settings folder and an exported settings archive hold, which can contain raw
+control characters that strict XML parsers reject; they are written back as
+the same raw bytes.
+
 Only user defaults are handled here. Ancillary files (ShellHistory.sqlite,
 pbhistory.plist, chatdb.sqlite, notes RTFD, snippets.plist on disk, saved
 window state, etc.) are intentionally out of scope.
@@ -82,7 +87,17 @@ TOP-LEVEL keys
     GitSearchPath, PathsToIgnore, NativeRenderingCSSLight/Dark,
     BrowserPluginPathHint, ImportPath, NoSyncLastSSHDirectory,
     NoSyncClaudeCodeConfigDirPath, NoSyncTokenExecutionStatsFile  paths
-  NoSyncSavePanelSavedSettings_* ......... nested "InitialDirectory" path
+  NoSyncSavePanelSavedSettings_* ......... nested "Initial Directory" path
+                                           (also "InitialDirectory")
+  NoSyncRemoteDataFileSyncBaselineSignatures,
+    NoSyncSyncDataFilesWithCustomFolder,
+    NoSyncRemoteDataFileSyncDiscardPending,
+    NoSyncRemoteDataFileSyncLastPushedLocal  custom settings folder state keyed
+                                           by the folder path (removed: the
+                                           private part is in the KEY)
+  NSOSPLastRootDirectory ................. AppKit open panel bookmark (Data:
+                                           path components and volume UUID;
+                                           emptied)
   PathToDatabase_* ....................... password-manager backend URL
   NoSyncBrowserJavaScriptAllowed_* ....... site origin in the key name
                                            (key removed, with its
@@ -158,6 +173,7 @@ import argparse
 import json
 import os
 import plistlib
+import re
 import sys
 
 REDACT = "[redacted]"
@@ -270,10 +286,20 @@ CONTENT_KEYS = {
     "NoSyncTokenExecutionStatsFile": REDACT_V,
     "NoSyncRecentArchives": REDACT_V,
     "InitialDirectory": REDACT_V,
+    "Initial Directory": REDACT_V,        # iTermSavePanel kInitialDirectoryKey
+    # AppKit open/save panel's last root directory: an Apple bookmark (Data)
+    # holding the path components and the volume UUID. Emptied.
+    "NSOSPLastRootDirectory": REDACT_V,
     # Removed rather than redacted: this blob is keyed BY endpoint URL (plus a
     # hash of the entry's custom headers), and scrub() can only rewrite values,
     # never keys, so the hosts in the keys would survive a redaction.
     "NoSyncOllamaDiscoveredModels": REMOVE,
+    # Custom settings folder bookkeeping, each a dict keyed BY the folder
+    # path (iTermRemotePreferences.m); removed for the same reason.
+    "NoSyncRemoteDataFileSyncBaselineSignatures": REMOVE,
+    "NoSyncSyncDataFilesWithCustomFolder": REMOVE,
+    "NoSyncRemoteDataFileSyncDiscardPending": REMOVE,
+    "NoSyncRemoteDataFileSyncLastPushedLocal": REMOVE,
     # hosts / URLs
     "Bound Hosts": REDACT_V,
     "Hosts": REDACT_V,                    # array of VT100RemoteHost dicts
@@ -504,15 +530,56 @@ def scrub(obj, aggressive, report, path):
     return obj
 
 
+# XML 1.0 forbids these characters even as character references, but Apple's
+# plist writer emits them raw (a hotkey's "HotKey Characters" can be U+0008),
+# so the plists in a custom settings folder and in an exported settings
+# archive contain them. Python's XML parser rejects them, and plistlib's
+# writer refuses strings that hold them. They are mapped to private-use
+# characters for parsing and mapped back to the same raw bytes on output.
+XML_CONTROL_CHARS = re.compile(rb"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+CONTROL_STANDIN_BASE = 0xE000
+
+
+def control_standin(byte):
+    return chr(CONTROL_STANDIN_BASE + byte).encode("utf-8")
+
+
+def map_control_chars(raw):
+    """Returns raw with XML-illegal control characters replaced by
+    private-use stand-ins. Raises ValueError if raw already holds one of
+    the stand-ins, because the mapping back would then be ambiguous."""
+    for b in range(0x20):
+        if control_standin(b) in raw:
+            raise ValueError("plist holds private-use characters U+E000-U+E01F "
+                             "and raw control characters; cannot round-trip it")
+    return XML_CONTROL_CHARS.sub(lambda m: control_standin(m.group(0)[0]), raw)
+
+
+def unmap_control_chars(raw):
+    for b in range(0x20):
+        raw = raw.replace(control_standin(b), bytes([b]))
+    return raw
+
+
 def load_plist(path):
+    """Returns (data, fmt, mapped) where mapped says control characters
+    were mapped and must be restored by dump_plist."""
     with open(path, "rb") as f:
         raw = f.read()
-    fmt = plistlib.FMT_BINARY if raw[:8] == b"bplist00" else plistlib.FMT_XML
-    return plistlib.loads(raw), fmt
+    if raw[:8] == b"bplist00":
+        return plistlib.loads(raw), plistlib.FMT_BINARY, False
+    if XML_CONTROL_CHARS.search(raw):
+        return plistlib.loads(map_control_chars(raw)), plistlib.FMT_XML, True
+    return plistlib.loads(raw), plistlib.FMT_XML, False
+
+
+def dump_plist(data, fmt, mapped):
+    out = plistlib.dumps(data, fmt=fmt)
+    return unmap_control_chars(out) if mapped else out
 
 
 def sanitize_file(in_path, out_path, aggressive, dry_run):
-    data, fmt = load_plist(in_path)
+    data, fmt, mapped = load_plist(in_path)
     report = Report()
     scrub(data, aggressive, report, [])
 
@@ -531,7 +598,7 @@ def sanitize_file(in_path, out_path, aggressive, dry_run):
         return
 
     with open(out_path, "wb") as f:
-        plistlib.dump(data, f, fmt=fmt)
+        f.write(dump_plist(data, fmt, mapped))
     print(f"  wrote: {out_path}")
 
 
