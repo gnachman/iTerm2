@@ -1,11 +1,42 @@
 #!/bin/sh
-# Fast pre-commit guard. Only does real work when the code string catalog is part
-# of the commit; otherwise it exits immediately (no Python, no 7MB JSON parse).
+# Fast pre-commit guard. Each check does real work only when its fast path
+# finds something for it in the commit; otherwise it costs a git command or
+# two and no Python. Every check runs, and the commit is refused if any fails.
 root=$(git rev-parse --show-toplevel) || exit 0
 cd "$root" || exit 0
 
-# Fast path: is xcstrings/Localizable.xcstrings actually staged in this commit?
+status=0
+
+# 1. Untranslated strings: only when xcstrings/Localizable.xcstrings is staged
+# (no Python, no 7MB JSON parse otherwise).
 if git diff --cached --name-only --diff-filter=ACM | grep -qx 'xcstrings/Localizable.xcstrings'; then
-    exec python3 tools/check_untranslated_strings.py
+    python3 tools/check_untranslated_strings.py || status=1
 fi
-exit 0
+
+# 2. @synchronized on a lock that could be nil (docs/swift-migration/concurrency.md
+# section 2): only when a staged Objective-C file under the covered directories
+# contains @synchronized in its staged copy. The Python check then looks at the
+# added lines only. Exit 2 from it means it could not check; that blocks too.
+# Names travel NUL-separated, and the output is captured rather than piped into
+# grep -q, which would kill git grep with SIGPIPE and make xargs complain.
+synchronized_files=$(git diff --cached --name-only -z --diff-filter=ACMRT -- \
+        'sources/*.m' 'sources/*.mm' 'sources/*.h' \
+        'ThirdParty/PSMTabBarControl/*.m' 'ThirdParty/PSMTabBarControl/*.mm' 'ThirdParty/PSMTabBarControl/*.h' \
+        'ModernTests/*.m' 'ModernTests/*.mm' 'ModernTests/*.h' |
+    xargs -0 -r git --literal-pathspecs grep --cached -l -F -e '@synchronized' --)
+if [ -n "$synchronized_files" ]; then
+    python3 tools/check_nonnil_locks.py
+    rc=$?
+    if [ "$rc" -eq 1 ]; then
+        echo "pre-commit: the @synchronized lock check (tools/check_nonnil_locks.py) rejected this commit." >&2
+        echo "pre-commit: fix what it reports, or bypass hooks deliberately with git commit --no-verify." >&2
+        status=1
+    elif [ "$rc" -ne 0 ]; then
+        echo "pre-commit: the @synchronized lock check (tools/check_nonnil_locks.py) failed (exit $rc) and checked nothing." >&2
+        echo "pre-commit: to commit anyway, bypass hooks deliberately with git commit --no-verify," >&2
+        echo "pre-commit: and report the checker's failure." >&2
+        status=1
+    fi
+fi
+
+exit $status

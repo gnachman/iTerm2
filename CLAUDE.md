@@ -45,5 +45,6 @@
 - Don't use sleep to solve concurrency problems.
 - Tests should not be flaky. Don't write tests that will fail if the system is slower than usual.
 - Write new classes in Swift unless there is a very good reason not to.
+- A new @synchronized must lock on self, a class object, or ITNonnilLock(expr) from DebugLogging.h, because @synchronized(nil) silently locks nothing. The pre-commit hook (enable with make install-hooks) enforces this with tools/check_nonnil_locks.py; for a lock that is meant to be nil, add // nonnil-lock-ok: <reason> on the @synchronized line.
 - Do not modify CLAUDE.md without express written permission
 - Do not use computer use or accessibility APIs to control my computer.
