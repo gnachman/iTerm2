@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) id plistValue;
 
 + (instancetype)tupleWithObject:(nullable T1)firstObject andObject:(nullable T2)secondObject;
-+ (instancetype)fromPlistValue:(id)plistValue;
++ (instancetype)fromPlistValue:(nullable id)plistValue;
 + (NSArray<iTermTuple<T1, T2> *> *)cartesianProductOfArray:(NSArray<T1> *)a1
                                                       with:(NSArray<T2> *)a2;
 - (iTermTuple<id, T2> *)mapFirst:(id (^)(T1 object))block;

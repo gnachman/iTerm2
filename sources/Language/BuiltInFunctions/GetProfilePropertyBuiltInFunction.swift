@@ -33,7 +33,9 @@ extension GetProfilePropertyBuiltInFunction: iTermBuiltInFunctionProtocol {
                 }
                 let key = parameters[keyArgName] as! String
                 let value = iTermProfilePreferences.object(forKey: key, inProfile: session.justProfile)
-                completion(value, nil)
+                // A missing key has always answered NSNull: while the method was claimed
+                // nonnull, Swift bridged its nil back to Objective-C as NSNull.
+                completion(value ?? NSNull(), nil)
             }
         iTermBuiltInFunctions.sharedInstance().register(builtInFunction, namespace: "iterm2")
     }

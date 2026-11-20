@@ -104,19 +104,31 @@ class iTermProfilePreferenceObserver: NSObject {
     }
 
     func value(_ key: String) -> [[AnyHashable: Any]]? {
-        return iTermProfilePreferences.object(forKey: key, inProfile: model.bookmark(withGuid: guid)) as? [[AnyHashable: Any]]
+        return iTermProfilePreferences.object(forKey: key, inProfile: observedProfile) as? [[AnyHashable: Any]]
     }
     func value(_ key: String) -> [String]? {
-        return iTermProfilePreferences.object(forKey: key, inProfile: model.bookmark(withGuid: guid)) as? [String]
+        return iTermProfilePreferences.object(forKey: key, inProfile: observedProfile) as? [String]
     }
     func value(_ key: String) -> String? {
-        return iTermProfilePreferences.string(forKey: key, inProfile: model.bookmark(withGuid: guid))
+        return iTermProfilePreferences.string(forKey: key, inProfile: observedProfile)
     }
     func value(_ key: String) -> Double {
-        return iTermProfilePreferences.double(forKey: key, inProfile: model.bookmark(withGuid: guid))
+        return iTermProfilePreferences.double(forKey: key, inProfile: observedProfile)
     }
     func value(_ key: String) -> Bool {
-        return iTermProfilePreferences.bool(forKey: key, inProfile: model.bookmark(withGuid: guid))
+        return iTermProfilePreferences.bool(forKey: key, inProfile: observedProfile)
+    }
+
+    // The profile the value(_:) accessors read. They used to pass the implicitly
+    // unwrapped result of bookmark(withGuid:) to a nonnull parameter, which trapped
+    // when the profile was missing. That parameter is nullable now, so the trap is
+    // kept explicit here; see "iTermProfilePreferenceObserver.value(_:) traps when
+    // its profile is missing" in docs/swift-migration/bugs.md.
+    private var observedProfile: [AnyHashable: Any] {
+        guard let profile = model.bookmark(withGuid: guid) else {
+            it_fatalError("No profile with GUID \(guid)")
+        }
+        return profile
     }
 }
 

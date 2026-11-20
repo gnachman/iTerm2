@@ -32,49 +32,49 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
                        inProfile:(Profile *)profile
                            model:(ProfileModel *)model;
 
-+ (BOOL)boolForKey:(NSString *)key inProfile:(Profile *)profile;
++ (BOOL)boolForKey:(NSString *)key inProfile:(nullable Profile *)profile;
 + (void)setBool:(BOOL)value
          forKey:(NSString *)key
       inProfile:(Profile *)profile
           model:(ProfileModel *)model;
 
-+ (int)intForKey:(NSString *)key inProfile:(Profile *)profile;
++ (int)intForKey:(NSString *)key inProfile:(nullable Profile *)profile;
 + (void)setInt:(int)value
         forKey:(NSString *)key
      inProfile:(Profile *)profile
          model:(ProfileModel *)model;
 
-+ (NSInteger)integerForKey:(NSString *)key inProfile:(Profile *)profile;
++ (NSInteger)integerForKey:(NSString *)key inProfile:(nullable Profile *)profile;
 + (void)setInteger:(NSInteger)value
             forKey:(NSString *)key
          inProfile:(Profile *)profile
              model:(ProfileModel *)model;
 
-+ (NSUInteger)unsignedIntegerForKey:(NSString *)key inProfile:(Profile *)profile;
++ (NSUInteger)unsignedIntegerForKey:(NSString *)key inProfile:(nullable Profile *)profile;
 + (void)setUnsignedInteger:(NSUInteger)value
         forKey:(NSString *)key
      inProfile:(Profile *)profile
          model:(ProfileModel *)model;
 
-+ (double)floatForKey:(NSString *)key inProfile:(Profile *)profile;
++ (double)floatForKey:(NSString *)key inProfile:(nullable Profile *)profile;
 + (void)setFloat:(double)value
           forKey:(NSString *)key
        inProfile:(Profile *)profile
            model:(ProfileModel *)model;
 
-+ (double)doubleForKey:(NSString *)key inProfile:(Profile *)profile;
++ (double)doubleForKey:(NSString *)key inProfile:(nullable Profile *)profile;
 + (void)setDouble:(double)value
            forKey:(NSString *)key
         inProfile:(Profile *)profile
             model:(ProfileModel *)model;
 
-+ (NSString * _Nullable)stringForKey:(NSString *)key inProfile:(Profile *)profile;
++ (NSString * _Nullable)stringForKey:(NSString *)key inProfile:(nullable Profile *)profile;
 + (void)setString:(NSString *)value
            forKey:(NSString *)key
         inProfile:(Profile *)profile
             model:(ProfileModel *)model;
 
-+ (id)objectForKey:(NSString *)key inProfile:(Profile *)profile;
++ (id _Nullable)objectForKey:(NSString *)key inProfile:(nullable Profile *)profile;
 + (void)setObject:(id)object
            forKey:(NSString *)key
         inProfile:(Profile *)profile
@@ -146,8 +146,8 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
 // or a dictionary carrying the expression plus an owner tag. These let callers
 // read the expression uniformly and identify feature-owned (palette) bindings
 // without inspecting the expression text.
-+ (NSString * _Nullable)expressionForBindingValue:(id)value;
-+ (BOOL)bindingValueIsPaletteOwned:(id)value;
++ (NSString * _Nullable)expressionForBindingValue:(nullable id)value;
++ (BOOL)bindingValueIsPaletteOwned:(nullable id)value;
 + (id)paletteBindingValueWithExpression:(NSString *)expression;
 
 // Returns bindings with palette-owned entries removed for the base/Light/Dark
@@ -155,7 +155,7 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
 // Single home for the "drop the i:N binding for this color" rule.
 + (NSDictionary *)bindings:(NSDictionary *)bindings
     byRemovingPaletteBindingsForBaseKey:(NSString *)baseKey;
-+ (BOOL)valueIsExplicitlySetForKey:(NSString *)key inProfile:(Profile *)profile;
++ (BOOL)valueIsExplicitlySetForKey:(NSString *)key inProfile:(nullable Profile *)profile;
 
 @end
 
