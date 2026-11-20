@@ -515,6 +515,13 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
         NSString *className = entry[kIntervalTreeClassNameKey];
         if (intervalDict && objectDict && className) {
             Class theClass = NSClassFromString(className);
+            // Saved state names the class. Many unrelated classes respond to
+            // -initWithDictionary:, so accept only interval tree objects, as
+            // -restoreFromGraphRecord:offset:largeContentProvider: does.
+            if (theClass && ![theClass conformsToProtocol:@protocol(IntervalTreeObject)]) {
+                DLog(@"Skipping saved interval tree entry of class %@: it does not conform to IntervalTreeObject", className);
+                continue;
+            }
             if ([theClass instancesRespondToSelector:@selector(initWithDictionary:)]) {
                 id<IntervalTreeObject> object = [[[theClass alloc] initWithDictionary:objectDict] autorelease];
                 if (object) {
