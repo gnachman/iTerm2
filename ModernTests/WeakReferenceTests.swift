@@ -67,8 +67,13 @@ final class WeakReferenceTests: XCTestCase {
         var object: WeakReferenceProbe? = WeakReferenceProbe()
         let reference1 = try makeReference(try XCTUnwrap(object))
         let reference2 = try makeReference(try XCTUnwrap(object))
-        XCTAssertTrue(reference1.weaklyReferencedObject === object)
-        XCTAssertTrue(reference2.weaklyReferencedObject === object)
+        // The getter returns the object autoreleased. Uninstrumented builds usually elide that
+        // through the return-value handshake, but the thread sanitizer's instrumentation defeats
+        // it, so without this pool the object outlives `object = nil`.
+        autoreleasepool {
+            XCTAssertTrue(reference1.weaklyReferencedObject === object)
+            XCTAssertTrue(reference2.weaklyReferencedObject === object)
+        }
 
         object = nil
         XCTAssertNil(reference1.weaklyReferencedObject)

@@ -686,16 +686,17 @@ final class PromptMarkExcludedSubrangeTests: XCTestCase {
     /// The decoded RC then reports `.invalid` status.
     func test_codable_foldRC_deadWeakBox_encodesAsInvalid() {
         let saveDS = FakeResilientDataSource(guid: "save", width: 80, lines: 100)
-        let rc: ResilientCoordinate
-        do {
+        // -doppelganger returns its result autoreleased. Uninstrumented builds usually elide that
+        // through the return-value handshake, but the nullability and thread sanitizers'
+        // instrumentation defeats it, so the marks are created in a pool of their own.
+        let rc: ResilientCoordinate = autoreleasepool {
             let foldMark = makeFoldMark()
             let dopFoldMark = foldMark.doppelganger() as! FoldMark
-            rc = ResilientCoordinate(dataSource: saveDS,
-                                     enclosingFold: dopFoldMark,
-                                     coord: VT100GridCoord(x: 0, y: 0))
+            return ResilientCoordinate(dataSource: saveDS,
+                                       enclosingFold: dopFoldMark,
+                                       coord: VT100GridCoord(x: 0, y: 0))
         }
-        // foldMark and dopFoldMark go out of scope; rc's WeakBox value is nil.
-        autoreleasepool { }
+        // foldMark and dopFoldMark are gone; rc's WeakBox value is nil.
 
         let dict = rc.dictionaryValue
         XCTAssertEqual(dict["kind"] as? String, "invalid")

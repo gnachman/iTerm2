@@ -1324,18 +1324,19 @@ class ResilientCoordinateTests: XCTestCase {
         // No public way to construct an .invalid RC at init, but a dead
         // WeakBox in .fold encodes as kind="invalid" — exercise that path.
         let saveDS = TestDataSource(guid: "save", width: 80, lines: 100)
-        let rc: ResilientCoordinate
-        do {
+        // -doppelganger returns its result autoreleased. Uninstrumented
+        // builds usually elide that through the return-value handshake, but
+        // the nullability and thread sanitizers' instrumentation defeats it,
+        // so the marks are created in a pool of their own.
+        let rc: ResilientCoordinate = autoreleasepool {
             let foldMark = makeFoldMark()
             let dop = foldMark.doppelganger() as! FoldMark
-            rc = ResilientCoordinate(dataSource: saveDS,
-                                     enclosingFold: dop,
-                                     coord: VT100GridCoord(x: 1, y: 0))
-            _ = foldMark
-            _ = dop
+            return ResilientCoordinate(dataSource: saveDS,
+                                       enclosingFold: dop,
+                                       coord: VT100GridCoord(x: 1, y: 0))
         }
-        // foldMark and dop both go out of scope here; the WeakBox should
-        // zero out and encode produces .invalid.
+        // foldMark and dop are gone here; the WeakBox should zero out and
+        // encode produces .invalid.
         let dict = rc.dictionaryValue
         XCTAssertEqual(dict, codableDict(of: rc))
         XCTAssertEqual(dict["kind"] as? String, "invalid")
