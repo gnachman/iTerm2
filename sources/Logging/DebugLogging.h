@@ -249,6 +249,184 @@ extern BOOL iTermBetaAssertionsCrash;
 // changes. ModernTests compares it with the Swift BETA compilation condition.
 BOOL iTermBetaMacroIsDefined(void);
 
+// Saturating conversions from floating point to integer, for it_floatToInteger and
+// it_floatToIntegerUnchecked in sources/Infrastructure/SwiftMigrationHelpers.swift
+// (docs/swift-migration/translation-rules.md section 1; decisions.md, 2026-11-20). Each truncates
+// toward zero, gives the nearest bound of its result type for a value outside it (infinities
+// included), and gives 0 for NaN, the same on every processor. None is undefined behavior for any
+// input, unlike a C cast of an out-of-range value, and none traps, unlike Swift's Int32(x).
+//
+// On arm64 each is the single instruction FCVTZS or FCVTZU, which the Arm Architecture Reference
+// Manual defines to do exactly this for 32 and 64 bit results. It is written as inline assembly
+// because the ACLE intrinsics in <arm_neon.h> cover only conversions between types of the same
+// width (vcvtd_s64_f64, vcvts_s32_f32 and their unsigned forms), and a 64 bit conversion clamped to
+// 32 bits costs six instructions more. On other processors (x86_64, which has no saturating
+// conversion) each is its Portable form, which compares first and casts only a value whose
+// truncation is in range, which C defines. The Portable forms are compiled on every processor so
+// that ModernTests checks them on arm64 too.
+
+static inline int32_t iTermSaturatingInt32FromFloatPortable(float value) {
+    if (value >= 2147483648.0f) {  // 2^31
+        return INT32_MAX;
+    }
+    if (value >= -2147483648.0f) {  // -2^31; the next float below it truncates out of range
+        return (int32_t)value;
+    }
+    return value < 0 ? INT32_MIN : 0;  // 0 for NaN
+}
+
+static inline uint32_t iTermSaturatingUInt32FromFloatPortable(float value) {
+    if (value >= 4294967296.0f) {  // 2^32
+        return UINT32_MAX;
+    }
+    if (value > -1.0f) {  // a value in (-1, 0) truncates to 0
+        return (uint32_t)value;
+    }
+    return 0;  // at most -1, or NaN
+}
+
+static inline int64_t iTermSaturatingInt64FromFloatPortable(float value) {
+    if (value >= 9223372036854775808.0f) {  // 2^63
+        return INT64_MAX;
+    }
+    if (value >= -9223372036854775808.0f) {  // -2^63
+        return (int64_t)value;
+    }
+    return value < 0 ? INT64_MIN : 0;  // 0 for NaN
+}
+
+static inline uint64_t iTermSaturatingUInt64FromFloatPortable(float value) {
+    if (value >= 18446744073709551616.0f) {  // 2^64
+        return UINT64_MAX;
+    }
+    if (value > -1.0f) {
+        return (uint64_t)value;
+    }
+    return 0;  // at most -1, or NaN
+}
+
+static inline int32_t iTermSaturatingInt32FromDoublePortable(double value) {
+    if (value >= 2147483648.0) {  // 2^31
+        return INT32_MAX;
+    }
+    if (value > -2147483649.0) {  // -2^31 - 1, exact in a double
+        return (int32_t)value;
+    }
+    return value < 0 ? INT32_MIN : 0;  // 0 for NaN
+}
+
+static inline uint32_t iTermSaturatingUInt32FromDoublePortable(double value) {
+    if (value >= 4294967296.0) {  // 2^32
+        return UINT32_MAX;
+    }
+    if (value > -1.0) {
+        return (uint32_t)value;
+    }
+    return 0;  // at most -1, or NaN
+}
+
+static inline int64_t iTermSaturatingInt64FromDoublePortable(double value) {
+    if (value >= 9223372036854775808.0) {  // 2^63
+        return INT64_MAX;
+    }
+    if (value >= -9223372036854775808.0) {  // -2^63; the next double below it truncates out of range
+        return (int64_t)value;
+    }
+    return value < 0 ? INT64_MIN : 0;  // 0 for NaN
+}
+
+static inline uint64_t iTermSaturatingUInt64FromDoublePortable(double value) {
+    if (value >= 18446744073709551616.0) {  // 2^64
+        return UINT64_MAX;
+    }
+    if (value > -1.0) {
+        return (uint64_t)value;
+    }
+    return 0;  // at most -1, or NaN
+}
+
+#if defined(__aarch64__)
+static inline int32_t iTermSaturatingInt32FromFloat(float value) {
+    int32_t result;
+    __asm__("fcvtzs %w0, %s1" : "=r"(result) : "w"(value));
+    return result;
+}
+
+static inline uint32_t iTermSaturatingUInt32FromFloat(float value) {
+    uint32_t result;
+    __asm__("fcvtzu %w0, %s1" : "=r"(result) : "w"(value));
+    return result;
+}
+
+static inline int64_t iTermSaturatingInt64FromFloat(float value) {
+    int64_t result;
+    __asm__("fcvtzs %x0, %s1" : "=r"(result) : "w"(value));
+    return result;
+}
+
+static inline uint64_t iTermSaturatingUInt64FromFloat(float value) {
+    uint64_t result;
+    __asm__("fcvtzu %x0, %s1" : "=r"(result) : "w"(value));
+    return result;
+}
+
+static inline int32_t iTermSaturatingInt32FromDouble(double value) {
+    int32_t result;
+    __asm__("fcvtzs %w0, %d1" : "=r"(result) : "w"(value));
+    return result;
+}
+
+static inline uint32_t iTermSaturatingUInt32FromDouble(double value) {
+    uint32_t result;
+    __asm__("fcvtzu %w0, %d1" : "=r"(result) : "w"(value));
+    return result;
+}
+
+static inline int64_t iTermSaturatingInt64FromDouble(double value) {
+    int64_t result;
+    __asm__("fcvtzs %x0, %d1" : "=r"(result) : "w"(value));
+    return result;
+}
+
+static inline uint64_t iTermSaturatingUInt64FromDouble(double value) {
+    uint64_t result;
+    __asm__("fcvtzu %x0, %d1" : "=r"(result) : "w"(value));
+    return result;
+}
+#else
+static inline int32_t iTermSaturatingInt32FromFloat(float value) {
+    return iTermSaturatingInt32FromFloatPortable(value);
+}
+
+static inline uint32_t iTermSaturatingUInt32FromFloat(float value) {
+    return iTermSaturatingUInt32FromFloatPortable(value);
+}
+
+static inline int64_t iTermSaturatingInt64FromFloat(float value) {
+    return iTermSaturatingInt64FromFloatPortable(value);
+}
+
+static inline uint64_t iTermSaturatingUInt64FromFloat(float value) {
+    return iTermSaturatingUInt64FromFloatPortable(value);
+}
+
+static inline int32_t iTermSaturatingInt32FromDouble(double value) {
+    return iTermSaturatingInt32FromDoublePortable(value);
+}
+
+static inline uint32_t iTermSaturatingUInt32FromDouble(double value) {
+    return iTermSaturatingUInt32FromDoublePortable(value);
+}
+
+static inline int64_t iTermSaturatingInt64FromDouble(double value) {
+    return iTermSaturatingInt64FromDoublePortable(value);
+}
+
+static inline uint64_t iTermSaturatingUInt64FromDouble(double value) {
+    return iTermSaturatingUInt64FromDoublePortable(value);
+}
+#endif
+
 // Wraps the lock expression of a @synchronized statement:
 //   @synchronized(ITNonnilLock(_lock)) { ... }
 // @synchronized(nil) runs its block with no lock and no error. This evaluates the expression once,

@@ -7,23 +7,28 @@
 //  assertions.md, and concurrency.md section 2.
 //
 //  Behavior by build (decisions.md, 2026-11-20):
-//  - Every arithmetic and conversion helper (it_add, it_subtract, it_multiply, it_negate,
-//    it_shiftLeft, it_narrow, it_floatToInteger) returns what the C expression it replaces gives
-//    in practice on the processor it runs on: add, subtract, multiply and negate wrap; narrowing
-//    keeps the low bits; a left shift drops the bits shifted out and masks the count as the
-//    hardware does; a float converted to an integer gives what the processor's conversion gives.
-//    That is the result in every build and under every policy; only the reporting differs.
+//  - Every integer arithmetic and conversion helper (it_add, it_subtract, it_multiply, it_negate,
+//    it_shiftLeft, it_narrow) returns what the C expression it replaces gives in practice on the
+//    processor it runs on: add, subtract, multiply and negate wrap; narrowing keeps the low bits;
+//    a left shift drops the bits shifted out and masks the count as the hardware does.
+//    it_floatToInteger is the exception: what C gives for NaN or an out-of-range value is not one
+//    fixed result (it varies with the processor, the optimization level and whether the result is
+//    kept in a register), so it clamps: the truncation when it fits, the nearest bound of the type
+//    when it does not, 0 for NaN, the same on both processors (decisions.md, 2026-11-20). That is
+//    the result in every build and under every policy; only the reporting differs.
 //  - Development, Beta and Nightly compile the Objective-C with the BETA macro and this Swift with
 //    the BETA compilation condition. There every such event (an overflow, a narrowing that changes
 //    the value, a shift that loses set bits or has a count C leaves undefined, a float conversion
 //    of NaN or of a value out of range) is a beta assertion, and a failed beta assertion crashes
 //    through it_fatalError, as ITBetaAssert does. ModernTests replaces the crash with a failure of
 //    the running test (iTermBetaAssertionTestObserver).
-//  - Deployment (release) compiles the arithmetic and conversion helpers to the C result alone,
-//    with no check. Add, subtract, multiply, negate, narrowing and 32 and 64 bit shifts then cost
-//    what the C did; a float conversion and a shift of an 8 or 16 bit value cost a few more
-//    instructions, because they reproduce the processor's result explicitly. it_betaAssert logs a failure as ITBetaAssert does
-//    and continues. it_conservativeBetaAssert compiles to nothing.
+//  - Deployment (release) compiles the arithmetic and conversion helpers to their result alone,
+//    with no check. Add, subtract, multiply, negate, narrowing, 32 and 64 bit shifts, and on arm64
+//    a float conversion to a 32 or 64 bit type then cost what the C did (the float conversion is
+//    the one saturating instruction, through the C functions in DebugLogging.h); a shift of an 8
+//    or 16 bit value, a float conversion to an 8 or 16 bit type, and a float conversion on x86_64
+//    cost a few more instructions. it_betaAssert logs a failure as ITBetaAssert does and
+//    continues. it_conservativeBetaAssert compiles to nothing.
 //
 //  Whether a failure crashes is read at run time from iTermBetaAssertionsCrash, which the
 //  Objective-C sets from the BETA macro, so that tests can check the release policy (log and
@@ -454,16 +459,27 @@ func it_narrow<S: BinaryInteger, T: FixedWidthInteger>(_ value: S,
 
 // MARK: - Float to integer
 
-/// Converts a floating point value to an integer type as the C cast `(T)value` does on the
-/// processor this runs on, in the Deployment build of the C (clang at -Os).
+/// Converts a floating point value to an integer type as the C cast `(T)value` does for a value
+/// whose truncation fits in T, and clamps otherwise (decisions.md, 2026-11-20).
 ///
-/// A value whose truncation toward zero fits in T gives that truncation on both processors; a
-/// fractional part is dropped silently, as C drops it, and is not reported. NaN and values out of
-/// range fail a beta assertion and give what the processor gives (iTermFloatToIntegerModel):
-/// on arm64 the conversion saturates and NaN gives 0; on x86_64 it gives the "integer indefinite"
-/// value (the minimum of the register) or the low bits of a wider conversion.
+/// A value whose truncation toward zero fits in T gives that truncation; a fractional part is
+/// dropped silently, as C drops it, and is not reported. A value whose truncation is above T.max
+/// (including +infinity) gives T.max, one whose truncation is below T.min (including -infinity)
+/// gives T.min, so 0 for an unsigned T, and NaN gives 0. The result is the same on arm64 and x86_64 and in every build.
+/// NaN and values out of range fail a beta assertion. C leaves those inputs undefined, and what it
+/// produces for them varies with the processor, the optimization level and whether the result is
+/// kept in a register, so no single value reproduces C; the clamp is the result most likely to
+/// keep working code working.
 ///
-/// F is Float, Double, CGFloat or Float16, each of which converts to Double exactly.
+/// F is Float, Double, CGFloat or Float16, each of which converts to Double exactly. T is at most
+/// 64 bits wide.
+///
+/// In Deployment builds this is the conversion alone: one instruction (fcvtzs or fcvtzu) on arm64
+/// for a 32 or 64 bit T, and a clamp after a 32 bit conversion for an 8 or 16 bit T. With BETA
+/// (Development, Beta and Nightly) it also rounds and compares to check the value, so it does not
+/// belong in a loop that runs per character, per cell, per token or per frame (assertions.md
+/// section 1). A hot path that needs a conversion uses it_floatToIntegerUnchecked with the owner's
+/// sign-off (translation-rules.md section 1).
 @inline(__always)
 func it_floatToInteger<F: BinaryFloatingPoint, T: FixedWidthInteger>(_ value: F,
                                                                      to type: T.Type,
@@ -474,7 +490,7 @@ func it_floatToInteger<F: BinaryFloatingPoint, T: FixedWidthInteger>(_ value: F,
     return it_floatToInteger(value, to: type, file: file, line: line, function: function,
                              onFailure: iTermBetaAssertionFailed)
 #else
-    return iTermFloatToIntegerModel.processor(Double(value), to: type)
+    return iTermFloatToIntegerClamp.convert(value, to: type)
 #endif
 }
 
@@ -486,116 +502,94 @@ func it_floatToInteger<F: BinaryFloatingPoint, T: FixedWidthInteger>(_ value: F,
                                                                      line: UInt = #line,
                                                                      function: StaticString = #function,
                                                                      onFailure: iTermBetaAssertionFailureHandler) -> T {
-    let double = Double(value)
-    if !iTermFloatToIntegerModel.fits(double.rounded(.towardZero), in: T.self) {
+    if !iTermFloatToIntegerClamp.fits(value, in: type) {
         onFailure(iTermFloatConversionMessage(value, type), file, line, function)
     }
-    return iTermFloatToIntegerModel.processor(double, to: type)
+    return iTermFloatToIntegerClamp.convert(value, to: type)
 }
 
-/// What clang's code for `(T)value` gives on each processor, for a Double (Float and CGFloat
-/// values convert to Double exactly and give the same results). Both models are compiled on
-/// every architecture so that each can be tested anywhere; `processor` picks the one that
-/// applies. The results were established with a C probe (see the unit's report and
-/// translation-rules.md section 1):
+/// The less safe form of it_floatToInteger, for a hot path, used only where the owner has signed
+/// off on it when that code is ported, and listed with the sign-off in the unit's dossier
+/// (decisions.md, 2026-11-20; translation-rules.md section 1).
 ///
-/// arm64, clang at -Os, as Deployment builds the C:
-/// - Int32, UInt32, Int64, UInt64: fcvtzs or fcvtzu at that width, which truncates toward zero,
-///   saturates at the bounds of the type, and gives 0 for NaN.
-/// - Int8, UInt8, Int16, UInt16: fcvtzs to 32 bits, saturating to the Int32 range with NaN as 0,
-///   then the low bits. At -O0 clang uses fcvtzu for the unsigned narrow types instead, so a
-///   Development build of the C gives 0 where this gives the low bits of a negative value; the
-///   helper follows Deployment.
-///
-/// x86_64 (cvttsd2si and cvttss2si, the same at -O0 and -Os): a NaN or a value whose truncation
-/// is outside the signed range of the destination register gives the minimum of that register.
-/// - Int8, UInt8, Int16, UInt16, Int32: a 32 bit conversion, then the low bits.
-/// - UInt32, Int64: a 64 bit conversion, then the low bits.
-/// - UInt64: values in [2^63, 2^64) convert exactly; every other value gives the bit pattern of
-///   the 64 bit signed conversion (so NaN, values of at least 2^64 and values below -2^63 give
-///   2^63, and a negative value in range gives 2^64 minus its magnitude).
-enum iTermFloatToIntegerModel {
-    /// Whether `truncated`, a value already rounded toward zero, is a value of T. False for NaN.
+/// It gives exactly the result it_floatToInteger gives, for every input, on every processor and in
+/// every build: the truncation when it fits, T.max or T.min when it does not, and 0 for NaN. It
+/// never traps and is never undefined behavior. What it gives up is the report: nothing checks
+/// the value in any build, so a NaN or an out-of-range value that it_floatToInteger would report
+/// as a failed beta assertion passes silently, clamped. On arm64 it is the same single
+/// instruction as it_floatToInteger in a Deployment build; on x86_64 it is a few comparisons and
+/// a conversion.
+@inline(__always)
+func it_floatToIntegerUnchecked<F: BinaryFloatingPoint, T: FixedWidthInteger>(_ value: F,
+                                                                              to type: T.Type) -> T {
+    return iTermFloatToIntegerClamp.convert(value, to: type)
+}
+
+/// The clamped conversion behind it_floatToInteger and it_floatToIntegerUnchecked.
+enum iTermFloatToIntegerClamp {
+    /// Whether `value` truncated toward zero is a value of T. False for NaN and infinities.
     @inline(__always)
-    static func fits<T: FixedWidthInteger>(_ truncated: Double, in type: T.Type) -> Bool {
+    static func fits<F: BinaryFloatingPoint, T: FixedWidthInteger>(_ value: F, in type: T.Type) -> Bool {
+        let truncated = Double(value).rounded(.towardZero)
         // T.min is zero or minus a power of two, so it converts exactly. T.max + 1 is a power of
         // two; Double(T.max) is either exact or rounds up to that power, and adding one gives it
         // in both cases. NaN fails both comparisons.
         return truncated >= Double(T.min) && truncated < Double(T.max) + 1
     }
 
-    /// The result on the processor this code runs on.
+    /// The clamped conversion. With `portable` false this uses the processor's conversion (the
+    /// saturating instruction on arm64); with it true it uses the comparisons that x86_64 uses,
+    /// so that tests can check those on arm64. Both give the same result for every input.
+    ///
+    /// Float converts with the Float functions; every other F converts to Double exactly first.
+    /// No processor converts to 8 or 16 bits directly, so those convert at 32 bits and clamp.
     @inline(__always)
-    static func processor<T: FixedWidthInteger>(_ value: Double, to type: T.Type) -> T {
-#if arch(arm64)
-        return arm64(value, to: type)
-#elseif arch(x86_64)
-        return x86_64(value, to: type)
-#else
-#error("The C behavior of float to integer conversion is established only for arm64 and x86_64")
-#endif
-    }
-
-    /// The arm64 result. T is at most 64 bits wide.
-    @inline(__always)
-    static func arm64<T: FixedWidthInteger>(_ value: Double, to type: T.Type) -> T {
-        let truncated = value.rounded(.towardZero)
-        if T.bitWidth < 32 || (T.bitWidth == 32 && T.isSigned) {
-            return T(truncatingIfNeeded: saturating(truncated, Int32.self))
+    static func convert<F: BinaryFloatingPoint, T: FixedWidthInteger>(_ value: F,
+                                                                      to type: T.Type,
+                                                                      portable: Bool = false) -> T {
+        if F.self == Float.self {
+            let float = Float(value)
+            if T.isSigned {
+                if T.bitWidth > 32 {
+                    return T(truncatingIfNeeded: portable ? iTermSaturatingInt64FromFloatPortable(float)
+                                                          : iTermSaturatingInt64FromFloat(float))
+                }
+                return clamp(portable ? iTermSaturatingInt32FromFloatPortable(float)
+                                      : iTermSaturatingInt32FromFloat(float), to: type)
+            }
+            if T.bitWidth > 32 {
+                return T(truncatingIfNeeded: portable ? iTermSaturatingUInt64FromFloatPortable(float)
+                                                      : iTermSaturatingUInt64FromFloat(float))
+            }
+            return clamp(portable ? iTermSaturatingUInt32FromFloatPortable(float)
+                                  : iTermSaturatingUInt32FromFloat(float), to: type)
         }
-        if T.bitWidth == 32 {
-            return T(truncatingIfNeeded: saturating(truncated, UInt32.self))
-        }
+        let double = Double(value)
         if T.isSigned {
-            return T(truncatingIfNeeded: saturating(truncated, Int64.self))
+            if T.bitWidth > 32 {
+                return T(truncatingIfNeeded: portable ? iTermSaturatingInt64FromDoublePortable(double)
+                                                      : iTermSaturatingInt64FromDouble(double))
+            }
+            return clamp(portable ? iTermSaturatingInt32FromDoublePortable(double)
+                                  : iTermSaturatingInt32FromDouble(double), to: type)
         }
-        return T(truncatingIfNeeded: saturating(truncated, UInt64.self))
+        if T.bitWidth > 32 {
+            return T(truncatingIfNeeded: portable ? iTermSaturatingUInt64FromDoublePortable(double)
+                                                  : iTermSaturatingUInt64FromDouble(double))
+        }
+        return clamp(portable ? iTermSaturatingUInt32FromDoublePortable(double)
+                              : iTermSaturatingUInt32FromDouble(double), to: type)
     }
 
-    /// The x86_64 result. T is at most 64 bits wide.
+    /// A 32 bit result clamped to T, which is at most 32 bits wide and has the same signedness.
     @inline(__always)
-    static func x86_64<T: FixedWidthInteger>(_ value: Double, to type: T.Type) -> T {
-        let truncated = value.rounded(.towardZero)
-        if T.bitWidth < 32 || (T.bitWidth == 32 && T.isSigned) {
-            return T(truncatingIfNeeded: indefinite(truncated, Int32.self))
+    private static func clamp<I: FixedWidthInteger, T: FixedWidthInteger>(_ wide: I, to type: T.Type) -> T {
+        if T.bitWidth >= I.bitWidth {
+            return T(truncatingIfNeeded: wide)
         }
-        if T.bitWidth == 32 || T.isSigned {
-            return T(truncatingIfNeeded: indefinite(truncated, Int64.self))
-        }
-        // clang converts x and x - 2^63 and combines them; the result is exact in [2^63, 2^64)
-        // and the signed conversion's bit pattern everywhere else.
-        if truncated >= 9223372036854775808.0 && truncated < 18446744073709551616.0 {
-            return T(truncatingIfNeeded: UInt64(truncated))
-        }
-        return T(truncatingIfNeeded: indefinite(truncated, Int64.self))
-    }
-
-    /// A conversion that saturates at the bounds of I and gives 0 for NaN (fcvtzs, fcvtzu).
-    @inline(__always)
-    private static func saturating<I: FixedWidthInteger>(_ truncated: Double, _ type: I.Type) -> I {
-        if fits(truncated, in: I.self) {
-            return exactly(truncated, I.self)
-        }
-        if truncated.isNaN {
-            return 0
-        }
-        return truncated < 0 ? .min : .max
-    }
-
-    /// A conversion that gives I.min for NaN and for values out of range (cvttsd2si).
-    @inline(__always)
-    private static func indefinite<I: FixedWidthInteger & SignedInteger>(_ truncated: Double, _ type: I.Type) -> I {
-        if fits(truncated, in: I.self) {
-            return exactly(truncated, I.self)
-        }
-        return .min
-    }
-
-    /// `truncated` as an I, when it is a value of I. The concrete conversions compile to single
-    /// instructions; the generic I(truncated) calls into the standard library.
-    @inline(__always)
-    private static func exactly<I: FixedWidthInteger>(_ truncated: Double, _ type: I.Type) -> I {
-        return I.isSigned ? I(truncatingIfNeeded: Int64(truncated)) : I(truncatingIfNeeded: UInt64(truncated))
+        let low = I(truncatingIfNeeded: T.min)
+        let high = I(truncatingIfNeeded: T.max)
+        return T(truncatingIfNeeded: Swift.min(Swift.max(wide, low), high))
     }
 }
 

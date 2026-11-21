@@ -51,19 +51,6 @@ private func check<T: Equatable>(_ description: String,
                    file: file, line: line)
 }
 
-/// The value that applies on the processor the tests run on. The two processors' C conversions
-/// of a float to an integer differ for NaN and out-of-range values (translation-rules.md
-/// section 1).
-private func valueOnThisProcessor<T>(arm64: T, x86_64: T) -> T {
-#if arch(arm64)
-    return arm64
-#elseif arch(x86_64)
-    return x86_64
-#else
-#error("Only arm64 and x86_64 are supported")
-#endif
-}
-
 // MARK: - Beta assertions
 
 final class SwiftMigrationBetaAssertTests: XCTestCase {
@@ -333,8 +320,24 @@ final class SwiftMigrationPublicHelperPolicyTests: XCTestCase {
     func testFloatToInteger() {
         let line: UInt = #line + 1
         let result = it_floatToInteger(Double.nan, to: Int32.self)
-        XCTAssertEqual(result, valueOnThisProcessor(arm64: 0, x86_64: Int32.min))
+        XCTAssertEqual(result, 0)
         assertCrashedOnce("converting nan (Double) to Int32 is out of range", line: line)
+    }
+
+    func testFloatToIntegerClampsANarrowType() {
+        let line: UInt = #line + 1
+        let result = it_floatToInteger(300.0, to: UInt8.self)
+        XCTAssertEqual(result, 255)
+        assertCrashedOnce("converting 300.0 (Double) to UInt8 is out of range", line: line)
+    }
+
+    func testFloatToIntegerUncheckedNeverReports() {
+        XCTAssertEqual(it_floatToIntegerUnchecked(Double.nan, to: Int32.self), 0)
+        XCTAssertEqual(it_floatToIntegerUnchecked(1e300, to: Int8.self), 127)
+        XCTAssertEqual(it_floatToIntegerUnchecked(-Float.infinity, to: Int.self), Int.min)
+        XCTAssertEqual(it_floatToIntegerUnchecked(CGFloat(-2.75), to: UInt.self), 0)
+        XCTAssertEqual(it_floatToIntegerUnchecked(CGFloat(-2.75), to: Int.self), -2)
+        XCTAssertTrue(crashes.failures.isEmpty, "\(crashes.failures.map(\.message))")
     }
 
     func testSynchronizedNilLock() {
@@ -710,156 +713,256 @@ final class SwiftMigrationNarrowingTests: XCTestCase {
 
 // MARK: - Float to integer
 
-/// One value converted to every integer type, with the C results on each processor in the order
-/// Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64.
+/// One value converted to every integer type, in the order Int8, UInt8, Int16, UInt16, Int32,
+/// UInt32, Int64, UInt64, with the clamped result (decisions.md, 2026-11-20): the value truncated
+/// toward zero when that fits, the nearest bound of the type when it does not, and 0 for NaN. The
+/// result is the same on arm64 and x86_64.
 ///
-/// The arm64 columns are the output of a C probe compiled with clang at -Os (as Deployment builds
-/// the C) and run on Apple silicon: each conversion in a function of its own whose result is
-/// stored in a variable of the target type. The x86_64 columns come from the instructions clang
-/// emits for the same probe with -arch x86_64 at -O0 and -Os (identical), evaluated with the
-/// Intel SDM's definition of cvttsd2si and cvttss2si; Rosetta was not available to run them.
-private struct FloatConversionRow {
-    let value: Double
-    let arm64: [String]
-    let x86_64: [String]
+/// `asserts` has one character per type, in the same order: "x" where the conversion is a beta
+/// assertion (NaN, or a truncation outside the type), "." where it is not.
+///
+/// The expected values were computed with exact rational arithmetic by a script independent of
+/// the helper, and are written out here as literals.
+private struct FloatClampRow<F: BinaryFloatingPoint> {
+    let value: F
+    let expected: [String]
+    let asserts: String
 
-    init(_ value: Double, arm64: [String], x86_64: [String]) {
+    init(_ value: F, _ expected: [String], asserts: String) {
         self.value = value
-        self.arm64 = arm64
-        self.x86_64 = x86_64
-    }
-
-    var onThisProcessor: [String] {
-        return valueOnThisProcessor(arm64: arm64, x86_64: x86_64)
+        self.expected = expected
+        self.asserts = asserts
     }
 }
 
-// Double values, which CGFloat shares (CGFLOAT_IS_DOUBLE is 1 and the probe's CGFloat rows were
-// identical to its Double rows).
-private let doubleConversionRows: [FloatConversionRow] = [
-        .init(.nan, arm64: ["0", "0", "0", "0", "0", "0", "0", "0"], x86_64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "9223372036854775808"]),
-        .init(.infinity, arm64: ["-1", "255", "-1", "65535", "2147483647", "4294967295", "9223372036854775807", "18446744073709551615"], x86_64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "9223372036854775808"]),
-        .init(-.infinity, arm64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "0"], x86_64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "9223372036854775808"]),
-        .init(1e+300, arm64: ["-1", "255", "-1", "65535", "2147483647", "4294967295", "9223372036854775807", "18446744073709551615"], x86_64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "9223372036854775808"]),
-        .init(-1e+300, arm64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "0"], x86_64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "9223372036854775808"]),
-        .init(2.75, arm64: ["2", "2", "2", "2", "2", "2", "2", "2"], x86_64: ["2", "2", "2", "2", "2", "2", "2", "2"]),
-        .init(-2.75, arm64: ["-2", "254", "-2", "65534", "-2", "0", "-2", "0"], x86_64: ["-2", "254", "-2", "65534", "-2", "4294967294", "-2", "18446744073709551614"]),
-        .init(-0.5, arm64: ["0", "0", "0", "0", "0", "0", "0", "0"], x86_64: ["0", "0", "0", "0", "0", "0", "0", "0"]),
-        .init(-1.0, arm64: ["-1", "255", "-1", "65535", "-1", "0", "-1", "0"], x86_64: ["-1", "255", "-1", "65535", "-1", "4294967295", "-1", "18446744073709551615"]),
-        .init(127.9, arm64: ["127", "127", "127", "127", "127", "127", "127", "127"], x86_64: ["127", "127", "127", "127", "127", "127", "127", "127"]),
-        .init(128.0, arm64: ["-128", "128", "128", "128", "128", "128", "128", "128"], x86_64: ["-128", "128", "128", "128", "128", "128", "128", "128"]),
-        .init(-129.0, arm64: ["127", "127", "-129", "65407", "-129", "0", "-129", "0"], x86_64: ["127", "127", "-129", "65407", "-129", "4294967167", "-129", "18446744073709551487"]),
-        .init(255.9, arm64: ["-1", "255", "255", "255", "255", "255", "255", "255"], x86_64: ["-1", "255", "255", "255", "255", "255", "255", "255"]),
-        .init(256.0, arm64: ["0", "0", "256", "256", "256", "256", "256", "256"], x86_64: ["0", "0", "256", "256", "256", "256", "256", "256"]),
-        .init(300.0, arm64: ["44", "44", "300", "300", "300", "300", "300", "300"], x86_64: ["44", "44", "300", "300", "300", "300", "300", "300"]),
-        .init(-300.0, arm64: ["-44", "212", "-300", "65236", "-300", "0", "-300", "0"], x86_64: ["-44", "212", "-300", "65236", "-300", "4294966996", "-300", "18446744073709551316"]),
-        .init(32768.0, arm64: ["0", "0", "-32768", "32768", "32768", "32768", "32768", "32768"], x86_64: ["0", "0", "-32768", "32768", "32768", "32768", "32768", "32768"]),
-        .init(65535.5, arm64: ["-1", "255", "-1", "65535", "65535", "65535", "65535", "65535"], x86_64: ["-1", "255", "-1", "65535", "65535", "65535", "65535", "65535"]),
-        .init(65536.0, arm64: ["0", "0", "0", "0", "65536", "65536", "65536", "65536"], x86_64: ["0", "0", "0", "0", "65536", "65536", "65536", "65536"]),
-        .init(70000.0, arm64: ["112", "112", "4464", "4464", "70000", "70000", "70000", "70000"], x86_64: ["112", "112", "4464", "4464", "70000", "70000", "70000", "70000"]),
-        .init(-70000.0, arm64: ["-112", "144", "-4464", "61072", "-70000", "0", "-70000", "0"], x86_64: ["-112", "144", "-4464", "61072", "-70000", "4294897296", "-70000", "18446744073709481616"]),
-        .init(2147483647.9, arm64: ["-1", "255", "-1", "65535", "2147483647", "2147483647", "2147483647", "2147483647"], x86_64: ["-1", "255", "-1", "65535", "2147483647", "2147483647", "2147483647", "2147483647"]),
-        .init(2147483648.0, arm64: ["-1", "255", "-1", "65535", "2147483647", "2147483648", "2147483648", "2147483648"], x86_64: ["0", "0", "0", "0", "-2147483648", "2147483648", "2147483648", "2147483648"]),
-        .init(-2147483648.9, arm64: ["0", "0", "0", "0", "-2147483648", "0", "-2147483648", "0"], x86_64: ["0", "0", "0", "0", "-2147483648", "2147483648", "-2147483648", "18446744071562067968"]),
-        .init(-2147483649.0, arm64: ["0", "0", "0", "0", "-2147483648", "0", "-2147483649", "0"], x86_64: ["0", "0", "0", "0", "-2147483648", "2147483647", "-2147483649", "18446744071562067967"]),
-        .init(4294967295.5, arm64: ["-1", "255", "-1", "65535", "2147483647", "4294967295", "4294967295", "4294967295"], x86_64: ["0", "0", "0", "0", "-2147483648", "4294967295", "4294967295", "4294967295"]),
-        .init(4294967296.0, arm64: ["-1", "255", "-1", "65535", "2147483647", "4294967295", "4294967296", "4294967296"], x86_64: ["0", "0", "0", "0", "-2147483648", "0", "4294967296", "4294967296"]),
-        .init(4294967303.0, arm64: ["-1", "255", "-1", "65535", "2147483647", "4294967295", "4294967303", "4294967303"], x86_64: ["0", "0", "0", "0", "-2147483648", "7", "4294967303", "4294967303"]),
-        .init(-4294967303.0, arm64: ["0", "0", "0", "0", "-2147483648", "0", "-4294967303", "0"], x86_64: ["0", "0", "0", "0", "-2147483648", "4294967289", "-4294967303", "18446744069414584313"]),
-        .init(10000000000.0, arm64: ["-1", "255", "-1", "65535", "2147483647", "4294967295", "10000000000", "10000000000"], x86_64: ["0", "0", "0", "0", "-2147483648", "1410065408", "10000000000", "10000000000"]),
-        .init(-5000000000.0, arm64: ["0", "0", "0", "0", "-2147483648", "0", "-5000000000", "0"], x86_64: ["0", "0", "0", "0", "-2147483648", "3589934592", "-5000000000", "18446744068709551616"]),
-        .init(9.223372036854776e+18, arm64: ["-1", "255", "-1", "65535", "2147483647", "4294967295", "9223372036854775807", "9223372036854775808"], x86_64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "9223372036854775808"]),
-        .init(-9.223372036854776e+18, arm64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "0"], x86_64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "9223372036854775808"]),
-        .init(-9.223372036854778e+18, arm64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "0"], x86_64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "9223372036854775808"]),
-        .init(1.3835058055282164e+19, arm64: ["-1", "255", "-1", "65535", "2147483647", "4294967295", "9223372036854775807", "13835058055282163712"], x86_64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "13835058055282163712"]),
-        .init(1.8446744073709552e+19, arm64: ["-1", "255", "-1", "65535", "2147483647", "4294967295", "9223372036854775807", "18446744073709551615"], x86_64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "9223372036854775808"]),
-        .init(1.844674407370955e+19, arm64: ["-1", "255", "-1", "65535", "2147483647", "4294967295", "9223372036854775807", "18446744073709549568"], x86_64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "18446744073709549568"]),
+/// Every width's boundaries: the greatest Double below 2^(w-1), 2^(w-1), -2^(w-1), the next Double
+/// below -2^(w-1) (which truncates to -2^(w-1) for w up to 32, and is out of range for w = 64), the
+/// greatest Double below 2^w and 2^w. Double(Int64.max) is 2^63.
+private let doubleClampRows: [FloatClampRow<Double>] = [
+    .init(.nan, ["0", "0", "0", "0", "0", "0", "0", "0"], asserts: "xxxxxxxx"),
+    .init(.infinity, ["127", "255", "32767", "65535", "2147483647", "4294967295", "9223372036854775807", "18446744073709551615"], asserts: "xxxxxxxx"),
+    .init(-.infinity, ["-128", "0", "-32768", "0", "-2147483648", "0", "-9223372036854775808", "0"], asserts: "xxxxxxxx"),
+    .init(0.0, ["0", "0", "0", "0", "0", "0", "0", "0"], asserts: "........"),
+    .init(-0.0, ["0", "0", "0", "0", "0", "0", "0", "0"], asserts: "........"),
+    .init(0x1p-1074, ["0", "0", "0", "0", "0", "0", "0", "0"], asserts: "........"),
+    .init(-0x1p-1074, ["0", "0", "0", "0", "0", "0", "0", "0"], asserts: "........"),
+    .init(0x1p-1022, ["0", "0", "0", "0", "0", "0", "0", "0"], asserts: "........"),
+    .init(-0x1p-1022, ["0", "0", "0", "0", "0", "0", "0", "0"], asserts: "........"),
+    .init(2.75, ["2", "2", "2", "2", "2", "2", "2", "2"], asserts: "........"),
+    .init(-2.75, ["-2", "0", "-2", "0", "-2", "0", "-2", "0"], asserts: ".x.x.x.x"),
+    .init(-0.5, ["0", "0", "0", "0", "0", "0", "0", "0"], asserts: "........"),
+    .init(-1.0, ["-1", "0", "-1", "0", "-1", "0", "-1", "0"], asserts: ".x.x.x.x"),
+    .init(-129.0, ["-128", "0", "-129", "0", "-129", "0", "-129", "0"], asserts: "xx.x.x.x"),
+    .init(-32769.0, ["-128", "0", "-32768", "0", "-32769", "0", "-32769", "0"], asserts: "xxxx.x.x"),
+    .init(-2147483649.0, ["-128", "0", "-32768", "0", "-2147483648", "0", "-2147483649", "0"], asserts: "xxxxxx.x"),
+    .init(-0x1.fffffffffffffp-1, ["0", "0", "0", "0", "0", "0", "0", "0"], asserts: "........"),
+    .init(0x1.fffffffffffffp6, ["127", "127", "127", "127", "127", "127", "127", "127"], asserts: "........"),
+    .init(0x1p7, ["127", "128", "128", "128", "128", "128", "128", "128"], asserts: "x......."),
+    .init(-0x1p7, ["-128", "0", "-128", "0", "-128", "0", "-128", "0"], asserts: ".x.x.x.x"),
+    .init(-0x1.0000000000001p7, ["-128", "0", "-128", "0", "-128", "0", "-128", "0"], asserts: ".x.x.x.x"),
+    .init(0x1.fffffffffffffp7, ["127", "255", "255", "255", "255", "255", "255", "255"], asserts: "x......."),
+    .init(0x1p8, ["127", "255", "256", "256", "256", "256", "256", "256"], asserts: "xx......"),
+    .init(0x1.fffffffffffffp14, ["127", "255", "32767", "32767", "32767", "32767", "32767", "32767"], asserts: "xx......"),
+    .init(0x1p15, ["127", "255", "32767", "32768", "32768", "32768", "32768", "32768"], asserts: "xxx....."),
+    .init(-0x1p15, ["-128", "0", "-32768", "0", "-32768", "0", "-32768", "0"], asserts: "xx.x.x.x"),
+    .init(-0x1.0000000000001p15, ["-128", "0", "-32768", "0", "-32768", "0", "-32768", "0"], asserts: "xx.x.x.x"),
+    .init(0x1.fffffffffffffp15, ["127", "255", "32767", "65535", "65535", "65535", "65535", "65535"], asserts: "xxx....."),
+    .init(0x1p16, ["127", "255", "32767", "65535", "65536", "65536", "65536", "65536"], asserts: "xxxx...."),
+    .init(0x1.fffffffffffffp30, ["127", "255", "32767", "65535", "2147483647", "2147483647", "2147483647", "2147483647"], asserts: "xxxx...."),
+    .init(0x1p31, ["127", "255", "32767", "65535", "2147483647", "2147483648", "2147483648", "2147483648"], asserts: "xxxxx..."),
+    .init(-0x1p31, ["-128", "0", "-32768", "0", "-2147483648", "0", "-2147483648", "0"], asserts: "xxxx.x.x"),
+    .init(-0x1.0000000000001p31, ["-128", "0", "-32768", "0", "-2147483648", "0", "-2147483648", "0"], asserts: "xxxx.x.x"),
+    .init(0x1.fffffffffffffp31, ["127", "255", "32767", "65535", "2147483647", "4294967295", "4294967295", "4294967295"], asserts: "xxxxx..."),
+    .init(0x1p32, ["127", "255", "32767", "65535", "2147483647", "4294967295", "4294967296", "4294967296"], asserts: "xxxxxx.."),
+    .init(0x1.fffffffffffffp62, ["127", "255", "32767", "65535", "2147483647", "4294967295", "9223372036854774784", "9223372036854774784"], asserts: "xxxxxx.."),
+    .init(0x1p63, ["127", "255", "32767", "65535", "2147483647", "4294967295", "9223372036854775807", "9223372036854775808"], asserts: "xxxxxxx."),
+    .init(-0x1p63, ["-128", "0", "-32768", "0", "-2147483648", "0", "-9223372036854775808", "0"], asserts: "xxxxxx.x"),
+    .init(-0x1.0000000000001p63, ["-128", "0", "-32768", "0", "-2147483648", "0", "-9223372036854775808", "0"], asserts: "xxxxxxxx"),
+    .init(0x1.fffffffffffffp63, ["127", "255", "32767", "65535", "2147483647", "4294967295", "9223372036854775807", "18446744073709549568"], asserts: "xxxxxxx."),
+    .init(0x1p64, ["127", "255", "32767", "65535", "2147483647", "4294967295", "9223372036854775807", "18446744073709551615"], asserts: "xxxxxxxx"),
+    .init(1e300, ["127", "255", "32767", "65535", "2147483647", "4294967295", "9223372036854775807", "18446744073709551615"], asserts: "xxxxxxxx"),
+    .init(-1e300, ["-128", "0", "-32768", "0", "-2147483648", "0", "-9223372036854775808", "0"], asserts: "xxxxxxxx"),
 ]
 
-// Float values: the probe's Double values rounded to Float, without duplicates.
-private let floatConversionRows: [FloatConversionRow] = [
-        .init(.nan, arm64: ["0", "0", "0", "0", "0", "0", "0", "0"], x86_64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "9223372036854775808"]),
-        .init(.infinity, arm64: ["-1", "255", "-1", "65535", "2147483647", "4294967295", "9223372036854775807", "18446744073709551615"], x86_64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "9223372036854775808"]),
-        .init(-.infinity, arm64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "0"], x86_64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "9223372036854775808"]),
-        .init(2.75, arm64: ["2", "2", "2", "2", "2", "2", "2", "2"], x86_64: ["2", "2", "2", "2", "2", "2", "2", "2"]),
-        .init(-2.75, arm64: ["-2", "254", "-2", "65534", "-2", "0", "-2", "0"], x86_64: ["-2", "254", "-2", "65534", "-2", "4294967294", "-2", "18446744073709551614"]),
-        .init(-0.5, arm64: ["0", "0", "0", "0", "0", "0", "0", "0"], x86_64: ["0", "0", "0", "0", "0", "0", "0", "0"]),
-        .init(-1.0, arm64: ["-1", "255", "-1", "65535", "-1", "0", "-1", "0"], x86_64: ["-1", "255", "-1", "65535", "-1", "4294967295", "-1", "18446744073709551615"]),
-        .init(127.9000015258789, arm64: ["127", "127", "127", "127", "127", "127", "127", "127"], x86_64: ["127", "127", "127", "127", "127", "127", "127", "127"]),
-        .init(128.0, arm64: ["-128", "128", "128", "128", "128", "128", "128", "128"], x86_64: ["-128", "128", "128", "128", "128", "128", "128", "128"]),
-        .init(-129.0, arm64: ["127", "127", "-129", "65407", "-129", "0", "-129", "0"], x86_64: ["127", "127", "-129", "65407", "-129", "4294967167", "-129", "18446744073709551487"]),
-        .init(255.89999389648438, arm64: ["-1", "255", "255", "255", "255", "255", "255", "255"], x86_64: ["-1", "255", "255", "255", "255", "255", "255", "255"]),
-        .init(256.0, arm64: ["0", "0", "256", "256", "256", "256", "256", "256"], x86_64: ["0", "0", "256", "256", "256", "256", "256", "256"]),
-        .init(300.0, arm64: ["44", "44", "300", "300", "300", "300", "300", "300"], x86_64: ["44", "44", "300", "300", "300", "300", "300", "300"]),
-        .init(-300.0, arm64: ["-44", "212", "-300", "65236", "-300", "0", "-300", "0"], x86_64: ["-44", "212", "-300", "65236", "-300", "4294966996", "-300", "18446744073709551316"]),
-        .init(32768.0, arm64: ["0", "0", "-32768", "32768", "32768", "32768", "32768", "32768"], x86_64: ["0", "0", "-32768", "32768", "32768", "32768", "32768", "32768"]),
-        .init(65535.5, arm64: ["-1", "255", "-1", "65535", "65535", "65535", "65535", "65535"], x86_64: ["-1", "255", "-1", "65535", "65535", "65535", "65535", "65535"]),
-        .init(65536.0, arm64: ["0", "0", "0", "0", "65536", "65536", "65536", "65536"], x86_64: ["0", "0", "0", "0", "65536", "65536", "65536", "65536"]),
-        .init(70000.0, arm64: ["112", "112", "4464", "4464", "70000", "70000", "70000", "70000"], x86_64: ["112", "112", "4464", "4464", "70000", "70000", "70000", "70000"]),
-        .init(-70000.0, arm64: ["-112", "144", "-4464", "61072", "-70000", "0", "-70000", "0"], x86_64: ["-112", "144", "-4464", "61072", "-70000", "4294897296", "-70000", "18446744073709481616"]),
-        .init(2147483648.0, arm64: ["-1", "255", "-1", "65535", "2147483647", "2147483648", "2147483648", "2147483648"], x86_64: ["0", "0", "0", "0", "-2147483648", "2147483648", "2147483648", "2147483648"]),
-        .init(-2147483648.0, arm64: ["0", "0", "0", "0", "-2147483648", "0", "-2147483648", "0"], x86_64: ["0", "0", "0", "0", "-2147483648", "2147483648", "-2147483648", "18446744071562067968"]),
-        .init(4294967296.0, arm64: ["-1", "255", "-1", "65535", "2147483647", "4294967295", "4294967296", "4294967296"], x86_64: ["0", "0", "0", "0", "-2147483648", "0", "4294967296", "4294967296"]),
-        .init(-4294967296.0, arm64: ["0", "0", "0", "0", "-2147483648", "0", "-4294967296", "0"], x86_64: ["0", "0", "0", "0", "-2147483648", "0", "-4294967296", "18446744069414584320"]),
-        .init(10000000000.0, arm64: ["-1", "255", "-1", "65535", "2147483647", "4294967295", "10000000000", "10000000000"], x86_64: ["0", "0", "0", "0", "-2147483648", "1410065408", "10000000000", "10000000000"]),
-        .init(-5000000000.0, arm64: ["0", "0", "0", "0", "-2147483648", "0", "-5000000000", "0"], x86_64: ["0", "0", "0", "0", "-2147483648", "3589934592", "-5000000000", "18446744068709551616"]),
-        .init(9.223372036854776e+18, arm64: ["-1", "255", "-1", "65535", "2147483647", "4294967295", "9223372036854775807", "9223372036854775808"], x86_64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "9223372036854775808"]),
-        .init(-9.223372036854776e+18, arm64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "0"], x86_64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "9223372036854775808"]),
-        .init(1.3835058055282164e+19, arm64: ["-1", "255", "-1", "65535", "2147483647", "4294967295", "9223372036854775807", "13835058055282163712"], x86_64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "13835058055282163712"]),
-        .init(1.8446744073709552e+19, arm64: ["-1", "255", "-1", "65535", "2147483647", "4294967295", "9223372036854775807", "18446744073709551615"], x86_64: ["0", "0", "0", "0", "-2147483648", "0", "-9223372036854775808", "9223372036854775808"]),
+/// The same boundaries for Float, whose neighbors are farther apart: the Float below 2^31 is
+/// 2^31 - 128, and the Float below -2^31 is -2^31 - 256, which is out of range for Int32.
+private let floatClampRows: [FloatClampRow<Float>] = [
+    .init(.nan, ["0", "0", "0", "0", "0", "0", "0", "0"], asserts: "xxxxxxxx"),
+    .init(.infinity, ["127", "255", "32767", "65535", "2147483647", "4294967295", "9223372036854775807", "18446744073709551615"], asserts: "xxxxxxxx"),
+    .init(-.infinity, ["-128", "0", "-32768", "0", "-2147483648", "0", "-9223372036854775808", "0"], asserts: "xxxxxxxx"),
+    .init(0.0, ["0", "0", "0", "0", "0", "0", "0", "0"], asserts: "........"),
+    .init(-0.0, ["0", "0", "0", "0", "0", "0", "0", "0"], asserts: "........"),
+    .init(0x1p-149, ["0", "0", "0", "0", "0", "0", "0", "0"], asserts: "........"),
+    .init(-0x1p-149, ["0", "0", "0", "0", "0", "0", "0", "0"], asserts: "........"),
+    .init(0x1p-126, ["0", "0", "0", "0", "0", "0", "0", "0"], asserts: "........"),
+    .init(-0x1p-126, ["0", "0", "0", "0", "0", "0", "0", "0"], asserts: "........"),
+    .init(2.75, ["2", "2", "2", "2", "2", "2", "2", "2"], asserts: "........"),
+    .init(-2.75, ["-2", "0", "-2", "0", "-2", "0", "-2", "0"], asserts: ".x.x.x.x"),
+    .init(-0.5, ["0", "0", "0", "0", "0", "0", "0", "0"], asserts: "........"),
+    .init(-1.0, ["-1", "0", "-1", "0", "-1", "0", "-1", "0"], asserts: ".x.x.x.x"),
+    .init(-129.0, ["-128", "0", "-129", "0", "-129", "0", "-129", "0"], asserts: "xx.x.x.x"),
+    .init(-32769.0, ["-128", "0", "-32768", "0", "-32769", "0", "-32769", "0"], asserts: "xxxx.x.x"),
+    .init(-0x1.fffffep-1, ["0", "0", "0", "0", "0", "0", "0", "0"], asserts: "........"),
+    .init(0x1.fffffep6, ["127", "127", "127", "127", "127", "127", "127", "127"], asserts: "........"),
+    .init(0x1p7, ["127", "128", "128", "128", "128", "128", "128", "128"], asserts: "x......."),
+    .init(-0x1p7, ["-128", "0", "-128", "0", "-128", "0", "-128", "0"], asserts: ".x.x.x.x"),
+    .init(-0x1.000002p7, ["-128", "0", "-128", "0", "-128", "0", "-128", "0"], asserts: ".x.x.x.x"),
+    .init(0x1.fffffep7, ["127", "255", "255", "255", "255", "255", "255", "255"], asserts: "x......."),
+    .init(0x1p8, ["127", "255", "256", "256", "256", "256", "256", "256"], asserts: "xx......"),
+    .init(0x1.fffffep14, ["127", "255", "32767", "32767", "32767", "32767", "32767", "32767"], asserts: "xx......"),
+    .init(0x1p15, ["127", "255", "32767", "32768", "32768", "32768", "32768", "32768"], asserts: "xxx....."),
+    .init(-0x1p15, ["-128", "0", "-32768", "0", "-32768", "0", "-32768", "0"], asserts: "xx.x.x.x"),
+    .init(-0x1.000002p15, ["-128", "0", "-32768", "0", "-32768", "0", "-32768", "0"], asserts: "xx.x.x.x"),
+    .init(0x1.fffffep15, ["127", "255", "32767", "65535", "65535", "65535", "65535", "65535"], asserts: "xxx....."),
+    .init(0x1p16, ["127", "255", "32767", "65535", "65536", "65536", "65536", "65536"], asserts: "xxxx...."),
+    .init(0x1.fffffep30, ["127", "255", "32767", "65535", "2147483520", "2147483520", "2147483520", "2147483520"], asserts: "xxxx...."),
+    .init(0x1p31, ["127", "255", "32767", "65535", "2147483647", "2147483648", "2147483648", "2147483648"], asserts: "xxxxx..."),
+    .init(-0x1p31, ["-128", "0", "-32768", "0", "-2147483648", "0", "-2147483648", "0"], asserts: "xxxx.x.x"),
+    .init(-0x1.000002p31, ["-128", "0", "-32768", "0", "-2147483648", "0", "-2147483904", "0"], asserts: "xxxxxx.x"),
+    .init(0x1.fffffep31, ["127", "255", "32767", "65535", "2147483647", "4294967040", "4294967040", "4294967040"], asserts: "xxxxx..."),
+    .init(0x1p32, ["127", "255", "32767", "65535", "2147483647", "4294967295", "4294967296", "4294967296"], asserts: "xxxxxx.."),
+    .init(0x1.fffffep62, ["127", "255", "32767", "65535", "2147483647", "4294967295", "9223371487098961920", "9223371487098961920"], asserts: "xxxxxx.."),
+    .init(0x1p63, ["127", "255", "32767", "65535", "2147483647", "4294967295", "9223372036854775807", "9223372036854775808"], asserts: "xxxxxxx."),
+    .init(-0x1p63, ["-128", "0", "-32768", "0", "-2147483648", "0", "-9223372036854775808", "0"], asserts: "xxxxxx.x"),
+    .init(-0x1.000002p63, ["-128", "0", "-32768", "0", "-2147483648", "0", "-9223372036854775808", "0"], asserts: "xxxxxxxx"),
+    .init(0x1.fffffep63, ["127", "255", "32767", "65535", "2147483647", "4294967295", "9223372036854775807", "18446742974197923840"], asserts: "xxxxxxx."),
+    .init(0x1p64, ["127", "255", "32767", "65535", "2147483647", "4294967295", "9223372036854775807", "18446744073709551615"], asserts: "xxxxxxxx"),
+    .init(0x1.fffffep127, ["127", "255", "32767", "65535", "2147483647", "4294967295", "9223372036854775807", "18446744073709551615"], asserts: "xxxxxxxx"),
+    .init(-0x1.fffffep127, ["-128", "0", "-32768", "0", "-2147483648", "0", "-9223372036854775808", "0"], asserts: "xxxxxxxx"),
 ]
+
+private let floatClampTypeNames = ["Int8", "UInt8", "Int16", "UInt16", "Int32", "UInt32", "Int64", "UInt64"]
+
+/// Checks `convert` against every row for each of the eight integer types. `convert` returns the
+/// result as a string and the number of beta assertions it reported.
+private func checkClampRows<F: BinaryFloatingPoint>(
+    _ rows: [FloatClampRow<F>],
+    _ source: String,
+    checkAssertions: Bool,
+    file: StaticString = #filePath,
+    line: UInt = #line,
+    _ convert: (F, Int) -> (String, Int)) {
+    for row in rows {
+        let asserts = Array(row.asserts)
+        XCTAssertEqual(row.expected.count, 8, "\(row.value)", file: file, line: line)
+        XCTAssertEqual(asserts.count, 8, "\(row.value)", file: file, line: line)
+        for index in 0..<8 {
+            let description = "\(row.value) (\(source)) -> \(floatClampTypeNames[index])"
+            let (actual, failures) = convert(row.value, index)
+            XCTAssertEqual(actual, row.expected[index], description, file: file, line: line)
+            if checkAssertions {
+                XCTAssertEqual(failures, asserts[index] == "x" ? 1 : 0, description, file: file, line: line)
+            }
+        }
+    }
+}
+
+/// it_floatToInteger with a recording handler, to the integer type at `index`.
+private func checkedConversion<F: BinaryFloatingPoint>(_ value: F, _ index: Int) -> (String, Int) {
+    func one<T: FixedWidthInteger>(_ type: T.Type) -> (String, Int) {
+        let recorder = FailureRecorder()
+        let result = it_floatToInteger(value, to: type, onFailure: recorder.handler)
+        return ("\(result)", recorder.failures.count)
+    }
+    switch index {
+    case 0: return one(Int8.self)
+    case 1: return one(UInt8.self)
+    case 2: return one(Int16.self)
+    case 3: return one(UInt16.self)
+    case 4: return one(Int32.self)
+    case 5: return one(UInt32.self)
+    case 6: return one(Int64.self)
+    case 7: return one(UInt64.self)
+    default: return ("bad index \(index)", 0)
+    }
+}
+
+/// The conversion it_floatToInteger and it_floatToIntegerUnchecked share, through the comparisons
+/// x86_64 uses instead of the processor's conversion, to the integer type at `index`.
+private func portableConversion<F: BinaryFloatingPoint>(_ value: F, _ index: Int) -> (String, Int) {
+    func one<T: FixedWidthInteger>(_ type: T.Type) -> (String, Int) {
+        return ("\(iTermFloatToIntegerClamp.convert(value, to: type, portable: true))", 0)
+    }
+    switch index {
+    case 0: return one(Int8.self)
+    case 1: return one(UInt8.self)
+    case 2: return one(Int16.self)
+    case 3: return one(UInt16.self)
+    case 4: return one(Int32.self)
+    case 5: return one(UInt32.self)
+    case 6: return one(Int64.self)
+    case 7: return one(UInt64.self)
+    default: return ("bad index \(index)", 0)
+    }
+}
+
+/// it_floatToIntegerUnchecked, to the integer type at `index`. It has no failure handler; a beta
+/// assertion from it would fail the running test through iTermBetaAssertionTestObserver.
+private func uncheckedConversion<F: BinaryFloatingPoint>(_ value: F, _ index: Int) -> (String, Int) {
+    func one<T: FixedWidthInteger>(_ type: T.Type) -> (String, Int) {
+        return ("\(it_floatToIntegerUnchecked(value, to: type))", 0)
+    }
+    switch index {
+    case 0: return one(Int8.self)
+    case 1: return one(UInt8.self)
+    case 2: return one(Int16.self)
+    case 3: return one(UInt16.self)
+    case 4: return one(Int32.self)
+    case 5: return one(UInt32.self)
+    case 6: return one(Int64.self)
+    case 7: return one(UInt64.self)
+    default: return ("bad index \(index)", 0)
+    }
+}
 
 final class SwiftMigrationFloatConversionTests: XCTestCase {
-    private func checkRow<F: BinaryFloatingPoint>(_ value: F,
-                                                  _ expected: [String],
-                                                  file: StaticString = #filePath,
-                                                  line: UInt = #line) {
-        func one<T: FixedWidthInteger>(_ index: Int, _ type: T.Type) {
-            let recorder = FailureRecorder()
-            let actual = it_floatToInteger(value, to: T.self, onFailure: recorder.handler)
-            XCTAssertEqual("\(actual)", expected[index], "\(value) (\(F.self)) -> \(T.self)", file: file, line: line)
-            // A failure is reported exactly when the value rounded toward zero is not a value of T.
-            let truncated = value.rounded(.towardZero)
-            let fits = truncated.isFinite && T(exactly: truncated) != nil
-            XCTAssertEqual(recorder.failures.count, fits ? 0 : 1,
-                           "\(value) (\(F.self)) -> \(T.self): \(recorder.failures.map(\.message))",
-                           file: file, line: line)
-        }
-        one(0, Int8.self)
-        one(1, UInt8.self)
-        one(2, Int16.self)
-        one(3, UInt16.self)
-        one(4, Int32.self)
-        one(5, UInt32.self)
-        one(6, Int64.self)
-        one(7, UInt64.self)
+    func testDoubleClamps() {
+        checkClampRows(doubleClampRows, "Double", checkAssertions: true, checkedConversion)
     }
 
-    func testDoubleMatchesC() {
-        for row in doubleConversionRows {
-            checkRow(row.value, row.onThisProcessor)
-        }
+    func testCGFloatClamps() {
+        let rows = doubleClampRows.map { FloatClampRow(CGFloat($0.value), $0.expected, asserts: $0.asserts) }
+        checkClampRows(rows, "CGFloat", checkAssertions: true, checkedConversion)
     }
 
-    func testCGFloatMatchesC() {
-        for row in doubleConversionRows {
-            checkRow(CGFloat(row.value), row.onThisProcessor)
-        }
+    func testFloatClamps() {
+        checkClampRows(floatClampRows, "Float", checkAssertions: true, checkedConversion)
     }
 
-    func testFloatMatchesC() {
-        for row in floatConversionRows {
-            checkRow(Float(row.value), row.onThisProcessor)
-        }
+    /// The comparisons x86_64 uses (the Portable functions in DebugLogging.h), checked on the
+    /// processor the tests run on, so that the x86_64 code is tested on Apple silicon too.
+    func testPortableConversionClamps() {
+        checkClampRows(doubleClampRows, "Double, portable", checkAssertions: false, portableConversion)
+        let cgFloatRows = doubleClampRows.map { FloatClampRow(CGFloat($0.value), $0.expected, asserts: $0.asserts) }
+        checkClampRows(cgFloatRows, "CGFloat, portable", checkAssertions: false, portableConversion)
+        checkClampRows(floatClampRows, "Float, portable", checkAssertions: false, portableConversion)
+    }
+
+    /// it_floatToIntegerUnchecked gives the same result as it_floatToInteger for every input.
+    func testUncheckedGivesTheSameClamp() {
+        checkClampRows(doubleClampRows, "Double, unchecked", checkAssertions: false, uncheckedConversion)
+        let cgFloatRows = doubleClampRows.map { FloatClampRow(CGFloat($0.value), $0.expected, asserts: $0.asserts) }
+        checkClampRows(cgFloatRows, "CGFloat, unchecked", checkAssertions: false, uncheckedConversion)
+        checkClampRows(floatClampRows, "Float, unchecked", checkAssertions: false, uncheckedConversion)
     }
 
     func testIntAndUIntAreTheSixtyFourBitConversions() {
-        for row in doubleConversionRows {
+        for row in doubleClampRows {
             XCTAssertEqual("\(it_floatToInteger(row.value, to: Int.self, onFailure: { _, _, _, _ in }))",
-                           row.onThisProcessor[6], "\(row.value) -> Int")
+                           row.expected[6], "\(row.value) -> Int")
             XCTAssertEqual("\(it_floatToInteger(row.value, to: UInt.self, onFailure: { _, _, _, _ in }))",
-                           row.onThisProcessor[7], "\(row.value) -> UInt")
+                           row.expected[7], "\(row.value) -> UInt")
         }
+    }
+
+    func testInt64MaxAsDoubleIsTwoToTheSixtyThree() {
+        // Double cannot hold Int64.max; the conversion rounds up to 2^63, which is out of range
+        // and clamps back to Int64.max.
+        XCTAssertEqual(Double(Int64.max), 0x1p63)
+        check("Double(Int64.max) -> Int64", { it_floatToInteger(Double(Int64.max), to: Int64.self, onFailure: $0) },
+              Int64(9223372036854775807), fails: true)
+        check("Double(Int64.max) -> Int", { it_floatToInteger(Double(Int64.max), to: Int.self, onFailure: $0) },
+              Int(9223372036854775807), fails: true)
     }
 
     private func inRangeCases<F: BinaryFloatingPoint, T: FixedWidthInteger>(_: F.Type, _: T.Type) {
@@ -881,12 +984,11 @@ final class SwiftMigrationFloatConversionTests: XCTestCase {
             check("\(d) -2.75", { it_floatToInteger(F(-2.75), to: T.self, onFailure: $0) }, T(-2), fails: false)
             check("\(d) -2.5", { it_floatToInteger(F(-2.5), to: T.self, onFailure: $0) }, T(-2), fails: false)
         }
-        check("\(d) NaN", { it_floatToInteger(F.nan, to: T.self, onFailure: $0) },
-              iTermFloatToIntegerModel.processor(Double.nan, to: T.self), fails: true)
+        // Every NaN gives 0, whatever its sign or payload.
+        check("\(d) NaN", { it_floatToInteger(F.nan, to: T.self, onFailure: $0) }, T(0), fails: true)
         check("\(d) signaling NaN", { it_floatToInteger(F.signalingNaN, to: T.self, onFailure: $0) },
-              iTermFloatToIntegerModel.processor(Double.nan, to: T.self), fails: true)
-        check("\(d) -NaN", { it_floatToInteger(-F.nan, to: T.self, onFailure: $0) },
-              iTermFloatToIntegerModel.processor(Double.nan, to: T.self), fails: true)
+              T(0), fails: true)
+        check("\(d) -NaN", { it_floatToInteger(-F.nan, to: T.self, onFailure: $0) }, T(0), fails: true)
     }
 
     func testInRangeAndNaN() {
@@ -901,16 +1003,24 @@ final class SwiftMigrationFloatConversionTests: XCTestCase {
         inRangeCases(Double.self, UInt32.self)
         inRangeCases(Double.self, UInt64.self)
         inRangeCases(Float.self, Int.self)
+        inRangeCases(Float.self, Int8.self)
         inRangeCases(Float.self, Int16.self)
         inRangeCases(Float.self, Int32.self)
+        inRangeCases(Float.self, Int64.self)
+        inRangeCases(Float.self, UInt.self)
         inRangeCases(Float.self, UInt8.self)
+        inRangeCases(Float.self, UInt16.self)
         inRangeCases(Float.self, UInt32.self)
+        inRangeCases(Float.self, UInt64.self)
         inRangeCases(CGFloat.self, Int.self)
+        inRangeCases(CGFloat.self, Int8.self)
         inRangeCases(CGFloat.self, Int32.self)
+        inRangeCases(CGFloat.self, UInt8.self)
         inRangeCases(CGFloat.self, UInt32.self)
+        inRangeCases(CGFloat.self, UInt.self)
     }
 
-    // Float16 converts to Double exactly, so it follows the same model.
+    // Float16 converts to Double exactly and clamps the same way. It is not available on x86_64.
     func testFloat16() {
 #if arch(arm64)
         func cases<T: FixedWidthInteger>(_ type: T.Type) {
@@ -921,9 +1031,11 @@ final class SwiftMigrationFloatConversionTests: XCTestCase {
             check("\(d) 2.75", { it_floatToInteger(Float16(2.75), to: T.self, onFailure: $0) }, T(2), fails: false)
         }
         cases(Int.self)
+        cases(Int8.self)
         cases(Int32.self)
         cases(Int64.self)
         cases(UInt.self)
+        cases(UInt8.self)
         cases(UInt16.self)
         cases(UInt32.self)
         cases(UInt64.self)
@@ -934,71 +1046,16 @@ final class SwiftMigrationFloatConversionTests: XCTestCase {
         check("Float16 -greatestFinite -> Int64",
               { it_floatToInteger(-Float16.greatestFiniteMagnitude, to: Int64.self, onFailure: $0) },
               Int64(-65504), fails: false)
-        // Out of range for Int8: fcvtzs to 32 bits gives 65504, whose low byte is 0xE0.
         check("Float16 greatestFinite -> Int8",
               { it_floatToInteger(Float16.greatestFiniteMagnitude, to: Int8.self, onFailure: $0) },
-              Int8(-32), fails: true)
+              Int8(127), fails: true)
+        check("Float16 -greatestFinite -> Int16",
+              { it_floatToInteger(-Float16.greatestFiniteMagnitude, to: Int16.self, onFailure: $0) },
+              Int16(-32768), fails: true)
+        check("Float16 -greatestFinite -> UInt16",
+              { it_floatToInteger(-Float16.greatestFiniteMagnitude, to: UInt16.self, onFailure: $0) },
+              UInt16(0), fails: true)
 #endif
-    }
-
-    func testDoubleToInt32Boundaries() {
-        check("2147483647.0", { it_floatToInteger(2147483647.0, to: Int32.self, onFailure: $0) }, Int32.max, fails: false)
-        check("2147483647.9", { it_floatToInteger(2147483647.9, to: Int32.self, onFailure: $0) }, Int32.max, fails: false)
-        check("2147483648.0", { it_floatToInteger(2147483648.0, to: Int32.self, onFailure: $0) },
-              valueOnThisProcessor(arm64: Int32.max, x86_64: Int32.min), fails: true)
-        check("-2147483648.0", { it_floatToInteger(-2147483648.0, to: Int32.self, onFailure: $0) }, Int32.min, fails: false)
-        check("-2147483648.9", { it_floatToInteger(-2147483648.9, to: Int32.self, onFailure: $0) }, Int32.min, fails: false)
-        check("-2147483649.0", { it_floatToInteger(-2147483649.0, to: Int32.self, onFailure: $0) }, Int32.min, fails: true)
-    }
-
-    func testDoubleToInt64Boundaries() {
-        // 2^63 is the smallest Double too large for Int64; the next Double below it is 2^63 - 1024.
-        let twoTo63 = Double(sign: .plus, exponent: 63, significand: 1)
-        check("2^63", { it_floatToInteger(twoTo63, to: Int64.self, onFailure: $0) },
-              valueOnThisProcessor(arm64: Int64.max, x86_64: Int64.min), fails: true)
-        check("2^63.nextDown", { it_floatToInteger(twoTo63.nextDown, to: Int64.self, onFailure: $0) },
-              Int64.max - 1023, fails: false)
-        check("-2^63", { it_floatToInteger(-twoTo63, to: Int64.self, onFailure: $0) }, Int64.min, fails: false)
-        check("(-2^63).nextDown", { it_floatToInteger((-twoTo63).nextDown, to: Int64.self, onFailure: $0) },
-              Int64.min, fails: true)
-        check("Double(Int64.max)", { it_floatToInteger(Double(Int64.max), to: Int64.self, onFailure: $0) },
-              valueOnThisProcessor(arm64: Int64.max, x86_64: Int64.min), fails: true)
-    }
-
-    func testDoubleToUInt64Boundaries() {
-        let twoTo63 = Double(sign: .plus, exponent: 63, significand: 1)
-        let twoTo64 = Double(sign: .plus, exponent: 64, significand: 1)
-        check("2^64", { it_floatToInteger(twoTo64, to: UInt64.self, onFailure: $0) },
-              valueOnThisProcessor(arm64: UInt64.max, x86_64: UInt64(1) << 63), fails: true)
-        check("2^64.nextDown", { it_floatToInteger(twoTo64.nextDown, to: UInt64.self, onFailure: $0) },
-              UInt64.max - 2047, fails: false)
-        check("2^63", { it_floatToInteger(twoTo63, to: UInt64.self, onFailure: $0) }, UInt64(1) << 63, fails: false)
-        check("(-1).nextUp", { it_floatToInteger((-1.0).nextUp, to: UInt64.self, onFailure: $0) }, 0, fails: false)
-        check("-1", { it_floatToInteger(-1.0, to: UInt64.self, onFailure: $0) },
-              valueOnThisProcessor(arm64: 0, x86_64: UInt64.max), fails: true)
-    }
-
-    func testDoubleToSmallTypes() {
-        check("255.9 -> UInt8", { it_floatToInteger(255.9, to: UInt8.self, onFailure: $0) }, 255, fails: false)
-        check("256 -> UInt8", { it_floatToInteger(256.0, to: UInt8.self, onFailure: $0) }, 0, fails: true)
-        check("127.99 -> Int8", { it_floatToInteger(127.99, to: Int8.self, onFailure: $0) }, 127, fails: false)
-        check("128 -> Int8", { it_floatToInteger(128.0, to: Int8.self, onFailure: $0) }, -128, fails: true)
-        check("-128.99 -> Int8", { it_floatToInteger(-128.99, to: Int8.self, onFailure: $0) }, -128, fails: false)
-        check("-129 -> Int8", { it_floatToInteger(-129.0, to: Int8.self, onFailure: $0) }, 127, fails: true)
-        check("65535.5 -> UInt16", { it_floatToInteger(65535.5, to: UInt16.self, onFailure: $0) }, 65535, fails: false)
-        check("65536 -> UInt16", { it_floatToInteger(65536.0, to: UInt16.self, onFailure: $0) }, 0, fails: true)
-    }
-
-    func testFloatToInt32Boundaries() {
-        // 2^31 is exactly representable in Float; the Float below it is 2^31 - 128.
-        let twoTo31 = Float(sign: .plus, exponent: 31, significand: 1)
-        check("Float 2^31", { it_floatToInteger(twoTo31, to: Int32.self, onFailure: $0) },
-              valueOnThisProcessor(arm64: Int32.max, x86_64: Int32.min), fails: true)
-        check("Float 2^31.nextDown", { it_floatToInteger(twoTo31.nextDown, to: Int32.self, onFailure: $0) },
-              Int32.max - 127, fails: false)
-        check("Float -2^31", { it_floatToInteger(-twoTo31, to: Int32.self, onFailure: $0) }, Int32.min, fails: false)
-        check("Float (-2^31).nextDown", { it_floatToInteger((-twoTo31).nextDown, to: Int32.self, onFailure: $0) },
-              Int32.min, fails: true)
     }
 
     func testMessage() {
@@ -1009,66 +1066,6 @@ final class SwiftMigrationFloatConversionTests: XCTestCase {
             "converting nan (Double) to Int32 is out of range",
             "converting 10000000000.0 (Double) to Int32 is out of range",
         ])
-    }
-}
-
-/// Both models of the processor's conversion are compiled on every architecture, so the one for
-/// the processor the tests do not run on is checked here against the same table.
-final class SwiftMigrationFloatConversionModelTests: XCTestCase {
-    private func checkModel(_ name: String,
-                            _ rows: [FloatConversionRow],
-                            _ expected: (FloatConversionRow) -> [String],
-                            _ model: (Double, Any.Type) -> String) {
-        let types: [Any.Type] = [Int8.self, UInt8.self, Int16.self, UInt16.self,
-                                 Int32.self, UInt32.self, Int64.self, UInt64.self]
-        for row in rows {
-            for (index, type) in types.enumerated() {
-                XCTAssertEqual(model(row.value, type), expected(row)[index], "\(name): \(row.value) -> \(type)")
-            }
-        }
-    }
-
-    private static func arm64(_ value: Double, _ type: Any.Type) -> String {
-        switch type {
-        case is Int8.Type: return "\(iTermFloatToIntegerModel.arm64(value, to: Int8.self))"
-        case is UInt8.Type: return "\(iTermFloatToIntegerModel.arm64(value, to: UInt8.self))"
-        case is Int16.Type: return "\(iTermFloatToIntegerModel.arm64(value, to: Int16.self))"
-        case is UInt16.Type: return "\(iTermFloatToIntegerModel.arm64(value, to: UInt16.self))"
-        case is Int32.Type: return "\(iTermFloatToIntegerModel.arm64(value, to: Int32.self))"
-        case is UInt32.Type: return "\(iTermFloatToIntegerModel.arm64(value, to: UInt32.self))"
-        case is Int64.Type: return "\(iTermFloatToIntegerModel.arm64(value, to: Int64.self))"
-        case is UInt64.Type: return "\(iTermFloatToIntegerModel.arm64(value, to: UInt64.self))"
-        default: return "unexpected type \(type)"
-        }
-    }
-
-    private static func x86_64(_ value: Double, _ type: Any.Type) -> String {
-        switch type {
-        case is Int8.Type: return "\(iTermFloatToIntegerModel.x86_64(value, to: Int8.self))"
-        case is UInt8.Type: return "\(iTermFloatToIntegerModel.x86_64(value, to: UInt8.self))"
-        case is Int16.Type: return "\(iTermFloatToIntegerModel.x86_64(value, to: Int16.self))"
-        case is UInt16.Type: return "\(iTermFloatToIntegerModel.x86_64(value, to: UInt16.self))"
-        case is Int32.Type: return "\(iTermFloatToIntegerModel.x86_64(value, to: Int32.self))"
-        case is UInt32.Type: return "\(iTermFloatToIntegerModel.x86_64(value, to: UInt32.self))"
-        case is Int64.Type: return "\(iTermFloatToIntegerModel.x86_64(value, to: Int64.self))"
-        case is UInt64.Type: return "\(iTermFloatToIntegerModel.x86_64(value, to: UInt64.self))"
-        default: return "unexpected type \(type)"
-        }
-    }
-
-    func testArm64Model() {
-        checkModel("arm64", doubleConversionRows + floatConversionRows, \.arm64, Self.arm64)
-    }
-
-    func testX86_64Model() {
-        checkModel("x86_64", doubleConversionRows + floatConversionRows, \.x86_64, Self.x86_64)
-    }
-
-    func testProcessorPicksTheModelForThisArchitecture() {
-        for row in doubleConversionRows {
-            XCTAssertEqual("\(iTermFloatToIntegerModel.processor(row.value, to: UInt8.self))", row.onThisProcessor[1])
-            XCTAssertEqual("\(iTermFloatToIntegerModel.processor(row.value, to: UInt64.self))", row.onThisProcessor[7])
-        }
     }
 }
 
