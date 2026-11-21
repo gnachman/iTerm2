@@ -599,12 +599,15 @@
     if (prefix.length == 0) {
         // Zero-prefix suggest. This is a special case to avoid an annoying shift-reduce conflict
         // and because I expect it will need fancier ranking.
-        return [self pathsAndFunctionSuggestionsWithPrefix:@"" legalPaths:[_pathSource(@"") allObjects]];
+        // The suggestion methods give nil when the path source gives no paths;
+        // this method is declared nonnull, so make that an empty array.
+        return [self pathsAndFunctionSuggestionsWithPrefix:@"" legalPaths:[_pathSource(@"") allObjects]] ?: @[];
     }
     _prefix = prefix;
     CPTokenStream *tokenStream = [_tokenizer tokenise:prefix];
     id result = [_parser parse:tokenStream];
-    return [self parsedResult:result forString:prefix];
+    // nil when the parser produces no suggestions for the prefix.
+    return [self parsedResult:result forString:prefix] ?: @[];
 }
 
 - (NSArray<NSString *> *)parsedResult:(id)result forString:(NSString *)prefix {
