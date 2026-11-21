@@ -1006,9 +1006,16 @@ enum RuntimeSnapshotComparison {
 //   weak -> weak-or-unowned                    a check: the runtime cannot tell
 //                                              weak from unowned
 //   ownership unrecorded on either side        a check
-//   atomic -> nonatomic                        failure: every Swift property is
-//                                              nonatomic, which drops the
-//                                              accessors' serialization
+//   atomic -> nonatomic                        a check, one per property: every
+//                                              Swift property is nonatomic, and
+//                                              the prescribed port stores the
+//                                              value in a MutableAtomicObject
+//                                              whose lock the runtime cannot see
+//                                              (concurrency.md section 3); a
+//                                              failure when anything else about
+//                                              the property fails
+//   nonatomic -> atomic                        failure: a Swift property is never
+//                                              atomic
 //   any other property attribute change, or a
 //   property added or removed                  failure, except the NSObject
 //                                              protocol's properties and
@@ -1216,10 +1223,16 @@ extension RuntimeSnapshotComparison {
         }
         let bAtomic = b["atomic"] != nil
         let aAtomic = a["atomic"] != nil
+        // Every Swift property is nonatomic. The port of an atomic property
+        // that is relied upon stores it in a MutableAtomicObject, whose lock
+        // the runtime cannot see, so the change is a check unless something
+        // else about the property fails (the failure then names it too).
+        var lostAtomicity: String?
         if bAtomic && !aAtomic {
-            problems.append("atomic became nonatomic: every Swift property is nonatomic, so its accessors no longer serialize reads and writes; the port needs a lock where the atomicity mattered, and the change needs the owner")
+            lostAtomicity = "atomic became nonatomic"
+            checks.append("property \(name) was atomic: Swift properties are not; check that the port stores it in a MutableAtomicObject and reads and writes it through its value (concurrency.md section 3), or that the dossier shows it was atomic by accident")
         } else if bAtomic != aAtomic {
-            problems.append("nonatomic became atomic")
+            problems.append("nonatomic became atomic, which a Swift property never is")
         }
         for flag in ["readonly", "dynamic", "optional"] where (b[flag] != nil) != (a[flag] != nil) {
             problems.append(b[flag] != nil ? "is no longer \(flag)" : "became \(flag)")
@@ -1258,9 +1271,16 @@ extension RuntimeSnapshotComparison {
             problems.append("other fields differ")
         }
         if problems.isEmpty && before[0] != after[0] {
-            expected.append("the attribute string differs (raw=): Swift writes the attribute codes in another order")
+            if lostAtomicity != nil {
+                expected.append("the attribute string differs (raw=): it gains N, for nonatomic, which is listed as a check, and Swift writes the attribute codes in another order")
+            } else {
+                expected.append("the attribute string differs (raw=): Swift writes the attribute codes in another order")
+            }
         }
         if !problems.isEmpty {
+            if let lostAtomicity {
+                problems.append(lostAtomicity)
+            }
             fail("changed \(what): \(problems.joined(separator: "; "))\n      before: \(before[0])\n      after:  \(after[0])")
             return
         }

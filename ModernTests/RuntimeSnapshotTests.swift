@@ -326,6 +326,10 @@ final class RuntimeSnapshotTests: XCTestCase {
         XCTAssertFalse(result.passed)
         XCTAssertTrue(single(result.differences).hasPrefix("class RuntimeSnapshotFixture: changed instance-property atomicStrong\n"),
                       result.report)
+        // Between two Objective-C snapshots the change is a failure only,
+        // never the check a port to Swift gets (concurrency.md section 3).
+        XCTAssertEqual(result.checks, [], result.report)
+        XCTAssertEqual(result.crossLanguageClasses, [], result.report)
     }
 
     func testAddedMethodFails() throws {

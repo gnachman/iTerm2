@@ -7,7 +7,8 @@
 //  section 7): an NSObject subclass with every member @objc, the same
 //  selectors, and the same Foundation types. Then variants of it, each
 //  wrong in one way that the comparison must catch, and the Swift sides of
-//  the two Objective-C classes whose features Swift cannot reproduce.
+//  the Objective-C classes whose features Swift reproduces differently or
+//  not at all.
 //
 //  Changing anything here changes the snapshot pairs under
 //  tools/swift_migration/tests/fixtures/runtime_snapshot_compare/:
@@ -17,6 +18,8 @@
 
 import AppKit
 import Foundation
+// For MutableAtomicObject, the storage of a ported atomic property.
+@testable import iTerm2SharedARC
 import RuntimeSnapshotFixtures
 
 // The faithful port.
@@ -322,11 +325,69 @@ class RuntimeSnapshotPortLoadSwiftFixture: NSObject {
     }
 }
 
-// The port of RuntimeSnapshotPortAtomicObjCFixture: Swift has no atomic
-// properties.
+// The port of RuntimeSnapshotPortAtomicObjCFixture, written the prescribed
+// way for an atomic property that is relied upon (concurrency.md section 3):
+// Swift has no atomic properties, so each value is stored in a
+// MutableAtomicObject and the @objc property is computed over its value, so
+// that both accessors take a lock.
 @objc(RuntimeSnapshotPortAtomicSwiftFixture)
 class RuntimeSnapshotPortAtomicSwiftFixture: NSObject {
-    @objc var atomicObject: NSObject?
+    private let atomicObjectStorage = MutableAtomicObject<NSObject?>(nil)
+    @objc var atomicObject: NSObject? {
+        get {
+            return atomicObjectStorage.value
+        }
+        set {
+            _ = atomicObjectStorage.getAndSet(newValue)
+        }
+    }
+    private let atomicRectStorage = MutableAtomicObject<NSRect>(.zero)
+    @objc var atomicRect: NSRect {
+        get {
+            return atomicRectStorage.value
+        }
+        set {
+            _ = atomicRectStorage.getAndSet(newValue)
+        }
+    }
+    private let atomicCountStorage = MutableAtomicObject<Int>(0)
+    @objc var atomicCount: Int {
+        get {
+            return atomicCountStorage.value
+        }
+        set {
+            _ = atomicCountStorage.getAndSet(newValue)
+        }
+    }
+}
+
+// Wrong: atomicObject is get-only, so Objective-C sees a readonly property
+// and no -setAtomicObject:. Its loss of atomicity alone would be a check;
+// with the other change it fails.
+@objc(RuntimeSnapshotPortAtomicSwiftReadonlyFixture)
+class RuntimeSnapshotPortAtomicSwiftReadonlyFixture: NSObject {
+    private let atomicObjectStorage = MutableAtomicObject<NSObject?>(nil)
+    @objc var atomicObject: NSObject? {
+        return atomicObjectStorage.value
+    }
+    private let atomicRectStorage = MutableAtomicObject<NSRect>(.zero)
+    @objc var atomicRect: NSRect {
+        get {
+            return atomicRectStorage.value
+        }
+        set {
+            _ = atomicRectStorage.getAndSet(newValue)
+        }
+    }
+    private let atomicCountStorage = MutableAtomicObject<Int>(0)
+    @objc var atomicCount: Int {
+        get {
+            return atomicCountStorage.value
+        }
+        set {
+            _ = atomicCountStorage.getAndSet(newValue)
+        }
+    }
 }
 
 // A class with a designated initializer that takes an argument and no

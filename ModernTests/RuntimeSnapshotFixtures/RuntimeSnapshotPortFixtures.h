@@ -54,9 +54,14 @@ NS_ASSUME_NONNULL_BEGIN
 @interface RuntimeSnapshotPortLoadObjCFixture : NSObject
 @end
 
-// Has an atomic property; every Swift property is nonatomic.
+// Has atomic properties: an object, a struct, and a scalar that is atomic
+// by default. Every Swift property is nonatomic; the faithful port stores
+// each in a MutableAtomicObject (docs/swift-migration/concurrency.md
+// section 3).
 @interface RuntimeSnapshotPortAtomicObjCFixture : NSObject
 @property (atomic, strong, nullable) NSObject *atomicObject;
+@property (atomic) NSRect atomicRect;
+@property NSInteger atomicCount;
 @end
 
 // Implements -init and -initWithCount:. Its Swift port,

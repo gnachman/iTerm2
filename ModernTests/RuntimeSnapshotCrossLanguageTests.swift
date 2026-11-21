@@ -191,10 +191,61 @@ final class RuntimeSnapshotCrossLanguageTests: XCTestCase {
         XCTAssertTrue(result.classified.contains { $0.hasPrefix("class C: Swift storage p ") }, "\(result.classified)")
     }
 
+    // An atomic property becomes nonatomic in every Swift port, because a
+    // Swift property is never atomic. The prescribed port stores it in a
+    // MutableAtomicObject (concurrency.md section 3), which the runtime cannot
+    // see, so the change is one check per property, not a failure.
+    func testAtomicBecomingNonatomicIsACheck() {
+        let result = port(["instance-property p type=q ownership=assign atomic ivar=_p raw=Tq,V_p",
+                           "instance-property o type=@\"NSObject\" ownership=strong atomic ivar=_o raw=T@\"NSObject\",&,V_o"],
+                          ["instance-property p type=q ownership=assign nonatomic ivar= raw=Tq,N",
+                           "instance-property o type=@\"NSObject\" ownership=strong nonatomic ivar= raw=T@\"NSObject\",N,&"])
+        XCTAssertTrue(result.passed, result.report)
+        XCTAssertEqual(result.differences, [])
+        let checks = memberChecks(result)
+        XCTAssertEqual(checks.count, 2, result.report)
+        XCTAssertTrue(checks.first?.hasPrefix("class C: changed instance-property o\n") ?? false, result.report)
+        XCTAssertTrue(checks.first?.contains("check: property o was atomic: Swift properties are not; check that the port stores it in a MutableAtomicObject and reads and writes it through its value (concurrency.md section 3), or that the dossier shows it was atomic by accident") ?? false, result.report)
+        XCTAssertTrue(checks.last?.hasPrefix("class C: changed instance-property p\n") ?? false, result.report)
+        XCTAssertTrue(checks.last?.contains("check: property p was atomic: ") ?? false, result.report)
+        // The other differences of the property (the backing ivar, the order
+        // of the attribute codes) are still classified.
+        XCTAssertTrue(result.classified.contains { $0.hasPrefix("class C: changed instance-property p\n") && $0.contains("backing ivar _p became (none)") },
+                      result.report)
+    }
+
+    // Atomic to nonatomic is a check only when nothing else about the
+    // property changed in a way that fails; the failure then names both.
+    func testAtomicBecomingNonatomicWithAnotherChangeFails() {
+        let atomic = "instance-property p type=q ownership=assign atomic ivar=_p raw=Tq,V_p"
+        for after in ["instance-property p type=q ownership=assign nonatomic readonly ivar= raw=Tq,N,R",
+                      "instance-property p type=i ownership=assign nonatomic ivar= raw=Ti,N",
+                      "instance-property p type=q ownership=strong nonatomic ivar= raw=Tq,N,&"] {
+            let result = port([atomic], [after])
+            XCTAssertFalse(result.passed, after)
+            XCTAssertEqual(result.differences.count, 1, result.report)
+            XCTAssertTrue(result.differences.first?.contains("atomic became nonatomic") ?? false, result.report)
+            XCTAssertEqual(memberChecks(result), [], result.report)
+        }
+        // A dropped setter fails as a method; the property's own change is
+        // still only a check.
+        let droppedSetter = port([atomic, "instance-method -setP: types=v24@0:8q16"],
+                                 ["instance-property p type=q ownership=assign nonatomic ivar= raw=Tq,N"])
+        XCTAssertFalse(droppedSetter.passed)
+        XCTAssertEqual(droppedSetter.differences, ["class C: removed instance-method -setP: types=v24@0:8q16"], droppedSetter.report)
+    }
+
+    // A Swift property is never atomic, so nonatomic becoming atomic in a
+    // port cannot come from a Swift class: it fails.
+    func testNonatomicBecomingAtomicFails() {
+        let result = port(["instance-property p type=q ownership=assign nonatomic ivar=_p raw=Tq,N,V_p"],
+                          ["instance-property p type=q ownership=assign atomic ivar= raw=Tq"])
+        XCTAssertFalse(result.passed)
+        XCTAssertTrue(result.differences.first?.contains("nonatomic became atomic") ?? false, result.report)
+        XCTAssertEqual(memberChecks(result), [], result.report)
+    }
+
     func testPropertyRules() {
-        // Atomic to nonatomic fails.
-        XCTAssertFalse(port(["instance-property p type=q ownership=assign atomic ivar=_p raw=Tq,V_p"],
-                            ["instance-property p type=q ownership=assign nonatomic ivar=p raw=Tq,N,Vp"]).passed)
         // Readonly, type and ownership changes fail.
         XCTAssertFalse(port(["instance-property p type=q ownership=assign nonatomic ivar=_p raw=Tq,N,V_p"],
                             ["instance-property p type=q ownership=assign nonatomic readonly ivar= raw=Tq,N,R"]).passed)
