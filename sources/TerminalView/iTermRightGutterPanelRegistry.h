@@ -18,12 +18,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 typedef id<iTermRightGutterPanel> _Nonnull (^iTermRightGutterPanelFactory)(void);
 
-// Block returning the configured width for a panel type. The profile is
-// always available; the session may be nil when computing budgets for a
+// Block returning the configured width for a panel type. The profile may be
+// nil when a session computes its budget before its profile is set; the
+// session may be nil when computing budgets for a
 // session that doesn't exist yet (e.g., tmux layout sizing). Must be cheap;
 // called on the layout-budget hot path. Return 0 to omit the panel from the
 // budget without instantiating it.
-typedef CGFloat (^iTermRightGutterPanelWidthProvider)(Profile *profile,
+typedef CGFloat (^iTermRightGutterPanelWidthProvider)(Profile * _Nullable profile,
                                                      PTYSession * _Nullable session);
 
 @interface iTermRightGutterPanelRegistry : NSObject
@@ -44,7 +45,7 @@ typedef CGFloat (^iTermRightGutterPanelWidthProvider)(Profile *profile,
 
 // Sum of widths over enabled panels for the given profile/session. Cheap;
 // safe to call from +[PTYSession desiredRightExtraForProfile:session:].
-- (CGFloat)totalWidthForProfile:(Profile *)profile
+- (CGFloat)totalWidthForProfile:(nullable Profile *)profile
                         session:(nullable PTYSession *)session;
 
 // Lazily instantiate a panel by identifier. Returns nil if the identifier

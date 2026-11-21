@@ -22,7 +22,9 @@ private final class FakeSwitcherDelegate: NSObject, iTermAutomaticProfileSwitche
         profile = savedProfile.originalProfile
     }
 
-    func automaticProfileSwitcherCurrentProfile() -> TestProfile {
+    // Optional because the protocol's return is: a session's profile is nil
+    // until it is set. This fake always has one.
+    func automaticProfileSwitcherCurrentProfile() -> TestProfile? {
         return profile
     }
 

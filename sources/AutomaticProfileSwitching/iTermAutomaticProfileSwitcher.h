@@ -36,7 +36,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)automaticProfileSwitcherLoadProfile:(iTermSavedProfile *)savedProfile;
 
 // Returns the current profile, including local changes.
-- (Profile *)automaticProfileSwitcherCurrentProfile;
+- (nullable Profile *)automaticProfileSwitcherCurrentProfile;
 
 // Returns the current profile. Only the name and GUID are needed.
 - (iTermSavedProfile *)automaticProfileSwitcherCurrentSavedProfile;
@@ -70,7 +70,7 @@ NS_ASSUME_NONNULL_BEGIN
                path:(nullable NSString *)path
                 job:(nullable NSString *)job
         commandLine:(nullable NSString *)commandLine
-expressionValueProvider:(id<iTermAutomaticProfileSwitchingExpressionValueProvider>)expressionValueProvider;
+expressionValueProvider:(nullable id<iTermAutomaticProfileSwitchingExpressionValueProvider>)expressionValueProvider;
 
 @end
 

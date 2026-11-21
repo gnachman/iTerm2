@@ -257,7 +257,7 @@ NSString * const kTriggerVariableValueRegexKey = @"variableValueRegex";
     _compiledRegex = [NSRegularExpression regularExpressionWithPattern:regex_ options:0 error:nil];
 }
 
-- (void)setContentRegex:(NSString * _Nonnull)contentRegex {
+- (void)setContentRegex:(NSString * _Nullable)contentRegex {
     contentRegex_ = [contentRegex copy];
 }
 

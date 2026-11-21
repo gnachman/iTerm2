@@ -138,7 +138,7 @@ extern NSString * const kTriggerVariableValueRegexKey;
 
 @property (nonatomic, readonly) iTermTriggerMatchType matchType;
 @property (nonatomic, copy) NSString *regex;
-@property (nonatomic, copy, readonly) NSString *contentRegex;
+@property (nonatomic, copy, readonly, nullable) NSString *contentRegex;
 @property (nonatomic, copy, readonly) NSString *name;
 @property (nonatomic, copy, readonly, nullable) NSString *job;
 @property (nonatomic, copy, readonly, nullable) NSString *provenance;

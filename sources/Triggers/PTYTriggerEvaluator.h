@@ -78,7 +78,7 @@ extern NSString *const PTYSessionSlownessEventExecute;
 - (instancetype)initWithQueue:(dispatch_queue_t)queue NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
-- (void)loadFromProfileArray:(NSArray *)array;
+- (void)loadFromProfileArray:(nullable NSArray *)array;
 - (void)checkPartialLineTriggers;
 - (void)checkIdempotentTriggersIfAllowed;
 - (void)invalidateIdempotentTriggers;

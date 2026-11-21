@@ -1207,7 +1207,7 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // Display timer stuff
 - (void)updateDisplayBecause:(NSString *)reason;
 - (void)doAntiIdle;
-- (nullable NSString*)ansiColorsMatchingForeground:(NSDictionary*)fg andBackground:(NSDictionary*)bg inBookmark:(Profile*)aDict;
+- (nullable NSString*)ansiColorsMatchingForeground:(nullable NSDictionary*)fg andBackground:(nullable NSDictionary*)bg inBookmark:(Profile*)aDict;
 
 - (void)changeFontSizeDirection:(int)dir;
 - (void)setFontTable:(iTermFontTable *)fontTable
@@ -1298,7 +1298,7 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 - (void)revealPromptMarkWithID:(NSString *)guid;
 - (void)saveScrollPositionWithName:(nullable NSString *)name;
 - (void)renameMark:(id<iTermGenericNamedMarkReading>)mark to:(nullable NSString *)newName;
-- (NSArray<id<iTermGenericNamedMarkReading>> *)namedMarks;
+- (nullable NSArray<id<iTermGenericNamedMarkReading>> *)namedMarks;
 - (void)removeNamedMark:(id<iTermGenericNamedMarkReading>)mark;
 - (BOOL)canAddNamedMark;
 
@@ -1443,7 +1443,7 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // Whether a program-set OSC 0/1/2 title should enable TemporarySessionName.
 // Exposed for testing.
 + (BOOL)programOSCTitleShouldEnableTemporaryNameForComponents:(NSUInteger)components;
-- (void)profileNameDidChangeTo:(NSString *)name;
+- (void)profileNameDidChangeTo:(nullable NSString *)name;
 - (void)profileDidChangeToProfileWithName:(NSString *)name;
 - (void)updateStatusBarStyle;
 - (BOOL)checkForCyclesInSwiftyStrings;
@@ -1471,7 +1471,7 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 - (BOOL)handleKeyUpWithBuckyBits:(NSEvent *)event;
 - (BOOL)handleFlagsChangedWithBuckyBits:(NSEvent *)event;
 - (CGFloat)desiredRightExtra;
-+ (CGFloat)desiredRightExtraForProfile:(Profile *)profile
++ (CGFloat)desiredRightExtraForProfile:(nullable Profile *)profile
                                session:(nullable PTYSession *)session;
 
 // Portion of desiredRightExtra contributed by right-gutter panels (the rest
@@ -1479,7 +1479,7 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // timestamps at the inner edge of the panel area instead of all the way at
 // PTYTextView's right edge.
 - (CGFloat)desiredPanelReservation;
-+ (CGFloat)desiredPanelReservationForProfile:(Profile *)profile
++ (CGFloat)desiredPanelReservationForProfile:(nullable Profile *)profile
                                      session:(nullable PTYSession *)session;
 - (void)showError:(NSString *)message suppressionKey:(NSString *)key identifier:(NSString *)identifier;
 - (void)dismissAnnouncementWithIdentifier:(NSString *)identifier;
@@ -1493,7 +1493,7 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // Pure transformation: produces the protobuf cell style for a given screen_char_t
 // and its iTermExternalAttribute. Exposed as a class method for unit testing.
 + (ITMCellStyle *)protoStyleForCharacter:(screen_char_t)c
-                       externalAttributes:(iTermExternalAttribute *)ea;
+                       externalAttributes:(nullable iTermExternalAttribute *)ea;
 
 // Pure transformation: produces the text of a line plus its run-length-encoded
 // code-point counts and cell styles. Exposed as a class method for unit testing.

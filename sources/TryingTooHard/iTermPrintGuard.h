@@ -12,8 +12,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermPrintGuard : NSObject
 
-- (BOOL)shouldPrintWithProfile:(Profile *)profile
-                      inWindow:(NSWindow *)window
+- (BOOL)shouldPrintWithProfile:(nullable Profile *)profile
+                      inWindow:(nullable NSWindow *)window
                      willPrint:(BOOL)willPrint;
 
 @end
