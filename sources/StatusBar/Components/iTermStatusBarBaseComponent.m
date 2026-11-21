@@ -186,7 +186,7 @@ const double iTermStatusBarBaseComponentDefaultPriority = 5;
     return nil;
 }
 
-- (NSColor *)statusBarBackgroundColor {
+- (nullable NSColor *)statusBarBackgroundColor {
     return _advancedConfiguration.backgroundColor;
 }
 

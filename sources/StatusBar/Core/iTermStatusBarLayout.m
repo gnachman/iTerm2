@@ -38,7 +38,7 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
     return [NSFont systemFontOfSize:12];
 }
 
-+ (instancetype)advancedConfigurationFromDictionary:(NSDictionary *)dict {
++ (instancetype)advancedConfigurationFromDictionary:(nullable NSDictionary *)dict {
     iTermStatusBarAdvancedConfiguration *configuration = [[iTermStatusBarAdvancedConfiguration alloc] init];
     configuration.separatorColor = [[NSDictionary castFrom:dict[iTermStatusBarLayoutDictionaryKeySeparatorColor]] colorValue];
     configuration.backgroundColor = [[NSDictionary castFrom:dict[iTermStatusBarLayoutDictionaryKeyBackgroundColor]] colorValue];
@@ -105,7 +105,7 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
 }
 
 + (NSArray<id<iTermStatusBarComponent>> *)componentsArrayFromDictionary:(NSDictionary *)dictionary
-                                                                  scope:(iTermVariableScope *)scope {
+                                                                  scope:(nullable iTermVariableScope *)scope {
     NSMutableArray<id<iTermStatusBarComponent>> *result = [NSMutableArray array];
     for (NSDictionary *dict in dictionary[iTermStatusBarLayoutKeyComponents]) {
         NSString *className = dict[iTermStatusBarLayoutKeyClass];

@@ -140,7 +140,7 @@ typedef void (^iTermGitPollWorkerCompletionBlock)(iTermGitState * _Nullable, BOO
     }];
 }
 
-- (void)didFetchState:(iTermGitState *)state timedOut:(BOOL)timedOut cacheKey:(NSString *)cacheKey {
+- (void)didFetchState:(nullable iTermGitState *)state timedOut:(BOOL)timedOut cacheKey:(NSString *)cacheKey {
     DLog(@"Did fetch state %@ timedOut=%@ for cacheKey %@", state, @(timedOut), cacheKey);
     iTermGitState *cached = _cache[cacheKey];
     if (cached != nil &&

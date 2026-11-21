@@ -322,7 +322,7 @@ NS_ASSUME_NONNULL_BEGIN
     return [self textColor];
 }
 
-- (NSColor *)statusBarBackgroundColor {
+- (nullable NSColor *)statusBarBackgroundColor {
     return [self backgroundColor];
 }
 

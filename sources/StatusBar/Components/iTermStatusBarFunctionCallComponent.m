@@ -104,7 +104,7 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
     return [self textColor];
 }
 
-- (NSColor *)statusBarBackgroundColor {
+- (nullable NSColor *)statusBarBackgroundColor {
     return [self backgroundColor];
 }
 

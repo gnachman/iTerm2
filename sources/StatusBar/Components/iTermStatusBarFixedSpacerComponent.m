@@ -58,7 +58,7 @@ NS_ASSUME_NONNULL_BEGIN
     return _width;
 }
 
-- (NSColor *)statusBarBackgroundColor {
+- (nullable NSColor *)statusBarBackgroundColor {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
     return [knobValues[iTermStatusBarSharedBackgroundColorKey] colorValue] ?: [super statusBarBackgroundColor];
 }

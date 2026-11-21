@@ -49,8 +49,8 @@ NS_ASSUME_NONNULL_BEGIN
           syntaxHighlighterForAttributedString:(NSMutableAttributedString *)attributedString;
 - (void)minimalComposerDidBecomeFirstResponder:(iTermMinimalComposerViewController *)composer;
 - (BOOL)minimalComposerShouldFetchSuggestions:(iTermMinimalComposerViewController *)composer
-                                      forHost:(id<VT100RemoteHostReading>)remoteHost
-                               tmuxController:(TmuxController *)tmuxController;
+                                      forHost:(nullable id<VT100RemoteHostReading>)remoteHost
+                               tmuxController:(nullable TmuxController *)tmuxController;
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
        fetchSuggestions:(iTermSuggestionRequest *)request
           byUserRequest:(BOOL)byUserRequest;

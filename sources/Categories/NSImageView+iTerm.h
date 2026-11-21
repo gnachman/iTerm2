@@ -11,7 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface NSImageView (iTerm)
 
-- (void)it_setTintColor:(NSColor *)color;
+- (void)it_setTintColor:(nullable NSColor *)color;
 
 @end
 

@@ -38,7 +38,7 @@ extern NSString *const iTermStatusBarLayoutKeyAdvancedConfiguration;
 // edge; when on the bottom it is drawn along its top edge.
 @property (nonatomic) BOOL drawSeparatorBetweenStatusBarAndTerminal;
 
-+ (instancetype)advancedConfigurationFromDictionary:(NSDictionary *)dict;
++ (instancetype)advancedConfigurationFromDictionary:(nullable NSDictionary *)dict;
 + (NSFont *)defaultFont;
 
 - (NSDictionary *)dictionaryValue;

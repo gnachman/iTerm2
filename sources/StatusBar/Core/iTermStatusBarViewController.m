@@ -209,13 +209,13 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
     [self.view layoutSubtreeIfNeeded];
 }
 
-- (NSViewController<iTermFindViewController> *)searchViewController {
+- (nullable NSViewController<iTermFindViewController> *)searchViewController {
     return [_containerViews mapWithBlock:^id(iTermStatusBarContainerView *containerView) {
         return containerView.component.statusBarComponentSearchViewController;
     }].firstObject;
 }
 
-- (NSViewController<iTermFindViewController> *)filterViewController {
+- (nullable NSViewController<iTermFindViewController> *)filterViewController {
     return [_containerViews mapWithBlock:^id(iTermStatusBarContainerView *containerView) {
         return containerView.component.statusBarComponentFilterViewController;
     }].firstObject;
@@ -239,7 +239,7 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
     }
 }
 
-- (iTermStatusBarContainerView *)containerViewForComponent:(id<iTermStatusBarComponent>)component {
+- (nullable iTermStatusBarContainerView *)containerViewForComponent:(id<iTermStatusBarComponent>)component {
     return [_containerViews objectPassingTest:^BOOL(iTermStatusBarContainerView *containerView, NSUInteger index, BOOL *stop) {
         return [containerView.component isEqualToComponent:component];
     }];

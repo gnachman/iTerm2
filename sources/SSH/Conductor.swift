@@ -550,8 +550,9 @@ class Conductor: NSObject, SSHIdentityProvider {
         let provider = SSHProcessInfoProvider(rootPID: framedPID!, runner: self)
         provider.register(trackedPID: framedPID!)
         if let sessionID = delegate?.guid {
+            // Non-nil for a non-nil session ID.
             let instance = iTermCPUUtilization.instance(forSessionID: sessionID)
-            instance.publisher = provider.cpuUtilizationPublisher
+            instance?.publisher = provider.cpuUtilizationPublisher
         }
         return provider
     }()

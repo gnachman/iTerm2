@@ -46,7 +46,7 @@ const CGFloat iTermStatusBarViewControllerMargin = 10;
 }
 
 - (instancetype)initWithContainerViews:(NSArray<iTermStatusBarContainerView *> *)containerViews
-                         mandatoryView:(nonnull iTermStatusBarContainerView *)mandatoryView
+                         mandatoryView:(nullable iTermStatusBarContainerView *)mandatoryView
                         statusBarWidth:(CGFloat)statusBarWidth
                  removeEmptyComponents:(BOOL)removeEmptyComponents {
     self = [super init];

@@ -19,8 +19,8 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermStatusBarLargeComposerViewControllerDelegate<NSObject>
 - (void)largeComposerViewControllerTextDidChange:(iTermStatusBarLargeComposerViewController *)controller;
 - (BOOL)largeComposerViewControllerShouldFetchSuggestions:(iTermStatusBarLargeComposerViewController *)controller
-                                                  forHost:(id<VT100RemoteHostReading>)remoteHost
-                                           tmuxController:(TmuxController *)tmuxController;
+                                                  forHost:(nullable id<VT100RemoteHostReading>)remoteHost
+                                           tmuxController:(nullable TmuxController *)tmuxController;
 - (void)largeComposerViewController:(iTermStatusBarLargeComposerViewController *)controller
                    fetchSuggestions:(iTermSuggestionRequest *)request
                       byUserRequest:(BOOL)byUserRequest;

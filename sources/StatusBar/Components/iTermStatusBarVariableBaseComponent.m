@@ -83,7 +83,7 @@ NS_ASSUME_NONNULL_BEGIN
     return YES;
 }
 
-- (NSString *)fullString {
+- (nullable NSString *)fullString {
     return [self.scope valueForVariableName:_path];
 }
 

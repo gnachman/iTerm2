@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermGitState (MainApp)
 @property (nonatomic, readonly) NSTimeInterval age;
 
-- (instancetype)initWithScope:(iTermVariableScope *)scope;
+- (nullable instancetype)initWithScope:(iTermVariableScope *)scope;
 
 @end
 

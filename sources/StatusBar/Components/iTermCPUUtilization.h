@@ -16,7 +16,7 @@ typedef void (^iTermCPUUtilizationObserver)(double);
 @property (nullable, nonatomic, readonly) NSArray<NSNumber *> *samples;
 @property (nonatomic, strong) iTermPublisher<NSNumber *> *publisher;
 
-+ (instancetype)instanceForSessionID:(NSString *)sessionID;
++ (nullable instancetype)instanceForSessionID:(nullable NSString *)sessionID;
 + (void)setInstance:(nullable iTermCPUUtilization *)instance
        forSessionID:(NSString *)sessionID;
 - (instancetype)initWithPublisher:(iTermPublisher<NSNumber *> *)publisher;

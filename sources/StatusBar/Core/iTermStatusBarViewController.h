@@ -28,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 // content. nil means use the system separator color (matches the workgroup
 // toolbar in non-minimal themes).
 - (nullable NSColor *)statusBarEdgeSeparatorColor;
-- (NSColor *)statusBarBackgroundColor;
+- (nullable NSColor *)statusBarBackgroundColor;
 - (NSColor *)statusBarTerminalBackgroundColor;
 - (NSFont *)statusBarTerminalFont;
 - (void)statusBarWriteString:(NSString *)string;
@@ -67,8 +67,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readonly) iTermStatusBarLayout *layout;
 @property (nonatomic, readonly) iTermVariableScope *scope;
-@property (nonatomic, readonly) NSViewController<iTermFindViewController> *searchViewController;
-@property (nonatomic, readonly) NSViewController<iTermFilterViewController> *filterViewController;
+@property (nonatomic, readonly, nullable) NSViewController<iTermFindViewController> *searchViewController;
+@property (nonatomic, readonly, nullable) NSViewController<iTermFilterViewController> *filterViewController;
 
 @property (nullable, nonatomic, strong) id<iTermStatusBarComponent> temporaryLeftComponent;
 @property (nullable, nonatomic, strong) id<iTermStatusBarComponent> temporaryRightComponent;

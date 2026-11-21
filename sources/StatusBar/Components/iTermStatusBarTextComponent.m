@@ -81,12 +81,12 @@ NS_ASSUME_NONNULL_BEGIN
     return [[self longestStringValue] length] == 0;
 }
 
-- (NSColor *)textColor {
+- (nullable NSColor *)textColor {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
     return [knobValues[iTermStatusBarSharedTextColorKey] colorValue] ?: ([self defaultTextColor] ?: [self.delegate statusBarComponentDefaultTextColor]);
 }
 
-- (NSColor *)backgroundColor {
+- (nullable NSColor *)backgroundColor {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
     return [knobValues[iTermStatusBarSharedBackgroundColorKey] colorValue] ?: [super statusBarBackgroundColor];
 }
@@ -232,7 +232,7 @@ NS_ASSUME_NONNULL_BEGIN
     return [self textColor];
 }
 
-- (NSColor *)statusBarBackgroundColor {
+- (nullable NSColor *)statusBarBackgroundColor {
     return [self backgroundColor];
 }
 

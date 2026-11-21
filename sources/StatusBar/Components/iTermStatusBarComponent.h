@@ -81,7 +81,7 @@ forInvocation:(NSString *)invocation
 + (NSDictionary *)statusBarComponentDefaultKnobs;
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration
-                                scope:(iTermVariableScope *)scope;
+                                scope:(nullable iTermVariableScope *)scope;
 
 - (nullable NSImage *)statusBarComponentIcon;
 

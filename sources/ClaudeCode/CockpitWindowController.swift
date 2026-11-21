@@ -3232,8 +3232,8 @@ extension CockpitWindowController: iTermMinimalComposerViewControllerDelegate {
     // No shell here, so never fetch shell completions; this also keeps
     // the composer off the host/scope-dependent path.
     func minimalComposerShouldFetchSuggestions(_ composer: iTermMinimalComposerViewController,
-                                               forHost remoteHost: VT100RemoteHostReading,
-                                               tmuxController: TmuxController) -> Bool {
+                                               forHost remoteHost: VT100RemoteHostReading?,
+                                               tmuxController: TmuxController?) -> Bool {
         return false
     }
 

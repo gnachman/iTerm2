@@ -63,8 +63,8 @@ private final class FakeCockpitComposerDelegate: NSObject, @MainActor iTermMinim
     }
     func minimalComposerDidBecomeFirstResponder(_ composer: iTermMinimalComposerViewController) {}
     func minimalComposerShouldFetchSuggestions(_ composer: iTermMinimalComposerViewController,
-                                               forHost remoteHost: VT100RemoteHostReading,
-                                               tmuxController: TmuxController) -> Bool { false }
+                                               forHost remoteHost: VT100RemoteHostReading?,
+                                               tmuxController: TmuxController?) -> Bool { false }
     func minimalComposer(_ composer: iTermMinimalComposerViewController, fetchSuggestions request: SuggestionRequest, byUserRequest: Bool) {}
     func minimalComposerHandleKeyDown(_ event: NSEvent) -> Bool { false }
     func minimalComposerNextResponder() -> NSResponder? { nil }
