@@ -13,9 +13,9 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermOrderedDictionary<__covariant KeyType, __covariant ObjectType> : NSObject
 @property (nonatomic, readonly) NSString *debugString;
 
-+ (instancetype)byMapping:(NSArray<ObjectType> *)array
++ (instancetype)byMapping:(nullable NSArray<ObjectType> *)array
                     block:(nullable KeyType _Nullable (^NS_NOESCAPE)(NSUInteger index, ObjectType object))block;
-+ (instancetype)byMappingEnumerator:(NSEnumerator<ObjectType> *)array
++ (instancetype)byMappingEnumerator:(nullable NSEnumerator<ObjectType> *)array
                               block:(nullable KeyType (^NS_NOESCAPE)(NSUInteger index, ObjectType object))block;
 + (instancetype)withTuples:(NSArray<iTermTuple<KeyType, ObjectType> *> *)tuples;
 

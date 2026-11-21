@@ -43,8 +43,8 @@ NS_ASSUME_NONNULL_BEGIN
                      modifiedCharacter:(UTF32Char)modifiedCharacter NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
-- (NSString * _Nullable)keyInBindingDictionary:(NSDictionary<NSString *, NSDictionary *> *)dict;
-- (NSDictionary * _Nullable)valueInBindingDictionary:(NSDictionary<NSString *, NSDictionary *> *)dict;
+- (NSString * _Nullable)keyInBindingDictionary:(nullable NSDictionary<NSString *, NSDictionary *> *)dict;
+- (NSDictionary * _Nullable)valueInBindingDictionary:(nullable NSDictionary<NSString *, NSDictionary *> *)dict;
 
 // YES if some binding in `dict` shares this keystroke's physical key and modifiers
 // (its portableSerialized), regardless of the character. Used to detect that a

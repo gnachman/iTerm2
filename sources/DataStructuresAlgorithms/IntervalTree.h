@@ -142,7 +142,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)sanityCheck;
 
 // For subclasses;
-- (void)restoreFromDictionary:(NSDictionary *)dict;
+- (void)restoreFromDictionary:(nullable NSDictionary *)dict;
 
 // Graph decoding - restore from a graph-encoded structure.
 // Returns YES if successfully restored from graph format, NO if the dictionary
@@ -152,7 +152,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Graph decoding with lazy loading support for large content.
 // @param provider Provider for lazy loading large content, or nil for immediate loading.
-- (BOOL)restoreFromGraphRecord:(NSDictionary *)dict
+- (BOOL)restoreFromGraphRecord:(nullable NSDictionary *)dict
                         offset:(long long)offset
           largeContentProvider:(id<iTermLargeContentProvider> _Nullable)provider;
 

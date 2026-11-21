@@ -188,13 +188,13 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 // #rrggbb
 - (NSString *)srgbHexString;
 
-+ (instancetype _Nullable)colorFromHexString:(NSString *)hexString;
++ (instancetype _Nullable)colorFromHexString:(nullable NSString *)hexString;
 
 // When allowingAlpha is YES, an appended alpha component (#RRGGBBAA or
 // p3#RRRRGGGGBBBBAAAA) is honored. Only pass YES for colors that render with
 // alpha (the badge and cursor guide); otherwise those forms are rejected so
 // transparency can't leak into colors that should be opaque.
-+ (instancetype _Nullable)colorFromHexString:(NSString *)hexString
++ (instancetype _Nullable)colorFromHexString:(nullable NSString *)hexString
                                allowingAlpha:(BOOL)allowingAlpha;
 
 - (NSColor *)it_colorByDimmingByAmount:(double)dimmingAmount;
@@ -207,7 +207,7 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 @property (nonatomic, readonly) NSColorSpace * _Nullable it_colorSpace;
 
 - (BOOL)isApproximatelyEqualToColor:(NSColor *)other epsilon:(double)e;
-- (NSColor *)blendedWithColor:(NSColor *)color weight:(CGFloat)weight;
+- (NSColor *)blendedWithColor:(nullable NSColor *)color weight:(CGFloat)weight;
 @property (nonatomic, readonly) vector_float4 vector;
 
 + (instancetype)colorWithVector:(vector_float4)vector colorSpace:(NSColorSpace *)colorSpace;

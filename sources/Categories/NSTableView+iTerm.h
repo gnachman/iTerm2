@@ -26,7 +26,7 @@ extern NSString *const iTermDynamicProfileSymbolName;
                                         owner:(NSView<NSTableViewDelegate, NSTableViewDataSource> *)owner;
 
 - (iTermTableCellViewWithTextField *)newTableCellViewWithTextFieldUsingIdentifier:(NSString *)identifier
-                                                                             font:(NSFont *)font
+                                                                             font:(nullable NSFont *)font
                                                                            string:(NSString *)string;
 - (iTermTableCellViewWithTextField *)newTableCellViewWithTextFieldUsingIdentifier:(NSString *)identifier
                                                                  attributedString:(NSAttributedString *)attributedString;

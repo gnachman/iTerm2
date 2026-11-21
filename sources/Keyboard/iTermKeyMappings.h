@@ -45,7 +45,7 @@ extern NSString *const iTermKeyMappingsLeaderDidChange;
 // Return the action for a given keycode and modifiers, searching only the
 // specified keymappings dictionary.
 + (iTermKeyBindingAction * _Nullable)localActionForKeystroke:(iTermKeystroke *)keystroke
-                                                 keyMappings:(NSDictionary *)keyMappings;
+                                                 keyMappings:(nullable NSDictionary *)keyMappings;
 
 // Return anaction at a given index from the global key mappings.
 + (iTermKeyBindingAction * _Nullable)globalActionAtIndex:(NSInteger)rowIndex;
@@ -58,7 +58,7 @@ extern NSString *const iTermKeyMappingsLeaderDidChange;
 
 #pragma mark Mapping-Related
 
-+ (NSDictionary *)keyMappingsForProfile:(Profile *)profile;
++ (nullable NSDictionary *)keyMappingsForProfile:(Profile *)profile;
 
 // True if a bookmark has a mapping for a keystroke.
 + (BOOL)haveKeyMappingForKeystroke:(iTermKeystroke *)keystroke inProfile:(Profile *)profile;

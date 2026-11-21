@@ -273,7 +273,7 @@ static BOOL NSStringIsValidURLScheme(NSString *scheme) {
     return [self URLWithUserSuppliedStringImpl:string];
 }
 
-+ (NSURL *)URLWithUserSuppliedStringImpl:(NSString *)string {
++ (nullable NSURL *)URLWithUserSuppliedStringImpl:(NSString *)string {
     // Convert all sequences of non-reserved symbols into numbers 0, 1, 2, ...
     NSCharacterSet *reservedSymbols = [NSCharacterSet characterSetWithCharactersInString:@":/@.#?&="];
     NSMutableIndexSet *nonReservedSymbolIndices = [[string indicesOfCharactersInSet:[reservedSymbols invertedSet]] mutableCopy];
