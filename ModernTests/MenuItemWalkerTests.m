@@ -128,4 +128,108 @@ static NSMenu *ITMakeNestedResetMenu(ITWalkerFiredRecorder *recorder,
     XCTAssertEqualObjects(recorder.fired, first, @"Expected the document-order-first duplicate to fire");
 }
 
+#pragma mark - Identifier that names an unavailable item
+
+// Mirrors Edit > Actions > "Move Session to Tab" (a user-defined action, which has no stable
+// identifier) and Session > "Move Session to Tab" (the real item, which has one). The action
+// item comes first in document order. The walker must not fire it for a binding that names
+// the real item: it is a different item, and it can do something else.
+static NSMenu *ITMakeMoveSessionMenu(ITWalkerFiredRecorder *recorder,
+                                     NSMenuItem **outAction,
+                                     NSMenuItem **outReal) {
+    NSMenuItem *action = ITMakeLeaf(@"Move Session to Tab", nil, recorder);
+    NSMenu *actionsSubmenu = [[NSMenu alloc] init];
+    actionsSubmenu.autoenablesItems = NO;
+    [actionsSubmenu addItem:action];
+    NSMenuItem *actions = [[NSMenuItem alloc] init];
+    actions.title = @"Actions";
+    actions.enabled = YES;
+    actions.submenu = actionsSubmenu;
+
+    NSMenuItem *real = ITMakeLeaf(@"Move Session to Tab", @"Move Session to Tab", recorder);
+    real.identifier = @"Move Session to Tab";
+    NSMenu *sessionSubmenu = [[NSMenu alloc] init];
+    sessionSubmenu.autoenablesItems = NO;
+    [sessionSubmenu addItem:real];
+    NSMenuItem *session = [[NSMenuItem alloc] init];
+    session.title = @"Session";
+    session.enabled = YES;
+    session.submenu = sessionSubmenu;
+
+    NSMenu *menu = [[NSMenu alloc] init];
+    menu.autoenablesItems = NO;
+    [menu addItem:actions];
+    [menu addItem:session];
+    if (outAction) {
+        *outAction = action;
+    }
+    if (outReal) {
+        *outReal = real;
+    }
+    return menu;
+}
+
+- (void)testIdentifierOfEnabledItemFiresThatItemNotEarlierTitleDuplicate {
+    ITWalkerFiredRecorder *recorder = [[ITWalkerFiredRecorder alloc] init];
+    NSMenuItem *real = nil;
+    NSMenu *menu = ITMakeMoveSessionMenu(recorder, NULL, &real);
+
+    const BOOL result = [menu it_selectMenuItemWithTitle:@"Move Session to Tab"
+                                              identifier:@"Move Session to Tab"];
+    XCTAssertTrue(result);
+    XCTAssertEqualObjects(recorder.fired, real);
+}
+
+- (void)testIdentifierOfDisabledItemDoesNotFallBackToTitleDuplicate {
+    ITWalkerFiredRecorder *recorder = [[ITWalkerFiredRecorder alloc] init];
+    NSMenuItem *real = nil;
+    NSMenu *menu = ITMakeMoveSessionMenu(recorder, NULL, &real);
+    real.enabled = NO;
+
+    const BOOL result = [menu it_selectMenuItemWithTitle:@"Move Session to Tab"
+                                              identifier:@"Move Session to Tab"];
+    XCTAssertFalse(result, @"A disabled target must report no selection");
+    XCTAssertNil(recorder.fired, @"The identifier names a disabled item; no title duplicate may fire");
+}
+
+- (void)testIdentifierOfHiddenItemDoesNotFallBackToTitleDuplicate {
+    ITWalkerFiredRecorder *recorder = [[ITWalkerFiredRecorder alloc] init];
+    NSMenuItem *real = nil;
+    NSMenu *menu = ITMakeMoveSessionMenu(recorder, NULL, &real);
+    real.hidden = YES;
+
+    const BOOL result = [menu it_selectMenuItemWithTitle:@"Move Session to Tab"
+                                              identifier:@"Move Session to Tab"];
+    XCTAssertFalse(result);
+    XCTAssertNil(recorder.fired);
+}
+
+// An identifier that names no live item is stale, and the title fallback stays available.
+- (void)testIdentifierOfNoItemStillFallsBackToTitle {
+    ITWalkerFiredRecorder *recorder = [[ITWalkerFiredRecorder alloc] init];
+    NSMenuItem *action = nil;
+    NSMenu *menu = ITMakeMoveSessionMenu(recorder, &action, NULL);
+
+    const BOOL result = [menu it_selectMenuItemWithTitle:@"Move Session to Tab"
+                                              identifier:@"Removed Identifier"];
+    XCTAssertTrue(result);
+    XCTAssertEqualObjects(recorder.fired, action);
+}
+
+// -[NSMenu update] on the root does not validate the items of a submenu. The enabled state
+// of the target can be the value from the last time that its submenu was open. The walker
+// must refresh the submenu before it reads isEnabled.
+- (void)testStaleDisabledStateInSubmenuIsRefreshed {
+    ITWalkerFiredRecorder *recorder = [[ITWalkerFiredRecorder alloc] init];
+    NSMenuItem *real = nil;
+    NSMenu *menu = ITMakeMoveSessionMenu(recorder, NULL, &real);
+    real.menu.autoenablesItems = YES;
+    real.enabled = NO;
+
+    const BOOL result = [menu it_selectMenuItemWithTitle:@"Move Session to Tab"
+                                              identifier:@"Move Session to Tab"];
+    XCTAssertTrue(result);
+    XCTAssertEqualObjects(recorder.fired, real);
+}
+
 @end
