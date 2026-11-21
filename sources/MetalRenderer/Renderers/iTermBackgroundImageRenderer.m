@@ -86,7 +86,7 @@ NS_ASSUME_NONNULL_BEGIN
     return iTermMetalFrameDataStatPqCreateBackgroundImageTS;
 }
 
-- (void)setImage:(iTermImageWrapper *)image
+- (void)setImage:(nullable iTermImageWrapper *)image
             mode:(iTermBackgroundImageMode)mode
            frame:(CGRect)frame
    containerRect:(CGRect)containerRect

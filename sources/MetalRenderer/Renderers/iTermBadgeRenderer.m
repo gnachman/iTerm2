@@ -49,7 +49,7 @@ NS_ASSUME_NONNULL_BEGIN
     return _texture != nil;
 }
 
-- (void)setBadgeImage:(NSImage *)image
+- (void)setBadgeImage:(nullable NSImage *)image
            colorSpace:(NSColorSpace *)colorSpace
               context:(nonnull iTermMetalBufferPoolContext *)context {
     if (image == _previousImage && colorSpace == _colorSpace) {

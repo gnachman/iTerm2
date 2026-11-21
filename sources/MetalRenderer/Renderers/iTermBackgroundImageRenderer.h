@@ -21,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Call this before creating transient state.
 // Frame takes values in [0,1] giving relative location of the viewport within the tab.
-- (void)setImage:(iTermImageWrapper *)image
+- (void)setImage:(nullable iTermImageWrapper *)image
             mode:(iTermBackgroundImageMode)mode
            frame:(CGRect)frame
    containerRect:(CGRect)containerRect

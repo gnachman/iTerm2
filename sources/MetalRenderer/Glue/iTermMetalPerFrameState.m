@@ -97,7 +97,7 @@ typedef struct {
     BOOL image;
 } iTermBackgroundColorKey;
 
-static vector_float4 VectorForColor(NSColor *colorInUnknownSpace, NSColorSpace *colorSpace) {
+static vector_float4 VectorForColor(NSColor * _Nullable colorInUnknownSpace, NSColorSpace *colorSpace) {
     NSColor *color = [colorInUnknownSpace colorUsingColorSpace:colorSpace];
     return (vector_float4) { color.redComponent, color.greenComponent, color.blueComponent, color.alphaComponent };
 }
@@ -846,7 +846,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     return _configuration->_cursorGuideColor && _configuration->_cursorGuideEnabled;
 }
 
-- (NSColor *)cursorGuideColor {
+- (nullable NSColor *)cursorGuideColor {
     return _configuration->_cursorGuideColor;
 }
 
@@ -866,7 +866,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     return _badgeDestinationRect;
 }
 
-- (NSImage *)badgeImage {
+- (nullable NSImage *)badgeImage {
     return _badgeImage;
 }
 
@@ -1012,7 +1012,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 }
 
 // Private queue
-- (iTermImageWrapper *)metalBackgroundImageGetMode:(nullable iTermBackgroundImageMode *)mode {
+- (nullable iTermImageWrapper *)metalBackgroundImageGetMode:(nullable iTermBackgroundImageMode *)mode {
     if (mode) {
         *mode = _configuration->_backgroundImageMode;
     }
@@ -1022,7 +1022,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 NS_INLINE void iTermGlyphKeySetVisualPosition(iTermCachedGlyphKeysBuffer *buf,
                                               int gk,
                                               int logicalIndex,
-                                              const int *bidiLUT,
+                                              const int * _Nullable bidiLUT,
                                               int bidiLUTLength) {
     iTermCachedGlyphKeysBufferEnsureSize(buf, gk);
     if (bidiLUT && logicalIndex < bidiLUTLength) {
@@ -1035,7 +1035,7 @@ NS_INLINE void iTermGlyphKeySetVisualPosition(iTermCachedGlyphKeysBuffer *buf,
 NS_INLINE int iTermGlyphKeyEmitPlaceholder(iTermCachedGlyphKeysBuffer *buf,
                                            int i,
                                            int logicalIndex,
-                                           const int *bidiLUT,
+                                           const int * _Nullable bidiLUT,
                                            int bidiLUTLength) {
     iTermCachedGlyphKeysBufferEnsureSize(buf, i);
     buf->buffer[i].type = iTermMetalGlyphTypeRegular;
@@ -1053,7 +1053,7 @@ NS_INLINE int iTermGlyphKeyEmitRegular(iTermCachedGlyphKeysBuffer *buf,
                                        const screen_char_t *line,
                                        BOOL isBoxDrawingCharacter,
                                        BOOL thinStrokes,
-                                       const int *bidiLUT,
+                                       const int * _Nullable bidiLUT,
                                        int bidiLUTLength,
                                        iTermBidiDisplayInfo * _Nullable bidiInfo,
                                        iTermLineAttribute lineAttribute,
@@ -1552,7 +1552,7 @@ static void iTermInitializeColorKey(BOOL findMatch,
                                     BOOL isBlockCharacter,
                                     vector_float4 bgColor,
                                     const screen_char_t *characterPointer,
-                                    iTermExternalAttribute *ea,
+                                    iTermExternalAttribute * _Nullable ea,
                                     BOOL darkMode,
                                     iTermTextColorKey *currentColorKey) {
     currentColorKey->isMatch = findMatch;
@@ -1602,8 +1602,8 @@ static BOOL iTermMetalSetUnderline(iTermMetalPerFrameState *self,
                                    const iTermTextColorKey *currentColorKey,
                                    int logicalIndex,
                                    int visualX,
-                                   iTermURL *url,
-                                   iTermExternalAttribute *ea,
+                                   iTermURL * _Nullable url,
+                                   iTermExternalAttribute * _Nullable ea,
                                    iTermMetalGlyphAttributes *attributes) {
     if (annotated || inUnderlinedRange) {
         attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
@@ -1658,17 +1658,17 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                            const screen_char_t *const line,
                                            int row,
                                            int width,
-                                           NSArray<id<iTermAttributedString>> *attributedStrings,
+                                           NSArray<id<iTermAttributedString>> * _Nullable attributedStrings,
                                            CTVector(CGFloat) positions,
-                                           iTermBidiDisplayInfo *bidiInfo,
+                                           iTermBidiDisplayInfo * _Nullable bidiInfo,
                                            NSIndexSet *selectedIndexes,
-                                           NSIndexSet *annotatedIndexes,
-                                           NSData *findMatches,
+                                           NSIndexSet * _Nullable annotatedIndexes,
+                                           NSData * _Nullable findMatches,
                                            NSRange underlinedRange,
-                                           iTermExternalAttributeIndex *eaIndex,
+                                           iTermExternalAttributeIndex * _Nullable eaIndex,
                                            iTermMetalPerFrameStateConfiguration *_configuration,
                                            NSMutableArray<iTermKittyImageRun *> *kittyImageRuns,
-                                           NSArray<iTermKittyImageDraw *> *kittyImageDraws,
+                                           NSArray<iTermKittyImageDraw *> * _Nullable kittyImageDraws,
                                            NSMutableArray<iTermMetalImageRun *> *imageRuns,
                                            iTermLineAttribute lineAttribute,
                                            // out parameters:
@@ -1910,7 +1910,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
       lineStyleMarkRightInset:(out nonnull int *)lineStyleMarkRightInsetPtr
                           row:(int)row
                         width:(int)width
-                     bidiInfo:(iTermBidiDisplayInfo *)bidiInfo
+                     bidiInfo:(nullable iTermBidiDisplayInfo *)bidiInfo
                drawableGlyphs:(int *)drawableGlyphsPtr
                          date:(out NSDate **)datePtr
                belongsToBlock:(out BOOL *)belongsToBlockPtr
@@ -2630,7 +2630,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                       _relativeFrame.size.height);
 }
 
-- (NSArray<iTermKittyImageDraw *> *)kittyImageDraws {
+- (nullable NSArray<iTermKittyImageDraw *> *)kittyImageDraws {
     return _kittyImageDraws;
 }
 
@@ -2668,7 +2668,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
 #pragma mark - Color
 
 - (vector_float4)textColorForCharacter:(const screen_char_t *const)c
-                     externalAttribute:(iTermExternalAttribute *)ea
+                     externalAttribute:(nullable iTermExternalAttribute *)ea
                                   line:(int)line
                        backgroundColor:(vector_float4)unprocessedBackgroundColor
                               selected:(BOOL)selected
@@ -2757,7 +2757,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     return result;
 }
 
-- (NSColor *)backgroundColorForCursor {
+- (nullable NSColor *)backgroundColorForCursor {
     NSColor *color;
     if (_configuration->_renderInputs.reverseVideo) {
         color = [[_configuration->_colorMap colorForKey:kColorMapCursorText] colorWithAlphaComponent:1.0];

@@ -11,7 +11,7 @@ import Metal
 
 /// Delegate protocol for handling view rendering and resizing
 @objc public protocol iTermMetalViewDelegate: AnyObject {
-    func metalView(_ view: iTermMetalView, drawableSizeWillChange size: CGSize)
+    func metalView(_ view: iTermMetalView?, drawableSizeWillChange size: CGSize)
 
     @objc(drawInMetalView:)
     func draw(in view: iTermMetalView)

@@ -407,7 +407,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
 
 #pragma mark - iTermMetalViewDelegate
 
-- (void)metalView:(nonnull iTermMetalView *)view drawableSizeWillChange:(CGSize)size {
+- (void)metalView:(nullable iTermMetalView *)view drawableSizeWillChange:(CGSize)size {
     self.mainThreadState->viewportSize.x = size.width;
     self.mainThreadState->viewportSize.y = size.height;
 }
@@ -878,7 +878,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
             continue;
         }
         [frameData measureTimeForStat:renderer.createTransientStateStat ofBlock:^{
-            __kindof iTermMetalRendererTransientState * _Nonnull tState =
+            __kindof iTermMetalRendererTransientState * _Nullable tState =
             [renderer createTransientStateForConfiguration:cellConfiguration
                                              commandBuffer:commandBuffer];
             if (tState) {

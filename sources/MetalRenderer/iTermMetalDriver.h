@@ -119,12 +119,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSColor *markSuccessColor;
 @property (nonatomic, readonly) NSColor *markOtherColor;
 @property (nonatomic, readonly) NSColor *markFailureColor;
-@property (nonatomic, readonly) NSImage *badgeImage;
+@property (nonatomic, readonly, nullable) NSImage *badgeImage;
 @property (nonatomic, readonly) CGRect badgeSourceRect;
 @property (nonatomic, readonly) CGRect badgeDestinationRect;
 @property (nonatomic, nullable, readonly) iTermMetalIMEInfo *imeInfo;
 @property (nonatomic, readonly) BOOL showBroadcastStripes;
-@property (nonatomic, readonly) NSColor *cursorGuideColor;
+@property (nonatomic, readonly, nullable) NSColor *cursorGuideColor;
 @property (nonatomic, readonly) BOOL cursorGuideEnabled;
 @property (nonatomic, readonly) vector_float4 fullScreenFlashColor;
 @property (nonatomic, readonly) BOOL timestampsEnabled;
@@ -177,7 +177,7 @@ NS_ASSUME_NONNULL_BEGIN
       lineStyleMarkRightInset:(out int *)lineStyleMarkRightInset
                           row:(int)row
                         width:(int)width
-                     bidiInfo:(iTermBidiDisplayInfo *)bidiInfo
+                     bidiInfo:(nullable iTermBidiDisplayInfo *)bidiInfo
                drawableGlyphs:(int *)drawableGlyphsPtr
                          date:(out NSDate * _Nonnull * _Nonnull)date
                belongsToBlock:(out BOOL * _Nonnull)belongsToBlock
@@ -195,7 +195,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                                                 emoji:(BOOL *)emoji;
 
 // Returns the background image or nil. If there's a background image, fill in mode.
-- (iTermImageWrapper *)metalBackgroundImageGetMode:(nullable iTermBackgroundImageMode *)mode;
+- (nullable iTermImageWrapper *)metalBackgroundImageGetMode:(nullable iTermBackgroundImageMode *)mode;
 
 // An object that compares as equal if ascii characters produced by metalImagesForGlyph would
 // produce the same bitmap.
@@ -216,7 +216,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (CGRect)relativeFrame;
 - (CGRect)containerRect;
-- (NSArray<iTermKittyImageDraw *> *)kittyImageDraws;
+- (nullable NSArray<iTermKittyImageDraw *> *)kittyImageDraws;
 
 @end
 

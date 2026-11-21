@@ -17,9 +17,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol iTermMetalGlueDelegate<NSObject>
 - (void)metalGlueDidDrawFrameAndNeedsRedraw:(BOOL)redrawAsap;
-- (CGContextRef)metalGlueContext;
+- (CGContextRef _Nullable)metalGlueContext;
 - (CGContextRef)metalGlueContextDoubleWidth;
-- (iTermImageWrapper *)metalGlueBackgroundImage;
+- (nullable iTermImageWrapper *)metalGlueBackgroundImage;
 - (iTermBackgroundImageMode)metalGlueBackgroundImageMode;
 - (CGFloat)metalGlueBackgroundImageBlend;
 
