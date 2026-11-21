@@ -111,7 +111,9 @@
         _inset = inset;
         _type = [type copy];
         if ([iTermAdvancedSettingsModel retinaInlineImages]) {
-            _scaleFactor = scaleFactor;
+            // Sizes are divided by the scale factor. Without a window it can be 0, so treat a
+            // scale that is not a positive number as 1, as the rest of the app does.
+            _scaleFactor = (isfinite(scaleFactor) && scaleFactor > 0) ? scaleFactor : 1;
         } else {
             _scaleFactor = 1;
         }
@@ -332,13 +334,13 @@
     const VT100GridSize gridSize = grid.sizeRespectingRegionConditionally;
     switch (_widthUnits) {
         case kVT100TerminalUnitsPixels:
-            *widthPtr = ceil((double)_width / (cellSize.width * _scaleFactor));
+            *widthPtr = iTermSaturatingInt32FromDouble(ceil((double)_width / (cellSize.width * _scaleFactor)));
             *requestedWidthInPointsPtr = _width / _scaleFactor;
             return NO;
 
         case kVT100TerminalUnitsPercentage: {
             const double fraction = (double)MAX(MIN(100, _width), 0) / 100.0;
-            *widthPtr = ceil((double)gridSize.width * fraction);
+            *widthPtr = iTermSaturatingInt32FromDouble(ceil((double)gridSize.width * fraction));
             *requestedWidthInPointsPtr = gridSize.width * cellSize.width * fraction;
             return NO;
         }
@@ -350,7 +352,7 @@
 
         case kVT100TerminalUnitsAuto:
             if (_heightUnits == kVT100TerminalUnitsAuto) {
-                *widthPtr = ceil((double)scaledSize.width / cellSize.width);
+                *widthPtr = iTermSaturatingInt32FromDouble(ceil((double)scaledSize.width / cellSize.width));
                 *requestedWidthInPointsPtr = scaledSize.width;
                 return NO;
             }
@@ -368,13 +370,13 @@
                           cellSize:(NSSize)cellSize {
     switch (_heightUnits) {
         case kVT100TerminalUnitsPixels:
-            *heightPtr = ceil((double)_height / (cellSize.height * _scaleFactor));
+            *heightPtr = iTermSaturatingInt32FromDouble(ceil((double)_height / (cellSize.height * _scaleFactor)));
             *requestedHeightInPointsPtr = _height / _scaleFactor;
             break;
 
         case kVT100TerminalUnitsPercentage: {
             const double fraction = (double)MAX(MIN(100, _height), 0) / 100.0;
-            *heightPtr = ceil((double)grid.sizeRespectingRegionConditionally.height * fraction);
+            *heightPtr = iTermSaturatingInt32FromDouble(ceil((double)grid.sizeRespectingRegionConditionally.height * fraction));
             *requestedHeightInPointsPtr = grid.sizeRespectingRegionConditionally.height * cellSize.height * fraction;
             break;
         }
@@ -385,12 +387,12 @@
 
         case kVT100TerminalUnitsAuto:
             if (_widthUnits == kVT100TerminalUnitsAuto) {
-                *heightPtr = ceil((double)scaledSize.height / cellSize.height);
+                *heightPtr = iTermSaturatingInt32FromDouble(ceil((double)scaledSize.height / cellSize.height));
                 *requestedHeightInPointsPtr = scaledSize.height;
             } else {
                 double aspectRatio = scaledSize.width / scaledSize.height;
                 const CGFloat heightPoints = widthPoints / aspectRatio;
-                *heightPtr = ceil(heightPoints / cellSize.height);
+                *heightPtr = iTermSaturatingInt32FromDouble(ceil(heightPoints / cellSize.height));
                 *requestedHeightInPointsPtr = heightPoints;
             }
             break;
@@ -404,7 +406,7 @@
                          cellSize:(NSSize)cellSize {
     const CGFloat aspectRatio = scaledSize.width / scaledSize.height;
     const CGFloat widthInPoints = ((CGFloat)heightPoints * aspectRatio);
-    *widthPtr = round(widthInPoints / cellSize.width);
+    *widthPtr = iTermSaturatingInt32FromDouble(round(widthInPoints / cellSize.width));
     *requestedWidthInPointsPtr = widthInPoints;
 }
 
@@ -444,7 +446,7 @@
     if (*widthPtr > maxWidth) {
         const CGFloat scale = maxWidth / (double)*widthPtr;
         *widthPtr = grid.sizeRespectingRegionConditionally.width;
-        *heightPtr *= scale;
+        *heightPtr = iTermSaturatingInt32FromDouble(*heightPtr * scale);
         *heightPtr = MAX(1, *heightPtr);
         *requestedWidthInPointsPtr = *widthPtr * cellSize.width;
         *requestedHeightInPointsPtr = *heightPtr * cellSize.height;
@@ -456,7 +458,7 @@
     if (*heightPtr > maxHeight) {
         const CGFloat scale = (double)*heightPtr / maxHeight;
         *heightPtr = maxHeight;
-        *widthPtr *= scale;
+        *widthPtr = iTermSaturatingInt32FromDouble(*widthPtr * scale);
         *widthPtr = MAX(1, *widthPtr);
         *requestedWidthInPointsPtr = *widthPtr * cellSize.width;
         *requestedHeightInPointsPtr = *heightPtr * cellSize.height;
@@ -540,6 +542,9 @@
     const int xOffset = grid.cursorX;
     const int screenWidth = grid.sizeRespectingRegionConditionally.width;
     screen_char_t c = screenChar;
+    // The width can be up to INT_MAX (see getRequestedWidthInPoints:...), so clamp it to the
+    // screen before adding the cursor's column. Columns past the screen are never drawn.
+    const int xLimit = MIN(screenWidth, xOffset + MIN(width, screenWidth));
     for (int y = 0; y < height; y++) {
         if (y > 0) {
             if (_sixelData && self.sixelDisplayMode && [self.delegate inlineImageLinefeedWouldScroll]) {
@@ -547,7 +552,7 @@
             }
             [self.delegate inlineImageAppendLinefeed];
         }
-        for (int x = xOffset; x < xOffset + width && x < screenWidth; x++) {
+        for (int x = xOffset; x < xLimit; x++) {
             SetPositionInImageChar(&c, x - xOffset, y);
             // DLog(@"Set character at %@,%@: %@", @(x), @(currentGrid_.cursorY), DebugStringForScreenChar(c));
             [grid setCharsFrom:VT100GridCoordMake(x, grid.cursorY)
@@ -556,7 +561,9 @@
             externalAttributes:nil];
         }
     }
-    grid.cursorX = grid.cursorX + width;
+    // The width can exceed the screen (up to INT_MAX for a huge requested height); any width of at
+    // least the screen's leaves the cursor at the right edge, so clamp it before adding.
+    grid.cursorX = grid.cursorX + MIN(width, grid.size.width);
 }
 
 - (void)getScreenCharacter:(screen_char_t *)cPtr

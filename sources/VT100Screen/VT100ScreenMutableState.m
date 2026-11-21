@@ -9274,7 +9274,13 @@ launchCoprocessWithCommand:(NSString *)command
 
 - (void)kittyImageControllerMoveCursorWithDx:(NSInteger)dx dy:(NSInteger)dy {
     [self.currentGrid moveCursorRight:dx];
-    for (int i = 0; i < dy; i++) {
+    // A placement's height comes from the program (its r key, or its v key in pixels) and may be
+    // billions of rows, each of which costs a line feed that scrolls. The protocol leaves the
+    // cursor position undefined once it would leave the screen, so cap the rows as REP caps its
+    // count. Every visible line has scrolled off long before the cap.
+    const NSInteger kMaxRows = 65535;
+    const NSInteger rows = MIN(dy, kMaxRows);
+    for (NSInteger i = 0; i < rows; i++) {
         [self appendLineFeed];
     }
 }

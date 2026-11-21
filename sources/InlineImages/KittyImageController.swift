@@ -688,8 +688,17 @@ class KittyImageController: NSObject {
         }
 
         let bytesPerPixel = 4
-        let bytesPerRow = Int(clamping: width) * bytesPerPixel
-        let unpaddedBytes = Int(clamping: bpp) * Int(clamping: width) * Int(clamping: height)
+        // The dimensions come from the program's s and v keys. A product that does not fit in an
+        // Int would trap, and no payload could hold that many bytes anyway.
+        guard let widthInt = Int(exactly: width),
+              let heightInt = Int(exactly: height),
+              case let (bytesPerRow, rowOverflow) = widthInt.multipliedReportingOverflow(by: bytesPerPixel),
+              case let (pixels, pixelsOverflow) = widthInt.multipliedReportingOverflow(by: heightInt),
+              case let (unpaddedBytes, bytesOverflow) = pixels.multipliedReportingOverflow(by: Int(bpp)),
+              !rowOverflow && !pixelsOverflow && !bytesOverflow else {
+            DLog("image(data:bpp:width:height:): FAILED - dimensions too large (bpp=\(bpp) width=\(width) height=\(height))")
+            return nil
+        }
 
         guard rawData.count >= unpaddedBytes else {
             DLog("image(data:bpp:width:height:): FAILED - data too short: have \(rawData.count) bytes, need \(unpaddedBytes) bytes (bpp=\(bpp) * width=\(width) * height=\(height))")
@@ -714,8 +723,8 @@ class KittyImageController: NSObject {
         }
 
         let cgImage = CGImage(
-            width: Int(clamping: width),
-            height: Int(clamping: height),
+            width: widthInt,
+            height: heightInt,
             bitsPerComponent: 8,
             bitsPerPixel: bytesPerPixel * 8,
             bytesPerRow: bytesPerRow,
@@ -731,7 +740,7 @@ class KittyImageController: NSObject {
             return nil
         }
 
-        let nsimage = NSImage(cgImage: cgImage, size: NSSize(width: Int(width), height: Int(height)))
+        let nsimage = NSImage(cgImage: cgImage, size: NSSize(width: widthInt, height: heightInt))
         DLog("image(data:bpp:width:height:): success - created image \(width)x\(height)")
         return iTermImage(nativeImage: nsimage)
     }
