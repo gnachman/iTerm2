@@ -95,4 +95,20 @@
     XCTAssertTrue(again != first);
 }
 
+// The cache keeps a copy of the path, so mutating the string that was passed
+// in does not change the cached key. Swift cannot exercise this: a mutable
+// string passed from Swift is bridged to a new string at the call.
+- (void)testMutatingThePassedPathDoesNotChangeTheCachedKey {
+    iTermCacheableImage *cache = [[iTermCacheableImage alloc] init];
+    NSString *a = [self writeImageNamed:@"a.png"];
+    NSString *b = [self writeImageNamed:@"b.png"];
+    NSMutableString *mutablePath = [a mutableCopy];
+    NSImage *first = [cache imageAtPath:mutablePath ofSize:NSMakeSize(16, 16) flipped:NO];
+    XCTAssertNotNil(first);
+
+    [mutablePath setString:b];
+
+    XCTAssertTrue([cache imageAtPath:[a copy] ofSize:NSMakeSize(16, 16) flipped:NO] == first);
+}
+
 @end
