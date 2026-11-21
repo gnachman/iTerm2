@@ -113,7 +113,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)hasEqualCharacterContents:(ScreenCharArray *)other;
 // Returns YES if this is a DECDHL bottom-half line that duplicates the
 // given top-half line's character content.
-- (BOOL)isDECDHLDuplicateOf:(ScreenCharArray *)previous;
+- (BOOL)isDECDHLDuplicateOf:(nullable ScreenCharArray *)previous;
 - (ScreenCharArray *)screenCharArrayByAppendingScreenCharArray:(ScreenCharArray *)other;
 - (ScreenCharArray *)screenCharArrayByRemovingTrailingNullsAndHardNewline;
 - (ScreenCharArray *)inWindow:(VT100GridRange)window;

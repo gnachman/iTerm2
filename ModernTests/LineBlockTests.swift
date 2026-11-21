@@ -38,7 +38,7 @@ class LineBlockTests: XCTestCase {
                 return buffer.withUnsafeMutableBufferPointer { umbp in
                     var len = Int32(umbp.count)
                     StringToScreenChars(string, umbp.baseAddress!, screen_char_t(), screen_char_t(), &len, false, nil, nil, iTermUnicodeNormalization.none, 9, false, nil)
-                    let eaIndex = externalAttribute.map { iTermUniformExternalAttributes.withAttribute($0) }
+                    let eaIndex = externalAttribute.flatMap { iTermUniformExternalAttributes.withAttribute($0) }
                     return iTermLegacyStyleString(chars: umbp.baseAddress!, count: Int(len), eaIndex: eaIndex)
                 }
             }

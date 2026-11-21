@@ -88,29 +88,29 @@ final class iTermExternalAttributeIndexEqualityTests: XCTestCase {
 
     // MARK: - Uniform indexes
 
-    func testUniformIndexesWithDifferentAttributesAreNotEqual() {
-        let lhs = iTermUniformExternalAttributes.withAttribute(hyperlink("https://a.example.com"))
-        let rhs = iTermUniformExternalAttributes.withAttribute(hyperlink("https://b.example.com"))
+    func testUniformIndexesWithDifferentAttributesAreNotEqual() throws {
+        let lhs = try XCTUnwrap(iTermUniformExternalAttributes.withAttribute(hyperlink("https://a.example.com")))
+        let rhs = try XCTUnwrap(iTermUniformExternalAttributes.withAttribute(hyperlink("https://b.example.com")))
         XCTAssertFalse(lhs.isEqual(toExternalAttributeIndex: rhs))
         XCTAssertFalse(rhs.isEqual(toExternalAttributeIndex: lhs))
     }
 
-    func testUniformIndexesWithSameAttributeAreEqual() {
+    func testUniformIndexesWithSameAttributeAreEqual() throws {
         let attribute = hyperlink("https://a.example.com")
-        let lhs = iTermUniformExternalAttributes.withAttribute(attribute)
-        let rhs = iTermUniformExternalAttributes.withAttribute(attribute)
+        let lhs = try XCTUnwrap(iTermUniformExternalAttributes.withAttribute(attribute))
+        let rhs = try XCTUnwrap(iTermUniformExternalAttributes.withAttribute(attribute))
         XCTAssertTrue(lhs.isEqual(toExternalAttributeIndex: rhs))
     }
 
-    func testNonEmptyUniformIndexIsNotEqualToNil() {
-        let uniform = iTermUniformExternalAttributes.withAttribute(hyperlink("https://a.example.com"))
+    func testNonEmptyUniformIndexIsNotEqualToNil() throws {
+        let uniform = try XCTUnwrap(iTermUniformExternalAttributes.withAttribute(hyperlink("https://a.example.com")))
         XCTAssertFalse(iTermExternalAttributeIndex.externalAttributeIndex(uniform, isEqualToIndex: nil))
         XCTAssertFalse(iTermExternalAttributeIndex.externalAttributeIndex(nil, isEqualToIndex: uniform))
     }
 
-    func testUniformIndexIsNotEqualToSparseIndex() {
+    func testUniformIndexIsNotEqualToSparseIndex() throws {
         let attribute = hyperlink("https://a.example.com")
-        let uniform = iTermUniformExternalAttributes.withAttribute(attribute)
+        let uniform = try XCTUnwrap(iTermUniformExternalAttributes.withAttribute(attribute))
         let sparse = index(attribute, at: 0)
         XCTAssertFalse(uniform.isEqual(toExternalAttributeIndex: sparse))
         XCTAssertFalse(sparse.isEqual(toExternalAttributeIndex: uniform))

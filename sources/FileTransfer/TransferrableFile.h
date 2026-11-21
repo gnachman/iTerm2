@@ -41,7 +41,7 @@ typedef void (^TransferrableFileCompletionBlock)(BOOL success, NSString * _Nulla
 @property(atomic, copy, nullable) NSString *completionNote;
 
 + (void)lockFileName:(NSString *)name;
-+ (void)unlockFileName:(NSString *)name;
++ (void)unlockFileName:(nullable NSString *)name;
 + (BOOL)fileNameIsLocked:(NSString *)name;
 
 // These two are only needed for keyboard-interactive auth

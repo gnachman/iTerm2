@@ -62,7 +62,7 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
                    fromSessionWithGUID:(NSString * _Nullable)sender;
 
 - (NSSet<NSString *> *)currentDomain;
-- (NSSet<NSString *> *)domainContainingSession:(NSString *)session;
+- (nullable NSSet<NSString *> *)domainContainingSession:(NSString *)session;
 
 @end
 

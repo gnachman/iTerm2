@@ -730,7 +730,7 @@ static BOOL iTermDecodeDarkVariantTrailer(iTermTLVDecoder *decoder, VT100Termina
 
 - (instancetype)initWithURL:(iTermURL *)url
                 blockIDList:(NSString *)blockIDList
-                    controlCode:(nonnull NSNumber *)code {
+                    controlCode:(nullable NSNumber *)code {
     self = [self init];
     if (self) {
         _url = url;

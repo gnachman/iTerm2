@@ -86,7 +86,7 @@ isEqualToExternalAttribute:(iTermExternalAttribute * _Nullable)rhs;
 - (iTermExternalAttributeIndex *)indexByDeletingFirst:(int)n;
 - (void)copyInto:(iTermExternalAttributeIndex *)destination;
 - (void)copyFrom:(id<iTermExternalAttributeIndexReading> _Nullable)destination startOffset:(int)startOffset;
-- (BOOL)isEqualToExternalAttributeIndex:(id<iTermExternalAttributeIndexReading>)other;
+- (BOOL)isEqualToExternalAttributeIndex:(nullable id<iTermExternalAttributeIndexReading>)other;
 - (iTermExternalAttribute * _Nullable)attributeAtIndex:(int)i;
 // Returns the lineAttribute if all entries share the same non-singleWidth
 // value, or singleWidth if empty/mixed. Efficient for uniform attrs.
@@ -129,12 +129,12 @@ isEqualToExternalAttribute:(iTermExternalAttribute * _Nullable)rhs;
 
 + (iTermExternalAttributeIndex *)concatenationOf:(id<iTermExternalAttributeIndexReading>)lhs
                                       length:(int)lhsLength
-                                        with:(id<iTermExternalAttributeIndexReading>)rhs
+                                        with:(nullable id<iTermExternalAttributeIndexReading>)rhs
                                       length:(int)rhsLength;
 @end
 
 @interface iTermUniformExternalAttributes: iTermExternalAttributeIndex
-+ (instancetype)withAttribute:(iTermExternalAttribute *)attr;
++ (nullable instancetype)withAttribute:(nullable iTermExternalAttribute *)attr;
 
 - (void)copyFrom:(id<iTermExternalAttributeIndexReading> _Nullable)source
           source:(int)source

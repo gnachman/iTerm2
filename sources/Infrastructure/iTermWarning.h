@@ -153,7 +153,7 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 
 // Tests can use this to prevent warning popups.
 + (void)setWarningHandler:(id<iTermWarningHandler>)handler;
-+ (id<iTermWarningHandler>)warningHandler;
++ (nullable id<iTermWarningHandler>)warningHandler;
 
 // Tells warnings which terminal sessions a window holds, so a warning attached to a window can be
 // tied to them for the companion app (see sessionGuid). A block, set by the code that knows about
