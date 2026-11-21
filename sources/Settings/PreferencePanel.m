@@ -874,11 +874,12 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 
 - (NSArray<iTermSetting *> *)allSettings {
+    // _tabView is nil until the window's nib loads, and not every caller loads it.
     return [_tabView.tabViewItems flatMapWithBlock:^NSArray *(__kindof NSTabViewItem *tabViewItem) {
         NSToolbarItem *toolbarItem = [self toolbarItemForTabViewItem:tabViewItem];
         iTermPreferencesBaseViewController *vc = [self viewControllerForTabViewItem:tabViewItem];
         return [vc allSettingsWithPathComponents:@[toolbarItem.label]];
-    }];
+    }] ?: @[];
 }
 
 #if ITERM_DEBUG
