@@ -105,11 +105,6 @@ NS_INLINE NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
                                   withObject:(id _Nullable)object1
                                   withObject:(id _Nullable)object2;
 
-- (void)it_performNonObjectReturningSelector:(SEL)selector
-                                  withObject:(id _Nullable)object1
-                                      object:(id _Nullable)object2
-                                      object:(id _Nullable)object3;
-
 - (id)it_performAutoreleasedObjectReturningSelector:(SEL)selector withObject:(id)object;
 
 - (BOOL)it_isSafeForPlist;

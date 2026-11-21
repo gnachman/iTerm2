@@ -327,10 +327,6 @@ static iTermController *gSharedInstance;
     }
 }
 
-// meant for action for menu items that have a submenu
-- (void)noAction:(id)sender {
-}
-
 - (void)newSessionWithSameProfile:(id)sender newWindow:(BOOL)newWindow {
     Profile *bookmark = nil;
     if (_frontTerminalWindowController) {

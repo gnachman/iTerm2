@@ -1,7 +1,7 @@
 @import Foundation;
 
 /**
- * A helper class for swizzling a selector for the scope of a block.
+ * A helper class for replacing the implementation of a method, for good.
  */
 @interface iTermSelectorSwizzler : NSObject
 
@@ -12,9 +12,10 @@
 
 @end
 
-// Before using -[NSObject swizzleInstanceMethodSelector:withBlock:] you must first create a context
-// to hold the original methods. When you're done, -drain it. The context should be created
-// autoreleased. It will become dealloc'ed after you drain it.
+// A per-thread stack of contexts, each holding the original implementations of methods swizzled
+// while it was the innermost context; draining it restores them. Nothing in the app swizzles through
+// a context any more (the method that did was deleted), so no context records anything. A context
+// must be drained before it is deallocated.
 @interface iTermSelectorSwizzlerContext : NSObject
 
 // Replace all methods swizzled during the lifetime of this context, or nested contexts, with their

@@ -226,24 +226,6 @@ static void (*originalNSThemeZoomWidgetCellShowMenuIMP)(id, SEL, id) = NULL;
     free(props);
 }
 
-- (void)performSelectorWithObjects:(NSArray *)tuple {
-    SEL selector = NSSelectorFromString(tuple[0]);
-    NSArray *objects = tuple[1];
-
-    NSMethodSignature *signature  = [self methodSignatureForSelector:selector];
-    NSInvocation  *invocation = [NSInvocation invocationWithMethodSignature:signature];
-
-    NSObject *temp[objects.count];
-
-    [invocation setTarget:self];
-    [invocation setSelector:selector];
-    for (int i = 0; i < objects.count; i++) {
-        temp[i] = objects[i];
-        [invocation setArgument:&temp[i] atIndex:i + 2];
-    }
-    [invocation invoke];
-}
-
 - (iTermDelayedPerform *)performBlock:(void (^)(void))block afterDelay:(NSTimeInterval)delay {
     iTermDelayedPerform *delayedPerform = [[iTermDelayedPerform alloc] init];
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
@@ -292,12 +274,6 @@ static void (*originalNSThemeZoomWidgetCellShowMenuIMP)(id, SEL, id) = NULL;
     IMP imp = [self methodForSelector:selector];
     void (*func)(id, SEL, id, id) = (void *)imp;
     func(self, selector, object1, object2);
-}
-
-- (void)it_performNonObjectReturningSelector:(SEL)selector withObject:(id)object1 object:(id)object2 object:(id)object3 {
-    IMP imp = [self methodForSelector:selector];
-    void (*func)(id, SEL, id, id, id) = (void *)imp;
-    func(self, selector, object1, object2, object3);
 }
 
 - (id)it_performAutoreleasedObjectReturningSelector:(SEL)selector withObject:(id)object {
