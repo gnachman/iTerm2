@@ -47,18 +47,22 @@
 //  Format: a header, then one class section per class, sorted by class name.
 //  Square brackets mark what can be absent:
 //
-//    # Objective-C runtime snapshot, format 2
+//    # Objective-C runtime snapshot, format 3
 //    architecture <arm64 or x86_64>
 //    build-configuration [<name of the directory the app was built into>]
 //    build-variant [<sanitizer variant, such as ASan, inferred from the
 //                   directory layout of the build products>]
 //    class <name>
+//      OWNERSHIP-CONFLICT <reason> <ivar name or word=<n> or class>  (only when there is one)
 //      DUPLICATE <kind> <name> count=<n>        (only when there is one)
 //      language <objc, swift, or unknown>
 //      superclass [<name>]
 //      image [<file name of the binary that defines the class>]
+//      ivar-arc-flag <set, clear, or unknown>
+//      strong-ivar-layout [<layout bytes in hexadecimal, 00 included>]
+//      weak-ivar-layout [<layout bytes in hexadecimal, 00 included>]
 //      protocol <name>                           (directly adopted, sorted, once per adopting list)
-//      ivar <name> types=[<encoding>]
+//      ivar <name> types=[<encoding>] ownership=<label> layout=[<s, w, ->]
 //      class-method +<selector> types=[<encoding>] [also-implemented-by=<+ or -><class>] [image=[<file name>]]
 //      instance-method -<selector> types=[<encoding>] [also-implemented-by=-<class>] [image=[<file name>]]
 //      class-property <name> <attributes>
@@ -168,6 +172,13 @@
 //  Instance variables are listed by name and type encoding, without offsets,
 //  which change for unrelated reasons. Key-value coding falls back to ivars
 //  and xibs connect outlets to them, so a renamed or dropped ivar matters.
+//  Each also has the ownership the runtime's ivar layouts give it, as a
+//  label and the ivar's words in the layouts; the class's ARC flag and its
+//  two layouts are on their own lines, and an ivar ownership conflict gets
+//  an OWNERSHIP-CONFLICT line. RuntimeSnapshotIvarOwnership.swift describes
+//  the labels, what each one cannot tell, and the conflicts. The strong-
+//  and weak-ivar-layout lines have no value when the runtime has no layout,
+//  and 00 when it has an empty one.
 //
 //  Property ownership is reported only as far as the property's attribute
 //  string states it:
@@ -453,6 +464,8 @@ enum RuntimeSnapshot {
         var name: String?
         // Empty when the runtime has no encoding.
         var encoding: String
+        var offset: Int
+        var ivar: Ivar
     }
 
     private static func section(for cls: AnyClass) throws -> [String] {
@@ -498,8 +511,16 @@ enum RuntimeSnapshot {
         for property in classProperties + instanceProperties {
             try requireName(property.name, "a property")
         }
+        let ownership = ivarOwnership(of: cls,
+                                      ivars: classIvars,
+                                      language: classLanguage,
+                                      hasCxxDestruct: instanceMethods.contains { sameBytes($0.selector, ".cxx_destruct") })
 
         var body = [String]()
+        // Conflicts first, like duplicates: either fails any comparison.
+        body.append(contentsOf: ownership.result.conflicts.map {
+            "\(RuntimeSnapshotFormat.ownershipConflictKeyword) \($0.reason) \(e($0.subject))"
+        })
         // +load is not a duplicate: see the comment at the top of this file.
         body.append(contentsOf: duplicateLines(kind: "class-method",
                                                entries: classMethods.filter { !sameBytes($0.selector, "load") }.map { ("+" + $0.selector, $0.types) },
@@ -517,11 +538,21 @@ enum RuntimeSnapshot {
         body.append(valueLine(RuntimeSnapshotFormat.languageKeyword, classLanguage))
         body.append(valueLine(RuntimeSnapshotFormat.superclassKeyword, superclassName))
         body.append(valueLine(RuntimeSnapshotFormat.imageKeyword, image))
+        body.append(valueLine(RuntimeSnapshotFormat.arcFlagKeyword, ownership.result.arcFlag.rawValue))
+        body.append(valueLine(RuntimeSnapshotFormat.strongLayoutKeyword,
+                              RuntimeSnapshotIvarOwnership.layoutLineValue(ownership.strongLayout)))
+        body.append(valueLine(RuntimeSnapshotFormat.weakLayoutKeyword,
+                              RuntimeSnapshotIvarOwnership.layoutLineValue(ownership.weakLayout)))
         body.append(contentsOf: classProtocols.map { "protocol " + e($0) })
         // Every name was checked above.
         body.append(contentsOf: classIvars.map { (name: $0.name ?? "", encoding: $0.encoding) }
             .sorted { utf8Less($0.name, $1.name) }
-            .map { "ivar \(e($0.name)) types=\(e($0.encoding))" })
+            .map { ivar in
+                guard let owned = ownership.result.ivars[ivar.name] else {
+                    it_fatalError("No ownership for ivar \(ivar.name)")
+                }
+                return ivarLine(name: ivar.name, encoding: ivar.encoding, ownership: owned)
+            })
         body.append(contentsOf: classMethods.map { methodLine(kind: "class-method", sign: "+", entry: $0, classImage: image) })
         body.append(contentsOf: instanceMethods.map { methodLine(kind: "instance-method", sign: "-", entry: $0, classImage: image) })
         body.append(contentsOf: classProperties.map { "class-property \(e($0.name)) \($0.description)" })
@@ -741,6 +772,57 @@ enum RuntimeSnapshot {
 
     // MARK: - Ivars
 
+    // An ivar line. See the comment at the top of this file.
+    // Internal rather than private so that tests can reach it.
+    static func ivarLine(name: String, encoding: String, ownership: RuntimeSnapshotIvarOwnership.IvarOwnership) -> String {
+        return "ivar \(e(name)) types=\(e(encoding)) ownership=\(ownership.label) layout=\(ownership.layout)"
+    }
+
+    private struct OwnershipFacts {
+        var result: RuntimeSnapshotIvarOwnership.Result
+        var strongLayout: [UInt8]?
+        var weakLayout: [UInt8]?
+    }
+
+    // Reads what the runtime holds about the ownership of the class's own
+    // ivars and labels each one (RuntimeSnapshotIvarOwnership.swift). It
+    // sends no messages: the layouts, the instance size and
+    // _class_getIvarMemoryManagement are plain runtime functions.
+    // The ownership result alone, without the rest of a snapshot, which is
+    // much faster for a test that checks every class in the app.
+    static func ivarOwnership(of cls: AnyClass) -> RuntimeSnapshotIvarOwnership.Result {
+        let destructor = Array(".cxx_destruct".utf8)
+        return ivarOwnership(of: cls,
+                             ivars: ivars(of: cls),
+                             language: language(of: cls),
+                             hasCxxDestruct: ownSelectors(of: cls).contains(destructor)).result
+    }
+
+    private static func ivarOwnership(of cls: AnyClass,
+                                      ivars: [IvarEntry],
+                                      language: String,
+                                      hasCxxDestruct: Bool) -> OwnershipFacts {
+        let strongLayout = RuntimeSnapshotIvarOwnership.layoutBytes(class_getIvarLayout(cls))
+        let weakLayout = RuntimeSnapshotIvarOwnership.layoutBytes(class_getWeakIvarLayout(cls))
+        var answers = [String: RuntimeSnapshotIvarOwnership.MemoryManagement]()
+        for ivar in ivars {
+            if let name = ivar.name, let answer = RuntimeSnapshotIvarOwnership.memoryManagement(of: cls, ivar: ivar.ivar) {
+                answers[name] = answer
+            }
+        }
+        let facts = RuntimeSnapshotIvarOwnership.ClassFacts(
+            isSwift: language == RuntimeSnapshotFormat.swiftLanguage || RuntimeSnapshotIvarOwnership.runtimeSaysSwift(cls) == true,
+            hasCxxDestruct: hasCxxDestruct,
+            strongLayout: strongLayout,
+            weakLayout: weakLayout,
+            instanceSize: class_getInstanceSize(cls),
+            memoryManagement: answers)
+        let result = RuntimeSnapshotIvarOwnership.ownership(
+            ivars: ivars.map { .init(name: $0.name ?? "", encoding: $0.encoding, offset: $0.offset) },
+            facts: facts)
+        return OwnershipFacts(result: result, strongLayout: strongLayout, weakLayout: weakLayout)
+    }
+
     private static func ivars(of cls: AnyClass) -> [IvarEntry] {
         var count: UInt32 = 0
         guard let list = class_copyIvarList(cls, &count) else {
@@ -754,7 +836,7 @@ enum RuntimeSnapshot {
             // The runtime stores no name for an ivar added with an empty one.
             let name = ivar_getName(list[i]).map { String(cString: $0) }
             let encoding = ivar_getTypeEncoding(list[i]).map { String(cString: $0) } ?? ""
-            result.append(IvarEntry(name: name, encoding: encoding))
+            result.append(IvarEntry(name: name, encoding: encoding, offset: ivar_getOffset(list[i]), ivar: list[i]))
         }
         return result
     }

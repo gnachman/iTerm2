@@ -31,7 +31,7 @@ final class RuntimeSnapshotTests: XCTestCase {
 
     // The lines that start every snapshot taken on this machine's architecture.
     private var header: String {
-        return "# Objective-C runtime snapshot, format 2\narchitecture \(architecture)\n\(configurationLine)\n\(variantLine)\n"
+        return "# Objective-C runtime snapshot, format 3\narchitecture \(architecture)\n\(configurationLine)\n\(variantLine)\n"
     }
 
     // A well-formed class section with the given member lines, which are
@@ -43,7 +43,10 @@ final class RuntimeSnapshotTests: XCTestCase {
                          _ members: String...) -> String {
         let body = ["language " + language,
                     "superclass" + (superclass.map { " " + $0 } ?? ""),
-                    "image" + (image.map { " " + $0 } ?? "")] + members
+                    "image" + (image.map { " " + $0 } ?? ""),
+                    "ivar-arc-flag unknown",
+                    "strong-ivar-layout",
+                    "weak-ivar-layout"] + members
         return "class \(name)\n" + body.map { "  " + $0 + "\n" }.joined() + "end class \(name)\n"
     }
 
@@ -59,7 +62,7 @@ final class RuntimeSnapshotTests: XCTestCase {
 
     private var expectedFixtureSnapshot: String {
         return """
-        # Objective-C runtime snapshot, format 2
+        # Objective-C runtime snapshot, format 3
         architecture \(architecture)
         \(configurationLine)
         \(variantLine)
@@ -67,19 +70,22 @@ final class RuntimeSnapshotTests: XCTestCase {
           language objc
           superclass RuntimeSnapshotFixtureBase
           image ModernTests
+          ivar-arc-flag set
+          strong-ivar-layout 12113300
+          weak-ivar-layout 3100
           protocol RuntimeSnapshotFixtureProtocol
-          ivar _atomicAssign types=d
-          ivar _atomicStrong types=@"NSObject"
-          ivar _directValue types=q
-          ivar _enabled types=\(bool)
-          ivar _nonatomicAssign types=q
-          ivar _nonatomicCopy types=@"NSString"
-          ivar _nonatomicStrong types=@"NSObject"
-          ivar _nonatomicUnretained types=@"NSObject"
-          ivar _nonatomicWeak types=@"NSObject"
-          ivar _readonlyClass types=#
-          ivar _readonlyObject types=@"NSObject"
-          ivar _readwriteClass types=#
+          ivar _atomicAssign types=d ownership=scalar layout=
+          ivar _atomicStrong types=@"NSObject" ownership=strong layout=s
+          ivar _directValue types=q ownership=scalar layout=
+          ivar _enabled types=\(bool) ownership=scalar layout=
+          ivar _nonatomicAssign types=q ownership=scalar layout=
+          ivar _nonatomicCopy types=@"NSString" ownership=strong layout=s
+          ivar _nonatomicStrong types=@"NSObject" ownership=strong layout=s
+          ivar _nonatomicUnretained types=@"NSObject" ownership=unretained-or-manual layout=
+          ivar _nonatomicWeak types=@"NSObject" ownership=weak layout=w
+          ivar _readonlyClass types=# ownership=strong layout=s
+          ivar _readonlyObject types=@"NSObject" ownership=strong layout=s
+          ivar _readwriteClass types=# ownership=strong layout=s
           class-method +baseClassMethod types=v16@0:8 also-implemented-by=+RuntimeSnapshotFixtureBase
           class-method +classMethodWithInteger: types=@20@0:8i16
           class-method +classProperty types=@16@0:8
@@ -147,7 +153,7 @@ final class RuntimeSnapshotTests: XCTestCase {
         let actual = try RuntimeSnapshot.snapshot(classNames: ["RuntimeSnapshotFixture"])
         let lines = actual.components(separatedBy: "\n")
         // The direct property's storage is an ordinary ivar, which is listed.
-        XCTAssertEqual(lines.filter { $0.contains("directValue") }, ["  ivar _directValue types=q"])
+        XCTAssertEqual(lines.filter { $0.contains("directValue") }, ["  ivar _directValue types=q ownership=scalar layout="])
         XCTAssertFalse(actual.contains("directMethod"))
     }
 
@@ -156,7 +162,7 @@ final class RuntimeSnapshotTests: XCTestCase {
     func testSnapshotOfBaseClassReportsClassMethodOverrides() throws {
         let actual = try RuntimeSnapshot.snapshot(classNames: ["RuntimeSnapshotFixtureBase"])
         XCTAssertEqual(actual, """
-            # Objective-C runtime snapshot, format 2
+            # Objective-C runtime snapshot, format 3
             architecture \(architecture)
             \(configurationLine)
             \(variantLine)
@@ -164,6 +170,9 @@ final class RuntimeSnapshotTests: XCTestCase {
               language objc
               superclass NSObject
               image ModernTests
+              ivar-arc-flag unknown
+              strong-ivar-layout
+              weak-ivar-layout
               class-method +baseClassMethod types=v16@0:8
               class-method +initialize types=v16@0:8 also-implemented-by=+NSObject
               class-method +valueForKey: types=@24@0:8@16 also-implemented-by=-NSObject
@@ -179,7 +188,7 @@ final class RuntimeSnapshotTests: XCTestCase {
     func testDuplicateSelectorIsReported() throws {
         let actual = try RuntimeSnapshot.snapshot(classNames: ["RuntimeSnapshotDuplicateFixture"])
         XCTAssertEqual(actual, """
-            # Objective-C runtime snapshot, format 2
+            # Objective-C runtime snapshot, format 3
             architecture \(architecture)
             \(configurationLine)
             \(variantLine)
@@ -189,6 +198,9 @@ final class RuntimeSnapshotTests: XCTestCase {
               language objc
               superclass NSObject
               image ModernTests
+              ivar-arc-flag unknown
+              strong-ivar-layout
+              weak-ivar-layout
               class-method +duplicatedClassMethod types=@16@0:8
               class-method +duplicatedClassMethod types=@16@0:8
               instance-method -duplicatedMethod types=@16@0:8
@@ -206,7 +218,7 @@ final class RuntimeSnapshotTests: XCTestCase {
     func testRepeatedIdenticalPropertiesAreNotDuplicates() throws {
         let actual = try RuntimeSnapshot.snapshot(classNames: ["RuntimeSnapshotPropertyRepeatFixture"])
         XCTAssertEqual(actual, """
-            # Objective-C runtime snapshot, format 2
+            # Objective-C runtime snapshot, format 3
             architecture \(architecture)
             \(configurationLine)
             \(variantLine)
@@ -214,6 +226,9 @@ final class RuntimeSnapshotTests: XCTestCase {
               language objc
               superclass NSObject
               image ModernTests
+              ivar-arc-flag unknown
+              strong-ivar-layout
+              weak-ivar-layout
               protocol RuntimeSnapshotFixtureObjectProtocol
               protocol RuntimeSnapshotFixtureObjectProtocol
               protocol RuntimeSnapshotFixtureOtherObjectProtocol
@@ -435,7 +450,7 @@ final class RuntimeSnapshotTests: XCTestCase {
     func testSnapshotOfSwiftFixture() throws {
         let actual = try RuntimeSnapshot.snapshot(classNames: ["RuntimeSnapshotSwiftFixture"])
         XCTAssertEqual(actual, """
-            # Objective-C runtime snapshot, format 2
+            # Objective-C runtime snapshot, format 3
             architecture \(architecture)
             \(configurationLine)
             \(variantLine)
@@ -443,8 +458,11 @@ final class RuntimeSnapshotTests: XCTestCase {
               language swift
               superclass NSObject
               image ModernTests
-              ivar constant types=@"NSString"
-              ivar variable types=@"NSString"
+              ivar-arc-flag set
+              strong-ivar-layout
+              weak-ivar-layout
+              ivar constant types=@"NSString" ownership=swift layout=
+              ivar variable types=@"NSString" ownership=swift layout=
               instance-method -.cxx_destruct types=v16@0:8
               instance-method -constant types=@16@0:8
               instance-method -init types=@16@0:8 also-implemented-by=-NSObject
@@ -464,7 +482,7 @@ final class RuntimeSnapshotTests: XCTestCase {
     func testSnapshotOfSwiftOwnershipFixture() throws {
         let actual = try RuntimeSnapshot.snapshot(classNames: ["RuntimeSnapshotSwiftOwnershipFixture"])
         XCTAssertEqual(actual, """
-            # Objective-C runtime snapshot, format 2
+            # Objective-C runtime snapshot, format 3
             architecture \(architecture)
             \(configurationLine)
             \(variantLine)
@@ -472,11 +490,14 @@ final class RuntimeSnapshotTests: XCTestCase {
               language swift
               superclass NSObject
               image ModernTests
-              ivar copied types=@"NSString"
-              ivar string types=?
-              ivar unownedObject types=?
-              ivar unownedUnsafeObject types=?
-              ivar weakObject types=?
+              ivar-arc-flag set
+              strong-ivar-layout
+              weak-ivar-layout
+              ivar copied types=@"NSString" ownership=swift layout=
+              ivar string types=? ownership=swift layout=
+              ivar unownedObject types=? ownership=swift layout=
+              ivar unownedUnsafeObject types=? ownership=swift layout=
+              ivar weakObject types=? ownership=swift layout=
               instance-method -.cxx_destruct types=v16@0:8
               instance-method -computed types=@16@0:8
               instance-method -computedReadonly types=@16@0:8
@@ -507,7 +528,7 @@ final class RuntimeSnapshotTests: XCTestCase {
     func testSnapshotOfSwiftSubclassFixture() throws {
         let actual = try RuntimeSnapshot.snapshot(classNames: ["RuntimeSnapshotSwiftSubclassFixture"])
         XCTAssertEqual(actual, """
-            # Objective-C runtime snapshot, format 2
+            # Objective-C runtime snapshot, format 3
             architecture \(architecture)
             \(configurationLine)
             \(variantLine)
@@ -515,6 +536,9 @@ final class RuntimeSnapshotTests: XCTestCase {
               language swift
               superclass RuntimeSnapshotFixtureBase
               image ModernTests
+              ivar-arc-flag unknown
+              strong-ivar-layout
+              weak-ivar-layout
               instance-method -baseMethod types=v16@0:8 also-implemented-by=-RuntimeSnapshotFixtureBase
               instance-method -init types=@16@0:8 also-implemented-by=-NSObject
             end class RuntimeSnapshotSwiftSubclassFixture
@@ -536,7 +560,7 @@ final class RuntimeSnapshotTests: XCTestCase {
             XCTFail("too few lines: \(lines)")
             return
         }
-        XCTAssertEqual(lines[0], "# Objective-C runtime snapshot, format 2")
+        XCTAssertEqual(lines[0], "# Objective-C runtime snapshot, format 3")
         XCTAssertEqual(lines[1], "architecture " + architecture)
         XCTAssertEqual(lines[2], configurationLine)
         XCTAssertEqual(lines[3], variantLine)
@@ -548,12 +572,12 @@ final class RuntimeSnapshotTests: XCTestCase {
     // Header values are escaped, and an absent one leaves only the keyword.
     func testHeaderValuesAreEscaped() {
         XCTAssertEqual(RuntimeSnapshot.headerLines(architecture: "arm 64", buildConfiguration: "My Config%", buildVariant: "A\u{e9}San"),
-                       ["# Objective-C runtime snapshot, format 2",
+                       ["# Objective-C runtime snapshot, format 3",
                         "architecture arm%2064",
                         "build-configuration My%20Config%25",
                         "build-variant A%C3%A9San"])
         XCTAssertEqual(RuntimeSnapshot.headerLines(architecture: "arm64", buildConfiguration: nil, buildVariant: nil),
-                       ["# Objective-C runtime snapshot, format 2",
+                       ["# Objective-C runtime snapshot, format 3",
                         "architecture arm64",
                         "build-configuration",
                         "build-variant"])
@@ -562,9 +586,9 @@ final class RuntimeSnapshotTests: XCTestCase {
     // A header with no build configuration or variant parses, and differs
     // from one with them.
     func testHeaderWithoutConfigurationOrVariant() {
-        let bare = "# Objective-C runtime snapshot, format 2\narchitecture \(architecture)\nbuild-configuration\nbuild-variant\n" + section("C")
+        let bare = "# Objective-C runtime snapshot, format 3\narchitecture \(architecture)\nbuild-configuration\nbuild-variant\n" + section("C")
         XCTAssertEqual(status(bare, bare), 0)
-        let named = "# Objective-C runtime snapshot, format 2\narchitecture \(architecture)\nbuild-configuration Development\nbuild-variant ASan\n" + section("C")
+        let named = "# Objective-C runtime snapshot, format 3\narchitecture \(architecture)\nbuild-configuration Development\nbuild-variant ASan\n" + section("C")
         let result = RuntimeSnapshotComparison.compare(before: bare, after: named)
         XCTAssertEqual(result.errors, [
             "The snapshots were taken with different build-configuration: before (no value), after Development. Macros, and so methods, differ between build configurations, so they cannot be compared.",
@@ -595,7 +619,7 @@ final class RuntimeSnapshotTests: XCTestCase {
     }
 
     func testMissingArchitectureIsAnError() {
-        let snapshot = "# Objective-C runtime snapshot, format 2\nbuild-configuration Development\n" + section("C")
+        let snapshot = "# Objective-C runtime snapshot, format 3\nbuild-configuration Development\n" + section("C")
         let result = RuntimeSnapshotComparison.compare(before: snapshot, after: snapshot)
         XCTAssertFalse(result.passed)
         XCTAssertEqual(result.errors, ["before: no architecture line", "before: no build-variant line",
@@ -617,16 +641,16 @@ final class RuntimeSnapshotTests: XCTestCase {
 
     func testIvarsAreRecorded() throws {
         let lines = try lines(of: "RuntimeSnapshotFixture")
-        XCTAssertTrue(lines.contains("  ivar _atomicStrong types=@\"NSObject\""), lines.joined(separator: "\n"))
-        XCTAssertTrue(lines.contains("  ivar _enabled types=\(bool)"), lines.joined(separator: "\n"))
-        XCTAssertTrue(lines.contains("  ivar _directValue types=q"), lines.joined(separator: "\n"))
+        XCTAssertTrue(lines.contains("  ivar _atomicStrong types=@\"NSObject\" ownership=strong layout=s"), lines.joined(separator: "\n"))
+        XCTAssertTrue(lines.contains("  ivar _enabled types=\(bool) ownership=scalar layout="), lines.joined(separator: "\n"))
+        XCTAssertTrue(lines.contains("  ivar _directValue types=q ownership=scalar layout="), lines.joined(separator: "\n"))
     }
 
     func testRemovedIvarFails() throws {
         let before = try RuntimeSnapshot.snapshot(classNames: ["RuntimeSnapshotFixture"])
         let after = removingLines(containing: "  ivar _nonatomicCopy ", from: before)
         let result = RuntimeSnapshotComparison.compare(before: before, after: after)
-        XCTAssertEqual(result.differences, ["class RuntimeSnapshotFixture: removed ivar _nonatomicCopy types=@\"NSString\""])
+        XCTAssertEqual(result.differences, ["class RuntimeSnapshotFixture: removed ivar _nonatomicCopy types=@\"NSString\" ownership=strong layout=s"])
     }
 
     func testImageOfClassAndForeignMethod() throws {
@@ -668,7 +692,7 @@ final class RuntimeSnapshotTests: XCTestCase {
 
     func testClassAppearingTwiceIsAnError() {
         let result = RuntimeSnapshotComparison.compare(before: header + section("C"), after: header + section("C") + section("C"))
-        XCTAssertEqual(result.errors, ["after line 14: class C appears more than once"])
+        XCTAssertEqual(result.errors, ["after line 20: class C appears more than once"])
     }
 
     func testClassOpenedInsideClassIsAnError() {
@@ -680,14 +704,14 @@ final class RuntimeSnapshotTests: XCTestCase {
     func testLineOutsideClassIsAnError() {
         let good = header + section("C")
         let result = RuntimeSnapshotComparison.compare(before: good, after: good + "  instance-method -foo types=v16@0:8\n")
-        XCTAssertEqual(result.errors, ["after line 10: “  instance-method -foo types=v16@0:8” is outside a class section"])
+        XCTAssertEqual(result.errors, ["after line 13: “  instance-method -foo types=v16@0:8” is outside a class section"])
     }
 
     func testMismatchedEndIsAnError() {
         let good = header + section("C")
         let bad = header + section("C").replacingOccurrences(of: "end class C", with: "end class D")
         let result = RuntimeSnapshotComparison.compare(before: good, after: bad)
-        XCTAssertEqual(result.errors, ["after line 9: “end class D” does not match the open class C"])
+        XCTAssertEqual(result.errors, ["after line 12: “end class D” does not match the open class C"])
     }
 
     // MARK: - Ownership and language
@@ -745,14 +769,18 @@ final class RuntimeSnapshotTests: XCTestCase {
         XCTAssertTrue(result.allowed.isEmpty)
     }
 
-    // A class that moves between languages gets no verdict, and fails.
-    func testLanguageChangeIsNotAVerdict() {
+    // A class that moves from Swift to Objective-C gets no verdict, and
+    // fails.
+    func testLanguageChangeFromSwiftIsNotAVerdict() {
         let before = header + """
             class C
               language objc
               superclass NSObject
               image ModernTests
-              ivar _obj types=@"NSObject"
+              ivar-arc-flag set
+              strong-ivar-layout 0100
+              weak-ivar-layout
+              ivar _obj types=@"NSObject" ownership=strong layout=s
               instance-property obj type=@"NSObject" ownership=strong nonatomic ivar=_obj raw=T@"NSObject",&,N,V_obj
             end class C
 
@@ -762,32 +790,40 @@ final class RuntimeSnapshotTests: XCTestCase {
               language swift
               superclass NSObject
               image ModernTests
-              ivar obj types=@"NSObject"
+              ivar-arc-flag set
+              strong-ivar-layout
+              weak-ivar-layout
+              ivar obj types=@"NSObject" ownership=swift layout=
               instance-property obj type=@"NSObject" ownership=strong nonatomic ivar=obj raw=T@"NSObject",N,&,Vobj
             end class C
 
             """
-        let result = RuntimeSnapshotComparison.compare(before: before, after: after)
+        // From Objective-C to Swift, the same pair is compared by the rule
+        // "identical in meaning" (RuntimeSnapshotCrossLanguageTests.swift).
+        let port = RuntimeSnapshotComparison.compare(before: before, after: after)
+        XCTAssertTrue(port.passed, port.report)
+        XCTAssertEqual(port.crossLanguageClasses, ["C"])
+        let result = RuntimeSnapshotComparison.compare(before: after, after: before)
         XCTAssertFalse(result.passed)
-        XCTAssertEqual(result.languageChanges, ["class C changed language from objc to swift"])
+        XCTAssertEqual(result.languageChanges, ["class C changed language from swift to objc"])
         XCTAssertTrue(result.differences.isEmpty)
-        XCTAssertEqual(result.unclassified.count, 3)
-        XCTAssertTrue(result.report.hasPrefix("NO VERDICT for these classes:\n  class C changed language from objc to swift\n"), result.report)
+        XCTAssertEqual(result.unclassified.count, 4)
+        XCTAssertTrue(result.report.hasPrefix("NO VERDICT for these classes:\n  class C changed language from swift to objc\n"), result.report)
         XCTAssertFalse(result.report.contains("PASS"))
         // No verdict is not a verdict of failure either.
         XCTAssertFalse(result.report.contains("FAIL:"), result.report)
         XCTAssertTrue(result.report.hasSuffix("NO VERDICT for some classes, so the comparison does not pass.\n"), result.report)
         XCTAssertEqual(RuntimeSnapshotComparison.runCommandLine(arguments: ["x", "before", "after"],
-                                                                readFile: { Data(($0 == "before" ? before : after).utf8) }).status, 1)
+                                                                readFile: { Data(($0 == "before" ? after : before).utf8) }).status, 1)
     }
 
     // A class that stays in one language is compared strictly even when
     // another class in the same files changed language.
     func testLanguageChangeOfOneClassLeavesOthersStrict() {
-        let before = header + section("C") + section("D")
-        let after = header + section("C", language: "swift") + section("D", superclass: "NSResponder")
+        let before = header + section("C", language: "swift") + section("D")
+        let after = header + section("C") + section("D", superclass: "NSResponder")
         let result = RuntimeSnapshotComparison.compare(before: before, after: after)
-        XCTAssertEqual(result.languageChanges, ["class C changed language from objc to swift"])
+        XCTAssertEqual(result.languageChanges, ["class C changed language from swift to objc"])
         XCTAssertTrue(single(result.differences).hasPrefix("class D: changed superclass"), result.report)
     }
 
@@ -901,8 +937,8 @@ final class RuntimeSnapshotTests: XCTestCase {
     }
 
     func testLanguageChangeWithNoOtherDifferenceSaysSo() {
-        let before = header + section("C")
-        let after = header + section("C", language: "swift")
+        let before = header + section("C", language: "swift")
+        let after = header + section("C")
         let result = RuntimeSnapshotComparison.compare(before: before, after: after)
         XCTAssertFalse(result.passed)
         XCTAssertTrue(result.unclassified.isEmpty)
@@ -1062,7 +1098,7 @@ final class RuntimeSnapshotTests: XCTestCase {
     }
 
     func testMissingLanguageOnBothSidesIsMalformed() {
-        let snapshot = header + "class C\n  superclass NSObject\n  image ModernTests\nend class C\n"
+        let snapshot = header + "class C\n  superclass NSObject\n  image ModernTests\n  ivar-arc-flag unknown\n  strong-ivar-layout\n  weak-ivar-layout\nend class C\n"
         let result = RuntimeSnapshotComparison.compare(before: snapshot, after: snapshot)
         XCTAssertFalse(result.passed)
         XCTAssertEqual(result.errors, ["before: class C: 0 language lines, but a class section has exactly one",
@@ -1076,7 +1112,7 @@ final class RuntimeSnapshotTests: XCTestCase {
 
     func testMissingLanguageOnOneSideIsMalformed() {
         let good = header + section("C")
-        let missing = header + "class C\n  superclass NSObject\n  image ModernTests\nend class C\n"
+        let missing = header + "class C\n  superclass NSObject\n  image ModernTests\n  ivar-arc-flag unknown\n  strong-ivar-layout\n  weak-ivar-layout\nend class C\n"
         let result = RuntimeSnapshotComparison.compare(before: good, after: missing)
         XCTAssertFalse(result.passed)
         XCTAssertEqual(result.errors, ["after: class C: 0 language lines, but a class section has exactly one"])
@@ -1141,8 +1177,9 @@ final class RuntimeSnapshotTests: XCTestCase {
         let changedStrong = "class RuntimeSnapshotFixture: changed instance-property atomicStrong"
         return [
             SingleChange(covers: "language",
-                         old: "  language objc", new: ["  language swift"],
-                         expected: ["class RuntimeSnapshotFixture changed language from objc to swift"]),
+                         className: "RuntimeSnapshotSwiftFixture",
+                         old: "  language swift", new: ["  language objc"],
+                         expected: ["class RuntimeSnapshotSwiftFixture changed language from swift to objc"]),
             SingleChange(covers: "language unknown",
                          old: "  language objc", new: ["  language unknown"],
                          expected: ["class RuntimeSnapshotFixture: language objc before, unknown after"]),
@@ -1174,18 +1211,18 @@ final class RuntimeSnapshotTests: XCTestCase {
                          old: "  protocol RuntimeSnapshotFixtureObjectProtocol", occurrences: 2, new: [],
                          expected: ["class RuntimeSnapshotPropertyRepeatFixture: changed protocol RuntimeSnapshotFixtureObjectProtocol"]),
             SingleChange(covers: "ivar added",
-                         old: "  ivar _atomicAssign types=d", new: ["  ivar _atomicAssign types=d", "  ivar _atomicAssignToo types=d"],
-                         expected: ["class RuntimeSnapshotFixture: added ivar _atomicAssignToo types=d"]),
+                         old: "  ivar _atomicAssign types=d ownership=scalar layout=", new: ["  ivar _atomicAssign types=d ownership=scalar layout=", "  ivar _atomicAssignToo types=d ownership=scalar layout="],
+                         expected: ["class RuntimeSnapshotFixture: added ivar _atomicAssignToo types=d ownership=scalar layout="]),
             SingleChange(covers: "ivar removed",
-                         old: "  ivar _atomicAssign types=d", new: [],
-                         expected: ["class RuntimeSnapshotFixture: removed ivar _atomicAssign types=d"]),
+                         old: "  ivar _atomicAssign types=d ownership=scalar layout=", new: [],
+                         expected: ["class RuntimeSnapshotFixture: removed ivar _atomicAssign types=d ownership=scalar layout="]),
             SingleChange(covers: "ivar renamed",
-                         old: "  ivar _atomicAssign types=d", new: ["  ivar _atomicAssignRenamed types=d"],
-                         expected: ["class RuntimeSnapshotFixture: removed ivar _atomicAssign types=d",
-                                    "class RuntimeSnapshotFixture: added ivar _atomicAssignRenamed types=d"]),
+                         old: "  ivar _atomicAssign types=d ownership=scalar layout=", new: ["  ivar _atomicAssignRenamed types=d ownership=scalar layout="],
+                         expected: ["class RuntimeSnapshotFixture: removed ivar _atomicAssign types=d ownership=scalar layout=",
+                                    "class RuntimeSnapshotFixture: added ivar _atomicAssignRenamed types=d ownership=scalar layout="]),
             SingleChange(covers: "ivar type",
-                         old: "  ivar _atomicAssign types=d", new: ["  ivar _atomicAssign types=f"],
-                         expected: ["class RuntimeSnapshotFixture: changed ivar _atomicAssign\n      before: types=d\n      after:  types=f"]),
+                         old: "  ivar _atomicAssign types=d ownership=scalar layout=", new: ["  ivar _atomicAssign types=f ownership=scalar layout="],
+                         expected: ["class RuntimeSnapshotFixture: changed ivar _atomicAssign\n      before: types=d ownership=scalar layout=\n      after:  types=f ownership=scalar layout="]),
             SingleChange(covers: "class-method added",
                          old: "  class-method +classProperty types=@16@0:8",
                          new: ["  class-method +classProperty types=@16@0:8", "  class-method +classPropertyToo types=@16@0:8"],
@@ -1279,6 +1316,34 @@ final class RuntimeSnapshotTests: XCTestCase {
             SingleChange(covers: "DUPLICATE",
                          old: "  language objc", new: ["  DUPLICATE instance-method -protocolMethod count=2", "  language objc"],
                          expected: ["DUPLICATES (", "after: class RuntimeSnapshotFixture: DUPLICATE instance-method -protocolMethod count=2"]),
+            SingleChange(covers: "ivar ownership",
+                         className: "RuntimeSnapshotStrongIvarFixture",
+                         old: "  ivar _object types=@ ownership=strong layout=s", new: ["  ivar _object types=@ ownership=weak layout=s"],
+                         expected: ["class RuntimeSnapshotStrongIvarFixture: changed ivar _object\n      before: types=@ ownership=strong layout=s\n      after:  types=@ ownership=weak layout=s"]),
+            SingleChange(covers: "ivar layout",
+                         className: "RuntimeSnapshotStrongIvarFixture",
+                         old: "  ivar _object types=@ ownership=strong layout=s", new: ["  ivar _object types=@ ownership=strong layout=w"],
+                         expected: ["class RuntimeSnapshotStrongIvarFixture: changed ivar _object"]),
+            SingleChange(covers: "ivar-arc-flag",
+                         className: "RuntimeSnapshotStrongIvarFixture",
+                         old: "  ivar-arc-flag set", new: ["  ivar-arc-flag clear"],
+                         expected: ["class RuntimeSnapshotStrongIvarFixture: changed ivar-arc-flag\n      before: set\n      after:  clear"]),
+            SingleChange(covers: "strong-ivar-layout",
+                         className: "RuntimeSnapshotStrongIvarFixture",
+                         old: "  strong-ivar-layout 0100", new: ["  strong-ivar-layout 1100"],
+                         expected: ["class RuntimeSnapshotStrongIvarFixture: changed strong-ivar-layout\n      before: 0100\n      after:  1100"]),
+            SingleChange(covers: "strong-ivar-layout to none",
+                         className: "RuntimeSnapshotStrongIvarFixture",
+                         old: "  strong-ivar-layout 0100", new: ["  strong-ivar-layout"],
+                         expected: ["class RuntimeSnapshotStrongIvarFixture: changed strong-ivar-layout\n      before: 0100\n      after:  (no value)"]),
+            SingleChange(covers: "weak-ivar-layout",
+                         className: "RuntimeSnapshotStrongIvarFixture",
+                         old: "  weak-ivar-layout", new: ["  weak-ivar-layout 0100"],
+                         expected: ["class RuntimeSnapshotStrongIvarFixture: changed weak-ivar-layout\n      before: (no value)\n      after:  0100"]),
+            SingleChange(covers: "OWNERSHIP-CONFLICT",
+                         className: "RuntimeSnapshotStrongIvarFixture",
+                         old: "  ivar-arc-flag set", new: ["  OWNERSHIP-CONFLICT runtime-disagrees _object", "  ivar-arc-flag set"],
+                         expected: ["OWNERSHIP CONFLICTS (", "after: class RuntimeSnapshotStrongIvarFixture: OWNERSHIP-CONFLICT runtime-disagrees _object"]),
         ]
     }
 
@@ -1318,7 +1383,7 @@ final class RuntimeSnapshotTests: XCTestCase {
         let rows = singleChanges.map { $0.covers }
         let memberLines = snapshot.components(separatedBy: "\n").filter { $0.hasPrefix("  ") }
         var kinds = Set(memberLines.compactMap { $0.dropFirst(2).split(separator: " ").first.map(String.init) })
-        kinds.formUnion(RuntimeSnapshotFormat.singleValueKeywords + RuntimeSnapshotFormat.memberKinds + [RuntimeSnapshotFormat.duplicateKeyword])
+        kinds.formUnion(RuntimeSnapshotFormat.singleValueKeywords + RuntimeSnapshotFormat.memberKinds + [RuntimeSnapshotFormat.duplicateKeyword, RuntimeSnapshotFormat.ownershipConflictKeyword])
         for kind in kinds.sorted() {
             XCTAssertTrue(rows.contains { $0 == kind || $0.hasPrefix(kind + " ") }, "no row covers lines of kind \(kind)")
         }
@@ -1351,10 +1416,13 @@ final class RuntimeSnapshotTests: XCTestCase {
               language objc
               superclass NSObject
               image ModernTests
-              ivar _assignedClass types=#
-              ivar _both types=\(bool)
-              ivar _customSetter types=q
-              ivar _unretainedClass types=#
+              ivar-arc-flag set
+              strong-ivar-layout
+              weak-ivar-layout
+              ivar _assignedClass types=# ownership=unretained-or-manual layout=
+              ivar _both types=\(bool) ownership=scalar layout=
+              ivar _customSetter types=q ownership=scalar layout=
+              ivar _unretainedClass types=# ownership=unretained-or-manual layout=
               instance-method -assignBoth: types=v20@0:8\(bool)16
               instance-method -assignCustomSetter: types=v24@0:8q16
               instance-method -assignedClass types=#16@0:8
@@ -1471,7 +1539,7 @@ final class RuntimeSnapshotTests: XCTestCase {
         }
         let snapshot = try RuntimeSnapshot.snapshot(classes: [cls])
         let lines = snapshot.components(separatedBy: "\n")
-        for expected in ["  ivar cxx types={vector<int,%20std::allocator<int>%20>=}",
+        for expected in ["  ivar cxx types={vector<int,%20std::allocator<int>%20>=} ownership=manual layout=",
                          "  instance-method -percent%25 types=v16@0:8",
                          "  instance-method -tab%09bed types=v16@0:8",
                          "  instance-method -with%20space types=v16@0:8",
@@ -1557,7 +1625,7 @@ final class RuntimeSnapshotTests: XCTestCase {
         let good = header + section("C")
         let bad = good + "architecture \(architecture)\n" + section("D")
         let result = RuntimeSnapshotComparison.compare(before: good + section("D"), after: bad)
-        XCTAssertEqual(result.errors, ["after line 10: “architecture \(architecture)” is a header line after the first class section"])
+        XCTAssertEqual(result.errors, ["after line 13: “architecture \(architecture)” is a header line after the first class section"])
         XCTAssertEqual(status(good + section("D"), bad), 2)
     }
 
@@ -1566,7 +1634,7 @@ final class RuntimeSnapshotTests: XCTestCase {
     func testMalformedLinesAreRefusedEvenWhenBothSidesAgree() {
         let good = header + section("C",
                                     "protocol P",
-                                    "ivar _x types=q",
+                                    "ivar _x types=q ownership=scalar layout=",
                                     "instance-method -foo types=v16@0:8",
                                     "instance-property p type=q ownership=assign nonatomic ivar=_p raw=Tq,N,V_p")
         XCTAssertEqual(status(good, good), 0)
@@ -1589,7 +1657,7 @@ final class RuntimeSnapshotTests: XCTestCase {
             ("a non-canonical escape", method, "  instance-method -fo%6F types=v16@0:8\n"),
             ("a bad escape", method, "  instance-method -fo%zz types=v16@0:8\n"),
             ("a detail on a protocol line", "  protocol P\n", "  protocol P extra\n"),
-            ("an ivar without types", "  ivar _x types=q\n", "  ivar _x\n"),
+            ("an ivar without types", "  ivar _x types=q ownership=scalar layout=\n", "  ivar _x ownership=scalar layout=\n"),
             ("a superclass with a space", "  superclass NSObject\n", "  superclass NS Object\n"),
             ("an image with an extra field", "  image ModernTests\n", "  image ModernTests extra\n"),
             ("a header line with an extra field", "architecture \(architecture)\n", "architecture \(architecture) extra\n"),
@@ -1661,8 +1729,8 @@ final class RuntimeSnapshotTests: XCTestCase {
     func testMalformedInputIsRefused() {
         let good = header + section("C", "protocol P")
         let malformed: [(String, String)] = [
-            ("a second format line", good.replacingOccurrences(of: "format 2\n", with: "format 2\n# Objective-C runtime snapshot, format 2\n")),
-            ("a snapshot in format 1", good.replacingOccurrences(of: "format 2\n", with: "format 1\n")),
+            ("a second format line", good.replacingOccurrences(of: "format 3\n", with: "format 3\n# Objective-C runtime snapshot, format 3\n")),
+            ("a snapshot in format 2", good.replacingOccurrences(of: "format 3\n", with: "format 2\n")),
             ("a comment inside a class", good.replacingOccurrences(of: "  protocol P\n", with: "  protocol P\n# comment\n")),
             ("a trailing no-break space", good.replacingOccurrences(of: "  protocol P\n", with: "  protocol P\u{a0}\n")),
             ("a trailing space", good.replacingOccurrences(of: "  protocol P\n", with: "  protocol P \n")),
@@ -1770,8 +1838,8 @@ final class RuntimeSnapshotTests: XCTestCase {
         }
         let snapshot = try RuntimeSnapshot.snapshot(classes: [cls])
         let lines = snapshot.components(separatedBy: "\n")
-        XCTAssertTrue(lines.contains("  ivar untyped types="), snapshot)
-        XCTAssertTrue(lines.contains("  ivar spelled types=(none)"), snapshot)
+        XCTAssertTrue(lines.contains("  ivar untyped types= ownership=unknown-type layout="), snapshot)
+        XCTAssertTrue(lines.contains("  ivar spelled types=(none) ownership=manual layout="), snapshot)
         XCTAssertEqual(RuntimeSnapshotComparison.compare(before: snapshot, after: snapshot).errors, [])
     }
 
@@ -2058,7 +2126,7 @@ final class RuntimeSnapshotTests: XCTestCase {
 
     // The pass caveat, exactly. It names what this tool does not compare.
     func testPassCaveatText() throws {
-        XCTAssertEqual(RuntimeSnapshotFormat.notCoveredByPass, "A pass means only that the recorded lines match. Known gaps, which this tool does not compare:\n- what methods do, including methods that decide at run time which selectors or keys an object answers (respondsToSelector:, forwarding, method resolution, valueForUndefinedKey:), so selectors a class forwards or resolves dynamically are not covered\n- the contents of adopted protocols; only their names are recorded\n- classes not named in the snapshot, including the members of superclasses and subclasses\n- whether an ivar is strong, weak, or unretained\n- the type of an ivar whose encoding the runtime leaves unknown or empty\n- ivar declaration order, which decides teardown order under ARC\n- the ownership of a property printed as unrecorded\n- weak versus unowned in Swift, including a property that a Swift extension declares on an Objective-C class, which is printed as weak even when Swift declared it unowned\n- for a Swift class, whether a member is dynamic\n- build configurations other than the one snapshotted")
+        XCTAssertEqual(RuntimeSnapshotFormat.notCoveredByPass, "A pass means only that the recorded lines match. Known gaps, which this tool does not compare:\n- what methods do, including methods that decide at run time which selectors or keys an object answers (respondsToSelector:, forwarding, method resolution, valueForUndefinedKey:), so selectors a class forwards or resolves dynamically are not covered\n- the contents of adopted protocols; only their names are recorded\n- classes not named in the snapshot, including the members of superclasses and subclasses\n- the ownership of an ivar labeled unretained-or-manual, manual, unretained-or-unknown, struct-or-cxx-object, struct-no-destructor, struct-unknown, c-pointer, unaligned-object or unknown-type, or the words of an arc-members ivar outside the layouts, which the runtime cannot tell; check them against the source or with tools/swift_migration/ivar_ownership_check.py\n- the ownership of the stored properties of a Swift class, which the runtime layouts do not describe\n- the type of an ivar whose encoding the runtime leaves unknown or empty\n- the class of an object parameter or return value, which every method encoding writes as plain @, so NSString * becoming NSArray *, or id becoming a class, is not seen; the reviewer compares the Swift signatures with the Objective-C declarations (for an Objective-C header, the Swift interface snapshot, tools/swift_migration/swift_interface.py, shows the types Swift sees)\n- nullability: a Swift parameter that is not optional where the Objective-C method accepted nil (a nil passed from Objective-C then traps) is not seen; nullability claims are made and proven by the annotate process (docs/swift-migration/nullability.md) and checked at run time by the nullability sanitizer configuration (phase0.md section 4)\n- ivar declaration order, which decides teardown order under ARC\n- the ownership of a property printed as unrecorded\n- weak versus unowned in Swift, including a property that a Swift extension declares on an Objective-C class, which is printed as weak even when Swift declared it unowned\n- for a Swift class, whether a member is dynamic\n- build configurations other than the one snapshotted")
         let snapshot = try RuntimeSnapshot.snapshot(classNames: ["RuntimeSnapshotFixtureBase"])
         let result = RuntimeSnapshotComparison.compare(before: snapshot, after: snapshot)
         XCTAssertTrue(result.passed)
@@ -2066,16 +2134,19 @@ final class RuntimeSnapshotTests: XCTestCase {
     }
 
     // Two classes that differ only in whether their ivar is strong or weak
-    // have identical snapshots apart from their names, so a port that changed
-    // an ivar's ownership would pass. The caveat says so.
-    func testIvarOwnershipIsNotCompared() throws {
+    // differ in their ivar lines and layouts, so a port that changed an
+    // ivar's ownership fails. (Before the snapshot read the layouts this
+    // test showed the opposite, and the pass caveat listed it as a gap.)
+    func testIvarOwnershipIsCompared() throws {
         let strong = try RuntimeSnapshot.snapshot(classNames: ["RuntimeSnapshotStrongIvarFixture"])
         let weak = try RuntimeSnapshot.snapshot(classNames: ["RuntimeSnapshotWeakIvarFixture"])
             .replacingOccurrences(of: "RuntimeSnapshotWeakIvarFixture", with: "RuntimeSnapshotStrongIvarFixture")
-        XCTAssertTrue(strong.contains("\n  ivar _object types=@\n"), strong)
+        XCTAssertTrue(strong.contains("\n  ivar _object types=@ ownership=strong layout=s\n"), strong)
+        XCTAssertTrue(weak.contains("\n  ivar _object types=@ ownership=weak layout=w\n"), weak)
         let result = RuntimeSnapshotComparison.compare(before: strong, after: weak)
-        XCTAssertTrue(result.passed, result.report)
-        XCTAssertTrue(result.report.contains("whether an ivar is strong, weak, or unretained"), result.report)
+        XCTAssertFalse(result.passed, result.report)
+        XCTAssertTrue(result.differences.contains("class RuntimeSnapshotStrongIvarFixture: changed ivar _object\n      before: types=@ ownership=strong layout=s\n      after:  types=@ ownership=weak layout=w"), "\(result.differences)")
+        XCTAssertFalse(RuntimeSnapshotFormat.notCoveredByPass.contains("whether an ivar is strong, weak, or unretained"))
     }
 
     // Two Swift classes that differ only in whether a property is dynamic
@@ -2097,7 +2168,7 @@ final class RuntimeSnapshotTests: XCTestCase {
                                         "DUPLICATE instance-property count count=2",
                                         "DUPLICATE instance-method -image=x count=2",
                                         "protocol count=2",
-                                        "ivar types=q types=q",
+                                        "ivar types=q types=q ownership=scalar layout=",
                                         "instance-method -image=x types=v16@0:8",
                                         "instance-method -image=x types=v24@0:8@16",
                                         "instance-method -types= types=v16@0:8",

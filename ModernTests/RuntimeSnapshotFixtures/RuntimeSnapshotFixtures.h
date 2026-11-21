@@ -140,8 +140,8 @@ extern BOOL RuntimeSnapshotInitializeFixtureInitialized;
 @end
 
 // Identical except for whether their ivar is strong or weak. Both ivars are
-// encoded as @, and the snapshot does not read ivar layouts, so their
-// snapshots are identical apart from the class name.
+// encoded as @; only the ivar layouts, which the snapshot reads, tell them
+// apart.
 @interface RuntimeSnapshotStrongIvarFixture : NSObject {
 @public
     __strong id _object;

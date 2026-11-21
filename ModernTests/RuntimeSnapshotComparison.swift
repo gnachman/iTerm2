@@ -68,7 +68,7 @@ import Foundation
 enum RuntimeSnapshotFormat {
     // The first line of every snapshot. Bump the number if the format changes
     // in a way that makes old and new snapshots incomparable.
-    static let headerLine = "# Objective-C runtime snapshot, format 2"
+    static let headerLine = "# Objective-C runtime snapshot, format 3"
 
     // Header lines that say what the snapshot was taken from. Snapshots that
     // differ in any of them cannot be compared.
@@ -89,11 +89,21 @@ enum RuntimeSnapshotFormat {
     // section has exactly one.
     static let superclassKeyword = "superclass"
     static let imageKeyword = "image"
-    static let singleValueKeywords = [languageKeyword, superclassKeyword, imageKeyword]
+    // The class's ARC flag as the runtime reveals it (set, clear, or
+    // unknown), and its strong and weak ivar layouts in hexadecimal with
+    // their terminating zero byte, or no value when the runtime has none. See
+    // RuntimeSnapshotIvarOwnership.swift.
+    static let arcFlagKeyword = "ivar-arc-flag"
+    static let strongLayoutKeyword = "strong-ivar-layout"
+    static let weakLayoutKeyword = "weak-ivar-layout"
+    static let arcFlags = ["set", "clear", "unknown"]
+    static let singleValueKeywords = [languageKeyword, superclassKeyword, imageKeyword,
+                                      arcFlagKeyword, strongLayoutKeyword, weakLayoutKeyword]
 
     // The keywords of header and class-section lines that are written with
     // no value when theirs is absent. The others always have one.
-    static let optionalValueKeywords = [buildConfigurationKeyword, buildVariantKeyword, superclassKeyword, imageKeyword]
+    static let optionalValueKeywords = [buildConfigurationKeyword, buildVariantKeyword, superclassKeyword, imageKeyword,
+                                        strongLayoutKeyword, weakLayoutKeyword]
 
     // Lines of the form "<kind> <name> [<details>]", any number of each.
     static let memberKinds = ["protocol", "ivar", "class-method", "instance-method", "class-property", "instance-property"]
@@ -101,6 +111,21 @@ enum RuntimeSnapshotFormat {
     // Prefix of the line that flags a selector or property appearing more than
     // once in a class's own list.
     static let duplicateKeyword = "DUPLICATE"
+
+    // Prefix of the line that flags an ivar ownership conflict: the layouts
+    // contradict each other, the ivar list, or the runtime's own answer.
+    static let ownershipConflictKeyword = "OWNERSHIP-CONFLICT"
+
+    // The labels an ivar line's ownership= can carry, and the reasons an
+    // OWNERSHIP-CONFLICT line can give. Kept here, not taken from
+    // RuntimeSnapshotIvarOwnership.swift, because this file is compiled on
+    // its own; a test checks that the lists agree.
+    static let ivarOwnerships = ["strong", "weak", "unretained-or-manual", "manual", "unretained-or-unknown",
+                                 "arc-members", "cxx-object", "struct-or-cxx-object", "struct-no-destructor",
+                                 "struct-unknown", "c-pointer", "scalar", "selector", "bitfield",
+                                 "unaligned-object", "unknown-type", "swift"]
+    static let ownershipConflictReasons = ["runtime-disagrees", "word-in-both-layouts", "layout-word-on-non-object",
+                                           "layout-word-without-ivar", "arc-flag-inconsistent"]
 
     // The ownership labels a property line can carry.
     static let ownerships = ["copy", "strong", "weak", "weak-or-unowned", "unsafe_unretained", "unrecorded", "assign"]
@@ -158,8 +183,11 @@ enum RuntimeSnapshotFormat {
         "- what methods do, including methods that decide at run time which selectors or keys an object answers (respondsToSelector:, forwarding, method resolution, valueForUndefinedKey:), so selectors a class forwards or resolves dynamically are not covered",
         "- the contents of adopted protocols; only their names are recorded",
         "- classes not named in the snapshot, including the members of superclasses and subclasses",
-        "- whether an ivar is strong, weak, or unretained",
+        "- the ownership of an ivar labeled unretained-or-manual, manual, unretained-or-unknown, struct-or-cxx-object, struct-no-destructor, struct-unknown, c-pointer, unaligned-object or unknown-type, or the words of an arc-members ivar outside the layouts, which the runtime cannot tell; check them against the source or with tools/swift_migration/ivar_ownership_check.py",
+        "- the ownership of the stored properties of a Swift class, which the runtime layouts do not describe",
         "- the type of an ivar whose encoding the runtime leaves unknown or empty",
+        "- the class of an object parameter or return value, which every method encoding writes as plain @, so NSString * becoming NSArray *, or id becoming a class, is not seen; the reviewer compares the Swift signatures with the Objective-C declarations (for an Objective-C header, the Swift interface snapshot, tools/swift_migration/swift_interface.py, shows the types Swift sees)",
+        "- nullability: a Swift parameter that is not optional where the Objective-C method accepted nil (a nil passed from Objective-C then traps) is not seen; nullability claims are made and proven by the annotate process (docs/swift-migration/nullability.md) and checked at run time by the nullability sanitizer configuration (phase0.md section 4)",
         "- ivar declaration order, which decides teardown order under ARC",
         "- the ownership of a property printed as unrecorded",
         "- weak versus unowned in Swift, including a property that a Swift extension declares on an Objective-C class, which is printed as weak even when Swift declared it unowned",
@@ -185,6 +213,9 @@ struct RuntimeSnapshotComparisonResult {
     // Duplicate-selector lines found in either snapshot. Any entry fails the
     // comparison.
     var duplicates: [String] = []
+    // OWNERSHIP-CONFLICT lines found in either snapshot. Any entry fails the
+    // comparison.
+    var ownershipConflicts: [String] = []
     // Differences not covered by the allow-list. Any entry fails the comparison.
     var differences: [String] = []
     // Differences covered by the allow-list. Reported but not a failure.
@@ -207,9 +238,18 @@ struct RuntimeSnapshotComparisonResult {
     var invalidLanguages: [String] = []
     // Differences in classes that get no verdict, for a person to check.
     var unclassified: [String] = []
+    // Classes that moved from Objective-C to Swift, compared by the rule
+    // "identical in meaning" (docs/swift-migration/phase0.md section 9).
+    var crossLanguageClasses: [String] = []
+    // Differences such a move is known to bring, each with the reason it is
+    // harmless. Reported but not a failure.
+    var classified: [String] = []
+    // Differences the runtime cannot judge, each saying what to check in the
+    // source. Reported but not a failure: the reviewer checks each one.
+    var checks: [String] = []
 
     var passed: Bool {
-        return duplicates.isEmpty && differences.isEmpty && errors.isEmpty && languageChanges.isEmpty && unknownLanguages.isEmpty && invalidLanguages.isEmpty
+        return duplicates.isEmpty && ownershipConflicts.isEmpty && differences.isEmpty && errors.isEmpty && languageChanges.isEmpty && unknownLanguages.isEmpty && invalidLanguages.isEmpty
     }
 
     var report: String {
@@ -241,6 +281,10 @@ struct RuntimeSnapshotComparisonResult {
             lines.append("DUPLICATES (a selector listed more than once in one class's method list, so which implementation runs is undefined; or a property listed more than once with different attributes):")
             lines.append(contentsOf: duplicates.map { "  " + $0 })
         }
+        if !ownershipConflicts.isEmpty {
+            lines.append("OWNERSHIP CONFLICTS (the ivar layouts contradict each other, the ivar list, or the runtime's own answer: a bug in the snapshot tool or a real surprise):")
+            lines.append(contentsOf: ownershipConflicts.map { "  " + $0 })
+        }
         if !differences.isEmpty {
             lines.append("DIFFERENCES:")
             lines.append(contentsOf: differences.map { "  " + $0 })
@@ -248,6 +292,18 @@ struct RuntimeSnapshotComparisonResult {
         if !unclassified.isEmpty {
             lines.append("UNCLASSIFIED DIFFERENCES (in classes that get no verdict):")
             lines.append(contentsOf: unclassified.map { "  " + $0 })
+        }
+        if !crossLanguageClasses.isEmpty {
+            lines.append("MOVED FROM OBJECTIVE-C TO SWIFT, compared by the rule “identical in meaning”:")
+            lines.append(contentsOf: crossLanguageClasses.map { "  class " + $0 })
+        }
+        if !checks.isEmpty {
+            lines.append("CHECK AGAINST THE SOURCE (the runtime cannot tell whether these keep the meaning; the reviewer checks each one):")
+            lines.append(contentsOf: checks.map { "  " + $0 })
+        }
+        if !classified.isEmpty {
+            lines.append("Expected differences of a move to Swift:")
+            lines.append(contentsOf: classified.map { "  " + $0 })
         }
         if !allowed.isEmpty {
             lines.append("Allowed differences:")
@@ -258,10 +314,15 @@ struct RuntimeSnapshotComparisonResult {
         }
         if !errors.isEmpty {
             lines.append("ERROR: the inputs cannot be compared.")
-        } else if !duplicates.isEmpty || !differences.isEmpty {
+        } else if !duplicates.isEmpty || !ownershipConflicts.isEmpty || !differences.isEmpty {
             lines.append("FAIL: the snapshots do not match.")
         } else if passed {
-            lines.append("PASS: the snapshots match.")
+            if crossLanguageClasses.isEmpty {
+                lines.append("PASS: the snapshots match.")
+            } else {
+                lines.append("PASS: the snapshots match, and the classes that moved to Swift are identical in meaning apart from the expected differences" +
+                             (checks.isEmpty ? "." : ", with \(checks.count) item\(checks.count == 1 ? "" : "s") to check against the source (see CHECK AGAINST THE SOURCE)."))
+            }
             lines.append(RuntimeSnapshotFormat.notCoveredByPass)
         }
         return lines.joined(separator: "\n") + "\n"
@@ -427,6 +488,11 @@ enum RuntimeSnapshotComparison {
                 result.invalidLanguages.append("class \(className): no valid language line \(beforeValid ? "after" : "before")")
             }
         } else if let beforeLanguage, let afterLanguage, known.contains(beforeLanguage), known.contains(afterLanguage) {
+            if beforeLanguage == Bytes(RuntimeSnapshotFormat.objcLanguage) && afterLanguage == Bytes(RuntimeSnapshotFormat.swiftLanguage) {
+                // A port: compared by the rule "identical in meaning".
+                compareAcrossLanguages(className: className, before: before, after: after, result: &result)
+                return
+            }
             noVerdict = beforeLanguage != afterLanguage
             if noVerdict {
                 result.languageChanges.append("class \(className) changed language from \(beforeLanguage) to \(afterLanguage)")
@@ -635,6 +701,10 @@ enum RuntimeSnapshotComparison {
                 declaredDuplicates.insert(Key(kind: fields[1], name: fields[2]))
                 continue
             }
+            if kind == RuntimeSnapshotFormat.ownershipConflictKeyword {
+                result.ownershipConflicts.append("\(label): class \(className): \(Bytes(content))")
+                continue
+            }
             let key: Key
             let detail: Bytes
             if RuntimeSnapshotFormat.singleValueKeywords.contains(kind) {
@@ -674,7 +744,8 @@ enum RuntimeSnapshotComparison {
         // begins with =, which no name or encoding does.
         // The name is positional: the second field of a DUPLICATE line is
         // its kind and the third its name; elsewhere the second is the name.
-        let keyed = kind == RuntimeSnapshotFormat.duplicateKeyword ? fields.dropFirst(3) : fields.dropFirst(2)
+        let positional = kind == RuntimeSnapshotFormat.duplicateKeyword || kind == RuntimeSnapshotFormat.ownershipConflictKeyword
+        let keyed = positional ? fields.dropFirst(3) : fields.dropFirst(2)
         let keys = keyed.map { String($0.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)[0]) }
         if let repeated = keys.first(where: { key in keys.filter { $0 == key }.count > 1 }) {
             return "repeats the field \(repeated)"
@@ -693,12 +764,27 @@ enum RuntimeSnapshotComparison {
                 return "names a kind of line that is never reported as a duplicate"
             }
             return isCount(fields[3]) ? nil : "has no count=<n> field with n a number of 2 or more"
+        case RuntimeSnapshotFormat.ownershipConflictKeyword:
+            guard fields.count == 3 else {
+                return "is an OWNERSHIP-CONFLICT line, which has exactly a reason and a subject"
+            }
+            return RuntimeSnapshotFormat.ownershipConflictReasons.contains(fields[1]) ? nil : "gives a reason that is not one of \(RuntimeSnapshotFormat.ownershipConflictReasons.joined(separator: ", "))"
         case RuntimeSnapshotFormat.languageKeyword, RuntimeSnapshotFormat.superclassKeyword, RuntimeSnapshotFormat.imageKeyword:
             return valueCountProblem(fields)
+        case RuntimeSnapshotFormat.arcFlagKeyword:
+            if let problem = valueCountProblem(fields) {
+                return problem
+            }
+            return RuntimeSnapshotFormat.arcFlags.contains(fields[1]) ? nil : "has a value that is not one of \(RuntimeSnapshotFormat.arcFlags.joined(separator: ", "))"
+        case RuntimeSnapshotFormat.strongLayoutKeyword, RuntimeSnapshotFormat.weakLayoutKeyword:
+            if let problem = valueCountProblem(fields) {
+                return problem
+            }
+            return fields.count == 1 || isLayout(fields[1]) ? nil : "has a value that is not a layout: uppercase hexadecimal bytes ending in the only 00"
         case "protocol":
             return fields.count == 2 ? nil : "is a protocol line, which has only a name"
         case "ivar":
-            return fields.count == 3 && fields[2].hasPrefix("types=") ? nil : "is an ivar line, which has exactly a name and types=<encoding>"
+            return ivarProblem(fields)
         case "class-method", "instance-method":
             let sign = kind == "class-method" ? "+" : "-"
             guard fields.count >= 3, fields[1].hasPrefix(sign), fields[1].utf8.count > 1, fields[2].hasPrefix("types=") else {
@@ -771,6 +857,35 @@ enum RuntimeSnapshotComparison {
         return rest.isEmpty ? nil : "has fields after raw=, which is always the last field of a property line"
     }
 
+    // An ivar line: ivar <name> types=[<encoding>] ownership=<label>
+    // layout=[<s, w and - with no trailing ->].
+    private static func ivarProblem(_ fields: [String]) -> String? {
+        let grammar = "is an ivar line, which has exactly a name, types=<encoding>, ownership=<label> and layout=<words>"
+        guard fields.count == 5, fields[2].hasPrefix("types="), fields[3].hasPrefix("ownership="), fields[4].hasPrefix("layout=") else {
+            return grammar
+        }
+        let label = String(fields[3].dropFirst("ownership=".count))
+        guard RuntimeSnapshotFormat.ivarOwnerships.contains(label) else {
+            return "has an ownership that is not one of \(RuntimeSnapshotFormat.ivarOwnerships.joined(separator: ", "))"
+        }
+        let words = fields[4].dropFirst("layout=".count)
+        guard words.allSatisfy({ "sw-".contains($0) }), words.last != "-" else {
+            return "has a layout that is not s, w and - with no trailing -"
+        }
+        return nil
+    }
+
+    // Whether field is a layout as the writer writes it: pairs of uppercase
+    // hexadecimal digits, the last pair 00 and no other.
+    private static func isLayout(_ field: String) -> Bool {
+        let digits = Array(field)
+        guard digits.count >= 2, digits.count % 2 == 0, digits.allSatisfy({ "0123456789ABCDEF".contains($0) }) else {
+            return false
+        }
+        let pairs = stride(from: 0, to: digits.count, by: 2).map { String(digits[$0..<($0 + 2)]) }
+        return pairs.last == "00" && !pairs.dropLast().contains("00")
+    }
+
     // What is wrong with the number of values on a line that has a keyword
     // and then at most one value, or nil. A keyword in
     // RuntimeSnapshotFormat.optionalValueKeywords may have no value; the
@@ -830,5 +945,473 @@ enum RuntimeSnapshotComparison {
             problems.append(contentsOf: offending.sorted(by: utf8Less))
         }
         return problems
+    }
+}
+
+// MARK: - Comparing a class that moved from Objective-C to Swift
+
+// The rule "identical in meaning" (docs/swift-migration/phase0.md section 9,
+// owner queue R4): methods with their type encodings, protocols, superclass
+// and the decoded property attributes must match; the systematic differences
+// that the Swift compiler brings are classified, each with its reason; what
+// the runtime cannot judge is listed as a check against the source; anything
+// else fails. The classes of difference were found by experiment, by
+// snapshotting an Objective-C class and its stage-one Swift port
+// (ModernTests/RuntimeSnapshotFixtures/RuntimeSnapshotPortFixtures.*):
+//
+//   language objc -> swift                     the trigger for this comparison
+//   ivar-arc-flag, strong- and weak-ivar-layout  classified: Swift writes no
+//                                              layouts for its storage
+//   ivar lines                                 every Objective-C ivar vanishes
+//                                              (a check each: code that reaches
+//                                              it by name breaks) and Swift's
+//                                              storage appears, named after the
+//                                              property without the underscore,
+//                                              often with no type encoding
+//                                              (classified)
+//   -.cxx_destruct added or removed            classified: each compiler adds
+//                                              it for its own storage
+//   every initializer in the Swift class (init  a check each, kept or added:
+//   family, and new-family class methods)      Swift lists -init for every
+//                                              class, and stubs for inherited
+//                                              designated initializers the
+//                                              class does not override (such as
+//                                              -initWithFrame: for an NSView
+//                                              subclass); a stub traps, and the
+//                                              runtime cannot tell it from a
+//                                              real initializer. An added one
+//                                              that overrides nothing fails
+//   the class as a whole                       a check: the runtime does not
+//                                              say which members are dynamic
+//   +load, +initialize removed                 failure: Swift cannot implement
+//                                              them; the port must move the work
+//   -dealloc removed                           failure: Swift lists -dealloc only
+//                                              when the class declares deinit
+//   a pointer encoded ^v against a pointer to
+//   an incomplete struct (^{_NSZone=}, an
+//   opaque struct), or with the const
+//   qualifier r on one side (CFString)         classified; any other pointee
+//                                              change fails
+//   any other method added, removed, or with
+//   another encoding, override or image        failure
+//   property attribute string (raw=) and
+//   backing ivar (ivar=)                       classified: Swift orders the
+//                                              codes differently and names its
+//                                              storage without the underscore,
+//                                              or has none for a computed
+//                                              property
+//   getter=/setter= present before, absent after  classified when the
+//                                              method it names is still there
+//                                              (Swift writes no G or S code)
+//   weak -> weak-or-unowned                    a check: the runtime cannot tell
+//                                              weak from unowned
+//   ownership unrecorded on either side        a check
+//   atomic -> nonatomic                        failure: every Swift property is
+//                                              nonatomic, which drops the
+//                                              accessors' serialization
+//   any other property attribute change, or a
+//   property added or removed                  failure, except the NSObject
+//                                              protocol's properties and
+//                                              @optional protocol properties,
+//                                              which clang copies into the
+//                                              class's list and Swift does not
+//                                              (classified)
+//   protocols, superclass, image               must match; a protocol listed a
+//                                              different number of times is
+//                                              classified (clang lists it once
+//                                              per adopting list)
+//   the class's runtime name                   must match: a renamed class is a
+//                                              class only in one snapshot
+extension RuntimeSnapshotComparison {
+    private static let nsObjectProtocolProperties = ["hash", "superclass", "description", "debugDescription"]
+
+    private static func compareAcrossLanguages(className: Bytes,
+                                               before: ParsedClass,
+                                               after: ParsedClass,
+                                               result: inout RuntimeSnapshotComparisonResult) {
+        result.crossLanguageClasses.append(className.description)
+        let prefix = "class \(className): "
+        func fail(_ text: String) {
+            result.differences.append(prefix + text)
+        }
+        func classify(_ text: String, _ reason: String) {
+            result.classified.append(prefix + text + "\n      expected because: " + reason)
+        }
+        func check(_ text: String, _ what: String) {
+            result.checks.append(prefix + text + "\n      check: " + what)
+        }
+        let keys = Set(before.keys).union(after.keys).sorted { lhs, rhs in
+            if lhs.kind != rhs.kind {
+                return lhs.kind < rhs.kind
+            }
+            return lhs.name < rhs.name
+        }
+        check("Swift callers bypass key-value observing and swizzling for members not marked dynamic",
+              "the runtime does not record which Swift members are dynamic; Swift code calls the others directly, not through objc_msgSend, so an observer added with key-value observing or a method swizzled or replaced at run time is skipped for those calls; check whether this class is observed or swizzled, and mark those members @objc dynamic (translation-rules.md section 7)")
+        let afterInstanceMethods = Set(after.keys.filter { $0.kind == Bytes("instance-method") }.map { $0.name })
+        let afterClassMethods = Set(after.keys.filter { $0.kind == Bytes("class-method") }.map { $0.name })
+        for key in keys {
+            let b = (before[key] ?? []).sorted()
+            let a = (after[key] ?? []).sorted()
+            if b == a {
+                continue
+            }
+            let kind = key.kind.description
+            let name = key.name.description
+            let what = describe(key)
+            switch kind {
+            case RuntimeSnapshotFormat.languageKeyword:
+                continue
+            case RuntimeSnapshotFormat.arcFlagKeyword, RuntimeSnapshotFormat.strongLayoutKeyword, RuntimeSnapshotFormat.weakLayoutKeyword:
+                classify("changed \(what) from \(describeValue(b.first ?? Bytes(""))) to \(describeValue(a.first ?? Bytes("")))",
+                         "the ivar layouts and ARC flag describe Objective-C ivars; Swift writes no layouts for its storage, whose ownership comes from the Swift declarations")
+            case "protocol":
+                if !b.isEmpty && !a.isEmpty {
+                    classify("protocol \(name) listed \(b.count) times before and \(a.count) after",
+                             "clang lists a protocol once for each list that adopts it (the class and each category or extension)")
+                } else {
+                    fail("\(b.isEmpty ? "added" : "removed") protocol \(name)")
+                }
+            case "ivar":
+                for detail in b {
+                    check("Objective-C ivar \(name) (\(detail)) is gone",
+                          "anything that reaches it by name breaks: class_getInstanceVariable, object_getIvar or ivar_getOffset with this name, key-value coding falling back to the ivar (accessInstanceVariablesDirectly), a xib outlet connected to the ivar, and obj->\(name) in Objective-C; Swift's storage is named differently, usually after the property without the underscore")
+                }
+                for detail in a {
+                    classify("Swift storage \(name) (\(detail))",
+                             "a Swift class lists its stored properties as ivars named after the property, often with no Objective-C type encoding; their ownership comes from the Swift declaration")
+                }
+            case "class-method", "instance-method":
+                compareMethodAcrossLanguages(name: name, kind: kind, before: b, after: a, fail: fail, classify: classify, check: check)
+            case "class-property", "instance-property":
+                let methods = kind == "class-property" ? afterClassMethods : afterInstanceMethods
+                let sign = kind == "class-property" ? "+" : "-"
+                compareProperty(name: name, kind: kind, before: b, after: a,
+                                hasMethod: { methods.contains(Bytes(sign + $0)) },
+                                fail: fail, classify: classify, check: check)
+            default:
+                // superclass, image, and any other line must match.
+                if b.count == 1 && a.count == 1 {
+                    fail("changed \(what)\n      before: \(describeValue(b[0]))\n      after:  \(describeValue(a[0]))")
+                } else {
+                    fail("changed \(what)\n      before: \(joined(b, " | "))\n      after:  \(joined(a, " | "))")
+                }
+            }
+        }
+        // Every initializer of the Swift class, kept or added: when the
+        // class does not declare or inherit it, Swift's version is a stub
+        // that traps, and nothing in the runtime tells a stub from a real
+        // implementation.
+        for key in after.keys.sorted(by: { ($0.kind, $0.name) < ($1.kind, $1.name) })
+            where (key.kind == Bytes("instance-method") || key.kind == Bytes("class-method")) && isInitializer(key.name.description) {
+            check("initializer \(describe(key)) is in the Swift class",
+                  "it may be a stub that Swift synthesizes for an inherited designated initializer the class does not override, which traps (“Use of unimplemented initializer”) when called, so Objective-C code that calls it (for -init, also +new and [[X alloc] init]) crashes; check that the Swift class declares this initializer or inherits it (Swift inherits its superclass's designated initializers only when the class declares none of its own and every stored property has a default)")
+        }
+    }
+
+    private static func compareMethodAcrossLanguages(name: String,
+                                                     kind: String,
+                                                     before: [Bytes],
+                                                     after: [Bytes],
+                                                     fail: (String) -> Void,
+                                                     classify: (String, String) -> Void,
+                                                     check: (String, String) -> Void) {
+        let what = "\(kind) \(name)"
+        if after.isEmpty {
+            switch name {
+            case "-.cxx_destruct":
+                classify("removed \(what)", "clang adds .cxx_destruct to destroy ARC and C++ ivars; Swift destroys its own storage")
+            case "+load", "+initialize":
+                fail("removed \(what): a Swift class cannot implement \(name) (Swift rejects it), so the port must do its work elsewhere, explicitly, and this difference needs the owner")
+            case "-dealloc":
+                fail("removed \(what): Swift lists -dealloc only for a class that declares deinit, so the port has none; this fails, rather than asking for a check, until there is a way to record that nothing -dealloc did is still needed")
+            default:
+                fail("removed \(what) \(joined(before, " | "))")
+            }
+            return
+        }
+        if before.isEmpty {
+            switch name {
+            case "-.cxx_destruct":
+                classify("added \(what)", "Swift adds .cxx_destruct to destroy its stored properties")
+            case _ where isInitializer(name) && after.allSatisfy({ fields(of: $0)["also-implemented-by"] != nil }):
+                // An initializer that overrides a superclass's, such as the
+                // -init Swift lists for every class or the -initWithFrame:
+                // it lists for an NSView subclass: checked below, with every
+                // initializer of the Swift class.
+                break
+            default:
+                fail("added \(what) \(joined(after, " | ")): Swift exposes a selector the Objective-C class did not have (for example the setter of an @objc private(set) var)")
+            }
+            return
+        }
+        guard before.count == 1, after.count == 1 else {
+            fail("changed \(what)\n      before: \(joined(before, " | "))\n      after:  \(joined(after, " | "))")
+            return
+        }
+        let b = fields(of: before[0])
+        let a = fields(of: after[0])
+        let rest = { (f: [String: String]) in f.filter { $0.key != "types" } }
+        if rest(b) == rest(a), let bt = b["types"], let at = a["types"], encodingsDifferOnlyInPointees(bt, at) {
+            classify("changed \(what) types from \(bt) to \(at)",
+                     "the encodings differ only where Swift writes ^v for a pointer to an incomplete struct (NSZone *, an OpaquePointer), or adds the const qualifier r (CFString); the pointers have the same size and pointee, and are passed identically")
+            return
+        }
+        fail("changed \(what)\n      before: \(before[0])\n      after:  \(after[0])")
+    }
+
+    // The fields of a method line's details or a property line's details:
+    // key=value fields by key, and bare flags with an empty value.
+    private static func fields(of detail: Bytes) -> [String: String] {
+        var result = [String: String]()
+        for field in detail.description.split(separator: " ") {
+            let parts = field.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
+            result[String(parts[0])] = parts.count == 2 ? String(parts[1]) : ""
+        }
+        return result
+    }
+
+    private static func compareProperty(name: String,
+                                        kind: String,
+                                        before: [Bytes],
+                                        after: [Bytes],
+                                        hasMethod: (String) -> Bool,
+                                        fail: (String) -> Void,
+                                        classify: (String, String) -> Void,
+                                        check: (String, String) -> Void) {
+        let what = "\(kind) \(name)"
+        if after.isEmpty {
+            let attributes = fields(of: before[0])
+            if kind == "instance-property" && nsObjectProtocolProperties.contains(name) && attributes["readonly"] != nil {
+                classify("removed \(what)",
+                         "clang copies the NSObject protocol's properties into the class's list for each protocol list derived from NSObject; Swift does not; the accessors are NSObject's and are unchanged")
+            } else if attributes["optional"] != nil {
+                classify("removed \(what)",
+                         "an @optional property of an adopted protocol, which clang copies into the class's list and Swift does not; its accessors, if the class has any, are compared as methods")
+            } else {
+                fail("removed \(what) \(joined(before, " | "))")
+            }
+            return
+        }
+        if before.isEmpty {
+            fail("added \(what) \(joined(after, " | "))")
+            return
+        }
+        if Set(before) == Set(after) {
+            classify("\(what) listed \(before.count) times before and \(after.count) after",
+                     "clang lists a protocol's properties once for each list that adopts the protocol")
+            return
+        }
+        guard Set(before).count == 1, Set(after).count == 1 else {
+            fail("changed \(what)\n      before: \(joined(before, " | "))\n      after:  \(joined(after, " | "))")
+            return
+        }
+        var b = fields(of: before[0])
+        var a = fields(of: after[0])
+        var problems = [String]()
+        var expected = [String]()
+        var checks = [String]()
+        if b["type"] != a["type"] {
+            problems.append("type \(b["type"] ?? "") became \(a["type"] ?? "")")
+        }
+        let bAtomic = b["atomic"] != nil
+        let aAtomic = a["atomic"] != nil
+        if bAtomic && !aAtomic {
+            problems.append("atomic became nonatomic: every Swift property is nonatomic, so its accessors no longer serialize reads and writes; the port needs a lock where the atomicity mattered, and the change needs the owner")
+        } else if bAtomic != aAtomic {
+            problems.append("nonatomic became atomic")
+        }
+        for flag in ["readonly", "dynamic", "optional"] where (b[flag] != nil) != (a[flag] != nil) {
+            problems.append(b[flag] != nil ? "is no longer \(flag)" : "became \(flag)")
+        }
+        let bOwnership = b["ownership"] ?? ""
+        let aOwnership = a["ownership"] ?? ""
+        if bOwnership != aOwnership {
+            if bOwnership == "weak" && aOwnership == "weak-or-unowned" {
+                checks.append("weak became weak-or-unowned: the runtime cannot tell Swift's weak from unowned or unowned(unsafe); check that the Swift declaration is weak")
+            } else if bOwnership == "unrecorded" || aOwnership == "unrecorded" {
+                checks.append("ownership \(bOwnership) became \(aOwnership): the runtime does not record one of them; check the declarations agree")
+            } else {
+                problems.append("ownership \(bOwnership) became \(aOwnership)")
+            }
+        }
+        for accessor in ["getter", "setter"] {
+            let bName = b[accessor]
+            let aName = a[accessor]
+            if bName == aName {
+                continue
+            }
+            if let bName, aName == nil, !bName.isEmpty, hasMethod(bName) {
+                expected.append("\(accessor)=\(bName) is not written: Swift writes no G or S code for a custom accessor name, and the method \(bName) is there")
+            } else {
+                problems.append("\(accessor) \(bName ?? "(none)") became \(aName ?? "(none)")")
+            }
+        }
+        if b["ivar"] != a["ivar"] {
+            expected.append("backing ivar \(b["ivar"].map { $0.isEmpty ? "(none)" : $0 } ?? "(none)") became \(a["ivar"].map { $0.isEmpty ? "(none)" : $0 } ?? "(none)"): Swift names its storage without the underscore, and has none an Objective-C ivar list can name for a computed or closure-typed property")
+        }
+        for key in ["type", "ownership", "atomic", "nonatomic", "readonly", "dynamic", "optional", "getter", "setter", "ivar", "raw"] {
+            b[key] = nil
+            a[key] = nil
+        }
+        if b != a {
+            problems.append("other fields differ")
+        }
+        if problems.isEmpty && before[0] != after[0] {
+            expected.append("the attribute string differs (raw=): Swift writes the attribute codes in another order")
+        }
+        if !problems.isEmpty {
+            fail("changed \(what): \(problems.joined(separator: "; "))\n      before: \(before[0])\n      after:  \(after[0])")
+            return
+        }
+        for text in checks {
+            check("changed \(what)\n      before: \(before[0])\n      after:  \(after[0])", text)
+        }
+        if !expected.isEmpty {
+            classify("changed \(what)\n      before: \(before[0])\n      after:  \(after[0])", expected.joined(separator: "; "))
+        }
+    }
+
+    // Whether a selector, with its sign, is in the init family (an instance
+    // method: init followed by nothing, a colon, or an uppercase letter) or
+    // the new family (a class method, the same rule with new), as the
+    // Objective-C method-family rule defines them.
+    static func isInitializer(_ signedSelector: String) -> Bool {
+        let family: String
+        if signedSelector.hasPrefix("-") {
+            family = "init"
+        } else if signedSelector.hasPrefix("+") {
+            family = "new"
+        } else {
+            return false
+        }
+        let selector = signedSelector.dropFirst()
+        guard selector.hasPrefix(family) else {
+            return false
+        }
+        guard let next = selector.dropFirst(family.count).first else {
+            return true
+        }
+        return next == ":" || next.isUppercase
+    }
+
+    // Whether two method type encodings are the same apart from pointers that
+    // pointerTypesAreEquivalent accepts, component by component (a type and
+    // its frame offset).
+    static func encodingsDifferOnlyInPointees(_ lhs: String, _ rhs: String) -> Bool {
+        guard let l = encodingComponents(lhs), let r = encodingComponents(rhs), l.count == r.count, lhs != rhs else {
+            return false
+        }
+        for (x, y) in zip(l, r) where x != y {
+            guard x.offset == y.offset, pointerTypesAreEquivalent(x.type, y.type) else {
+                return false
+            }
+        }
+        return true
+    }
+
+    // The pointer encodings that swiftc writes differently from clang for the
+    // same C type, found by compiling one method per pointer type in each
+    // language: ^v for a pointer to an incomplete struct (NSZone *, which
+    // Swift imports as NSZone?, and a pointer to an opaque struct, which it
+    // imports as OpaquePointer), where clang writes ^{Name=}; and r^{...}
+    // for a CF type such as CFString, where clang writes ^{...} (the const
+    // qualifier). Pointers to scalars, objects, selectors, complete structs
+    // and char * are written alike, so any other difference (a pointee of
+    // another type or size, ^@ against ^v, another depth) is not accepted.
+    static func pointerTypesAreEquivalent(_ lhs: String, _ rhs: String) -> Bool {
+        if lhs == rhs {
+            return true
+        }
+        let l = lhs.hasPrefix("r") ? String(lhs.dropFirst()) : lhs
+        let r = rhs.hasPrefix("r") ? String(rhs.dropFirst()) : rhs
+        if l == r {
+            return l.hasPrefix("^")
+        }
+        guard l.hasPrefix("^"), r.hasPrefix("^") else {
+            return false
+        }
+        let lp = String(l.dropFirst())
+        let rp = String(r.dropFirst())
+        if (lp == "v" && isIncompleteStruct(rp)) || (rp == "v" && isIncompleteStruct(lp)) {
+            return true
+        }
+        return lp.hasPrefix("^") && rp.hasPrefix("^") && pointerTypesAreEquivalent(lp, rp)
+    }
+
+    // A struct encoding with no fields, {Name=}: an incomplete struct.
+    private static func isIncompleteStruct(_ type: String) -> Bool {
+        return type.hasPrefix("{") && type.hasSuffix("=}") && type.filter { $0 == "{" }.count == 1
+    }
+
+    // Splits a method type encoding into its types, each with its frame
+    // offset (the digits after it), or returns nil for an encoding it cannot
+    // read. Qualifiers (r, n, N, o, O, R, V) stay with their type.
+    static func encodingComponents(_ encoding: String) -> [(type: String, offset: String)]? {
+        let chars = Array(encoding)
+        var i = 0
+        func skipType() -> Bool {
+            while i < chars.count, "rnNoORVA".contains(chars[i]) {
+                i += 1
+            }
+            guard i < chars.count else {
+                return false
+            }
+            let c = chars[i]
+            i += 1
+            switch c {
+            case "^":
+                return skipType()
+            case "@":
+                if i < chars.count, chars[i] == "?" {
+                    i += 1
+                } else if i < chars.count, chars[i] == "\"" {
+                    guard let close = chars[(i + 1)...].firstIndex(of: "\"") else {
+                        return false
+                    }
+                    i = close + 1
+                }
+                return true
+            case "{", "(", "[":
+                let open = c
+                let close: Character = c == "{" ? "}" : (c == "(" ? ")" : "]")
+                var depth = 1
+                var quoted = false
+                while i < chars.count, depth > 0 {
+                    if quoted {
+                        quoted = chars[i] != "\""
+                    } else if chars[i] == "\"" {
+                        quoted = true
+                    } else if chars[i] == open {
+                        depth += 1
+                    } else if chars[i] == close {
+                        depth -= 1
+                    }
+                    i += 1
+                }
+                return depth == 0
+            case "b":
+                while i < chars.count, chars[i].isNumber {
+                    i += 1
+                }
+                return true
+            default:
+                return true
+            }
+        }
+        var result = [(type: String, offset: String)]()
+        while i < chars.count {
+            let start = i
+            guard skipType() else {
+                return nil
+            }
+            let type = String(chars[start..<i])
+            let offsetStart = i
+            while i < chars.count, chars[i].isNumber {
+                i += 1
+            }
+            result.append((type, String(chars[offsetStart..<i])))
+        }
+        return result
     }
 }
