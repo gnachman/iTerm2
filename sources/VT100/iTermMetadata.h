@@ -98,7 +98,7 @@ iTermImmutableMetadataGetExternalAttributesIndex(iTermImmutableMetadata obj);
 // metadata. Safe to call on stack-local metadata structs.
 void iTermImmutableMetadataDeriveLineAttributeFromExternalAttributes(iTermImmutableMetadata *metadata);
 
-void iTermMetadataInitFromArray(iTermMetadata *obj, NSArray *array);
+void iTermMetadataInitFromArray(iTermMetadata *obj, NSArray * _Nullable array);
 NSArray *iTermImmutableMetadataEncodeToArray(iTermImmutableMetadata obj);
 NSArray *iTermMetadataEncodeToArray(iTermMetadata obj);
 

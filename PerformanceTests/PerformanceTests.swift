@@ -218,7 +218,7 @@ class FakeSession: NSObject {
         return 0
     }
     
-    func screenSSHLocation() -> String {
+    func screenSSHLocation() -> String? {
         return "localhost"
     }
     

@@ -22,8 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readonly) NSArray<LineBlock *> *blocks;
 @property (nonatomic, readonly) NSUInteger count;
-@property (nonatomic, readonly) LineBlock *lastBlock;
-@property (nonatomic, readonly) LineBlock *firstBlock;
+@property (nonatomic, readonly, nullable) LineBlock *lastBlock;
+@property (nonatomic, readonly, nullable) LineBlock *firstBlock;
 @property (nonatomic) BOOL resizing;
 @property (nonatomic, readonly) NSString *dumpForCrashlog;
 @property (nonatomic, weak) id<iTermLineBlockArrayDelegate> delegate;

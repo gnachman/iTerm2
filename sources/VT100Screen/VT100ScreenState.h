@@ -306,7 +306,7 @@ extern NSString *const kScreenStateOpenAidStackKey;
 @property (nonatomic, readonly) int numberOfLines;
 
 - (iTermImmutableMetadata)metadataOnLine:(int)lineNumber;
-- (iTermBidiDisplayInfo *)bidiInfoForLine:(int)line;
+- (nullable iTermBidiDisplayInfo *)bidiInfoForLine:(int)line;
 
 // Like getLineAtIndex:withBuffer:, but uses dedicated storage for the result.
 // This function is dangerous! It writes to an internal buffer and returns a
@@ -343,8 +343,8 @@ extern NSString *const kScreenStateOpenAidStackKey;
 - (__kindof id<IntervalTreeImmutableObject> _Nullable)objectOnOrBeforeLine:(int)line ofClass:(Class)cls;
 - (NSArray<id<IntervalTreeImmutableObject>> *)objectsOnLine:(int)line ofClass:(Class)cls;
 - (NSArray<iTermTerminalButtonPlace *> *)buttonsInRange:(VT100GridRange)range;
-- (VT100GridCoordRange)rangeOfBlockWithID:(NSString *)blockID;
-- (id<iTermBlockMarkReading> _Nullable)blockMarkWithID:(NSString *)blockID;
+- (VT100GridCoordRange)rangeOfBlockWithID:(nullable NSString *)blockID;
+- (id<iTermBlockMarkReading> _Nullable)blockMarkWithID:(nullable NSString *)blockID;
 // The block marks on absolute line `y`, by block ID, each covering the one line.
 - (NSDictionary<NSString *, iTermRange *> * _Nullable)blockMarkDictionaryOnLine:(long long)y;
 - (BOOL)haveFoldsInRange:(NSRange)absLineRange;

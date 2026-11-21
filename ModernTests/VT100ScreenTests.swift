@@ -2424,7 +2424,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
         return 0
     }
     
-    func screenSSHLocation() -> String {
+    func screenSSHLocation() -> String? {
         return "localhost"
     }
     

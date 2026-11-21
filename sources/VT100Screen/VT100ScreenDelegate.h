@@ -569,7 +569,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
                                    sshArgs:(NSString * _Nonnull)sshArgs
                     injectShellIntegration:(BOOL)injectShellIntegration;
 - (NSInteger)screenEndSSH:(NSString * _Nonnull)uniqueID;
-- (NSString * _Nonnull)screenSSHLocation;
+- (NSString * _Nullable)screenSSHLocation;
 // Returns NO if the connection's framer output must not start recovery because the
 // connection was abandoned.
 - (BOOL)screenBeginFramerRecovery:(int)parentDepth;

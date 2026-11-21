@@ -22,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 // when there is nothing to recompute.
 - (BOOL)anyLineNeedsBidiReload;
 - (iTermBidiDisplayInfo * _Nullable)_bidiInfoForLineNumber:(int)lineNum width:(int)width;
-- (iTermBidiDisplayInfo * _Nullable)subBidiInfo:(iTermBidiDisplayInfo *)bidi
+- (iTermBidiDisplayInfo * _Nullable)subBidiInfo:(iTermBidiDisplayInfo * _Nullable)bidi
                                           range:(NSRange)range
                                           width:(int)width;
 

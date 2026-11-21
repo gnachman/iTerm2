@@ -154,7 +154,7 @@ migrationIndex:(iTermExternalAttributeIndex * _Nullable)migrationIndex
 
 // Replace the external attributes in the last entry.
 // numEntries > first
-- (void)setLastExternalAttributeIndex:(iTermExternalAttributeIndex *)eaIndex;
+- (void)setLastExternalAttributeIndex:(nullable iTermExternalAttributeIndex *)eaIndex;
 
 - (void)setRTLFound:(BOOL)rtlFound atIndex:(NSInteger)index;
 

@@ -15,9 +15,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setSize:(VT100GridSize)proposedSize
       visibleLines:(VT100GridRange)previouslyVisibleLineRange
-         selection:(iTermSelection *)selection
+         selection:(nullable iTermSelection *)selection
            hasView:(BOOL)hasView
-       delegate:(id<VT100ScreenDelegate>)delegate;
+       delegate:(nullable id<VT100ScreenDelegate>)delegate;
 
 - (void)restoreInitialSizeWithDelegate:(id<VT100ScreenDelegate>)delegate;
 
@@ -25,7 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 // position it had when the state was saved (see -[VT100Grid preferredCursorPosition]).
 - (void)restorePreferredCursorPositionIfPossible;
 
-- (void)setSize:(VT100GridSize)size delegate:(id<VT100ScreenDelegate>)delegate;
+- (void)setSize:(VT100GridSize)size delegate:(nullable id<VT100ScreenDelegate>)delegate;
 
 - (void)destructivelySetScreenWidth:(int)width height:(int)height;
 
