@@ -68,7 +68,7 @@ Evidence, with every command and its output, is in
 }
 ```
 
-Inside: compare with `(path as NSString).isEqual(to: cached as String)`, store `(path as NSString).copy()` as the key (a `copy() as? NSString` could turn a non-string into nil), call `NSEqualSizes`, use `image?.size ?? .zero`, add a main-thread beta assertion at entry. The runtime snapshot must keep `-imageAtPath:ofSize:flipped:` with encoding `@44@0:8@16{CGSize=dd}24B40`.
+As ported: the key is compared with `NSString` `-isEqual:` (literal, as `-isEqualToString:` is, and the `String` parameter bridges back to the caller's `NSString` unchanged, so the comparison sees its original UTF-16 units), stored as `key?.copy() as? NSString` (the key is always an `NSString` here, so the cast cannot drop it), `NSEqualSizes`, `image?.size ?? .zero`, and a main-thread `it_betaAssert` at entry (concurrency.md §9 and §10). The runtime snapshot must keep `-imageAtPath:ofSize:flipped:` with encoding `@44@0:8@16{CGSize=dd}24B40`.
 
 Characterization tests (step 3), fixtures written to a temporary directory:
 
@@ -87,9 +87,10 @@ Characterization tests (step 3), fixtures written to a temporary directory:
 
 ## Open questions and risks
 
-- A NaN size is left out of the tests: it reaches `lockFocus` through `it_imageOfSize:` and was not probed; the app passes only 16x16. Probe it in step 3 before deciding.
-- How swiftc encodes the `Bool` parameter on x86_64 is untested, and cannot be tested by running here: this machine has no Rosetta. Check it another way at the close (the runtime snapshot of an x86_64 build, read without running), or leave it to the owner.
-- Thread confinement is by reading on four of five paths; the beta assertion will show any exception.
+- A NaN size is left out of the tests and was not probed: it reaches `lockFocus` through `it_imageOfSize:`; the app passes only 16x16.
+- Resolved: in an x86_64 build the Swift method is encoded `@44@0:8@16{CGSize=dd}24c40`, the same `c` as Objective-C `BOOL` there (E19). Nothing was run for x86_64: no Rosetta.
+- Thread confinement is by reading on four of five paths; the port's beta assertion will show any exception in nightly and beta builds.
+- A non-string icon path in a hand-edited profile now raises in the Swift bridging thunk instead of inside AppKit; the app crashes on either (E19).
 
 ## Considered and rejected
 

@@ -682,3 +682,132 @@ Full suite with both commits applied, `tools/run_tests.expect -parallel`
 when re-run alone and with its class without `-parallel`; it does not touch
 this unit. Two sibling `AsyncFilter` tests are already disabled as flaky in
 `bugs.md`.
+
+## E19. The `test` and `port` commits
+
+**Characterization tests.** `ModernTests/iTermCacheableImageTests.swift`:
+class `iTermCacheableImageTests` (15 tests, no `PTYSession`) and class
+`iTermCacheableImageSessionTests` (1 test through `PTYSession.tabGraphic`,
+kept apart because creating a session reaches the untriaged nullability
+violation logged in `bugs.md`, "`-screenRestoreState:` receives nil while a
+session is created"). Plus one Objective-C test added to
+`ModernTests/iTermCacheableImageNilPathTests.m`,
+`testMutatingThePassedPathDoesNotChangeTheCachedKey`: Swift cannot exercise
+the `copy` of the key, because a mutable string passed from Swift is
+bridged to a new `String` at the call. All 20 tests passed against the
+Objective-C class (`tools/run_tests.expect ModernTests/iTermCacheableImageTests
+ModernTests/iTermCacheableImageSessionTests ModernTests/iTermCacheableImageNilPathTests`).
+
+Mutation table: each a one-edit change of the Objective-C `.m`
+(`tmp/unit-iTermCacheableImage/mutate.sh` and `mutate2.sh` in lane-1), the
+three classes run, the `.m` restored from HEAD and checked byte-identical
+after every run. The session test was in `iTermCacheableImageTests` at the
+time; its body is unchanged since.
+
+| Mutation | Tests that failed |
+|---|---|
+| M1 return the cached image whenever there is one | path, size and flip miss tests; failed load replaces the entry; precomposed versus decomposed; session; nil path replaces the image |
+| M2 never store the path | same inputs hit; equal string hits; session; mutable key; nil path replaces |
+| M3 compare with `compare:` (canonical equivalence) | precomposed versus decomposed |
+| M4 a failed load can be a hit | a failed load is never a hit |
+| M5 keep the old image when a load fails | failed load replaces the entry; session; nil path replaces |
+| M6 drop the flip | both flip tests |
+| M7 ignore size in the hit test | size miss |
+| M8 ignore flipped in the hit test | flip miss |
+| M9 never resize | another size; zero size; both flip tests; session |
+| M10 store the passed string without `copy` | mutable key (Objective-C) |
+| M11 return an empty image instead of nil | every nil test, Swift and Objective-C |
+| M12 always flip | natural size kept; another size produced |
+| M13 always redraw at the requested size | none: an equivalent mutant (the result has the same size and colors; only the object's provenance differs, which nothing observes) |
+
+The decomposed spelling of a name in the precomposed-versus-decomposed
+test: the test accepts either a nil result or an image `!==` the first, so
+it does not depend on whether the file system opens both spellings; it
+requires the third call, with the precomposed spelling again, to miss too.
+
+Nullability sanitizer at the test state: the two classes without a session,
+19 passed, 0 reports (run `nullability-20261121-144253`); the session class
+aborts on the logged `VT100ScreenMutableState.m:7190` violation, before
+the code under test runs (run `nullability-20261121-144402`).
+
+**Port.** Files: `sources/SessionIcons/iTermCacheableImage.swift` added;
+`iTermCacheableImage.h` and `.m` deleted; the import removed from
+`PTYSession.m` and, with its two comment lines, from the bridging header,
+which is then byte-identical to its content before the `annotate` commit;
+the project file edited by hand (8 lines: the `.m` entries become `.swift`
+entries modelled on `SwiftMigrationHelpers.swift`, the `.h` entries go); the
+Objective-C test file's `#import "iTermCacheableImage.h"` replaced by a
+local `@interface` for the Swift class, as other ModernTests Objective-C
+files do, because ModernTests cannot import `iTerm2SharedARC-Swift.h`.
+
+| Check | Command | Result |
+|---|---|---|
+| (a) tests unchanged | `shasum` of the two test files against the test-state copies, then the three classes | Swift file byte-identical; Objective-C file differs only in the import (above); 20 passed |
+| (b) runtime snapshot | `tools/swift_migration/runtime_snapshot.sh` before and after, `compare_runtime_snapshots.sh before after` | PASS, exit 0; `-imageAtPath:ofSize:flipped:` `@44@0:8@16{CGSize=dd}24B40` unchanged; `-init` added (inherited `NSObject.init()`, also implemented by NSObject); 6 checks against the source, answered below |
+| (c) what Objective-C sees | the generated `iTerm2SharedARC-Swift.h` | `SWIFT_CLASS_NAMED("iTermCacheableImage") @interface iTermCacheableImage : NSObject` / `- (NSImage * _Nullable)imageAtPath:(NSString * _Nullable)path ofSize:(NSSize)size flipped:(BOOL)flipped SWIFT_WARN_UNUSED_RESULT;` / `- (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;`: the annotated header's declaration |
+| (d) lints | `swift_lints.py --staged --message <port message>` | 0 findings in `iTermCacheableImage.swift` (the 6 force-unwrap findings are in the test file, which the staged port change counts as added; it is not a migration file in its own `test` commit). `swift_ast_lints.py` could not run: no capture in the lane (exit 3); by reading, the file has no integer arithmetic, no integer initializer, no pointer argument and no implicitly unwrapped Objective-C value |
+| (e) build | `tools/build.sh` | succeeded; only the three known Companion warnings (the bridging header changed) and the AppIntents notice |
+| (f) sanitizers | `sanitizer_tests.sh nullability` and `integer` | nullability: 19 passed, 0 reports; the session class aborts on the logged violation only; integer: 20 passed, 0 reports |
+| (h) full suite | `tools/run_tests.expect -parallel` | 11,992 passed, 688 skipped, 0 failed (7 min 49 s) |
+
+Answers to the snapshot's checks: nothing reaches the four vanished ivars
+by name (the class name appears in no other file than the unit, its tests
+and `PTYSession.m`, which uses only `alloc`, `init`, `release` and the
+method; the class has no properties, so no key-value coding key, and the
+census found no key-value coding, xib or registry reference); nothing
+observes or swizzles the class; `-init` is a real initializer, inherited
+because the class declares none and every stored property has a default,
+and it is exercised from Objective-C by `[[iTermCacheableImage alloc] init]`
+in `PTYSession.m` (the session test) and in the Objective-C tests.
+
+(g) Lifetime: `PTYSession.m` is compiled with manual reference counting;
+`[[iTermCacheableImage alloc] init]` returns +1 and `[_customIcon release]`
+in `-dealloc` balances it. A Swift `@objc` class descends from `NSObject`,
+whose `retain` and `release` it inherits, so that code is unchanged in
+meaning. The returned image comes back at +0 from the Swift thunk, as it
+did from ARC Objective-C.
+
+Non-string path probe (`tmp/unit-iTermCacheableImage/probe/` in lane-1:
+`Port.swift` with the port's signature, `main.m` with a copy of the
+Objective-C body, `@42` passed as the path): both raise
+`NSInvalidArgumentException` (`-[NSConstantIntegerNumber length]:
+unrecognized selector`). The Objective-C body raises inside
+`-initWithContentsOfFile:` after storing the number as the key and the new
+size and flipped state; the Swift port raises in the bridging thunk before
+its body runs, so it stores nothing. In the app both are an uncaught
+exception, and the app crashes on exceptions
+(`NSApplicationCrashOnExceptions`, `iTermApplicationDelegate.m:1477`), so
+the outcome is the same; the different stored state is visible only to code
+that catches the exception and calls again, which no code does. It needs a
+hand-edited profile with a non-string icon path.
+
+**x86_64.**
+(i) Rosetta is not available, so nothing ran for x86_64. The app was built
+for x86_64 into a separate directory, without touching the lane's normal
+build products:
+
+```bash
+X=$PWD/tmp/unit-iTermCacheableImage/x86
+xcodebuild -scheme iTerm2 -configuration Development -destination 'generic/platform=macOS' \
+    -skipPackagePluginValidation -derivedDataPath $X/DerivedData \
+    CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+    ARCHS=x86_64 ONLY_ACTIVE_ARCH=NO SYMROOT=$X/Build OBJROOT=$X/Build/Intermediates.noindex build
+otool -ov $X/Build/Development/iTerm2.app/Contents/MacOS/iTerm2.debug.dylib
+```
+
+`BUILD SUCCEEDED` (2 min); `lipo -archs` gives `x86_64`. No warning in a
+file this unit touches; the warnings printed are in vendored C, the
+WebExtensions framework, `it2cli` and the three known Companion files, all
+untouched. The class's method list in the x86_64 binary:
+
+```
+_OBJC_CLASS_$_iTermCacheableImage  (Swift class, superclass NSObject)
+  types @44@0:8@16{CGSize=dd}24c40   imp ...iTermCacheableImageC5image6atPath2of7flipped...FTo
+  types @16@0:8                      imp ...iTermCacheableImageCACycfcTo   (init)
+  types v16@0:8                      imp ...iTermCacheableImageCfETo       (.cxx_destruct)
+```
+
+swiftc encodes the `Bool` parameter as `c` on x86_64, as clang encodes
+`BOOL` there, so the encoding matches the Objective-C method's on Intel
+(on arm64 both are `B`). The open question in phase0.md section 9 about
+`Bool` on Intel is answered for this method: no difference.

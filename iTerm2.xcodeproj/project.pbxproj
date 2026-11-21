@@ -868,8 +868,7 @@
 		531E71F72229A69C00915960 /* iTermExpressionParser+Private.h in Headers */ = {isa = PBXBuildFile; fileRef = 531E71F62229A69C00915960 /* iTermExpressionParser+Private.h */; };
 		532755852387821C00C50732 /* iTermProcessMonitor.h in Headers */ = {isa = PBXBuildFile; fileRef = 532755832387821C00C50732 /* iTermProcessMonitor.h */; };
 		532755862387821C00C50732 /* iTermProcessMonitor.m in Sources */ = {isa = PBXBuildFile; fileRef = 532755842387821C00C50732 /* iTermProcessMonitor.m */; };
-		532F942B215DFEF600D509E4 /* iTermCacheableImage.h in Headers */ = {isa = PBXBuildFile; fileRef = 532F9429215DFEF600D509E4 /* iTermCacheableImage.h */; };
-		532F942C215DFEF600D509E4 /* iTermCacheableImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 532F942A215DFEF600D509E4 /* iTermCacheableImage.m */; };
+		EF60A64AC2C3931A26536FB1 /* iTermCacheableImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C39BDCC0886A7B3E89A53CC /* iTermCacheableImage.swift */; };
 		5337A315203E065300024BEA /* iTermPowerManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 5337A313203E065300024BEA /* iTermPowerManager.h */; };
 		5337A316203E065300024BEA /* iTermPowerManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5337A314203E065300024BEA /* iTermPowerManager.m */; };
 		533BDAC320DB5CE100E26F0A /* NSObject+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30CE186D1414007F550F /* NSObject+iTerm.m */; };
@@ -5926,8 +5925,7 @@
 		531F3F9FB14C3EA734F70D35 /* AILiveHarness.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AILiveHarness.swift; sourceTree = "<group>"; };
 		532755832387821C00C50732 /* iTermProcessMonitor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermProcessMonitor.h; sourceTree = "<group>"; };
 		532755842387821C00C50732 /* iTermProcessMonitor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermProcessMonitor.m; sourceTree = "<group>"; };
-		532F9429215DFEF600D509E4 /* iTermCacheableImage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCacheableImage.h; sourceTree = "<group>"; };
-		532F942A215DFEF600D509E4 /* iTermCacheableImage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCacheableImage.m; sourceTree = "<group>"; };
+		3C39BDCC0886A7B3E89A53CC /* iTermCacheableImage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermCacheableImage.swift; sourceTree = "<group>"; };
 		5337A313203E065300024BEA /* iTermPowerManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPowerManager.h; sourceTree = "<group>"; };
 		5337A314203E065300024BEA /* iTermPowerManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPowerManager.m; sourceTree = "<group>"; };
 		534690231C94FE8000B7E4E9 /* overflowImage.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = overflowImage.png; sourceTree = "<group>"; };
@@ -14770,8 +14768,7 @@
 			children = (
 				A67F61FB214397CD0093940A /* iTermGraphicSource.h */,
 				A67F61FC214397CD0093940A /* iTermGraphicSource.m */,
-				532F9429215DFEF600D509E4 /* iTermCacheableImage.h */,
-				532F942A215DFEF600D509E4 /* iTermCacheableImage.m */,
+				3C39BDCC0886A7B3E89A53CC /* iTermCacheableImage.swift */,
 			);
 			path = SessionIcons;
 			sourceTree = "<group>";
@@ -16543,7 +16540,6 @@
 				53C2D3A52152CA3900FF6471 /* NSUserDefaults+iTerm.h in Headers */,
 				A6047134213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h in Headers */,
 				A66719341DCE36C3000CE608 /* iTermQuickLookController.h in Headers */,
-				532F942B215DFEF600D509E4 /* iTermCacheableImage.h in Headers */,
 				A61A85A924F23C9B00B03880 /* iTermGlobalSearchOutlineView.h in Headers */,
 				A65429AF20C492F000CE71B1 /* iTermParameterPanelWindowController.h in Headers */,
 				A667C26B277B8DE2006B4DEF /* VT100ScreenMutableState.h in Headers */,
@@ -19741,7 +19737,7 @@
 				A68CB8632E4006A8002531F5 /* HighlightBrowserTrigger.swift in Sources */,
 				A6AD64422F984E0900A216BA /* iTermLoggingHelper.m in Sources */,
 				A6BEE47E26E7E4CC009C0C2C /* PTYSessionZoomState.swift in Sources */,
-				532F942C215DFEF600D509E4 /* iTermCacheableImage.m in Sources */,
+				EF60A64AC2C3931A26536FB1 /* iTermCacheableImage.swift in Sources */,
 				A6614C7D210AE7350001EAA3 /* iTermPasteViewManager.m in Sources */,
 				A69833F02F6B6CA500156A99 /* iTermLocalNetworkPermissionPrompter.swift in Sources */,
 				A656186C2D67AE240059CD35 /* GradientView.swift in Sources */,

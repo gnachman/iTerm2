@@ -15,7 +15,11 @@
 
 #import <XCTest/XCTest.h>
 
-#import "iTermCacheableImage.h"
+// A Swift class (sources/SessionIcons/iTermCacheableImage.swift). ModernTests
+// cannot import iTerm2SharedARC-Swift.h, so declare what these tests call.
+@interface iTermCacheableImage : NSObject
+- (nullable NSImage *)imageAtPath:(nullable NSString *)path ofSize:(NSSize)size flipped:(BOOL)flipped;
+@end
 
 @interface iTermCacheableImageNilPathTests : XCTestCase
 @end

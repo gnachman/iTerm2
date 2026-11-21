@@ -96,7 +96,6 @@
 #import "iTermBadgeLabel.h"
 #import "iTermBuiltInFunctions.h"
 #import "iTermBuriedSessions.h"
-#import "iTermCacheableImage.h"
 #import "iTermCapturedOutputMark.h"
 #import "iTermCarbonHotKeyController.h"
 #import "iTermCharacterSource.h"

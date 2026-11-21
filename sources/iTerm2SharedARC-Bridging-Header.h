@@ -341,7 +341,3 @@
 #import "iTermTermkeyKeyMapper.h"
 #import "iTermThreadSafety.h"
 #import "iTermTmuxLayoutBuilder.h"
-
-// Exposed for the Swift migration's characterization tests. Remove when the
-// class is ported to Swift.
-#import "iTermCacheableImage.h"
