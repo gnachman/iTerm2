@@ -33,15 +33,6 @@ Improvements:
   13130.
 
 Bug Fixes:
-- Fixed a security issue where a crafted file,
-  when displayed in the terminal (for example
-  with “cat”), could run arbitrary commands by
-  abusing the Kitty image and drag-and-drop
-  protocols. Replies sent back to programs no
-  longer include control characters that could
-  be injected into your shell. Title reports
-  were hardened the same way. Thanks to Minseong
-  Kim of NSHC Red Alert Labs for the report.
 - A floating Session Note could be drawn behind
   the Clippings panel. It now stays on top.
 - Saving settings to a custom folder and Export
