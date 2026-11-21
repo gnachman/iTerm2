@@ -38,7 +38,10 @@ class AppSwitchingPreventionDetector: NSObject {
     }
 
     @objc(didExecuteCommand:)
-    func didExecute(command: String) {
+    func didExecute(command optionalCommand: String?) {
+        // nil for an aborted command. Before this parameter was optional the
+        // bridge turned that nil into an empty string.
+        let command = optionalCommand ?? ""
         DLog("didExecute \(command)")
         if !IsSecureEventInputEnabled() {
             DLog("sei off")

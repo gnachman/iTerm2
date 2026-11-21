@@ -107,11 +107,13 @@ class WindowInitialPositioner: NSObject {
     @objc(initWithScreenNumberFromFirstProfile:disableAutoFrame:profileGUID:delegate:)
     init(screenNumberFromFirstProfile: Int32,
          disableAutoFrame: Bool,
-         profileGUID: String,
+         profileGUID: String?,
          delegate: WindowInitialPositionerDelegate) {
         self.screenNumberFromFirstProfile = screenNumberFromFirstProfile
         self.disableAutoFrame = disableAutoFrame
-        self.profileGUID = profileGUID
+        // nil for a window made without a profile. Before this parameter was
+        // optional the bridge turned that nil into an empty string.
+        self.profileGUID = profileGUID ?? ""
         self.delegate = delegate
         super.init()
     }

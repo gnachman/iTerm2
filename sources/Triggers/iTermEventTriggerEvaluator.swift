@@ -177,7 +177,10 @@ class EventTriggerEvaluator: NSObject {
     // MARK: - Loading Triggers
 
     /// Load event triggers from profile array
-    @objc func loadFromProfileArray(_ array: [[String: Any]]) {
+    @objc func loadFromProfileArray(_ profileArray: [[String: Any]]?) {
+        // nil when the profile has no triggers. Before this parameter was
+        // optional the bridge turned that nil into an empty array.
+        let array = profileArray ?? []
         RLog("[\(sessionDescription)] Loading triggers from \(array.count) trigger definitions")
         invalidateAllTimers()
         eventTriggers.removeAll()

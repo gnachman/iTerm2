@@ -138,8 +138,11 @@ final class iTermTmuxTabGroups: NSObject {
     // would nest two levels deep (a parent that is itself listed as a sub-group). An older iTerm2
     // may have ungrouped a sub-group's tabs while it was attached.
     @objc(parentsByPruning:toGroupsOfMemberships:)
-    static func prune(_ parents: [String: iTermTmuxTabGroupMembership],
+    static func prune(_ optionalParents: [String: iTermTmuxTabGroupMembership]?,
                       memberships: [NSNumber: iTermTmuxTabGroupMembership]) -> [String: iTermTmuxTabGroupMembership] {
+        // nil until tab groups are saved. Before this parameter was optional
+        // the bridge turned that nil into an empty dictionary.
+        let parents = optionalParents ?? [:]
         let referenced = Set(memberships.values.map(\.groupID))
         return parents.filter { subgroupID, parent in
             referenced.contains(subgroupID) && parents[parent.groupID] == nil

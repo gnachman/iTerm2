@@ -126,7 +126,10 @@ class ToolNamedMarks: NSView, ToolbeltTool, NSTableViewDelegate, NSTableViewData
     @objc override var isFlipped: Bool { true }
 
     @objc(setNamedMarks:)
-    func set(marks: [iTermGenericNamedMarkReading]) {
+    func set(marks optionalMarks: [iTermGenericNamedMarkReading]?) {
+        // nil for a session without named marks. Before this parameter was
+        // optional the bridge turned that nil into an empty array.
+        let marks = optionalMarks ?? []
         // For browser sessions, preserve the database ordering which already sorts current page marks first
         // For terminal sessions, sort by namedMarkSort
         if toolWrapper()?.delegate?.delegate?.toolbeltCurrentSessionIsBrowser() == true {

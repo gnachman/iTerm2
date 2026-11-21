@@ -259,8 +259,12 @@ class iTermTitlebarAccessoryNanny: NSObject {
     }
 
     @objc(has:)
-    func has(viewController: NSTitlebarAccessoryViewController) -> Bool {
+    func has(viewController: NSTitlebarAccessoryViewController?) -> Bool {
         guard titledWindow != nil else {
+            return false
+        }
+        // PseudoTerminal asks before its tab bar accessory exists.
+        guard let viewController else {
             return false
         }
         return viewControllers.contains(viewController)
