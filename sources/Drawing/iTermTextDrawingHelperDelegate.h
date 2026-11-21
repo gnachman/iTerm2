@@ -42,7 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSDate * _Nullable)drawingHelperTimestampForLine:(int)line;
 
-- (NSColor *)drawingHelperColorForCode:(int)theIndex
+- (nullable NSColor *)drawingHelperColorForCode:(int)theIndex
                                  green:(int)green
                                   blue:(int)blue
                              colorMode:(ColorMode)theMode

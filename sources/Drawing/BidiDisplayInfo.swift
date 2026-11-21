@@ -443,8 +443,12 @@ class BidiDisplayInfoObjc: NSObject {
     }
 
     @objc(initWithDictionary:)
-    init?(_ dictionary: NSDictionary) {
+    init?(_ dictionary: NSDictionary?) {
         guard iTermPreferences.bool(forKey: kPreferenceKeyBidi) else {
+            return nil
+        }
+        // A saved line without bidi info passes nil.
+        guard let dictionary else {
             return nil
         }
         guard let lutObj = dictionary[Keys.lut.rawValue],

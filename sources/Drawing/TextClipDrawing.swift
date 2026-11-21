@@ -360,7 +360,7 @@ extension TextClipDrawing: iTermTextDrawingHelperDelegate {
                             colorMode theMode: ColorMode,
                             bold isBold: Bool,
                             faint isFaint: Bool,
-                            isBackground: Bool) -> NSColor {
+                            isBackground: Bool) -> NSColor? {
         return isBackground ? NSColor(red: 1, green: 1, blue: 0, alpha: 1) : NSColor(red: 0, green: 0, blue: 0, alpha: 1)
     }
 
