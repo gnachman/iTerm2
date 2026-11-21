@@ -605,6 +605,13 @@ private class TokenExecutorImpl {
     }
 
     func pause() -> Unpauser {
+        // Dormant on purpose (DEBUG is set in no configuration of this target). Enabled, it
+        // fires from app code: a paused side effect running on the main queue outside a join
+        // calls pause() through -[VT100ScreenMutableState setColor:forKey:] -> -mutateColorMap: ->
+        // -addPausedNoDelegateSideEffect:name: (see terminalSetColorTableEntryAtIndex:color:).
+        // pause() itself is safe on any queue. The open question is that such a side effect
+        // changes mutation-queue state while high-priority tasks can still run there.
+        // Make it ITERM_DEBUG once that path is resolved.
 #if DEBUG
         assertQueue()
 #endif
@@ -654,7 +661,7 @@ private class TokenExecutorImpl {
     }
 
     func discardTokensFromPTY() {
-#if DEBUG
+#if ITERM_DEBUG
         assertQueue()
 #endif
         tokenQueue.removeAllNormalPriority()
@@ -929,7 +936,7 @@ private class TokenExecutorImpl {
         }
     }
 
-#if ITERM_DEBUG
+#if ITERM_DEBUG || DEBUG
     private func assertQueue() {
         iTermGCD.assertSafe(forMutationQueue: queue)
     }

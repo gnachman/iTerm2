@@ -139,6 +139,17 @@ final class TokenExecutorPermitTests: XCTestCase {
         while TimeInterval(DispatchTime.now().uptimeNanoseconds - start) / 1e9 < seconds {}
     }
 
+    // Joins `session` the way the app does (-[VT100ScreenMutableState performSynchroDanceWithBlock:]):
+    // the main queue is marked safe for the session's queue for the duration of the joined block,
+    // so the block may call executor methods that require the mutation queue or a real join.
+    private func join(_ session: Session, _ block: () -> ()) {
+        iTermGCD.setMainQueueSafe(true, on: session.queue)
+        session.executor.whilePaused {
+            block()
+            iTermGCD.setMainQueueSafe(false, on: session.queue)
+        }
+    }
+
     // Runs on the executor's queue, in a token, until a join pauses the executor.
     private static func spinUntilPaused(_ executor: TokenExecutor) {
         spin("the join pauses the executor") { executor.isPausedForTesting }
@@ -363,7 +374,7 @@ final class TokenExecutorPermitTests: XCTestCase {
     func testWaiterWithDiscardedTokensDoesNotKeepThePermit() {
         let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
         let (_, b, release) = makeHolderAndWaiter(permits: permits)
-        b.executor.whilePaused {
+        join(b) {
             b.executor.discardTokensFromPTY()
         }
         release.signal()
@@ -423,7 +434,7 @@ final class TokenExecutorPermitTests: XCTestCase {
         waitUntil("b waits") { permits.waitingCountForTesting == 1 }
 
         var unpauser: Unpauser?
-        a.executor.whilePaused {
+        join(a) {
             unpauser = a.executor.pause()
         }
         waitUntil("b ran while a was paused") { b.delegate.tokensSeen == 10 }

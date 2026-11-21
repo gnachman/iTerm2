@@ -102,8 +102,10 @@ final class MouseModeChangeCoalescingTests: XCTestCase {
         harness.sync()
         harness.resetCalls()
 
-        // Run the token on the mutation queue, as the pty path does, so the
-        // main thread's state is not updated.
+        // Run the token on the session's mutation queue, as the pty path
+        // does, so the main thread's state is not updated. (With task I/O
+        // monitors on, the session has a queue of its own, not the shared
+        // one.)
         let parser = VT100Parser()
         parser.encoding = String.Encoding.utf8.rawValue
         enableMouse1003.withUnsafeBufferPointer { buf in
@@ -112,7 +114,7 @@ final class MouseModeChangeCoalescingTests: XCTestCase {
         var vector = CVector()
         CVectorCreate(&vector, 100)
         _ = parser.addParsedTokens(to: &vector)
-        iTermGCD.mutationQueue().sync {
+        harness.screen.mutableState.queueForTesting().sync {
             for i in 0..<CVectorCount(&vector) {
                 let token = CVectorGetObject(&vector, i) as! VT100Token
                 harness.screen.mutableState.terminal!.execute(token)
