@@ -382,7 +382,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
 }
 
-- (NSArray<iTermVariableReference *> *)recordedReferences {
+- (nullable NSArray<iTermVariableReference *> *)recordedReferences {
     return [_names.allObjects mapWithBlock:^id(NSString *path) {
         return [[iTermVariableReference alloc] initWithPath:path vendor:self->_scope];
     }];

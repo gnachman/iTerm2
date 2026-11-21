@@ -21,14 +21,14 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSString *)prettyPWD:(nullable NSString *)absolutePath
           homeDirectory:(nullable NSString *)home;
 
-+ (NSString *)titleForSessionName:(NSString *)sessionName
-                      profileName:(NSString *)profileName
-                              job:(NSString *)jobVariable
-                      commandLine:(NSString *)commandLineVariable
-                              pwd:(NSString *)pwdVariable
-                              tty:(NSString *)ttyVariable
-                             user:(NSString *)userVariable
-                             host:(NSString *)hostVariable
++ (NSString *)titleForSessionName:(nullable NSString *)sessionName
+                      profileName:(nullable NSString *)profileName
+                              job:(nullable NSString *)jobVariable
+                      commandLine:(nullable NSString *)commandLineVariable
+                              pwd:(nullable NSString *)pwdVariable
+                              tty:(nullable NSString *)ttyVariable
+                             user:(nullable NSString *)userVariable
+                             host:(nullable NSString *)hostVariable
                           aiTitle:(nullable NSString *)aiTitleVariable
                     homeDirectory:(nullable NSString *)homeDirectory
                          tmuxPane:(nullable NSString *)tmuxPaneVariable
@@ -36,8 +36,8 @@ NS_ASSUME_NONNULL_BEGIN
                        windowName:(nullable NSString *)windowName
                    tmuxWindowName:(nullable NSString *)tmuxWindowName
                   tmuxWindowTitle:(nullable NSString *)tmuxWindowTitle
-                             rows:(NSNumber *)rows
-                          columns:(NSNumber *)columns
+                             rows:(nullable NSNumber *)rows
+                          columns:(nullable NSNumber *)columns
                        components:(iTermTitleComponents)titleComponents
                     isWindowTitle:(BOOL)isWindowTitle;
 

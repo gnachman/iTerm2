@@ -87,11 +87,11 @@ NS_SWIFT_NAME(iTermBuiltInFunctionProtocol)
                namespace:(nullable NSString *)namespace_;
 
 - (BOOL)haveFunctionWithName:(NSString *)name
-                   namespace:(NSString *)namespace_
+                   namespace:(nullable NSString *)namespace_
                    arguments:(NSArray<NSString *> *)arguments;
 
 - (void)callFunctionWithName:(NSString *)name
-                   namespace:(NSString *)namespace_
+                   namespace:(nullable NSString *)namespace_
                   parameters:(NSDictionary<NSString *, id> *)parameters
                        scope:(iTermVariableScope *)scope
           sideEffectsAllowed:(BOOL)sideEffectsAllowed

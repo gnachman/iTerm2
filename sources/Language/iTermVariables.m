@@ -216,7 +216,7 @@ NSString *const iTermVariableKeyWindowTitle = @"title";
     return _values[name];
 }
 
-- (id)valueByUnwrappingWeakVariables:(id)value {
+- (nullable id)valueByUnwrappingWeakVariables:(nullable id)value {
     iTermWeakVariables *weakVariables = [iTermWeakVariables castFrom:value];
     if (weakVariables) {
         return weakVariables.variables;
@@ -362,7 +362,7 @@ NSString *const iTermVariableKeyWindowTitle = @"title";
     }
 }
 
-- (NSArray *)strongArrayFromWeakArray:(NSPointerArray *)weakArray {
+- (NSArray *)strongArrayFromWeakArray:(nullable NSPointerArray *)weakArray {
     NSMutableArray *result = [NSMutableArray array];
     for (NSInteger i = 0; i < weakArray.count; i++) {
         void *pointer = [weakArray pointerAtIndex:i];
@@ -401,7 +401,7 @@ NSString *const iTermVariableKeyWindowTitle = @"title";
     }
 }
 
-- (nullable iTermVariables *)setValue:(id)value forVariableNamed:(NSString *)name withSideEffects:(BOOL)sideEffects weak:(BOOL)weak {
+- (nullable iTermVariables *)setValue:(nullable id)value forVariableNamed:(NSString *)name withSideEffects:(BOOL)sideEffects weak:(BOOL)weak {
     if (name.length == 0) {
         return nil;
     }

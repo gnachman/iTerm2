@@ -30,13 +30,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 
 - (instancetype)initWithParsedExpression:(iTermParsedExpression *)parsedExpression
-                              invocation:(NSString *)invocation
+                              invocation:(nullable NSString *)invocation
                                    scope:(iTermVariableScope *)scope NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)initWithExpressionString:(NSString *)expressionString
                                    scope:(iTermVariableScope *)scope;
 
-- (instancetype)initWithInterpolatedString:(NSString *)interpolatedString
+- (instancetype)initWithInterpolatedString:(nullable NSString *)interpolatedString
                                      scope:(iTermVariableScope *)scope;
 
 // Renders undefined variable references inline as "[undefined variable <path>]" instead of the

@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)sharedInstance;
 
 - (void)removeKey:(NSString *)key;
-- (void)setVariables:(iTermVariables *)variables forKey:(NSString *)key;
+- (void)setVariables:(iTermVariables *)variables forKey:(nullable NSString *)key;
 - (nullable iTermVariables *)variablesForKey:(NSString *)key;
 
 @end

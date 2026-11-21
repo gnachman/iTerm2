@@ -72,7 +72,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // A scope that remembers which variables were referred to.
 @interface iTermVariableRecordingScope : iTermVariableScope
-@property (nonatomic, readonly) NSArray<iTermVariableReference *> *recordedReferences;
+@property (nullable, nonatomic, readonly) NSArray<iTermVariableReference *> *recordedReferences;
 
 - (instancetype)initWithScope:(iTermVariableScope *)scope NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
