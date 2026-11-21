@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermGitClient : NSObject
 @property (nonatomic, readonly, copy) NSString *path;
-@property (nonatomic, readonly) git_repository *repo;
+@property (nonatomic, readonly, nullable) git_repository *repo;
 
 + (BOOL)name:(NSString *)name matchesPattern:(NSString *)pattern;
 
