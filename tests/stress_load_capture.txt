@@ -1,0 +1,1365 @@
+[tab_1] Running stress test for 0.15 seconds (modes: normal)...
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+[32m[41mColored text iteration 1[0m
+漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글
+Line 3: 日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI
+LTR start مرحبا بالعالم שלום עולם end LTR 4
+Price: ₪5 or $5.99 - מחיר: 5 شيكل
+👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯
+éàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñ
+[9C[4A[4B>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+col1	col2	col3	col4	9
+[31mA[32mB[33mC[34mD[35mE[36mF[37mG[31mH[32mI[33mJ[34mK[35mL[36mM[37mN[31mO[32mP[33mQ[34mR[35mS[36mT[37mU[31mV[32mW[33mX[34mY[35mZ[36mA[37mB[31mC[32mD[33mE[34mF[35mG[36mH[37mI[31mJ[32mK[33mL[34mM[35mN[36mO[37mP[31mQ[32mR[33mS[34mT[35mU[36mV[37mW[31mX[32mY[33mZ[34mA[35mB[36mC[37mD[31mE[32mF[33mG[34mH[35mI[36mJ[37mK[31mL[32mM[33mN[34mO[35mP[36mQ[37mR[31mS[32mT[33mU[34mV[35mW[36mX[37mY[31mZ[32mA[33mB[0m
+[5mBLINK 11[0m
+[7;4;3mSTYLE 12[0m
+[sSaved13[uRestored13
+]8;;https://example.com/14\link14]8;;\
+┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘
+a‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿d
+ABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉م
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+[36m[45mColored text iteration 19[0m
+漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글
+Line 21: 日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI
+LTR start مرحبا بالعالم שלום עולם end LTR 22
+Price: ₪23 or $23.99 - מחיר: 23 شيكل
+👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯
+éàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñ
+[7C[2A[2B>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+col1	col2	col3	col4	27
+[31mA[32mB[33mC[34mD[35mE[36mF[37mG[31mH[32mI[33mJ[34mK[35mL[36mM[37mN[31mO[32mP[33mQ[34mR[35mS[36mT[37mU[31mV[32mW[33mX[34mY[35mZ[36mA[37mB[31mC[32mD[33mE[34mF[35mG[36mH[37mI[31mJ[32mK[33mL[34mM[35mN[36mO[37mP[31mQ[32mR[33mS[34mT[35mU[36mV[37mW[31mX[32mY[33mZ[34mA[35mB[36mC[37mD[31mE[32mF[33mG[34mH[35mI[36mJ[37mK[31mL[32mM[33mN[34mO[35mP[36mQ[37mR[31mS[32mT[33mU[34mV[35mW[36mX[37mY[31mZ[32mA[33mB[0m
+[5mBLINK 29[0m
+[7;4;3mSTYLE 30[0m
+[sSaved31[uRestored31
+]8;;https://example.com/32\link32]8;;\
+┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘
+a‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿d
+ABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉م
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+[33m[42mColored text iteration 37[0m
+漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글
+Line 39: 日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI
+LTR start مرحبا بالعالم שלום עולם end LTR 40
+Price: ₪41 or $41.99 - מחיר: 41 شيكل
+👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯
+éàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñ
+[5C[5A[5B>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+col1	col2	col3	col4	45
+[31mA[32mB[33mC[34mD[35mE[36mF[37mG[31mH[32mI[33mJ[34mK[35mL[36mM[37mN[31mO[32mP[33mQ[34mR[35mS[36mT[37mU[31mV[32mW[33mX[34mY[35mZ[36mA[37mB[31mC[32mD[33mE[34mF[35mG[36mH[37mI[31mJ[32mK[33mL[34mM[35mN[36mO[37mP[31mQ[32mR[33mS[34mT[35mU[36mV[37mW[31mX[32mY[33mZ[34mA[35mB[36mC[37mD[31mE[32mF[33mG[34mH[35mI[36mJ[37mK[31mL[32mM[33mN[34mO[35mP[36mQ[37mR[31mS[32mT[33mU[34mV[35mW[36mX[37mY[31mZ[32mA[33mB[0m
+[5mBLINK 47[0m
+[7;4;3mSTYLE 48[0m
+[sSaved49[uRestored49
+]8;;https://example.com/50\link50]8;;\
+┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘
+a‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿d
+ABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉م
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+[37m[46mColored text iteration 55[0m
+漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글
+Line 57: 日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI
+LTR start مرحبا بالعالم שלום עולם end LTR 58
+Price: ₪59 or $59.99 - מחיר: 59 شيكل
+👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯
+éàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñ
+[3C[3A[3B>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+col1	col2	col3	col4	63
+[31mA[32mB[33mC[34mD[35mE[36mF[37mG[31mH[32mI[33mJ[34mK[35mL[36mM[37mN[31mO[32mP[33mQ[34mR[35mS[36mT[37mU[31mV[32mW[33mX[34mY[35mZ[36mA[37mB[31mC[32mD[33mE[34mF[35mG[36mH[37mI[31mJ[32mK[33mL[34mM[35mN[36mO[37mP[31mQ[32mR[33mS[34mT[35mU[36mV[37mW[31mX[32mY[33mZ[34mA[35mB[36mC[37mD[31mE[32mF[33mG[34mH[35mI[36mJ[37mK[31mL[32mM[33mN[34mO[35mP[36mQ[37mR[31mS[32mT[33mU[34mV[35mW[36mX[37mY[31mZ[32mA[33mB[0m
+[5mBLINK 65[0m
+[7;4;3mSTYLE 66[0m
+[sSaved67[uRestored67
+]8;;https://example.com/68\link68]8;;\
+┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘
+a‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿d
+ABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉م
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+[34m[43mColored text iteration 73[0m
+漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글
+Line 75: 日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI
+LTR start مرحبا بالعالم שלום עולם end LTR 76
+Price: ₪77 or $77.99 - מחיר: 77 شيكل
+👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯
+éàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñ
+[1C[1A[1B>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+col1	col2	col3	col4	81
+[31mA[32mB[33mC[34mD[35mE[36mF[37mG[31mH[32mI[33mJ[34mK[35mL[36mM[37mN[31mO[32mP[33mQ[34mR[35mS[36mT[37mU[31mV[32mW[33mX[34mY[35mZ[36mA[37mB[31mC[32mD[33mE[34mF[35mG[36mH[37mI[31mJ[32mK[33mL[34mM[35mN[36mO[37mP[31mQ[32mR[33mS[34mT[35mU[36mV[37mW[31mX[32mY[33mZ[34mA[35mB[36mC[37mD[31mE[32mF[33mG[34mH[35mI[36mJ[37mK[31mL[32mM[33mN[34mO[35mP[36mQ[37mR[31mS[32mT[33mU[34mV[35mW[36mX[37mY[31mZ[32mA[33mB[0m
+[5mBLINK 83[0m
+[7;4;3mSTYLE 84[0m
+[sSaved85[uRestored85
+]8;;https://example.com/86\link86]8;;\
+┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘
+a‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿d
+ABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉م
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+[31m[40mColored text iteration 91[0m
+漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글
+Line 93: 日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI
+LTR start مرحبا بالعالم שלום עולם end LTR 94
+Price: ₪95 or $95.99 - מחיר: 95 شيكل
+👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯
+éàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñ
+[19C[4A[4B>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+col1	col2	col3	col4	99
+[31mA[32mB[33mC[34mD[35mE[36mF[37mG[31mH[32mI[33mJ[34mK[35mL[36mM[37mN[31mO[32mP[33mQ[34mR[35mS[36mT[37mU[31mV[32mW[33mX[34mY[35mZ[36mA[37mB[31mC[32mD[33mE[34mF[35mG[36mH[37mI[31mJ[32mK[33mL[34mM[35mN[36mO[37mP[31mQ[32mR[33mS[34mT[35mU[36mV[37mW[31mX[32mY[33mZ[34mA[35mB[36mC[37mD[31mE[32mF[33mG[34mH[35mI[36mJ[37mK[31mL[32mM[33mN[34mO[35mP[36mQ[37mR[31mS[32mT[33mU[34mV[35mW[36mX[37mY[31mZ[32mA[33mB[0m
+[5mBLINK 101[0m
+[7;4;3mSTYLE 102[0m
+[sSaved103[uRestored103
+]8;;https://example.com/104\link104]8;;\
+┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘
+a‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿d
+ABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉م
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+[35m[44mColored text iteration 109[0m
+漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글
+Line 111: 日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI
+LTR start مرحبا بالعالم שלום עולם end LTR 112
+Price: ₪113 or $113.99 - מחיר: 113 شيكل
+👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯
+éàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñ
+[17C[2A[2B>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+col1	col2	col3	col4	117
+[31mA[32mB[33mC[34mD[35mE[36mF[37mG[31mH[32mI[33mJ[34mK[35mL[36mM[37mN[31mO[32mP[33mQ[34mR[35mS[36mT[37mU[31mV[32mW[33mX[34mY[35mZ[36mA[37mB[31mC[32mD[33mE[34mF[35mG[36mH[37mI[31mJ[32mK[33mL[34mM[35mN[36mO[37mP[31mQ[32mR[33mS[34mT[35mU[36mV[37mW[31mX[32mY[33mZ[34mA[35mB[36mC[37mD[31mE[32mF[33mG[34mH[35mI[36mJ[37mK[31mL[32mM[33mN[34mO[35mP[36mQ[37mR[31mS[32mT[33mU[34mV[35mW[36mX[37mY[31mZ[32mA[33mB[0m
+[5mBLINK 119[0m
+[7;4;3mSTYLE 120[0m
+[sSaved121[uRestored121
+]8;;https://example.com/122\link122]8;;\
+┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘
+a‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿d
+ABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉م
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+[32m[41mColored text iteration 127[0m
+漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글
+Line 129: 日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI
+LTR start مرحبا بالعالم שלום עולם end LTR 130
+Price: ₪131 or $131.99 - מחיר: 131 شيكل
+👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯
+éàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñ
+[15C[5A[5B>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+col1	col2	col3	col4	135
+[31mA[32mB[33mC[34mD[35mE[36mF[37mG[31mH[32mI[33mJ[34mK[35mL[36mM[37mN[31mO[32mP[33mQ[34mR[35mS[36mT[37mU[31mV[32mW[33mX[34mY[35mZ[36mA[37mB[31mC[32mD[33mE[34mF[35mG[36mH[37mI[31mJ[32mK[33mL[34mM[35mN[36mO[37mP[31mQ[32mR[33mS[34mT[35mU[36mV[37mW[31mX[32mY[33mZ[34mA[35mB[36mC[37mD[31mE[32mF[33mG[34mH[35mI[36mJ[37mK[31mL[32mM[33mN[34mO[35mP[36mQ[37mR[31mS[32mT[33mU[34mV[35mW[36mX[37mY[31mZ[32mA[33mB[0m
+[5mBLINK 137[0m
+[7;4;3mSTYLE 138[0m
+[sSaved139[uRestored139
+]8;;https://example.com/140\link140]8;;\
+┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘
+a‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿d
+ABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉م
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+[36m[45mColored text iteration 145[0m
+漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글
+Line 147: 日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI
+LTR start مرحبا بالعالم שלום עולם end LTR 148
+Price: ₪149 or $149.99 - מחיר: 149 شيكل
+[tab_1] Stress test complete: 150 iterations
+[tab_1] Running stress test for 0.15 seconds (modes: buffer)...
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0000
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345003
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0004
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345007
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0008
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345011
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0012
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345015
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0016
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345019
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0020
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345023
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0024
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345027
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0028
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345031
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0032
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345035
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0036
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345039
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0040
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345043
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0044
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345047
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0048
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345051
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0052
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345055
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0056
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345059
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0060
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345063
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0064
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345067
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0068
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345071
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0072
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345075
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0076
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345079
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0080
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345083
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0084
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345087
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0088
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345091
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0092
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345095
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0096
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345099
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0100
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345103
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0104
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345107
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0108
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345111
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0112
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345115
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0116
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345119
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0120
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345123
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0124
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345127
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0128
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345131
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0132
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345135
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0136
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345139
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0140
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345143
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0144
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[32mBUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi[0m
+Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345Text123مرحبا456שלום789עולם012العالم345147
+BUFFER:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi0148
+日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글日本語中文한글
+[tab_1] Stress test complete: 150 iterations
+[tab_1] Running stress test for 0.15 seconds (modes: clearcodes)...
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+[32m[41mColored text iteration 1[0m
+漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글
+Line 3: 日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI
+LTR start مرحبا بالعالم שלום עולם end LTR 4
+Price: ₪5 or $5.99 - מחיר: 5 شيكل
+👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯
+éàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñ
+[9C[4A[4B>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+col1	col2	col3	col4	9
+[31mA[32mB[33mC[34mD[35mE[36mF[37mG[31mH[32mI[33mJ[34mK[35mL[36mM[37mN[31mO[32mP[33mQ[34mR[35mS[36mT[37mU[31mV[32mW[33mX[34mY[35mZ[36mA[37mB[31mC[32mD[33mE[34mF[35mG[36mH[37mI[31mJ[32mK[33mL[34mM[35mN[36mO[37mP[31mQ[32mR[33mS[34mT[35mU[36mV[37mW[31mX[32mY[33mZ[34mA[35mB[36mC[37mD[31mE[32mF[33mG[34mH[35mI[36mJ[37mK[31mL[32mM[33mN[34mO[35mP[36mQ[37mR[31mS[32mT[33mU[34mV[35mW[36mX[37mY[31mZ[32mA[33mB[0m
+[5mBLINK 11[0m
+[7;4;3mSTYLE 12[0m
+[sSaved13[uRestored13
+[2LInserted14
+[2MDeleted14
+[5;20rRegion15
+[r
+Erase16[2K[2J
+[?1049hAlt17
+[?1049l
+]8;;https://example.com/18\link18]8;;\
+┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘
+a‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿d
+ABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉م
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+[33m[42mColored text iteration 23[0m
+漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글
+Line 25: 日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI
+LTR start مرحبا بالعالم שלום עולם end LTR 26
+Price: ₪27 or $27.99 - מחיר: 27 شيكل
+👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯
+éàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñ
+[11C[1A[1B>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+col1	col2	col3	col4	31
+[31mA[32mB[33mC[34mD[35mE[36mF[37mG[31mH[32mI[33mJ[34mK[35mL[36mM[37mN[31mO[32mP[33mQ[34mR[35mS[36mT[37mU[31mV[32mW[33mX[34mY[35mZ[36mA[37mB[31mC[32mD[33mE[34mF[35mG[36mH[37mI[31mJ[32mK[33mL[34mM[35mN[36mO[37mP[31mQ[32mR[33mS[34mT[35mU[36mV[37mW[31mX[32mY[33mZ[34mA[35mB[36mC[37mD[31mE[32mF[33mG[34mH[35mI[36mJ[37mK[31mL[32mM[33mN[34mO[35mP[36mQ[37mR[31mS[32mT[33mU[34mV[35mW[36mX[37mY[31mZ[32mA[33mB[0m
+[5mBLINK 33[0m
+[7;4;3mSTYLE 34[0m
+[sSaved35[uRestored35
+[2LInserted36
+[2MDeleted36
+[5;20rRegion37
+[r
+Erase38[2K[2J
+[?1049hAlt39
+[?1049l
+]8;;https://example.com/40\link40]8;;\
+┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘
+a‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿d
+ABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉م
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+[34m[43mColored text iteration 45[0m
+漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글
+Line 47: 日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI
+LTR start مرحبا بالعالم שלום עולם end LTR 48
+Price: ₪49 or $49.99 - מחיר: 49 شيكل
+👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯
+éàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñ
+[13C[3A[3B>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+col1	col2	col3	col4	53
+[31mA[32mB[33mC[34mD[35mE[36mF[37mG[31mH[32mI[33mJ[34mK[35mL[36mM[37mN[31mO[32mP[33mQ[34mR[35mS[36mT[37mU[31mV[32mW[33mX[34mY[35mZ[36mA[37mB[31mC[32mD[33mE[34mF[35mG[36mH[37mI[31mJ[32mK[33mL[34mM[35mN[36mO[37mP[31mQ[32mR[33mS[34mT[35mU[36mV[37mW[31mX[32mY[33mZ[34mA[35mB[36mC[37mD[31mE[32mF[33mG[34mH[35mI[36mJ[37mK[31mL[32mM[33mN[34mO[35mP[36mQ[37mR[31mS[32mT[33mU[34mV[35mW[36mX[37mY[31mZ[32mA[33mB[0m
+[5mBLINK 55[0m
+[7;4;3mSTYLE 56[0m
+[sSaved57[uRestored57
+[2LInserted58
+[2MDeleted58
+[5;20rRegion59
+[r
+Erase60[2K[2J
+[?1049hAlt61
+[?1049l
+]8;;https://example.com/62\link62]8;;\
+┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘
+a‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿d
+ABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉م
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+[35m[44mColored text iteration 67[0m
+漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글
+Line 69: 日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI
+LTR start مرحبا بالعالم שלום עולם end LTR 70
+Price: ₪71 or $71.99 - מחיר: 71 شيكل
+👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯
+éàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñ
+[15C[5A[5B>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+col1	col2	col3	col4	75
+[31mA[32mB[33mC[34mD[35mE[36mF[37mG[31mH[32mI[33mJ[34mK[35mL[36mM[37mN[31mO[32mP[33mQ[34mR[35mS[36mT[37mU[31mV[32mW[33mX[34mY[35mZ[36mA[37mB[31mC[32mD[33mE[34mF[35mG[36mH[37mI[31mJ[32mK[33mL[34mM[35mN[36mO[37mP[31mQ[32mR[33mS[34mT[35mU[36mV[37mW[31mX[32mY[33mZ[34mA[35mB[36mC[37mD[31mE[32mF[33mG[34mH[35mI[36mJ[37mK[31mL[32mM[33mN[34mO[35mP[36mQ[37mR[31mS[32mT[33mU[34mV[35mW[36mX[37mY[31mZ[32mA[33mB[0m
+[5mBLINK 77[0m
+[7;4;3mSTYLE 78[0m
+[sSaved79[uRestored79
+[2LInserted80
+[2MDeleted80
+[5;20rRegion81
+[r
+Erase82[2K[2J
+[?1049hAlt83
+[?1049l
+]8;;https://example.com/84\link84]8;;\
+┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘
+a‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿d
+ABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉م
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+[36m[45mColored text iteration 89[0m
+漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글
+Line 91: 日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI
+LTR start مرحبا بالعالم שלום עולם end LTR 92
+Price: ₪93 or $93.99 - מחיר: 93 شيكل
+👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯
+éàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñ
+[17C[2A[2B>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+col1	col2	col3	col4	97
+[31mA[32mB[33mC[34mD[35mE[36mF[37mG[31mH[32mI[33mJ[34mK[35mL[36mM[37mN[31mO[32mP[33mQ[34mR[35mS[36mT[37mU[31mV[32mW[33mX[34mY[35mZ[36mA[37mB[31mC[32mD[33mE[34mF[35mG[36mH[37mI[31mJ[32mK[33mL[34mM[35mN[36mO[37mP[31mQ[32mR[33mS[34mT[35mU[36mV[37mW[31mX[32mY[33mZ[34mA[35mB[36mC[37mD[31mE[32mF[33mG[34mH[35mI[36mJ[37mK[31mL[32mM[33mN[34mO[35mP[36mQ[37mR[31mS[32mT[33mU[34mV[35mW[36mX[37mY[31mZ[32mA[33mB[0m
+[5mBLINK 99[0m
+[7;4;3mSTYLE 100[0m
+[sSaved101[uRestored101
+[2LInserted102
+[2MDeleted102
+[5;20rRegion103
+[r
+Erase104[2K[2J
+[?1049hAlt105
+[?1049l
+]8;;https://example.com/106\link106]8;;\
+┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘
+a‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿d
+ABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉م
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+[37m[46mColored text iteration 111[0m
+漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글
+Line 113: 日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI
+LTR start مرحبا بالعالم שלום עולם end LTR 114
+Price: ₪115 or $115.99 - מחיר: 115 شيكل
+👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯
+éàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñ
+[19C[4A[4B>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+col1	col2	col3	col4	119
+[31mA[32mB[33mC[34mD[35mE[36mF[37mG[31mH[32mI[33mJ[34mK[35mL[36mM[37mN[31mO[32mP[33mQ[34mR[35mS[36mT[37mU[31mV[32mW[33mX[34mY[35mZ[36mA[37mB[31mC[32mD[33mE[34mF[35mG[36mH[37mI[31mJ[32mK[33mL[34mM[35mN[36mO[37mP[31mQ[32mR[33mS[34mT[35mU[36mV[37mW[31mX[32mY[33mZ[34mA[35mB[36mC[37mD[31mE[32mF[33mG[34mH[35mI[36mJ[37mK[31mL[32mM[33mN[34mO[35mP[36mQ[37mR[31mS[32mT[33mU[34mV[35mW[36mX[37mY[31mZ[32mA[33mB[0m
+[5mBLINK 121[0m
+[7;4;3mSTYLE 122[0m
+[sSaved123[uRestored123
+[2LInserted124
+[2MDeleted124
+[5;20rRegion125
+[r
+Erase126[2K[2J
+[?1049hAlt127
+[?1049l
+]8;;https://example.com/128\link128]8;;\
+┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘┌─┬─┐│├─┼─┤│└─┴─┘
+a‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿da‍b‌c﻿d
+ABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉مرحباABC日本語🎉م
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+[31m[40mColored text iteration 133[0m
+漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글漢字テスト中文한글
+Line 135: 日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI日本語ABC中文DEF한글GHI
+LTR start مرحبا بالعالم שלום עולם end LTR 136
+Price: ₪137 or $137.99 - מחיר: 137 شيكل
+👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯👨‍👩‍👧‍👦🏳️‍🌈👍🏽🇺🇸🎉✨🔥💯
+éàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñéàôüñ
+[1C[1A[1B>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+col1	col2	col3	col4	141
+[31mA[32mB[33mC[34mD[35mE[36mF[37mG[31mH[32mI[33mJ[34mK[35mL[36mM[37mN[31mO[32mP[33mQ[34mR[35mS[36mT[37mU[31mV[32mW[33mX[34mY[35mZ[36mA[37mB[31mC[32mD[33mE[34mF[35mG[36mH[37mI[31mJ[32mK[33mL[34mM[35mN[36mO[37mP[31mQ[32mR[33mS[34mT[35mU[36mV[37mW[31mX[32mY[33mZ[34mA[35mB[36mC[37mD[31mE[32mF[33mG[34mH[35mI[36mJ[37mK[31mL[32mM[33mN[34mO[35mP[36mQ[37mR[31mS[32mT[33mU[34mV[35mW[36mX[37mY[31mZ[32mA[33mB[0m
+[5mBLINK 143[0m
+[7;4;3mSTYLE 144[0m
+[sSaved145[uRestored145
+[2LInserted146
+[2MDeleted146
+[5;20rRegion147
+[r
+Erase148[2K[2J
+[?1049hAlt149
+[?1049l
+[tab_1] Stress test complete: 150 iterations
+[tab_1] Running dashboard mode 'htop' for 0.045 seconds @ 30fps...
+[?1049h[?25l[2J[H[2KCPU0: [[31m██████████████████████████████████[0m░░░░]  91.2%
+[2KCPU1: [[33m█████████████████████████[0m░░░░░░░░░░░░░]  66.8%
+[2KCPU2: [[32m██████████████████[0m░░░░░░░░░░░░░░░░░░░░]  48.5%
+[2KCPU3: [[32m█████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░]  35.4%
+[2KCPU4: [[32m██████████████████[0m░░░░░░░░░░░░░░░░░░░░]  49.4%
+[2KCPU5: [[32m███████████████[0m░░░░░░░░░░░░░░░░░░░░░░░]  41.5%
+[2KCPU6: [[31m█████████████████████████████████[0m░░░░░]  87.6%
+[2KMem: [[32m████████████████[0m░░░░░░░░░░░░░░░░░░░░░░]  44.0%
+[2KSwp: [[32m█████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  15.0%
+[2K[1m[7m PID    USER      CPU%  MEM%  COMMAND                                   [0m
+[2K36698 daemon    [31m 97.9[0m   5.0  kernel_task
+[2K92429 _windowserver [31m 90.2[0m  15.5  node server.js
+[2K 5065 root      [31m 89.8[0m  46.2  sshd: admin
+[2K79165 root      [31m 88.4[0m  24.7  WindowServer
+[2K62523 postgres  [31m 86.5[0m  13.0  postgres: writer
+[2K77369 daemon    [31m 85.4[0m   6.6  WindowServer
+[2K82595 www-data  [31m 84.5[0m  12.2  node server.js
+[2K89588 postgres  [31m 83.8[0m  26.2  sshd: admin
+[2K43587 postgres  [31m 81.6[0m   5.0  iTerm2 --server
+[2K71755 www-data  [31m 81.4[0m  27.0  postgres: writer
+[24;1H[7m [1mIteration: 1[0m | tab_1 | Press Ctrl-C to stop                  [0m[H[2KCPU0: [[31m█████████████████████████████████████[0m░]  98.4%
+[2KCPU1: [[33m██████████████████████[0m░░░░░░░░░░░░░░░░]  59.5%
+[2KCPU2: [[32m██████████████████[0m░░░░░░░░░░░░░░░░░░░░]  48.9%
+[2KCPU3: [[32m██████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░]  38.4%
+[2KCPU4: [[32m█████████████████[0m░░░░░░░░░░░░░░░░░░░░░]  46.4%
+[2KCPU5: [[32m██████████████████[0m░░░░░░░░░░░░░░░░░░░░]  48.9%
+[2KCPU6: [[31m███████████████████████████████[0m░░░░░░░]  83.2%
+[2KMem: [[32m████████████████[0m░░░░░░░░░░░░░░░░░░░░░░]  42.1%
+[2KSwp: [[32m█████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  14.1%
+[2K[1m[7m PID    USER      CPU%  MEM%  COMMAND                                   [0m
+[2K36698 daemon    [31m 97.9[0m   5.0  kernel_task
+[2K 5065 root      [31m 89.8[0m  46.2  sshd: admin
+[2K79165 root      [31m 88.4[0m  24.7  WindowServer
+[2K62523 postgres  [31m 86.5[0m  13.0  postgres: writer
+[2K77369 daemon    [31m 85.4[0m   6.6  WindowServer
+[2K82595 www-data  [31m 84.5[0m  12.2  node server.js
+[2K89588 postgres  [31m 83.8[0m  26.2  sshd: admin
+[2K71755 www-data  [31m 81.4[0m  27.0  postgres: writer
+[2K12430 _windowserver [33m 79.9[0m  49.4  sshd: admin
+[2K27988 root      [33m 71.7[0m   0.1  docker compose up
+[24;1H[7m [1mIteration: 2[0m | tab_1 | Press Ctrl-C to stop                  [0m[H[2KCPU0: [[31m███████████████████████████████████[0m░░░]  93.8%
+[2KCPU1: [[33m███████████████████[0m░░░░░░░░░░░░░░░░░░░]  52.4%
+[2KCPU2: [[33m███████████████████[0m░░░░░░░░░░░░░░░░░░░]  50.6%
+[2KCPU3: [[32m█████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░]  35.6%
+[2KCPU4: [[33m█████████████████████[0m░░░░░░░░░░░░░░░░░]  56.2%
+[2KCPU5: [[32m███████████████[0m░░░░░░░░░░░░░░░░░░░░░░░]  41.5%
+[2KCPU6: [[33m████████████████████████████[0m░░░░░░░░░░]  75.5%
+[2KMem: [[32m████████████████[0m░░░░░░░░░░░░░░░░░░░░░░]  43.0%
+[2KSwp: [[32m█████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  14.9%
+[2K[1m[7m PID    USER      CPU%  MEM%  COMMAND                                   [0m
+[2K36698 daemon    [31m 97.9[0m   5.0  kernel_task
+[2K 5065 root      [31m 89.8[0m  46.2  sshd: admin
+[2K79165 root      [31m 88.4[0m  24.7  WindowServer
+[2K40355 admin     [31m 85.7[0m  36.4  WindowServer
+[2K77369 daemon    [31m 85.4[0m   6.6  WindowServer
+[2K82595 www-data  [31m 84.5[0m  12.2  node server.js
+[2K89588 postgres  [31m 83.8[0m  26.2  sshd: admin
+[2K71755 www-data  [31m 81.4[0m  27.0  postgres: writer
+[2K12430 _windowserver [33m 79.9[0m  49.4  sshd: admin
+[2K27988 root      [33m 71.7[0m   0.1  docker compose up
+[24;1H[7m [1mIteration: 3[0m | tab_1 | Press Ctrl-C to stop                  [0m[H[2KCPU0: [[31m████████████████████████████████[0m░░░░░░]  85.1%
+[2KCPU1: [[32m████████████████[0m░░░░░░░░░░░░░░░░░░░░░░]  44.1%
+[2KCPU2: [[33m█████████████████████[0m░░░░░░░░░░░░░░░░░]  55.6%
+[2KCPU3: [[32m██████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  26.8%
+[2KCPU4: [[32m█████████████████[0m░░░░░░░░░░░░░░░░░░░░░]  46.3%
+[2KCPU5: [[32m██████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░]  39.4%
+[2KCPU6: [[33m████████████████████████████[0m░░░░░░░░░░]  75.9%
+[2KMem: [[32m████████████████[0m░░░░░░░░░░░░░░░░░░░░░░]  42.8%
+[2KSwp: [[32m█████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  14.9%
+[2K[1m[7m PID    USER      CPU%  MEM%  COMMAND                                   [0m
+[2K36698 daemon    [31m 97.9[0m   5.0  kernel_task
+[2K 5065 root      [31m 89.8[0m  46.2  sshd: admin
+[2K79165 root      [31m 88.4[0m  24.7  WindowServer
+[2K40355 admin     [31m 85.7[0m  36.4  WindowServer
+[2K77369 daemon    [31m 85.4[0m   6.6  WindowServer
+[2K82595 www-data  [31m 84.5[0m  12.2  node server.js
+[2K89588 postgres  [31m 83.8[0m  26.2  sshd: admin
+[2K71755 www-data  [31m 81.4[0m  27.0  postgres: writer
+[2K12430 _windowserver [33m 79.9[0m  49.4  sshd: admin
+[2K34199 _windowserver [33m 77.7[0m  21.6  mds_stores
+[24;1H[7m [1mIteration: 4[0m | tab_1 | Press Ctrl-C to stop                  [0m[H[2KCPU0: [[31m████████████████████████████████[0m░░░░░░]  86.1%
+[2KCPU1: [[32m██████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░]  37.2%
+[2KCPU2: [[33m████████████████████████[0m░░░░░░░░░░░░░░]  65.4%
+[2KCPU3: [[32m█████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░]  36.5%
+[2KCPU4: [[32m██████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░]  39.3%
+[2KCPU5: [[32m██████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░]  37.5%
+[2KCPU6: [[33m██████████████████████████████[0m░░░░░░░░]  79.5%
+[2KMem: [[32m████████████████[0m░░░░░░░░░░░░░░░░░░░░░░]  44.3%
+[2KSwp: [[32m█████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  14.9%
+[2K[1m[7m PID    USER      CPU%  MEM%  COMMAND                                   [0m
+[2K42266 postgres  [31m 99.8[0m  31.8  /System/Library/Metal
+[2K36698 daemon    [31m 97.9[0m   5.0  kernel_task
+[2K 5065 root      [31m 89.8[0m  46.2  sshd: admin
+[2K79165 root      [31m 88.4[0m  24.7  WindowServer
+[2K11095 _windowserver [31m 86.9[0m   2.0  /System/Library/Metal
+[2K40355 admin     [31m 85.7[0m  36.4  WindowServer
+[2K77369 daemon    [31m 85.4[0m   6.6  WindowServer
+[2K82595 www-data  [31m 84.5[0m  12.2  node server.js
+[2K89588 postgres  [31m 83.8[0m  26.2  sshd: admin
+[2K71755 www-data  [31m 81.4[0m  27.0  postgres: writer
+[24;1H[7m [1mIteration: 5[0m | tab_1 | Press Ctrl-C to stop                  [0m[H[2KCPU0: [[33m█████████████████████████████[0m░░░░░░░░░]  76.9%
+[2KCPU1: [[32m██████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  27.5%
+[2KCPU2: [[33m███████████████████████████[0m░░░░░░░░░░░]  72.2%
+[2KCPU3: [[32m████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░]  33.1%
+[2KCPU4: [[32m████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░]  32.5%
+[2KCPU5: [[32m███████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░]  30.5%
+[2KCPU6: [[31m███████████████████████████████[0m░░░░░░░]  82.6%
+[2KMem: [[32m█████████████████[0m░░░░░░░░░░░░░░░░░░░░░]  46.2%
+[2KSwp: [[32m█████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  14.9%
+[2K[1m[7m PID    USER      CPU%  MEM%  COMMAND                                   [0m
+[2K42266 postgres  [31m 99.8[0m  31.8  /System/Library/Metal
+[2K99333 _windowserver [31m 99.1[0m  37.3  postgres: writer
+[2K36698 daemon    [31m 97.9[0m   5.0  kernel_task
+[2K37967 _windowserver [31m 90.1[0m  20.9  launchd
+[2K 5065 root      [31m 89.8[0m  46.2  sshd: admin
+[2K79165 root      [31m 88.4[0m  24.7  WindowServer
+[2K11095 _windowserver [31m 86.9[0m   2.0  /System/Library/Metal
+[2K40355 admin     [31m 85.7[0m  36.4  WindowServer
+[2K82595 www-data  [31m 84.5[0m  12.2  node server.js
+[2K89588 postgres  [31m 83.8[0m  26.2  sshd: admin
+[24;1H[7m [1mIteration: 6[0m | tab_1 | Press Ctrl-C to stop                  [0m[H[2KCPU0: [[33m█████████████████████████[0m░░░░░░░░░░░░░]  68.2%
+[2KCPU1: [[32m█████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░]  34.7%
+[2KCPU2: [[31m██████████████████████████████[0m░░░░░░░░]  81.1%
+[2KCPU3: [[32m███████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░]  29.2%
+[2KCPU4: [[32m███████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░]  30.7%
+[2KCPU5: [[32m█████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░]  36.7%
+[2KCPU6: [[33m████████████████████████████[0m░░░░░░░░░░]  73.9%
+[2KMem: [[32m█████████████████[0m░░░░░░░░░░░░░░░░░░░░░]  46.8%
+[2KSwp: [[32m█████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  14.2%
+[2K[1m[7m PID    USER      CPU%  MEM%  COMMAND                                   [0m
+[2K42266 postgres  [31m 99.8[0m  31.8  /System/Library/Metal
+[2K99333 _windowserver [31m 99.1[0m  37.3  postgres: writer
+[2K36698 daemon    [31m 97.9[0m   5.0  kernel_task
+[2K37967 _windowserver [31m 90.1[0m  20.9  launchd
+[2K 5065 root      [31m 89.8[0m  46.2  sshd: admin
+[2K11095 _windowserver [31m 86.9[0m   2.0  /System/Library/Metal
+[2K40355 admin     [31m 85.7[0m  36.4  WindowServer
+[2K82595 www-data  [31m 84.5[0m  12.2  node server.js
+[2K89588 postgres  [31m 83.8[0m  26.2  sshd: admin
+[2K37630 daemon    [31m 83.0[0m   2.8  python3 stress_load.py
+[24;1H[7m [1mIteration: 7[0m | tab_1 | Press Ctrl-C to stop                  [0m[H[2KCPU0: [[33m██████████████████████[0m░░░░░░░░░░░░░░░░]  60.3%
+[2KCPU1: [[32m█████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░]  35.7%
+[2KCPU2: [[33m█████████████████████████████[0m░░░░░░░░░]  78.0%
+[2KCPU3: [[32m██████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  26.8%
+[2KCPU4: [[32m█████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░]  36.2%
+[2KCPU5: [[32m█████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░]  36.5%
+[2KCPU6: [[31m██████████████████████████████[0m░░░░░░░░]  81.5%
+[2KMem: [[32m█████████████████[0m░░░░░░░░░░░░░░░░░░░░░]  47.2%
+[2KSwp: [[32m█████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  14.1%
+[2K[1m[7m PID    USER      CPU%  MEM%  COMMAND                                   [0m
+[2K42266 postgres  [31m 99.8[0m  31.8  /System/Library/Metal
+[2K99333 _windowserver [31m 99.1[0m  37.3  postgres: writer
+[2K38848 admin     [31m 95.8[0m  19.4  WindowServer
+[2K 9875 root      [31m 90.2[0m   2.0  WindowServer
+[2K37967 _windowserver [31m 90.1[0m  20.9  launchd
+[2K 5065 root      [31m 89.8[0m  46.2  sshd: admin
+[2K11095 _windowserver [31m 86.9[0m   2.0  /System/Library/Metal
+[2K40355 admin     [31m 85.7[0m  36.4  WindowServer
+[2K82595 www-data  [31m 84.5[0m  12.2  node server.js
+[2K89588 postgres  [31m 83.8[0m  26.2  sshd: admin
+[24;1H[7m [1mIteration: 8[0m | tab_1 | Press Ctrl-C to stop                  [0m[H[2KCPU0: [[33m██████████████████████████[0m░░░░░░░░░░░░]  69.2%
+[2KCPU1: [[32m██████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░]  39.0%
+[2KCPU2: [[33m██████████████████████████████[0m░░░░░░░░]  79.5%
+[2KCPU3: [[32m████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  21.1%
+[2KCPU4: [[32m██████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  28.1%
+[2KCPU5: [[32m████████████████[0m░░░░░░░░░░░░░░░░░░░░░░]  42.9%
+[2KCPU6: [[31m█████████████████████████████████[0m░░░░░]  89.3%
+[2KMem: [[32m██████████████████[0m░░░░░░░░░░░░░░░░░░░░]  48.3%
+[2KSwp: [[32m█████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  14.5%
+[2K[1m[7m PID    USER      CPU%  MEM%  COMMAND                                   [0m
+[2K42266 postgres  [31m 99.8[0m  31.8  /System/Library/Metal
+[2K99333 _windowserver [31m 99.1[0m  37.3  postgres: writer
+[2K38848 admin     [31m 95.8[0m  19.4  WindowServer
+[2K20468 daemon    [31m 95.5[0m  39.6  kernel_task
+[2K55320 root      [31m 93.6[0m  20.8  /usr/bin/sample iTerm2
+[2K37967 _windowserver [31m 90.1[0m  20.9  launchd
+[2K 5065 root      [31m 89.8[0m  46.2  sshd: admin
+[2K11095 _windowserver [31m 86.9[0m   2.0  /System/Library/Metal
+[2K40355 admin     [31m 85.7[0m  36.4  WindowServer
+[2K82595 www-data  [31m 84.5[0m  12.2  node server.js
+[24;1H[7m [1mIteration: 9[0m | tab_1 | Press Ctrl-C to stop                  [0m[H[2KCPU0: [[33m█████████████████████████[0m░░░░░░░░░░░░░]  66.1%
+[2KCPU1: [[32m████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░]  32.5%
+[2KCPU2: [[31m████████████████████████████████[0m░░░░░░]  86.1%
+[2KCPU3: [[32m█████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  15.8%
+[2KCPU4: [[32m█████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  25.4%
+[2KCPU5: [[32m█████████████████[0m░░░░░░░░░░░░░░░░░░░░░]  44.8%
+[2KCPU6: [[31m███████████████████████████████[0m░░░░░░░]  82.1%
+[2KMem: [[32m█████████████████[0m░░░░░░░░░░░░░░░░░░░░░]  46.4%
+[2KSwp: [[32m█████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  14.8%
+[2K[1m[7m PID    USER      CPU%  MEM%  COMMAND                                   [0m
+[2K42266 postgres  [31m 99.8[0m  31.8  /System/Library/Metal
+[2K99333 _windowserver [31m 99.1[0m  37.3  postgres: writer
+[2K43911 postgres  [31m 96.1[0m  14.8  sshd: admin
+[2K45148 daemon    [31m 95.9[0m   6.5  /System/Library/Metal
+[2K38848 admin     [31m 95.8[0m  19.4  WindowServer
+[2K20468 daemon    [31m 95.5[0m  39.6  kernel_task
+[2K55320 root      [31m 93.6[0m  20.8  /usr/bin/sample iTerm2
+[2K37967 _windowserver [31m 90.1[0m  20.9  launchd
+[2K 5065 root      [31m 89.8[0m  46.2  sshd: admin
+[2K11095 _windowserver [31m 86.9[0m   2.0  /System/Library/Metal
+[24;1H[7m [1mIteration: 10[0m | tab_1 | Press Ctrl-C to stop                 [0m[H[2KCPU0: [[33m███████████████████████[0m░░░░░░░░░░░░░░░]  62.3%
+[2KCPU1: [[32m███████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░]  30.1%
+[2KCPU2: [[33m██████████████████████████████[0m░░░░░░░░]  79.0%
+[2KCPU3: [[32m███[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]   8.3%
+[2KCPU4: [[32m███████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  19.8%
+[2KCPU5: [[32m█████████████████[0m░░░░░░░░░░░░░░░░░░░░░]  45.0%
+[2KCPU6: [[33m█████████████████████████████[0m░░░░░░░░░]  76.9%
+[2KMem: [[32m█████████████████[0m░░░░░░░░░░░░░░░░░░░░░]  45.1%
+[2KSwp: [[32m█████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  14.5%
+[2K[1m[7m PID    USER      CPU%  MEM%  COMMAND                                   [0m
+[2K42266 postgres  [31m 99.8[0m  31.8  /System/Library/Metal
+[2K99333 _windowserver [31m 99.1[0m  37.3  postgres: writer
+[2K43911 postgres  [31m 96.1[0m  14.8  sshd: admin
+[2K45148 daemon    [31m 95.9[0m   6.5  /System/Library/Metal
+[2K20468 daemon    [31m 95.5[0m  39.6  kernel_task
+[2K55320 root      [31m 93.6[0m  20.8  /usr/bin/sample iTerm2
+[2K 5065 root      [31m 89.8[0m  46.2  sshd: admin
+[2K11095 _windowserver [31m 86.9[0m   2.0  /System/Library/Metal
+[2K86927 root      [31m 86.1[0m  30.1  kernel_task
+[2K79279 admin     [31m 85.9[0m   9.3  /usr/bin/sample iTerm2
+[24;1H[7m [1mIteration: 11[0m | tab_1 | Press Ctrl-C to stop                 [0m[H[2KCPU0: [[33m█████████████████████[0m░░░░░░░░░░░░░░░░░]  56.3%
+[2KCPU1: [[32m█████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  25.9%
+[2KCPU2: [[33m█████████████████████████████[0m░░░░░░░░░]  78.4%
+[2KCPU3: [[32m██████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  17.3%
+[2KCPU4: [[32m█████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  25.8%
+[2KCPU5: [[32m███████████████[0m░░░░░░░░░░░░░░░░░░░░░░░]  40.5%
+[2KCPU6: [[33m█████████████████████████████[0m░░░░░░░░░]  78.0%
+[2KMem: [[32m█████████████████[0m░░░░░░░░░░░░░░░░░░░░░]  45.8%
+[2KSwp: [[32m█████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  15.1%
+[2K[1m[7m PID    USER      CPU%  MEM%  COMMAND                                   [0m
+[2K42266 postgres  [31m 99.8[0m  31.8  /System/Library/Metal
+[2K99333 _windowserver [31m 99.1[0m  37.3  postgres: writer
+[2K45148 daemon    [31m 95.9[0m   6.5  /System/Library/Metal
+[2K20468 daemon    [31m 95.5[0m  39.6  kernel_task
+[2K59435 www-data  [31m 93.7[0m   7.1  launchd
+[2K55320 root      [31m 93.6[0m  20.8  /usr/bin/sample iTerm2
+[2K 5065 root      [31m 89.8[0m  46.2  sshd: admin
+[2K11095 _windowserver [31m 86.9[0m   2.0  /System/Library/Metal
+[2K86927 root      [31m 86.1[0m  30.1  kernel_task
+[2K79279 admin     [31m 85.9[0m   9.3  /usr/bin/sample iTerm2
+[24;1H[7m [1mIteration: 12[0m | tab_1 | Press Ctrl-C to stop                 [0m[H[2KCPU0: [[33m█████████████████████[0m░░░░░░░░░░░░░░░░░]  55.8%
+[2KCPU1: [[32m███████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░]  29.5%
+[2KCPU2: [[31m███████████████████████████████[0m░░░░░░░]  83.6%
+[2KCPU3: [[32m████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  11.9%
+[2KCPU4: [[32m███████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░]  31.0%
+[2KCPU5: [[32m█████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░]  36.1%
+[2KCPU6: [[31m█████████████████████████████████[0m░░░░░]  87.7%
+[2KMem: [[32m████████████████[0m░░░░░░░░░░░░░░░░░░░░░░]  44.3%
+[2KSwp: [[32m██████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  15.9%
+[2K[1m[7m PID    USER      CPU%  MEM%  COMMAND                                   [0m
+[2K42266 postgres  [31m 99.8[0m  31.8  /System/Library/Metal
+[2K99333 _windowserver [31m 99.1[0m  37.3  postgres: writer
+[2K45148 daemon    [31m 95.9[0m   6.5  /System/Library/Metal
+[2K20468 daemon    [31m 95.5[0m  39.6  kernel_task
+[2K59435 www-data  [31m 93.7[0m   7.1  launchd
+[2K55320 root      [31m 93.6[0m  20.8  /usr/bin/sample iTerm2
+[2K 5065 root      [31m 89.8[0m  46.2  sshd: admin
+[2K86927 root      [31m 86.1[0m  30.1  kernel_task
+[2K79279 admin     [31m 85.9[0m   9.3  /usr/bin/sample iTerm2
+[2K40355 admin     [31m 85.7[0m  36.4  WindowServer
+[24;1H[7m [1mIteration: 13[0m | tab_1 | Press Ctrl-C to stop                 [0m[H[2KCPU0: [[33m█████████████████████[0m░░░░░░░░░░░░░░░░░]  57.2%
+[2KCPU1: [[32m████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░]  32.0%
+[2KCPU2: [[31m████████████████████████████████[0m░░░░░░]  84.3%
+[2KCPU3: [[32m███[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  10.1%
+[2KCPU4: [[32m████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░]  33.7%
+[2KCPU5: [[32m████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░]  34.2%
+[2KCPU6: [[31m███████████████████████████████████[0m░░░]  93.3%
+[2KMem: [[32m█████████████████[0m░░░░░░░░░░░░░░░░░░░░░]  45.5%
+[2KSwp: [[32m█████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  15.5%
+[2K[1m[7m PID    USER      CPU%  MEM%  COMMAND                                   [0m
+[2K42266 postgres  [31m 99.8[0m  31.8  /System/Library/Metal
+[2K45148 daemon    [31m 95.9[0m   6.5  /System/Library/Metal
+[2K20468 daemon    [31m 95.5[0m  39.6  kernel_task
+[2K59435 www-data  [31m 93.7[0m   7.1  launchd
+[2K55320 root      [31m 93.6[0m  20.8  /usr/bin/sample iTerm2
+[2K 5065 root      [31m 89.8[0m  46.2  sshd: admin
+[2K86927 root      [31m 86.1[0m  30.1  kernel_task
+[2K79279 admin     [31m 85.9[0m   9.3  /usr/bin/sample iTerm2
+[2K40355 admin     [31m 85.7[0m  36.4  WindowServer
+[2K82595 www-data  [31m 84.5[0m  12.2  node server.js
+[24;1H[7m [1mIteration: 14[0m | tab_1 | Press Ctrl-C to stop                 [0m[H[2KCPU0: [[32m██████████████████[0m░░░░░░░░░░░░░░░░░░░░]  47.8%
+[2KCPU1: [[32m███████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░]  31.5%
+[2KCPU2: [[31m██████████████████████████████████[0m░░░░]  92.0%
+[2KCPU3: [[32m[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]   0.3%
+[2KCPU4: [[32m█████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░]  34.2%
+[2KCPU5: [[32m█████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  25.5%
+[2KCPU6: [[31m██████████████████████████████████████[0m] 100.0%
+[2KMem: [[32m█████████████████[0m░░░░░░░░░░░░░░░░░░░░░]  46.2%
+[2KSwp: [[32m██████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  16.0%
+[2K[1m[7m PID    USER      CPU%  MEM%  COMMAND                                   [0m
+[2K42266 postgres  [31m 99.8[0m  31.8  /System/Library/Metal
+[2K45148 daemon    [31m 95.9[0m   6.5  /System/Library/Metal
+[2K20468 daemon    [31m 95.5[0m  39.6  kernel_task
+[2K59435 www-data  [31m 93.7[0m   7.1  launchd
+[2K55320 root      [31m 93.6[0m  20.8  /usr/bin/sample iTerm2
+[2K19402 postgres  [31m 93.3[0m   7.4  mds_stores
+[2K 5065 root      [31m 89.8[0m  46.2  sshd: admin
+[2K86927 root      [31m 86.1[0m  30.1  kernel_task
+[2K79279 admin     [31m 85.9[0m   9.3  /usr/bin/sample iTerm2
+[2K40355 admin     [31m 85.7[0m  36.4  WindowServer
+[24;1H[7m [1mIteration: 15[0m | tab_1 | Press Ctrl-C to stop                 [0m[r[?25h[?1049l[tab_1] Dashboard complete: 15 iterations
+[tab_1] Running dashboard mode 'watch' for 0.045 seconds @ 30fps...
+[?1049h[?25l[2J[H[1mEvery 0.1s: dashboard watch mode[0m    1970-01-01 00:00:00
+
+Load average: 3.38 3.03 1.68
+Tasks: 166 total, 5 running
+Memory: 5990M used / 16384M total
+
+[1m    PID USER         %CPU   %MEM COMMAND                       [0m
+[31m  53076 www-data     96.8    7.2 node                          [0m
+[33m  66151 admin        28.2   15.1 bash                          [0m
+[33m  32835 admin        31.0   14.6 vim                           [0m
+[31m  43280 daemon       56.0    7.1 docker                        [0m
+[31m  80071 admin        96.7    9.5 bash                          [0m
+[31m  34144 root         80.5   11.0 python3                       [0m
+[31m  12226 daemon       71.0   15.7 vim                           [0m
+[31m    150 daemon       82.8    6.7 vim                           [0m
+  42626 root         19.1   11.4 node                          [0m
+  18678 daemon        9.1   19.9 bash                          [0m
+[33m  64132 root         30.1    5.8 python3                       [0m
+[31m  71755 www-data     81.4   10.8 bash                          [0m
+[33m  71727 www-data     44.5   11.9 iTerm2                        [0m
+[33m  41556 admin        29.0    3.8 node                          [0m
+[2J[H[1mEvery 0.1s: dashboard watch mode[0m    1970-01-01 00:00:00
+
+Load average: 0.13 3.93 1.04
+Tasks: 117 total, 1 running
+Memory: 6780M used / 16384M total
+
+[1m    PID USER         %CPU   %MEM COMMAND                       [0m
+[31m  99301 admin        87.7   18.5 python3                       [0m
+[31m  91662 daemon       83.8   10.5 bash                          [0m
+[31m  30868 admin        89.5   11.8 iTerm2                        [0m
+[33m  75982 www-data     45.1   13.2 vim                           [0m
+[33m  46841 root         32.4    2.3 bash                          [0m
+[31m  82595 www-data     84.5    4.9 vim                           [0m
+[31m  35526 root         70.5    7.4 node                          [0m
+[31m  43587 daemon       81.6    2.0 node                          [0m
+  91446 admin         4.5   11.5 bash                          [0m
+  78928 root          2.7   12.7 bash                          [0m
+[33m  75492 root         39.1    7.4 python3                       [0m
+   4770 root         19.5   19.4 vim                           [0m
+[33m  16240 daemon       21.1   16.0 vim                           [0m
+[31m   2987 daemon       62.1   16.7 python3                       [0m
+[2J[H[1mEvery 0.1s: dashboard watch mode[0m    1970-01-01 00:00:00
+
+Load average: 0.88 2.59 1.40
+Tasks: 146 total, 1 running
+Memory: 6062M used / 16384M total
+
+[1m    PID USER         %CPU   %MEM COMMAND                       [0m
+[31m  61228 root         59.6   14.0 iTerm2                        [0m
+[33m  26130 www-data     35.9   14.6 bash                          [0m
+[31m  22207 admin        96.7    1.2 vim                           [0m
+[33m  20737 admin        34.2    5.0 bash                          [0m
+  57975 admin         1.3   13.6 bash                          [0m
+[31m  66664 www-data     64.9    7.8 vim                           [0m
+[31m  32891 admin        56.1    0.2 vim                           [0m
+[31m  10365 www-data     73.9   10.9 node                          [0m
+[33m  31475 daemon       35.2    5.8 docker                        [0m
+[31m  77369 admin        71.6    7.8 iTerm2                        [0m
+  85306 root          0.2    3.8 docker                        [0m
+[33m  20982 admin        22.3    9.0 vim                           [0m
+  88314 daemon        3.2   17.4 bash                          [0m
+  54818 root         16.6    1.3 vim                           [0m
+[2J[H[1mEvery 0.1s: dashboard watch mode[0m    1970-01-01 00:00:00
+
+Load average: 0.63 2.11 1.95
+Tasks: 243 total, 5 running
+Memory: 7094M used / 16384M total
+
+[1m    PID USER         %CPU   %MEM COMMAND                       [0m
+[33m     10 root         49.5    6.2 iTerm2                        [0m
+   6535 daemon       18.8   20.0 vim                           [0m
+[31m  10941 admin        98.7    8.0 vim                           [0m
+  54721 www-data      0.3    0.3 python3                       [0m
+  88574 root         19.0   12.2 node                          [0m
+[31m  39639 www-data     68.9    3.6 iTerm2                        [0m
+  51996 root          2.2   18.3 python3                       [0m
+[31m  33619 admin        65.4   16.3 vim                           [0m
+[31m  45489 root         87.2    5.6 python3                       [0m
+[33m   5545 root         20.6    5.2 docker                        [0m
+[31m  48090 root         84.6   19.2 bash                          [0m
+[31m  85900 daemon       71.2   18.1 vim                           [0m
+[31m  57075 www-data     87.1    3.6 iTerm2                        [0m
+  76956 www-data      0.9    3.0 docker                        [0m
+[2J[H[1mEvery 0.1s: dashboard watch mode[0m    1970-01-01 00:00:00
+
+Load average: 1.35 1.47 0.37
+Tasks: 299 total, 5 running
+Memory: 4146M used / 16384M total
+
+[1m    PID USER         %CPU   %MEM COMMAND                       [0m
+   5401 www-data     16.4   19.6 docker                        [0m
+[31m  47305 daemon       98.9    2.6 python3                       [0m
+[31m  62661 admin        93.4    6.2 bash                          [0m
+[33m  95508 root         30.3   16.7 docker                        [0m
+  54359 root          9.9   18.2 iTerm2                        [0m
+  44182 www-data     12.4    2.3 iTerm2                        [0m
+[33m  55907 root         30.2   14.7 node                          [0m
+[31m  21831 daemon       80.6   19.8 python3                       [0m
+   8630 root         19.8    4.4 iTerm2                        [0m
+[33m   1030 root         39.4   10.4 iTerm2                        [0m
+[33m  64045 admin        42.3    7.4 docker                        [0m
+[33m  76708 admin        43.1    7.2 python3                       [0m
+[31m  92014 root         90.3    9.0 vim                           [0m
+[33m  26436 root         49.7    5.1 vim                           [0m
+[2J[H[1mEvery 0.1s: dashboard watch mode[0m    1970-01-01 00:00:00
+
+Load average: 0.17 3.79 0.86
+Tasks: 137 total, 1 running
+Memory: 4810M used / 16384M total
+
+[1m    PID USER         %CPU   %MEM COMMAND                       [0m
+[33m  60085 daemon       36.2   16.5 python3                       [0m
+  78151 daemon       14.8    8.1 vim                           [0m
+[31m  55475 daemon       67.9   17.8 iTerm2                        [0m
+[31m  65359 admin        54.3   18.6 python3                       [0m
+[31m  44594 www-data     81.8    0.7 node                          [0m
+[31m  33671 admin        84.2   11.7 vim                           [0m
+  92586 daemon        6.6    1.7 python3                       [0m
+   8698 admin        13.0    6.0 iTerm2                        [0m
+[31m  43332 admin        80.1   17.4 iTerm2                        [0m
+[31m  48670 daemon       90.1   10.0 bash                          [0m
+[31m  11882 root         74.7   18.1 node                          [0m
+[31m  37967 daemon       82.6    9.6 iTerm2                        [0m
+[31m  79618 admin        85.1   16.0 vim                           [0m
+[33m     32 admin        30.2   11.4 docker                        [0m
+[2J[H[1mEvery 0.1s: dashboard watch mode[0m    1970-01-01 00:00:00
+
+Load average: 0.26 3.44 3.77
+Tasks: 177 total, 4 running
+Memory: 5573M used / 16384M total
+
+[1m    PID USER         %CPU   %MEM COMMAND                       [0m
+  50290 root         16.4   18.7 node                          [0m
+  37630 www-data      5.6    0.7 iTerm2                        [0m
+[31m  18469 daemon       89.0   12.0 python3                       [0m
+[31m  88283 admin        81.0    7.1 python3                       [0m
+[33m  80187 daemon       38.7    0.9 iTerm2                        [0m
+  19841 root          3.2   12.3 vim                           [0m
+[31m  42456 root         70.0   13.0 node                          [0m
+  50255 daemon       11.1    1.2 vim                           [0m
+[31m  61236 www-data     65.0   19.4 vim                           [0m
+[31m  81532 www-data     78.9    2.5 iTerm2                        [0m
+[31m  38510 root         51.9   15.7 node                          [0m
+[33m   5005 daemon       44.5   15.1 iTerm2                        [0m
+[31m  46735 root         95.6   18.0 python3                       [0m
+[31m  63723 www-data     90.1   18.9 vim                           [0m
+[2J[H[1mEvery 0.1s: dashboard watch mode[0m    1970-01-01 00:00:00
+
+Load average: 2.28 3.50 0.92
+Tasks: 298 total, 5 running
+Memory: 6861M used / 16384M total
+
+[1m    PID USER         %CPU   %MEM COMMAND                       [0m
+[31m  68644 daemon       50.7   18.9 node                          [0m
+[31m  55833 daemon       92.3   18.7 iTerm2                        [0m
+[33m   8248 root         41.5    3.1 python3                       [0m
+[31m  58553 daemon       68.6    0.6 docker                        [0m
+  94706 www-data      7.9    1.4 docker                        [0m
+[33m  90673 root         34.5    3.6 node                          [0m
+[31m  47947 root         59.7    2.9 python3                       [0m
+[31m  26843 root         74.8    5.9 vim                           [0m
+[31m   3231 admin        85.9    3.7 python3                       [0m
+[31m  62482 www-data     70.7    5.2 python3                       [0m
+[33m  27279 www-data     33.5   19.2 docker                        [0m
+  72510 www-data     18.4   19.9 python3                       [0m
+  69892 www-data     15.6   18.0 node                          [0m
+[31m  29206 www-data     50.8    4.7 node                          [0m
+[2J[H[1mEvery 0.1s: dashboard watch mode[0m    1970-01-01 00:00:00
+
+Load average: 1.16 1.68 0.19
+Tasks: 133 total, 5 running
+Memory: 4084M used / 16384M total
+
+[1m    PID USER         %CPU   %MEM COMMAND                       [0m
+[31m  51617 root         70.2    2.6 docker                        [0m
+[31m  72192 daemon       74.1    2.8 iTerm2                        [0m
+  39064 www-data      8.5    8.9 docker                        [0m
+[33m  83499 root         37.6    0.2 vim                           [0m
+[33m  42031 daemon       20.4    5.9 iTerm2                        [0m
+[31m  11935 admin        79.7    5.5 bash                          [0m
+[31m  79371 admin        79.6    8.9 iTerm2                        [0m
+[33m  24299 daemon       43.2    5.0 iTerm2                        [0m
+[33m  44616 admin        35.5   12.6 python3                       [0m
+[33m  63346 admin        29.5   16.6 iTerm2                        [0m
+  81099 daemon        0.8    6.0 vim                           [0m
+[33m  39474 admin        42.4   15.0 python3                       [0m
+[31m  88891 daemon       76.0    4.6 iTerm2                        [0m
+  36712 root         12.1   17.7 python3                       [0m
+[2J[H[1mEvery 0.1s: dashboard watch mode[0m    1970-01-01 00:00:00
+
+Load average: 0.00 1.59 3.56
+Tasks: 281 total, 4 running
+Memory: 5821M used / 16384M total
+
+[1m    PID USER         %CPU   %MEM COMMAND                       [0m
+[33m  13374 www-data     35.4   17.4 vim                           [0m
+  25695 root          3.5   15.8 docker                        [0m
+  69946 www-data     11.8   17.2 node                          [0m
+[31m   8926 daemon       86.1    5.7 node                          [0m
+[31m  75233 admin        53.1    8.2 vim                           [0m
+[31m  71248 daemon       74.1   18.1 docker                        [0m
+[33m  38307 daemon       37.2   12.6 node                          [0m
+[33m  16161 root         38.1   11.8 node                          [0m
+[33m  73350 www-data     35.4    9.5 iTerm2                        [0m
+[33m  28576 daemon       48.9   10.0 iTerm2                        [0m
+[33m  85467 root         44.4    2.9 iTerm2                        [0m
+   6869 admin         2.6    9.4 python3                       [0m
+[31m  69053 root         68.7    1.6 vim                           [0m
+  87689 daemon        0.6    0.8 bash                          [0m
+[2J[H[1mEvery 0.1s: dashboard watch mode[0m    1970-01-01 00:00:00
+
+Load average: 0.01 1.08 2.56
+Tasks: 174 total, 2 running
+Memory: 4576M used / 16384M total
+
+[1m    PID USER         %CPU   %MEM COMMAND                       [0m
+  98516 www-data     19.1    8.7 vim                           [0m
+  43280 daemon       16.8    8.4 vim                           [0m
+[33m  57052 admin        44.7   14.2 bash                          [0m
+[33m  41429 admin        20.9    3.7 docker                        [0m
+[31m  50971 daemon       80.7    7.8 node                          [0m
+[31m  25716 daemon       94.0   11.7 python3                       [0m
+[33m  50902 root         23.4    1.7 node                          [0m
+[31m  47660 root         74.3   13.5 node                          [0m
+[31m  80057 www-data     61.3   14.1 bash                          [0m
+[31m  98500 www-data     77.1   17.7 iTerm2                        [0m
+[31m  60070 root         63.2   10.3 vim                           [0m
+[31m  71721 daemon       58.1    9.8 vim                           [0m
+[33m  62345 admin        33.7    0.8 python3                       [0m
+  21347 www-data      0.4   13.1 node                          [0m
+[2J[H[1mEvery 0.1s: dashboard watch mode[0m    1970-01-01 00:00:00
+
+Load average: 0.25 1.71 0.89
+Tasks: 255 total, 4 running
+Memory: 6284M used / 16384M total
+
+[1m    PID USER         %CPU   %MEM COMMAND                       [0m
+  28964 daemon       19.3   12.2 bash                          [0m
+[33m  11223 www-data     32.3    9.1 docker                        [0m
+[31m  33489 root         52.2    3.8 python3                       [0m
+  27472 www-data     18.8    4.0 vim                           [0m
+[33m  95555 www-data     31.2   17.2 docker                        [0m
+[31m  63188 www-data     87.2    4.8 docker                        [0m
+  72349 root          0.9    9.9 iTerm2                        [0m
+[31m   6222 daemon       97.9    9.2 python3                       [0m
+[33m  11222 root         24.1   16.5 node                          [0m
+[33m  54266 admin        44.1    1.5 iTerm2                        [0m
+  73271 daemon        3.9    3.6 iTerm2                        [0m
+[31m  28843 admin        84.0    5.6 docker                        [0m
+  41891 daemon       10.7   18.0 bash                          [0m
+[31m  70920 admin        71.1   15.5 bash                          [0m
+[2J[H[1mEvery 0.1s: dashboard watch mode[0m    1970-01-01 00:00:00
+
+Load average: 2.42 2.14 1.04
+Tasks: 159 total, 1 running
+Memory: 4486M used / 16384M total
+
+[1m    PID USER         %CPU   %MEM COMMAND                       [0m
+  80593 root         17.3    8.3 node                          [0m
+[31m  37298 root         74.2   10.3 python3                       [0m
+[31m  15964 daemon       64.5    2.4 vim                           [0m
+[33m  74013 www-data     23.0   14.3 bash                          [0m
+[33m  86588 www-data     22.2   16.6 node                          [0m
+[31m   8492 www-data     67.5    4.7 vim                           [0m
+[31m  62950 www-data     58.2    2.7 python3                       [0m
+[33m  72499 www-data     36.7   12.7 node                          [0m
+[31m  51850 admin        97.6   10.2 python3                       [0m
+[31m  17771 admin        78.1   15.5 bash                          [0m
+[33m  91187 admin        23.5    2.6 node                          [0m
+[33m  99611 daemon       35.3   11.8 vim                           [0m
+[31m  65335 root         61.6    0.5 bash                          [0m
+[33m  47005 daemon       45.6    0.3 node                          [0m
+[2J[H[1mEvery 0.1s: dashboard watch mode[0m    1970-01-01 00:00:00
+
+Load average: 2.22 0.65 3.52
+Tasks: 288 total, 4 running
+Memory: 6236M used / 16384M total
+
+[1m    PID USER         %CPU   %MEM COMMAND                       [0m
+[33m  41150 root         25.9   12.1 vim                           [0m
+[31m  25044 www-data     78.5    7.7 python3                       [0m
+[33m  27350 root         31.5   14.9 node                          [0m
+[31m  44980 daemon       66.8   13.2 node                          [0m
+[31m  34093 www-data     67.2    6.1 docker                        [0m
+[31m  75182 root         73.2    3.0 python3                       [0m
+  64371 root          2.5    0.9 node                          [0m
+  85705 www-data      6.7    1.2 vim                           [0m
+[31m  55398 admin        89.2    4.3 iTerm2                        [0m
+[33m  18620 www-data     31.2   13.0 vim                           [0m
+[33m  97952 daemon       38.3    8.2 docker                        [0m
+[31m  69954 daemon       75.9   11.3 python3                       [0m
+  53600 daemon       17.1   10.0 bash                          [0m
+  86767 admin         8.0    4.7 node                          [0m
+[2J[H[1mEvery 0.1s: dashboard watch mode[0m    1970-01-01 00:00:00
+
+Load average: 0.99 0.09 3.23
+Tasks: 143 total, 5 running
+Memory: 4689M used / 16384M total
+
+[1m    PID USER         %CPU   %MEM COMMAND                       [0m
+[33m  94083 root         42.7   17.3 python3                       [0m
+[31m  81332 daemon       71.0   12.3 python3                       [0m
+[31m  33093 www-data     80.6   14.7 python3                       [0m
+[33m  82021 root         49.6    7.2 vim                           [0m
+[33m  19767 daemon       23.6    7.1 vim                           [0m
+[33m  98695 daemon       33.8   16.1 iTerm2                        [0m
+[31m   1938 www-data     53.0    5.8 iTerm2                        [0m
+[31m   4579 www-data     93.4    0.8 iTerm2                        [0m
+[33m  94554 root         40.4    9.9 python3                       [0m
+[33m  35790 root         25.4   13.6 vim                           [0m
+[31m  37982 admin        76.3   10.3 iTerm2                        [0m
+  32852 admin        11.6   19.6 node                          [0m
+  76828 www-data     16.3   17.4 node                          [0m
+[31m  43341 root         58.5    1.0 node                          [0m
+[?25h[?1049l[tab_1] Dashboard complete: 15 iterations
+[tab_1] Running dashboard mode 'progress' for 0.045 seconds @ 30fps...
+[?1049h[?25l[2J[H[1mProgress Bars Stress Test[0m
+Iteration: 0
+Task  1: 
+Task  2: 
+Task  3: 
+Task  4: 
+Task  5: 
+Task  6: 
+Task  7: 
+Task  8: 
+Task  9: 
+Task 10: 
+Task 11: 
+Task 12: 
+Task 13: 
+Task 14: 
+Task 15: 
+Task 16: 
+Task 17: 
+Task 18: 
+Task 19: 
+Task 20: 
+[2;12H1[3;10H[[31m█████████████████████████████████████████[0m░░░░░░░]  86.7%[K[4;10H[[33m██████████████████████████████████████[0m░░░░░░░░░░]  79.7%[K[5;10H[[32m██████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░]  46.7%[K[6;10H[[32m██████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  29.6%[K[7;10H[[33m█████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░]  54.0%[K[8;10H[[32m████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  41.9%[K[9;10H[[31m██████████████████████████████████████[0m░░░░░░░░░░]  81.1%[K[10;10H[[32m████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  33.8%[K[11;10H[[33m█████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░]  52.3%[K[12;10H[[33m██████████████████████████████[0m░░░░░░░░░░░░░░░░░░]  63.2%[K[13;10H[[31m████████████████████████████████████████████[0m░░░░]  93.7%[K[14;10H[[33m██████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░]  54.9%[K[15;10H[[32m██████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  30.2%[K[16;10H[[33m██████████████████████████████████████[0m░░░░░░░░░░]  79.8%[K[17;10H[[33m███████████████████████████████[0m░░░░░░░░░░░░░░░░░]  65.0%[K[18;10H[[32m████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  26.1%[K[19;10H[[31m█████████████████████████████████████████████[0m░░░]  94.9%[K[20;10H[[31m████████████████████████████████████████████████[0m] 100.0%[K[21;10H[[31m████████████████████████████████████████[0m░░░░░░░░]  85.3%[K[22;10H[[31m█████████████████████████████████████████████[0m░░░]  93.9%[K[2;12H2[3;10H[[31m██████████████████████████████████████████[0m░░░░░░]  88.9%[K[4;10H[[31m████████████████████████████████████████[0m░░░░░░░░]  83.6%[K[5;10H[[33m████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░]  51.2%[K[6;10H[[32m████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  33.4%[K[7;10H[[33m███████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░]  56.9%[K[8;10H[[32m████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  43.3%[K[9;10H[[31m████████████████████████████████████████[0m░░░░░░░░]  83.9%[K[10;10H[[32m█████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  37.2%[K[11;10H[[33m███████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░]  57.0%[K[12;10H[[33m████████████████████████████████[0m░░░░░░░░░░░░░░░░]  68.1%[K[13;10H[[31m██████████████████████████████████████████████[0m░░]  96.6%[K[14;10H[[33m████████████████████████████[0m░░░░░░░░░░░░░░░░░░░░]  59.4%[K[15;10H[[32m███████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  32.3%[K[16;10H[[31m████████████████████████████████████████[0m░░░░░░░░]  84.0%[K[17;10H[[33m████████████████████████████████[0m░░░░░░░░░░░░░░░░]  68.2%[K[18;10H[[32m█████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  27.2%[K[19;10H[[31m███████████████████████████████████████████████[0m░]  98.7%[K[20;10H[[31m███████████████████████████████████████████████[0m░]  99.0%[K[21;10H[[31m███████████████████████████████████████████[0m░░░░░]  89.6%[K[22;10H[[31m██████████████████████████████████████████████[0m░░]  97.6%[K[2;12H3[3;10H[[31m███████████████████████████████████████████[0m░░░░░]  91.2%[K[4;10H[[31m██████████████████████████████████████████[0m░░░░░░]  87.6%[K[5;10H[[33m██████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░]  55.8%[K[6;10H[[32m█████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  37.1%[K[7;10H[[33m████████████████████████████[0m░░░░░░░░░░░░░░░░░░░░]  59.8%[K[8;10H[[32m█████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░]  44.7%[K[9;10H[[31m█████████████████████████████████████████[0m░░░░░░░]  86.6%[K[10;10H[[32m███████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  40.7%[K[11;10H[[33m█████████████████████████████[0m░░░░░░░░░░░░░░░░░░░]  61.6%[K[12;10H[[33m███████████████████████████████████[0m░░░░░░░░░░░░░]  72.9%[K[13;10H[[31m███████████████████████████████████████████████[0m░]  99.5%[K[14;10H[[33m██████████████████████████████[0m░░░░░░░░░░░░░░░░░░]  63.9%[K[15;10H[[32m████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  34.3%[K[16;10H[[31m██████████████████████████████████████████[0m░░░░░░]  88.2%[K[17;10H[[33m██████████████████████████████████[0m░░░░░░░░░░░░░░]  71.4%[K[18;10H[[32m█████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  28.2%[K[19;10H[[31m████████████████████████████████████████████████[0m] 100.0%[K[20;10H[[31m███████████████████████████████████████████████[0m░]  98.0%[K[21;10H[[31m█████████████████████████████████████████████[0m░░░]  93.9%[K[22;10H[[31m████████████████████████████████████████████████[0m] 100.0%[K[2;12H4[3;10H[[31m████████████████████████████████████████████[0m░░░░]  93.4%[K[4;10H[[31m███████████████████████████████████████████[0m░░░░░]  91.5%[K[5;10H[[33m█████████████████████████████[0m░░░░░░░░░░░░░░░░░░░]  60.4%[K[6;10H[[32m███████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  40.8%[K[7;10H[[33m██████████████████████████████[0m░░░░░░░░░░░░░░░░░░]  62.7%[K[8;10H[[32m██████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░]  46.1%[K[9;10H[[31m██████████████████████████████████████████[0m░░░░░░]  89.3%[K[10;10H[[32m█████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░]  44.1%[K[11;10H[[33m███████████████████████████████[0m░░░░░░░░░░░░░░░░░]  66.3%[K[12;10H[[33m█████████████████████████████████████[0m░░░░░░░░░░░]  77.8%[K[13;10H[[31m████████████████████████████████████████████████[0m] 100.0%[K[14;10H[[33m████████████████████████████████[0m░░░░░░░░░░░░░░░░]  68.3%[K[15;10H[[32m█████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  36.4%[K[16;10H[[31m████████████████████████████████████████████[0m░░░░]  92.5%[K[17;10H[[33m███████████████████████████████████[0m░░░░░░░░░░░░░]  74.6%[K[18;10H[[32m██████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  29.3%[K[19;10H[[31m██████████████████████████████████████████████[0m░░]  97.0%[K[20;10H[[31m██████████████████████████████████████████████[0m░░]  97.0%[K[21;10H[[31m███████████████████████████████████████████████[0m░]  98.2%[K[22;10H[[31m█████████████████████████████████████████████[0m░░░]  95.5%[K[2;12H5[3;10H[[31m█████████████████████████████████████████████[0m░░░]  95.6%[K[4;10H[[31m█████████████████████████████████████████████[0m░░░]  95.4%[K[5;10H[[33m███████████████████████████████[0m░░░░░░░░░░░░░░░░░]  65.0%[K[6;10H[[32m█████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░]  44.6%[K[7;10H[[33m███████████████████████████████[0m░░░░░░░░░░░░░░░░░]  65.6%[K[8;10H[[32m██████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░]  47.5%[K[9;10H[[31m████████████████████████████████████████████[0m░░░░]  92.1%[K[10;10H[[32m██████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░]  47.5%[K[11;10H[[33m██████████████████████████████████[0m░░░░░░░░░░░░░░]  70.9%[K[12;10H[[31m███████████████████████████████████████[0m░░░░░░░░░]  82.7%[K[13;10H[[31m███████████████████████████████████████████████[0m░]  98.0%[K[14;10H[[33m██████████████████████████████████[0m░░░░░░░░░░░░░░]  72.8%[K[15;10H[[32m██████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  38.4%[K[16;10H[[31m██████████████████████████████████████████████[0m░░]  96.7%[K[17;10H[[33m█████████████████████████████████████[0m░░░░░░░░░░░]  77.8%[K[18;10H[[32m██████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  30.3%[K[19;10H[[31m█████████████████████████████████████████████[0m░░░]  94.1%[K[20;10H[[31m██████████████████████████████████████████████[0m░░]  96.0%[K[21;10H[[31m████████████████████████████████████████████████[0m] 100.0%[K[22;10H[[31m███████████████████████████████████████████[0m░░░░░]  91.1%[K[2;12H6[3;10H[[31m██████████████████████████████████████████████[0m░░]  97.9%[K[4;10H[[31m███████████████████████████████████████████████[0m░]  99.3%[K[5;10H[[33m█████████████████████████████████[0m░░░░░░░░░░░░░░░]  69.6%[K[6;10H[[32m███████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░]  48.3%[K[7;10H[[33m████████████████████████████████[0m░░░░░░░░░░░░░░░░]  68.5%[K[8;10H[[32m███████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░]  48.9%[K[9;10H[[31m█████████████████████████████████████████████[0m░░░]  94.8%[K[10;10H[[33m████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░]  51.0%[K[11;10H[[33m████████████████████████████████████[0m░░░░░░░░░░░░]  75.6%[K[12;10H[[31m██████████████████████████████████████████[0m░░░░░░]  87.5%[K[13;10H[[31m██████████████████████████████████████████████[0m░░]  96.0%[K[14;10H[[33m█████████████████████████████████████[0m░░░░░░░░░░░]  77.2%[K[15;10H[[32m███████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  40.4%[K[16;10H[[31m████████████████████████████████████████████████[0m] 100.0%[K[17;10H[[31m██████████████████████████████████████[0m░░░░░░░░░░]  81.0%[K[18;10H[[32m███████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  31.4%[K[19;10H[[31m███████████████████████████████████████████[0m░░░░░]  91.1%[K[20;10H[[31m█████████████████████████████████████████████[0m░░░]  95.0%[K[21;10H[[31m██████████████████████████████████████████████[0m░░]  97.7%[K[22;10H[[31m█████████████████████████████████████████[0m░░░░░░░]  86.6%[K[2;12H7[3;10H[[31m████████████████████████████████████████████████[0m] 100.0%[K[4;10H[[31m████████████████████████████████████████████████[0m] 100.0%[K[5;10H[[33m███████████████████████████████████[0m░░░░░░░░░░░░░]  74.2%[K[6;10H[[33m████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░]  52.0%[K[7;10H[[33m██████████████████████████████████[0m░░░░░░░░░░░░░░]  71.3%[K[8;10H[[33m████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░]  50.3%[K[9;10H[[31m██████████████████████████████████████████████[0m░░]  97.5%[K[10;10H[[33m██████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░]  54.4%[K[11;10H[[31m██████████████████████████████████████[0m░░░░░░░░░░]  80.2%[K[12;10H[[31m████████████████████████████████████████████[0m░░░░]  92.4%[K[13;10H[[31m█████████████████████████████████████████████[0m░░░]  94.1%[K[14;10H[[31m███████████████████████████████████████[0m░░░░░░░░░]  81.7%[K[15;10H[[32m████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  42.5%[K[16;10H[[31m█████████████████████████████████████████████[0m░░░]  95.5%[K[17;10H[[31m████████████████████████████████████████[0m░░░░░░░░]  84.2%[K[18;10H[[32m███████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  32.4%[K[19;10H[[31m██████████████████████████████████████████[0m░░░░░░]  88.1%[K[20;10H[[31m█████████████████████████████████████████████[0m░░░]  94.0%[K[21;10H[[31m█████████████████████████████████████████████[0m░░░]  95.4%[K[22;10H[[31m███████████████████████████████████████[0m░░░░░░░░░]  82.1%[K[2;12H8[3;10H[[31m███████████████████████████████████████████████[0m░]  98.2%[K[4;10H[[31m██████████████████████████████████████████████[0m░░]  96.7%[K[5;10H[[33m█████████████████████████████████████[0m░░░░░░░░░░░]  78.8%[K[6;10H[[33m██████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░]  55.8%[K[7;10H[[33m███████████████████████████████████[0m░░░░░░░░░░░░░]  74.2%[K[8;10H[[33m████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░]  51.7%[K[9;10H[[31m████████████████████████████████████████████████[0m] 100.0%[K[10;10H[[33m███████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░]  57.9%[K[11;10H[[31m████████████████████████████████████████[0m░░░░░░░░]  84.9%[K[12;10H[[31m██████████████████████████████████████████████[0m░░]  97.3%[K[13;10H[[31m████████████████████████████████████████████[0m░░░░]  92.1%[K[14;10H[[31m█████████████████████████████████████████[0m░░░░░░░]  86.2%[K[15;10H[[32m█████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░]  44.5%[K[16;10H[[31m███████████████████████████████████████████[0m░░░░░]  91.0%[K[17;10H[[31m█████████████████████████████████████████[0m░░░░░░░]  87.4%[K[18;10H[[32m████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  33.5%[K[19;10H[[31m████████████████████████████████████████[0m░░░░░░░░]  85.1%[K[20;10H[[31m████████████████████████████████████████████[0m░░░░]  93.0%[K[21;10H[[31m████████████████████████████████████████████[0m░░░░]  93.1%[K[22;10H[[33m█████████████████████████████████████[0m░░░░░░░░░░░]  77.6%[K[2;12H9[3;10H[[31m██████████████████████████████████████████████[0m░░]  96.5%[K[4;10H[[31m████████████████████████████████████████████[0m░░░░]  93.5%[K[5;10H[[31m████████████████████████████████████████[0m░░░░░░░░]  83.4%[K[6;10H[[33m████████████████████████████[0m░░░░░░░░░░░░░░░░░░░░]  59.5%[K[7;10H[[33m█████████████████████████████████████[0m░░░░░░░░░░░]  77.1%[K[8;10H[[33m█████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░]  53.1%[K[9;10H[[31m███████████████████████████████████████████████[0m░]  98.0%[K[10;10H[[33m█████████████████████████████[0m░░░░░░░░░░░░░░░░░░░]  61.3%[K[11;10H[[31m██████████████████████████████████████████[0m░░░░░░]  89.5%[K[12;10H[[31m████████████████████████████████████████████████[0m] 100.0%[K[13;10H[[31m███████████████████████████████████████████[0m░░░░░]  90.1%[K[14;10H[[31m███████████████████████████████████████████[0m░░░░░]  90.6%[K[15;10H[[32m██████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░]  46.6%[K[16;10H[[31m█████████████████████████████████████████[0m░░░░░░░]  86.6%[K[17;10H[[31m███████████████████████████████████████████[0m░░░░░]  90.6%[K[18;10H[[32m████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  34.6%[K[19;10H[[31m███████████████████████████████████████[0m░░░░░░░░░]  82.2%[K[20;10H[[31m████████████████████████████████████████████[0m░░░░]  92.0%[K[21;10H[[31m███████████████████████████████████████████[0m░░░░░]  90.8%[K[22;10H[[33m███████████████████████████████████[0m░░░░░░░░░░░░░]  73.2%[K[2;12H10[3;10H[[31m█████████████████████████████████████████████[0m░░░]  94.7%[K[4;10H[[31m███████████████████████████████████████████[0m░░░░░]  90.2%[K[5;10H[[31m██████████████████████████████████████████[0m░░░░░░]  88.0%[K[6;10H[[33m██████████████████████████████[0m░░░░░░░░░░░░░░░░░░]  63.3%[K[7;10H[[31m██████████████████████████████████████[0m░░░░░░░░░░]  80.0%[K[8;10H[[33m██████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░]  54.5%[K[9;10H[[31m██████████████████████████████████████████████[0m░░]  96.1%[K[10;10H[[33m███████████████████████████████[0m░░░░░░░░░░░░░░░░░]  64.8%[K[11;10H[[31m█████████████████████████████████████████████[0m░░░]  94.2%[K[12;10H[[31m█████████████████████████████████████████████[0m░░░]  95.1%[K[13;10H[[31m██████████████████████████████████████████[0m░░░░░░]  88.1%[K[14;10H[[31m█████████████████████████████████████████████[0m░░░]  95.1%[K[15;10H[[32m███████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░]  48.6%[K[16;10H[[31m███████████████████████████████████████[0m░░░░░░░░░]  82.1%[K[17;10H[[31m█████████████████████████████████████████████[0m░░░]  93.8%[K[18;10H[[32m█████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  35.6%[K[19;10H[[33m██████████████████████████████████████[0m░░░░░░░░░░]  79.2%[K[20;10H[[31m███████████████████████████████████████████[0m░░░░░]  91.0%[K[21;10H[[31m██████████████████████████████████████████[0m░░░░░░]  88.5%[K[22;10H[[33m████████████████████████████████[0m░░░░░░░░░░░░░░░░]  68.7%[K[2;12H11[3;10H[[31m████████████████████████████████████████████[0m░░░░]  92.9%[K[4;10H[[31m█████████████████████████████████████████[0m░░░░░░░]  86.9%[K[5;10H[[31m████████████████████████████████████████████[0m░░░░]  92.6%[K[6;10H[[33m████████████████████████████████[0m░░░░░░░░░░░░░░░░]  67.0%[K[7;10H[[31m███████████████████████████████████████[0m░░░░░░░░░]  82.9%[K[8;10H[[33m██████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░]  55.9%[K[9;10H[[31m█████████████████████████████████████████████[0m░░░]  94.1%[K[10;10H[[33m████████████████████████████████[0m░░░░░░░░░░░░░░░░]  68.2%[K[11;10H[[31m███████████████████████████████████████████████[0m░]  98.8%[K[12;10H[[31m███████████████████████████████████████████[0m░░░░░]  90.3%[K[13;10H[[31m█████████████████████████████████████████[0m░░░░░░░]  86.2%[K[14;10H[[31m███████████████████████████████████████████████[0m░]  99.5%[K[15;10H[[33m████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░]  50.6%[K[16;10H[[33m█████████████████████████████████████[0m░░░░░░░░░░░]  77.6%[K[17;10H[[31m██████████████████████████████████████████████[0m░░]  97.0%[K[18;10H[[32m█████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  36.7%[K[19;10H[[33m████████████████████████████████████[0m░░░░░░░░░░░░]  76.2%[K[20;10H[[31m███████████████████████████████████████████[0m░░░░░]  90.0%[K[21;10H[[31m█████████████████████████████████████████[0m░░░░░░░]  86.2%[K[22;10H[[33m██████████████████████████████[0m░░░░░░░░░░░░░░░░░░]  64.2%[K[2;12H12[3;10H[[31m███████████████████████████████████████████[0m░░░░░]  91.2%[K[4;10H[[31m████████████████████████████████████████[0m░░░░░░░░]  83.6%[K[5;10H[[31m██████████████████████████████████████████████[0m░░]  97.2%[K[6;10H[[33m█████████████████████████████████[0m░░░░░░░░░░░░░░░]  70.7%[K[7;10H[[31m█████████████████████████████████████████[0m░░░░░░░]  85.8%[K[8;10H[[33m███████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░]  57.3%[K[9;10H[[31m████████████████████████████████████████████[0m░░░░]  92.2%[K[10;10H[[33m██████████████████████████████████[0m░░░░░░░░░░░░░░]  71.7%[K[11;10H[[31m████████████████████████████████████████████████[0m] 100.0%[K[12;10H[[31m████████████████████████████████████████[0m░░░░░░░░]  85.4%[K[13;10H[[31m████████████████████████████████████████[0m░░░░░░░░]  84.2%[K[14;10H[[31m████████████████████████████████████████████████[0m] 100.0%[K[15;10H[[33m█████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░]  52.7%[K[16;10H[[33m███████████████████████████████████[0m░░░░░░░░░░░░░]  73.1%[K[17;10H[[31m████████████████████████████████████████████████[0m] 100.0%[K[18;10H[[32m██████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  37.7%[K[19;10H[[33m███████████████████████████████████[0m░░░░░░░░░░░░░]  73.2%[K[20;10H[[31m██████████████████████████████████████████[0m░░░░░░]  88.9%[K[21;10H[[31m████████████████████████████████████████[0m░░░░░░░░]  83.9%[K[22;10H[[33m████████████████████████████[0m░░░░░░░░░░░░░░░░░░░░]  59.8%[K[2;12H13[3;10H[[31m██████████████████████████████████████████[0m░░░░░░]  89.4%[K[4;10H[[31m██████████████████████████████████████[0m░░░░░░░░░░]  80.4%[K[5;10H[[31m████████████████████████████████████████████████[0m] 100.0%[K[6;10H[[33m███████████████████████████████████[0m░░░░░░░░░░░░░]  74.5%[K[7;10H[[31m██████████████████████████████████████████[0m░░░░░░]  88.7%[K[8;10H[[33m████████████████████████████[0m░░░░░░░░░░░░░░░░░░░░]  58.7%[K[9;10H[[31m███████████████████████████████████████████[0m░░░░░]  90.2%[K[10;10H[[33m████████████████████████████████████[0m░░░░░░░░░░░░]  75.1%[K[11;10H[[31m█████████████████████████████████████████████[0m░░░]  95.8%[K[12;10H[[31m██████████████████████████████████████[0m░░░░░░░░░░]  80.5%[K[13;10H[[31m███████████████████████████████████████[0m░░░░░░░░░]  82.2%[K[14;10H[[31m██████████████████████████████████████████████[0m░░]  97.2%[K[15;10H[[33m██████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░]  54.7%[K[16;10H[[33m████████████████████████████████[0m░░░░░░░░░░░░░░░░]  68.6%[K[17;10H[[31m███████████████████████████████████████████████[0m░]  98.7%[K[18;10H[[32m██████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  38.8%[K[19;10H[[33m█████████████████████████████████[0m░░░░░░░░░░░░░░░]  70.3%[K[20;10H[[31m██████████████████████████████████████████[0m░░░░░░]  87.9%[K[21;10H[[31m███████████████████████████████████████[0m░░░░░░░░░]  81.6%[K[22;10H[[33m██████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░]  55.3%[K[2;12H14[3;10H[[31m██████████████████████████████████████████[0m░░░░░░]  87.7%[K[4;10H[[33m█████████████████████████████████████[0m░░░░░░░░░░░]  77.1%[K[5;10H[[31m██████████████████████████████████████████████[0m░░]  97.7%[K[6;10H[[33m█████████████████████████████████████[0m░░░░░░░░░░░]  78.2%[K[7;10H[[31m███████████████████████████████████████████[0m░░░░░]  91.6%[K[8;10H[[33m████████████████████████████[0m░░░░░░░░░░░░░░░░░░░░]  60.1%[K[9;10H[[31m██████████████████████████████████████████[0m░░░░░░]  88.3%[K[10;10H[[33m█████████████████████████████████████[0m░░░░░░░░░░░]  78.5%[K[11;10H[[31m███████████████████████████████████████████[0m░░░░░]  91.6%[K[12;10H[[33m████████████████████████████████████[0m░░░░░░░░░░░░]  75.6%[K[13;10H[[31m██████████████████████████████████████[0m░░░░░░░░░░]  80.2%[K[14;10H[[31m█████████████████████████████████████████████[0m░░░]  94.4%[K[15;10H[[33m███████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░]  56.8%[K[16;10H[[33m██████████████████████████████[0m░░░░░░░░░░░░░░░░░░]  64.1%[K[17;10H[[31m██████████████████████████████████████████████[0m░░]  97.4%[K[18;10H[[32m███████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  39.8%[K[19;10H[[33m████████████████████████████████[0m░░░░░░░░░░░░░░░░]  67.3%[K[20;10H[[31m█████████████████████████████████████████[0m░░░░░░░]  86.9%[K[21;10H[[33m██████████████████████████████████████[0m░░░░░░░░░░]  79.3%[K[22;10H[[33m████████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░]  50.8%[K[2;12H15[3;10H[[31m█████████████████████████████████████████[0m░░░░░░░]  85.9%[K[4;10H[[33m███████████████████████████████████[0m░░░░░░░░░░░░░]  73.8%[K[5;10H[[31m█████████████████████████████████████████████[0m░░░]  95.4%[K[6;10H[[31m███████████████████████████████████████[0m░░░░░░░░░]  81.9%[K[7;10H[[31m█████████████████████████████████████████████[0m░░░]  94.5%[K[8;10H[[33m█████████████████████████████[0m░░░░░░░░░░░░░░░░░░░]  61.5%[K[9;10H[[31m█████████████████████████████████████████[0m░░░░░░░]  86.3%[K[10;10H[[31m███████████████████████████████████████[0m░░░░░░░░░]  82.0%[K[11;10H[[31m█████████████████████████████████████████[0m░░░░░░░]  87.4%[K[12;10H[[33m█████████████████████████████████[0m░░░░░░░░░░░░░░░]  70.8%[K[13;10H[[33m█████████████████████████████████████[0m░░░░░░░░░░░]  78.3%[K[14;10H[[31m███████████████████████████████████████████[0m░░░░░]  91.6%[K[15;10H[[33m████████████████████████████[0m░░░░░░░░░░░░░░░░░░░░]  58.8%[K[16;10H[[33m████████████████████████████[0m░░░░░░░░░░░░░░░░░░░░]  59.7%[K[17;10H[[31m██████████████████████████████████████████████[0m░░]  96.0%[K[18;10H[[32m███████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  40.9%[K[19;10H[[33m██████████████████████████████[0m░░░░░░░░░░░░░░░░░░]  64.3%[K[20;10H[[31m█████████████████████████████████████████[0m░░░░░░░]  85.9%[K[21;10H[[33m████████████████████████████████████[0m░░░░░░░░░░░░]  77.0%[K[22;10H[[32m██████████████████████[0m░░░░░░░░░░░░░░░░░░░░░░░░░░]  46.4%[K[?25h[?1049l[tab_1] Dashboard complete: 15 iterations
+[tab_1] Running dashboard mode 'table' for 0.045 seconds @ 30fps...
+[?1049h[?25l[2J[H[1mTable with Scroll Region - tab_1[0m
+───────────────────────────────────────────────────────────────────────────────
+[7m    ID Timestamp                 Value Status       Message                       [0m
+───────────────────────────────────────────────────────────────────────────────
+[5;23r[23;1H     1 00:00:00.600               6311 [36mPENDING     [0m Processing request            
+[23;1H     2 00:00:00.604               4242 [36mPENDING     [0m Connection reset              
+[23;1H     3 00:00:00.608               4969 [36mPENDING     [0m Cache miss                    
+[23;1H     4 00:00:00.612               9558 [33mWARN        [0m Timeout occurred              
+[23;1H     5 00:00:00.616               2281 [31mERROR       [0m Data synchronized             
+[23;1H     6 00:00:00.620               1553 [31mERROR       [0m Timeout occurred              
+[23;1H     7 00:00:00.624               9861 [33mWARN        [0m Cache miss                    
+[23;1H     8 00:00:00.628               1618 [32mOK          [0m Batch complete                
+[23;1H     9 00:00:00.632               5409 [36mPENDING     [0m Timeout occurred              
+[23;1H    10 00:00:00.636               1649 [31mERROR       [0m Connection reset              
+[23;1H    11 00:00:00.640               5180 [33mWARN        [0m Timeout occurred              
+[23;1H    12 00:00:00.644               7815 [36mPENDING     [0m Batch complete                
+[r[?25h[?1049l[tab_1] Dashboard complete: 12 iterations
+[tab_1] Running dashboard mode 'status' for 0.045 seconds @ 30fps...
+[?1049h[?25l[2J[H[1mService Status Dashboard[0m - Iteration 1
+───────────────────────────────────────────────────────────────────────────────
+
+[42m[30m web-1      [0m [42m[30m web-2      [0m [41m[37m web-3      [0m [42m[30m api-1      [0m [43m[30m api-2      [0m 
+
+[42m[30m db-master  [0m [42m[30m db-replica [0m [42m[30m cache-1    [0m [42m[30m cache-2    [0m [42m[30m queue      [0m 
+
+[43m[30m worker-1   [0m [42m[30m worker-2   [0m [43m[30m worker-3   [0m [42m[30m monitor    [0m [42m[30m logging    [0m 
+
+[42m[30m auth       [0m [42m[30m storage    [0m [43m[30m cdn        [0m [42m[30m dns        [0m [43m[30m lb-1       [0m 
+
+[41m[37m lb-2       [0m [43m[30m backup     [0m [42m[30m cron       [0m [43m[30m mailer     [0m 
+
+───────────────────────────────────────────────────────────────────────────────
+[42m[30m UP [0m [43m[30m DEGRADED [0m [41m[37m DOWN [0m
+[H[1mService Status Dashboard[0m - Iteration 2
+───────────────────────────────────────────────────────────────────────────────
+
+[1m[42m[30m web-1      [0m [1m[42m[30m web-2      [0m [1m[41m[37m web-3      [0m [1m[42m[30m api-1      [0m [1m[43m[30m api-2      [0m 
+
+[1m[42m[30m db-master  [0m [1m[42m[30m db-replica [0m [1m[42m[30m cache-1    [0m [1m[42m[30m cache-2    [0m [1m[42m[30m queue      [0m 
+
+[1m[43m[30m worker-1   [0m [1m[41m[37m worker-2   [0m [1m[43m[30m worker-3   [0m [1m[42m[30m monitor    [0m [1m[42m[30m logging    [0m 
+
+[1m[42m[30m auth       [0m [1m[42m[30m storage    [0m [1m[43m[30m cdn        [0m [1m[42m[30m dns        [0m [1m[43m[30m lb-1       [0m 
+
+[1m[41m[37m lb-2       [0m [1m[43m[30m backup     [0m [1m[42m[30m cron       [0m [1m[43m[30m mailer     [0m 
+
+───────────────────────────────────────────────────────────────────────────────
+[42m[30m UP [0m [43m[30m DEGRADED [0m [41m[37m DOWN [0m
+[H[1mService Status Dashboard[0m - Iteration 3
+───────────────────────────────────────────────────────────────────────────────
+
+[42m[30m web-1      [0m [42m[30m web-2      [0m [41m[37m web-3      [0m [42m[30m api-1      [0m [43m[30m api-2      [0m 
+
+[42m[30m db-master  [0m [42m[30m db-replica [0m [42m[30m cache-1    [0m [42m[30m cache-2    [0m [42m[30m queue      [0m 
+
+[43m[30m worker-1   [0m [41m[37m worker-2   [0m [43m[30m worker-3   [0m [42m[30m monitor    [0m [42m[30m logging    [0m 
+
+[42m[30m auth       [0m [42m[30m storage    [0m [41m[37m cdn        [0m [42m[30m dns        [0m [43m[30m lb-1       [0m 
+
+[41m[37m lb-2       [0m [43m[30m backup     [0m [42m[30m cron       [0m [43m[30m mailer     [0m 
+
+───────────────────────────────────────────────────────────────────────────────
+[42m[30m UP [0m [43m[30m DEGRADED [0m [41m[37m DOWN [0m
+[H[1mService Status Dashboard[0m - Iteration 4
+───────────────────────────────────────────────────────────────────────────────
+
+[1m[42m[30m web-1      [0m [1m[42m[30m web-2      [0m [1m[41m[37m web-3      [0m [1m[42m[30m api-1      [0m [1m[43m[30m api-2      [0m 
+
+[1m[42m[30m db-master  [0m [1m[42m[30m db-replica [0m [1m[42m[30m cache-1    [0m [1m[42m[30m cache-2    [0m [1m[42m[30m queue      [0m 
+
+[1m[43m[30m worker-1   [0m [1m[41m[37m worker-2   [0m [1m[43m[30m worker-3   [0m [1m[42m[30m monitor    [0m [1m[42m[30m logging    [0m 
+
+[1m[42m[30m auth       [0m [1m[42m[30m storage    [0m [1m[43m[30m cdn        [0m [1m[42m[30m dns        [0m [1m[43m[30m lb-1       [0m 
+
+[1m[41m[37m lb-2       [0m [1m[43m[30m backup     [0m [1m[42m[30m cron       [0m [1m[43m[30m mailer     [0m 
+
+───────────────────────────────────────────────────────────────────────────────
+[42m[30m UP [0m [43m[30m DEGRADED [0m [41m[37m DOWN [0m
+[H[1mService Status Dashboard[0m - Iteration 5
+───────────────────────────────────────────────────────────────────────────────
+
+[42m[30m web-1      [0m [42m[30m web-2      [0m [41m[37m web-3      [0m [42m[30m api-1      [0m [43m[30m api-2      [0m 
+
+[42m[30m db-master  [0m [42m[30m db-replica [0m [42m[30m cache-1    [0m [42m[30m cache-2    [0m [42m[30m queue      [0m 
+
+[42m[30m worker-1   [0m [41m[37m worker-2   [0m [43m[30m worker-3   [0m [42m[30m monitor    [0m [42m[30m logging    [0m 
+
+[42m[30m auth       [0m [42m[30m storage    [0m [43m[30m cdn        [0m [42m[30m dns        [0m [43m[30m lb-1       [0m 
+
+[41m[37m lb-2       [0m [43m[30m backup     [0m [42m[30m cron       [0m [43m[30m mailer     [0m 
+
+───────────────────────────────────────────────────────────────────────────────
+[42m[30m UP [0m [43m[30m DEGRADED [0m [41m[37m DOWN [0m
+[H[1mService Status Dashboard[0m - Iteration 6
+───────────────────────────────────────────────────────────────────────────────
+
+[1m[42m[30m web-1      [0m [1m[42m[30m web-2      [0m [1m[41m[37m web-3      [0m [1m[42m[30m api-1      [0m [1m[42m[30m api-2      [0m 
+
+[1m[42m[30m db-master  [0m [1m[42m[30m db-replica [0m [1m[43m[30m cache-1    [0m [1m[42m[30m cache-2    [0m [1m[42m[30m queue      [0m 
+
+[1m[42m[30m worker-1   [0m [1m[41m[37m worker-2   [0m [1m[43m[30m worker-3   [0m [1m[42m[30m monitor    [0m [1m[42m[30m logging    [0m 
+
+[1m[42m[30m auth       [0m [1m[42m[30m storage    [0m [1m[43m[30m cdn        [0m [1m[41m[37m dns        [0m [1m[43m[30m lb-1       [0m 
+
+[1m[41m[37m lb-2       [0m [1m[43m[30m backup     [0m [1m[42m[30m cron       [0m [1m[43m[30m mailer     [0m 
+
+───────────────────────────────────────────────────────────────────────────────
+[42m[30m UP [0m [43m[30m DEGRADED [0m [41m[37m DOWN [0m
+[H[1mService Status Dashboard[0m - Iteration 7
+───────────────────────────────────────────────────────────────────────────────
+
+[42m[30m web-1      [0m [42m[30m web-2      [0m [43m[30m web-3      [0m [42m[30m api-1      [0m [42m[30m api-2      [0m 
+
+[42m[30m db-master  [0m [42m[30m db-replica [0m [43m[30m cache-1    [0m [42m[30m cache-2    [0m [42m[30m queue      [0m 
+
+[42m[30m worker-1   [0m [41m[37m worker-2   [0m [43m[30m worker-3   [0m [42m[30m monitor    [0m [42m[30m logging    [0m 
+
+[42m[30m auth       [0m [42m[30m storage    [0m [43m[30m cdn        [0m [41m[37m dns        [0m [43m[30m lb-1       [0m 
+
+[41m[37m lb-2       [0m [43m[30m backup     [0m [42m[30m cron       [0m [43m[30m mailer     [0m 
+
+───────────────────────────────────────────────────────────────────────────────
+[42m[30m UP [0m [43m[30m DEGRADED [0m [41m[37m DOWN [0m
+[H[1mService Status Dashboard[0m - Iteration 8
+───────────────────────────────────────────────────────────────────────────────
+
+[1m[42m[30m web-1      [0m [1m[42m[30m web-2      [0m [1m[43m[30m web-3      [0m [1m[42m[30m api-1      [0m [1m[42m[30m api-2      [0m 
+
+[1m[42m[30m db-master  [0m [1m[42m[30m db-replica [0m [1m[43m[30m cache-1    [0m [1m[42m[30m cache-2    [0m [1m[41m[37m queue      [0m 
+
+[1m[42m[30m worker-1   [0m [1m[41m[37m worker-2   [0m [1m[43m[30m worker-3   [0m [1m[42m[30m monitor    [0m [1m[42m[30m logging    [0m 
+
+[1m[42m[30m auth       [0m [1m[42m[30m storage    [0m [1m[42m[30m cdn        [0m [1m[41m[37m dns        [0m [1m[43m[30m lb-1       [0m 
+
+[1m[41m[37m lb-2       [0m [1m[43m[30m backup     [0m [1m[42m[30m cron       [0m [1m[43m[30m mailer     [0m 
+
+───────────────────────────────────────────────────────────────────────────────
+[42m[30m UP [0m [43m[30m DEGRADED [0m [41m[37m DOWN [0m
+[H[1mService Status Dashboard[0m - Iteration 9
+───────────────────────────────────────────────────────────────────────────────
+
+[42m[30m web-1      [0m [42m[30m web-2      [0m [43m[30m web-3      [0m [42m[30m api-1      [0m [42m[30m api-2      [0m 
+
+[42m[30m db-master  [0m [41m[37m db-replica [0m [43m[30m cache-1    [0m [42m[30m cache-2    [0m [41m[37m queue      [0m 
+
+[42m[30m worker-1   [0m [41m[37m worker-2   [0m [43m[30m worker-3   [0m [42m[30m monitor    [0m [42m[30m logging    [0m 
+
+[42m[30m auth       [0m [42m[30m storage    [0m [41m[37m cdn        [0m [41m[37m dns        [0m [42m[30m lb-1       [0m 
+
+[41m[37m lb-2       [0m [43m[30m backup     [0m [42m[30m cron       [0m [43m[30m mailer     [0m 
+
+───────────────────────────────────────────────────────────────────────────────
+[42m[30m UP [0m [43m[30m DEGRADED [0m [41m[37m DOWN [0m
+[H[1mService Status Dashboard[0m - Iteration 10
+───────────────────────────────────────────────────────────────────────────────
+
+[42m[30m web-1      [0m [42m[30m web-2      [0m [1m[42m[30m web-3      [0m [42m[30m api-1      [0m [1m[42m[30m api-2      [0m 
+
+[42m[30m db-master  [0m [1m[41m[37m db-replica [0m [1m[43m[30m cache-1    [0m [42m[30m cache-2    [0m [1m[41m[37m queue      [0m 
+
+[1m[42m[30m worker-1   [0m [1m[41m[37m worker-2   [0m [43m[30m worker-3   [0m [42m[30m monitor    [0m [1m[43m[30m logging    [0m 
+
+[42m[30m auth       [0m [42m[30m storage    [0m [1m[41m[37m cdn        [0m [1m[41m[37m dns        [0m [1m[41m[37m lb-1       [0m 
+
+[41m[37m lb-2       [0m [43m[30m backup     [0m [42m[30m cron       [0m [1m[43m[30m mailer     [0m 
+
+───────────────────────────────────────────────────────────────────────────────
+[42m[30m UP [0m [43m[30m DEGRADED [0m [41m[37m DOWN [0m
+[H[1mService Status Dashboard[0m - Iteration 11
+───────────────────────────────────────────────────────────────────────────────
+
+[42m[30m web-1      [0m [42m[30m web-2      [0m [42m[30m web-3      [0m [42m[30m api-1      [0m [42m[30m api-2      [0m 
+
+[42m[30m db-master  [0m [41m[37m db-replica [0m [42m[30m cache-1    [0m [42m[30m cache-2    [0m [42m[30m queue      [0m 
+
+[42m[30m worker-1   [0m [41m[37m worker-2   [0m [43m[30m worker-3   [0m [42m[30m monitor    [0m [43m[30m logging    [0m 
+
+[42m[30m auth       [0m [42m[30m storage    [0m [41m[37m cdn        [0m [41m[37m dns        [0m [41m[37m lb-1       [0m 
+
+[41m[37m lb-2       [0m [43m[30m backup     [0m [42m[30m cron       [0m [43m[30m mailer     [0m 
+
+───────────────────────────────────────────────────────────────────────────────
+[42m[30m UP [0m [43m[30m DEGRADED [0m [41m[37m DOWN [0m
+[H[1mService Status Dashboard[0m - Iteration 12
+───────────────────────────────────────────────────────────────────────────────
+
+[42m[30m web-1      [0m [42m[30m web-2      [0m [1m[42m[30m web-3      [0m [42m[30m api-1      [0m [1m[42m[30m api-2      [0m 
+
+[42m[30m db-master  [0m [1m[41m[37m db-replica [0m [1m[42m[30m cache-1    [0m [42m[30m cache-2    [0m [1m[42m[30m queue      [0m 
+
+[1m[42m[30m worker-1   [0m [41m[37m worker-2   [0m [43m[30m worker-3   [0m [42m[30m monitor    [0m [1m[43m[30m logging    [0m 
+
+[42m[30m auth       [0m [42m[30m storage    [0m [1m[41m[37m cdn        [0m [1m[41m[37m dns        [0m [1m[43m[30m lb-1       [0m 
+
+[41m[37m lb-2       [0m [1m[42m[30m backup     [0m [42m[30m cron       [0m [43m[30m mailer     [0m 
+
+───────────────────────────────────────────────────────────────────────────────
+[42m[30m UP [0m [43m[30m DEGRADED [0m [41m[37m DOWN [0m
+[H[1mService Status Dashboard[0m - Iteration 13
+───────────────────────────────────────────────────────────────────────────────
+
+[42m[30m web-1      [0m [43m[30m web-2      [0m [42m[30m web-3      [0m [42m[30m api-1      [0m [41m[37m api-2      [0m 
+
+[42m[30m db-master  [0m [41m[37m db-replica [0m [42m[30m cache-1    [0m [42m[30m cache-2    [0m [42m[30m queue      [0m 
+
+[42m[30m worker-1   [0m [41m[37m worker-2   [0m [43m[30m worker-3   [0m [42m[30m monitor    [0m [43m[30m logging    [0m 
+
+[42m[30m auth       [0m [42m[30m storage    [0m [41m[37m cdn        [0m [41m[37m dns        [0m [43m[30m lb-1       [0m 
+
+[41m[37m lb-2       [0m [42m[30m backup     [0m [42m[30m cron       [0m [43m[30m mailer     [0m 
+
+───────────────────────────────────────────────────────────────────────────────
+[42m[30m UP [0m [43m[30m DEGRADED [0m [41m[37m DOWN [0m
+[H[1mService Status Dashboard[0m - Iteration 14
+───────────────────────────────────────────────────────────────────────────────
+
+[42m[30m web-1      [0m [1m[43m[30m web-2      [0m [1m[42m[30m web-3      [0m [42m[30m api-1      [0m [1m[41m[37m api-2      [0m 
+
+[42m[30m db-master  [0m [1m[41m[37m db-replica [0m [1m[42m[30m cache-1    [0m [42m[30m cache-2    [0m [1m[42m[30m queue      [0m 
+
+[1m[42m[30m worker-1   [0m [41m[37m worker-2   [0m [43m[30m worker-3   [0m [42m[30m monitor    [0m [1m[43m[30m logging    [0m 
+
+[42m[30m auth       [0m [42m[30m storage    [0m [1m[41m[37m cdn        [0m [1m[41m[37m dns        [0m [1m[43m[30m lb-1       [0m 
+
+[41m[37m lb-2       [0m [1m[42m[30m backup     [0m [1m[41m[37m cron       [0m [43m[30m mailer     [0m 
+
+───────────────────────────────────────────────────────────────────────────────
+[42m[30m UP [0m [43m[30m DEGRADED [0m [41m[37m DOWN [0m
+[H[1mService Status Dashboard[0m - Iteration 15
+───────────────────────────────────────────────────────────────────────────────
+
+[42m[30m web-1      [0m [43m[30m web-2      [0m [42m[30m web-3      [0m [42m[30m api-1      [0m [41m[37m api-2      [0m 
+
+[42m[30m db-master  [0m [41m[37m db-replica [0m [42m[30m cache-1    [0m [42m[30m cache-2    [0m [42m[30m queue      [0m 
+
+[42m[30m worker-1   [0m [41m[37m worker-2   [0m [43m[30m worker-3   [0m [43m[30m monitor    [0m [43m[30m logging    [0m 
+
+[42m[30m auth       [0m [42m[30m storage    [0m [41m[37m cdn        [0m [42m[30m dns        [0m [43m[30m lb-1       [0m 
+
+[41m[37m lb-2       [0m [41m[37m backup     [0m [41m[37m cron       [0m [43m[30m mailer     [0m 
+
+───────────────────────────────────────────────────────────────────────────────
+[42m[30m UP [0m [43m[30m DEGRADED [0m [41m[37m DOWN [0m
+[?25h[?1049l[tab_1] Dashboard complete: 15 iterations

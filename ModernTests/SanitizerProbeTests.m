@@ -17,6 +17,7 @@
 //      ITERM2_SANITIZER_PROBE=integer      testSignedOverflowProbe,
 //                                          testImplicitTruncationProbe
 //      ITERM2_SANITIZER_PROBE=thread       testDataRaceProbe
+//      ITERM2_SANITIZER_PROBE=integer-sign testSignChangeProbe
 //
 //  The values are kept opaque to the optimizer (volatile reads, a noinline
 //  function) so that the violation happens at run time and is not folded
@@ -38,6 +39,7 @@ static NSUInteger SanitizerProbeLengthOfNonnullString(NSString * _Nonnull string
 // A value the compiler cannot see through.
 static volatile int gSanitizerProbeOne = 1;
 static volatile int gSanitizerProbeWide = 0x12345;
+static volatile int gSanitizerProbeMinusOne = -1;
 
 // The variable the thread probe races on. It is a plain int on purpose.
 static int gSanitizerProbeRacyValue;
@@ -87,6 +89,18 @@ static void *SanitizerProbeWriter(void *unused) {
     int wide = gSanitizerProbeWide;
     uint8_t narrow = wide;
     XCTAssertEqual(narrow, 0x45);
+}
+
+// Expected under the integer-sign mode: "implicit conversion from type 'int'
+// of value -1 (32-bit, signed) to type 'unsigned int' changed the value to
+// 4294967295 (32-bit, unsigned)", kind implicit-integer-sign-change. The
+// width is the same, so the integer mode, which has no sign-change check,
+// reports nothing here.
+- (void)testSignChangeProbe {
+    [self skipUnlessProbing:@"integer-sign"];
+    int negative = gSanitizerProbeMinusOne;
+    unsigned int reinterpreted = negative;
+    XCTAssertEqual(reinterpreted, UINT_MAX);
 }
 
 // Expected under the thread mode: "data race" on gSanitizerProbeRacyValue
