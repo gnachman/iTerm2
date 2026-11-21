@@ -6,24 +6,41 @@
 //  See docs/swift-migration/phase0.md section 7, translation-rules.md section 1,
 //  assertions.md, and concurrency.md section 2.
 //
-//  Behavior by build:
+//  Behavior by build (decisions.md, 2026-11-20):
+//  - Every arithmetic and conversion helper (it_add, it_subtract, it_multiply, it_negate,
+//    it_shiftLeft, it_narrow, it_floatToInteger) returns what the C expression it replaces gives
+//    in practice on the processor it runs on: add, subtract, multiply and negate wrap; narrowing
+//    keeps the low bits; a left shift drops the bits shifted out and masks the count as the
+//    hardware does; a float converted to an integer gives what the processor's conversion gives.
+//    That is the result in every build and under every policy; only the reporting differs.
 //  - Development, Beta and Nightly compile the Objective-C with the BETA macro and this Swift with
-//    the BETA compilation condition. There a failed beta assertion, an arithmetic overflow, an
-//    out-of-range narrowing and an out-of-range float conversion all crash through it_fatalError,
-//    as ITBetaAssert does.
-//  - Deployment (release) logs the failure as ITBetaAssert does and continues. The arithmetic,
-//    narrowing and float helpers return the saturated value. it_conservativeBetaAssert compiles
-//    to nothing.
+//    the BETA compilation condition. There every such event (an overflow, a narrowing that changes
+//    the value, a shift that loses set bits or has a count C leaves undefined, a float conversion
+//    of NaN or of a value out of range) is a beta assertion, and a failed beta assertion crashes
+//    through it_fatalError, as ITBetaAssert does. ModernTests replaces the crash with a failure of
+//    the running test (iTermBetaAssertionTestObserver).
+//  - Deployment (release) compiles the arithmetic and conversion helpers to the C result alone,
+//    with no check. Add, subtract, multiply, negate, narrowing and 32 and 64 bit shifts then cost
+//    what the C did; a float conversion and a shift of an 8 or 16 bit value cost a few more
+//    instructions, because they reproduce the processor's result explicitly. it_betaAssert logs a failure as ITBetaAssert does
+//    and continues. it_conservativeBetaAssert compiles to nothing.
 //
 //  Whether a failure crashes is read at run time from iTermBetaAssertionsCrash, which the
-//  Objective-C sets from the BETA macro, so that tests can check the Deployment policy in a
-//  Development build. Only it_conservativeBetaAssert uses the compile-time condition, because
-//  without BETA it must cost nothing at all.
+//  Objective-C sets from the BETA macro, so that tests can check the release policy (log and
+//  continue, with the same result) in a Development build. The compile-time condition decides
+//  only whether a check is compiled at all: it_conservativeBetaAssert and the arithmetic and
+//  conversion helpers have none without BETA.
 //
 //  Each helper that can fail has two entry points. The public one reports failures to
 //  iTermBetaAssertionFailed, which applies the build's policy. The other takes the failure
-//  handler as its last parameter, `onFailure`, so tests can check both the clamped result and
-//  that a failure was reported, without crashing the test host.
+//  handler as its last parameter, `onFailure`, so tests can check both the result and that a
+//  failure was reported, without crashing the test host.
+//
+//  The arithmetic and conversion helpers are scaffolding for a faithful port. Each call is
+//  replaced with ordinary Swift in stage two, and the inventory counts the calls that remain.
+//  Code whose C relies on wrapping or truncating (hashes, checksums, bit packing) does not use
+//  them: it uses &+, &-, &*, &<< and init(truncatingIfNeeded:) with a comment saying what relies
+//  on it.
 //
 //  These are written for code that is called often: the checks are inlined, the path where
 //  nothing fails is a few instructions with no allocation, and everything that builds a message
@@ -40,21 +57,31 @@ typealias iTermBetaAssertionFailureHandler = (_ message: String,
 
 // MARK: - Beta assertions
 
-/// True in builds that define BETA (Development, Beta, Nightly), where ITBetaAssert crashes.
-/// False in Deployment, where it logs and continues.
-var iTermBetaAssertionsAreFatal: Bool {
-    @inline(__always) get { iTermBetaAssertionsCrash.boolValue }
-}
-
-/// True in builds where ITConservativeBetaAssert is compiled in, which are the same builds.
-var iTermConservativeBetaAssertionsEnabled: Bool {
-    @inline(__always) get {
-#if BETA
-        return iTermBetaAssertionsAreFatal
-#else
-        return false
-#endif
+/// The process-wide state of the beta assertions.
+enum iTermBetaAssertions {
+    /// True in builds that define BETA (Development, Beta, Nightly), where ITBetaAssert crashes.
+    /// False in Deployment, where it logs and continues.
+    static var areFatal: Bool {
+        @inline(__always) get { iTermBetaAssertionsCrash.boolValue }
     }
+
+    /// True in builds where ITConservativeBetaAssert is compiled in, which are the same builds.
+    static var conservativeAssertionsEnabled: Bool {
+        @inline(__always) get {
+#if BETA
+            return areFatal
+#else
+            return false
+#endif
+        }
+    }
+
+    /// What a failed beta assertion calls to crash in builds where beta assertions are fatal. It
+    /// is it_fatalError in production. ModernTests replaces it for the whole run with one that
+    /// fails the running test, and individual tests replace it, and restore it afterwards, to check
+    /// that the public helpers apply the build's policy. It is read only after a failure, so it
+    /// costs nothing when no check fails.
+    static var crashHandler: iTermBetaAssertionFailureHandler = iTermBetaAssertionCrash
 }
 
 // The BETA compilation condition is set in the project separately from the C macro of the same
@@ -122,7 +149,7 @@ func it_conservativeBetaAssert(_ condition: @autoclosure () -> Bool,
                                line: UInt = #line,
                                function: StaticString = #function) {
 #if BETA
-    if iTermConservativeBetaAssertionsEnabled && !condition() {
+    if iTermBetaAssertions.conservativeAssertionsEnabled && !condition() {
         iTermBetaAssertionFailed(message(), file: file, line: line, function: function)
     }
 #endif
@@ -153,8 +180,8 @@ func iTermBetaAssertionFailed(_ message: String,
                              file: file,
                              line: line,
                              function: function,
-                             fatal: iTermBetaAssertionsAreFatal,
-                             crash: iTermBetaAssertionCrashHandler)
+                             fatal: iTermBetaAssertions.areFatal,
+                             crash: iTermBetaAssertions.crashHandler)
 }
 
 /// Reports a failed beta assertion with the policy injected. When `fatal` is true this logs as
@@ -193,12 +220,6 @@ private func iTermBetaAssertionErrorLog(_ message: String,
     NSLog("%@", message)
 }
 
-/// What a failed beta assertion calls to crash in builds where beta assertions are fatal. It is
-/// it_fatalError in production. Tests replace it, and restore it afterwards, to check that the
-/// public helpers apply the build's policy without crashing the test host. It is read only after
-/// a failure, so it costs nothing when no check fails.
-var iTermBetaAssertionCrashHandler: iTermBetaAssertionFailureHandler = iTermBetaAssertionCrash
-
 /// The production crash handler.
 private func iTermBetaAssertionCrash(_ message: String,
                                      file: StaticString,
@@ -209,15 +230,25 @@ private func iTermBetaAssertionCrash(_ message: String,
 
 // MARK: - Arithmetic
 
-/// a + b. On overflow, fails a beta assertion and returns the bound in the direction of the
-/// overflow.
+// Each of these replaces a C expression whose operands have type T and whose result is stored in
+// a T. The result is the C result: the low bits of the exact value. For 8 and 16 bit types C first
+// promotes the operands to int, computes there (where add and subtract cannot overflow), and the
+// store truncates; the low bits are the same as wrapping in T. A port of an expression whose
+// promoted result is used at int width (`int x = a + b` with `uint8_t a, b`) widens the operands
+// first and does not use the T overload.
+
+/// a + b, wrapping as C does. A result that wraps fails a beta assertion.
 @inline(__always)
 func it_add<T: FixedWidthInteger>(_ a: T,
                                   _ b: T,
                                   file: StaticString = #file,
                                   line: UInt = #line,
                                   function: StaticString = #function) -> T {
+#if BETA
     return it_add(a, b, file: file, line: line, function: function, onFailure: iTermBetaAssertionFailed)
+#else
+    return a &+ b
+#endif
 }
 
 /// it_add with the failure handler injected.
@@ -229,22 +260,25 @@ func it_add<T: FixedWidthInteger>(_ a: T,
                                   function: StaticString = #function,
                                   onFailure: iTermBetaAssertionFailureHandler) -> T {
     let (result, overflow) = a.addingReportingOverflow(b)
-    if !overflow {
-        return result
+    if overflow {
+        onFailure(iTermOverflowMessage(a, "+", b), file, line, function)
     }
-    onFailure(iTermOverflowMessage(a, "+", b), file, line, function)
-    return b > 0 ? .max : .min
+    return result
 }
 
-/// a - b. On overflow, fails a beta assertion and returns the bound in the direction of the
-/// overflow. For unsigned types, b > a gives zero.
+/// a - b, wrapping as C does. A result that wraps fails a beta assertion. For unsigned types,
+/// b > a gives 2^bitWidth - (b - a), as in C.
 @inline(__always)
 func it_subtract<T: FixedWidthInteger>(_ a: T,
                                        _ b: T,
                                        file: StaticString = #file,
                                        line: UInt = #line,
                                        function: StaticString = #function) -> T {
+#if BETA
     return it_subtract(a, b, file: file, line: line, function: function, onFailure: iTermBetaAssertionFailed)
+#else
+    return a &- b
+#endif
 }
 
 /// it_subtract with the failure handler injected.
@@ -256,22 +290,25 @@ func it_subtract<T: FixedWidthInteger>(_ a: T,
                                        function: StaticString = #function,
                                        onFailure: iTermBetaAssertionFailureHandler) -> T {
     let (result, overflow) = a.subtractingReportingOverflow(b)
-    if !overflow {
-        return result
+    if overflow {
+        onFailure(iTermOverflowMessage(a, "-", b), file, line, function)
     }
-    onFailure(iTermOverflowMessage(a, "-", b), file, line, function)
-    return b > 0 ? .min : .max
+    return result
 }
 
-/// a * b. On overflow, fails a beta assertion and returns the bound with the sign of the true
-/// product.
+/// a * b, wrapping as C does (the low bits of the exact product). A result that wraps fails a
+/// beta assertion.
 @inline(__always)
 func it_multiply<T: FixedWidthInteger>(_ a: T,
                                        _ b: T,
                                        file: StaticString = #file,
                                        line: UInt = #line,
                                        function: StaticString = #function) -> T {
+#if BETA
     return it_multiply(a, b, file: file, line: line, function: function, onFailure: iTermBetaAssertionFailed)
+#else
+    return a &* b
+#endif
 }
 
 /// it_multiply with the failure handler injected.
@@ -283,20 +320,23 @@ func it_multiply<T: FixedWidthInteger>(_ a: T,
                                        function: StaticString = #function,
                                        onFailure: iTermBetaAssertionFailureHandler) -> T {
     let (result, overflow) = a.multipliedReportingOverflow(by: b)
-    if !overflow {
-        return result
+    if overflow {
+        onFailure(iTermOverflowMessage(a, "*", b), file, line, function)
     }
-    onFailure(iTermOverflowMessage(a, "*", b), file, line, function)
-    return (a < 0) != (b < 0) ? .min : .max
+    return result
 }
 
-/// -a, for signed types. Negating .min fails a beta assertion and returns .max.
+/// -a, for signed types, wrapping as C does: -T.min is T.min, and fails a beta assertion.
 @inline(__always)
 func it_negate<T: FixedWidthInteger & SignedInteger>(_ a: T,
                                                      file: StaticString = #file,
                                                      line: UInt = #line,
                                                      function: StaticString = #function) -> T {
+#if BETA
     return it_negate(a, file: file, line: line, function: function, onFailure: iTermBetaAssertionFailed)
+#else
+    return 0 &- a
+#endif
 }
 
 /// it_negate with the failure handler injected.
@@ -307,29 +347,35 @@ func it_negate<T: FixedWidthInteger & SignedInteger>(_ a: T,
                                                      function: StaticString = #function,
                                                      onFailure: iTermBetaAssertionFailureHandler) -> T {
     let (result, overflow) = T.zero.subtractingReportingOverflow(a)
-    if !overflow {
-        return result
+    if overflow {
+        onFailure(iTermNegationOverflowMessage(a), file, line, function)
     }
-    onFailure(iTermNegationOverflowMessage(a), file, line, function)
-    return .max
+    return result
 }
 
-/// a << count, where the result is a * 2^count.
+/// a << count, as the C expression `(T)(a << count)` gives it on arm64 and x86_64.
 ///
-/// Fails a beta assertion, and returns a defined value, when the shift loses set bits or the
-/// count is out of range. This is reported for unsigned types too, although C defines an
-/// unsigned left shift as dropping the bits shifted out; code that relies on that uses `&<<`.
-/// - The result does not fit: returns .max, or .min if a is negative.
-/// - count is at least the bit width: the same, or zero if a is zero.
-/// - count is negative, which C leaves undefined: reported, then returns a shifted right by the
-///   magnitude of count, which is what Swift's `<<` does.
+/// C shifts at the width of the promoted operand: int (32 bits) for 8, 16 and 32 bit types, and
+/// 64 bits for 64 bit types. Both processors use only the low 5 bits of the count for a 32 bit
+/// shift and the low 6 bits for a 64 bit shift, so a count C leaves undefined (negative, or at
+/// least the promoted width) is masked to those bits. Bits shifted out are dropped, for signed
+/// and unsigned types alike, and for 8 and 16 bit types the store keeps the low bits.
+///
+/// Fails a beta assertion when the count is one C leaves undefined (negative, or at least the
+/// promoted width), or when the shift loses a set bit or changes the sign, so that the result is
+/// not a * 2^count. A left shift of a negative value that loses nothing (-3 << 2 is -12) is not
+/// reported.
 @inline(__always)
 func it_shiftLeft<T: FixedWidthInteger, U: BinaryInteger>(_ a: T,
                                                           _ count: U,
                                                           file: StaticString = #file,
                                                           line: UInt = #line,
                                                           function: StaticString = #function) -> T {
+#if BETA
     return it_shiftLeft(a, count, file: file, line: line, function: function, onFailure: iTermBetaAssertionFailed)
+#else
+    return iTermShiftLeftAsC(a, count)
+#endif
 }
 
 /// it_shiftLeft with the failure handler injected.
@@ -340,40 +386,56 @@ func it_shiftLeft<T: FixedWidthInteger, U: BinaryInteger>(_ a: T,
                                                           line: UInt = #line,
                                                           function: StaticString = #function,
                                                           onFailure: iTermBetaAssertionFailureHandler) -> T {
-    if count >= 0 && count < T.bitWidth {
-        let shift = Int(truncatingIfNeeded: count)
-        let result = a &<< shift
-        // An arithmetic right shift restores a exactly when no bit, including the sign, was lost.
-        if result &>> shift == a {
-            return result
+    let result = iTermShiftLeftAsC(a, count)
+    if count < 0 || count >= iTermPromotedShiftWidth(T.self) {
+        onFailure(iTermShiftCountMessage(a, count), file, line, function)
+    } else if count >= T.bitWidth {
+        // Possible only for 8 and 16 bit types: the promoted shift is defined and the store
+        // drops every bit.
+        if a != 0 {
+            onFailure(iTermOverflowMessage(a, "<<", count), file, line, function)
         }
+    } else if result &>> Int(truncatingIfNeeded: count) != a {
+        // An arithmetic right shift restores a exactly when no bit, including the sign, was lost.
         onFailure(iTermOverflowMessage(a, "<<", count), file, line, function)
-        return a < 0 ? .min : .max
     }
-    onFailure(iTermShiftCountMessage(a, count), file, line, function)
-    if count < 0 {
-        return a >> count.magnitude
-    }
-    if a == 0 {
-        return 0
-    }
-    return a < 0 ? .min : .max
+    return result
+}
+
+/// The width at which C shifts a value of type T: int for the narrower types.
+@inline(__always)
+private func iTermPromotedShiftWidth<T: FixedWidthInteger>(_ type: T.Type) -> Int {
+    return Swift.max(T.bitWidth, 32)
+}
+
+/// The C result of `(T)(a << count)`: the count masked to the promoted width, as the hardware
+/// masks it, and the low bits of the shifted value.
+@inline(__always)
+private func iTermShiftLeftAsC<T: FixedWidthInteger, U: BinaryInteger>(_ a: T, _ count: U) -> T {
+    let shift = Int(truncatingIfNeeded: count) & (iTermPromotedShiftWidth(T.self) - 1)
+    return shift < T.bitWidth ? a &<< shift : 0
 }
 
 // MARK: - Narrowing
 
-/// Converts `value` to `T`. If it does not fit, fails a beta assertion and returns the nearest
-/// value of T (T.max or T.min).
+/// Converts `value` to `T` as a C conversion between integer types does: the low bits of the
+/// two's complement value, sign-extended or zero-extended when T is wider. This covers narrowing
+/// and reinterpreting signed as unsigned or back. A conversion that changes the value fails a
+/// beta assertion.
 ///
-/// Use this for any narrowing the code does not rely on truncating. Plain `init(clamping:)`
-/// clamps silently in every build and is only for places where clamping is expected.
+/// Use this for any conversion the code does not rely on truncating. Where the C relies on it
+/// (a hash, a byte taken from a wider value), write `init(truncatingIfNeeded:)` with a comment.
 @inline(__always)
 func it_narrow<S: BinaryInteger, T: FixedWidthInteger>(_ value: S,
                                                        to type: T.Type,
                                                        file: StaticString = #file,
                                                        line: UInt = #line,
                                                        function: StaticString = #function) -> T {
+#if BETA
     return it_narrow(value, to: type, file: file, line: line, function: function, onFailure: iTermBetaAssertionFailed)
+#else
+    return T(truncatingIfNeeded: value)
+#endif
 }
 
 /// it_narrow with the failure handler injected.
@@ -384,31 +446,36 @@ func it_narrow<S: BinaryInteger, T: FixedWidthInteger>(_ value: S,
                                                        line: UInt = #line,
                                                        function: StaticString = #function,
                                                        onFailure: iTermBetaAssertionFailureHandler) -> T {
-    if let result = T(exactly: value) {
-        return result
+    if T(exactly: value) == nil {
+        onFailure(iTermNarrowingMessage(value, type), file, line, function)
     }
-    onFailure(iTermNarrowingMessage(value, type), file, line, function)
-    return T(clamping: value)
+    return T(truncatingIfNeeded: value)
 }
 
 // MARK: - Float to integer
 
-/// Converts a floating point value to an integer type, rounding toward zero as C does.
+/// Converts a floating point value to an integer type as the C cast `(T)value` does on the
+/// processor this runs on, in the Deployment build of the C (clang at -Os).
 ///
-/// The result is defined for every input. If the value rounded toward zero does not fit in T,
-/// this fails a beta assertion and returns:
-/// - zero for NaN,
-/// - T.max for +infinity and for finite values above the range,
-/// - T.min for -infinity and for finite values below the range.
-/// Negative zero, and any value strictly between -1 and 1, gives zero without failing.
+/// A value whose truncation toward zero fits in T gives that truncation on both processors; a
+/// fractional part is dropped silently, as C drops it, and is not reported. NaN and values out of
+/// range fail a beta assertion and give what the processor gives (iTermFloatToIntegerModel):
+/// on arm64 the conversion saturates and NaN gives 0; on x86_64 it gives the "integer indefinite"
+/// value (the minimum of the register) or the low bits of a wider conversion.
+///
+/// F is Float, Double, CGFloat or Float16, each of which converts to Double exactly.
 @inline(__always)
 func it_floatToInteger<F: BinaryFloatingPoint, T: FixedWidthInteger>(_ value: F,
                                                                      to type: T.Type,
                                                                      file: StaticString = #file,
                                                                      line: UInt = #line,
                                                                      function: StaticString = #function) -> T {
+#if BETA
     return it_floatToInteger(value, to: type, file: file, line: line, function: function,
                              onFailure: iTermBetaAssertionFailed)
+#else
+    return iTermFloatToIntegerModel.processor(Double(value), to: type)
+#endif
 }
 
 /// it_floatToInteger with the failure handler injected.
@@ -419,27 +486,117 @@ func it_floatToInteger<F: BinaryFloatingPoint, T: FixedWidthInteger>(_ value: F,
                                                                      line: UInt = #line,
                                                                      function: StaticString = #function,
                                                                      onFailure: iTermBetaAssertionFailureHandler) -> T {
-    let truncated = value.rounded(.towardZero)
-    // T.min is zero or minus a power of two, so it converts exactly. T.max + 1 is a power of two;
-    // F(T.max) is either exact or rounds up to that power, and adding one gives it in both cases.
-    // NaN fails both comparisons. That holds when F can represent the bounds, as Float, Double
-    // and CGFloat can for every integer type here. A narrower type such as Float16 rounds the
-    // bounds of the wide integer types to infinity, so an infinite value is rejected on its own.
-    if truncated.isFinite && truncated >= F(T.min) && truncated < F(T.max) + 1 {
-        // Every value of Float, Double and CGFloat converts to Double exactly, and an in-range
-        // value fits in Int64 or UInt64, so these concrete conversions compile to single
-        // instructions. The generic T(truncated) calls into the standard library.
-        if F.significandBitCount <= Double.significandBitCount {
-            let double = Double(truncated)
-            return T.isSigned ? T(truncatingIfNeeded: Int64(double)) : T(truncatingIfNeeded: UInt64(double))
+    let double = Double(value)
+    if !iTermFloatToIntegerModel.fits(double.rounded(.towardZero), in: T.self) {
+        onFailure(iTermFloatConversionMessage(value, type), file, line, function)
+    }
+    return iTermFloatToIntegerModel.processor(double, to: type)
+}
+
+/// What clang's code for `(T)value` gives on each processor, for a Double (Float and CGFloat
+/// values convert to Double exactly and give the same results). Both models are compiled on
+/// every architecture so that each can be tested anywhere; `processor` picks the one that
+/// applies. The results were established with a C probe (see the unit's report and
+/// translation-rules.md section 1):
+///
+/// arm64, clang at -Os, as Deployment builds the C:
+/// - Int32, UInt32, Int64, UInt64: fcvtzs or fcvtzu at that width, which truncates toward zero,
+///   saturates at the bounds of the type, and gives 0 for NaN.
+/// - Int8, UInt8, Int16, UInt16: fcvtzs to 32 bits, saturating to the Int32 range with NaN as 0,
+///   then the low bits. At -O0 clang uses fcvtzu for the unsigned narrow types instead, so a
+///   Development build of the C gives 0 where this gives the low bits of a negative value; the
+///   helper follows Deployment.
+///
+/// x86_64 (cvttsd2si and cvttss2si, the same at -O0 and -Os): a NaN or a value whose truncation
+/// is outside the signed range of the destination register gives the minimum of that register.
+/// - Int8, UInt8, Int16, UInt16, Int32: a 32 bit conversion, then the low bits.
+/// - UInt32, Int64: a 64 bit conversion, then the low bits.
+/// - UInt64: values in [2^63, 2^64) convert exactly; every other value gives the bit pattern of
+///   the 64 bit signed conversion (so NaN, values of at least 2^64 and values below -2^63 give
+///   2^63, and a negative value in range gives 2^64 minus its magnitude).
+enum iTermFloatToIntegerModel {
+    /// Whether `truncated`, a value already rounded toward zero, is a value of T. False for NaN.
+    @inline(__always)
+    static func fits<T: FixedWidthInteger>(_ truncated: Double, in type: T.Type) -> Bool {
+        // T.min is zero or minus a power of two, so it converts exactly. T.max + 1 is a power of
+        // two; Double(T.max) is either exact or rounds up to that power, and adding one gives it
+        // in both cases. NaN fails both comparisons.
+        return truncated >= Double(T.min) && truncated < Double(T.max) + 1
+    }
+
+    /// The result on the processor this code runs on.
+    @inline(__always)
+    static func processor<T: FixedWidthInteger>(_ value: Double, to type: T.Type) -> T {
+#if arch(arm64)
+        return arm64(value, to: type)
+#elseif arch(x86_64)
+        return x86_64(value, to: type)
+#else
+#error("The C behavior of float to integer conversion is established only for arm64 and x86_64")
+#endif
+    }
+
+    /// The arm64 result. T is at most 64 bits wide.
+    @inline(__always)
+    static func arm64<T: FixedWidthInteger>(_ value: Double, to type: T.Type) -> T {
+        let truncated = value.rounded(.towardZero)
+        if T.bitWidth < 32 || (T.bitWidth == 32 && T.isSigned) {
+            return T(truncatingIfNeeded: saturating(truncated, Int32.self))
         }
-        return T(truncated)
+        if T.bitWidth == 32 {
+            return T(truncatingIfNeeded: saturating(truncated, UInt32.self))
+        }
+        if T.isSigned {
+            return T(truncatingIfNeeded: saturating(truncated, Int64.self))
+        }
+        return T(truncatingIfNeeded: saturating(truncated, UInt64.self))
     }
-    onFailure(iTermFloatConversionMessage(value, type), file, line, function)
-    if value.isNaN {
-        return 0
+
+    /// The x86_64 result. T is at most 64 bits wide.
+    @inline(__always)
+    static func x86_64<T: FixedWidthInteger>(_ value: Double, to type: T.Type) -> T {
+        let truncated = value.rounded(.towardZero)
+        if T.bitWidth < 32 || (T.bitWidth == 32 && T.isSigned) {
+            return T(truncatingIfNeeded: indefinite(truncated, Int32.self))
+        }
+        if T.bitWidth == 32 || T.isSigned {
+            return T(truncatingIfNeeded: indefinite(truncated, Int64.self))
+        }
+        // clang converts x and x - 2^63 and combines them; the result is exact in [2^63, 2^64)
+        // and the signed conversion's bit pattern everywhere else.
+        if truncated >= 9223372036854775808.0 && truncated < 18446744073709551616.0 {
+            return T(truncatingIfNeeded: UInt64(truncated))
+        }
+        return T(truncatingIfNeeded: indefinite(truncated, Int64.self))
     }
-    return value < 0 ? .min : .max
+
+    /// A conversion that saturates at the bounds of I and gives 0 for NaN (fcvtzs, fcvtzu).
+    @inline(__always)
+    private static func saturating<I: FixedWidthInteger>(_ truncated: Double, _ type: I.Type) -> I {
+        if fits(truncated, in: I.self) {
+            return exactly(truncated, I.self)
+        }
+        if truncated.isNaN {
+            return 0
+        }
+        return truncated < 0 ? .min : .max
+    }
+
+    /// A conversion that gives I.min for NaN and for values out of range (cvttsd2si).
+    @inline(__always)
+    private static func indefinite<I: FixedWidthInteger & SignedInteger>(_ truncated: Double, _ type: I.Type) -> I {
+        if fits(truncated, in: I.self) {
+            return exactly(truncated, I.self)
+        }
+        return .min
+    }
+
+    /// `truncated` as an I, when it is a value of I. The concrete conversions compile to single
+    /// instructions; the generic I(truncated) calls into the standard library.
+    @inline(__always)
+    private static func exactly<I: FixedWidthInteger>(_ truncated: Double, _ type: I.Type) -> I {
+        return I.isSigned ? I(truncatingIfNeeded: Int64(truncated)) : I(truncatingIfNeeded: UInt64(truncated))
+    }
 }
 
 // MARK: - Synchronized
