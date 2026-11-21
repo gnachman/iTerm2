@@ -1108,10 +1108,22 @@ int decode_utf8_char(const unsigned char *datap,
     if (self.length == 0) {
         return self;
     }
+    // Full-width wrappers are used in CJK text and are members of the IDN character set, so they
+    // stay attached to a nearby URL.
     NSDictionary *wrappers = @{ @('('): @")",
                                 @('[') : @"]",
                                 @('"'): @"\"",
-                                @('\''): @"'" };
+                                @('\''): @"'",
+                                @('（'): @"）",
+                                @('［'): @"］",
+                                @('【'): @"】",
+                                @('《'): @"》",
+                                @('〈'): @"〉",
+                                @('「'): @"」",
+                                @('『'): @"』",
+                                @('“'): @"”",
+                                @('‘'): @"’",
+                                @('｛'): @"｝" };
     unichar c = [self characterAtIndex:0];
     NSString *closingString = wrappers[@(c)];
     NSString *string = self;
@@ -1189,13 +1201,14 @@ int decode_utf8_char(const unsigned char *datap,
 }
 
 - (NSString *)stringByRemovingTerminatingPunctuation {
-    NSCharacterSet *punctuationCharacterSet = [NSCharacterSet characterSetWithCharactersInString:[iTermAdvancedSettingsModel trailingPunctuationMarks]];
-    NSRange range = [self rangeOfCharacterFromSet:punctuationCharacterSet options:(NSBackwardsSearch | NSAnchoredSearch)];
-    if (range.length > 0 && range.location != NSNotFound) {
-        return [self substringToIndex:range.location];
-    } else {
-        return self;
+    // Strip every trailing mark, not just one. Prose can put more than one after a URL or path
+    // (for example “.).” or a full-width “。”), and none of them belong to the link.
+    NSCharacterSet *punctuationCharacterSet = [NSCharacterSet it_trailingPunctuationCharacterSet];
+    NSUInteger length = self.length;
+    while (length > 0 && [punctuationCharacterSet characterIsMember:[self characterAtIndex:length - 1]]) {
+        length--;
     }
+    return [self substringToIndex:length];
 }
 
 - (NSString *)stringByTrimmingLeadingHyphens {

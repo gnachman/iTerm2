@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermPathCleaner.h"
 #import "NSArray+CommonAdditions.h"
+#import "NSCharacterSet+iTerm.h"
 #import "NSFileManager+CommonAdditions.h"
 #import "NSStringITerm.h"
 #import "RegexKitLite.h"
@@ -124,13 +125,10 @@ static dispatch_queue_t iTermPathFinderQueue(void) {
 
             // Some programs will thoughtlessly print a filename followed by some silly suffix.
             // We'll try versions with and without a questionable suffix. The version
-            // with the suffix is always preferred if it exists.
-            static NSArray *questionableSuffixes;
-            static dispatch_once_t onceToken;
-            dispatch_once(&onceToken, ^{
-                questionableSuffixes = @[ @"!", @"?", @".", @",", @";", @":", @"...", @"…" ];
-            });
-            for (NSString *modifiedPossiblePath in [self pathsFromPath:trimmedPath byRemovingBadSuffixes:questionableSuffixes]) {
+            // with the suffix is always preferred if it exists. This includes full-width CJK
+            // punctuation, which a run of filename characters otherwise swallows.
+            for (NSString *modifiedPossiblePath in [self pathsFromPath:trimmedPath
+                                                  byRemovingBadSuffixes:[NSCharacterSet it_trailingPunctuationCharacterSet]]) {
                 if (self.canceled) {
                     _path = nil;
                     return;
@@ -232,15 +230,15 @@ static dispatch_queue_t iTermPathFinderQueue(void) {
     return parts;
 }
 
-- (NSArray *)pathsFromPath:(NSString *)source byRemovingBadSuffixes:(NSArray *)badSuffixes {
-    NSMutableArray *result = [NSMutableArray array];
-    [result addObject:source];
-    for (NSString *badSuffix in badSuffixes) {
-        if ([source hasSuffix:badSuffix]) {
-            NSString *stripped = [source substringToIndex:source.length - badSuffix.length];
-            if (stripped.length) {
-                [result addObject:stripped];
-            }
+// Returns source followed by each successively shorter version made by removing trailing
+// punctuation, longest first, so a file whose name really ends in punctuation still wins.
+- (NSArray *)pathsFromPath:(NSString *)source byRemovingBadSuffixes:(NSCharacterSet *)badSuffixes {
+    NSMutableArray *result = [NSMutableArray arrayWithObject:source];
+    NSString *stripped = source;
+    while (stripped.length > 0 && [badSuffixes characterIsMember:[stripped characterAtIndex:stripped.length - 1]]) {
+        stripped = [stripped substringToIndex:stripped.length - 1];
+        if (stripped.length) {
+            [result addObject:stripped];
         }
     }
     return result;

@@ -9,8 +9,10 @@
 
 #import "DebugLogging.h"
 #import "NSArray+CommonAdditions.h"
+#import "NSCharacterSet+iTerm.h"
 #import "NSFileManager+CommonAdditions.h"
 #import "NSString+CommonAdditions.h"
+#import "NSStringITerm.h"
 #import "RegexKitLite.h"
 
 static dispatch_queue_t iTermPathCleanerQueue(void) {
@@ -254,10 +256,12 @@ static dispatch_queue_t iTermPathCleanerQueue(void) {
     // If it's in any form of bracketed delimiters, strip them
     path = [path stringByRemovingEnclosingBrackets];
 
-    // Strip various trailing characters that are unlikely to be part of the file name.
-    NSString *trailingPunctuationRegex = @"[.,:]$";
-    path = [path stringByReplacingOccurrencesOfRegex:trailingPunctuationRegex
-                                          withString:@""];
+    // Strip various trailing characters that are unlikely to be part of the file name. This
+    // includes full-width CJK punctuation, which commonly follows a path in prose. Don’t strip
+    // closing brackets or quotes here; a trailing line/column number may need them below.
+    NSMutableCharacterSet *trailingPunctuation = [[NSCharacterSet it_trailingCJKPunctuationCharacterSet] mutableCopy];
+    [trailingPunctuation addCharactersInString:@".:,;!?"];
+    path = [path stringByTrimmingTrailingCharactersFromCharacterSet:trailingPunctuation];
 
     // Try to chop off a trailing line/column number.
     NSArray<NSString *> *regexes = [self.lineAndColumnNumberRegexes mapWithBlock:^id(NSString *anObject) {

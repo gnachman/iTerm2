@@ -479,6 +479,31 @@ unichar iTermMinimumDefaultEmojiPresentationCodePoint = 0x231a;
 }
 
 // ============================================================================
+// Trailing Punctuation Character Set
+// ============================================================================
+// Full-width punctuation used in CJK text. These code points are members of the IDN character set
+// (see +idnCharacters, which includes U+3001 to U+303F), so a run of URL or filename characters
+// swallows them. They never belong to a URL or a file name at its end, though, so they must be
+// trimmed the same way ASCII punctuation is.
+static NSString *const iTermCJKTrailingPunctuation = @"。，、；：！？．）］｝】》」』〉〕”’…\u3000";
+
++ (NSCharacterSet *)it_trailingCJKPunctuationCharacterSet {
+    static NSCharacterSet *cjk;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        cjk = [NSCharacterSet characterSetWithCharactersInString:iTermCJKTrailingPunctuation];
+    });
+    return cjk;
+}
+
++ (NSCharacterSet *)it_trailingPunctuationCharacterSet {
+    // The user-configurable marks can change at runtime, so don't cache the union.
+    NSMutableCharacterSet *result = [[self it_trailingCJKPunctuationCharacterSet] mutableCopy];
+    [result addCharactersInString:[iTermAdvancedSettingsModel trailingPunctuationMarks]];
+    return result;
+}
+
+// ============================================================================
 // Emoji with Default Text Presentation (Emoji - Emoji_Presentation)
 // From emoji-data.txt
 // ============================================================================

@@ -395,6 +395,36 @@ final class SemanticHistoryControllerTests: XCTestCase, iTermObject, iTermSemant
         assertStripsTrailingPunctuation(":")
     }
 
+    // Full-width CJK punctuation is part of the URL/filename character set, so it stays attached
+    // to the path unless it is explicitly trimmed.
+    func testGetFullPathStripsTrailingIdeographicFullStop() {
+        assertStripsTrailingPunctuation("。")
+    }
+
+    func testGetFullPathStripsTrailingFullWidthComma() {
+        assertStripsTrailingPunctuation("，")
+    }
+
+    func testGetFullPathStripsTrailingFullWidthCloseParen() {
+        assertStripsTrailingPunctuation("）")
+    }
+
+    func testGetFullPathStripsMultipleTrailingFullWidthMarks() {
+        controller.fakeFileManager.files.insert(filename)
+        let cleaned = cleanedUpPath(filename + "。）。", workingDirectory: workingDirectory)
+        XCTAssertEqual(cleaned.path, filename)
+        XCTAssertNil(cleaned.lineNumber)
+    }
+
+    func testGetFullPathStripsFullWidthBrackets() {
+        assertStripsDelimiters(open: "（", close: "）")
+        assertStripsDelimiters(open: "【", close: "】")
+        assertStripsDelimiters(open: "《", close: "》")
+        assertStripsDelimiters(open: "「", close: "」")
+        assertStripsDelimiters(open: "『", close: "』")
+        assertStripsDelimiters(open: "“", close: "”")
+    }
+
     func testGetFullPathExtractsLineNumber() {
         controller.fakeFileManager.files.insert(filename)
         let cleaned = cleanedUpPath(filename + ":123", workingDirectory: workingDirectory)
@@ -1067,6 +1097,19 @@ final class SemanticHistoryControllerTests: XCTestCase, iTermObject, iTermSemant
                                        workingDirectory: searchDirectory,
                                        trimWhitespace: false)
         XCTAssertNil(found.path)
+    }
+
+    // A full-width period after a file name is part of the filename character set, but it is not
+    // part of the file name. The clickable range must not include it, or clicking the path fails.
+    func testPathOfExistingFileExcludesFullWidthPunctuation() {
+        addFile("报告.md", in: searchDirectory)
+        let found = pathOfExistingFile(prefix: "\(searchDirectory)/报告",
+                                       suffix: ".md。",
+                                       workingDirectory: searchDirectory,
+                                       trimWhitespace: false)
+        XCTAssertEqual(found.path, "\(searchDirectory)/报告.md")
+        XCTAssertEqual(found.prefixChars, "\(searchDirectory)/报告".count)
+        XCTAssertEqual(found.suffixChars, ".md".count)
     }
 
     // Regression test for issue 4927
