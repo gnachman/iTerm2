@@ -778,15 +778,6 @@ final class CompanionPairingController: NSObject {
         // window is torn down (stopAdvertising clears this).
         freshPairingActive = true
 
-#if DEBUG
-        // Development automation hook: the iOS simulator has no camera, so
-        // end-to-end tests read the pairing URL from here and hand it to the
-        // phone via simctl openurl.
-        try? code.urlString().write(toFile: "/tmp/iterm2-companion-pairing-url.txt",
-                                    atomically: true,
-                                    encoding: .utf8)
-#endif
-
         try startListening(pairingID: pairingID)
         startFreshPairingExpiry()
         return code
