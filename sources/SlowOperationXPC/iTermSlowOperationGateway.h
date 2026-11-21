@@ -30,6 +30,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)init NS_UNAVAILABLE;
 
+// Tests only. Makes a gateway with no connection to the service (requests go nowhere and get no
+// reply) whose pending recent-branch callbacks are kept in `recentBranchFetchCallbacks`, so a test
+// can observe how that array is used.
+- (instancetype)initForTestingWithRecentBranchFetchCallbacks:(NSMutableArray *)recentBranchFetchCallbacks;
+
 // NOTE: the completion block won't be called if it times out.
 - (void)checkIfDirectoryExists:(NSString *)directory
                     completion:(void (^)(BOOL))completion;

@@ -471,7 +471,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
                    completion:(void (^)(NSArray<NSString *> *))reply {
     iTermGitRecentBranchesBox *box = [[iTermGitRecentBranchesBox alloc] init];
     box.block = reply;
-    @synchronized(ITNonnilLock(_gitStateHandlers)) {
+    @synchronized(ITNonnilLock(_gitRecentBranchFetchCallbacks)) {
         [_gitRecentBranchFetchCallbacks addObject:box];
     }
     [[_connectionToService remoteObjectProxy] fetchRecentBranchesAt:path
@@ -618,6 +618,18 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
         RLog(@"fetchUserShell: gave up waiting for XPC reply");
         completion(nil);
     });
+}
+
+#pragma mark - Testing
+
+- (instancetype)initForTestingWithRecentBranchFetchCallbacks:(NSMutableArray *)recentBranchFetchCallbacks {
+    self = [super init];
+    if (self) {
+        _gitStateHandlers = [NSMutableArray array];
+        _gitRecentBranchFetchCallbacks = recentBranchFetchCallbacks;
+        _timeout = 0.5;
+    }
+    return self;
 }
 
 @end
