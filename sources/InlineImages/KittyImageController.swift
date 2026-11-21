@@ -155,7 +155,8 @@ class KittyImageController: NSObject {
             }
             let myRange: Range<CGFloat> = rect.xRange
             let queryMin: CGFloat = CGFloat(column) * cellSize.width
-            let queryMax: CGFloat = CGFloat(column + 1) * cellSize.width
+            // Add in CGFloat: column + 1 traps for Int32.max, which a delete command can supply.
+            let queryMax: CGFloat = (CGFloat(column) + 1) * cellSize.width
             let queryRange = queryMin..<queryMax
             return myRange.overlaps(queryRange)
         }
@@ -166,7 +167,7 @@ class KittyImageController: NSObject {
             }
             let myRange = rect.yRange
             let queryMin: CGFloat = CGFloat(row) * cellSize.height
-            let queryMax: CGFloat = CGFloat(row + 1) * cellSize.height
+            let queryMax: CGFloat = (CGFloat(row) + 1) * cellSize.height
             let queryRange = queryMin..<queryMax
             return myRange.overlaps(queryRange)
         }
@@ -275,8 +276,24 @@ class KittyImageController: NSObject {
     private var accumulator: Accumulator?
     private var placements = [Placement]()
 
+    // The most image data accepted from one transmission: decoded chunks, inflated zlib output, a
+    // file or a shared-memory object. It is the image cache budget (kitty's own storage quota is
+    // the same 320 MB), because an image whose data alone exceeds the whole budget could not be
+    // kept. Without it a program could make iTerm2 hold unbounded data: chunks are accumulated
+    // without limit and deflate expands up to about 1032:1.
+    private let maximumDataSize: Int
+    private static let dataTooLargeError = "ENOSPC:Image data exceeds the storage quota"
+
+    // Set when a chunked transmission was abandoned for exceeding maximumDataSize. Its remaining
+    // chunks are dropped, and its final chunk gets the error response.
+    private var discardedTransmissionIdentifier: UInt32?
+
+    // Set by inflate(data:limit:) when it stops because the output would exceed the limit.
+    private var inflateExceededLimit = false
+
     @objc override init() {
         _images = LRUDictionary<UInt64, Image>(maximumSize: Self.defaultImageCacheBudget)
+        maximumDataSize = Self.defaultImageCacheBudget
         super.init()
     }
 
@@ -284,6 +301,7 @@ class KittyImageController: NSObject {
     // pass a small budget so eviction can be exercised deterministically.
     init(imageCacheBudget: Int) {
         _images = LRUDictionary<UInt64, Image>(maximumSize: imageCacheBudget)
+        maximumDataSize = imageCacheBudget
         super.init()
     }
 
@@ -423,6 +441,20 @@ class KittyImageController: NSObject {
         DLog("reallyExecuteTransmit BEGIN - id=\(command.identifier) (0x\(String(command.identifier, radix: 16))) more=\(command.more) medium=\(command.medium) format=\(command.format) query=\(query) payloadLength=\(payload.count)")
         DLog("reallyExecuteTransmit: current accumulator state: \(accumulator == nil ? "nil" : "exists with id=\(accumulator!.transmission.identifier) (0x\(String(accumulator!.transmission.identifier, radix: 16))) decodedDataLength=\(accumulator!.decodedData.count) hasDisplay=\(accumulator!.display != nil)")")
 
+        if let discarded = discardedTransmissionIdentifier {
+            if discarded == 0 || command.identifier == 0 || command.identifier == discarded {
+                if command.more == .expectMore {
+                    DLog("reallyExecuteTransmit: dropping a chunk of a transmission abandoned for its size")
+                    return nil
+                }
+                discardedTransmissionIdentifier = nil
+                RLog("reallyExecuteTransmit: final chunk of a transmission abandoned for its size")
+                return Self.dataTooLargeError
+            }
+            // A different image: the abandoned transmission was never finished.
+            discardedTransmissionIdentifier = nil
+        }
+
         if let accumulator {
             // Validate this chunk belongs to the same image transmission.
             // Only reject if both have non-zero IDs that don't match.
@@ -460,6 +492,14 @@ class KittyImageController: NSObject {
                     return "EINVAL:could not decode payload chunk"
                 }
 
+                if accumulator.decodedData.count + chunkData.count > maximumDataSize {
+                    RLog("reallyExecuteTransmit: abandoning chunked transmission id=\(accumulator.transmission.identifier): \(accumulator.decodedData.count) + \(chunkData.count) bytes exceeds \(maximumDataSize)")
+                    self.accumulator = nil
+                    if command.more == .expectMore {
+                        discardedTransmissionIdentifier = accumulator.transmission.identifier
+                    }
+                    return Self.dataTooLargeError
+                }
                 if command.more == .expectMore {
                     DLog("reallyExecuteTransmit: appending decoded chunk to accumulator (chunkBytes=\(chunkData.count), new total bytes=\(accumulator.decodedData.count + chunkData.count))")
                     self.accumulator?.decodedData += chunkData
@@ -552,7 +592,7 @@ class KittyImageController: NSObject {
             if command.compression == .zlib {
                 guard let decompressed = inflate(data: preDecodedData) else {
                     DLog("executeTransmitDirect: ERROR - could not decompress pre-decoded data (length=\(preDecodedData.count))")
-                    return "could not decompress payload"
+                    return inflateExceededLimit ? Self.dataTooLargeError : "could not decompress payload"
                 }
                 data = decompressed
             } else {
@@ -560,9 +600,10 @@ class KittyImageController: NSObject {
             }
         } else {
             // Single-chunk transmission: decode base64 (and decompress if needed)
+            inflateExceededLimit = false
             guard let decoded = decodeDirectTransmission(command, payload: payload) else {
                 DLog("executeTransmitDirect: ERROR - could not decode payload (payloadLength=\(payload.count), compression=\(command.compression))")
-                return "could not decode payload"
+                return inflateExceededLimit ? Self.dataTooLargeError : "could not decode payload"
             }
             data = decoded
         }
@@ -763,55 +804,74 @@ class KittyImageController: NSObject {
     }
 
     func inflate(data compressedData: Data) -> Data? {
-        DLog("inflate: compressedDataLength=\(compressedData.count)")
-        var z = z_stream()
-        z.zalloc = nil
-        z.zfree = nil
-        z.opaque = nil
-        z.avail_in = uInt(compressedData.count)
-        compressedData.withUnsafeBytes { (ptr: UnsafeRawBufferPointer) in
-            z.next_in = UnsafeMutablePointer<Bytef>(mutating: ptr.bindMemory(to: Bytef.self).baseAddress)
-        }
+        return inflate(data: compressedData, limit: maximumDataSize)
+    }
 
-        // Initial buffer allocation
-        var decompressedData = Data()
-        let bufferSize = 16384
-        let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
-        defer {
-            buffer.deallocate()
-        }
-
-        // Initialize the zlib stream
-        let initResult = inflateInit_(&z, ZLIB_VERSION, Int32(MemoryLayout<z_stream>.size))
-        if initResult != Z_OK {
-            DLog("inflate: FAILED inflateInit - result=\(initResult)")
+    // Returns nil if the data is not a complete zlib stream, or if its output would exceed
+    // `limit` bytes (then inflateExceededLimit is set).
+    private func inflate(data compressedData: Data, limit: Int) -> Data? {
+        DLog("inflate: compressedDataLength=\(compressedData.count) limit=\(limit)")
+        inflateExceededLimit = false
+        guard !compressedData.isEmpty, compressedData.count <= Int(uInt.max) else {
+            DLog("inflate: FAILED - input length \(compressedData.count) is empty or too long")
             return nil
         }
+        // zlib keeps a pointer into the input for the whole decompression, so all of it happens
+        // inside withUnsafeBytes: the pointer is not valid once the closure returns.
+        return compressedData.withUnsafeBytes { (input: UnsafeRawBufferPointer) -> Data? in
+            var z = z_stream()
+            z.zalloc = nil
+            z.zfree = nil
+            z.opaque = nil
+            z.next_in = UnsafeMutablePointer<Bytef>(mutating: input.bindMemory(to: Bytef.self).baseAddress)
+            z.avail_in = uInt(input.count)
 
-        // Decompress the data
-        var result: Int32
-        repeat {
-            z.next_out = buffer
-            z.avail_out = uInt(bufferSize)
-
-            result = zlib.inflate(&z, Z_NO_FLUSH)
-
-            if result == Z_STREAM_ERROR || result == Z_DATA_ERROR || result == Z_MEM_ERROR {
-                DLog("inflate: FAILED during decompression - result=\(result) (Z_STREAM_ERROR=\(Z_STREAM_ERROR), Z_DATA_ERROR=\(Z_DATA_ERROR), Z_MEM_ERROR=\(Z_MEM_ERROR))")
-                inflateEnd(&z)
+            let initResult = inflateInit_(&z, ZLIB_VERSION, Int32(MemoryLayout<z_stream>.size))
+            if initResult != Z_OK {
+                DLog("inflate: FAILED inflateInit - result=\(initResult)")
                 return nil
             }
+            defer {
+                inflateEnd(&z)
+            }
 
-            let bytesDecompressed = bufferSize - Int(z.avail_out)
-            decompressedData.append(buffer, count: bytesDecompressed)
+            var decompressedData = Data()
+            let bufferSize = 16384
+            let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
+            defer {
+                buffer.deallocate()
+            }
 
-        } while result != Z_STREAM_END
-
-        // Clean up
-        inflateEnd(&z)
-
-        DLog("inflate: success - decompressedLength=\(decompressedData.count)")
-        return decompressedData
+            while true {
+                z.next_out = buffer
+                z.avail_out = uInt(bufferSize)
+                let result = zlib.inflate(&z, Z_NO_FLUSH)
+                switch result {
+                case Z_OK, Z_STREAM_END:
+                    let bytesDecompressed = bufferSize - Int(z.avail_out)
+                    if decompressedData.count + bytesDecompressed > limit {
+                        RLog("inflate: FAILED - output exceeds \(limit) bytes")
+                        inflateExceededLimit = true
+                        return nil
+                    }
+                    decompressedData.append(buffer, count: bytesDecompressed)
+                    if result == Z_STREAM_END {
+                        DLog("inflate: success - decompressedLength=\(decompressedData.count)")
+                        return decompressedData
+                    }
+                case Z_BUF_ERROR:
+                    // No progress was possible. The output buffer is always empty here, so the
+                    // input ran out before the stream ended: it was truncated. Calling again
+                    // would return Z_BUF_ERROR forever.
+                    DLog("inflate: FAILED - stream truncated (avail_in=\(z.avail_in))")
+                    return nil
+                default:
+                    // Z_NEED_DICT, Z_STREAM_ERROR, Z_DATA_ERROR, Z_MEM_ERROR: not a usable stream.
+                    DLog("inflate: FAILED during decompression - result=\(result)")
+                    return nil
+                }
+            }
+        }
     }
 
     private func decompressAndDecode(_ payload: String) -> Data? {
@@ -866,10 +926,34 @@ class KittyImageController: NSObject {
             RLog("executeTransmitTemporaryFile: ERROR - bad filename (missing tty-graphics-protocol)")
             return "EBADF:Bad filename"
         }
-        defer {
-            try? FileManager.default.removeItem(at: fileURL)
+        // Read through a descriptor opened without following a symlink, check that it is a regular
+        // file, and only then delete it. Deleting by path before checking would remove a
+        // directory with a matching name, recursively.
+        let fd = open(fileURL.path, O_RDONLY | O_NOFOLLOW)
+        guard fd >= 0 else {
+            RLog("executeTransmitTemporaryFile: ERROR - could not open: \(String(cString: strerror(errno)))")
+            return "EBADF:Could not open file"
         }
-        return handle(command: command, fileURL: fileURL, query: query)
+        defer {
+            close(fd)
+        }
+        var st = stat()
+        guard fstat(fd, &st) == 0, (st.st_mode & S_IFMT) == S_IFREG else {
+            RLog("executeTransmitTemporaryFile: ERROR - not a regular file")
+            return "EBADF:Not a file"
+        }
+        // It is a regular file transmitted for us to consume, so it is deleted whatever happens
+        // next. unlink never removes a directory.
+        unlink(fileURL.path)
+        guard Int64(st.st_size) <= Int64(maximumDataSize) else {
+            RLog("executeTransmitTemporaryFile: ERROR - file is \(st.st_size) bytes, more than \(maximumDataSize)")
+            return Self.dataTooLargeError
+        }
+        guard let content = try? FileHandle(fileDescriptor: fd, closeOnDealloc: false).readToEnd() else {
+            RLog("executeTransmitTemporaryFile: ERROR - read failed")
+            return "EBADF:Could not read file"
+        }
+        return handle(command: command, data: content, query: query)
     }
 
     private func filenameIsSafe(fileURL: URL) -> Bool {
@@ -916,6 +1000,11 @@ class KittyImageController: NSObject {
                 RLog("handle(fileURL): ERROR - unsafe filename")
                 return "EBADF:Invalid path"
             }
+            if let size = try fileURL.resourceValues(forKeys: [.fileSizeKey]).fileSize,
+               size > maximumDataSize {
+                RLog("handle(fileURL): ERROR - file is \(size) bytes, more than \(maximumDataSize)")
+                return Self.dataTooLargeError
+            }
             let content = try Data(contentsOf: fileURL)
             DLog("handle(fileURL): read \(content.count) bytes from file")
             return handle(command: command, data: content, query: query)
@@ -923,6 +1012,10 @@ class KittyImageController: NSObject {
             RLog("handle(fileURL): ERROR - \(error.localizedDescription)")
             return "EBADF:\(error.localizedDescription)"
         }
+    }
+
+    private enum SharedMemoryError: Error {
+        case tooLarge
     }
 
     func executeTransmitSharedMemory(_ command: KittyImageCommand.ImageTransmission,
@@ -938,6 +1031,9 @@ class KittyImageController: NSObject {
             let data = try readPOSIXSharedMemory(named: name)
             DLog("executeTransmitSharedMemory: read \(data.count) bytes from shared memory")
             return handle(command: command, data: data, query: query)
+        } catch SharedMemoryError.tooLarge {
+            RLog("executeTransmitSharedMemory: ERROR - object is larger than \(maximumDataSize) bytes")
+            return Self.dataTooLargeError
         } catch {
             RLog("executeTransmitSharedMemory: ERROR - \(error.localizedDescription)")
             return "EBADF:\(error.localizedDescription)"
@@ -971,6 +1067,11 @@ class KittyImageController: NSObject {
         }
 
         let size = Int(st.st_size)
+        if size > maximumDataSize {
+            _ = shm_unlink(name)
+            unlinkDone = true
+            throw SharedMemoryError.tooLarge
+        }
         if size == 0 {
             _ = shm_unlink(name)
             unlinkDone = true
@@ -1384,8 +1485,9 @@ class KittyImageController: NSObject {
             // Delete all placements that intersect a specific cell having a specific z-index. 
             // The cell and z-index is specified using the x, y and z keys.
             let offset = delegate.kittyImageControllerScreenAbsLine()
-            let coord = VT100GridAbsCoord(x: Int32(clamping: command.x),
-                                          y: Int64(command.y) + offset)
+            // Like d=p, x and y are cursor positions, so x=1,y=1 is the top-left cell.
+            let coord = VT100GridAbsCoord(x: Int32(clamping: command.x) - 1,
+                                          y: Int64(command.y) - 1 + offset)
             let cellSize = delegate.kittyImageControllerCellSize()
 
             removePlacements { placement in
