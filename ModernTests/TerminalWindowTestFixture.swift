@@ -30,10 +30,13 @@ final class TerminalWindowTestFixture {
     /// `engageLayoutEngine`, which defaults to the ITERM2_ENGAGE_LAYOUT_ENGINE
     /// environment variable, the window's layout engine is engaged, and
     /// closing the window fails the test if the engine enforces a minimum size
-    /// or had to break constraints.
+    /// or had to break constraints. `profile`, which defaults to the default
+    /// profile, is used for the window and for every session the fixture
+    /// makes unless a method is given another.
     init(windowType: iTermWindowType = .WINDOW_TYPE_NORMAL,
-         engageLayoutEngine: Bool = LayoutEngineTestSupport.engageInEveryFixtureWindow) {
-        guard let profile = ProfileModel.sharedInstance().defaultBookmark(),
+         engageLayoutEngine: Bool = LayoutEngineTestSupport.engageInEveryFixtureWindow,
+         profile customProfile: [AnyHashable: Any]? = nil) {
+        guard let profile = customProfile ?? ProfileModel.sharedInstance().defaultBookmark(),
               let terminal = PseudoTerminal(smartLayout: false,
                                             windowType: windowType,
                                             savedWindowType: windowType,
