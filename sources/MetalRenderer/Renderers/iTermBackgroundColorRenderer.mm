@@ -157,7 +157,6 @@
            transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermBackgroundColorRendererTransientState *tState = transientState;
     id<MTLBuffer> infoBuffer = [self infoBufferForTransientState:tState];
-    const NSUInteger suppressedBottomPx = static_cast<NSUInteger>(tState.suppressedBottomHeight * tState.cellConfiguration.scale - tState.margins.top);
     [tState enumerateSegments:^(const iTermBackgroundColorPIU *pius, size_t numberOfInstances) {
         if (numberOfInstances == 0) {
             return;
@@ -183,6 +182,10 @@
     if (tState.suppressedBottomHeight > 0) {
         // Fill in the suppressed region with default background color.
         // Note that we also draw the margins for simplicity.
+        const NSUInteger suppressedBottomPx =
+            iTermBackgroundColorRendererSuppressedBottomPixels(tState.suppressedBottomHeight,
+                                                               tState.cellConfiguration.scale,
+                                                               tState.margins.top);
         CGRect quad = CGRectMake(0,
                                  0,
                                  tState.cellConfiguration.cellSize.width * tState.cellConfiguration.gridSize.width,

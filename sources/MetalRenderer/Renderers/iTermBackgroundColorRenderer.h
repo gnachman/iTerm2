@@ -5,6 +5,18 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+// The height in pixels of the quad that fills the suppressed region at the
+// bottom with the default background color. When the top margin is larger
+// than the scaled suppressed height the difference is negative, and the
+// result is 0: converting a negative value to NSUInteger is undefined (0 on
+// arm64, near 2^64 on x86_64).
+NS_INLINE NSUInteger iTermBackgroundColorRendererSuppressedBottomPixels(CGFloat suppressedBottomHeight,
+                                                                        CGFloat scale,
+                                                                        CGFloat topMargin) {
+    const CGFloat pixels = suppressedBottomHeight * scale - topMargin;
+    return pixels > 0 ? (NSUInteger)pixels : 0;
+}
+
 @interface iTermBackgroundColorRendererTransientState : iTermMetalCellRendererTransientState
 
 // Alpha value gives the value from iTermAlphaValueForTopView.
