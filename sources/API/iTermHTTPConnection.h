@@ -17,6 +17,10 @@
 @property (nonatomic, readonly) NSNumber *euid;
 @property (nonatomic, readonly) dispatch_io_t ioStream;
 
+// The object needs the state that the designated initializer sets up (its queue, lock, buffer and
+// stream).
+- (instancetype)init NS_UNAVAILABLE;
+
 - (instancetype)initWithFileDescriptor:(int)fd
                          clientAddress:(iTermSocketAddress *)address
                                   euid:(NSNumber *)euid;
