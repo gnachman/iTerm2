@@ -29,7 +29,9 @@
     _size = size;
     _flipped = flipped;
 
-    _image = [[NSImage alloc] initWithContentsOfFile:path];
+    // AppKit declares the path of -initWithContentsOfFile: nonnull. It returns
+    // nil for nil, so skipping the call for a nil path gives the same result.
+    _image = path ? [[NSImage alloc] initWithContentsOfFile:path] : nil;
     if (flipped) {
         _image = [_image it_verticallyFlippedImage];
     }
