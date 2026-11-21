@@ -53,13 +53,15 @@ class PathSniffer: NSObject {
          range: VT100GridCoordRange,
          remoteHost: VT100RemoteHostReading?,
          offset: Int64,
-         pwd: String,
+         pwd: String?,
          width: Int32,
          queue: DispatchQueue) {
         self.extractor = extractor
         self.range = range
         self.remoteHost = remoteHost
         self.offset = offset
+        // nil when the working directory is not known yet. Relative candidates are
+        // then skipped rather than resolved against the root of the file system.
         self.pwd = pwd
         self.width = width
         self.queue = queue

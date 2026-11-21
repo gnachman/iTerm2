@@ -461,6 +461,11 @@ provideDataForType:(NSString *)type {
             [item setString:url.absoluteString
                     forType:NSPasteboardTypeFileURL];
         } else {
+            if (!_data) {
+                // A native image has no encoded data, so there is nothing to offer.
+                // -setData:forType: raises on nil.
+                return;
+            }
             if ([type isEqualToString:UTTypeImage.identifier] && ![_data uniformTypeIdentifierForImageData]) {
                 [item setData:_data forType:UTTypeImage.identifier];
             } else {

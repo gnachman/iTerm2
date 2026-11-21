@@ -117,8 +117,9 @@ class ImageRegistry: NSObject {
         }
     }
 
+    // data is nil for an image that has no encoded data, such as a native image.
     @objc(setData:forImage:code:)
-    func set(data: Data, image: iTermImage, code: Int) {
+    func set(data: Data?, image: iTermImage, code: Int) {
         mutex.sync {
             guard let imageInfo = codeToImage[code] else {
                 return
