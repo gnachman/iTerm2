@@ -149,7 +149,7 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
 - (BOOL)mouseHandlerMouseDownAt:(NSPoint)locationInWindow;
 - (BOOL)mouseHandlerMouseUp:(NSEvent *)event;
 - (void)mouseHandler:(PTYMouseHandler *)sender handleCommandShiftClickAtCoord:(VT100GridCoord)coord;
-- (BOOL)mouseHandlerInUnderlinedRangeForEvent:(NSEvent *)event;
+- (BOOL)mouseHandlerInUnderlinedRangeForEvent:(nullable NSEvent *)event;
 - (void)mouseHandlerCancelSingleClick:(PTYMouseHandler *)sender;
 
 @end
@@ -215,7 +215,7 @@ NS_DESIGNATED_INITIALIZER;
 - (void)keyDown:(NSEvent *)event;
 - (void)selectionScrollWillStart;
 - (void)didDragSemanticHistory;
-- (BOOL)mouseReportingAllowedForEvent:(NSEvent *)event;
+- (BOOL)mouseReportingAllowedForEvent:(nullable NSEvent *)event;
 - (void)didCopyToPasteboardWithControlSequence;
 - (BOOL)wantsScrollWheelMomentumEvents;
 - (BOOL)mouseEventIsReportable:(NSEvent *)event;

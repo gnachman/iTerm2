@@ -56,8 +56,8 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow;
 - (id<VT100ScreenMarkReading>)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
                               markAtCoord:(VT100GridCoord)coord;
 
-- (iTermOffscreenCommandLine *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
-            offscreenCommandLineForClickAt:(NSPoint)windowPoint;
+- (nullable iTermOffscreenCommandLine *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+                     offscreenCommandLineForClickAt:(NSPoint)windowPoint;
 
 - (NSString *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
    workingDirectoryOnLine:(int)line;

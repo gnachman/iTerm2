@@ -365,7 +365,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (void)updateFindDriver;
 - (void)takeStatusBarViewFrom:(SessionView *)donor;
 
-- (void)addSubviewBelowFindView:(NSView *)aView;
+- (void)addSubviewBelowFindView:(nullable NSView *)aView;
 
 // This keeps you from adding views over the find view.
 - (void)addSubview:(NSView *)view NS_UNAVAILABLE;

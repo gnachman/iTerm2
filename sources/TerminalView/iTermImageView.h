@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermImageView : NSView
 
-@property (nonatomic, strong) iTermImageWrapper *image;
+@property (nonatomic, strong, nullable) iTermImageWrapper *image;
 @property (nonatomic) iTermBackgroundImageMode contentMode;
 @property (nonatomic, strong) NSColor *backgroundColor;
 @property (nonatomic) CGFloat blend;

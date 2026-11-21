@@ -36,7 +36,7 @@ iTermURLActionHelperDelegate>
 
 #pragma mark - Coordinate Space Conversions
 
-- (NSPoint)clickPoint:(NSEvent *)event allowRightMarginOverflow:(BOOL)allowRightMarginOverflow;
+- (NSPoint)clickPoint:(nullable NSEvent *)event allowRightMarginOverflow:(BOOL)allowRightMarginOverflow;
 
 - (NSPoint)windowLocationToRowCol:(NSPoint)locationInWindow
          allowRightMarginOverflow:(BOOL)allowRightMarginOverflow;
@@ -47,7 +47,7 @@ iTermURLActionHelperDelegate>
 - (NSPoint)pointForCoord:(VT100GridCoord)coord;
 
 - (VT100GridCoord)coordForPointInWindow:(NSPoint)point;
-- (VT100GridCoord)coordForEvent:(NSEvent *)event;
+- (VT100GridCoord)coordForEvent:(nullable NSEvent *)event;
 - (VT100GridCoord)coordForMouseLocation:(NSPoint)screenPoint;
 
 #pragma mark - Inline Images
@@ -83,10 +83,10 @@ iTermURLActionHelperDelegate>
 #pragma mark - Mouse Cursor
 
 // Returns whether any change was made.
-- (BOOL)updateCursor:(NSEvent *)event action:(nullable URLAction *)action;
-- (void)updateCursorAndUnderlinedRange:(NSEvent *)event;
+- (BOOL)updateCursor:(nullable NSEvent *)event action:(nullable URLAction *)action;
+- (void)updateCursorAndUnderlinedRange:(nullable NSEvent *)event;
 - (BOOL)setCursor:(NSCursor *)cursor;
-- (BOOL)mouseIsOverImageInEvent:(NSEvent *)event;
+- (BOOL)mouseIsOverImageInEvent:(nullable NSEvent *)event;
 
 #pragma mark - Quicklook
 
