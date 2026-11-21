@@ -33,6 +33,10 @@ Improvements:
   13130.
 
 Bug Fixes:
+- Paths and URLs no longer absorb the
+  full-width punctuation that follows them in
+  Chinese and Japanese text, so ⌘-click opens
+  the right file or link.
 - A floating Session Note could be drawn behind
   the Clippings panel. It now stays on top.
 - Saving settings to a custom folder and Export

@@ -19,7 +19,19 @@
                         @[ @"[", @"]" ],
                         @[ @"{", @"}", ],
                         @[ @"\'", @"\'" ],
-                        @[ @"\"", @"\"" ] ];
+                        @[ @"\"", @"\"" ],
+                        // Full-width brackets used in CJK text. They are members of the IDN
+                        // character set, so they stay attached to a nearby path.
+                        @[ @"（", @"）" ],
+                        @[ @"【", @"】" ],
+                        @[ @"《", @"》" ],
+                        @[ @"〈", @"〉" ],
+                        @[ @"「", @"」" ],
+                        @[ @"『", @"』" ],
+                        @[ @"“", @"”" ],
+                        @[ @"‘", @"’" ],
+                        @[ @"［", @"］" ],
+                        @[ @"｛", @"｝" ] ];
     for (NSArray *pair in pairs) {
         if ([trimmed hasPrefix:pair[0]] && [trimmed hasSuffix:pair[1]]) {
             return [[self substringWithRange:NSMakeRange(1, self.length - 2)] stringByRemovingEnclosingBrackets];

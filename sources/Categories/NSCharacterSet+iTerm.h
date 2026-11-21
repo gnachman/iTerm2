@@ -15,6 +15,12 @@ extern unichar iTermMinimumDefaultEmojiPresentationCodePoint;
 
 + (NSCharacterSet *)urlCharacterSet;
 + (NSCharacterSet *)filenameCharacterSet;
+// Full-width punctuation used in CJK text that may follow a URL or a file name in prose. These
+// code points are members of the IDN character set, so a run of URL or filename characters
+// swallows them, but they cannot end a URL or a file name.
++ (NSCharacterSet *)it_trailingCJKPunctuationCharacterSet;
+// The characters above plus the user-configurable +trailingPunctuationMarks.
++ (NSCharacterSet *)it_trailingPunctuationCharacterSet;
 + (NSCharacterSet *)emojiWithDefaultEmojiPresentation;
 + (NSCharacterSet *)emojiWithDefaultTextPresentation;
 + (NSCharacterSet *)strongRTLCodePoints;
