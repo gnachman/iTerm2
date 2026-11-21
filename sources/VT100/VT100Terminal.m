@@ -1499,6 +1499,10 @@ static const int kMaxScreenRows = 4096;
     [_delegate terminalSendReport:[self.output reportDECDSR:997 :subcode]];
 }
 
+static int VT100TerminalSaturatingAdd(int a, int b) {
+    return (int)MAX((long long)INT_MIN, MIN((long long)INT_MAX, (long long)a + (long long)b));
+}
+
 - (VT100GridRect)rectangleInToken:(VT100Token *)token
                   startingAtIndex:(int)index
                  defaultRectangle:(VT100GridRect)defaultRectangle {
@@ -1528,11 +1532,12 @@ static const int kMaxScreenRows = 4096;
     }
 
     if (self.originMode) {
+        // Saturate rather than overflow: a coordinate beyond the screen stays beyond it.
         VT100GridRect scrollRegion = [_delegate terminalScrollRegion];
-        coordRange.start.x += scrollRegion.origin.x;
-        coordRange.start.y += scrollRegion.origin.y;
-        coordRange.end.x += scrollRegion.origin.x;
-        coordRange.end.y += scrollRegion.origin.y;
+        coordRange.start.x = VT100TerminalSaturatingAdd(coordRange.start.x, scrollRegion.origin.x);
+        coordRange.start.y = VT100TerminalSaturatingAdd(coordRange.start.y, scrollRegion.origin.y);
+        coordRange.end.x = VT100TerminalSaturatingAdd(coordRange.end.x, scrollRegion.origin.x);
+        coordRange.end.y = VT100TerminalSaturatingAdd(coordRange.end.y, scrollRegion.origin.y);
     }
 
     // Convert the coordRange to a 0-based rect (all coords are 1-based so far) and return it.
@@ -2128,11 +2133,17 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         case VT100CSI_CUP:
             [delegate terminalMoveCursorToX:token.csi->p[1] y:token.csi->p[0]];
             break;
-        case VT100CSI_CHT:
-            for (int i = 0; i < token.csi->p[0]; i++) {
+        case VT100CSI_CHT: {
+            // Without wraparound each tab moves the cursor right or, at the right margin, does
+            // nothing, so no more tabs than there are columns can have any effect. With
+            // wraparound each tab can wrap and scroll, so cap the count as REP does.
+            const int limit = [iTermAdvancedSettingsModel tabsWrapAround] ? 65535 : [delegate terminalSizeInCells].width;
+            const int count = MIN(limit, token.csi->p[0]);
+            for (int i = 0; i < count; i++) {
                 [delegate terminalAppendTabAtCursor:!_softAlternateScreenMode];
             }
             break;
+        }
         case VT100CSI_CUU:
             [delegate terminalCursorUp:token.csi->p[0] > 0 ? token.csi->p[0] : 1
                        andToStartOfLine:NO];
@@ -5418,7 +5429,9 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
 
 - (void)executeCharacterPositionRelative:(int)dx {
     const int width = [_delegate terminalSizeInCells].width;
-    const int proposed = [_delegate terminalCursorX] + dx;
+    // Moving more than the width stops at the edge, as the width does. Clamping keeps the sum
+    // from overflowing.
+    const int proposed = [_delegate terminalCursorX] + MIN(dx, width);
     const int x = MIN(proposed, width);
     [_delegate terminalSetCursorX:x];
 }

@@ -1656,7 +1656,9 @@ static BOOL sOSC7DisabledWarningShown;
     int rightMargin = [self.currentGrid rightMargin];
     const BOOL isDWL = [self.currentGrid currentLineIsDoubleWidth];
 
-    int xPos = x - 1;
+    // A column beyond the width ends up at the right edge or margin like the width does;
+    // clamping it keeps the origin-mode addition below from overflowing.
+    int xPos = MIN(x - 1, self.currentGrid.size.width);
 
     if (isDWL) {
         // Snap margins to character boundaries on double-width lines.
@@ -1682,7 +1684,9 @@ static BOOL sOSC7DisabledWarningShown;
     int topMargin = self.currentGrid.topMargin;
     int bottomMargin = self.currentGrid.bottomMargin;
 
-    yPos = y - 1;
+    // A row beyond the height ends up at the bottom edge or margin like the height does;
+    // clamping it keeps the origin-mode addition below from overflowing.
+    yPos = MIN(y - 1, self.currentGrid.size.height);
 
     if ([self.terminal originMode]) {
         DLog(@"In origin mode. Interpret relative to top margin %d, don't go past bottom margin %d",
@@ -2013,6 +2017,9 @@ static BOOL sOSC7DisabledWarningShown;
     if (j <= 0) {
         return;
     }
+    // Erasing more than the width erases to the end of the line, as the width does. Clamping
+    // keeps the doubling and the additions below from overflowing.
+    j = MIN(j, self.currentGrid.size.width);
     if ([self.currentGrid currentLineIsDoubleWidth]) {
         j *= 2;
     }
@@ -2898,8 +2905,13 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)copyFrom:(VT100GridRect)source to:(VT100GridCoord)dest {
-    id<VT100GridReading> copy = [self.currentGrid copy];
     const VT100GridSize size = self.currentGrid.size;
+    if (dest.x >= size.width || dest.y >= size.height) {
+        // Every destination cell would be off the screen. Returning early also keeps the
+        // destination arithmetic below from overflowing for a huge destination.
+        return;
+    }
+    id<VT100GridReading> copy = [self.currentGrid copy];
     [copy enumerateCellsInRect:source
                          block:^(VT100GridCoord sourceCoord,
                                  screen_char_t sct,
@@ -3103,7 +3115,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)backTab:(int)n {
-    for (int i = 0; i < n; i++) {
+    // Once the cursor reaches the left edge the remaining iterations do nothing, so stop there
+    // rather than looping once per count.
+    for (int i = 0; i < n && self.currentGrid.cursorX > 0; i++) {
         // TODO: respect left-right margins
         if (self.currentGrid.cursorX > 0) {
             self.currentGrid.cursorX = self.currentGrid.cursorX - 1;

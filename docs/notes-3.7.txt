@@ -46,3 +46,10 @@ Bug Fixes:
   the “Characters considered part of a word”
   regular expression when it continues onto the
   next line of soft-wrapped text.
+- Fix crashes and hangs caused by certain control
+  sequences with very large counts. A program’s
+  output could crash iTerm2 or freeze its window.
+  Sequences that move the cursor, insert, delete,
+  or erase characters or lines, or fill or erase
+  a rectangle now stop at the edge of the screen
+  as they do for smaller counts.

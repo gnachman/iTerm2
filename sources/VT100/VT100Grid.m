@@ -1129,7 +1129,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         // Don't allow cursor to wrap around the left margin when there is a
         // column scroll region. If the cursor begins at/right of the left margin, it stops at the
         // left margin. If the cursor begins left of the left margin, it stops at the left edge.
-        int x = cursor_.x - n * step;
+        // A count beyond the width reaches the margin like the width does; clamping it keeps
+        // n * step from overflowing.
+        int x = cursor_.x - MIN(n, size_.width) * step;
         const int leftMargin = [self leftMargin];
 
         int limit;
@@ -1166,7 +1168,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
             }
         } else {
             // Move as far as the left margin
-            int x = MAX(0, cursor_.x - n * step);
+            // n may exceed the width (it carries over wrapped lines), but this step can move at
+            // most to the left edge. Clamping keeps n * step from overflowing.
+            int x = MAX(0, cursor_.x - MIN(n, size_.width) * step);
             int moved = self.cursorX - x;
             n -= moved / step;
             self.cursorX = x;
@@ -1176,7 +1180,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
 
 - (void)moveCursorRight:(int)n {
     const int step = [self currentLineIsDoubleWidth] ? 2 : 1;
-    int x = cursor_.x + n * step;
+    // A count beyond the width stops at the margin like the width does; clamping it keeps the
+    // sum from overflowing.
+    int x = cursor_.x + MIN(n, size_.width) * step;
     int rightMargin = [self rightMargin];
     if (cursor_.x > rightMargin) {
         rightMargin = size_.width - 1;
@@ -1200,7 +1206,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
 
 - (void)moveCursorDown:(int)n {
     const int scrollBottom = self.bottomMargin;
-    int y = MAX(0, MIN(size_.height - 1, cursor_.y + n));
+    // A count beyond the height stops at the edge like the height does; clamping it keeps the
+    // sum from overflowing.
+    int y = MAX(0, MIN(size_.height - 1, cursor_.y + MIN(n, size_.height)));
     int x = MIN(cursor_.x, size_.width - 1);
     if (cursor_.y <= scrollBottom) {
         [self setCursor:VT100GridCoordMake(x,
@@ -1942,7 +1950,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         startCoord.y < size_.height) {
         int lineNumber = startCoord.y;
         int n = numberOfCharactersToDelete;
-        if (n + startCoord.x > rightMargin) {
+        // Compare without adding, which could overflow for a huge count.
+        if (n > rightMargin - startCoord.x) {
             n = rightMargin - startCoord.x + 1;
         }
 
@@ -2696,7 +2705,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         pos.x < self.leftMargin) {
         return;
     }
-    if (n + pos.x > self.rightMargin) {
+    // Compare without adding, which could overflow for a huge count.
+    if (n > self.rightMargin - pos.x) {
         n = self.rightMargin - pos.x + 1;
     }
     if (n < 1) {

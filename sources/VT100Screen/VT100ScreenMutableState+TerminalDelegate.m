@@ -1449,7 +1449,10 @@ typedef struct {
 
 - (void)terminalInsertEmptyCharsAtCursor:(int)n {
     DLog(@"begin %@", @(n));
-    const int count = [self.currentGrid currentLineIsDoubleWidth] ? n * 2 : n;
+    // Inserting more than the width clears to the margin, as the width does. Clamping keeps the
+    // doubling from overflowing.
+    const int clamped = MIN(n, self.currentGrid.size.width);
+    const int count = [self.currentGrid currentLineIsDoubleWidth] ? clamped * 2 : clamped;
     [self.currentGrid insertChar:[self.currentGrid defaultChar]
               externalAttributes:nil
                               at:self.currentGrid.cursor
@@ -1498,8 +1501,10 @@ typedef struct {
         int left = self.currentGrid.leftMargin;
         int width = self.currentGrid.rightMargin - self.currentGrid.leftMargin + 1;
         int height = self.currentGrid.bottomMargin - top + 1;
+        // Inserting more lines than the screen has clears to the bottom margin, as the height
+        // does. Clamping keeps scrollRect's arithmetic from overflowing.
         [self.currentGrid scrollRect:VT100GridRectMake(left, top, width, height)
-                              downBy:n
+                              downBy:MIN(n, self.currentGrid.size.height)
                            softBreak:NO];
         [self clearTriggerLine];
     }
@@ -1507,7 +1512,10 @@ typedef struct {
 
 - (void)terminalDeleteCharactersAtCursor:(int)n {
     DLog(@"begin %@", @(n));
-    const int count = [self.currentGrid currentLineIsDoubleWidth] ? n * 2 : n;
+    // Deleting more than the width clears to the margin, as the width does. Clamping keeps the
+    // doubling from overflowing.
+    const int clamped = MIN(n, self.currentGrid.size.width);
+    const int count = [self.currentGrid currentLineIsDoubleWidth] ? clamped * 2 : clamped;
     [self.currentGrid deleteChars:count startingAt:self.currentGrid.cursor];
     [self clearTriggerLine];
 }
@@ -1531,7 +1539,7 @@ typedef struct {
                                                        self.currentGrid.cursorY,
                                                        self.currentGrid.rightMargin - self.currentGrid.leftMargin + 1,
                                                        self.currentGrid.bottomMargin - self.currentGrid.cursorY + 1)
-                              downBy:-n
+                              downBy:-MIN(n, self.currentGrid.size.height)
                            softBreak:NO];
         [self clearTriggerLine];
     }
@@ -3079,9 +3087,14 @@ typedef struct {
 - (int)terminalChecksumInRectangle:(VT100GridRect)rect {
     DLog(@"begin %@", VT100GridRectDescription(rect));
     int result = 0;
-    for (int y = rect.origin.y; y < rect.origin.y + rect.size.height; y++) {
+    // Rows below the screen hold nothing. Reading them would wrap around onto the screen's own
+    // rows, and a huge height would loop once per row.
+    // The sums are formed in a wider type so a huge size cannot overflow them.
+    const int bottom = (int)MIN((long long)rect.origin.y + rect.size.height, (long long)self.currentGrid.size.height);
+    const int right = (int)MIN((long long)rect.origin.x + rect.size.width, (long long)self.width);
+    for (int y = rect.origin.y; y < bottom; y++) {
         const screen_char_t *theLine = [self.currentGrid screenCharsAtLineNumber:y];
-        for (int x = rect.origin.x; x < rect.origin.x + rect.size.width && x < self.width; x++) {
+        for (int x = rect.origin.x; x < right; x++) {
             unichar code = theLine[x].code;
             BOOL isPrivate = (code < ITERM2_PRIVATE_BEGIN &&
                               code > ITERM2_PRIVATE_END);
@@ -3110,7 +3123,13 @@ typedef struct {
     DLog(@"begin %@", VT100GridRectDescription(screenRect));
     __block NSMutableOrderedSet<NSString *> *codes = nil;
     VT100GridRect rect = screenRect;
-    rect.origin.y += [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
+    // Rows below the screen hold nothing. Enumerating them would wrap around onto the screen's
+    // own rows, and a huge height would loop once per row.
+    const int gridHeight = self.currentGrid.size.height;
+    const int firstRow = MIN(screenRect.origin.y, gridHeight);
+    rect.size.height = MIN(rect.size.height, gridHeight - firstRow);
+    rect.origin.y = firstRow + [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
+    const int right = (int)MIN((long long)rect.origin.x + rect.size.width, (long long)self.width);
     [self enumerateLinesInRange:NSMakeRange(rect.origin.y, rect.size.height)
                           block:^(int y,
                                   ScreenCharArray *sca,
@@ -3118,7 +3137,7 @@ typedef struct {
                                   BOOL *stop) {
         const screen_char_t *theLine = sca.line;
         id<iTermExternalAttributeIndexReading> eaIndex = iTermImmutableMetadataGetExternalAttributesIndex(metadata);
-        for (int x = rect.origin.x; x < rect.origin.x + rect.size.width && x < self.width; x++) {
+        for (int x = rect.origin.x; x < right; x++) {
             const screen_char_t c = theLine[x];
             if (c.code == 0 && !c.complexChar && !c.image) {
                 continue;
