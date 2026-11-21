@@ -42,3 +42,7 @@ Bug Fixes:
 - With Find open, clicking a command in the
   terminal no longer scrolls the view to the
   first match in that command.
+- Double-click selection now finds a match for
+  the “Characters considered part of a word”
+  regular expression when it continues onto the
+  next line of soft-wrapped text.

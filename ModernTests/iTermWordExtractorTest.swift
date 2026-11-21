@@ -19,19 +19,22 @@ fileprivate class MockTextDataSource: NSObject, iTermTextDataSource {
     /// Creates a mock data source with the given lines of text.
     /// - Parameter strings: Array of strings, one per line
     /// - Parameter width: Width of the grid (defaults to 80)
-    init(strings: [String], width: Int32 = 80) {
+    /// - Parameter softWrapped: If true, every line but the last ends in a soft wrap, making
+    ///   them all one wrapped line. Otherwise every line ends in a hard newline.
+    init(strings: [String], width: Int32 = 80, softWrapped: Bool = false) {
         self.gridWidth = width
         self.lines = []
         super.init()
 
-        for string in strings {
-            let sca = createScreenCharArray(from: string, width: width)
+        for (i, string) in strings.enumerated() {
+            let eol = (softWrapped && i < strings.count - 1) ? EOL_SOFT : EOL_HARD
+            let sca = createScreenCharArray(from: string, width: width, eol: eol)
             lines.append(sca)
         }
     }
 
     /// Creates a ScreenCharArray from a string
-    private func createScreenCharArray(from string: String, width: Int32) -> ScreenCharArray {
+    private func createScreenCharArray(from string: String, width: Int32, eol: Int32) -> ScreenCharArray {
         var buffer = [screen_char_t](repeating: screen_char_t(), count: Int(width) + 1)
 
         for (index, char) in string.unicodeScalars.enumerated() {
@@ -40,9 +43,9 @@ fileprivate class MockTextDataSource: NSObject, iTermTextDataSource {
             buffer[index].complexChar = 0
         }
 
-        // Set continuation character (EOL_HARD)
+        // Set continuation character
         var continuation = screen_char_t()
-        continuation.code = unichar(EOL_HARD)
+        continuation.code = unichar(eol)
 
         return ScreenCharArray(
             copyOfLine: buffer,
@@ -960,6 +963,27 @@ class iTermWordExtractorTest: XCTestCase {
             maximumLength: 1000
         )
         assertRangeEquals(range3, startX: 3, startY: 0, endX: 4, endY: 0)
+    }
+
+    // MARK: - Regex Mode Bound
+
+    /// Word selection in regular expression mode examines at most max(20, 2 x the screen height)
+    /// rows of a soft-wrapped line. This data source does not report a height, so the bound is
+    /// the minimum, 20 rows: 9 before the clicked row and 10 after it. A match covering the whole
+    /// 100-row wrapped line is cut at those rows.
+    func testRegexModeMatchIsCutAtRowBound() {
+        let strings = [String](repeating: String(repeating: "a", count: 10), count: 100)
+        let dataSource = MockTextDataSource(strings: strings, width: 10, softWrapped: true)
+        let textExtractor = iTermTextExtractor(dataSource: dataSource)
+        let range = textExtractor.rangeForWord(
+            at: VT100GridCoord(x: 4, y: 50),
+            maximumLength: kLongMaximumWordLength,
+            big: false,
+            additionalWordCharacters: nil,
+            regexPatterns: ["a+"]
+        )
+        // The end is exclusive: the end of row 60 is column 0 of row 61.
+        assertRangeEquals(range, startX: 0, startY: 41, endX: 0, endY: 61)
     }
 
     // MARK: - Regex Mode with CJK Tests

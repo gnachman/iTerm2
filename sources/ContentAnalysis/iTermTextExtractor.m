@@ -1753,7 +1753,9 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     }
     int i = y;
     NSInteger count = 0;
-    while (count < maxChars + width && i > 0 && [self lineHasSoftEol:i - 1 respectContinuations:respectContinuations]) {
+    // In NSInteger so that a large maxChars, such as INT_MAX, cannot overflow.
+    const NSInteger limit = (NSInteger)maxChars + width;
+    while (count < limit && i > 0 && [self lineHasSoftEol:i - 1 respectContinuations:respectContinuations]) {
         count += width;
         i--;
     }
@@ -1772,7 +1774,9 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     }
     int maxY = [_dataSource numberOfLines];
     NSInteger count = 0;
-    while (count < maxChars + width && i < maxY && [self lineHasSoftEol:i - 1 respectContinuations:respectContinuations]) {
+    // In NSInteger so that a large maxChars, such as INT_MAX, cannot overflow.
+    const NSInteger limit = (NSInteger)maxChars + width;
+    while (count < limit && i < maxY && [self lineHasSoftEol:i - 1 respectContinuations:respectContinuations]) {
         i++;
         count += width;
     }
@@ -2438,13 +2442,60 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
            ignoringNewlines:YES];
 }
 
+// Word selection in regular expression mode matches against the soft-wrapped line around the click.
+// A wrapped line can be millions of characters long, and each character examined costs a
+// located-string entry and an atom on the main thread, so at most this many rows (grid lines) of
+// it are examined, including the clicked row: max(20, 2 x the height of the screen). A match that
+// continues beyond those rows is cut at the edge of the window. See
+// -rowsOfWrappedLineIncludingLine:maximumRows: for how the rows are placed around the click.
+static int iTermTextExtractorRegexWordSearchMaximumRows(int screenHeight) {
+    const int minimumRows = 20;
+    return MAX(minimumRows, 2 * MAX(0, screenHeight));
+}
+
+// The number of rows of the visible grid, or 0 if the data source is not a screen.
+- (int)screenHeightForRegexWordSearch {
+    if ([_dataSource respondsToSelector:@selector(height)]) {
+        return [_dataSource height];
+    }
+    return 0;
+}
+
+// Returns the rows to examine of the soft-wrapped line that includes row y: at most maximumRows of
+// them, including y. Up to (maximumRows - 1) / 2 rows go before y and the rest after it; when the
+// wrapped line starts or ends sooner on one side, the rows unused there go to the other side.
+// Never looks at more than maximumRows - 1 rows on either side, so the work is bounded.
+- (VT100GridRange)rowsOfWrappedLineIncludingLine:(int)y maximumRows:(int)maximumRows {
+    const int spare = MAX(0, maximumRows - 1);
+    int availableBefore = 0;
+    while (availableBefore < spare &&
+           y - availableBefore > 0 &&
+           [self lineHasSoftEol:y - availableBefore - 1 respectContinuations:YES]) {
+        availableBefore++;
+    }
+    const int maxY = [_dataSource numberOfLines];
+    int availableAfter = 0;
+    while (availableAfter < spare &&
+           y + availableAfter + 1 < maxY &&
+           [self lineHasSoftEol:y + availableAfter respectContinuations:YES]) {
+        availableAfter++;
+    }
+    const int preferredBefore = spare / 2;
+    const int before = MIN(availableBefore, MAX(preferredBefore, spare - availableAfter));
+    const int after = MIN(availableAfter, spare - before);
+    return VT100GridRangeMake(y - before, before + after + 1);
+}
+
 - (iTermLocatedString *)locatedStringForWrappedLineEncompassing:(VT100GridCoord)coord
                                                    targetOffset:(int *)targetOffset {
-    // Get the range of the wrapped line containing this coordinate.
-    // Use a large maxChars to ensure we get the full line.
-    VT100GridWindowedRange lineRange = [self rangeForWrappedLineEncompassing:coord
-                                                        respectContinuations:YES
-                                                                    maxChars:INT_MAX];
+    // The rows of the wrapped line containing this coordinate, bounded around it.
+    const int maximumRows = iTermTextExtractorRegexWordSearchMaximumRows([self screenHeightForRegexWordSearch]);
+    const VT100GridRange rows = [self rowsOfWrappedLineIncludingLine:coord.y maximumRows:maximumRows];
+    VT100GridWindowedRange lineRange =
+        [self windowedRangeWithRange:VT100GridCoordRangeMake(_logicalWindow.location,
+                                                             rows.location,
+                                                             [self xLimit],
+                                                             rows.location + rows.length - 1)];
 
     BOOL ignoreContinuations = (_logicalWindow.length > 0);
     int xLimit = [self xLimit];
@@ -2496,9 +2547,20 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                                   ignoringNewlines:NO];  // Stop at hard newlines
     }];
 
-    // If we didn't find the exact coordinate, estimate based on position
+    // If the clicked cell is not in the string (it is a null, an image, or a continuation mark),
+    // use the first character on or after the clicked row, or the last character if all of them
+    // come before it. When the string held only the clicked row, index 0 meant that; now the
+    // string can start rows above the click.
     if (targetCharIndex < 0) {
-        targetCharIndex = 0;
+        iTermGridCoordArray *gridCoords = result.gridCoords;
+        const NSInteger count = gridCoords.count;
+        targetCharIndex = (int)MAX(0, count - 1);
+        for (NSInteger i = 0; i < count; i++) {
+            if ([gridCoords coordAt:i].y >= coord.y) {
+                targetCharIndex = (int)i;
+                break;
+            }
+        }
     }
 
     *targetOffset = targetCharIndex;

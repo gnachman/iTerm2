@@ -51,14 +51,17 @@ private final class FakeTextDataSource: NSObject, iTermTextDataSource {
     private let lines: [[screen_char_t]]
     private let screenCharArrays: [ScreenCharArray]
     private let gridWidth: Int32
+    private let gridHeight: Int32
 
-    // `cellLines` must each contain exactly `width` + 1 cells.
-    init(cellLines: [[screen_char_t]], width: Int) {
+    // `cellLines` must each contain exactly `width` + 1 cells. `height` is the number of rows of
+    // the visible grid.
+    init(cellLines: [[screen_char_t]], width: Int, height: Int = 24) {
         for line in cellLines {
             it_assert(line.count == width + 1, "Line has \(line.count) cells but width is \(width)")
         }
         lines = cellLines
         gridWidth = Int32(width)
+        gridHeight = Int32(height)
         screenCharArrays = cellLines.map { cells in
             cells.withUnsafeBufferPointer { pointer in
                 ScreenCharArray(copyOfLine: pointer.baseAddress!,
@@ -95,6 +98,10 @@ private final class FakeTextDataSource: NSObject, iTermTextDataSource {
 
     func width() -> Int32 {
         return gridWidth
+    }
+
+    func height() -> Int32 {
+        return gridHeight
     }
 
     func numberOfLines() -> Int32 {
@@ -146,6 +153,7 @@ private final class FakeTextDataSource: NSObject, iTermTextDataSource {
 final class TextExtractorTests: XCTestCase {
     private var savedWordCharacters: Any?
     private var savedWordMode: Any?
+    private var savedWordRegex: Any?
     private var wrappedLines: [[screen_char_t]] = []
     // The extractor only holds its data source weakly, so every data source handed to an extractor
     // is kept here until the test ends.
@@ -156,6 +164,7 @@ final class TextExtractorTests: XCTestCase {
         let defaults = iTermUserDefaults.userDefaults()
         savedWordCharacters = defaults.object(forKey: kPreferenceKeyCharactersConsideredPartOfAWordForSelection)
         savedWordMode = defaults.object(forKey: kPreferenceKeyCharactersConsideredPartOfAWordForSelectionMode)
+        savedWordRegex = defaults.object(forKey: kPreferenceKeyWordSelectionRegexPattern)
         wrappedLines = []
         retainedDataSources = []
     }
@@ -163,6 +172,7 @@ final class TextExtractorTests: XCTestCase {
     override func tearDown() {
         iTermPreferences.setObject(savedWordCharacters, forKey: kPreferenceKeyCharactersConsideredPartOfAWordForSelection)
         iTermPreferences.setObject(savedWordMode, forKey: kPreferenceKeyCharactersConsideredPartOfAWordForSelectionMode)
+        iTermPreferences.setObject(savedWordRegex, forKey: kPreferenceKeyWordSelectionRegexPattern)
         retainedDataSources = []
         super.tearDown()
     }
@@ -266,8 +276,8 @@ final class TextExtractorTests: XCTestCase {
         wrappedLines.append(FakeTextDataSource.padded(screenChars(for: line), width: width, eol: eol))
     }
 
-    private func wrappedDataSource(width: Int) -> FakeTextDataSource {
-        return FakeTextDataSource(cellLines: wrappedLines, width: width)
+    private func wrappedDataSource(width: Int, height: Int = 24) -> FakeTextDataSource {
+        return FakeTextDataSource(cellLines: wrappedLines, width: width, height: height)
     }
 
     private func assertRange(_ actual: VT100GridAbsCoordRange,
@@ -632,6 +642,411 @@ final class TextExtractorTests: XCTestCase {
                                                               respectContinuations: false,
                                                               maxChars: 1000)
         assertCoordRange(range.coordRange, startX: 0, startY: 1, endX: 30, endY: 1)
+    }
+
+    // A negative maxChars means no limit.
+    func testRangeForWrappedLine_NegativeMaxCharsIsUnlimited() {
+        for i in 0..<10 {
+            appendWrappedLine("1234567890", width: 10, eol: i < 9 ? EOL_SOFT : EOL_HARD)
+        }
+        let extractor = makeExtractor(for: wrappedDataSource(width: 10))
+        let range = extractor.range(forWrappedLineEncompassing: VT100GridCoord(x: 5, y: 5),
+                                    respectContinuations: false,
+                                    maxChars: -1)
+        assertCoordRange(range.coordRange, startX: 0, startY: 0, endX: 10, endY: 9)
+    }
+
+    // INT_MAX is as large a limit as there is. Adding the width to it used to
+    // overflow int, wrap negative, and stop at the row of the coordinate.
+    // See docs/swift-migration/integer-findings.md section 4.9.
+    func testRangeForWrappedLine_IntMaxMaxCharsIsUnlimited() {
+        for i in 0..<10 {
+            appendWrappedLine("1234567890", width: 10, eol: i < 9 ? EOL_SOFT : EOL_HARD)
+        }
+        let extractor = makeExtractor(for: wrappedDataSource(width: 10))
+        let range = extractor.range(forWrappedLineEncompassing: VT100GridCoord(x: 5, y: 5),
+                                    respectContinuations: false,
+                                    maxChars: Int32.max)
+        assertCoordRange(range.coordRange, startX: 0, startY: 0, endX: 10, endY: 9)
+    }
+
+    // A limit just below the overflow still adds the width without wrapping.
+    func testRangeForWrappedLine_LargeMaxCharsIsUnlimited() {
+        for i in 0..<10 {
+            appendWrappedLine("1234567890", width: 10, eol: i < 9 ? EOL_SOFT : EOL_HARD)
+        }
+        let extractor = makeExtractor(for: wrappedDataSource(width: 10))
+        let range = extractor.range(forWrappedLineEncompassing: VT100GridCoord(x: 5, y: 5),
+                                    respectContinuations: false,
+                                    maxChars: Int32.max - 10)
+        assertCoordRange(range.coordRange, startX: 0, startY: 0, endX: 10, endY: 9)
+    }
+
+    // MARK: - locatedStringForWrappedLineEncompassing
+
+    // iTermTextExtractor adopts iTermWordExtractorDataSource in its class
+    // extension, so Swift sees the conformance only at run time.
+    private func wordDataSource(_ extractor: iTermTextExtractor) -> iTermWordExtractorDataSource {
+        guard let dataSource = (extractor as AnyObject) as? iTermWordExtractorDataSource else {
+            it_fatalError("iTermTextExtractor does not conform to iTermWordExtractorDataSource")
+        }
+        return dataSource
+    }
+
+    // The located string spans every row of a wrapped line shorter than the
+    // bound, not only the row of the coordinate. It used to ask for maxChars
+    // INT_MAX, which overflowed and gave one row.
+    func testLocatedStringForWrappedLineSpansEveryRow() {
+        appendWrappedLine("before", width: 10, eol: EOL_HARD)
+        appendWrappedLine("abcdefghij", width: 10, eol: EOL_SOFT)
+        appendWrappedLine("klmnopqrst", width: 10, eol: EOL_SOFT)
+        appendWrappedLine("uvwxyz", width: 10, eol: EOL_HARD)
+        appendWrappedLine("after", width: 10, eol: EOL_HARD)
+        let extractor = makeExtractor(for: wrappedDataSource(width: 10))
+        var targetOffset = Int32(-1)
+        let located = wordDataSource(extractor).locatedString(forWrappedLineEncompassing: VT100GridCoord(x: 3, y: 2),
+                                              targetOffset: &targetOffset)
+        XCTAssertEqual(located.string, "abcdefghijklmnopqrstuvwxyz")
+        XCTAssertEqual(targetOffset, 13)
+        XCTAssertEqual(located.gridCoords.count, 26)
+        XCTAssertEqual(located.gridCoords.coord(at: 0).y, 1)
+        XCTAssertEqual(located.gridCoords.coord(at: 25).y, 3)
+    }
+
+    func testLocatedStringForUnwrappedLineIsThatRow() {
+        appendWrappedLine("before", width: 10, eol: EOL_HARD)
+        appendWrappedLine("middle", width: 10, eol: EOL_HARD)
+        appendWrappedLine("after", width: 10, eol: EOL_HARD)
+        let extractor = makeExtractor(for: wrappedDataSource(width: 10))
+        var targetOffset = Int32(-1)
+        let located = wordDataSource(extractor).locatedString(forWrappedLineEncompassing: VT100GridCoord(x: 2, y: 1),
+                                              targetOffset: &targetOffset)
+        XCTAssertEqual(located.string, "middle")
+        XCTAssertEqual(targetOffset, 2)
+    }
+
+    // Word selection in regular expression mode matches against the located
+    // string, so a click on the second row of a soft-wrapped line finds a
+    // match that starts on the first.
+    func testRegexWordSelectionCrossesSoftWrap() {
+        appendWrappedLine("see http://ex", width: 13, eol: EOL_SOFT)
+        appendWrappedLine("ample.com/x", width: 13, eol: EOL_HARD)
+        let extractor = makeExtractor(for: wrappedDataSource(width: 13))
+        let range = extractor.rangeForWord(at: VT100GridCoord(x: 2, y: 1),
+                                           maximumLength: kReasonableMaximumWordLength,
+                                           big: false,
+                                           additionalWordCharacters: nil,
+                                           regexPatterns: ["https?://[^ ]+"])
+        // "http://example.com/x": from column 4 of row 0 to the end of "x" on row 1.
+        assertCoordRange(range.coordRange, startX: 4, startY: 0, endX: 11, endY: 1)
+    }
+
+    // MARK: - Bound on the regex word path
+
+    // A hard-wrapped "before" row, then `rows` rows of one soft-wrapped line with every cell
+    // holding a letter, then a hard-wrapped "after" row. The wrapped line occupies rows 1 through
+    // `rows`. The letter changes from row to row so that a misplaced window shows in the text.
+    private func appendLongWrappedLine(rows: Int, width: Int) {
+        appendWrappedLine("before", width: width, eol: EOL_HARD)
+        let letters = Array("abcdefghijklmnopqrstuvwxyz")
+        for i in 0..<rows {
+            let row = String(repeating: letters[i % letters.count], count: width)
+            appendWrappedLine(row, width: width, eol: i < rows - 1 ? EOL_SOFT : EOL_HARD)
+        }
+        appendWrappedLine("after", width: width, eol: EOL_HARD)
+    }
+
+    // Asserts that the located string for a click at `click` covers exactly the full rows
+    // `firstRow` through `lastRow` and that the target offset points at the click.
+    private func assertLocatedWindow(dataSource: FakeTextDataSource,
+                                     click: VT100GridCoord,
+                                     firstRow: Int32,
+                                     lastRow: Int32,
+                                     file: StaticString = #filePath,
+                                     line: UInt = #line) {
+        let width = dataSource.width()
+        let extractor = makeExtractor(for: dataSource)
+        var targetOffset = Int32(-1)
+        let located = wordDataSource(extractor).locatedString(forWrappedLineEncompassing: click,
+                                                              targetOffset: &targetOffset)
+        let rows = lastRow - firstRow + 1
+        XCTAssertEqual(located.length, Int(rows * width), "length", file: file, line: line)
+        XCTAssertEqual(located.gridCoords.count, Int(rows * width), "coordinate count", file: file, line: line)
+        guard located.gridCoords.count > 0 else {
+            return
+        }
+        let first = located.gridCoords.coord(at: 0)
+        let last = located.gridCoords.coord(at: located.gridCoords.count - 1)
+        XCTAssertEqual(first.x, 0, "first x", file: file, line: line)
+        XCTAssertEqual(first.y, firstRow, "first row", file: file, line: line)
+        XCTAssertEqual(last.x, width - 1, "last x", file: file, line: line)
+        XCTAssertEqual(last.y, lastRow, "last row", file: file, line: line)
+        XCTAssertEqual(targetOffset, (click.y - firstRow) * width + click.x, "target offset", file: file, line: line)
+    }
+
+    // An 80x24 grid allows max(20, 2 * 24) = 48 rows: 23 before the clicked row and 24 after it.
+    // The wrapped line is rows 1 through 500.
+    func testLocatedStringForLongWrappedLineIsWindowAroundClickInMiddle() {
+        appendLongWrappedLine(rows: 500, width: 80)
+        assertLocatedWindow(dataSource: wrappedDataSource(width: 80, height: 24),
+                            click: VT100GridCoord(x: 7, y: 250),
+                            firstRow: 227,
+                            lastRow: 274)
+    }
+
+    // Near the start of the wrapped line there are only 2 rows before the click, so the rows
+    // unused before it go after it: still 48 rows in all.
+    func testLocatedStringForLongWrappedLineIsWindowAroundClickNearStart() {
+        appendLongWrappedLine(rows: 500, width: 80)
+        assertLocatedWindow(dataSource: wrappedDataSource(width: 80, height: 24),
+                            click: VT100GridCoord(x: 7, y: 3),
+                            firstRow: 1,
+                            lastRow: 48)
+    }
+
+    // Near the end of the wrapped line there are only 2 rows after the click, so the rows unused
+    // after it go before it.
+    func testLocatedStringForLongWrappedLineIsWindowAroundClickNearEnd() {
+        appendLongWrappedLine(rows: 500, width: 80)
+        assertLocatedWindow(dataSource: wrappedDataSource(width: 80, height: 24),
+                            click: VT100GridCoord(x: 7, y: 498),
+                            firstRow: 453,
+                            lastRow: 500)
+    }
+
+    // A screen 5 rows high still gets the minimum of 20 rows: 9 before the click and 10 after.
+    func testLocatedStringForLongWrappedLineOnSmallScreenUsesMinimumBound() {
+        appendLongWrappedLine(rows: 500, width: 80)
+        assertLocatedWindow(dataSource: wrappedDataSource(width: 80, height: 5),
+                            click: VT100GridCoord(x: 7, y: 250),
+                            firstRow: 241,
+                            lastRow: 260)
+    }
+
+    // A wrapped line no longer than the bound is taken whole, as before.
+    func testLocatedStringForWrappedLineShorterThanBoundIsWhole() {
+        appendLongWrappedLine(rows: 48, width: 80)
+        assertLocatedWindow(dataSource: wrappedDataSource(width: 80, height: 24),
+                            click: VT100GridCoord(x: 7, y: 20),
+                            firstRow: 1,
+                            lastRow: 48)
+    }
+
+    // One row more than the bound loses one row, from the side with more to spare.
+    func testLocatedStringForWrappedLineOneRowOverBound() {
+        appendLongWrappedLine(rows: 49, width: 80)
+        assertLocatedWindow(dataSource: wrappedDataSource(width: 80, height: 24),
+                            click: VT100GridCoord(x: 7, y: 2),
+                            firstRow: 1,
+                            lastRow: 48)
+    }
+
+    // A match that would run past the window is cut at the window: every cell of the wrapped line
+    // matches, and the selection is the 48 rows around the click.
+    func testRegexWordSelectionIsCutAtWindow() {
+        appendLongWrappedLine(rows: 500, width: 80)
+        let extractor = makeExtractor(for: wrappedDataSource(width: 80, height: 24))
+        let range = extractor.rangeForWord(at: VT100GridCoord(x: 7, y: 250),
+                                           maximumLength: kLongMaximumWordLength,
+                                           big: false,
+                                           additionalWordCharacters: nil,
+                                           regexPatterns: ["[a-z]+"])
+        // The end is exclusive: the end of a full row is column 0 of the next one.
+        assertCoordRange(range.coordRange, startX: 0, startY: 227, endX: 0, endY: 275)
+    }
+
+    // A click on the first row of a long wrapped line gets the row and the 47 after it.
+    func testLocatedStringForLongWrappedLineClickOnFirstRow() {
+        appendLongWrappedLine(rows: 500, width: 80)
+        assertLocatedWindow(dataSource: wrappedDataSource(width: 80, height: 24),
+                            click: VT100GridCoord(x: 7, y: 1),
+                            firstRow: 1,
+                            lastRow: 48)
+    }
+
+    // A click on the last row of a long wrapped line gets the row and the 47 before it.
+    func testLocatedStringForLongWrappedLineClickOnLastRow() {
+        appendLongWrappedLine(rows: 500, width: 80)
+        assertLocatedWindow(dataSource: wrappedDataSource(width: 80, height: 24),
+                            click: VT100GridCoord(x: 7, y: 500),
+                            firstRow: 453,
+                            lastRow: 500)
+    }
+
+    // A wrapped line of 47 rows, one fewer than the bound, is taken whole.
+    func testLocatedStringForWrappedLineOneRowUnderBoundIsWhole() {
+        appendLongWrappedLine(rows: 47, width: 80)
+        assertLocatedWindow(dataSource: wrappedDataSource(width: 80, height: 24),
+                            click: VT100GridCoord(x: 7, y: 30),
+                            firstRow: 1,
+                            lastRow: 47)
+    }
+
+    // A line that does not wrap is just its row.
+    func testLocatedStringForOneRowLineIsThatRow() {
+        appendLongWrappedLine(rows: 1, width: 80)
+        assertLocatedWindow(dataSource: wrappedDataSource(width: 80, height: 24),
+                            click: VT100GridCoord(x: 7, y: 1),
+                            firstRow: 1,
+                            lastRow: 1)
+    }
+
+    // MARK: - Clicks on null cells in regular expression mode
+
+    // Rows 0 to 2 are one soft-wrapped line whose last row is "end" followed by null cells;
+    // row 3 is a separate line.
+    private func appendWrappedLineEndingInNulls() {
+        appendWrappedLine("foo barbaz", width: 10, eol: EOL_SOFT)
+        appendWrappedLine("qux quuxab", width: 10, eol: EOL_SOFT)
+        appendWrappedLine("end", width: 10, eol: EOL_HARD)
+        appendWrappedLine("next", width: 10, eol: EOL_HARD)
+    }
+
+    private func useRegexWordMode(_ pattern: String) {
+        iTermPreferences.setUnsignedInteger(iTermSelectionWordMode.regularExpression.rawValue,
+                                            forKey: kPreferenceKeyCharactersConsideredPartOfAWordForSelectionMode)
+        iTermPreferences.setString(pattern, forKey: kPreferenceKeyWordSelectionRegexPattern)
+    }
+
+    // A double-click on the null cells after "end" selects the run of nulls on the clicked row,
+    // as it does in character mode, and not a word from a row above.
+    func testRegexWordSelectionOnNullCellSelectsTheNullRun() {
+        appendWrappedLineEndingInNulls()
+        let extractor = makeExtractor(for: wrappedDataSource(width: 10))
+        let regexRange = extractor.rangeForWord(at: VT100GridCoord(x: 6, y: 2),
+                                                maximumLength: kLongMaximumWordLength,
+                                                big: false,
+                                                additionalWordCharacters: nil,
+                                                regexPatterns: ["[a-z]+"])
+        let characterRange = extractor.rangeForWord(at: VT100GridCoord(x: 6, y: 2),
+                                                    maximumLength: kLongMaximumWordLength,
+                                                    big: false,
+                                                    additionalWordCharacters: nil,
+                                                    regexPatterns: nil)
+        assertCoordRange(regexRange.coordRange,
+                         startX: characterRange.coordRange.start.x,
+                         startY: characterRange.coordRange.start.y,
+                         endX: characterRange.coordRange.end.x,
+                         endY: characterRange.coordRange.end.y)
+        XCTAssertEqual(regexRange.coordRange.start.y, 2)
+        XCTAssertEqual(regexRange.coordRange.start.x, 3)
+    }
+
+    // The preference-driven entry point, used by Look Up and Autocomplete, behaves the same: a
+    // click on blank space never yields a word from another row.
+    func testPreferenceRegexWordAtNullCellStaysOnClickedRow() {
+        appendWrappedLineEndingInNulls()
+        useRegexWordMode("[a-z]+")
+        let extractor = makeExtractor(for: wrappedDataSource(width: 10))
+        for x in Int32(3)..<Int32(10) {
+            let range = extractor.rangeForWord(at: VT100GridCoord(x: x, y: 2),
+                                               maximumLength: kReasonableMaximumWordLength)
+            XCTAssertEqual(range.coordRange.start.y, 2, "click at \(x): \(VT100GridWindowedRangeDescription(range))")
+            XCTAssertEqual(range.coordRange.start.x, 3, "click at \(x): \(VT100GridWindowedRangeDescription(range))")
+        }
+    }
+
+    // If the clicked cell is not in the located string, the target offset is the first
+    // character of the clicked row, as it was when the located string held only that row.
+    func testLocatedStringTargetForUnrecordedClickIsStartOfClickedRow() {
+        appendWrappedLineEndingInNulls()
+        let extractor = makeExtractor(for: wrappedDataSource(width: 10))
+        var targetOffset = Int32(-1)
+        let located = wordDataSource(extractor).locatedString(forWrappedLineEncompassing: VT100GridCoord(x: 6, y: 2),
+                                                              targetOffset: &targetOffset)
+        XCTAssertEqual(located.string, "foo barbazqux quuxabend")
+        XCTAssertEqual(targetOffset, 20)
+    }
+
+    // MARK: - Copy-mode word movement in regular expression mode
+
+    // Moves the copy-mode cursor one word in `direction` from `coord`, as iTermCopyModeState does.
+    private func copyModeWordMove(from coord: VT100GridCoord,
+                                  direction: PTYTextViewSelectionExtensionDirection,
+                                  extractor: iTermTextExtractor,
+                                  dataSource: FakeTextDataSource) -> VT100GridCoord {
+        let helper = iTermLogicalMovementHelper(textExtractor: extractor,
+                                                selection: iTermSelection(),
+                                                cursorCoordinate: VT100GridAbsCoordMake(0, Int64(dataSource.numberOfLines() - 1)),
+                                                width: dataSource.width(),
+                                                numberOfLines: Int64(dataSource.numberOfLines()),
+                                                totalScrollbackOverflow: 0)
+        let trivial = VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(coord.x, Int64(coord.y), coord.x, Int64(coord.y)), 0, 0)
+        let range = helper.absRange(byExtending: trivial,
+                                    endpoint: .start,
+                                    direction: direction,
+                                    extractor: extractor,
+                                    unit: .word)
+        return VT100GridCoordMake(range.coordRange.start.x, Int32(range.coordRange.start.y))
+    }
+
+    private func isBefore(_ a: VT100GridCoord, _ b: VT100GridCoord) -> Bool {
+        return a.y < b.y || (a.y == b.y && a.x < b.x)
+    }
+
+    // Forward word movement makes progress on every step until it stops, and reaches the line
+    // after the wrapped line. It used to cycle through the wrapped line forever.
+    func testCopyModeForwardWordInRegexModeAlwaysAdvances() {
+        appendWrappedLineEndingInNulls()
+        useRegexWordMode("[a-z]+")
+        let dataSource = wrappedDataSource(width: 10)
+        let extractor = makeExtractor(for: dataSource)
+        var coord = VT100GridCoordMake(0, 0)
+        var visited: [String] = []
+        let maximumSteps = 40
+        for _ in 0..<maximumSteps {
+            let next = copyModeWordMove(from: coord, direction: .right, extractor: extractor, dataSource: dataSource)
+            if VT100GridCoordEquals(next, coord) {
+                break
+            }
+            visited.append(VT100GridCoordDescription(next))
+            XCTAssertTrue(isBefore(coord, next), "moved backward: \(visited.joined(separator: " "))")
+            if !isBefore(coord, next) {
+                return
+            }
+            coord = next
+        }
+        XCTAssertLessThan(visited.count, maximumSteps, "did not stop: \(visited.joined(separator: " "))")
+        XCTAssertEqual(coord.y, 3, "path: \(visited.joined(separator: " "))")
+    }
+
+    // Backward word movement from the last line makes progress on every step and reaches the
+    // start of the wrapped line.
+    func testCopyModeBackwardWordInRegexModeAlwaysAdvances() {
+        appendWrappedLineEndingInNulls()
+        useRegexWordMode("[a-z]+")
+        let dataSource = wrappedDataSource(width: 10)
+        let extractor = makeExtractor(for: dataSource)
+        var coord = VT100GridCoordMake(3, 3)
+        var visited: [String] = []
+        let maximumSteps = 40
+        for _ in 0..<maximumSteps {
+            let next = copyModeWordMove(from: coord, direction: .left, extractor: extractor, dataSource: dataSource)
+            if VT100GridCoordEquals(next, coord) {
+                break
+            }
+            visited.append(VT100GridCoordDescription(next))
+            XCTAssertTrue(isBefore(next, coord), "moved forward: \(visited.joined(separator: " "))")
+            if !isBefore(next, coord) {
+                return
+            }
+            coord = next
+        }
+        XCTAssertLessThan(visited.count, maximumSteps, "did not stop: \(visited.joined(separator: " "))")
+        XCTAssertEqual(coord.x, 0, "path: \(visited.joined(separator: " "))")
+        XCTAssertEqual(coord.y, 0, "path: \(visited.joined(separator: " "))")
+    }
+
+    // The work done for one click is bounded by the window, not by the length of the wrapped
+    // line: for a wrapped line of 5,000 rows the located string has at most 48 rows of text.
+    func testLocatedStringForVeryLongWrappedLineIsBounded() {
+        appendLongWrappedLine(rows: 5000, width: 80)
+        let extractor = makeExtractor(for: wrappedDataSource(width: 80, height: 24))
+        var targetOffset = Int32(-1)
+        let located = wordDataSource(extractor).locatedString(forWrappedLineEncompassing: VT100GridCoord(x: 7, y: 2500),
+                                                              targetOffset: &targetOffset)
+        XCTAssertGreaterThan(located.length, 0)
+        XCTAssertLessThanOrEqual(located.length, 48 * 80)
     }
 
     // MARK: - indexInSortedArray

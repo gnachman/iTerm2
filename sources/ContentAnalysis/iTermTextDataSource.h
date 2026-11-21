@@ -34,6 +34,11 @@ NS_ASSUME_NONNULL_BEGIN
 // For lines in the current grid (not in scrollback), this returns NO.
 - (BOOL)isFirstLineOfBlock:(int)lineNumber;
 
+@optional
+// The number of rows of the visible grid. A data source that is not a screen need not implement
+// it; the text extractor then treats the height as 0.
+- (int)height;
+
 @end
 
 NS_ASSUME_NONNULL_END

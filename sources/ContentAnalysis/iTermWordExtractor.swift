@@ -292,8 +292,14 @@ class WordExtractor: NSObject {
             ))
         }
 
+        // The regex path matches against a located string that leaves out null cells, so it
+        // cannot see a click on one. Treat such a click as character mode does: a run of nulls is
+        // its own word. Otherwise the click would land on another character of the window, maybe
+        // on another row, and copy-mode word movement could fail to advance.
+        let useRegex = !regexPatterns.isEmpty && theClass != .null
+
         // Collect atoms around the location (works for both character and regex modes)
-        guard let collection = collectAtomsAroundLocation(location) else {
+        guard let collection = collectAtomsAroundLocation(location, useRegex: useRegex) else {
             DLog("Failed to collect atoms")
             return ds.windowedRange(with: VT100GridCoordRangeMake(
                 location.x, location.y,
@@ -307,7 +313,7 @@ class WordExtractor: NSObject {
         // For regex mode, we need to re-classify based on the clicked atom
         // (since regex matches may have forcedWordClass)
         let effectiveClass: TextClass
-        if !regexPatterns.isEmpty {
+        if useRegex {
             effectiveClass = classForAtomWithString(atoms[clickIndex], bigWords: big)
             DLog("Regex mode: clicked atom '\(atoms[clickIndex].string)' has class \(effectiveClass)")
 
@@ -363,8 +369,8 @@ class WordExtractor: NSObject {
     /// Collect atoms around the given location.
     /// For regex mode: extracts wrapped line and uses RegexAtomIterator.
     /// For character mode: uses CharacterAtomIterator to enumerate atoms.
-    private func collectAtomsAroundLocation(_ location: VT100GridCoord) -> AtomCollection? {
-        if !regexPatterns.isEmpty {
+    private func collectAtomsAroundLocation(_ location: VT100GridCoord, useRegex: Bool) -> AtomCollection? {
+        if useRegex {
             return collectAtomsUsingRegex(around: location)
         } else {
             return collectAtomsUsingCharacterIterator(around: location)

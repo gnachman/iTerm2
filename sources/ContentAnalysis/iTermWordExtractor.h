@@ -89,14 +89,16 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorClass) {
                  targetOffset:(int *)targetOffset
                        coords:(NSMutableArray<NSValue *> *)coords;
 
-/// Extract a located string for the entire wrapped line containing a coordinate.
-/// This extends to the start and end of the logical line (respecting soft wraps),
-/// which provides more stable regex matching than a fixed radius.
+/// Extract a located string for the wrapped line containing a coordinate.
+/// This extends toward the start and end of the logical line (respecting soft wraps),
+/// which provides more stable regex matching than a fixed radius, but covers at most
+/// max(20, 2 x the screen height) rows around the coordinate, so a very long wrapped
+/// line is cut.
 /// Returns an iTermLocatedString with 1:1 mapping between UTF-16 code units and grid coordinates.
 /// - Parameters:
 ///   - coord: The coordinate within the wrapped line
 ///   - targetOffset: On return, contains the offset in the returned string where the coordinate is located
-/// - Returns: A located string for the entire wrapped line
+/// - Returns: A located string for the rows of the wrapped line around the coordinate
 - (iTermLocatedString *)locatedStringForWrappedLineEncompassing:(VT100GridCoord)coord
                                                    targetOffset:(int *)targetOffset;
 @end
