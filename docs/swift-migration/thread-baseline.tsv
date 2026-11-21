@@ -1,0 +1,19 @@
+# Thread sanitizer baseline: the reports the gate accepts.
+# Read by tools/swift_migration/sanitizer_summary.py --baseline. The ledger,
+# with the verdict and reasoning for each entry, is thread-baseline.md; the
+# ledger column names the section. Lines starting with # are comments.
+#
+# Columns, separated by one tab:
+#   entry     the ledger entry's number
+#   kind      the report's kind, as on its WARNING line (data race, ...)
+#   access    the top application frames of the report's first stack, as
+#             sanitizer_summary.py prints them: one frame, or for a block
+#             copy or dispose helper the helper and the next two application
+#             frames, joined by " ; ", top first, with the .N uniquing suffix
+#             of block invoke functions removed
+#   previous  the same for the "Previous ..." stack, or - if there is none
+#   location  the report's "Location is" description with addresses and
+#             thread numbers removed, or - to accept any
+#   ledger    where the entry is judged
+entry	kind	access	previous	location	ledger
+2.1	data race	__61-[iTermMetalDriver finishDrawingWithCommandBuffer:frameData:]_block_invoke_2	__copy_helper_block_e8_32s40s48b ; -[iTermMetalFrameData measureTimeForStat:ofBlock:] ; -[iTermMetalDriver finishDrawingWithCommandBuffer:frameData:]	heap block of size 56	thread-baseline.md section 2.1
