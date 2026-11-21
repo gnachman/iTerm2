@@ -85,6 +85,65 @@ proc kill_tree {pid} {
     catch {exec kill -9 $pid}
 }
 
+# The tests that reported a result (passed, failed or skipped: a skipped test
+# counts as executed), read from xcodebuild's one-line-per-test results. A run
+# that executed no tests proves nothing, and xcodebuild reports success when a
+# name matches nothing, so the eof handler fails such a run.
+set executed_count 0
+set unparsed_names {}
+array set executed_classes {}
+array set executed_methods {}
+
+proc note_test_result {line} {
+    global executed_count unparsed_names executed_classes executed_methods
+    regsub -all {\x1b\[[0-9;]*[A-Za-z]} $line {} line
+    set line [string trimright $line "\r\n"]
+    # A line that names a test and ends with its duration is a result, whatever
+    # the status wording ("passed", "failed", "skipped", "recorded an expected
+    # failure", ...), so statuses are not enumerated. For example:
+    # Serial:   Test Case '-[ModernTests.FooTests testBar]' passed (0.001 seconds).
+    # Parallel: Test case 'FooTests.testBar()' passed on 'Clone 1 of ...' (0.001 seconds)
+    # The match is anchored on the trailing duration, so an apostrophe in the
+    # parallel destination name does not break it.
+    if {![regexp {^Test [Cc]ase '([^']*)' .+ \([0-9.]+ seconds\)\.?$} $line -> name]} {
+        return
+    }
+    incr executed_count
+    set ident {[A-Za-z_][A-Za-z0-9_]*}
+    if {[regexp "^-\\\[(?:$ident\\.)?($ident) ($ident)\\\]\$" $name -> class method] ||
+        [regexp "^(?:$ident\\.)?($ident)\\.($ident)\\(\\)\$" $name -> class method]} {
+        set executed_classes($class) 1
+        set executed_methods($class/$method) 1
+    } elseif {[llength $unparsed_names] < 5} {
+        lappend unparsed_names $name
+    }
+}
+
+# The names given on the command line (Target/Class or Target/Class/method)
+# for which no test reported a result.
+proc names_that_ran_nothing {} {
+    global test_names executed_classes executed_methods
+    set result {}
+    foreach test_name $test_names {
+        set parts [split $test_name /]
+        set class [lindex $parts 1]
+        set method [lindex $parts 2]
+        regsub {\(\)$} $method {} method
+        if {$class eq ""} {
+            # A whole target: covered by the check that something ran.
+            continue
+        }
+        if {$method eq ""} {
+            if {![info exists executed_classes($class)]} {
+                lappend result $test_name
+            }
+        } elseif {![info exists executed_methods($class/$method)]} {
+            lappend result $test_name
+        }
+    }
+    return $result
+}
+
 spawn xcodebuild test -project iTerm2.xcodeproj -scheme ModernTests {*}$only_testing_flags -parallel-testing-enabled $parallel {*}$signing_flags
 set spawned_pid [exp_pid]
 
@@ -108,6 +167,7 @@ expect {
     -re "\[^\n\]*\n" {
         # Consume output a line at a time so the timeout measures time since the
         # last line rather than since the run started.
+        note_test_result $expect_out(0,string)
         exp_continue
     }
     timeout {
@@ -129,7 +189,28 @@ expect {
                 send_user "\n*** Tests failed. A parallel run reports only the test NAME;\n"
                 send_user "*** re-run without -parallel to see the assertion and its line. ***\n\n"
             }
+            exit $code
         }
-        exit $code
+        if {$executed_count == 0} {
+            send_user "\n*** FAILED: the run executed no tests. Check the test names; a name that\n"
+            send_user "*** matches nothing runs nothing, and xcodebuild still reports success. ***\n\n"
+            exit 1
+        }
+        if {[llength $unparsed_names] > 0} {
+            send_user "\n*** Could not tell which test names ran: a result line named a test in an\n"
+            send_user "*** unexpected form (for example [lindex $unparsed_names 0]), so the check\n"
+            send_user "*** that every given name ran something was skipped. ***\n\n"
+        } else {
+            set missing [names_that_ran_nothing]
+            if {[llength $missing] > 0} {
+                send_user "\n*** FAILED: these test names matched no test, so nothing ran for them:\n"
+                foreach name $missing {
+                    send_user "***   $name\n"
+                }
+                send_user "*** Check the names. $executed_count test(s) ran for the others. ***\n\n"
+                exit 1
+            }
+        }
+        exit 0
     }
 }
