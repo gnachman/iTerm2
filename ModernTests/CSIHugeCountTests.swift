@@ -51,6 +51,7 @@ final class CSIHugeCountTests: XCTestCase {
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             mutableState.terminalEnabled = true
             mutableState.terminal?.termType = "xterm"
+            mutableState.terminal?.encoding = String.Encoding.utf8.rawValue
             screen.destructivelySetScreenWidth(Self.width,
                                                height: Self.height,
                                                mutableState: mutableState)
@@ -145,11 +146,13 @@ final class CSIHugeCountTests: XCTestCase {
     }
 
     func testCursorDownWithHugeCountStopsAtBottomMargin() {
-        let setup = csi("3;10r") + csi("5;12H")
-        assertHugeMatchesEdge(setup: setup, edge: Int(Self.height), expectedX: 11, expectedY: 9) {
+        // Scroll region rows 3 through 14 (0-based 2 through 13). The cursor starts on 0-based row
+        // 11, where 11 + 2147483639 overflows.
+        let setup = csi("3;14r") + csi("12;12H")
+        assertHugeMatchesEdge(setup: setup, edge: Int(Self.height), expectedX: 11, expectedY: 13) {
             csi("\($0)B")
         }
-        XCTAssertEqual(outcome(setup, csi("2B")).y, 6)
+        XCTAssertEqual(outcome(setup, csi("1B")).y, 12)
     }
 
     func testCursorForwardWithHugeCountStopsAtRightEdge() {
@@ -298,9 +301,9 @@ final class CSIHugeCountTests: XCTestCase {
         assertHugeMatchesEdge(setup: setup, edge: Int(Self.width)) { csi("\($0)@") }
         assertHugeMatchesEdge(setup: setup, edge: Int(Self.width)) { csi("\($0)P") }
         XCTAssertEqual(row(outcome(setup, csi("1@")), 2), "cdefghijklmnopqrstu.")
-        // Existing behavior, not changed here: -[VT100Grid deleteChars:startingAt:] does nothing
-        // when the cursor is on the right margin (it requires x < rightMargin).
-        XCTAssertEqual(row(outcome(setup, csi("1P")), 2), "cdefghijklmnopqrstuv")
+        // As in xterm, DCH on the last column deletes the character under the cursor.
+        XCTAssertEqual(row(outcome(setup, csi("1P")), 2), "cdefghijklmnopqrstu.")
+        XCTAssertEqual(row(outcome(setup, csi("\(Self.width)P")), 2), "cdefghijklmnopqrstu.")
     }
 
     func testInsertAndDeleteCharactersInsideLeftRightMarginsWithHugeCount() {
@@ -319,6 +322,8 @@ final class CSIHugeCountTests: XCTestCase {
         assertHugeMatchesEdge(setup: setup, edge: Int(Self.width)) { csi("\($0)@") }
         assertHugeMatchesEdge(setup: setup, edge: Int(Self.width)) { csi("\($0)P") }
         XCTAssertEqual(row(outcome(setup, csi("1@")), 2), "cdefghijklmnopqrs.uv")
+        // DCH on the right margin deletes the character under the cursor, as in xterm.
+        XCTAssertEqual(row(outcome(setup, csi("1P")), 2), "cdefghijklmnopqrs.uv")
     }
 
     func testCursorMovesFromRowAndColumnTenWithHugeCount() {
@@ -415,15 +420,36 @@ final class CSIHugeCountTests: XCTestCase {
     }
 
     func testCopyRectangleToHugeDestination() {
+        // DECCRA is CSI Pts;Pls;Pbs;Prs;Pps;Ptd;Pld;Ppd $ v: the destination's top row comes
+        // before its left column.
         let setup = filledScreen
-        assertHugeMatchesEdge(setup: setup, edge: Int(Self.width) + 1) {
-            csi("1;1;2;2;1;\($0);\($0);1$v")
+        assertHugeMatchesEdge(setup: setup, edge: Int(Self.height) + 1) {
+            csi("1;1;2;2;1;\($0);5;1$v")
         }
-        // A destination beyond the screen copies nothing.
-        XCTAssertEqual(outcome(setup, csi("1;1;2;2;1;\(Self.width + 1);\(Self.width + 1);1$v")).dump,
+        assertHugeMatchesEdge(setup: setup, edge: Int(Self.width) + 1) {
+            csi("1;1;2;2;1;5;\($0);1$v")
+        }
+        // A destination below or right of the screen copies nothing.
+        XCTAssertEqual(outcome(setup, csi("1;1;2;2;1;\(Self.height + 1);5;1$v")).dump,
                        outcome(setup, "").dump)
-        XCTAssertNotEqual(outcome(setup, csi("1;1;2;2;1;5;5;1$v")).dump,
-                          outcome(setup, "").dump)
+        XCTAssertEqual(outcome(setup, csi("1;1;2;2;1;5;\(Self.width + 1);1$v")).dump,
+                       outcome(setup, "").dump)
+    }
+
+    func testCopyRectangleReadsDestinationTopBeforeLeft() {
+        // Copy the top-left block of one row and two columns to row 5, column 10 (0-based 4
+        // and 9).
+        let copied = outcome(filledScreen, csi("1;1;1;2;1;5;10;1$v"))
+        XCTAssertEqual(row(copied, 4), "efghijklmabpqrstuvwx")
+        XCTAssertEqual(row(copied, 9), "jklmnopqrstuvwxyzabc")
+    }
+
+    func testFillRectangleRejectsCharacterCodesAboveTheByteRange() {
+        // 65601 is 65 (A) plus 65536. It used to be truncated to 16 bits before the range checks.
+        let unchanged = outcome(filledScreen, "")
+        XCTAssertEqual(outcome(filledScreen, csi("65601;1;1;1;3$x")).dump, unchanged.dump)
+        XCTAssertEqual(outcome(filledScreen, csi("65568;1;1;1;3$x")).dump, unchanged.dump)
+        XCTAssertEqual(row(outcome(filledScreen, csi("65;1;1;1;3$x")), 0), "AAAdefghijklmnopqrst")
     }
 
     // MARK: - Rectangle reports
@@ -471,6 +497,43 @@ final class CSIHugeCountTests: XCTestCase {
         XCTAssertFalse(sgrCodes(screen, VT100GridRectMake(0, 0, Self.width, 15)).contains("1"))
     }
 
+    func testChecksumSkipsPrivateCodes() {
+        // The right half of a wide character and the cells a tab skips hold iTerm2-private
+        // codes. They were meant to be left out of the checksum, but the range test could never
+        // be true.
+        let screen = makeScreen()
+        feed(screen, "\u{4E2D}")
+        XCTAssertEqual(checksum(screen, VT100GridRectMake(0, 0, 2, 1)), 0x4E2D)
+        feed(screen, "\r\n\tX")
+        XCTAssertEqual(checksum(screen, VT100GridRectMake(0, 1, Self.width, 1)),
+                       Int32(UInt8(ascii: "\t")) + Int32(UInt8(ascii: "X")))
+    }
+
+    func testChecksumOfALargeScreenWrapsAsSixteenBits() {
+        // 34,000 cells of U+FF71 (a narrow character) sum to more than Int32.max.
+        let wide: Int32 = 200
+        let tall: Int32 = 170
+        session.configuration.unicodeVersion = 9
+        session.configuration.isDirty = true
+        let screen = VT100Screen()
+        session.screen = screen
+        screen.delegate = session
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.terminalEnabled = true
+            mutableState.terminal?.termType = "xterm"
+            screen.destructivelySetScreenWidth(wide, height: tall, mutableState: mutableState)
+            var c = mutableState.currentGrid.defaultChar
+            c.code = 0xFF71
+            mutableState.currentGrid.setCharsFrom(VT100GridCoord(x: 0, y: 0),
+                                                  to: VT100GridCoord(x: wide - 1, y: tall - 1),
+                                                  to: c,
+                                                  externalAttributes: nil)
+        })
+        let total = UInt64(wide) * UInt64(tall) * 0xFF71
+        XCTAssertGreaterThan(total, UInt64(Int32.max))
+        XCTAssertEqual(checksum(screen, VT100GridRectMake(0, 0, wide, tall)), Int32(total & 0xFFFF))
+    }
+
     func testChecksumIgnoresRowsBelowTheScreen() {
         let screen = screenWithBoldBottomRows()
         let onScreen = checksum(screen, VT100GridRectMake(0, 10, Self.width, 5))
@@ -491,6 +554,43 @@ final class CSIHugeCountTests: XCTestCase {
         }
         XCTAssertEqual(outcome(setup, csi("1I")).x, 8)
         XCTAssertEqual(outcome(setup, csi("2I")).x, 16)
+    }
+
+    func testForwardTabWithWraparound() {
+        // With tabs wrapping around, every tab can move the cursor, so the count is capped at
+        // 65535 as REP's is. The cap itself is not exercised here: 65535 wrapping tabs take more
+        // than five seconds in a test build, which trips the execution-permits watchdog.
+        let key = "TabsWrapAround"
+        let previous = iTermUserDefaults.userDefaults().object(forKey: key)
+        iTermUserDefaults.userDefaults().set(true, forKey: key)
+        iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
+        defer {
+            iTermUserDefaults.userDefaults().set(previous, forKey: key)
+            iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
+        }
+        XCTAssertTrue(iTermAdvancedSettingsModel.tabsWrapAround())
+        // On a 10x3 screen the stops are at columns 8 and 9 (the last), so
+        // after the first tab the cursor alternates between them, wrapping each time it leaves 9:
+        // an odd count ends on 8 and an even one on 9.
+        func cursorX(afterTabs count: Int) -> Int32 {
+            let screen = VT100Screen()
+            session.screen = screen
+            screen.delegate = session
+            screen.performBlock(joinedThreads: { _, mutableState, _ in
+                mutableState.terminalEnabled = true
+                mutableState.terminal?.termType = "xterm"
+                screen.destructivelySetScreenWidth(10, height: 3, mutableState: mutableState)
+            })
+            feed(screen, csi("\(count)I"))
+            var x = Int32(-1)
+            screen.performBlock(joinedThreads: { _, mutableState, _ in
+                x = mutableState.currentGrid.cursor.x
+            })
+            return x
+        }
+        XCTAssertEqual(cursorX(afterTabs: 3), 8)
+        XCTAssertEqual(cursorX(afterTabs: 4), 9)
+        XCTAssertEqual(cursorX(afterTabs: 101), 8)
     }
 
     func testBackTabWithHugeCountCompletesAtFirstColumn() {

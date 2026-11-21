@@ -1945,7 +1945,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:startCoord.y
                                                            createIfNeeded:NO];
     if (startCoord.x >= leftMargin &&
-        startCoord.x < rightMargin &&
+        startCoord.x <= rightMargin &&
         startCoord.y >= 0 &&
         startCoord.y < size_.height) {
         int lineNumber = startCoord.y;

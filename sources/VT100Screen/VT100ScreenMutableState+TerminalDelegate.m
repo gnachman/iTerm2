@@ -3086,7 +3086,9 @@ typedef struct {
 
 - (int)terminalChecksumInRectangle:(VT100GridRect)rect {
     DLog(@"begin %@", VT100GridRectDescription(rect));
-    int result = 0;
+    // DECRQCRA reports a 16-bit checksum. Sum in unsigned arithmetic, which wraps, and reduce to
+    // 16 bits; the sum of a large screen of wide characters overflowed int.
+    unsigned int result = 0;
     // Rows below the screen hold nothing. Reading them would wrap around onto the screen's own
     // rows, and a huge height would loop once per row.
     // The sums are formed in a wider type so a huge size cannot overflow them.
@@ -3096,17 +3098,22 @@ typedef struct {
         const screen_char_t *theLine = [self.currentGrid screenCharsAtLineNumber:y];
         for (int x = rect.origin.x; x < right; x++) {
             unichar code = theLine[x].code;
-            BOOL isPrivate = (code < ITERM2_PRIVATE_BEGIN &&
-                              code > ITERM2_PRIVATE_END);
+            // iTerm2's private codes (the right half of a wide character, the cells a tab skips)
+            // are bookkeeping, not text. A complex character's or an image's code is a registry
+            // index instead, so it is never private.
+            BOOL isPrivate = (!theLine[x].complexChar &&
+                              !theLine[x].image &&
+                              code >= ITERM2_PRIVATE_BEGIN &&
+                              code <= ITERM2_PRIVATE_END);
             if (code && !isPrivate) {
                 NSString *s = ScreenCharToStr(&theLine[x]);
                 for (int i = 0; i < s.length; i++) {
-                    result += (int)[s characterAtIndex:i];
+                    result += [s characterAtIndex:i];
                 }
             }
         }
     }
-    return result;
+    return (int)(result & 0xFFFF);
 }
 
 - (NSString *)terminalProfileName {

@@ -1213,7 +1213,9 @@ static const int kMaxScreenRows = 4096;
         rect.size.height <= 0) {
         return;
     }
-    const VT100GridCoord dest = VT100GridCoordMake(token.csi->p[5] - 1, token.csi->p[6] - 1);
+    // CSI Pts ; Pls ; Pbs ; Prs ; Pps ; Ptd ; Pld ; Ppd $ v: the destination's top row (p[5])
+    // comes before its left column (p[6]).
+    const VT100GridCoord dest = VT100GridCoordMake(token.csi->p[6] - 1, token.csi->p[5] - 1);
     if (dest.x < 0 || dest.y < 0) {
         return;
     }
@@ -1224,16 +1226,19 @@ static const int kMaxScreenRows = 4096;
     if (token.csi->count < 1) {
         return;
     }
-    const unichar ch = token.csi->p[0];
-    if (ch < 32) {
+    // Check the parameter's range before narrowing it, so 65601 is rejected rather than truncated
+    // to 65 ('A').
+    const int code = token.csi->p[0];
+    if (code < 32) {
         return;
     }
-    if (ch > 126 && ch < 160) {
+    if (code > 126 && code < 160) {
         return;
     }
-    if (ch > 255) {
+    if (code > 255) {
         return;
     }
+    const unichar ch = code;
     const VT100GridRect rect = [self rectangleInToken:token startingAtIndex:1 defaultRectangle:[self defaultRectangle]];
     if (rect.origin.x < 0 ||
         rect.origin.y < 0 ||
