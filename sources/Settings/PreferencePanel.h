@@ -68,7 +68,7 @@ void LoadPrefsFromCustomFolder(void);
 
 @protocol iTermPrefsPanelDelegate<NSObject>
 - (void)prefsPanelDidChangeFrameTo:(NSRect)newFrame;
-- (void)responderWillBecomeFirstResponder:(NSResponder *)responder;
+- (void)responderWillBecomeFirstResponder:(nullable NSResponder *)responder;
 @end
 
 @interface iTermPrefsPanel : NSPanel
