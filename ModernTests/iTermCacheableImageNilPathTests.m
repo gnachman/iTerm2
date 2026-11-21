@@ -8,8 +8,8 @@
 //  -[NSImage initWithContentsOfFile:], whose parameter AppKit declares
 //  nonnull; that returned nil, but the nullability sanitizer aborts on it.
 //  These tests pin the result for a nil path (nil) and that the cache keeps
-//  its behavior around such a call. The header is not visible to Swift, so
-//  they are written in Objective-C. See
+//  its behavior around such a call. They were written in Objective-C before
+//  the header was visible to Swift. See
 //  docs/swift-migration/units/iTermCacheableImage.md.
 //
 
@@ -58,26 +58,9 @@
     return path;
 }
 
-// The header still claims the path is nonnull, so a direct call with nil
-// would be reported by the nullability sanitizer at this file's call site,
-// before the method runs. An invocation carries the nil into the method
-// without that check, so what the sanitizer sees is the method's own use of
-// the path.
+// The header declares the path nullable, so nil is passed directly.
 - (NSImage *)imageFromCache:(iTermCacheableImage *)cache withNilPathOfSize:(NSSize)size {
-    SEL selector = @selector(imageAtPath:ofSize:flipped:);
-    NSInvocation *invocation =
-        [NSInvocation invocationWithMethodSignature:[cache methodSignatureForSelector:selector]];
-    invocation.target = cache;
-    invocation.selector = selector;
-    __unsafe_unretained NSString *path = nil;
-    BOOL flipped = NO;
-    [invocation setArgument:&path atIndex:2];
-    [invocation setArgument:&size atIndex:3];
-    [invocation setArgument:&flipped atIndex:4];
-    [invocation invoke];
-    __unsafe_unretained NSImage *result = nil;
-    [invocation getReturnValue:&result];
-    return result;
+    return [cache imageAtPath:nil ofSize:size flipped:NO];
 }
 
 - (void)testNilPathGivesNil {

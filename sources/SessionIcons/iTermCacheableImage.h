@@ -11,7 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermCacheableImage : NSObject
 
-- (NSImage *)imageAtPath:(NSString *)path ofSize:(NSSize)size flipped:(BOOL)flipped;
+- (nullable NSImage *)imageAtPath:(nullable NSString *)path ofSize:(NSSize)size flipped:(BOOL)flipped;
 
 @end
 
