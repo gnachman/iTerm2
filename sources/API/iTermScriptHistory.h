@@ -86,7 +86,7 @@ extern NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification;
 // Removes every finished entry. Persistent pseudo-entries (the app, APS,
 // dynamic profiles, browser loggers) are always running and survive.
 - (void)removeTerminatedEntries;
-- (iTermScriptHistoryEntry *)entryWithIdentifier:(NSString *)identifier;
+- (nullable iTermScriptHistoryEntry *)entryWithIdentifier:(nullable NSString *)identifier;
 - (iTermScriptHistoryEntry *)runningEntryWithPath:(NSString *)path;
 - (iTermScriptHistoryEntry *)runningEntryWithFullPath:(NSString *)fullPath;
 - (void)addAPSLoggingEntryIfNeeded;

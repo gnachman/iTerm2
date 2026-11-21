@@ -26,7 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (BOOL)autoLaunchFolderExists;
 
-- (NSArray<iTermScriptItem *> *)scriptItems;
+- (nullable NSArray<iTermScriptItem *> *)scriptItems;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithMenu:(NSMenu *)menu;

@@ -558,7 +558,7 @@ NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification = @"iTerm
                                                         object:self];
 }
 
-- (iTermScriptHistoryEntry *)entryWithIdentifier:(NSString *)identifier {
+- (nullable iTermScriptHistoryEntry *)entryWithIdentifier:(nullable NSString *)identifier {
     return [_entries objectPassingTest:^BOOL(iTermScriptHistoryEntry *element, NSUInteger index, BOOL *stop) {
         return [element.identifier isEqualToString:identifier];
     }];

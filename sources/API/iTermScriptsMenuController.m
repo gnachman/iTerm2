@@ -452,7 +452,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
 }
 
-- (NSArray<iTermScriptItem *> *)scriptItems {
+- (nullable NSArray<iTermScriptItem *> *)scriptItems {
     DLog(@"begin");
     if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
         DLog(@"not homeDirectoryDotDir");
@@ -611,7 +611,7 @@ NS_ASSUME_NONNULL_BEGIN
                               toMenu:rootMenu];
 }
 
-- (void)addMenuItemsForScriptItems:(NSArray<iTermScriptItem *> *)unsortedScriptItems
+- (void)addMenuItemsForScriptItems:(nullable NSArray<iTermScriptItem *> *)unsortedScriptItems
                             toMenu:(NSMenu *)containingMenu {
     NSArray<iTermScriptItem *> *const scriptItems = [unsortedScriptItems sortedArrayUsingSelector:@selector(compare:)];
     for (iTermScriptItem *scriptItem in scriptItems) {
