@@ -1,0 +1,15 @@
+Version 3.7.9 of iTerm2 was built on November 20,
+2026.
+
+This is a security update.
+
+Bug Fixes:
+- Fixed a security issue where a crafted file,
+  when displayed in the terminal (for example
+  with “cat”), could run arbitrary commands by
+  abusing the Kitty image and drag-and-drop
+  protocols. Replies sent back to programs no
+  longer include control characters that could
+  be injected into your shell. Title reports
+  were hardened the same way. Thanks to Minseong
+  Kim of NSHC Red Alert Labs for the report.
