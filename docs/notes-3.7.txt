@@ -49,7 +49,10 @@ Improvements:
   that begins with a Latin word used to flip to
   left-to-right on its own. Off by default.
   Search Settings > Advanced for “right-to-left
-  words”.
+  words”. On such a line a Latin label and
+  colon at the start (“UI-6: Deploy …”) come
+  first, also when a Latin word follows the
+  colon.
 
 Bug Fixes:
 - When a program turned on light/dark mode
