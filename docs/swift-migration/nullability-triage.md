@@ -173,12 +173,19 @@ rows settled by reading further. Examples:
 
 ## 5. Unclear, test-only and caller-bug rows
 
-The three `unclear` rows and what settles each:
+The three `unclear` rows and what settles each (the first is settled):
 
 - `-[VT100ScreenDelegate screenRestoreState:]` (`VT100ScreenDelegate.h:524`):
-  whether the joined block's delegate is nil during session setup, which
-  would mean the callee never ran. A DLog or breakpoint at
-  `VT100ScreenMutableState.m:7176` under the fixture settles it.
+  settled 2026-11-21, `wrong-annotation`. The joined block's delegate is
+  nil during session setup: `-[PTYSession initSynthetic:]` joins threads
+  before it sets the screen's delegate, so messaging the nil delegate for
+  `screenSwitchToSharedState` yields nil and the call site passes it on;
+  the callee never runs with nil (the sanitizer's report is at the call
+  site, `VT100ScreenMutableState.m:7190`, below `-[PTYSession
+  initSynthetic:]`). The parameter is now `_Nullable` (unit
+  `screenRestoreState-nullability`, bugs.md); the return of
+  `screenSwitchToSharedState` stays nonnull, since every implementer
+  returns the screen's state, never nil after `-[VT100Screen init]`.
 - `VT100SavedColorsSlot.init(text:background:selectionText:selectionBackground:...)`
   (`VT100SavedColors.swift:122`): whether every app screen's color map has
   its four keys before the terminal parses anything; if so, test-only. A
@@ -198,6 +205,57 @@ parser an ID or stops building it.
 The 20 `sdk-claim` rows need no change now. A port of each listed call site
 must test the optional before calling the Apple method, reproducing what
 messaging nil did ([translation-rules.md §2](translation-rules.md)).
+
+Some of those call sites now test for nil in Objective-C already, because
+they stopped every test that creates a session or a window under the
+aborting nullability run (unit `session-nullability-guards`, 2026-11-22;
+the list and what each guard keeps is in `bugs.md`, under
+"`-screenRestoreState:` receives nil while a session is created"): for
+`-unionSet:`, `iTermGenericEvaluator.m:214` and `iTermScriptFunctionCall.m:614`
+(not `iTermExpressionEvaluator.m:352`); `-removeObject:`,
+`iTermSessionHotkeyController.m:165`; `+dictionaryWithContentsOfFile:`,
+`iTermTouchbarMappings.m:48`; `-intersectsSet:`, `iTermBroadcastInputHelper.m:273`;
+`-isEqualToString:`, `ProfileModel.m:848` (`-bookmarkWithGuid:`), `PTYSession.m`'s
+`-setBadgeFormat:` and `-setSubtitleFormat:`,
+`PseudoTerminal.m`'s `-autoCommandHistoryEnabledForSession:`,
+`PseudoTerminal+TouchBar.m`'s `-updateTouchBarIfNeeded:` and
+`SessionTitleView.m`'s `-setTitle:` (not the other sites of that declaration);
+`-initWithData:encoding:`, `iTermKeyboardHandler.m:69`;
+`-indexOfTabViewItem:`, `PseudoTerminal.m`'s
+`-windowDecorationColor`.
+
+Unit `window-nullability-guards` (2026-11-22, same `bugs.md` entry) did
+the same for tests that open a window or a tab, under the owner's word
+that guards are fine anywhere, hot paths included, when sure to change
+nothing: `-isEqualToDictionary:`, `iTermMutableAttributedStringBuilder.m`'s
+`-setAttributes:` (hot path; one nil test); `-[NSArray initWithArray:]`,
+`iTermProfileModelJournal.m`'s `+journalWithAction:bookmark:model:index:identifier:`;
+`-isEqualToString:` and `-isEqualToArray:`, `ProfileModel.m`'s
+`-bookmark:differsJournalablyFrom:` (a value of another class still gets
+the message); `-isEqualToString:`, `iTermAutomaticProfileSwitcher.m`'s
+`-setHostname:...`, `iTermRule.m`'s
+`-scoreForHostname:username:path:job:commandLine:expressionValueProvider:`,
+`PseudoTerminal.m`'s
+`-hideAutoCommandHistoryForSession:`,
+`-wantsCommandHistoryUpdatesFromSession:`,
+`-updateAutoCommandHistoryForPrefix:inSession:popIfNeeded:`,
+`-nextTabGroupColorForParentGroupID:movingTabs:` and
+`-addTabGroupNestingItemsToMenu:forGroupID:` (not `PSMTabBarControl.m`'s
+`-setTabGroupIdentifiers:parentIdentifiers:forTabViewItems:`, which is in
+`ThirdParty/PSMTabBarControl` and waits for the owner); `-unionSet:`,
+both sites in `iTermExpressionEvaluator.m`; `-addObjectsFromArray:`,
+`IntervalTree.m`'s `-objectsWithSmallestLimitAfter:fromNode:` and
+`-objectsWithLargestLimitBelow:fromNode:`; `-indexOfObject:`,
+`iTermController.m`'s `-indexOfTerminal:`; `-objectForKeyedSubscript:`,
+`VT100ScreenState.m`'s `-blockMarkWithID:`; `-[NSView addSubview:]`,
+`iTermRootTerminalView.m`'s two status bar layout methods. Two of our
+own claims became nullable with it: the return of
+`-[iTermSearchResultsMinimapViewDelegate searchResultsMinimapViewLocations:]`
+and the `tabStyle` parameter of
+`-[iTermTheme statusBarTextColorForEffectiveAppearance:marginColor:colorMap:tabStyle:mainAndActive:]`.
+The return of `-[PSMMinimalTabStyleDelegate minimalTabStyleBackgroundColor]`
+is still a false nonnull claim, for the same reason as the tab bar site.
+The line numbers in the TSV are those of the collection night.
 
 ## 6. Swift fallout and Objective-C callers
 

@@ -75,4 +75,3 @@ example or not at all:
   a stable transcript, that per-function coverage can be reported, that the
   pure-move checker works, and whether comparing disassembly after an
   always-inline extraction is reliable enough to use.
-- Whether dossiers are worth committing or should stay as working files.

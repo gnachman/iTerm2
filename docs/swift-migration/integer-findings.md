@@ -311,8 +311,11 @@ is not an integer finding and is preserved.)
   behavior that a great deal of code relies on; the wrap shows up only where
   its result is then converted to a signed type (entries 7.10 and 7.12 are
   of that kind).
-- **The stress harness itself was not run.** `tools/perf/run_stress_test.sh`
-  refuses to start while any iTerm2 runs (`pgrep -x iTerm2`), drives the app
+- **The stress harness itself was not run.** (What follows describes the
+  harness as it was then. Since 2026-11-22 it addresses the app under test
+  by path and process and runs beside other instances:
+  [performance.md](performance.md).) `tools/perf/run_stress_test.sh`
+  refused to start while any iTerm2 runs (`pgrep -x iTerm2`), drives the app
   with AppleScript `tell application "iTerm2"`, which resolves by name and,
   with the owner's iTerm2 running, would drive the owner's app (the
   Development build has the same bundle identifier,
@@ -629,8 +632,9 @@ The hazard at `VT100ScreenMutableState.m:7263` (8.2) needs a test before it
 needs a fix.
 
 The stress harness itself, by hand (UNVERIFIED: none of this was run).
-What is known: the harness refuses to start while any other iTerm2 runs and
-addresses the app by name, so every other instance must be quit first; it
+What was known then: the harness refused to start while any other iTerm2
+ran and addressed the app by name, so every other instance had to be quit
+first (no longer so since 2026-11-22: [performance.md](performance.md)); it
 takes the app's path and a `--suite=NAME` option; and
 `tools/swift_migration/sanitizer_app.sh` builds a sanitized app at
 `tmp/sanitizers/app/Build/Development/iTerm2.app` with the nullability and

@@ -9,8 +9,8 @@ name does not exist yet. Which items are done is recorded in the checklist in
 [orchestration.md §9](orchestration.md). Each item is a `tool` commit and each is
 validated on a real file before any unit depends on it.
 
-Phase 0 is completed in full before the pilot begins, and its end is an owner
-checkpoint. Within it, tools are built in the order their dependencies
+Its end is an owner checkpoint; on 2026-11-21 the owner let the pilot start
+with some items unfinished ([plan.md §1](plan.md)). Within it, tools are built in the order their dependencies
 require: the inventory script (section 1) and the runtime snapshot (section 9) come
 first, because most other tools and every dossier use them. Phase 0 also
 includes the first sanitizer triage (section 4), the warning survey ([warnings.md](warnings.md)),
@@ -34,11 +34,13 @@ For each Objective-C++ file it also reports which of the four classes in
 in [README.md §2](README.md).
 
 It is `tools/swift_migration/inventory.py`, with the subcommands `summary`,
-`files`, `file`, `history` and `leaf`. Its `state` and `verify` subcommands
-are not available: the ivar and static table is to be rebuilt as queries on
-the code database (section 10; owner queue P1), and the comparison with the
-database and the runtime snapshot is not built. Results it marks heuristic
-come from text matching, as its `--help` describes.
+`files`, `file`, `history` and `leaf`. It has no `state` or `verify`
+subcommand: the ivar and static table is the code database query
+`codedb.py classstate`, and the comparison of the inventory's parsed
+classes with the database and the runtime snapshot is
+`codedb.py verifyinventory` (section 10, "Class state" and "Inventory
+verify"). Results it marks heuristic come from text matching, as its
+`--help` describes.
 
 ## 2. Entry-point census
 
@@ -46,8 +48,9 @@ Given a class name or selector, lists every reference the compiler cannot see.
 [hidden-callers.md](hidden-callers.md) explains each source and why it matters.
 
 It is `tools/swift_migration/entry_points.py`, with the subcommands
-`method`, `class` (with `--unreached`) and `file`. By the decision of
-2026-11-19 ([decisions.md](decisions.md)), everything the compiler sees comes
+`method`, `class` (with `--unreached`), `file` and `all-classes` (below).
+By the decision of 2026-11-19 ([decisions.md](decisions.md)), everything
+the compiler sees comes
 from queries on the code database (section 10), and text and XML search
 remain only for what the compiler does not see: xibs, storyboards, the sdef,
 plists, Core Data models, and names built at run time. The tool searches:
@@ -122,6 +125,46 @@ naming the framework. The selectors come from the code database's
 declarations for the headers units read, and from the headers read as text
 for the rest; a selector match is enough (found 2026-11-21: 9 live methods
 had been listed as uncalled).
+
+**Whole tree.** `entry_points.py all-classes --out DIR` runs the census of
+every class with a method or Swift member defined outside `submodules/`,
+the test directories and the migration's tools, in one process, deciding
+each class exactly as `class CLASS --unreached` does (tested on the fixture,
+and on 20 real classes, all identical). It writes `methods.tsv` (every
+method with its heading, scope, definition, counts per source, flags and
+reasons), the methods under "no caller found" split into
+`no_caller_in_scope.tsv` and `no_caller_out_of_scope.tsv` (by the
+definition's directory, README.md section 2), and `summary.json` and
+`summary.txt` (counts per heading, all and in scope). Methods in generated
+files are listed with the heading `generated` and left out of the others,
+as the class mode leaves them out. It reads the class-keyed tables through
+indexed temporary copies (the database file is not written), searches the
+resources once and reads each runtime method list once; progress goes to
+stderr, and `--memory-limit MB` (default 1500) stops it with status 2.
+
+Run of 2026-11-21 on the database recaptured that evening (every unit and
+module current), with the six runtime method lists of the earlier run:
+2,525 classes, 44,627 methods, 91 seconds, peak resident size 586 MB (a
+scratch driver had taken about an hour). In the migration's scope: 38,274
+called, 569 possibly called by the system, 128 weak, 70 through a Swift
+protocol requirement, 73 in code not compiled, 10 Swift USRs, 2 not
+decided, 149 called only from tests, 2 defined elsewhere, and 743 with no
+caller found; 52 more with no caller found are in `ThirdParty/` outside the
+scope, and 2,102 are in generated files. A sample of 40 of the 743 (seed
+20261122, `random.Random(seed).sample` over the list sorted by class and
+method) was checked by hand: `git grep` over every tracked file outside
+`submodules/` for the selector's first keyword, the property name for
+accessors (assignments for setters), the Swift spelling, and the custom
+getter's property; protocol conformance (including the prebuilt
+frameworks), target-action, xibs, key-value coding, overrides, menu
+validation and the sdef. All 40 are uncalled; no mechanism was missed.
+With 0 misses in 40, the 95% upper bound on the share of the 743 that a
+missed mechanism reaches is about 7.5% (rule of three), about 56 methods;
+the earlier 57-row sample, taken before the prebuilt-framework fix on a
+database of the same day, also found none of another kind. Several are not
+removable on their own although uncalled: advanced-setting getters and
+setters that a `DEFINE_*` macro generates with the setting, one half of a
+property, a method a protocol requires.
 
 The census can be defeated by a sufficiently indirect construction, such as a
 name built from pieces at run time, and it sees only the build configuration
@@ -286,6 +329,18 @@ with the reason. They fail the gate on:
   ([translation-rules.md §4](translation-rules.md)). This one may need to be a review checklist item instead of a
   lint.
 
+**Where they run.** In a lane the author runs `swift_lints.py --staged`.
+It counts every Swift file staged with a `kind=port` message as part of the
+port, so a test file staged in the same lane draws findings; those are not
+the port's. The type-aware lints (`swift_ast_lints.py`), `warning_survey.py`
+and `swift_interface.py` need a compile-command capture, which a lane does
+not have. The orchestrator runs them in its own checkout after the commit,
+or once after several:
+`capture_compile_commands.sh`, then `codedb.py update` (with
+`--accept-removals` when the port deleted files), then the three tools and
+`swift_lints.py REV` on the commit. A finding goes back to the author, and
+its fix is a new commit of the unit.
+
 ## 7. Helper library
 
 A small Swift file of named operations so that ported code says what the C did.
@@ -322,8 +377,8 @@ calling code that raises `NSException`.
   harness is `tools/swift_migration/perf_baseline.py`, with
   `perf_compare.py` to compare results; the scenarios, the result file, the
   quiet-machine rule and the commands are in
-  [performance.md §3](performance.md). The baseline itself has not been
-  taken yet: it needs a quiet machine.
+  [performance.md §3](performance.md). The baseline was taken on
+  2026-11-22; its numbers are in [performance.md §3](performance.md).
 - Memory: resident size and allocation counts for a scripted workload. The
   same harness: the `memory.scrollback_fill_20k` scenario in process, and
   the app's resident size during each stress run.
@@ -474,7 +529,9 @@ commit.
   inherited designated initializer the class does not override, such as
   `-initWithFrame:` for an `NSView` subclass; a stub traps when called and
   the runtime cannot tell it from a real initializer, so the reviewer
-  checks that the Swift class declares or inherits each one), one
+  checks that the Swift class declares or inherits each one, or that the
+  header marked it `NS_UNAVAILABLE` and the commit message says it now
+  traps (traps.md)), one
   check per class that Swift calls members not marked `dynamic` directly,
   past key-value observing and swizzling, and one check per property that
   was atomic and is nonatomic after. Every Swift property is nonatomic; an
@@ -512,10 +569,10 @@ been accepted:
   `-dealloc` did is still needed.
 - A class that implements `+load` or `+initialize`, which a Swift class
   cannot implement.
-- On Intel, `BOOL` is encoded `c`. Whether swiftc encodes `Bool` as `c` or
-  `B` there is untested, since the snapshots so far come from arm64; if
-  they differ, the encodings differ and the comparison fails, which fails
-  safe.
+
+The snapshots come from arm64 only. On x86_64 swiftc encodes `Bool` as `c`,
+as clang encodes `BOOL` there (read with `otool -ov` from an Intel build in
+the `iTermCacheableImage` port; [README.md §5](README.md), step 8).
 
 This is the main guarantee for hidden callers. Stage one keeps every selector,
 so a caller that reaches the class through a selector string, a xib, the
@@ -606,6 +663,30 @@ compiler, written once into a SQLite database and then queried
   `if` condition, is not marked even where the compiler drops an operand,
   so a mark never excuses code the object holds (`extract_sends.cpp`,
   "Constant conditions").
+- **Evidence for unreachable code.** A send in code that no path from its
+  function's entry reaches is marked (`send.in_unreachable_code`), from
+  Clang's control-flow graph of the innermost function, method, block or
+  lambda: after `return`, `break`, `continue`, `goto`, `throw`, `@throw`, or
+  a call the code generator treats as noreturn (the `noreturn` attribute,
+  `_Noreturn`, `[[noreturn]]`, `__builtin_unreachable`); not after
+  `__builtin_assume(0)`, `__builtin_trap`, `__builtin_debugtrap` or an
+  `analyzer_noreturn` function, where Clang's graph ends the path but the
+  compiler emits what follows. The skipped arm of a folded `if` or conditional
+  operator (the constant-condition rule above) is not a path, so the code
+  after `ITAssertWithMessage(NO, ...)` and `ITDebugAssert(NO)` is
+  unreachable. The default edge of a `switch` that lists every enumerator
+  is followed, because the compiler emits it. The mark reflects the unit's
+  own configuration (`tu.configuration`, Development for the capture;
+  `ITDebugAssert` is `assert` there and a cast to void in Deployment), and
+  the queries that list sends (`sends`, the census's callers) show such a
+  row with the mark "unreachable code" and that configuration rather than
+  hiding it. It is narrower than what the compiler drops: a send in no
+  block of the graph, a block or lambda written in unreachable code, the
+  code after `while (1)` without a `break` and template patterns are not
+  marked (`extract_sends.cpp`, "Unreachable code"). That a marked send is
+  never emitted is checked against an object file for each form of the
+  fixtures (`UnreachableCodeTest`), not proven for every form. Schema
+  version 13.
 - **What Swift imports.** For each captured Swift module whose command
   has a bridging header (only `iTerm2SharedARC`; `ModernTests` has none of
   its own and sees it through that module), `update` (and
@@ -649,6 +730,70 @@ compiler, written once into a SQLite database and then queried
   database that does not cover the project, or no rows while a text search
   finds a match in a file that is not parsed), and 2 on error.
 
+- **Class state.** `codedb.py classstate CLASS` is the ivar and static
+  table of [objc-state.md](objc-state.md) (`classstate.py` documents every
+  field). One row per ivar (declared in the `@interface`, a class
+  extension or the `@implementation`, or synthesized for a property) with
+  its type as the compiler prints it, where it is declared, ownership under
+  the ARC mode of the class's `@implementation`, whether Swift can import
+  the type and why not, the methods named like it, and every function that
+  uses it with the kind of use; one row per static the class's files
+  define, with whether it is written after its initialization (a non-const
+  C++ object is "not decided", because the extractor records its operator
+  and member calls as reads; a once token says so); and the statics and
+  globals those files use but do not define. Importability is decided from
+  the type facts the extractor records and, for the repository classes and
+  protocols a type names anywhere in it (found by name among the words of
+  the type the compiler prints), from the import table of the bridging
+  header (`swiftimports`). At the top level, one Swift does not import
+  makes the verdict "no", as `PTYTab._variablesScope` shows. Inside the
+  type the verdict depends on the position, as swiftc showed with a
+  forward-declared class (`classstate.py`, above `position_verdict`): in a
+  block's parameters or result, a type argument of `NSArray`,
+  `NSDictionary`, `NSSet`, `NSCache`, `NSMapTable`, `NSHashTable` or a
+  repository generic, or a C array's element, "no"; a type argument of
+  `NSMutableArray` and the other SDK classes whose API notes drop their
+  arguments, "degraded"; a pointer to an object pointer or a function
+  pointer, "degraded" (OpaquePointer). Any other position, or a type
+  nested more than one level, is "unknown" with "visibility: not checked
+  for the parts of this type". Records, typedefs and enums inside a type
+  are not judged.
+  `--snapshot FILE` compares each ivar's ownership with a format 3 runtime
+  snapshot (section 9), with the rules of `ivar_ownership_check.py`.
+  `--all` writes the table of every class with an `@implementation` in the
+  migration's scope (less generated protobuf and Core Data classes), one
+  class at a time, then a summary; `--json` makes it JSON Lines. On the
+  whole tree (2026-11-21: 1,230 classes, 7,789 ivars of which 463 are not
+  importable and 47 unknown, 26 of those the ColorPicker framework's) it took 6 to 11 minutes on the shared machine
+  and peaked at about 100 MB, writing 25 MB of text. Each class's header
+  says that the per-class text searches were not made.
+  Limits: no text search is made for a row (the database answers all of
+  them); `--all` skips the per-class searches of unparsed files and
+  skipped ranges that `classstate CLASS` makes, so a class whose answer
+  must be complete is asked alone. The visibility of typedefs, enums and C
+  records is not checked (no table of them), nor associated objects that
+  categories add, locks other than `@synchronized`, key-value observing of
+  accessor names, and how often a reference runs. Static functions are not
+  listed and methods are not grouped by shared state.
+
+- **Inventory verify.** `codedb.py verifyinventory [CLASS...]` compares
+  what `inventory.py`'s parser finds in each file (classes, superclasses,
+  protocols, ivars, methods, properties) with the database, class by
+  class, and with `--snapshot FILE` (format 2 or 3) a runtime snapshot's
+  superclasses, ivars and methods with the database. Each difference is
+  explained by a printed rule or is UNEXPLAINED (`verify_inventory.py`
+  lists the rules). On the whole tree (2026-11-21: 1,325 classes, 1,918
+  files, 33 seconds, 70 MB) 2,274 differences, 2,268 explained (macros,
+  files no unit reads, inactive `#if` branches) and 6 not: four methods of
+  `iTermWindowImpl.m`, which `PTYWindow.m` includes four times with
+  different settings (a known limit), and the two tool bugs in `bugs.md`.
+  The snapshot side reads format 3; on 2026-11-21 the only format 3
+  snapshots were of the two pilot classes, taken before their ports, so
+  against the current database they show the ported classes' ivars as
+  runtime only. Their ownership was checked with `ivar_ownership_check.py`
+  against a database from before the ports: every ivar agrees or is
+  answered by the compiler.
+
 - **Cross-check.** `codedb.py crosscheck` compares each Objective-C unit
   with its object file (`crosscheck.py`): the selectors it sends, the
   methods and ivars it defines, and the number of call sites of each
@@ -659,28 +804,50 @@ compiler, written once into a SQLite database and then queried
   row can neither explain a call site nor cancel one. A larger count in the
   object from an always_inline function is explained only up to the copies
   of that function that its references in the unit allow (`function_ref`).
+  The rule `unreachable-code` explains a selector only in the database
+  when every row of it is marked as unreachable code (or as in a constant-
+  false branch, or is in a function the object does not define) and at
+  least one is unreachable; the counts leave the unreachable rows out like
+  the constant-false ones, and a count that agrees only once they are left
+  out is listed as explained by that rule, so each such site is printed.
+  The rule holds for the configuration the database was extracted in
+  (Development).
   `--build-root` reads the objects of another build of the same sources,
   such as a sanitizer build. A C++ function, and a C function of an
-  Objective-C++ unit, is found in the object by its mangled name.
-  Known differences it reports as UNEXPLAINED, all in the safe direction
-  (a send in the database that the object lacks): sends in code that no
-  path reaches (after `return`, after a call of a noreturn function such as
-  the failure branch of an assertion, after a `switch` that returns in
-  every case), which the extractor does not mark; whether such code is
-  reachable can depend on the configuration (`ITDebugAssert` is `assert`
-  in Development and nothing in Deployment). And a condition with a side
-  effect that the compiler folds at one site and not at an identical one,
-  which nothing in the AST predicts.
-  Limits found in review and not fixed: the mangled-name lookup matches a
-  name inside a longer one (`6Helper` in `16HelperXxxxxxxxxx`) and a static
-  C function against a C++ member of the same name, so a function that was
-  not emitted can be taken as emitted, and its counted rows could cancel a
-  send the database misses; no such collision is known in the tree. The
-  rules for boxed numbers, strings and values, array and dictionary
-  literals and fast enumeration explain any excess of their framework
-  selectors in a unit without checking that the unit has such a literal,
-  so a missed explicit call of one of those selectors would be explained
-  away.
+  Objective-C++ unit, is found in the object by its mangled name, read
+  whole: the identifiers of the function's name, each a whole
+  `<length><identifier>`, and whether it is a constructor or destructor
+  must be the database's, except that the symbol may have more
+  identifiers before or between the database's (inline namespaces, which
+  the database's name leaves out). So a name inside a longer one (`6Helper`
+  in `16HelperXxxxxxxxxx`) no longer matches; a member `Foo::Helper` still
+  matches a database name `Helper`, because the extra leading identifier
+  may be an inline namespace (the safe direction). The constructor of a
+  class template (`ns::Tm<int>::Tm`) is recognized. A symbol whose form the
+  reader does not know (an ABI tag, an operator) is matched by its
+  identifiers in order, as before. On the database of 2026-11-21 this
+  changed no unit's result.
+  Known difference it reports as UNEXPLAINED, by design, in the safe
+  direction (sends in the database that the object lacks): a condition
+  with a side effect that the compiler folds at one site and not at an
+  identical one, which nothing in the AST predicts
+  (`iTermWebSocketFrame.m`, `-closeFrameCode`, the assignment used as a
+  condition in bugs.md: three call-site counts, `UTF8String`,
+  `callStackSymbols` and `stringWithFormat:`). It goes when that bug is
+  fixed.
+  Whole tree at schema 13 on 2026-11-21: 1,121 Objective-C units, 1,119
+  compared (the two others were test files edited after the capture), and
+  those three counts the only UNEXPLAINED differences, so
+  `codedb.py crosscheck` exits 1 until that bug is fixed.
+  Limits not fixed: the rules for boxed numbers, strings and values, array
+  and dictionary literals and fast enumeration explain any excess of their
+  framework selectors in a unit without checking that the unit has such a
+  literal, so a missed explicit call of one of those selectors would be
+  explained away. The rule `direct-method` explains an object with fewer
+  call sites of a selector whenever the unit defines or references a
+  method symbol for it, objc_direct or not (two counts it explained in
+  `PTYSession.m` and `PseudoTerminal.m` were unreachable sends); that is
+  the safe direction.
 
 - **Reflective registry.** `tools/swift_migration/reflective_registry.py`
   checks `reflective-sites.md` against the database: every dynamic
@@ -688,10 +855,34 @@ compiler, written once into a SQLite database and then queried
   and argument, not line), no bullet is stale, the bullet lines and the
   summary table agree with the database, and the names table is the union
   of the `Names:` lines. `update` rewrites the bullet lines and the summary
-  table and refuses while a site needs reading. Line numbers in the prose
-  are not regenerated. Bullets are paired with rows in line order, so when
-  one of two sites with the same key disappears, the wrong one of the two
-  bullets may be the one reported stale.
+  table and refuses while a site needs reading. Outside its bullets the
+  registry cites places by file and function, not by line (1,330 prose
+  references and 57 bare line numbers were rewritten that way on
+  2026-11-21), so nothing there moves with the code; `check` does not
+  read the prose. The 47 bullets of sections 4 to 9 that cite lines keep
+  `FILE:LINE`, the form `entry_points.py` parses; their 130 line numbers
+  (with the lists and "also" locations) were brought to the tree of that
+  day and are not regenerated (36 of the bullets also name their
+  function).
+  `check` is the lint of [hidden-callers.md §2](hidden-callers.md): a new
+  use of a reflective API with a name that is not a literal is a new
+  dynamic row and fails it (`LintFixtureTest` in
+  `tests/test_reflective_registry.py`: `NSSelectorFromString`,
+  `performSelector:`, `valueForKey:`, `NSClassFromString`, and
+  `NSInvocation` through `methodSignatureForSelector:` and `setSelector:`;
+  the same calls with literal names do not). It sees only the calls of the
+  extractor's table (`extractor/reflective_table.h`, listed by `codedb.py
+  reflective --list`) in Objective-C. It does not see the conversions of
+  a selector or class to a string (`NSStringFromSelector`,
+  `NSStringFromClass`, `sel_getName` on non-literals), `_cmd` used as
+  data, names assembled by `##` or string formatting until they reach a
+  call of the table, `conformsToProtocol:`, the forwarding methods,
+  Swift's `Selector("...")` and other reflective Swift, and the methods
+  Cocoa finds by naming convention (key-value coding accessors,
+  validation, scripting accessors); those stay with the reading of
+  [hidden-callers.md §3](hidden-callers.md). Bullets are paired with rows
+  in line order, so when one of two sites with the same key disappears,
+  the wrong one of the two bullets may be the one reported stale.
 
 Limits: function bodies in a repository header that units read only
 through a Clang module are not walked, so their sends and references are
@@ -860,3 +1051,37 @@ captured in; a file whose case differs from the compile database's entry
 is matched case-insensitively and the report says so. Tests:
 `python3 -B -m unittest discover -s tools/swift_migration/extraction/tests
 -p 'test_*.py'`.
+
+## 12. Light-path qualifying checks
+
+`tools/swift_migration/qualify_unit.py CLASS` prints each condition of
+[lifecycle.md §3](lifecycle.md) for an Objective-C class as PASS, FAIL or
+MANUAL, with its evidence and the query or search that produced it, and
+exits 0 when nothing FAILs; `--json` gives the same as data; its `--help`
+is the manual. Users, instance-variable accesses, overrides, properties,
+reflective calls, sends, macro expansions and static references come from
+the code database; xibs, storyboards, the sdef, property lists, Core Data
+models and the registry from the entry-point census's parsers (section 2),
+and the census's own per-method counts decide "nothing but ordinary
+sends". Text search is used where the database records nothing: a mention
+of the class that is no send or reference (a type, a cast), counted as a
+user and labelled; and in the unit's own files, calls of C functions such
+as `dispatch_async`, `objc_setAssociatedObject` and `NSStringFromClass`,
+and `@synchronized`. Profile keys are the string macros of any header that
+defines at least 20 of them (today `ITAddressBookMgr.h`), found through
+the database's macro expansions. A condition is MANUAL, never PASS, when
+the database cannot decide it: a unit of the class's files that is not
+current, a stale app file that mentions its selectors or properties, a
+census hit on a selector another class also
+has, a key-value coding key sent to an object of unknown class, a send to a
+repository method that itself stores (one level), a use from per-frame or
+per-token code (the hot directories and `PTYTextView*`, directly or through
+one class of a user file), a timer. Any access to its instance variables
+from outside the unit FAILs. The callers' thread is MANUAL until the
+orchestrator records the answer with `--callers-thread TEXT`, which is
+printed as RECORDED with the text as evidence. Every condition that can
+FAIL has a fixture that FAILs it alone. `--list` checks every class with an
+implementation under `sources/` in one process (about 2.5 minutes, 300 MB)
+and prints those that no condition FAILs, by size, with the conditions
+still MANUAL for each. It needs the repository and a current code database,
+nothing else.

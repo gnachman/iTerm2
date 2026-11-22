@@ -43,8 +43,8 @@ class from a system framework, or one made at run time) gets no compiler
 answer, which is reported as unknown, not as a disagreement.
 
 Exit status: 0 when nothing disagrees; 1 when something does; 2 on bad
-arguments, an unreadable snapshot, or a database that cannot be read or has
-another schema version.
+arguments, an unreadable snapshot, or a database that cannot be read, has a
+schema older than 11, or lacks a column the tool reads.
 """
 
 import argparse
@@ -55,7 +55,17 @@ import sqlite3
 import sys
 from collections import OrderedDict
 
-SCHEMA_VERSION = 11
+# The oldest schema of the code database whose tables hold the columns this
+# tool reads (REQUIRED_COLUMNS). A later schema is read when it still has
+# them: codedb.py raises its version for changes elsewhere (schema 12 added
+# columns this tool does not read), and a fixed version made the tool refuse
+# every current database.
+OLDEST_SCHEMA = 11
+REQUIRED_COLUMNS = {
+    'tu': ('id', 'main_file', 'extracted_at'),
+    'objc_impl': ('tu', 'class_name', 'category', 'arc', 'file'),
+    'objc_ivar': ('tu', 'class_name', 'name', 'type', 'type_class', 'ownership', 'arc', 'record_has_objects', 'file'),
+}
 
 # What the runtime label can tell, and what it cannot.
 RUNTIME_SAYS = {
@@ -296,8 +306,17 @@ def open_database(path):
         raise ValueError('no database at %s' % path)
     con = sqlite3.connect('file:%s?mode=ro' % path, uri=True)
     version = con.execute('PRAGMA user_version').fetchone()[0]
-    if version != SCHEMA_VERSION:
-        raise ValueError('the database at %s has schema %d; this tool reads schema %d' % (path, version, SCHEMA_VERSION))
+    if version < OLDEST_SCHEMA:
+        con.close()
+        raise ValueError('the database at %s has schema %d; this tool reads schema %d or later' % (
+            path, version, OLDEST_SCHEMA))
+    for table, columns in REQUIRED_COLUMNS.items():
+        have = set(r[1] for r in con.execute('PRAGMA table_info(%s)' % table))
+        missing = [c for c in columns if c not in have]
+        if missing:
+            con.close()
+            raise ValueError('the database at %s (schema %d) has no column %s in table %s, which this tool reads' % (
+                path, version, ', '.join(missing), table))
     return con
 
 

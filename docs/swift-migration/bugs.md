@@ -109,6 +109,67 @@ its assertion.
 - **Meanwhile:** disabled on 2026-11-20 with the `FLAKY-DISABLED` marker.
 - **Found:** 2026-11-20.
 
+### Flaky test `TabLifetimeWitnessTests.testClosedTabIsFreedWithItsSession`
+
+- **Where:** `ModernTests/LifetimeWitnessTests.swift`, class
+  `TabLifetimeWitnessTests`, `testClosedTabIsFreedWithItsSession`.
+- **What:** failed once, on 2026-11-21, in a full serial thread sanitizer
+  run (`tools/swift_migration/sanitizer_tests.sh thread`, unit
+  `phase0-test-items`, lane-1, on a heavily loaded machine), after 473
+  seconds: `XCTAssertEqual failed: ("["session", "session.screen",
+  "session.textview", "session.terminal", "session.tokenExecutor"]") is not
+  equal to ("[]") - A closed tab and its session must be freed`
+  (line 573, `assertAllFreed`). Run alone in thread mode on the same build
+  minutes later, the class passed (this test 3.8 s). It passed in the
+  address sanitizer full parallel runs before (3.25 s in lane-1's gate run
+  of the same day). What the log shows during the 473 seconds, unexplained:
+  the test process had 25 `PseudoTerminal`s alive (windows left by earlier
+  test classes, presumably), and `kRefreshTerminalNotification` was posted
+  about 450 times, each time refitting all 25 windows (11,250
+  `refreshTerminal: trigger=kRefreshTerminalNotification` lines, with
+  `tabBarShouldBeAccessory` alternating between YES and NO) over about 450
+  seconds. Belief, not verified: that kept the main thread busy, and the
+  30-second deadline of `LifetimeWitnessSupport.spin(until:)`, which is
+  checked only between run loop passes, could not end the wait sooner. Who
+  posted the notification so often was not found. The
+  run's log is `tmp/sanitizers/runs/thread-20261121-192129/test.log` in
+  lane-1 (not committed), lines 253461 to 718293.
+  The review read the same log: this looks like a refresh feedback loop
+  that starves the main thread, not random flakiness and not a leak in
+  closing a tab (the tab was freed; only the session, waiting on the main
+  thread, survived). The refresh rate was steady for the whole 473 seconds,
+  so one run loop pass probably lasted about 440 seconds, which points to
+  a nested run loop or a re-entrant posting loop. Prime suspect, not
+  proven: `+[iTermPreferences setHideTabBarSuppressedDuringDrag:]`
+  (`iTermPreferences.m`), which posts a refresh on every change and is
+  driven by the tab drag begin and end notifications through
+  `-[PseudoTerminal draggingDidBeginOrEnd:]`; the class that ran just
+  before was `TabGroupSubgroupDragOutTests`, a tab drag class. Running
+  those two classes together in the address sanitizer build did not
+  reproduce it (0.46 s). The storm belongs to this test: its two siblings
+  ran right after with the same 24 leftover windows and passed. Separate
+  defect: some earlier test classes leave 24 windows open, and no witness
+  catches that.
+- **Reproduce:** not reliably; it passed alone. Perhaps a full serial
+  thread-mode run, where earlier classes leave windows open.
+- **Owner's explanation (2026-11-21):** running the full suite sometimes
+  uses up all of memory, and then everything gets very slow. He attributes
+  the 473 seconds of the full serial thread sanitizer run to that; memory
+  pressure was not recorded during the run. The refresh storm is not
+  investigated further.
+- **Resolved (2026-11-21, re-enabled):** disabled earlier that day with the
+  `FLAKY-DISABLED` marker, then, as the owner asked, run by itself: the
+  class `TabLifetimeWitnessTests` passed five times in a row in the normal
+  build (`tools/run_tests.expect ModernTests/TabLifetimeWitnessTests`, this
+  test 0.35 s each time) and once alone under the thread sanitizer
+  (`tools/swift_migration/sanitizer_tests.sh thread
+  ModernTests/TabLifetimeWitnessTests`, 3 of 3 passed, verdict PASS), all
+  in lane-1. The skip is removed. If it fails again in a full run, record
+  the machine's memory pressure at the time (for example `memory_pressure`
+  or Activity Monitor's memory pressure graph, and the swap in use) before
+  disabling it.
+- **Found:** 2026-11-21.
+
 ## `@synchronized` sites whose lock can be nil
 
 Found by the Phase 0 nil-lock audit ([concurrency.md §2](concurrency.md)).
@@ -673,9 +734,207 @@ or a crash from program output.
 - **Reproduce:** `tools/swift_migration/sanitizer_tests.sh nullability
   ModernTests/iTermCacheableImageSessionTests` (any test that calls
   `PTYSession(synthetic: false)` does it).
-- **Meanwhile:** left as it is; to be triaged as a wrong annotation or a bug
-  (nullability.md section 7). It is why unit `iTermCacheableImage` keeps its
-  one `PTYSession` test in a class of its own.
+- **Which way nil arrives:** the delegate is nil. `-[PTYSession
+  initSynthetic:]` calls `-[VT100Screen performBlockWithJoinedThreads:]`
+  right after creating the screen (to set the flow ledger), before
+  `_screen.delegate = self` (set later, in `-[PTYSession
+  setScreenSize:parent:]`, `PTYSession.m` about line 2953). Messaging the nil
+  delegate for `screenSwitchToSharedState` yields nil, and the
+  `screenRestoreState:` call site passes it on. The sanitizer's stack
+  confirms it: the report is at the call site
+  (`VT100ScreenMutableState.m:7190`) with
+  `-[PTYSession initSynthetic:]` below it and no `PTYSession` delegate
+  frame above. No implementer ever runs with nil: with a delegate,
+  `-[VT100Screen switchToSharedState]` returns the screen's `_state`, which
+  `-[VT100Screen initWithOptionalMutationQueue:ownsQueue:]` sets to a copy
+  of the mutable state, so it is never nil.
+- **Resolved (2026-11-21, wrong annotation):** unit
+  `screenRestoreState-nullability` (kind `annotate`) declares the
+  parameter of `-[VT100ScreenDelegate screenRestoreState:]` `_Nullable`,
+  with a comment saying why. The return of `screenSwitchToSharedState` and
+  `-[VT100Screen switchToSharedState]` / `-restoreState:` keep their
+  nonnull claims, which are true. The Swift conformers and their overrides
+  in ModernTests and PerformanceTests take `VT100ScreenState?` and return
+  early on nil (which cannot happen there, since they run only as a
+  delegate). No behavior change. The nullability sanitizer run of
+  `iTermCacheableImageSessionTests` no longer reports this path; it now
+  stops at the next violation on the same session-creation path,
+  `iTermGenericEvaluator.m:214` (nil passed to `-[NSMutableSet unionSet:]`
+  from `-[iTermGenericEvaluator evaluateSynchronously:sideEffectsAllowed:completion:]`,
+  reached from `-[iTermGenericEvaluator initWithScope:...]` in
+  `-[PTYSession initSynthetic:]`), which is not triaged yet.
+- **Follow-up (2026-11-22, unit `session-nullability-guards`, kind
+  `fix`):** the next violations on the session and window creation paths
+  were worked through one at a time with
+  `tools/swift_migration/sanitizer_tests.sh nullability`. Each fix keeps
+  today's behavior: a guard that skips a call whose result with nil is
+  already known (checked with a small probe program against the SDK where
+  it returns a value), or one annotation made nullable. Fixed, in the order
+  the sanitizer reached them:
+  1. `iTermGenericEvaluator.m`, `-evaluateSynchronously:sideEffectsAllowed:completion:`:
+     `-unionSet:` with a nil `missing` (the evaluator's `missingValues` is
+     nil for an expression with no function call) is skipped.
+  2. `iTermScriptFunctionCall.m`, `-evaluateParametersWithScope:...`: the
+     same, for an argument's `innerMissing`.
+  3. `iTermProfilePreferences.h`, `iTermAmendedColorKey()`: the `profile`
+     parameter is now `_Nullable` (wrong annotation). `-[PTYSession
+     updateConfigurationFields]` passes the nil profile it has before
+     `-setProfile:`, and the function only passes it to
+     `+boolForKey:inProfile:`, which is nullable. No Swift caller.
+  4. `ProfileModel.m`, `-bookmarkWithGuid:`: returns nil at once for a nil
+     GUID (`-[PTYSession profileName]` passes one before the profile is
+     set); `-isEqualToString:nil` is NO for every profile, so the search
+     found nothing anyway.
+  5. `PseudoTerminal.m`, `-windowDecorationColor`: no selected tab while
+     the window is set up; `-indexOfTabViewItem:nil` is `NSNotFound`, so a
+     nil item counts as not the first tab (and a nil tab view still counts
+     as index 0, as before).
+  6. `iTermKeyboardHandler.m`, `-stringForEventWithoutSideEffects:encoding:`:
+     nil key mapper data becomes empty data; `-initWithData:nil` gives the
+     same empty string as empty data in all 105 available encodings.
+  7. `PTYSession.m`, `-setBadgeFormat:` and 8. `-setSubtitleFormat:`: the
+     current format is nil the first time; the early return is skipped for
+     nil, as `-isEqualToString:nil` is NO.
+  9. `iTermSessionHotkeyController.m`, `-removeSession:`: no registration
+     (no hotkey) skips `-removeObject:nil` and `-unregister`, both no-ops.
+  10. `iTermBroadcastInputHelper.m`, `-shouldBroadcastToSessionWithID:fromSessionWithGUID:`:
+      a nil domain skips `-intersectsSet:nil`, which is NO.
+  11. `PseudoTerminal.m`, `-autoCommandHistoryEnabledForSession:`: a nil
+      auto command history GUID skips `-isEqualToString:nil`.
+  12. `PseudoTerminal+TouchBar.m`, `-updateTouchBarIfNeeded:`: a nil
+      current customization identifier counts as different, as before.
+  13. `iTermTouchbarMappings.m`, `+loadGlobalTouchBarMap`: a nil plist path
+      (the resource is missing from the bundle) skips
+      `-dictionaryWithContentsOfFile:nil`, which is nil.
+  14. `SessionTitleView.m`, `-setTitle:`: a nil current title skips
+      `-isEqualToString:nil`.
+
+  `iTermCacheableImageSessionTests`, `PTYSessionEndActionTests`,
+  `PTYSessionNullabilityTests` and `PTYSessionSendTextSlowlyTests` now run
+  clean under the nullability sanitizer.
+- **Follow-up (2026-11-22, unit `window-nullability-guards`, kind `fix`,
+  with one `annotate` commit):** the owner then allowed guards anywhere,
+  hot paths included, “as long as you're sure they have no
+  behavior-changing effect”. Tests that open a window or a tab were run with
+  `sanitizer_tests.sh nullability --collect` until no report was left. Each
+  guard keeps the old result for every combination of nil and non-nil
+  operands, with the same calls in the same order apart from skipped
+  side-effect-free getters; results for nil were checked with probe
+  programs against the SDK. Guarded:
+  1. `iTermMutableAttributedStringBuilder.m`, `-setAttributes:` (hot path,
+     per-row text drawing): `[attributes isEqualToDictionary:_attributes]`
+     with nil `_attributes` (the first attributes on a builder) became
+     `_attributes && [...]`, one nil test. `-isEqualToDictionary:nil` is NO
+     for every dictionary class tried, and a nil `attributes` gives NO as a
+     nil receiver either way.
+  2. `iTermProfileModelJournal.m`, `+journalWithAction:bookmark:model:index:identifier:`:
+     a nil `KEY_TAGS` gets `[[NSArray alloc] init]`, the same `__NSArray0`
+     singleton `-initWithArray:nil` returned.
+  3. `ProfileModel.m`, `-bookmark:differsJournalablyFrom:`: each field is
+     compared by a helper that fetches a's value, then b's (the old
+     receiver-then-argument order), counts a missing b value as a
+     difference when a's value is nil or a string (an array for tags),
+     which is what `-isEqualToString:nil`/`-isEqualToArray:nil` and a nil
+     receiver gave, and otherwise sends the same message as before, so a
+     value of another class in a malformed profile (an `NSNumber`, which
+     has an `-isEqualToString:` category, or a string under `KEY_TAGS`)
+     still gets it with nil. A field absent from both profiles still
+     counts as a difference, as before.
+  4. `iTermAutomaticProfileSwitcher.m`, `-setHostname:...`: each
+     `-isEqualToString:` against a last value (nil before the first update
+     or for an unknown field) and against a nil current GUID is skipped
+     for a nil argument. The parameters are strings from session
+     variables, which only app code sets (the API sets only `user.`).
+     The same path in `iTermRule.m`,
+     `-scoreForHostname:username:path:job:commandLine:expressionValueProvider:`,
+     skips `-isEqualToString:` against a rule's nil `username` (found by
+     `AutomaticProfileSwitcherTests`).
+  5. and 6. `iTermExpressionEvaluator.m`, the interpolated-string and array
+     paths: `-unionSet:` with a nil `missingValues` is skipped (no test
+     reached these; the same proof as in `iTermGenericEvaluator`).
+  7. `IntervalTree.m`, `-objectsWithSmallestLimitAfter:fromNode:` and
+     `-objectsWithLargestLimitBelow:fromNode:`: `-addObjectsFromArray:`
+     with a nil array (a subtree not searched) is skipped; it is a no-op.
+     `-objectsWithSmallestLimitFromNode:` has the same shape, was not
+     reached, and is unchanged.
+  8. `iTermController.m`, `-indexOfTerminal:`: nil returns `NSNotFound`, or
+     0 when the array is nil after `-cleanUpIfNeeded`, as
+     `-indexOfObject:nil` and the nil array gave.
+  9. `PseudoTerminal.m`, `-hideAutoCommandHistoryForSession:` (reached),
+     `-wantsCommandHistoryUpdatesFromSession:` and
+     `-updateAutoCommandHistoryForPrefix:inSession:popIfNeeded:` (same
+     test, not reached): a nil auto command history GUID skips
+     `-isEqualToString:`, as in `-autoCommandHistoryEnabledForSession:`.
+  10. `PseudoTerminal.m`, `-nextTabGroupColorForParentGroupID:movingTabs:`:
+      a nil parent group ID skips `-isEqualToString:`.
+  11. `PseudoTerminal.m`, `-addTabGroupNestingItemsToMenu:forGroupID:`: a
+      nil parent of the group skips `-isEqualToString:`;
+      `-parentIDOfTabGroup:` is now called before `uniqueIdentifier` is
+      read (both pure).
+  12. (Not made: see Remaining. The site is in
+      `ThirdParty/PSMTabBarControl`, which is not to be edited.)
+  13. `VT100ScreenState.m`, `-blockMarkWithID:`: a nil block ID (a line in
+      no foldable block) returns nil at once; `-objectForKeyedSubscript:nil`
+      is nil for every dictionary class tried.
+  14. `iTermRootTerminalView.m`, both status bar layout methods: with no
+      status bar view controller, `-addSubview:nil` is skipped. A probe
+      showed it changes no subviews and calls none of the view's
+      overridable hooks (`-didAddSubview:`, `-setNeedsLayout:`,
+      `-setNeedsDisplay:`), unlike a real add.
+
+  Annotations made nullable (outward positions, or an inward one every use
+  tolerates; no Swift caller or conformer):
+  `-[iTermSearchResultsMinimapViewDelegate searchResultsMinimapViewLocations:]`
+  return (`SessionView` forwards it to its weak delegate; every caller
+  treats nil as empty), and the `tabStyle` parameter of
+  `-[iTermTheme statusBarTextColorForEffectiveAppearance:marginColor:colorMap:tabStyle:mainAndActive:]`
+  (passed on to
+  `-terminalWindowDecorationTextColorForBackgroundColor:effectiveAppearance:tabStyle:mainAndActive:`,
+  which only casts it to `PSMMinimalTabStyle`; that method's own
+  parameter is still nonnull, see Remaining).
+
+  `TabLifetimeWitnessTests`, `WindowLifetimeWitnessTests`,
+  `SessionLifetimeWitnessTests`, `PTYSessionTabColorResetTests`,
+  `SwapSessionPaneTitleTests`, `ProfileColorsReloadTests`,
+  `SessionNoteFocusTests`, `PTYSessionScreenWindowIndexTests`,
+  `DuplicateWindowLocationLockTests`, `TabGroupNewGroupColorTests`,
+  `PTYSessionSelectedCommandSearchTests`, `DuplicateTabSavedProgramTests`,
+  `TabGroupMenuAppearanceTests`, `TabGroupRestoreValidationTests`,
+  `WindowStyleChangeFocusTests` and `PaneFocusFollowsMouseIntegrationTests`
+  now run clean under the nullability sanitizer, and so do
+  `AutomaticProfileSwitcherTests`, `IntervalTreeBasicsTests`,
+  `IntervalTreeForwardLocationEnumeratorTests`,
+  `IntervalTreeSmallestLocationBugTests`,
+  `AttributedStringBuilderSpacingMarkTests`,
+  `InterpolateBuiltInFunctionTests`, `TriggerInterpolatedParameterTests`
+  and the four session classes above. **Remaining**, two sites that still
+  stop a test class, both needing an edit under
+  `ThirdParty/PSMTabBarControl`, which is not to be edited until the owner
+  says so (each was written and reviewed, then left out):
+  - `ThirdParty/PSMTabBarControl/source/PSMTabBarControl.m:5070`,
+    `-setTabGroupIdentifiers:parentIdentifiers:forTabViewItems:`: nil
+    passed to `-isEqualToString:` when a parent identifier is `NSNull`.
+    Stops `TabGroupSubgroupDragOutTests` (3 of 6 tests). The guard is a
+    nil test before the comparison; the group identifier test beside it
+    has the same shape.
+  - `sources/TerminalView/PseudoTerminal.m`,
+    `-minimalTabStyleBackgroundColor`: returns nil while the window has no
+    current session, through the nonnull return of
+    `-[PSMMinimalTabStyleDelegate minimalTabStyleBackgroundColor]` in
+    `PSMMinimalTabStyle.h`. Stops `MinimalWindowSubtitleLayoutTests` (both
+    tests). The fix is `nullable` on that return; its only caller,
+    `-[PSMMinimalTabStyle tabBarColor]`, already uses black for nil.
+
+  Also remaining, seen while reading and not reached by these tests:
+  - `-[iTermTheme terminalWindowDecorationTextColorForBackgroundColor:effectiveAppearance:tabStyle:mainAndActive:]`
+    receives the same nil `tabStyle` in the minimal theme (its parameter is
+    nonnull) and then returns nil from its nonnull return. Both claims are
+    in `iTermTheme.h`; the methods of `PTYWindow.h` that forward the color
+    are unannotated. Not changed, since the sanitizer did not reach it and
+    the return claim needs its callers checked.
+  - `TerminalWindowTestFixtureTests` and `PTYTabTiledSessionsTests` skip
+    unless on-screen tests are enabled (`OnscreenTestGate`), so they were
+    not checked.
 - **Found:** 2026-11-21, unit `iTermCacheableImage`, step 3.
 
 
@@ -733,3 +992,56 @@ or a crash from program output.
 - **Meanwhile:** preserved; `iTermColorSuggesterTests` uses gray defaults
   and reads result lightness without it.
 - **Found:** 2026-11-21, unit `iTermColorSuggester`.
+
+
+## `iTermColorSuggester` reseeds and draws from the process-wide `drand48` generator
+
+- **Where:** `sources/TryingTooHard/iTermColorSuggester.swift`, the
+  initializer (`srand48`, then two `drand48` calls per attempt). The
+  Objective-C did the same; the port kept it.
+- **What:** `srand48` and `drand48` share one generator for the whole
+  process, with no locking. Each suggestion resets the sequence of anything
+  else in the process that uses the family (nothing else in `sources/`
+  does; linked libraries were not searched), and two threads constructing
+  a suggester at once would interleave draws and get colors that do not
+  match their seeds. Every caller is on the main thread, and the
+  initializer asserts it in beta builds, which the owner judged the right
+  guard (2026-11-21).
+- **Reproduce:** by reading; `testOneAttemptTakesTwoNumbersFromTheSharedGenerator`
+  pins the shared use.
+- **Meanwhile:** left as it is. A fix that changes no colors: seed a local
+  three-word state as `srand48` does (the seed's low 32 bits, then
+  `0x330E`) and draw with `erand48`.
+- **Found:** 2026-11-21, unit `iTermColorSuggester`.
+
+## The inventory's parser misses a method written with a semicolon before its body
+
+- **Where:** `tools/swift_migration/inventory.py`, `ObjCFile` (the method
+  parser). Seen at `ColorPicker/ColorPicker/CPKFavorite.m:25`,
+  `+ (BOOL)supportsSecureCoding; {`.
+- **What:** Objective-C allows a `;` between a method's declarator and its
+  body in an `@implementation`. The parser does not list such a method, so
+  the inventory's method counts and anything built on them miss it. The
+  compiler records it.
+- **Reproduce:** `codedb.py verifyinventory CPKFavorite` reports
+  `method database only: +[CPKFavorite supportsSecureCoding]` as
+  unexplained.
+- **Meanwhile:** left as it is; no tool decision depends on the inventory's
+  per-method list.
+- **Found:** 2026-11-21, unit `phase0-class-state-table`.
+
+## `verifyinventory` compares `null_resettable`, which the database does not record
+
+- **Where:** `tools/swift_migration/codedb/verify_inventory.py`,
+  `KNOWN_ATTRIBUTES`. Seen at
+  `sources/SearchingFiltering/iTermFindPasteboard.h:13`.
+- **What:** the comparison of property attributes is meant to leave
+  nullability out, because `objc_property.attributes` holds the attributes
+  without it, but `null_resettable` is in the set it compares. Every
+  `null_resettable` property is reported as an unexplained difference.
+- **Reproduce:** `codedb.py verifyinventory iTermFindPasteboard` reports
+  `property differs: stringValue ... inventory (copy,nonatomic,null_resettable,readonly), database (copy,nonatomic,readonly)`.
+- **Meanwhile:** left as it is: one unexplained line on the whole tree.
+  The fix is to drop `null_resettable` from `KNOWN_ATTRIBUTES`, with a
+  fixture property that shows the line first.
+- **Found:** 2026-11-21, unit `phase0-class-state-table`.

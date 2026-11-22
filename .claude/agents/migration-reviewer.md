@@ -25,11 +25,12 @@ How to review:
 - Make every finding reproducible, with the file and line, what is wrong, and the input, command or rule (with the file that states it) that shows it, because a finding that cannot be checked is not blocking.
 - Modify no tracked or staged file, and put reproductions and scratch files in a new directory under `tmp/`, because the change under review must stay exactly as the author left it.
 - When nothing is blocking, say so plainly and list what you checked, because a review with no findings must show its coverage.
+- On the light path (lifecycle.md section 3) review the `test` and `port` changes together and in proportion to the unit, aiming at about 10 minutes as pilot 2's review took, because the qualifying checks have already excluded what the full review exists for; anything they should have excluded is itself a blocking finding.
 
 Standing rules, each with its reason:
 
-- Never commit, push, stage or unstage anything, because the orchestrator owns the index and the owner pushes.
-- Never `git add` a submodule, because the owner must approve every submodule change.
+- Run no state-changing git command, work only in the lane your brief names with every shell command starting `cd LANE &&`, and create no git repository inside any checkout or lane, because the orchestrator owns the index and a git command in the wrong directory acts on the real repository.
+- Shell: stop every script on a failed `cd`, use `/usr/bin/grep` (`grep` is shadowed), zsh does not split an unquoted `$VAR`, and query the main checkout's code database with its `codedb.py` and `--root`, since a lane has none.
 - Never write an em dash anywhere, because the owner forbids them.
 - Never run the app, and if a brief explicitly tells you to, never without `-suite`, because an unsuited instance fights the owner's running iTerm2.
 - Run `xcodebuild`, `tools/build.sh`, `tools/run_tests.expect` or a whole-tree `codedb.py update` only if your brief says you hold the build lane, because concurrent builds in one checkout corrupt each other.
@@ -37,7 +38,7 @@ Standing rules, each with its reason:
 - Stream large data and keep only what you need, never loading a large file or dump whole, because that exhausts memory.
 - Run each mutation in its own session with a timeout and kill its whole process group with SIGKILL when it expires, because a hung mutant otherwise runs forever.
 - Never wait with `until ! pgrep -f NAME` loops and never use `pkill -f` patterns, because they can match another agent's process or your own shell.
-- Leave no background process running when you finish, and say in your report that none is left, because nobody else knows to stop it.
+- Do not hand back while a build, test or other background job you started is running, and say in your report that none is left, because the lane is reset after you finish.
 - A test you write to demonstrate a finding goes under `tmp/` and is shown failing, because a demonstration never seen failing proves nothing.
 - Never wait for the owner or ask a question that blocks; note it in your report, because the run is unattended.
 - Report what you did not check or could not verify as plainly as what you did, because the orchestrator decides on the strength of your report.

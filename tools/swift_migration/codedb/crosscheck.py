@@ -303,6 +303,23 @@ RULES = [
          'every send of it in the unit is in a branch that a constant condition skips (the extractor marks such '
          'rows, in_constant_false_branch), or in a function the object does not define: the compiler emitted no '
          'code for it'),
+    # Code no path from the function's entry reaches (after return, break,
+    # continue, goto, @throw, a call of a noreturn function, the failure
+    # branch of an assertion whose condition is a constant false): the
+    # extractor marks a send row from Clang's CFG (send.in_unreachable_code;
+    # the rule, narrower than what the compiler drops, is in
+    # extract_sends.cpp, "Unreachable code"). The CFG is that of the unit's
+    # own configuration (tu.configuration; the capture builds Development,
+    # where ITDebugAssert is assert; in Deployment it is a cast to void and
+    # the code after ITDebugAssert(NO) is reachable). Applies when every row
+    # of the selector in the unit is so marked, is marked as in a constant-
+    # false branch, or is in a function the object does not define, and at
+    # least one is marked unreachable.
+    Rule('unreachable-code', 'database', None, (), None,
+         'every send of it in the unit is in code that no path from its function\'s entry reaches in the unit\'s '
+         'configuration (Development for the capture; the extractor marks such rows from Clang\'s control-flow '
+         'graph, in_unreachable_code), in a branch a constant condition skips, or in a function the object does '
+         'not define, and at least one is unreachable: the compiler emitted no code for it'),
     # A method declared __attribute__((objc_direct)) is called as a function:
     # the object references its implementation's symbol and sends nothing.
     Rule('direct-method', 'database', None, (), None,
@@ -360,7 +377,8 @@ def cxx_components(enclosing):
     suffix = None
     if len(parts) > 1 and parts[-1].startswith('~'):
         parts, suffix = parts[:-1], 'D'
-    elif len(parts) > 1 and parts[-1] == parts[-2]:
+    elif len(parts) > 1 and parts[-1].split('<', 1)[0] == parts[-2].split('<', 1)[0]:
+        # X::X, also for a class template (ns::Tm<int>::Tm).
         parts, suffix = parts[:-1], 'C'
     out = []
     for p in parts:
@@ -374,9 +392,145 @@ def cxx_components(enclosing):
     return (out, suffix) if out else None
 
 
+def _source_name(s, pos):
+    """(identifier, position after it) of the <length><identifier> at pos,
+    or None."""
+    m = re.match(r'[1-9][0-9]*', s[pos:])
+    if not m:
+        return None
+    start = pos + len(m.group())
+    end = start + int(m.group())
+    return (s[start:end], end) if end <= len(s) else None
+
+
+def _skip_template_args(s, pos):
+    """The position after the template arguments I...E at pos, or None for
+    a form this reader does not know (it then gives up on the symbol)."""
+    depth = 0
+    i = pos
+    while i < len(s):
+        c = s[i]
+        if c in 'INFJ':
+            depth += 1
+            i += 1
+        elif c == 'E':
+            depth -= 1
+            i += 1
+            if depth == 0:
+                return i
+        elif c.isdigit():
+            name = _source_name(s, i)
+            if name is None:
+                return None
+            i = name[1]
+        elif c == 'L':
+            # A literal L<type><value>E (not L_Z<encoding>E).
+            if s.startswith('_Z', i + 1):
+                return None
+            end = s.find('E', i)
+            if end < 0:
+                return None
+            i = end + 1
+        elif c == 'S':
+            m = re.match(r'S[0-9A-Z]*_|S[a-z]', s[i:])
+            if not m:
+                return None
+            i += len(m.group())
+        elif c == 'T':
+            m = re.match(r'T[0-9]*_', s[i:])
+            if not m:
+                return None
+            i += len(m.group())
+        elif c == 'D':
+            m = re.match(r'Dv[0-9]+_|D[pnaci]', s[i:])
+            if not m:
+                return None
+            i += len(m.group())
+        elif c == 'A':
+            m = re.match(r'A[0-9]+_', s[i:])
+            if not m:
+                return None
+            i += len(m.group())
+        elif c.islower() or c in 'PROKVCGMU':
+            # A builtin type, a qualifier or type constructor, or the vendor
+            # prefix of a name (u, U) whose identifier follows.
+            i += 1
+        else:
+            return None
+    return None
+
+
+def _encoding_name(s, pos):
+    """((identifiers, 'C', 'D' or None), position) of the name of the
+    function encoding at pos of a mangled name without its _Z, or None for a
+    form this reader does not know. The identifiers are the name's
+    components without template arguments and without std:: (St); 'C' and
+    'D' mark a constructor and a destructor, whose own name is the class's.
+    A local entity (Z<encoding>E<entity>, a lambda or a block's helper in a
+    function) gives the name of the function it is in."""
+    if s.startswith('Z', pos):
+        return _encoding_name(s, pos + 1)
+    if s.startswith('L', pos):
+        pos += 1
+    if s.startswith('St', pos):
+        pos += 2
+    if pos < len(s) and s[pos].isdigit():
+        name = _source_name(s, pos)
+        if name is None:
+            return None
+        pos = name[1]
+        if s.startswith('I', pos):
+            pos = _skip_template_args(s, pos)
+            if pos is None:
+                return None
+        return ((name[0],), None), pos
+    if not s.startswith('N', pos):
+        return None
+    pos += 1
+    while pos < len(s) and s[pos] in 'rVKRO':
+        pos += 1
+    if s.startswith('St', pos):
+        pos += 2
+    ids = []
+    special = None
+    while pos < len(s) and s[pos] != 'E':
+        c = s[pos]
+        if c.isdigit() and special is None:
+            name = _source_name(s, pos)
+            if name is None:
+                return None
+            ids.append(name[0])
+            pos = name[1]
+        elif c == 'I' and ids:
+            pos = _skip_template_args(s, pos)
+            if pos is None:
+                return None
+        elif re.match(r'C[123]|CI[12]|D[0125]', s[pos:]) and ids and special is None:
+            special = c
+            pos += 3 if s.startswith('CI', pos) else 2
+        else:
+            return None
+    if pos >= len(s) or not ids:
+        return None
+    return (tuple(ids), special), pos + 1
+
+
+def mangled_function_name(symbol):
+    """(identifiers, 'C', 'D' or None) of the function a symbol with an
+    Itanium mangled name (_Z..., with Mach-O's leading underscore, or
+    ___Z..._block_invoke for a block in it) holds, or None when this reader
+    does not know the form (an operator, an ABI tag, an unnamed type)."""
+    s = symbol.lstrip('_')
+    if not s.startswith('Z'):
+        return None
+    parsed = _encoding_name(s, 1)
+    return parsed[0] if parsed else None
+
+
 def mangled_names(symbol, components, suffix=None):
     """Whether the mangled symbol contains each component as <length><name>,
-    in order. A match inside a longer token (1Foo in 11Foo) or after an
+    in order: the match used for a symbol that mangled_function_name cannot
+    read. A match inside a longer token (1Foo in 11Foo) or after an
     identifier that ends in a digit (6iTerm2 then 11TexturePage) is not
     told apart: either way the function is taken as emitted, the safe
     direction. For a constructor or destructor of a class template the
@@ -402,12 +556,20 @@ def emitted(enclosing, facts):
     A C function is found by its C symbol, or, compiled as C++ (an
     Objective-C++ unit), by its mangled name; a C++ function by its mangled
     name, and a function declared extern "C" inside a namespace by the C
-    symbol of its last name. Matching mangled names by their identifiers can
-    only take a function as emitted that is not (an overload, another
-    function of the same names), which is the safe direction: its sends are
-    then expected in the object. False is returned only when no symbol of
-    the object can be the function's; None for a name that cannot be
-    matched (an operator, a lambda)."""
+    symbol of its last name. A mangled name is compared whole: the function
+    name it encodes (mangled_function_name: its identifiers in order, each a
+    whole <length><identifier>, and whether it is a constructor or a
+    destructor) must be the database's, allowing for inline namespaces
+    (same_function_name), so a name inside a longer one does not match; a
+    member of the same name as a static function still does (extra leading
+    identifiers may be an inline namespace), the safe direction. An
+    overload still matches (parameter types are not compared), which can
+    only take a function as emitted that is not, the safe direction. A
+    symbol whose form mangled_function_name does not know is matched as
+    before by its identifiers in order (mangled_names), also in the safe
+    direction. False is returned only when no symbol of the object can be
+    the function's; None for a name that cannot be matched (an operator, a
+    lambda)."""
     syms = function_symbols(enclosing)
     if syms is not None and syms & facts.defined_functions:
         return True
@@ -418,9 +580,32 @@ def emitted(enclosing, facts):
     if suffix is None and '_' + components[-1] in facts.defined_functions:
         return True
     mangled = facts.mangled if facts.mangled is not None else mangled_symbols(facts.defined_functions)
-    if any(mangled_names(sym, components, suffix) for sym in mangled):
-        return True
+    for sym in mangled:
+        name = mangled_function_name(sym)
+        if name is None:
+            if mangled_names(sym, components, suffix):
+                return True
+        elif same_function_name(name, components, suffix):
+            return True
     return False
+
+
+def same_function_name(name, components, suffix):
+    """Whether a name mangled_function_name read can be the function the
+    database names by components (and suffix, 'C' or 'D' or None): the same
+    last identifier, the database's identifiers in order among the symbol's,
+    and the same kind. The symbol may have more identifiers before or
+    between them because the database's name leaves out inline namespaces
+    (ankerl::unordered_dense::v4_11_0::detail is printed without v4_11_0;
+    a function in a leading inline namespace v1 is printed without v1).
+    Extra leading identifiers cannot be told from a class or namespace the
+    function belongs to, so a member Foo::Helper also matches a database
+    name Helper: taken as emitted, the safe direction."""
+    ids, special = name
+    if special != suffix or not ids or ids[-1] != components[-1]:
+        return False
+    it = iter(ids)
+    return all(c in it for c in components)
 
 
 # --- Comparison ----------------------------------------------------------------
@@ -449,13 +634,30 @@ def explain_selector(side, selector, facts, unit):
                 continue
             flagged = 0
             ok = True
-            for enclosing, marked in rows:
+            for row in rows:
+                enclosing, marked = row[0], row[1]
                 if marked:
                     flagged += 1
                 elif emitted(enclosing, facts) is not False:
                     ok = False
                     break
             if not ok or not flagged:
+                continue
+        if rule.name == 'unreachable-code':
+            rows = unit.get('constant_false', {}).get(selector)
+            if not rows:
+                continue
+            unreachable = 0
+            ok = True
+            for row in rows:
+                enclosing, marked = row[0], row[1]
+                dead = len(row) > 2 and row[2]
+                if dead:
+                    unreachable += 1
+                elif not marked and emitted(enclosing, facts) is not False:
+                    ok = False
+                    break
+            if not ok or not unreachable:
                 continue
         if rule.name == 'not-emitted':
             places = unit['send_places'].get(selector)
@@ -548,6 +750,10 @@ def compare_unit(facts, unit):
 # The database's count leaves out the rows marked as in code a constant
 # condition skips, always: a marked row is never a call site, so it can
 # neither explain a call site nor cancel one the database misses.
+# The rows marked as unreachable code are left out the same way; when
+# leaving them out is what makes the counts agree, the difference is still
+# listed, as explained by unreachable-code, so that each such site is
+# printed.
 #
 # A difference is classified as for the sets: 'object has MORE call sites'
 # is the dangerous direction (a send the database does not have), explained
@@ -599,7 +805,7 @@ def send_site_count(rows, facts):
                 hidden += 1
             continue
         n += 1
-        if len(row) > 7 and row[7]:
+        if is_dead_row(row):
             # Marked as dead code: left out of the count once, by the caller.
             continue
         where = row[2:5]
@@ -610,12 +816,33 @@ def send_site_count(rows, facts):
     return n, hidden, extra
 
 
+def is_dead_row(row):
+    """Whether a send-site row is marked as code the compiler does not emit:
+    in a branch a constant condition skips (an eighth element, 1) or in
+    unreachable code (a ninth element, 1)."""
+    return bool((len(row) > 7 and row[7]) or (len(row) > 8 and row[8]))
+
+
 def constant_false_sites(rows, facts):
     """How many of the rows send_site_count counts are marked as in a branch
     a constant condition skips (an eighth element, 1, of the row)."""
     n = 0
     for row in rows:
         if len(row) < 8 or not row[7] or row[0] in ('super', 'super_class'):
+            continue
+        if emitted(row[1], facts) is False:
+            continue
+        n += 1
+    return n
+
+
+def unreachable_sites(rows, facts):
+    """How many of the rows send_site_count counts are marked as in
+    unreachable code (a ninth element, 1) and not also as in a branch a
+    constant condition skips."""
+    n = 0
+    for row in rows:
+        if len(row) < 9 or not row[8] or row[7] or row[0] in ('super', 'super_class'):
             continue
         if emitted(row[1], facts) is False:
             continue
@@ -674,7 +901,7 @@ def inlined_copies(rows, facts, unit):
     n = 0
     for row in rows:
         kind, enclosing = row[0], row[1]
-        if kind in ('super', 'super_class') or (len(row) > 7 and row[7]):
+        if kind in ('super', 'super_class') or is_dead_row(row):
             continue
         if emitted(enclosing, facts) is not False or enclosing.startswith(('-[', '+[')):
             continue
@@ -692,13 +919,19 @@ def compare_counts(facts, unit):
         got = facts.call_sites[sel]
         want, hidden, extra = send_site_count(sites[sel], facts)
         flagged = constant_false_sites(sites[sel], facts)
-        live = want - flagged
+        unreachable = unreachable_sites(sites[sel], facts)
+        live = want - flagged - unreachable
+        # The database's count shown leaves out the constant-false rows and
+        # keeps the unreachable ones, which it names.
+        name = '%s (object %d, database %d%s%s)' % (sel, got, want - flagged, ', %d marked' % flagged if flagged else '',
+                                                   ', %d unreachable' % unreachable if unreachable else '')
         if got == live:
+            if unreachable:
+                out.append(Difference(COUNT_FEWER, name, 'unreachable-code'))
             continue
         direction = COUNT_MORE if got > live else COUNT_FEWER
-        name = '%s (object %d, database %d%s)' % (sel, got, live, ', %d marked' % flagged if flagged else '')
-        out.append(Difference(direction, name,
-                              explain_count(direction, sel, facts, unit, hidden, extra, got, want, flagged)))
+        out.append(Difference(direction, name, explain_count(direction, sel, facts, unit, hidden, extra, got, want,
+                                                             flagged + unreachable)))
     return out
 
 
@@ -706,20 +939,21 @@ def unit_rows(con, tu):
     """The rows of one unit that the comparison uses."""
     sends = collections.defaultdict(set)
     sites = collections.defaultdict(list)
-    # {selector: [(enclosing, in a branch a constant condition skips)]}, one
-    # per send and selector_ref row (a selector_ref is never marked).
+    # {selector: [(enclosing, in a branch a constant condition skips, in
+    # unreachable code)]}, one per send and selector_ref row (a selector_ref
+    # is never marked).
     constant_false = collections.defaultdict(list)
-    for sel, enclosing, kind, file, line, col, mfile, role, marked in con.execute(
+    for sel, enclosing, kind, file, line, col, mfile, role, marked, unreachable in con.execute(
             'SELECT selector, enclosing_name, receiver_kind, file, line, col, macro_file, macro_role, '
-            'in_constant_false_branch FROM send WHERE tu = ? ORDER BY id', (tu,)):
+            'in_constant_false_branch, in_unreachable_code FROM send WHERE tu = ? ORDER BY id', (tu,)):
         sends[sel].add(enclosing)
-        sites[sel].append((kind, enclosing, file, line, col, mfile, role, marked))
-        constant_false[sel].append((enclosing, marked))
+        sites[sel].append((kind, enclosing, file, line, col, mfile, role, marked, unreachable))
+        constant_false[sel].append((enclosing, marked, unreachable))
     selrefs = set()
     for sel, enclosing in con.execute('SELECT selector, enclosing_name FROM selector_ref WHERE tu = ?', (tu,)):
         selrefs.add(sel)
         sends[sel].add(enclosing)
-        constant_false[sel].append((enclosing, 0))
+        constant_false[sel].append((enclosing, 0, 0))
     methods = set()
     defined = set()
     for is_class, container, sel in con.execute(

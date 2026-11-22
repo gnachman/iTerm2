@@ -75,7 +75,8 @@ Do these every time a session begins, before anything else.
    2. **`codedb.py update`**. Incremental: it extracts every Objective-C
       unit that is not current and reads again every Swift module that is
       not current; a schema change, or a changed compiler, extractor or SDK,
-      makes every unit stale. Until the database is current, a query
+      makes every unit stale. After a port that deleted files, run it with
+      `--accept-removals`. Until the database is current, a query
       answers but exits 3 ("incomplete": some unit is not current) instead
       of 0 or 1 (`codedb.py --help`, "Exit status" and "Unit states"). A
       whole-tree extraction took about 7 minutes on a quiet machine and 20
@@ -134,9 +135,9 @@ Work out which stage the migration is in, in this order:
    request under "Needs a decision" if it is not already there. Meanwhile,
    improve Phase 0 tooling, work on test speed, and prepare dossiers for
    pilot candidates. Do not start pilot ports.
-3. **The pilot is not finished.** Work on pilot units
-   ([plan.md §1](plan.md)).
-4. **After the pilot.** Resume anything in `claims.md` that is in progress
+3. **After the two pilot units**, no further unit starts until the owner
+   says so ([lifecycle.md §3](lifecycle.md)); meanwhile work on Phase 0.
+4. **Once the owner allows further units.** Resume anything in `claims.md` that is in progress
    and not parked. Otherwise take the next eligible unit from the inventory
    script's ordering. A unit is eligible when:
    - it is in the current tier, or it is a giant-class extraction;
@@ -144,6 +145,10 @@ Work out which stage the migration is in, in this order:
    - its subclasses and categories are done
      ([interop.md](interop.md));
    - it is not parked.
+
+   Assign its path as [lifecycle.md §3](lifecycle.md) says, including
+   where the light path may be assigned. Light-path units with no
+   dependency on each other may run at once, each in its own lane.
 5. **The current tier is nearly exhausted.** Queue a tier-transition request
    in [owner-queue.md](owner-queue.md) with what was done and any crash
    reports attributed to its ports. Keep working on what remains, on
@@ -176,7 +181,8 @@ produces a commit goes through this sequence.
    If the gate fails, the failure goes back to the author as a finding and
    the loop continues.
 9. **Commit** (section 6).
-10. **At the close of a unit**, run gate steps 7 and 8, do the closing
+10. **At the close of a unit**, run gate steps 7 and 8 (for light-path
+    units, as [lifecycle.md §3](lifecycle.md) defers them), do the closing
     updates in [lifecycle.md §1](lifecycle.md), step 8, and remove the
     unit from `claims.md`.
 
@@ -221,7 +227,11 @@ the manual.
   database read-only by its absolute path, with your checkout's
   `codedb.py`: a `codedb.py` of another schema version refuses to query
   it, and its `update` would rebuild it. The lane instructions in the
-  tool's header say this.
+  tool's header say this. A lane whose code database tools differ from
+  your checkout's (a unit that changes the extractor) builds and passes
+  its own binary with `--extractor`, and its tests name a lane-local
+  binary: `codedb.py` refuses to rebuild another checkout's binary, since
+  a lane's tests once replaced the main checkout's during a re-extraction.
 - Lanes live beside your checkout, in `<checkout>.lanes/`. The nightly
   clone's are in `<clone>.lanes/`, which the session is allowed to edit
   ([workflow.md §4](workflow.md)).
@@ -229,7 +239,8 @@ the manual.
 You may run several units at once when they do not touch the same files.
 Every commit must be built and tested against the tree it lands on: the
 gate runs in the full-suite lane on your current `HEAD` with the unit's
-change applied.
+change applied. The project-file swap is staged before the gate
+([lifecycle.md §3](lifecycle.md), "The project file").
 
 ## 4. Briefing the author
 
@@ -252,15 +263,8 @@ Give it:
 - What to return: the change in the working tree, the tests it added, the
   commands it ran with their results, the proposed commit message with its
   trailer, and anything it was unsure about.
-- These standing instructions: do not commit; do not push; do not weaken or
-  disable a test; do not edit `CLAUDE.md` or the process files; translate or
-  improve, never both; when something in the rules seems wrong, say so
-  instead of working around it.
-
-When sending findings back, give the author the findings verbatim and remind
-it that a finding claiming a behavior difference or a bug gets a failing test
-before the fix, and that a finding it believes is wrong is answered with
-evidence, not ignored and not silently obeyed.
+The standing instructions are in the agent definition
+(`.claude/agents/migration-author.md`). Send findings back verbatim.
 
 ## 5. Briefing the reviewer
 
@@ -292,12 +296,15 @@ rejected" section.
 ## 6. Committing
 
 - Commit only what has passed the loop and the gate.
-- One commit is exactly one kind ([README.md §5](README.md)).
+- One commit is exactly one kind ([README.md §5](README.md)), apart from
+  the session's document commit.
 - Stage files by name. Never `git add` a submodule. `git add` new files as
-  soon as they are created, and add them to the Xcode project with
-  `tools/add_file_to_xcodeproj.rb`.
-- The message says what changed and why, and ends with the trailer
-  `Swift-Port: <unit> kind=<kind>`. An oversized port also carries
+  soon as they are created.
+- Changes that belong to no unit go in the session's one document commit;
+  a new tool or Phase 0 item is its own `tool` commit
+  ([README.md §5](README.md), "Where commits go").
+- The message says what changed and why. Every commit but the session's
+  document commit ends with the trailer `Swift-Port: <unit> kind=<kind>`. An oversized port also carries
   `Oversize-Port: <function>, <lines>`
   ([large-code.md §2](large-code.md)).
 - Follow the owner's rules for commit messages: no em dashes, and no
@@ -371,19 +378,19 @@ First, because everything else uses them:
       (`ColorPicker/`, and CoreParse from `submodules/CoreParse`, the source of
       `ThirdParty/CoreParse.framework`), so that callers in it are
       parsed and not only searched as text.
-- [ ] Code database, cross-check: every selector an object file sends is
+- [x] Code database, cross-check: every selector an object file sends is
       explained by the database, and the reverse.
 - [x] Inventory scope: add `SignedArchive/`, `pidinfo/`,
       `iTerm2SandboxedWorker/` and the other directories in
       [README.md §2](README.md) to the inventory's scope, with its counts
       and leaf ordering (owner queue Q13).
-- [ ] Ivar and static table per class ([objc-state.md](objc-state.md)),
+- [x] Ivar and static table per class ([objc-state.md](objc-state.md)),
       rebuilt as queries on the code database, with types and importability
       from the compiler. The text-based `inventory_state.py`, parked after
       four review rounds, is discarded by the owner's decision (owner queue
       P1); its ivar list, if the saved patch still exists, is only a
       comparison for the new one.
-- [ ] Inventory verify: the inventory's parsed classes, ivars and methods
+- [x] Inventory verify: the inventory's parsed classes, ivars and methods
       compared with the code database and the runtime snapshot.
 - [x] Runtime snapshot of a class, with the duplicate-selector check
       ([phase0.md §9](phase0.md)).
@@ -402,13 +409,13 @@ First, because everything else uses them:
 
 Then, in any order that respects dependencies:
 
-- [ ] Entry-point census ([phase0.md §2](phase0.md)), as queries on the
+- [x] Entry-point census ([phase0.md §2](phase0.md)), as queries on the
       code database for everything the compiler sees, plus the XML and text
       search for xibs, storyboards, the sdef, plists, Core Data models and
       names built at run time. A text-only version reached its second
       review; its XML parsing, hit classes and exit status are kept, and its
       lexers and macro model are replaced.
-- [ ] Reflective-site registry (`reflective-sites.md`) built by reading
+- [x] Reflective-site registry (`reflective-sites.md`) built by reading
       every hit, and the macro classification with its lint
       ([hidden-callers.md](hidden-callers.md)).
 - [x] Binding tests for xibs, the sdef, and archive class names
@@ -418,7 +425,7 @@ Then, in any order that respects dependencies:
 - [x] First triage of nullability sanitizer reports in the headers that are
       already annotated. The triage and the 16-unit fix plan are in
       `nullability-triage.md`; carrying the plan out is separate work.
-- [ ] Thread sanitizer baseline of existing races
+- [x] Thread sanitizer baseline of existing races
       ([concurrency.md §10](concurrency.md)).
 - [x] Integer sanitizer discovery run
       ([translation-rules.md §1](translation-rules.md)).
@@ -441,13 +448,16 @@ Then, in any order that respects dependencies:
 - [x] Instance census and lifetime witness tests for session, tab, and
       window ([lifetimes.md](lifetimes.md)).
 - [x] Test-log timing script ([test-speed.md](test-speed.md)).
-- [ ] Tests over five seconds fixed, starting with the two slowest, aiming
-      for under 1 second each ([test-speed.md §2](test-speed.md)).
-- [ ] Fast test tier defined, without the address sanitizer, with its time
-      budget.
+- [x] Tests over five seconds fixed, starting with the two slowest, aiming
+      for under 1 second each ([test-speed.md §2](test-speed.md)): made
+      fast, or in the slow tier with the reason
+      ([test-tiers.md §4](test-tiers.md)).
+- [x] Fast test tier defined, without the address sanitizer, with its time
+      budget (77 s: [test-tiers.md §1](test-tiers.md)).
 - [x] Nil-lock assertions added to the existing Objective-C
       ([concurrency.md §2](concurrency.md)).
-- [ ] Performance and memory baselines ([phase0.md §8](phase0.md)).
+- [x] Performance and memory baselines ([phase0.md §8](phase0.md);
+      the numbers are in [performance.md §3](performance.md)).
 - [x] Stored-state corpus ([stored-state.md](stored-state.md)), produced
       by agents: the current version with `-suite` and AppleScript or the
       Python API, older releases on vm1. The owner is needed only to start
@@ -463,8 +473,8 @@ Then, in any order that respects dependencies:
 
 After the pilot:
 
-- [ ] Process files revised from what the pilot found.
-- [ ] The project skill that encodes the lifecycle
+- [x] Process files revised from what the pilot found.
+- [x] The project skill that encodes the lifecycle
       ([README.md §7](README.md)).
 
 ## 10. When something goes wrong

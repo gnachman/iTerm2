@@ -675,7 +675,9 @@ class ExtraRowsNoteTest(unittest.TestCase):
                          'argument that no call uses, in a static or inline function that is never emitted, and in '
                          'code that a constant condition skips (in_constant_false_branch marks the cases where the '
                          'compiler certainly emits nothing). The operands of _Generic and __builtin_choose_expr '
-                         'that are not chosen are not listed.')
+                         'that are not chosen are not listed. A send in code that no path from its function\'s '
+                         'entry reaches in the unit\'s configuration is listed with the mark "unreachable code"; it '
+                         'can be live in another configuration.')
 
 
 CC = 'sources/constant_conditions.m'
@@ -814,6 +816,107 @@ class ConstantFormsTest(unittest.TestCase):
                     self.assertLessEqual(marked[sel] + sites.get(sel, 0), total[sel],
                                          '%s %s (arc %s): %d marked, %d call sites, %d rows' %
                                          (main, sel, arc, marked[sel], sites.get(sel, 0), total[sel]))
+
+
+UC_M = 'sources/unreachable.m'
+UC_MM = 'sources/unreachable.mm'
+
+
+def unreachable_rows(db):
+    return sorted(rows(db, 'SELECT selector, in_unreachable_code FROM send'))
+
+
+class UnreachableCodeTest(unittest.TestCase):
+    """in_unreachable_code: a send in a block of the function's control-flow
+    graph (Clang's CFG) that no path from the entry reaches, in the unit's
+    own configuration, where the skipped arm of an if or of a conditional
+    operator whose condition folds as CodeGen folds it is not a path. A
+    path ends at return, break, continue, goto, throw and @throw, and at a
+    call the code generator treats as noreturn (a noreturn attribute,
+    _Noreturn, [[noreturn]], __builtin_unreachable), not at the other
+    calls where Clang's CFG ends it (__builtin_assume(0), __builtin_trap,
+    __builtin_debugtrap, analyzer_noreturn). Checked against the compiler
+    for the forms of the fixtures (a marked send is never one it emitted),
+    and deliberately narrower than what the compiler drops (unreachable.m,
+    unreachable.mm)."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.root = make_root()
+        cls.m, cls.m_status, cls.m_stderr = extract(cls.root, UC_M)
+        cls.mm, cls.mm_status, cls.mm_stderr = extract(cls.root, UC_MM)
+
+    def test_clean(self):
+        self.assertEqual(self.m_status, 0, self.m_stderr)
+        self.assertEqual(self.mm_status, 0, self.mm_stderr)
+
+    def test_marked_in_objective_c(self):
+        marked = [s for s, m in unreachable_rows(self.m) if m]
+        self.assertEqual(marked, ['u01',      # after return
+                                  'u02',      # after a noreturn call
+                                  'u03',      # after if (!(0)) { noreturn } (ITAssertWithMessage(NO, ...))
+                                  'u04',      # after 0 ? ... : noreturn (assert(NO), ITDebugAssert(NO))
+                                  'u05',      # after a switch that returns in every case, default included
+                                  'u06',      # after break
+                                  'u07',      # after continue
+                                  'u08',      # after goto
+                                  'u09',      # after return in a block
+                                  'u10:with:',  # after its own noreturn argument
+                                  'u12',      # after @throw
+                                  'u13',      # after return in an if
+                                  'u14',      # after return in a method
+                                  'u15'])     # after __builtin_unreachable
+
+    def test_not_marked_in_objective_c(self):
+        unmarked = [s for s, m in unreachable_rows(self.m) if not m]
+        # n16 to n19: after __builtin_assume(0), __builtin_trap(),
+        # __builtin_debugtrap() and an analyzer_noreturn function, where
+        # Clang's CFG ends the path but the compiler emits what follows.
+        self.assertEqual(unmarked, ['n01', 'n02', 'n03', 'n04', 'n05', 'n06', 'n07', 'n08', 'n09', 'n10', 'n11',
+                                    'n12', 'n13', 'n14', 'n15', 'n16', 'n17', 'n18', 'n19', 'u11'])
+
+    def test_objective_c_plus_plus(self):
+        got = unreachable_rows(self.mm)
+        self.assertEqual([s for s, m in got if m], ['t01', 'u01', 'u02', 'u03'])
+        self.assertEqual(sorted(set(s for s, m in got if not m)), ['n02', 'n03', 't01'])
+        # t01: the template pattern's row (not analyzed) and the
+        # instantiation's (marked).
+        self.assertEqual([r for r in got if r[0] == 't01'], [('t01', 0), ('t01', 1)])
+
+    def test_the_query_shows_the_mark(self):
+        con = sqlite3.connect(self.m)
+        try:
+            configuration = con.execute('SELECT configuration FROM tu').fetchone()[0]
+        finally:
+            con.close()
+        self.assertEqual(codedb.unreachable_text(configuration),
+                         'unreachable code (no path from the function\'s entry in this unit\'s configuration, %s)' %
+                         (configuration or 'not recorded'))
+        self.assertEqual(codedb.unreachable_text('Development'),
+                         'unreachable code (no path from the function\'s entry in this unit\'s configuration, '
+                         'Development)')
+
+    @unittest.skipUnless(have_xcrun(), 'needs xcrun clang')
+    def test_marked_implies_not_emitted(self):
+        # The property that makes the mark safe to use as an excuse: for
+        # every selector, marked rows plus the object's call sites never
+        # exceed the rows, with and without ARC; and here every marked
+        # selector is absent from the object.
+        for main, db in ((UC_M, self.m), (UC_MM, self.mm)):
+            total = collections.Counter()
+            marked = collections.Counter()
+            for sel, m in rows(db, "SELECT selector, in_unreachable_code FROM send WHERE receiver_kind NOT LIKE "
+                                   "'super%'"):
+                total[sel] += 1
+                marked[sel] += m
+            for arc in (True, False):
+                sites = object_call_sites_o0(self.root, main, arc)
+                for sel in total:
+                    self.assertLessEqual(marked[sel] + sites.get(sel, 0), total[sel],
+                                         '%s %s (arc %s): %d marked, %d call sites, %d rows' %
+                                         (main, sel, arc, marked[sel], sites.get(sel, 0), total[sel]))
+                    if marked[sel]:
+                        self.assertEqual(sites.get(sel, 0), 0, '%s %s (arc %s)' % (main, sel, arc))
 
 
 if __name__ == '__main__':

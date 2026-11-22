@@ -204,5 +204,93 @@ class RegistryTest(unittest.TestCase):
         self.assertEqual(rr.main(['check', '--db', os.path.join(self.dir, 'none.sqlite'), '--doc', self.doc], out=out), 2)
 
 
+# A unit with a new use of each reflective API that hidden-callers.md
+# section 2 asks the lint to catch, written with names that are not literals,
+# and the same APIs with literal names, which are not sites of the registry.
+NEW_USES = """
+__attribute__((objc_root_class))
+@interface Obj {
+    Class isa;
+}
+- (id)performSelector:(SEL)s;
+- (id)valueForKey:(id)key;
+- (id)methodSignatureForSelector:(SEL)s;
+@end
+@interface NSInvocation : Obj
++ (NSInvocation *)invocationWithMethodSignature:(id)signature;
+@property SEL selector;
+- (void)invoke;
+@end
+SEL NSSelectorFromString(id s);
+Class NSClassFromString(id s);
+void NewUses(Obj *o, id name) {
+    SEL s = NSSelectorFromString(name);
+    [o performSelector:s];
+    [o valueForKey:name];
+    Class c = NSClassFromString(name);
+    (void)c;
+    NSInvocation *inv = [NSInvocation invocationWithMethodSignature:[o methodSignatureForSelector:s]];
+    inv.selector = s;
+    [inv invoke];
+}
+void LiteralUses(Obj *o) {
+    [o performSelector:@selector(literal)];
+    [o valueForKey:@"literalKey"];
+    (void)NSClassFromString(@"LiteralClass");
+    (void)NSSelectorFromString(@"literal:");
+}
+"""
+
+
+class LintFixtureTest(unittest.TestCase):
+    """check fails on a new use of a reflective API outside the registered
+    sites: each new use in NEW_USES, extracted by the code database's
+    extractor into a database of its own, is a NEW SITE; the uses with
+    literal names are not."""
+
+    @classmethod
+    def setUpClass(cls):
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE), 'codedb'))
+        sys.path.insert(0, os.path.join(os.path.dirname(HERE), 'codedb', 'tests'))
+        import test_codedb as base
+        base.setUpModule()
+        cls.base = base
+        cls.dir = tempfile.mkdtemp(prefix='reflective-registry-lint-')
+        root = os.path.join(cls.dir, 'repo')
+        os.makedirs(os.path.join(root, 'sources'))
+        with open(os.path.join(root, 'sources', 'new_uses.m'), 'w') as f:
+            f.write(NEW_USES)
+        cls.db = os.path.join(cls.dir, 'codedb.sqlite')
+        cls.status, cls.stderr, _ = base.extract(root, 'sources/new_uses.m', cls.db, extra=('-fobjc-arc',))
+        cls.doc = os.path.join(cls.dir, 'reflective-sites.md')
+        with open(cls.doc, 'w') as f:
+            f.write(DOC)
+        # The registry's own rows, so that only the new uses differ.
+        con = sqlite3.connect(cls.db)
+        for r in ROWS:
+            con.execute('INSERT INTO reflective_call(tu, function_or_selector, call_kind, kind, argument_index, '
+                        'argument_kind, argument_text, enclosing_name, file, line, col, in_migration_scope, in_block) '
+                        "VALUES (1, ?, 'x', 'x', ?, ?, ?, ?, ?, ?, ?, ?, 0)",
+                        (r[3], r[4], r[7], r[5], r[6], r[0], r[1], r[2], r[8]))
+        con.commit()
+        con.close()
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.dir)
+
+    def test_each_new_use_fails_check(self):
+        self.assertEqual(self.status, 0, self.stderr)
+        out = io.StringIO()
+        status = rr.main(['check', '--db', self.db, '--doc', self.doc], out=out)
+        self.assertEqual(status, 1, out.getvalue())
+        new = [line.strip() for line in out.getvalue().split('NEW SITE', 1)[1].split('STALE BULLET', 1)[0]
+               .splitlines()[1:]]
+        calls = sorted(set(line.split(': ', 1)[1].split(' on ', 1)[0] for line in new))
+        self.assertEqual(calls, ['NSClassFromString', 'NSSelectorFromString', 'methodSignatureForSelector:',
+                                 'performSelector:', 'setSelector:', 'valueForKey:'])
+        self.assertTrue(all(' in NewUses: ' in line for line in new), new)
+
+
 if __name__ == '__main__':
     unittest.main()

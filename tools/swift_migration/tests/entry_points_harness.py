@@ -174,11 +174,13 @@ def add_pp_skipped(db, rows=None):
     con.close()
 
 
-def build(swift=True, edit=None, sdk_table=True, pp_skipped=True):
+def build(swift=True, edit=None, sdk_table=True, pp_skipped=True, extra_mains=(), extra_test_mains=()):
     """A scratch copy of the fixture with its database: (root, paths).
     edit(root), if given, changes the copy before anything is extracted.
     sdk_table: give the database an sdk_method table of the fixture's SDK
-    declarations. pp_skipped: give it the skipped Objective-C ranges."""
+    declarations. pp_skipped: give it the skipped Objective-C ranges.
+    extra_mains and extra_test_mains: more files (written by edit) that the
+    app and the test target compile."""
     ensure_binaries()
     d = make_temp()
     root = os.path.join(d, 'repo')
@@ -186,13 +188,15 @@ def build(swift=True, edit=None, sdk_table=True, pp_skipped=True):
     if edit:
         edit(root)
     paths = make_paths(d, root)
-    base.write_project(root, {'App': list(APP_MAINS), 'ModernTests': list(TEST_MAINS), 'Fix': list(SWIFT_FILES)},
+    app_mains = tuple(APP_MAINS) + tuple(extra_mains)
+    test_mains = tuple(TEST_MAINS) + tuple(extra_test_mains)
+    base.write_project(root, {'App': list(app_mains), 'ModernTests': list(test_mains), 'Fix': list(SWIFT_FILES)},
                        product_types={'ModernTests': codedb.TEST_PRODUCT_TYPES[0]})
     sdk = codedb.current_sdk()[0]
     with open(paths.cdb, 'w') as f:
         f.write(json.dumps({'meta': True, 'build_settings_sha256': codedb.build_settings_digest(root)}) + '\n')
-        for m in APP_MAINS + TEST_MAINS:
-            target = 'ModernTests' if m in TEST_MAINS else 'App'
+        for m in app_mains + test_mains:
+            target = 'ModernTests' if m in test_mains else 'App'
             args = base.clang_args(root, m, extra=('-isysroot', sdk))
             f.write(json.dumps({'target': target, 'file': m, 'directory': root, 'arguments': args}) + '\n')
     status = codedb.update(paths, log=lambda m: None, swift=False)

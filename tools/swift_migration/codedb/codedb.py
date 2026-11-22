@@ -253,24 +253,42 @@ Commands:
                      For these four, Swift: Swift imports no Objective-C
                      ivar, and the Swift tables record no reference to an
                      ivar or to a C global or static.
-  codedb.py classstate [--update] [--json] [--runtime-methods FILE]... CLASS
+  codedb.py classstate [--update] [--json] [--runtime-methods FILE]...
+                       [--snapshot FILE] (CLASS | --all)
                      The ivar and static table of objc-state.md for CLASS
                      (classstate.py documents it): one row per ivar of the
                      class and per static its implementation files define,
                      with the type as the compiler prints it, where it is
                      declared, the ARC mode, ownership, whether Swift can
                      import the type (yes, degraded, no or unknown, with the
-                     reason, from objc_ivar.import_facts), the methods named
+                     reason, from objc_ivar.import_facts, with the repository
+                     classes and protocols it names anywhere in it checked
+                     against the import table of the bridging header: one
+                     Swift does not import makes it no at the top level, and
+                     inside the type no, degraded or unknown by position, as
+                     classstate.py states), the methods named
                      like it, every function that uses it with its accesses
                      and lines, and each reference from outside the class's
                      own code, in blocks and lambdas, and under
-                     @synchronized. Importable: yes (Swift sees the type as
+                     @synchronized; for a static, whether it is written
+                     after its initialization (not decided for a non-const
+                     C++ object); and the statics and globals
+                     its files use but do not define. Importable: yes (Swift sees the type as
                      declared), degraded (Swift sees it, losing something:
                      a tuple for a C array, OpaquePointer, a struct for a
                      plain enum, type arguments), no (the member is
                      dropped), unknown (not decided, with what is missing);
-                     whether the type is visible to the bridging header is
-                     not checked. Without --runtime-methods, accessor names
+                     the visibility of typedefs, enums and C records is not
+                     checked (no table of them), nor of a class in a
+                     position classstate.py does not list (unknown). --snapshot FILE compares
+                     each ivar's ownership with a format 3 runtime snapshot
+                     (agrees, OWNERSHIP DISAGREES, or the runtime cannot
+                     tell). --all writes the table of every class with an
+                     @implementation in the migration's scope, one class at
+                     a time (memory does not grow with the classes), without
+                     the per-class text searches of unparsed files and
+                     skipped ranges, and a summary; with --json, JSON Lines
+                     ending in a summary line. Without --runtime-methods, accessor names
                      are looked up in the repository and the SDK headers
                      only, and an accessor not found there says that
                      private framework methods were not consulted (JSON:
@@ -578,7 +596,7 @@ BUILD_SCRIPT = os.path.join(EXTRACTOR_DIR, 'build.sh')
 EXTRACTOR_SOURCE_NAMES = ('build.sh', 'extract_sends.cpp', 'reflective_table.h')
 
 # PRAGMA user_version of the database; the extractor's kSchemaVersion.
-SCHEMA_VERSION = 12
+SCHEMA_VERSION = 13
 # The tables whose rows belong to a unit (column tu), deleted with it.
 UNIT_TABLES = ('send', 'tu_input', 'objc_method', 'objc_method_override', 'objc_property', 'selector_ref',
                'reflective_call', 'decl_source', 'objc_ivar', 'c_static', 'ivar_ref', 'static_ref', 'objc_impl',
@@ -729,7 +747,9 @@ EXTRA_ROWS_NOTE = ('note: rows can be listed for sends the binary never makes: i
                    'in its instantiations (both arms of an if constexpr in the pattern), in a default argument that '
                    'no call uses, in a static or inline function that is never emitted, and in code that a constant '
                    'condition skips (in_constant_false_branch marks the cases where the compiler certainly emits '
-                   'nothing). The operands of _Generic and __builtin_choose_expr that are not chosen are not listed.')
+                   'nothing). The operands of _Generic and __builtin_choose_expr that are not chosen are not listed. '
+                   'A send in code that no path from its function\'s entry reaches in the unit\'s configuration is '
+                   'listed with the mark "unreachable code"; it can be live in another configuration.')
 
 # Flags of the captured Apple clang command that take a value and are dropped
 # with it: they write build products, or read Xcode-private files.
@@ -2423,6 +2443,21 @@ def binary_digest(exe):
     return binary_version(exe)[0]
 
 
+def checkout_owning_build_output(path):
+    """The root of the checkout whose tmp/codedb directory holds path, or
+    None when path is not inside any checkout's tmp/codedb."""
+    here = os.path.realpath(path)
+    while True:
+        parent = os.path.dirname(here)
+        if parent == here:
+            return None
+        if os.path.basename(here) == 'codedb' and os.path.basename(parent) == 'tmp':
+            root = os.path.dirname(parent)
+            if os.path.exists(os.path.join(root, 'tools', 'swift_migration', 'codedb', 'codedb.py')):
+                return root
+        here = parent
+
+
 def ensure_extractor(paths, log=print, builder=None, lock=None):
     """Build the extractor if the binary's digest is not the digest of the
     current sources."""
@@ -2430,6 +2465,14 @@ def ensure_extractor(paths, log=print, builder=None, lock=None):
     have = binary_digest(paths.extractor)
     if have == want:
         return
+    owner = checkout_owning_build_output(paths.extractor)
+    if owner is not None and owner != os.path.realpath(REPO_ROOT):
+        # A lane's tools run with --root naming another checkout: building
+        # here would replace that checkout's binary with one made from this
+        # tree's sources (it happened, and broke a re-extraction midway).
+        raise CodeDBError('the extractor at %s belongs to another checkout (%s) and does not match these sources '
+                          '(%s); not rebuilding it. Pass --extractor naming a binary of your own.' % (
+                              paths.extractor, owner, REPO_ROOT))
     log('building the extractor (%s)' % ('none at %s' % paths.extractor if have is None else 'its sources changed'))
     status, _ = run_in_group([paths.guard, '--', builder or BUILD_SCRIPT, paths.extractor], capture=False, lock=lock)
     if status != 0:
@@ -3524,18 +3567,40 @@ class QueryContext:
 
 def group_rows(rows, key_len):
     """Rows whose last two columns are (tu, target), grouped by the first
-    key_len columns in order: [(key, {'tus': {tu: rows}, 'targets': set})]."""
+    key_len columns in order: [(key, {'tus': {tu: rows}, 'targets': set,
+    'extra': {tu: set of the columns between the key and tu}})]."""
     groups = {}
     order = []
     for r in rows:
         key = r[:key_len]
         if key not in groups:
-            groups[key] = {'tus': {}, 'targets': set()}
+            groups[key] = {'tus': {}, 'targets': set(), 'extra': {}}
             order.append(key)
         g = groups[key]
         g['tus'][r[-2]] = g['tus'].get(r[-2], 0) + 1
         g['targets'].add(r[-1])
+        g['extra'].setdefault(r[-2], set()).add(tuple(r[key_len:-2]))
     return [(key, groups[key]) for key in order]
+
+
+def unreachable_text(configuration):
+    """The mark of a send row in unreachable code (send.in_unreachable_code):
+    reachability depends on the configuration the unit was parsed in."""
+    return "unreachable code (no path from the function's entry in this unit's configuration, %s)" % (
+        configuration or 'not recorded')
+
+
+def unreachable_mark(g):
+    """The unreachable-code mark of a group of SEND_ROW_SQL rows, or None:
+    every unit in which a row of the group is marked, and how many of the
+    group's units that is when not all."""
+    marked = dict((tu, cfg) for tu, extras in g['extra'].items() for u, cfg in extras if u)
+    if not marked:
+        return None
+    text = unreachable_text(','.join(sorted(set(c or 'not recorded' for c in marked.values()))))
+    if len(marked) < len(g['tus']):
+        text += ' in %d of %d units' % (len(marked), len(g['tus']))
+    return text
 
 
 def macro_text(macro, role, mfile, mline, eline, ecol):
@@ -3572,7 +3637,8 @@ class RowWriter:
 
 SEND_ROW_SQL = ('SELECT s.file, s.line, s.col, s.enclosing_name, s.receiver_kind, s.receiver_type, '
                 's.macro_name, s.macro_file, s.macro_line, s.macro_role, s.expansion_line, s.expansion_col, '
-                's.implicit_accessor, s.in_block, s.in_migration_scope, s.tu, t.target '
+                's.implicit_accessor, s.in_block, s.in_migration_scope, s.in_unreachable_code, t.configuration, '
+                's.tu, t.target '
                 'FROM send s JOIN tu t ON t.id = s.tu WHERE s.selector = ? '
                 'ORDER BY s.file, s.line, s.col')
 
@@ -3591,6 +3657,9 @@ def write_send_rows(q, writer, selector):
             parts.append('subscript accessor')
         if in_block:
             parts.append('in block')
+        unreachable = unreachable_mark(g)
+        if unreachable:
+            parts.append(unreachable)
         writer.write(parts, g, migration)
 
 
@@ -6073,12 +6142,18 @@ def main(argv=None):
                     help='a run-time method list (sdk_selectors.py --runtime-methods), consulted for accessor names '
                          'that a framework superclass implements privately; repeatable. Without it, an accessor not '
                          'found in the repository or the SDK headers says private methods were not consulted')
-    cs.add_argument('class_name')
+    cs.add_argument('--snapshot', metavar='FILE',
+                    help='a runtime snapshot in format 3 (runtime_snapshot.sh): each ivar\'s ownership is compared '
+                         'with the runtime\'s ivar layouts (ivar_ownership_check.judge)')
+    cs.add_argument('--all', action='store_true',
+                    help='every class with an @implementation in the migration\'s scope, streamed one class at a '
+                         'time; with --json, one JSON document per line')
+    cs.add_argument('class_name', nargs='?')
     vi = sub.add_parser('verifyinventory', help="compare the inventory's parsed classes with the database, and a "
                                                 'runtime snapshot with the database')
     vi.add_argument('--update', action='store_true',
                     help='run update first (under the lock and the watchdog), then answer')
-    vi.add_argument('--snapshot', help='a runtime snapshot written by runtime_snapshot.sh (format 2)')
+    vi.add_argument('--snapshot', help='a runtime snapshot written by runtime_snapshot.sh (format 2 or 3)')
     vi.add_argument('--only-snapshot', action='store_true', help='compare only the snapshot, not the inventory')
     vi.add_argument('classes', nargs='*', metavar='CLASS')
     mc = sub.add_parser('macros', help='repository macro definitions with their facts, kinds, expansion counts and '
@@ -6227,8 +6302,14 @@ def main(argv=None):
                 update(paths, log=lambda m: print(m, file=sys.stderr, flush=True))
             if args.command == 'classstate':
                 import classstate
+                if args.all == (args.class_name is not None):
+                    raise CodeDBError('classstate takes a CLASS or --all, not both or neither')
+                if args.all:
+                    return classstate.classstate_all(sys.modules[__name__], paths, as_json=args.json,
+                                                     runtime_methods=args.runtime_methods, snapshot=args.snapshot,
+                                                     progress=lambda m: print(m, file=sys.stderr, flush=True))
                 return classstate.classstate(sys.modules[__name__], paths, args.class_name, as_json=args.json,
-                                             runtime_methods=args.runtime_methods)
+                                             runtime_methods=args.runtime_methods, snapshot=args.snapshot)
             import verify_inventory
             return verify_inventory.verifyinventory(sys.modules[__name__], paths, classes=args.classes,
                                                     snapshot=args.snapshot, only_snapshot=args.only_snapshot)

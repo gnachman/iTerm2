@@ -426,7 +426,12 @@ classes (102 uses) record and enforce who may touch what.
   assumptions and no new isolation annotations.
 - Where the table shows a method is confined to one thread or queue and
   nothing asserts it, add a beta assertion ([assertions.md](assertions.md)) saying so. This is
-  one of the most valuable kinds of assertion the port can add.
+  one of the most valuable kinds of assertion the port can add, and the one
+  addition [README.md §4](README.md) allows a translation. Until the owner
+  answers owner queue Q23 item 13, it is added wherever the thread is
+  known, and the commit message names what the code depends on there
+  (unsynchronized shared or instance state, AppKit, a process-wide facility
+  such as `drand48`) or says that nothing was found to depend on it.
 - State objects that are deliberately handed from one thread to another
   (copied, sanitized, or frozen first) keep exactly that discipline. Do not
   share where the Objective-C copied.

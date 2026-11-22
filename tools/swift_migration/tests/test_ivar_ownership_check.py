@@ -232,6 +232,19 @@ class CheckTest(unittest.TestCase):
         _, out, _ = self.run_tool(HEADER + section('A', 'set', [('_o', '@', 'strong', 's')]))
         self.assertNotIn('WARNING', out)
 
+    def test_reads_the_code_databases_current_schema(self):
+        # The tool refused every database once codedb.py moved to schema 12,
+        # although the columns it reads did not change.
+        sys.path.insert(0, os.path.join(TOOL_DIR, 'codedb'))
+        import codedb
+        current = os.path.join(self.directory.name, 'current.sqlite')
+        db = Database(current, version=codedb.SCHEMA_VERSION)
+        db.implementation('A', 1, [('_o', 'id', 'object', 'strong', 0)])
+        db.con.close()
+        status, out, err = self.run_tool(HEADER + section('A', 'set', [('_o', '@', 'strong', 's')]), db_path=current)
+        self.assertEqual(status, 0, err)
+        self.assertIn('agrees', out)
+
     def test_errors(self):
         status, _, err = self.run_tool(HEADER.replace('format 3', 'format 2') + section('A', 'set', []))
         self.assertEqual(status, 2)

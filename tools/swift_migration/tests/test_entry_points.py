@@ -815,6 +815,43 @@ class RegistryBehindTest(DatabaseTest):
         self.assertTrue(section(d, 1)['complete'])
 
 
+class UnreachableCallerTest(DatabaseTest):
+    """A method whose only callers are sends in unreachable code
+    (send.in_unreachable_code) is never "no caller found", nor silently
+    "called": it has its own heading and flag."""
+
+    @staticmethod
+    def edit(root):
+        with open(os.path.join(root, 'sources', 'Widget.m'), 'a') as f:
+            f.write('@interface iTermWidget (Unreachable)\n- (void)deadOnly;\n- (void)halfDead;\n@end\n'
+                    '@implementation iTermWidget (Unreachable)\n- (void)deadOnly {}\n- (void)halfDead {}\n'
+                    '- (void)callsDead { return; [self deadOnly]; [self halfDead]; }\n'
+                    '- (void)callsLive { [self halfDead]; }\n@end\n')
+
+    def test_only_unreachable_callers(self):
+        # The flag names the configuration of the units (the capture's is
+        # Development; this fixture records none).
+        con = sqlite3.connect(self.paths.db)
+        config = con.execute("SELECT coalesce(configuration, 'not recorded') FROM tu WHERE main_file = "
+                             "'sources/Widget.m'").fetchone()[0]
+        con.close()
+        flag = 'called only from unreachable code (%s)' % config
+        status, d = self.run_json('--runtime-methods', harness.RUNTIME_FIXTURE, 'class', 'iTermWidget', '--unreached')
+        self.assertNotIn('-deadOnly', by_method(d['methods']))
+        m = by_method(d['unreachable'])['-deadOnly']
+        self.assertIn(flag, m['flags'])
+        self.assertEqual(d['counts']['unreachable'], 1)
+        status, d = self.run_json('class', 'iTermWidget')
+        t = by_method(d['methods'])
+        self.assertEqual(t['-deadOnly']['reach'], 'unreachable')
+        self.assertIn(flag, t['-deadOnly']['flags'])
+        # A live caller as well: called, no flag.
+        self.assertEqual(t['-halfDead']['reach'], 'called')
+        self.assertFalse(any('unreachable' in f for f in t['-halfDead']['flags']))
+        status, text = self.run_text('class', 'iTermWidget', '--unreached')
+        self.assertIn('\n' + ep.UNREACHABLE_HEADING + ': 1\n', text)
+
+
 class UnreadableRegistryTest(DatabaseTest):
     @staticmethod
     def edit(root):
@@ -1810,6 +1847,155 @@ class PrebuiltFrameworkTest(DatabaseTest):
         self.assertIn('kitIsReady', found)
         self.assertNotIn('setKitIsReady:', found)
         self.assertIn('publicNeverCalled', found)
+
+
+def add_outside_class(root):
+    """A class outside the migration's scope (ThirdParty/Other) with a method
+    nothing calls, for the split of "no caller found" by scope."""
+    with open(os.path.join(root, 'ThirdParty', 'Other', 'Other.m'), 'a') as f:
+        f.write('\n@interface iTermOutsideThing : NSObject\n- (void)outsideNeverCalled;\n@end\n\n'
+                '@implementation iTermOutsideThing\n- (void)outsideNeverCalled {\n}\n@end\n')
+
+
+def read_tsv(path):
+    """[dict] of a TSV file written by all-classes, keyed by its header."""
+    with open(path, 'r', encoding='utf-8') as f:
+        lines = f.read().rstrip('\n').split('\n')
+    header = lines[0].split('\t')
+    return [dict(zip(header, line.split('\t'))) for line in lines[1:] if line]
+
+
+def read_line_of(root, rel, needle):
+    with open(os.path.join(root, rel), 'r', encoding='utf-8') as f:
+        for n, line in enumerate(f, 1):
+            if needle in line:
+                return n
+    raise AssertionError('%s not in %s' % (needle, rel))
+
+
+class WholeTreeTest(DatabaseTest):
+    """all-classes: every class in one process, the same answer per class as
+    class CLASS --unreached."""
+    edit = staticmethod(add_outside_class)
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.out_dir = harness.make_temp()
+        err = io.StringIO()
+        out = io.StringIO()
+        with mock.patch('sys.stderr', err):
+            cls.status = ep.main(census_args(cls.root, cls.paths) + [
+                '--runtime-methods', harness.RUNTIME_FIXTURE, 'all-classes', '--out', cls.out_dir], out=out)
+        cls.stdout, cls.stderr = out.getvalue(), err.getvalue()
+        cls.table = read_tsv(os.path.join(cls.out_dir, 'methods.tsv'))
+        with open(os.path.join(cls.out_dir, 'summary.json'), 'r', encoding='utf-8') as f:
+            cls.summary = json.load(f)
+
+    def per_class(self, cls_name):
+        """({method: heading}, dossier) from class CLASS --unreached, with the
+        runtime list, in the whole-tree mode's heading names."""
+        status, d = self.run_json('--runtime-methods', harness.RUNTIME_FIXTURE, 'class', cls_name, '--unreached')
+        out = dict((m['method'], 'none') for m in d['methods'])
+        for k in ep.REACH_KEYS:
+            for m in d[k]:
+                out[m['method']] = k
+        return out, d
+
+    def test_same_heading_per_method_as_the_class_mode(self):
+        classes = sorted(set(r['class'] for r in self.table))
+        self.assertIn('iTermWidget', classes)
+        self.assertIn('iTermOutsideThing', classes)
+        for c in classes:
+            expected, d = self.per_class(c)
+            got = dict((r['method'], r['heading']) for r in self.table if r['class'] == c and
+                       r['heading'] not in ('generated', 'called'))
+            self.assertEqual(got, expected, c)
+            generated = sum(1 for r in self.table if r['class'] == c and r['heading'] == 'generated')
+            self.assertEqual(generated, d['generated_excluded'], c)
+
+    def test_every_class_with_a_definition_outside_tests_and_submodules(self):
+        classes = set(r['class'] for r in self.table)
+        self.assertIn('iTermGenMessage', classes)  # generated: its methods are counted as such
+        self.assertIn('PSMThing', classes)
+        self.assertFalse(any(c.endswith('Tests') for c in classes), classes)
+        self.assertNotIn('Sub', classes)
+
+    def test_generated_methods_are_listed_and_counted_but_not_under_a_heading(self):
+        gen = [r for r in self.table if r['class'] == 'iTermGenMessage']
+        self.assertTrue(gen)
+        self.assertEqual(set(r['heading'] for r in gen), {'generated'})
+        self.assertEqual(self.summary['generated_excluded'], sum(1 for r in self.table if r['heading'] ==
+                                                                 'generated'))
+
+    def test_no_caller_found_split_by_scope(self):
+        inside = read_tsv(os.path.join(self.out_dir, 'no_caller_in_scope.tsv'))
+        outside = read_tsv(os.path.join(self.out_dir, 'no_caller_out_of_scope.tsv'))
+        self.assertIn(('iTermOutsideThing', '-outsideNeverCalled'), [(r['class'], r['method']) for r in outside])
+        self.assertEqual(set(r['scope'] for r in outside), {'out of scope: ThirdParty'})
+        self.assertTrue(inside)
+        self.assertEqual(set(r['scope'] for r in inside), {'in scope'})
+        none = [(r['class'], r['method']) for r in self.table if r['heading'] == 'none']
+        self.assertEqual(sorted(none), sorted([(r['class'], r['method']) for r in inside + outside]))
+        self.assertEqual(self.summary['no_caller_in_scope'], len(inside))
+        self.assertEqual(self.summary['no_caller_out_of_scope'], len(outside))
+
+    def test_definition_and_counts_columns(self):
+        r = next(x for x in self.table if (x['class'], x['method']) == ('iTermOutsideThing', '-outsideNeverCalled'))
+        self.assertEqual(r['defined'], 'ThirdParty/Other/Other.m:%d' % (
+            read_line_of(self.root, 'ThirdParty/Other/Other.m', '- (void)outsideNeverCalled {')))
+        self.assertEqual(r['objc'], '0')
+        self.assertIn('no caller found', r['flags'])
+
+    def test_summary_counts_per_heading(self):
+        counts = self.summary['counts']
+        for k in ('none',) + ep.REACH_KEYS + ('called', 'generated'):
+            self.assertEqual(counts.get(k, 0), sum(1 for r in self.table if r['heading'] == k), k)
+            self.assertEqual(self.summary['counts_in_scope'][k], sum(1 for r in self.table if r['heading'] == k and
+                                                                     r['scope'] == 'in scope'), k)
+        self.assertEqual(self.summary['methods'], len(self.table))
+        self.assertEqual(self.summary['classes'], len(set(r['class'] for r in self.table)))
+        self.assertEqual(self.summary['errors'], [])
+        self.assertIn('peak_memory_mb', self.summary)
+        self.assertIn('seconds', self.summary)
+        with open(os.path.join(self.out_dir, 'summary.txt'), 'r', encoding='utf-8') as f:
+            text = f.read()
+        self.assertIn('no caller found, in scope: %d' % self.summary['no_caller_in_scope'], text)
+        self.assertIn(ep.SDK_HEADING, text)
+
+    def test_status_and_progress(self):
+        # A runtime method list always leaves the answer incomplete.
+        self.assertEqual(self.status, 3)
+        self.assertEqual(self.summary['exit_status'], 3)
+        self.assertTrue(any('framework methods are read from' in r for r in self.summary['incomplete']))
+        self.assertRegex(self.stderr, r'classes: \d+/\d+')
+        self.assertIn('peak memory', self.stderr)
+
+    def test_memory_limit_stops_the_run(self):
+        out_dir = harness.make_temp()
+        err = io.StringIO()
+        with mock.patch('sys.stderr', err):
+            status = ep.main(census_args(self.root, self.paths) + [
+                '--runtime-methods', harness.RUNTIME_FIXTURE, 'all-classes', '--out', out_dir, '--memory-limit',
+                '1'], out=io.StringIO())
+        self.assertEqual(status, 2)
+        self.assertIn('memory limit', err.getvalue())
+
+    def test_whole_tree_preparation_does_not_change_the_database_file(self):
+        before = os.stat(self.paths.db).st_mtime_ns, os.path.getsize(self.paths.db)
+        out_dir = harness.make_temp()
+        with mock.patch('sys.stderr', io.StringIO()):
+            ep.main(census_args(self.root, self.paths) + ['all-classes', '--out', out_dir], out=io.StringIO())
+        self.assertEqual((os.stat(self.paths.db).st_mtime_ns, os.path.getsize(self.paths.db)), before)
+
+    def test_primed_text_search_answers_as_the_unprimed_one(self):
+        res = ep.Resources(self.root, harness.codedb.repository_files(self.root))
+        want = ['biggerFont:', 'openPanel:', 'nothingByThisName:']
+        plain = res.text_search(want)
+        res.prime_text_search(want + ['other:'])
+        self.assertEqual(dict(res.text_search(want)), dict(plain))
+        self.assertEqual(dict(res.text_search(['biggerFont:'])), dict((k, v) for k, v in plain.items()
+                                                                      if k == 'biggerFont:'))
 
 
 class GeneratedFilesTest(unittest.TestCase):

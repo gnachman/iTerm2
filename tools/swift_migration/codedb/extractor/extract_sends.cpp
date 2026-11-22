@@ -94,11 +94,46 @@
 // Not marked, although the compiler may drop them: an aggregate or complex
 // conditional (CodeGen emits both operands), GNU a ?: b, the operands of a
 // conditional inside a branch condition, a folded condition's own operands,
-// loops (the compiler emits the body of while (0)), and code after a return.
+// loops (the compiler emits the body of while (0)), and code after a return
+// (see "Unreachable code").
 // test_codedb_completeness.py ConstantFormsTest checks every form against an
 // object file. An ivar_ref or static_ref row stands for every reference at
 // its place with its access (a macro argument expanded twice); it is marked
 // only if every one of them is.
+//
+// Unreachable code: a send row has in_unreachable_code 1 when its message
+// expression is placed only in blocks of its function's control-flow graph
+// (Clang's CFG, built with every statement as an element and without
+// pruning trivially false edges) that no path from the entry reaches. The
+// function is the innermost function, method, block or lambda whose body
+// holds the send. A path ends at return, break, continue, goto, @throw and
+// throw, and at a call CodeGen emits as noreturn: a callee with the noreturn
+// attribute, _Noreturn or [[noreturn]] (or of a noreturn function type), or
+// __builtin_unreachable. The graph also ends a path at __builtin_assume(0),
+// [[assume(0)]], __builtin_trap, __builtin_debugtrap and a call of an
+// analyzer_noreturn function, after which CodeGen still emits the code that
+// follows at -O0; there the edge the graph keeps to that code is followed
+// (endsPathForCodeGen). A path also does not take
+// the arm that the constant-condition rule above skips for an if, or for a
+// conditional operator (the arm CodeGen does not emit), so the code after
+// if (!(NO)) { noreturn(); } (ITAssertWithMessage(NO, ...)) and after
+// NO ? ... : noreturn() (assert(NO)) is unreachable. An edge the graph keeps
+// but calls unreachable (the default of a switch over an enum that lists
+// every enumerator) is followed, because CodeGen emits it. The mark reflects
+// the unit's own configuration (tu.configuration): the preprocessor decided
+// what the body is (ITDebugAssert is assert in Development and a cast to
+// void in Deployment), so a send marked in one configuration can be live in
+// another. Like the constant-condition mark it exists to explain a send the
+// database has and the object does not; it has been checked against the
+// compiler only for the forms of the test fixtures. It is deliberately
+// narrower than
+// what the compiler drops: a send not placed in any block of the graph, the
+// body of a block or lambda written in unreachable code, the code after
+// while (1) without a break (the graph keeps the loop's exit), and the
+// skipped operand of && and || are not marked. Bodies in a dependent
+// context (a template pattern) are not analyzed; an instantiation is.
+// test_codedb_completeness.py UnreachableCodeTest checks the forms against
+// an object file. Only send rows carry the mark.
 //
 // function_ref: for each function defined in the repository with internal
 // linkage or declared inline (the functions whose code the object holds
@@ -451,6 +486,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/Analysis/CFG.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/SourceManager.h"
@@ -498,7 +534,7 @@
 using namespace clang;
 
 // PRAGMA user_version of the database. codedb.py's SCHEMA_VERSION must match.
-static const int kSchemaVersion = 12;
+static const int kSchemaVersion = 13;
 
 // The location columns every row table shares (see the top of this file).
 #define LOCATION_COLUMNS                                                                                    \
@@ -585,7 +621,10 @@ static const char *kSchema =
     "  macro_role TEXT,"
     "  expansion_line INTEGER,"
     "  expansion_col INTEGER,"
-    "  in_migration_scope INTEGER NOT NULL," CONSTANT_FALSE_COLUMNS ");"
+    "  in_migration_scope INTEGER NOT NULL," CONSTANT_FALSE_COLUMNS ","
+    // In code no path from the function's entry reaches, in this unit's
+    // configuration (see "Unreachable code" at the top of this file).
+    "  in_unreachable_code INTEGER NOT NULL DEFAULT 0);"
     // Every Objective-C method declared or defined in the repository,
     // including accessors the compiler declares for properties (is_implicit)
     // and synthesizes in an implementation (is_synthesized_accessor).
@@ -1005,6 +1044,8 @@ struct SendRow : Located, ConstantFalse {
     std::string enclosingUSR, enclosingName;
     int inBlock = 0;
     int implicitAccessor = kExplicit;
+    // See "Unreachable code" at the top of this file.
+    int inUnreachable = 0;
 };
 
 struct OverrideRow {
@@ -2390,7 +2431,12 @@ public:
         std::optional<bool> value = foldedCondition(s->getCond(), s->isConstexpr());
         if (!value) return true;
         const Stmt *skipped = *value ? s->getElse() : s->getThen();
-        if (s->isConstexpr() || !containsLabel(skipped)) markDead(skipped, s->getCond());
+        if (s->isConstexpr() || !containsLabel(skipped)) {
+            markDead(skipped, s->getCond());
+            // Not a path for "Unreachable code": the CFG's successors of an
+            // if are the then arm (0) and the else arm or what follows (1).
+            skippedSuccessor_[s] = *value ? 1 : 0;
+        }
         return true;
     }
 
@@ -2427,7 +2473,12 @@ public:
         std::optional<bool> value = foldedCondition(e->getCond(), false);
         if (!value) return true;
         const Expr *skipped = *value ? e->getFalseExpr() : e->getTrueExpr();
-        if (!containsLabel(skipped)) markDead(skipped, e->getCond());
+        if (!containsLabel(skipped)) {
+            markDead(skipped, e->getCond());
+            // The CFG's successors of a conditional operator are the true
+            // operand (0) and the false operand (1).
+            skippedSuccessor_[e] = *value ? 1 : 0;
+        }
         return true;
     }
 
@@ -2461,6 +2512,14 @@ public:
         if (frame) frames_.push_back({d, 0});
         bool ok = Base::TraverseDecl(d);
         if (frame) frames_.pop_back();
+        if (frame) {
+            if (const auto *fd = dyn_cast<FunctionDecl>(d)) {
+                if (fd->doesThisDeclarationHaveABody() && !fd->isLateTemplateParsed())
+                    markUnreachable(d, fd->getBody());
+            } else if (const auto *md = dyn_cast<ObjCMethodDecl>(d)) {
+                if (md->hasBody()) markUnreachable(d, md->getBody());
+            }
+        }
         return ok;
     }
 
@@ -2472,6 +2531,7 @@ public:
         bool ok = Base::TraverseBlockExpr(e);
         if (once) onceDepth_--;
         frames_.back().blockDepth--;
+        markUnreachable(e->getBlockDecl(), e->getBody());
         return ok;
     }
 
@@ -2538,6 +2598,7 @@ public:
         lambdas_.push_back(e);
         bool ok = Base::TraverseLambdaExpr(e);
         lambdas_.pop_back();
+        markUnreachable(e->getCallOperator(), e->getBody());
         return ok;
     }
 
@@ -2750,6 +2811,7 @@ public:
             r.receiverType = row.receiverType;
             results_.reflective.push_back(std::move(r));
         }
+        sendRowOf_[m] = results_.sends.size();
         results_.sends.push_back(std::move(row));
         return true;
     }
@@ -3030,6 +3092,106 @@ private:
             where.line = exp.isValid() ? sm_.getExpansionLineNumber(exp) : 0;
         }
         deadRoots_.emplace(branch, std::make_pair(where.file, where.line));
+    }
+
+    // "Unreachable code" (see the top of this file): marks the send rows of
+    // the body of d (a function, method, block or lambda; not the bodies of
+    // blocks and lambdas inside it, which have their own) that are placed
+    // only in blocks of its CFG that no path from the entry reaches.
+    void markUnreachable(const Decl *d, Stmt *body) {
+        if (!d || !body || !isa<DeclContext>(d) || Decl::castToDeclContext(d)->isDependentContext()) return;
+        CFG::BuildOptions options;
+        options.PruneTriviallyFalseEdges = false;
+        options.setAllAlwaysAdd();
+        std::unique_ptr<CFG> cfg = CFG::buildCFG(d, body, &ctx_, options);
+        if (!cfg) return;
+        std::vector<char> reached(cfg->getNumBlockIDs(), 0);
+        std::vector<const CFGBlock *> work;
+        auto reach = [&](const CFGBlock *b) {
+            if (b && !reached[b->getBlockID()]) {
+                reached[b->getBlockID()] = 1;
+                work.push_back(b);
+            }
+        };
+        reach(&cfg->getEntry());
+        // The handlers of a try or @try hang off the block its statement
+        // terminates, which only exception edges (not built) lead to: they
+        // are roots too, as CodeGen emits them.
+        for (const CFGBlock *b : *cfg) {
+            const Stmt *t = b->getTerminatorStmt();
+            if (t && (isa<CXXTryStmt>(t) || isa<ObjCAtTryStmt>(t))) reach(b);
+        }
+        while (!work.empty()) {
+            const CFGBlock *b = work.back();
+            work.pop_back();
+            const Stmt *t = b->getTerminatorStmt();
+            int skip = -1;
+            if (t) {
+                auto it = skippedSuccessor_.find(t);
+                if (it != skippedSuccessor_.end()) skip = (int)it->second;
+            }
+            // A block the CFG ends as noreturn ends the path only when
+            // CodeGen ends it too (endsPathForCodeGen); otherwise the edge it
+            // keeps, called unreachable, to the code after is followed.
+            bool followUnreachable = (t && isa<SwitchStmt>(t)) || (b->hasNoReturnElement() && !endsPathForCodeGen(*b));
+            int index = 0;
+            for (const CFGBlock::AdjacentBlock &a : b->succs()) {
+                if (index++ == skip) continue;
+                reach(a.getReachableBlock());
+                // An edge the CFG keeps but calls unreachable is followed
+                // out of a switch (its default when the cases list every
+                // enumerator), which CodeGen emits, and out of a noreturn
+                // block CodeGen does not end. The others link the code after
+                // a noreturn call and the like, which no path reaches.
+                if (followUnreachable) reach(a.getPossiblyUnreachableBlock());
+            }
+        }
+        std::unordered_set<const Stmt *> live, dead;
+        for (const CFGBlock *b : *cfg) {
+            for (const CFGElement &el : *b) {
+                std::optional<CFGStmt> cs = el.getAs<CFGStmt>();
+                if (!cs || !isa<ObjCMessageExpr>(cs->getStmt())) continue;
+                (reached[b->getBlockID()] ? live : dead).insert(cs->getStmt());
+            }
+        }
+        for (const Stmt *st : dead) {
+            if (live.count(st)) continue;
+            auto it = sendRowOf_.find(st);
+            if (it != sendRowOf_.end()) results_.sends[it->second].inUnreachable = 1;
+        }
+    }
+
+    // Whether a block the CFG marks as ending in a noreturn element ends the
+    // path for CodeGen too: its last statement is a throw or @throw, or a
+    // call CodeGen emits as noreturn (a callee with the noreturn attribute,
+    // _Noreturn or [[noreturn]], or of a noreturn function type, or
+    // __builtin_unreachable). Not __builtin_assume(0), __builtin_trap,
+    // __builtin_debugtrap or another builtin, nor analyzer_noreturn, after
+    // which the CFG ends the path but CodeGen emits the code that follows.
+    bool endsPathForCodeGen(const CFGBlock &b) const {
+        const Stmt *last = nullptr;
+        for (auto it = b.rbegin(); it != b.rend(); ++it) {
+            if (std::optional<CFGStmt> cs = it->getAs<CFGStmt>()) {
+                last = cs->getStmt();
+                break;
+            }
+        }
+        if (!last) return false;
+        if (isa<CXXThrowExpr>(last) || isa<ObjCAtThrowStmt>(last)) return true;
+        const auto *call = dyn_cast<CallExpr>(last);
+        if (!call) return false;
+        if (const FunctionDecl *fd = call->getDirectCallee()) {
+            unsigned id = fd->getBuiltinID();
+            if (id == Builtin::BI__builtin_unreachable) return true;
+            if (id && !ctx_.BuiltinInfo.isLibFunction(id)) return false;
+            if (fd->hasAttr<NoReturnAttr>() || fd->hasAttr<C11NoReturnAttr>() || fd->hasAttr<CXX11NoReturnAttr>())
+                return true;
+        }
+        QualType callee = call->getCallee()->getType();
+        if (const auto *pt = callee->getAs<PointerType>()) callee = pt->getPointeeType();
+        else if (const auto *bt = callee->getAs<BlockPointerType>()) callee = bt->getPointeeType();
+        if (const auto *ft = callee->getAs<FunctionType>()) return ft->getNoReturnAttr();
+        return false;
     }
 
     void noteConstantFalse(ConstantFalse &row) const {
@@ -4566,6 +4728,10 @@ private:
     std::vector<int> implicitKinds_;
     int unevaluated_ = 0;
     std::set<const ObjCMessageExpr *> seen_;
+    // "Unreachable code": the row of each recorded send, and the successor
+    // of a folded if or conditional operator that CodeGen does not emit.
+    std::unordered_map<const Stmt *, size_t> sendRowOf_;
+    std::unordered_map<const Stmt *, unsigned> skippedSuccessor_;
     std::unordered_set<const CallExpr *> seenCalls_;
     std::unordered_set<const ObjCSelectorExpr *> seenSelectors_;
     std::unordered_set<const ObjCContainerDecl *> seenContainers_;
@@ -5274,8 +5440,9 @@ static bool writeDatabase(const Options &o, const Results &r, unsigned errors,
     for (const SendRow &row : r.sends) {
         run("INSERT INTO send(tu, selector, receiver_kind, receiver_type, target_usr, file, line, col,"
             " enclosing_usr, enclosing_name, in_block, implicit_accessor, macro_name, macro_file, macro_line,"
-            " macro_role, expansion_line, expansion_col, in_migration_scope, " CONSTANT_FALSE_NAMES ")"
-            " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," CONSTANT_FALSE_PLACEHOLDERS ")",
+            " macro_role, expansion_line, expansion_col, in_migration_scope, " CONSTANT_FALSE_NAMES ","
+            " in_unreachable_code)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," CONSTANT_FALSE_PLACEHOLDERS ",?)",
             [&](sqlite3_stmt *s) {
                 sqlite3_bind_int64(s, 1, tuId);
                 sqlite3_bind_text(s, 2, row.selector.c_str(), -1, SQLITE_TRANSIENT);
@@ -5303,6 +5470,7 @@ static bool writeDatabase(const Options &o, const Results &r, unsigned errors,
                 }
                 sqlite3_bind_int(s, 19, row.inMigrationScope);
                 bindConstantFalse(s, 20, row);
+                sqlite3_bind_int(s, 23, row.inUnreachable);
             });
     }
     for (const MethodRow &row : r.methods) {

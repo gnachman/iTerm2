@@ -17,3 +17,4 @@
 #   ledger    where the entry is judged
 entry	kind	access	previous	location	ledger
 2.1	data race	__61-[iTermMetalDriver finishDrawingWithCommandBuffer:frameData:]_block_invoke_2	__copy_helper_block_e8_32s40s48b ; -[iTermMetalFrameData measureTimeForStat:ofBlock:] ; -[iTermMetalDriver finishDrawingWithCommandBuffer:frameData:]	heap block of size 56	thread-baseline.md section 2.1
+2.3	data race	__61-[iTermMetalDriver finishDrawingWithCommandBuffer:frameData:]_block_invoke_4	__copy_helper_block_e8_32s40b ; -[iTermMetalFrameData measureTimeForStat:ofBlock:] ; -[iTermMetalDriver finishDrawingWithCommandBuffer:frameData:]	heap block of size 48	thread-baseline.md section 2.3

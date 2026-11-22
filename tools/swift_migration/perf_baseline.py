@@ -43,10 +43,13 @@ CLAUDE.md requires, and MIGRATION_PERF_ITERATIONS in its environment.
 
 App scenarios run tools/perf/run_stress_test.sh against
 Build/<configuration>/iTerm2.app with its own isolated suite,
-com.iterm2.stress-test. That script refuses to start while any process named
-iTerm2 is running, because it drives the app with AppleScript addressed to
-"iTerm2" by name, so app scenarios are skipped, with that reason, whenever
-one is: the owner's own iTerm2, or another checkout's test host. It is not
+com.iterm2.stress-test. That script launches a new instance with `open -n`
+and addresses it by its path (AppleScript) and its PID (everything else), so
+other iTerm2 instances, such as the owner's own or another checkout's build,
+may keep running and are never sent anything. It refuses to start only while
+an instance of the same app path is already running, so app scenarios are
+skipped, with that reason, only then: a test host of this checkout or a
+leftover stress run. It is not
 given the checkout's name as its suite because it deletes the suite's
 Application Support folder before each run. While each app run is in
 progress this script samples the app's resident size once a second with ps.
@@ -270,8 +273,10 @@ def run_xctest_scenarios(scenarios, configuration, iterations, work_dir, timeout
                 result['reason'] = 'timed out after %d s' % timeout
                 # The test host is not in xcodebuild's process group.
                 kill_exact_executable(test_host_executable(configuration))
+            result['load_average_after'] = perf_lib.load_average()
             results[s['name']] = result
-            log('  %s %s' % (result['status'], result['reason']))
+            log('  %s %s; load average %s' % (result['status'], result['reason'],
+                                              result['load_average_after']))
     finally:
         os.remove(patched_path)
     return results
@@ -315,12 +320,15 @@ class RssSampler:
         self._thread.join(timeout=5)
 
 
-def other_iterm2_running():
-    return perf_lib.process_may_be_running('iTerm2')
-
-
 def test_host_executable(configuration):
     return os.path.join(REPO, 'Build', configuration, 'iTerm2.app', 'Contents', 'MacOS', 'iTerm2')
+
+
+def app_under_test_running(configuration):
+    """Whether an instance of this checkout's own build is running. Other
+    iTerm2 instances do not matter: run_stress_test.sh addresses the app
+    under test by its path and its PID."""
+    return perf_lib.executable_may_be_running(test_host_executable(configuration))
 
 
 def kill_exact_executable(executable, only_pid=None):
@@ -348,12 +356,12 @@ def run_stress_scenarios(scenarios, configuration, runs, duration, work_dir):
             results[s['name']] = {'status': 'failed', 'source': source, 'metrics': {},
                                   'reason': 'no app at %s' % perf_lib.redact_path(app, REPO)}
             continue
-        if other_iterm2_running():
+        if app_under_test_running(configuration):
             results[s['name']] = {
                 'status': 'skipped', 'source': source, 'metrics': {},
-                'reason': ('a process named iTerm2 is running (the owner\'s app or a test host); '
-                           'run_stress_test.sh refuses to start then, because its AppleScript addresses '
-                           '"iTerm2" by name')}
+                'reason': ('an instance of %s is already running (a test host or an earlier stress '
+                           'run); run_stress_test.sh refuses to start a second instance of the same '
+                           'path' % perf_lib.redact_path(app, REPO))}
             log('scenario %s skipped: %s' % (s['name'], results[s['name']]['reason']))
             continue
         log('scenario %s' % s['name'])
@@ -387,10 +395,11 @@ def run_stress_scenarios(scenarios, configuration, runs, duration, work_dir):
                 break
             app_runs.append({'iterations_per_sec': parsed['iterations_per_sec'],
                              'rss_kb': sampler['rss'].samples if 'rss' in sampler else []})
-        metrics = perf_lib.stress_metrics(app_runs)
+        metrics = perf_lib.stress_metrics(app_runs, rate=s.get('rate', True))
+        load = perf_lib.load_average()
         results[s['name']] = {'status': 'failed' if failure else 'ok', 'reason': failure,
-                              'source': source, 'metrics': metrics}
-        log('  %s %s' % (results[s['name']]['status'], failure))
+                              'source': source, 'metrics': metrics, 'load_average_after': load}
+        log('  %s %s; load average %s' % (results[s['name']]['status'], failure, load))
     return results
 
 
@@ -414,9 +423,15 @@ def print_summary(result):
             log('%-44s %s: %s' % (name, entry['status'], entry['reason']))
             continue
         for metric, data in entry['metrics'].items():
-            s = data['summary']
-            log('%-44s %-24s median %.6g %s (n=%d, spread %.1f%%)' % (
-                name, metric, s['median'], data['unit'], s['n'], s['robust_rel_spread_percent']))
+            # Recomputed from the samples so that a summary written before
+            # 'best' existed prints the same way.
+            s = perf_lib.summarize_metric(data['unit'], data.get('better'), data['samples'])
+            if not s['n']:
+                log('%-44s %-24s no samples' % (name, metric))
+                continue
+            log('%-44s %-24s best %.6g median %.6g %s (n=%d, spread %.1f%%, compared on %s)' % (
+                name, metric, s['best'], s['median'], data['unit'], s['n'], s['robust_rel_spread_percent'],
+                s['statistic']))
 
 
 def cmd_run(args):
@@ -466,12 +481,16 @@ def cmd_run(args):
                                             args.test_timeout))
         results.update(run_stress_scenarios(stresses, args.configuration, args.app_runs, args.app_duration,
                                             work_dir))
-    state_after = perf_lib.machine_state()
+    log('waiting up to %d s for the 1-minute load average to settle after the run'
+        % perf_lib.QUIET_THRESHOLDS['after_settle_seconds'])
+    after_samples = perf_lib.settle_after(perf_lib.machine_state)
+    state_after = after_samples[-1]
 
     commit, dirty = commit_and_dirty()
     ordered = {s['name']: results[s['name']] for s in scenarios if s['name'] in results}
     result = perf_lib.assemble_result(
         baseline_requested=args.baseline, state_before=state_before, state_after=state_after,
+        after_samples=after_samples,
         commit=commit, dirty=dirty, configuration=args.configuration, arch=ARCH,
         machine=perf_lib.machine_identity(), scenarios=ordered,
         settings={'iterations': args.iterations, 'app_runs': args.app_runs, 'app_duration_s': args.app_duration,

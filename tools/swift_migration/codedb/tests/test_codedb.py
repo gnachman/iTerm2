@@ -1320,6 +1320,23 @@ class DriverTest(unittest.TestCase):
         os.chmod(builder, 0o644)
         codedb.ensure_extractor(paths, log=lambda m: None, builder=builder)
 
+    def test_ensure_extractor_never_rebuilds_another_checkouts_binary(self):
+        # A tool run from one checkout with --root naming another must not
+        # replace that checkout's extractor with a build of its own sources.
+        other = make_temp('codedb-other-')
+        os.makedirs(os.path.join(other, 'tools', 'swift_migration', 'codedb'))
+        open(os.path.join(other, 'tools', 'swift_migration', 'codedb', 'codedb.py'), 'w').close()
+        os.makedirs(os.path.join(other, 'tmp', 'codedb', 'bin'))
+        text = '#!/bin/sh\necho "extract_sends %s theirs"\n' % ('0' * 64)
+        exe = write_executable(os.path.join(other, 'tmp', 'codedb', 'bin', 'extract_sends'), text)
+        builder = write_executable(os.path.join(other, 'build.sh'),
+                                   '#!/bin/sh\necho clobbered > "$1"\n')
+        paths = codedb.Paths(self.root, extractor=exe)
+        with self.assertRaises(codedb.CodeDBError) as caught:
+            codedb.ensure_extractor(paths, log=lambda m: None, builder=builder)
+        self.assertIn('another checkout', str(caught.exception))
+        self.assertEqual(open(exe).read(), text)
+
     def test_single_file_not_in_database(self):
         with self.assertRaises(codedb.CodeDBError):
             codedb.update(self.paths, only_file=os.path.join(self.root, 'sources/widget.h'), log=lambda m: None)

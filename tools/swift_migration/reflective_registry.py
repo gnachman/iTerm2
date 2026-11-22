@@ -39,9 +39,18 @@ check reports, and exits 1 on any of them:
 
 update rewrites the bullet lines from the rows and the summary table from
 the bullets, and only those; it refuses while there is a NEW SITE or a
-STALE BULLET, because those need a person to read the site. Line numbers
-cited in prose (sections 4 to 9 and the entries' paragraphs) are not
-regenerated: they are not database rows, and check does not see them.
+STALE BULLET, because those need a person to read the site. The prose
+(the entries' paragraphs and the names table's Sites column) cites places
+by file and function, not by line, so that nothing in it moves with the
+code; check does not read it. The bullets of sections 4 to 9 keep
+FILE:LINE, which entry_points.py parses; they are not regenerated.
+
+check is the lint of hidden-callers.md section 2: a new use of a reflective
+API whose name is not a literal is a new dynamic row, so a NEW SITE. It sees
+only the calls of the extractor's table (extractor/reflective_table.h) in
+Objective-C; conversions to strings (NSStringFromSelector,
+NSStringFromClass), names built by naming convention and Swift are not
+rows (docs/swift-migration/phase0.md section 10).
 
 Exit status: 0 nothing to report, 1 differences (check) or refused
 (update), 2 error.

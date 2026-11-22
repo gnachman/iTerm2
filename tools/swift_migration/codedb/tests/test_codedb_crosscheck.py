@@ -446,6 +446,45 @@ class ConstantFalseTest(unittest.TestCase):
 
 
 
+UNREACHABLE_M = 'sources/unreachable.m'
+
+
+@unittest.skipUnless(have_xcrun(), 'needs xcrun clang')
+class UnreachableCodeTest(unittest.TestCase):
+    """Sends in code that no path from the function's entry reaches: the
+    extractor marks them (in_unreachable_code, from Clang's CFG) and the
+    cross-check explains the selectors and call sites they account for, and
+    nothing else (unreachable.m)."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.status = setup_tree(cls, mains=((UNREACHABLE_M, ['-fobjc-arc']),))
+
+    def test_marked_rows(self):
+        self.assertEqual(self.status, 0)
+        con = sqlite3.connect(self.paths.db)
+        try:
+            sends = con.execute('SELECT selector, line, in_unreachable_code FROM send WHERE file = ? ORDER BY line',
+                                (UNREACHABLE_M,)).fetchall()
+        finally:
+            con.close()
+        self.assertEqual(sends, [('alsoLive', 16, 0), ('alsoLive', 17, 1), ('onlyUnreachable', 20, 1),
+                                 ('afterAssert', 24, 1)])
+
+    def test_explained_by_the_marks(self):
+        status, text = run(self)
+        self.assertEqual(section(text, 'UNEXPLAINED:'), [], text)
+        self.assertEqual(status, 0, text)
+        explained = [line.strip() for line in section(text, 'explained:') if 'unreachable-code' in line]
+        self.assertEqual(explained, [
+            'T sources/unreachable.m: selector only in the database: afterAssert (unreachable-code)',
+            'T sources/unreachable.m: selector only in the database: onlyUnreachable (unreachable-code)',
+            'T sources/unreachable.m: %s: alsoLive (object 1, database 2, 1 unreachable) (unreachable-code)' %
+            crosscheck.COUNT_FEWER])
+        self.assertIn("unreachable-code (selector only in the database): every send of it in the unit is in code "
+                      "that no path from its function's entry reaches in the unit's configuration", text)
+
+
 INLINED_M = 'sources/inlined.m'
 
 
@@ -573,6 +612,54 @@ class ConstantFalseRuleTest(unittest.TestCase):
         sites = {'foo': [site(line=2) + (1,)]}
         self.assertEqual([(d.kind, d.name, d.rule) for d in crosscheck.compare_counts(f, unit({'foo'}, sites=sites))],
                          [(crosscheck.COUNT_MORE, 'foo (object 1, database 0, 1 marked)', None)])
+
+
+class UnreachableRuleTest(unittest.TestCase):
+    """Rows of a send in unreachable code carry a ninth element, 1
+    (in_unreachable_code); the constant-false mark is the eighth."""
+
+    def test_set_rule_needs_every_row_marked(self):
+        u = unit({'foo'}, places={'foo': {'-[A b]'}})
+        f = facts(defined={'-[A b]'})
+        u['constant_false'] = {'foo': [('-[A b]', 0, 1), ('-[A b]', 0, 1)]}
+        self.assertEqual(crosscheck.compare_unit(f, u)[0].rule, 'unreachable-code')
+        # A row in a constant-false branch and one in unreachable code.
+        u['constant_false'] = {'foo': [('-[A b]', 1, 0), ('-[A b]', 0, 1)]}
+        self.assertEqual(crosscheck.compare_unit(f, u)[0].rule, 'unreachable-code')
+        # One row not marked, in a function the object defines: unexplained.
+        u['constant_false'] = {'foo': [('-[A b]', 0, 1), ('-[A b]', 0, 0)]}
+        self.assertIsNone(crosscheck.compare_unit(f, u)[0].rule)
+        # A row in a function the object does not define needs no mark.
+        u['constant_false'] = {'foo': [('-[A b]', 0, 1), ('Gone', 0, 0)]}
+        self.assertEqual(crosscheck.compare_unit(f, u)[0].rule, 'unreachable-code')
+        # Only constant-false marks: that rule, not this one.
+        u['constant_false'] = {'foo': [('-[A b]', 1, 0)]}
+        self.assertEqual(crosscheck.compare_unit(f, u)[0].rule, 'constant-false-branch')
+
+    def test_count_explained_when_the_marked_rows_account_for_it(self):
+        f = facts(stubs={'foo'}, defined={'-[A b]'}, call_sites={'foo': 1})
+        sites = {'foo': [site(line=1) + (0, 0), site(line=2) + (0, 1)]}
+        self.assertEqual([(d.kind, d.name, d.rule) for d in crosscheck.compare_counts(f, unit({'foo'}, sites=sites))],
+                         [(crosscheck.COUNT_FEWER, 'foo (object 1, database 2, 1 unreachable)', 'unreachable-code')])
+        # Two fewer, one marked: one fewer, unexplained.
+        sites = {'foo': [site(line=1) + (0, 0), site(line=3) + (0, 0), site(line=2) + (0, 1)]}
+        self.assertEqual([(d.name, d.rule) for d in crosscheck.compare_counts(f, unit({'foo'}, sites=sites))],
+                         [('foo (object 1, database 3, 1 unreachable)', None)])
+
+    def test_a_marked_row_does_not_cancel_a_missed_send(self):
+        # The database's only row is unreachable; the object's call is a
+        # send the database does not have: object MORE, unexplained.
+        f = facts(stubs={'foo'}, defined={'-[A b]'}, call_sites={'foo': 1})
+        sites = {'foo': [site(line=2) + (0, 1)]}
+        self.assertEqual([(d.kind, d.name, d.rule) for d in crosscheck.compare_counts(f, unit({'foo'}, sites=sites))],
+                         [(crosscheck.COUNT_MORE, 'foo (object 1, database 1, 1 unreachable)', None)])
+
+    def test_a_marked_row_in_an_inlined_function_is_not_a_copy(self):
+        sites = {'foo': [site(enclosing='InlineHelper', line=2) + (0, 1)]}
+        u = unit({'foo'}, sites=sites)
+        u['function_refs'] = {'InlineHelper': {'-[A b]': 2}}
+        f = facts(stubs={'foo'}, defined={'-[A b]'}, call_sites={'foo': 1})
+        self.assertEqual([d.rule for d in crosscheck.compare_counts(f, u)], [None])
 
 
 class CallSiteCountTest(unittest.TestCase):
@@ -757,6 +844,60 @@ class CxxFunctionTest(unittest.TestCase):
         f = facts(defined={'__ZL11OtherHelperv'})
         self.assertEqual([d.rule for d in crosscheck.compare_unit(f, unit({'foo'}, places=places))],
                          ['not-emitted'])
+
+    def test_a_name_inside_a_longer_name_is_another_function(self):
+        # 6Helper is written inside 16HelperXxxxxxxxxx: not Helper.
+        self.assertIs(crosscheck.emitted('Helper', facts(defined={'__ZL16HelperXxxxxxxxxxv'})), False)
+        self.assertIs(crosscheck.emitted('ns::foo', facts(defined={'__ZN2ns6foobarEv'})), False)
+        # An identifier that ends in a digit is followed by the next one.
+        self.assertIs(crosscheck.emitted('iTerm2::TexturePage::TexturePage',
+                                         facts(defined={'__ZN6iTerm211TexturePageC2EP8NSStringi'})), True)
+
+    def test_a_static_function_is_not_a_member_of_the_same_name(self):
+        # Helper compiled as C++ is __ZL6Helperv: a database name Foo::Helper
+        # does not match it. The reverse (database name Helper, symbol
+        # Foo::Helper) cannot be told from a leading inline namespace and is
+        # taken as emitted (test_leading_inline_namespace).
+        self.assertIs(crosscheck.emitted('Foo::Helper', facts(defined={'__ZL6Helperv'})), False)
+        self.assertIs(crosscheck.emitted('Bar::Helper', facts(defined={'__ZN3Foo6HelperEv'})), False)
+        self.assertIs(crosscheck.emitted('Foo::Helper', facts(defined={'__ZN3Foo6HelperEv'})), True)
+
+    def test_parameter_types_are_not_names(self):
+        # The parameter type 6Helper is not the function's name.
+        self.assertIs(crosscheck.emitted('Helper', facts(defined={'__Z3use6Helper'})), False)
+        self.assertIs(crosscheck.emitted('use', facts(defined={'__Z3use6Helper'})), True)
+
+    def test_inline_namespace(self):
+        # The database's name leaves out an inline namespace that the
+        # mangled name has (ankerl::unordered_dense::v4_11_0::detail).
+        self.assertIs(crosscheck.emitted('ankerl::unordered_dense::detail::wyhash::mix',
+                                         facts(defined={'__ZN6ankerl15unordered_dense7v4_11_06detail6wyhash3mixEyy'})),
+                      True)
+        self.assertIs(crosscheck.emitted('ankerl::unordered_dense::detail::wyhash::mix',
+                                         facts(defined={'__ZN6ankerl15unordered_dense7v4_11_06detail6wyhash3mumEyy'})),
+                      False)
+
+    def test_leading_inline_namespace(self):
+        # inline namespace v1 { int InNs(U *); }: the database names it InNs.
+        self.assertIs(crosscheck.emitted('InNs', facts(defined={'__ZN2v14InNsEP1U'})), True)
+        self.assertIs(crosscheck.emitted('ns::InNs', facts(defined={'__ZN2v12ns4InNsEP1U'})), True)
+        # Still not a different last name.
+        self.assertIs(crosscheck.emitted('InNs', facts(defined={'__ZN2v15InNsXEP1U'})), False)
+
+    def test_class_template_constructor_detected(self):
+        # ns::Tm<int>::Tm, the constructor of a class template, as the
+        # database names it: C1 or C2 after the template arguments.
+        self.assertIs(crosscheck.emitted('ns::Tm<int>::Tm', facts(defined={'__ZN2ns2TmIiEC2Ev'})), True)
+        self.assertIs(crosscheck.emitted('ns::Tm<int>::Tm', facts(defined={'__ZN2ns2TmIiE1fEv'})), False)
+
+    def test_local_entity_names_its_function(self):
+        # A lambda in Helper (a local entity, Z...E) is code of Helper.
+        self.assertIs(crosscheck.emitted('Helper', facts(defined={'__ZZL6HelpervENK3$_0clEv'})), True)
+
+    def test_unparsed_symbol_is_matched_as_before(self):
+        # An ABI tag (B5cxx11) is not parsed: the identifiers are matched in
+        # order, as before, so the function is taken as emitted.
+        self.assertIs(crosscheck.emitted('Foo::bar', facts(defined={'__ZN3Foo3barB5cxx11Ev'})), True)
 
     def test_counts_leave_out_cxx_functions_not_emitted(self):
         # iTermTextRenderer.mm: two sends in its own methods, seven in C++

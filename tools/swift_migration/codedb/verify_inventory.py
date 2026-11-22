@@ -71,7 +71,9 @@ files of one class at a time (a few parsed files are cached) and queries the
 database for that class alone, so memory stays bounded.
 
 Runtime side (--snapshot FILE, a snapshot written by
-tools/swift_migration/runtime_snapshot.sh, format 2). For every class in it
+tools/swift_migration/runtime_snapshot.sh, format 2 or 3; the ivar ownership
+of format 3 is compared by ivar_ownership_check.py and codedb.py classstate
+--snapshot, not here). For every class in it
 (or those named), compares with the database:
 
   superclass  the snapshot's against objc_class
@@ -119,7 +121,11 @@ PARTLY = 'partly compiled'
 PARTLY_NOTE = ('    note: not explained: the line is skipped in some inclusions of its file and compiled in others, '
                'and the database does not record which inclusion defines this class')
 PARSED_CACHE = 16
-SNAPSHOT_HEADER = '# Objective-C runtime snapshot, format 2'
+# Format 3 (what runtime_snapshot.sh writes today) adds ivar ownership and
+# layout fields and class lines (ivar-arc-flag, the layouts,
+# OWNERSHIP-CONFLICT) that this comparison does not read; ivar_ownership_check.py
+# reads them.
+SNAPSHOT_HEADERS = ('# Objective-C runtime snapshot, format 2', '# Objective-C runtime snapshot, format 3')
 
 
 class SnapshotError(Exception):
@@ -534,8 +540,8 @@ def read_snapshot(path, wanted=None):
     cls = None
     with open(path, encoding='ascii', errors='strict') as f:
         first = f.readline().rstrip('\n')
-        if first != SNAPSHOT_HEADER:
-            raise SnapshotError('%s: not a format 2 runtime snapshot (first line %r)' % (path, first))
+        if first not in SNAPSHOT_HEADERS:
+            raise SnapshotError('%s: not a format 2 or 3 runtime snapshot (first line %r)' % (path, first))
         for n, line in enumerate(f, 2):
             line = line.rstrip('\n')
             if not line.startswith('  '):

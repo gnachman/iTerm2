@@ -6,8 +6,9 @@ Usage:
         [--json] [--allow-non-baseline] [--allow-different-machine]
 
 Both files are written by perf_baseline.py. For every scenario and metric in
-either file it prints the baseline and candidate medians, the change in the
-bad direction, the noise, the threshold, and a verdict:
+either file it prints the statistic compared (best or median), the baseline
+and candidate values of it, both medians, the change in the bad direction,
+the noise, the threshold, and a verdict:
 
     regression           worse by more than the threshold
     improvement          better by more than the threshold
@@ -31,18 +32,35 @@ applies whatever the reference holds; when the reference failed too the note
 says "also failed in reference", so a before and after with the same failure
 does not read as clean. Any status other than ok or skipped counts as failed.
 
-THE RULE IS A PROPOSAL. performance.md section 1 says "a regression beyond
-noise blocks the commit" without saying what noise is. Until the owner
-decides, this script uses:
+THE BEST SAMPLE FOR TIME AND RATE METRICS IS DECIDED; THE MEDIAN FOR OTHER
+METRICS AND EVERY THRESHOLD ARE PROPOSALS. The statistic a
+metric is judged on comes from its unit, in perf_lib.statistic_for:
+
+    best    time and rate units (s, ms, us, ns, iterations/s). The owner,
+            2026-11-22: "Given the variance you should take the fastest
+            time, since that's our best estimate." The best sample is the
+            minimum when lower is better and the maximum when higher is
+            better.
+    median  everything else: memory (kB), counts, unknown units.
+
+The best is computed from the samples, so result files written before the
+summary carried a 'best' key compare the same way.
 
     noise      = the larger of the two runs' robust relative spread,
                  1.4826 * MAD / median, in percent (an estimate of the
-                 standard deviation that one outlier cannot inflate)
-    threshold  = max(5%, 3 * noise)
-    regression = the candidate median is worse than the baseline median by
-                 more than the threshold
-    inconclusive when either side has fewer than 5 samples or the noise is
-                 above 10% (rerun on a quiet machine)
+                 standard deviation that one outlier cannot inflate);
+                 reported for every metric
+    best-of metrics:
+      threshold  = 5%
+      regression = the candidate best is worse than the baseline best by
+                   more than the threshold; the noise does not widen it and
+                   does not make the row inconclusive
+    median metrics:
+      threshold  = max(5%, 3 * noise)
+      regression = the candidate median is worse than the baseline median
+                   by more than the threshold
+      inconclusive when the noise is above 10% (rerun on a quiet machine)
+    either kind: inconclusive when either side has fewer than 5 samples
 
 Refuses (exit 2) to compare against a result that is not labeled a baseline,
 or across different configurations, architectures, or machines, unless told
@@ -74,10 +92,13 @@ NOISE_MULTIPLIER = 3.0
 MAX_NOISE_PERCENT = 10.0
 MIN_SAMPLES = 5
 
-RULE = ('PROPOSAL, not yet approved by the owner: regression when the candidate median is worse than the '
-        'baseline median by more than max(%.0f%%, %.0f x noise), noise being the larger robust relative '
-        'spread (1.4826 x MAD / median); inconclusive below %d samples or above %.0f%% noise.'
-        % (MIN_THRESHOLD_PERCENT, NOISE_MULTIPLIER, MIN_SAMPLES, MAX_NOISE_PERCENT))
+RULE = ('Time and rate metrics (units %s) compare the best sample, decided by the owner on 2026-11-22: '
+        'regression when the candidate best is worse than the baseline best by more than %.0f%%. Other '
+        'metrics compare the median: regression when worse by more than max(%.0f%%, %.0f x noise), noise '
+        'being the larger robust relative spread (1.4826 x MAD / median), inconclusive above %.0f%% noise. '
+        'Both: inconclusive below %d samples. The median for other metrics and every threshold are a PROPOSAL, not yet approved by the owner.'
+        % (', '.join(sorted(perf_lib.BEST_SAMPLE_UNITS)), MIN_THRESHOLD_PERCENT, MIN_THRESHOLD_PERCENT,
+           NOISE_MULTIPLIER, MAX_NOISE_PERCENT, MIN_SAMPLES))
 
 IDENTITY_KEYS = ('model', 'chip', 'logical_cpus', 'memory_bytes', 'os_build')
 SOFTWARE_KEYS = ('xcode', 'os_version')
@@ -150,22 +171,35 @@ def _scenario_rows(name, b_entry, c_entry):
 
 
 def compare_metric(base, cand):
-    b = perf_lib.summarize(base['samples'])
-    c = perf_lib.summarize(cand['samples'])
-    row = {'unit': base.get('unit'), 'better': base.get('better'),
+    # Always computed from the samples, never read from a stored summary, so
+    # that files written before the summary carried 'best' compare the same.
+    better = base.get('better')
+    statistic = perf_lib.statistic_for(base.get('unit'))
+    b = perf_lib.summarize_metric(base.get('unit'), better, base['samples'])
+    c = perf_lib.summarize_metric(base.get('unit'), better, cand['samples'])
+    row = {'unit': base.get('unit'), 'better': better, 'statistic': statistic,
            'baseline_median': b.get('median'), 'candidate_median': c.get('median'),
+           'baseline_best': b.get('best'), 'candidate_best': c.get('best'),
            'baseline_n': b['n'], 'candidate_n': c['n']}
-    if b['n'] == 0 or c['n'] == 0 or not b['median']:
+    if b['n'] == 0 or c['n'] == 0:
         row.update(verdict='inconclusive', note='no samples')
         return row
-    sign = 1.0 if base.get('better') == 'lower' else -1.0
-    worse = sign * 100.0 * (c['median'] - b['median']) / abs(b['median'])
+    if not b[statistic]:
+        row.update(verdict='inconclusive', note='baseline %s is zero, so no relative change' % statistic)
+        return row
+    sign = 1.0 if better == 'lower' else -1.0
+    worse = sign * 100.0 * (c[statistic] - b[statistic]) / abs(b[statistic])
     noise = max(b['robust_rel_spread_percent'], c['robust_rel_spread_percent'])
-    threshold = max(MIN_THRESHOLD_PERCENT, NOISE_MULTIPLIER * noise)
+    if statistic == 'best':
+        # Best against best: the spread is reported but neither widens the
+        # threshold nor makes the row inconclusive.
+        threshold = MIN_THRESHOLD_PERCENT
+    else:
+        threshold = max(MIN_THRESHOLD_PERCENT, NOISE_MULTIPLIER * noise)
     row.update(change_percent=worse, noise_percent=noise, threshold_percent=threshold)
     if min(b['n'], c['n']) < MIN_SAMPLES:
         row.update(verdict='inconclusive', note='fewer than %d samples' % MIN_SAMPLES)
-    elif noise > MAX_NOISE_PERCENT:
+    elif statistic == 'median' and noise > MAX_NOISE_PERCENT:
         row.update(verdict='inconclusive', note='noise %.1f%% above %.0f%%' % (noise, MAX_NOISE_PERCENT))
     elif worse > threshold:
         row.update(verdict='regression')
@@ -242,13 +276,20 @@ def render(report):
     for w in report['warnings']:
         lines.append('WARNING: ' + w)
     lines.append('')
-    header = '%-44s %-24s %10s %10s %8s %7s %7s  %s' % ('scenario', 'metric', 'baseline', 'candidate',
-                                                       'worse%', 'noise%', 'thresh%', 'verdict')
+    # baseline and candidate are the compared statistic (stat); the two
+    # median columns are always the medians.
+    row_format = '%-44s %-24s %-6s %10s %10s %10s %10s %8s %7s %7s  %s%s'
+    header = row_format % ('scenario', 'metric', 'stat', 'baseline', 'candidate', 'base med', 'cand med',
+                           'worse%', 'noise%', 'thresh%', 'verdict', '')
     lines.append(header)
     lines.append('-' * len(header))
     for r in report['rows']:
-        lines.append('%-44s %-24s %10s %10s %8s %7s %7s  %s%s' % (
-            r['scenario'], r['metric'], _fmt(r.get('baseline_median')), _fmt(r.get('candidate_median')),
+        stat = r.get('statistic')
+        key = 'best' if stat == 'best' else 'median'
+        lines.append(row_format % (
+            r['scenario'], r['metric'], stat or '-',
+            _fmt(r.get('baseline_' + key)), _fmt(r.get('candidate_' + key)),
+            _fmt(r.get('baseline_median')), _fmt(r.get('candidate_median')),
             _fmt(r.get('change_percent'), 3), _fmt(r.get('noise_percent'), 2),
             _fmt(r.get('threshold_percent'), 2), r['verdict'],
             (' (%s)' % r['note']) if r.get('note') else ''))

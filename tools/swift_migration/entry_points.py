@@ -18,6 +18,28 @@ Usage:
                                                     caller found.
   entry_points.py [options] file PATH               The classes PATH
                                                     implements, each as class.
+  entry_points.py [options] all-classes --out DIR [--memory-limit MB]
+                                                    Every class, each decided
+                                                    as class --unreached
+                                                    decides it, in one
+                                                    process.
+
+all-classes takes every class with a method or Swift member defined outside
+submodules/, the test directories and the migration's tools. It writes
+DIR/methods.tsv (every method: class, method, heading, system subgroup,
+scope, definition, the per-source counts, flags, reasons), the methods with
+no caller found split by the scope of their definition into
+DIR/no_caller_in_scope.tsv and DIR/no_caller_out_of_scope.tsv (README.md
+section 2: ThirdParty/ and other directories outside it), and the counts per
+heading, all and in scope, in DIR/summary.json and DIR/summary.txt, which it
+also prints (--json prints summary.json). Methods in generated files get the
+heading "generated" and no other, as class --unreached leaves them out. It
+reads the tables queried by class name through indexed temporary copies (the
+database file is not written), searches the resources once and reads each
+runtime method list once for every selector, so its answers are the class
+mode's. Progress goes to stderr; when the peak resident size passes
+--memory-limit (default 1500 MB) it stops with status 2. Exit status as
+below, and 2 when any class raised an error (listed in the summary).
 
 SELECTOR may be prefixed with + or - to choose the class or instance method
 (no -- is needed before -selector).
@@ -63,7 +85,10 @@ pp_skipped table; or there is no runtime method list, which leaves every
 candidate undecided whatever its name and its superclass (decisions.md,
 2026-11-20: a leading underscore is evidence of nothing); or the class's
 superclass chain cannot be followed to a framework class in a list); called
-only from tests; declared here and defined elsewhere (a declaration with no
+only from tests; called only from unreachable code (every caller is a send
+the code database marks as in code that no path reaches, in the
+configuration of the capture: a caller in another configuration, never no
+caller found); declared here and defined elsewhere (a declaration with no
 definition, of a class the repository does not define: a prebuilt framework
 or private framework API); and no caller found, which only a selector that
 no framework class implements in any list given can reach. Methods defined
@@ -723,11 +748,29 @@ class Resources:
             self.problems.append((f, 'not UTF-8; not read'))
             return None
 
+    def prime_text_search(self, tokens):
+        """Search once for every token given and keep the hits, so that a
+        later text_search of any subset of them reads no file (all-classes:
+        one pass for every selector of the tree instead of one per class).
+        Only the hits are kept."""
+        self._primed = (frozenset(tokens), self._scan(set(tokens)))
+
     def text_search(self, tokens):
         """{token: [TextHit]} of every whole token (a run of letters, digits,
         _ and :) in the searched resources that is one of tokens. Text
-        search: one pass over the files, streaming each."""
+        search: one pass over the files, streaming each, unless every token
+        was primed (prime_text_search), which gives the same hits."""
         wanted = set(tokens)
+        primed = getattr(self, '_primed', None)
+        if primed is not None and wanted <= primed[0]:
+            found = collections.defaultdict(list)
+            for t in wanted:
+                if t in primed[1]:
+                    found[t] = list(primed[1][t])
+            return found
+        return self._scan(wanted)
+
+    def _scan(self, wanted):
         found = collections.defaultdict(list)
         if not wanted:
             return found
@@ -1017,6 +1060,9 @@ APP_FRAMEWORKS_NOT_COVERED = ('the app\'s own embedded frameworks (Sparkle, NMSS
 ELSEWHERE_HEADING = 'declared here, defined elsewhere (a prebuilt framework or private framework API)'
 ELSEWHERE_REASON = ('declared only, and its class %s is not defined in the repository: a prebuilt framework or private '
                     'framework API defines it; there is nothing in the tree to delete')
+UNREACHABLE_HEADING = ('called only from unreachable code (sends that no path from their function\'s entry reaches in '
+                       'the configuration the database was extracted in; a caller in another configuration)')
+UNREACHABLE_FLAG = 'called only from unreachable code (%s)'
 WEAK_HEADING = 'weak: no caller found, but a framework class implements a method with this selector'
 WEAK_WHY = ('the frameworks send many selectors to objects of classes unrelated to the one that implements them, '
             'after respondsToSelector: (delegates, data sources, first responders, validation, accessibility, '
@@ -1707,6 +1753,33 @@ class Census:
     def close(self):
         self.q.close()
 
+    # Tables the per-class queries select from by class_name, which the
+    # code database does not index.
+    CLASS_KEYED_TABLES = ('objc_method', 'objc_property', 'swift_objc_decl')
+
+    def prepare_whole_tree(self, selectors):
+        """Make many class questions fast without changing any answer:
+        shadow each table of CLASS_KEYED_TABLES with a temporary copy (the
+        connection's temp schema, never the database file) carrying the
+        table's own indexes and one on class_name, which unqualified queries
+        then read; search the resources once for every selector; and read
+        each runtime method list once for every selector."""
+        tables = codedb.table_names(self.con)
+        for table in self.CLASS_KEYED_TABLES:
+            if table not in tables:
+                continue
+            self.con.execute('CREATE TEMP TABLE %s AS SELECT * FROM main.%s' % (table, table))
+            indexes = self.con.execute("SELECT name, sql FROM main.sqlite_master WHERE type = 'index' AND tbl_name = ? "
+                                       "AND sql IS NOT NULL", (table,)).fetchall()
+            for name, sql in indexes:
+                self.con.execute(re.sub(r'^CREATE INDEX \S+ ON', 'CREATE INDEX temp.wt_%s ON' % name, sql))
+            self.con.execute('CREATE INDEX temp.wt_%s_class ON %s(class_name)' % (table, table))
+            self.con.execute('CREATE INDEX temp.wt_%s_id ON %s(id)' % (table, table))
+        selectors = sorted(set(selectors))
+        self.resources.prime_text_search(selectors)
+        for rt in self.runtimes:
+            rt.prefetch(selectors)
+
     @property
     def repo_files(self):
         if self._repo_files is None:
@@ -2363,6 +2436,9 @@ def method_dossier(census, cls, selector_text):
             what.append('subscript accessor')
         if in_block:
             what.append('in block')
+        unreachable = codedb.unreachable_mark(g)
+        if unreachable:
+            what.append(unreachable)
         what.append('targets ' + ','.join(sorted(g['targets'])))
         add(s1, row(f, line, col, '  '.join(what), census.marks(g), census.is_test(g['targets']), not migration))
     if by_receiver:
@@ -2893,7 +2969,8 @@ def dossier(kind, subject, sections, status, extra=None):
 
 # --- A class ---------------------------------------------------------------------
 
-REACH_KEYS = ('system', 'weak', 'swift_protocol', 'inactive', 'swift_defined', 'undecided', 'tests', 'elsewhere')
+REACH_KEYS = ('system', 'weak', 'swift_protocol', 'inactive', 'swift_defined', 'undecided', 'tests', 'elsewhere',
+              'unreachable')
 
 
 def class_dossier(census, cls, unreached=False, exclude_generated=None):
@@ -3117,6 +3194,7 @@ def method_table(census, cls):
     tests = sorted(census.test_targets)
     tmark = ','.join('?' * len(tests)) or "''"
     counts = collections.defaultdict(collections.Counter)
+    unreachable_configs = {}
 
     def bump(sel, key, n=1):
         counts[sel][key] += n
@@ -3131,6 +3209,16 @@ def method_table(census, cls):
                 'all_test FROM send s JOIN tu t ON t.id = s.tu WHERE s.selector IN (%s) GROUP BY s.selector, s.file, '
                 's.line, s.col) GROUP BY 1, 2' % (tmark, marks), tests + part):
             bump(sel, 'tests' if is_test else 'objc', n)
+        # App send locations that every unit records as unreachable code
+        # (send.in_unreachable_code), and the units' configurations.
+        for sel, n, configs in con.execute(
+                'SELECT selector, count(*), group_concat(DISTINCT configs) FROM (SELECT s.selector AS selector, '
+                'min(t.target IN (%s)) AS all_test, min(s.in_unreachable_code) AS dead, '
+                "group_concat(DISTINCT coalesce(t.configuration, 'not recorded')) AS configs FROM send s JOIN tu t "
+                'ON t.id = s.tu WHERE s.selector IN (%s) GROUP BY s.selector, s.file, s.line, s.col) WHERE dead = 1 '
+                'AND all_test = 0 GROUP BY 1' % (tmark, marks), tests + part):
+            bump(sel, 'objc_unreachable', n)
+            unreachable_configs[sel] = ','.join(sorted(set((configs or '').split(','))))
         for sel, n in con.execute('SELECT selector, count(DISTINCT file || \':\' || line || \':\' || col) FROM '
                                   'selector_ref WHERE selector IN (%s) GROUP BY 1' % marks, part):
             bump(sel, 'selref', n)
@@ -3306,7 +3394,15 @@ def method_table(census, cls):
         if census.sdk_kind is None:
             undecided_reasons.append('not decided: no SDK declarations')
         later = []  # the reasons of the heading the method goes under
-        if called:
+        # Called only by app sends in unreachable code: not "no caller found"
+        # (the safe direction), and not silently called either.
+        only_unreachable = bool(c['objc']) and c['objc'] == c['objc_unreachable'] and not (
+            c['swift'] or entry['selector_refs'] or c['byname'] or c['kvc'] or registry[sel] or ib[sel] or
+            sdef[sel] or entry['text'] or sel in in_protocol)
+        if only_unreachable:
+            reach = 'unreachable'
+            flags.append(UNREACHABLE_FLAG % unreachable_configs.get(sel, 'not recorded'))
+        elif called:
             reach = 'called'
         elif reasons:
             reach = 'system'
@@ -3437,6 +3533,224 @@ def file_dossier(census, path):
     return [class_dossier(census, c) for c in classes]
 
 
+# --- Every class (all-classes) ----------------------------------------------------
+
+WHOLE_TREE_SKIP = ('submodules/', MIGRATION_TOOLS_DIR) + TEST_DIRS
+WHOLE_TREE_COLUMNS = ('class', 'method', 'heading', 'group', 'scope', 'defined', 'objc', 'swift', 'selector_refs',
+                      'by_name', 'kvc', 'registry', 'ib', 'scripting', 'text', 'tests', 'flags', 'reasons')
+HEADING_LABELS = collections.OrderedDict([
+    ('called', 'called: an Objective-C send, a Swift reference, a selector reference, a call by name, key-value '
+               'coding, the registry, Interface Builder, scripting, resource text, or a repository protocol'),
+    ('system', SDK_HEADING),
+    ('weak', WEAK_HEADING),
+    ('swift_protocol', SWIFT_PROTOCOL_HEADING),
+    ('inactive', INACTIVE_HEADING),
+    ('swift_defined', SWIFT_DEFINED_HEADING),
+    ('undecided', UNDECIDED_HEADING),
+    ('tests', TESTS_HEADING),
+    ('unreachable', UNREACHABLE_HEADING),
+    ('elsewhere', ELSEWHERE_HEADING),
+    ('none', 'no caller found'),
+    ('generated', 'in generated files, left out (as class --unreached leaves them out)'),
+])
+DEFAULT_MEMORY_LIMIT_MB = 1500
+PROGRESS_EVERY = 50
+
+
+def peak_memory_mb():
+    """The process's peak resident size in MB (ru_maxrss is in bytes on
+    macOS, in kilobytes elsewhere)."""
+    import resource
+    peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    return peak // (1024 * 1024) if sys.platform == 'darwin' else peak // 1024
+
+
+def whole_tree_classes(census):
+    """The classes with a method or Swift member defined in a repository file
+    outside submodules, tests, the migration's tools and prebuilt framework
+    bundles, sorted."""
+    def keep(f):
+        return bool(f) and not os.path.isabs(f) and not f.startswith(WHOLE_TREE_SKIP) and '.framework/' not in f
+    classes = set(c for c, f in census.con.execute(
+        "SELECT DISTINCT class_name, file FROM objc_method WHERE class_name IS NOT NULL AND container_kind != "
+        "'protocol' AND (is_definition = 1 OR is_synthesized_accessor = 1)") if keep(f))
+    if census.swift_tables:
+        classes |= set(c for c, f in census.con.execute(
+            'SELECT DISTINCT class_name, file FROM swift_objc_decl WHERE class_name IS NOT NULL') if keep(f))
+    return sorted(c for c in classes if re.match(r'^[A-Za-z_]\w*$', c))
+
+
+def whole_tree_selectors(census):
+    out = set(s for (s,) in census.con.execute('SELECT DISTINCT selector FROM objc_method'))
+    if census.swift_tables:
+        out |= set(s for (s,) in census.con.execute('SELECT DISTINCT selector FROM swift_objc_decl WHERE selector IS '
+                                                    'NOT NULL'))
+    return out
+
+
+def method_files(info):
+    """[(file, line)]: where a method is defined (Objective-C implementations
+    and Swift members), or declared when no definition is recorded."""
+    defined = [(f, line) for f, line, kind, _ in info['objc'] if kind in ('implementation', 'category-implementation')]
+    defined += [(s[0], s[1]) for s in info['swift']]
+    return sorted(set(defined or [(f, line) for f, line, _, _ in info['objc']]))
+
+
+def method_scope(census, files):
+    """'in scope' when a file is in the migration's scope and not generated;
+    otherwise 'out of scope: ' and why."""
+    names = [f for f, _ in files]
+    if any(codedb.in_migration_scope(f) and not census.is_generated(f) for f in names):
+        return 'in scope'
+    if names and all(census.is_generated(f) for f in names):
+        return 'out of scope: generated'
+    if any(f.startswith('ThirdParty/') for f in names):
+        return 'out of scope: ThirdParty'
+    return 'out of scope: outside the scope directories'
+
+
+def tsv_cell(value):
+    return re.sub(r'[\t\r\n]+', ' ', str(value))
+
+
+def all_classes(census, out_dir, memory_limit_mb=DEFAULT_MEMORY_LIMIT_MB, err=None):
+    """The census of every class (whole_tree_classes) in one process: the
+    method table of each, as class CLASS --unreached decides it, streamed to
+    out_dir/methods.tsv, with the methods under "no caller found" also in
+    no_caller_in_scope.tsv and no_caller_out_of_scope.tsv, and the counts in
+    summary.json and summary.txt. Progress goes to err. Raises CensusError
+    when the peak resident size passes memory_limit_mb. Returns the
+    summary."""
+    err = err or sys.stderr
+    import time
+    t0 = time.time()
+
+    def memory_check(where):
+        peak = peak_memory_mb()
+        if peak > memory_limit_mb:
+            raise CensusError('memory limit of %d MB passed (peak %d MB) %s' % (memory_limit_mb, peak, where))
+        return peak
+
+    os.makedirs(out_dir, exist_ok=True)
+    classes = whole_tree_classes(census)
+    err.write('all-classes: %d classes; preparing (temporary indexes, one search of resources, one read of each '
+              'runtime method list)\n' % len(classes))
+    err.flush()
+    memory_check('before preparing')
+    census.prepare_whole_tree(whole_tree_selectors(census))
+    memory_check('after preparing')
+    incomplete = []
+
+    def add_incomplete(lines):
+        for line in lines:
+            if line not in incomplete:
+                incomplete.append(line)
+    add_incomplete(census.objc_incomplete() + census.swift_incomplete() + census.registry_incomplete() +
+                   ['INCOMPLETE: %s: %s' % p for p in census.resources.problems] + census.scripting_incomplete() +
+                   census.sdk_incomplete() + census.runtime_incomplete() +
+                   ['INCOMPLETE: ' + r for r in missing_sources(census)])
+    counts = collections.Counter()
+    counts_in = collections.Counter()  # the same, for methods in the migration's scope
+    groups = collections.Counter()
+    out_of_scope = collections.Counter()
+    errors = []
+    n_in = n_out = n_methods = 0
+    header = '\t'.join(WHOLE_TREE_COLUMNS) + '\n'
+    paths = dict((k, os.path.join(out_dir, k + '.tsv')) for k in ('methods', 'no_caller_in_scope',
+                                                                  'no_caller_out_of_scope'))
+    with open(paths['methods'], 'w', encoding='utf-8') as all_out, \
+            open(paths['no_caller_in_scope'], 'w', encoding='utf-8') as in_out, \
+            open(paths['no_caller_out_of_scope'], 'w', encoding='utf-8') as out_out:
+        for f in (all_out, in_out, out_out):
+            f.write(header)
+        for i, cls in enumerate(classes, 1):
+            try:
+                table, _, extra = method_table(census, cls)
+                infos = census.class_methods(cls)
+            except (CensusError, sqlite3.Error) as e:
+                errors.append([cls, str(e)])
+                continue
+            add_incomplete(extra)
+            for m in table:
+                info = infos.get((m['method'][0] == '+', m['method'][1:]))
+                files = method_files(info) if info else []
+                # As class --unreached decides: generated methods are left
+                # out, the rest go under the heading of their reach.
+                heading = 'generated' if m['generated'] else m['reach']
+                scope = method_scope(census, files)
+                counts[heading] += 1
+                if scope == 'in scope':
+                    counts_in[heading] += 1
+                if heading == 'system':
+                    groups[m.get('system_group')] += 1
+                line = '\t'.join(tsv_cell(v) for v in [
+                    cls, m['method'], heading, m.get('system_group') or '', scope,
+                    ';'.join('%s:%d' % fl for fl in files)] + [m[k] for k in WHOLE_TREE_COLUMNS[6:16]] + [
+                    ', '.join(m['flags']), ' | '.join(m['reasons'])]) + '\n'
+                all_out.write(line)
+                n_methods += 1
+                if heading == 'none':
+                    if scope == 'in scope':
+                        in_out.write(line)
+                        n_in += 1
+                    else:
+                        out_out.write(line)
+                        n_out += 1
+                        out_of_scope[scope] += 1
+            if i % PROGRESS_EVERY == 0 or i == len(classes):
+                peak = memory_check('at class %s' % cls)
+                err.write('all-classes: classes: %d/%d (%s), methods: %d, no caller found: %d in scope, %d out of '
+                          'scope, %.0fs, peak memory %d MB\n' % (i, len(classes), cls, n_methods, n_in, n_out,
+                                                                 time.time() - t0, peak))
+                err.flush()
+    status = 2 if errors else 3 if incomplete else (0 if counts['none'] else 1)
+    summary = collections.OrderedDict([
+        ('root', census.root), ('database', census.paths.db), ('classes', len(classes)), ('methods', n_methods),
+        ('counts', collections.OrderedDict((k, counts[k]) for k in HEADING_LABELS)),
+        ('counts_in_scope', collections.OrderedDict((k, counts_in[k]) for k in HEADING_LABELS)),
+        ('system_groups', collections.OrderedDict(sorted((g or '', n) for g, n in groups.items()))),
+        ('generated_excluded', counts['generated']),
+        ('no_caller_in_scope', n_in), ('no_caller_out_of_scope', n_out),
+        ('no_caller_out_of_scope_by_reason', collections.OrderedDict(sorted(out_of_scope.items()))),
+        ('runtime_releases', [rt.label() for rt in census.runtimes]),
+        ('errors', errors), ('incomplete', incomplete), ('exit_status', status),
+        ('seconds', round(time.time() - t0, 1)), ('peak_memory_mb', peak_memory_mb()),
+        ('files', sorted(os.path.basename(p) for p in paths.values())),
+    ])
+    with open(os.path.join(out_dir, 'summary.json'), 'w', encoding='utf-8') as f:
+        json.dump(summary, f, indent=1)
+        f.write('\n')
+    with open(os.path.join(out_dir, 'summary.txt'), 'w', encoding='utf-8') as f:
+        write_whole_tree_summary(summary, f)
+    err.write('all-classes: done in %.0fs, peak memory %d MB\n' % (summary['seconds'], summary['peak_memory_mb']))
+    return summary
+
+
+def write_whole_tree_summary(s, out):
+    out.write('Entry-point census of every class: %d classes, %d methods (root %s, database %s)\n' % (
+        s['classes'], s['methods'], s['root'], s['database']))
+    releases = '; '.join(s['runtime_releases']) or 'none (every candidate is not decided)'
+    out.write('Runtime method lists: %s\n\n' % releases)
+    out.write('Methods per heading (all, then in the migration\'s scope):\n')
+    for k, label in HEADING_LABELS.items():
+        out.write('  %6d  %6d  %s\n' % (s['counts'][k], s['counts_in_scope'][k], label))
+        if k == 'system':
+            for g, n in s['system_groups'].items():
+                out.write('  %6d          %s\n' % (n, g))
+    out.write('\nno caller found, in scope: %d\n' % s['no_caller_in_scope'])
+    out.write('no caller found, out of scope: %d\n' % s['no_caller_out_of_scope'])
+    for why, n in s['no_caller_out_of_scope_by_reason'].items():
+        out.write('  %6d  %s\n' % (n, why))
+    out.write('\nerrors: %d\n' % len(s['errors']))
+    for cls, e in s['errors']:
+        out.write('  %s: %s\n' % (cls, e))
+    out.write('time %.1fs, peak memory %d MB\n' % (s['seconds'], s['peak_memory_mb']))
+    out.write('exit status %d: 0 methods with no caller found and every source complete, 1 none and complete, 3 '
+              'INCOMPLETE, 2 error\n' % s['exit_status'])
+    for line in s['incomplete']:
+        out.write(line + '\n')
+
+
 # --- Output -----------------------------------------------------------------------
 
 def loc(r):
@@ -3501,7 +3815,8 @@ def write_text(d, out):
                                  ('inactive', INACTIVE_HEADING),
                                  ('swift_defined', SWIFT_DEFINED_HEADING),
                                  ('undecided', NO_SDK_HEADING if d['sdk_source'] is None else UNDECIDED_HEADING),
-                                 ('tests', TESTS_HEADING), ('elsewhere', ELSEWHERE_HEADING)):
+                                 ('tests', TESTS_HEADING), ('elsewhere', ELSEWHERE_HEADING),
+                                 ('unreachable', UNREACHABLE_HEADING)):
                 out.write('\n%s: %d\n' % (heading, len(d[key])))
                 for m in d[key]:
                     write_method(out, m)
@@ -3533,9 +3848,10 @@ def unreached_status_words(d):
               'framework class implements a method with the selector), %d as possibly called through a Swift '
               'protocol requirement, %d as referenced in code not compiled in this configuration, %d as defined in '
               'Swift (Swift callers of them are not in the database), %d as candidates not decided, %d as called '
-              'only from tests, and %d as declared here and defined elsewhere (%d methods in generated files left '
-              'out)' % (c['no_caller'], c['system'], c['weak'], c['swift_protocol'], c['inactive'], c['swift_defined'],
-                        c['undecided'], c['tests'], c['elsewhere'], d['generated_excluded']))
+              'only from tests, %d as called only from unreachable code, and %d as declared here and defined '
+              'elsewhere (%d methods in generated files left out)' % (
+                  c['no_caller'], c['system'], c['weak'], c['swift_protocol'], c['inactive'], c['swift_defined'],
+                  c['undecided'], c['tests'], c.get('unreachable', 0), c['elsewhere'], d['generated_excluded']))
     if status == 0:
         return ('This run: exit status 0: methods with no caller found are listed above, and every source was '
                 'consulted and is complete. Methods listed: %s.' % counts)
@@ -3574,6 +3890,11 @@ def build_parser():
     c.add_argument('--no-exclude-generated', dest='exclude_generated', action='store_false')
     f = sub.add_parser('file', help='the classes a file implements')
     f.add_argument('path', metavar='PATH')
+    a = sub.add_parser('all-classes', help='every class in one process, as class CLASS --unreached decides each')
+    a.add_argument('--out', metavar='DIR', required=True, help='where methods.tsv, no_caller_in_scope.tsv, '
+                   'no_caller_out_of_scope.tsv, summary.json and summary.txt are written')
+    a.add_argument('--memory-limit', metavar='MB', type=int, default=DEFAULT_MEMORY_LIMIT_MB,
+                   help='stop with status 2 when the peak resident size passes this (default %(default)s)')
     return p
 
 
@@ -3610,6 +3931,14 @@ def main(argv=None, out=None):
         census = Census(paths, registry_path=args.registry, sdk_selectors=args.sdk_selectors,
                         runtime_methods=args.runtime_methods)
         try:
+            if args.command == 'all-classes':
+                summary = all_classes(census, args.out, memory_limit_mb=args.memory_limit)
+                if args.json:
+                    json.dump(summary, out, indent=1)
+                    out.write('\n')
+                else:
+                    write_whole_tree_summary(summary, out)
+                return summary['exit_status']
             if args.command == 'method':
                 docs = [method_dossier(census, args.cls, args.selector)]
             elif args.command == 'class':

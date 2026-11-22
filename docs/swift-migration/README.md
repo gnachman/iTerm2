@@ -7,11 +7,16 @@ are the source of truth for every agent and person doing migration work.
 the topic files its task needs, as listed in section 1, before starting the
 task.
 
-If a rule turns out to be wrong, the rule is changed here first, in its own
-commit, with the owner's agreement, and the reason is recorded in
-`decisions.md`. Factual errors and out-of-date descriptions in these files
-may be corrected without asking the owner; a change to a rule still needs
-the owner and a `decisions.md` entry.
+A unit takes the light path of [lifecycle.md §3](lifecycle.md) (a short
+dossier, a `test` and a `port` commit, one review) when that section allows,
+or the full path of [lifecycle.md §1](lifecycle.md). After the two pilot
+units no unit starts until the owner says so (lifecycle.md §3).
+
+If a rule turns out to be wrong, the rule is changed here first, with the
+owner's agreement, and the reason is recorded in `decisions.md`. Factual
+errors and out-of-date descriptions in these files may be corrected without
+asking the owner; a change to a rule still needs the owner and a
+`decisions.md` entry.
 
 The work will take months and many thousands of commits, carried out by many
 agents with no shared memory. The process is designed around that: every step
@@ -28,7 +33,7 @@ file it appears in.
 |---|---|---|
 | [workflow.md](workflow.md) | How work runs unattended: the author and reviewer loop, parking, the owner queue, the nightly schedule and usage budget, and the morning review | Before orchestrating anything; before acting as an author or a reviewer |
 | [orchestration.md](orchestration.md) | The orchestrator's runbook: what to do from a cold start with no memory, how to choose work, how to brief the author and the reviewer, how to commit and stop, and the Phase 0 checklist | The orchestrator, at the start of every session |
-| [lifecycle.md](lifecycle.md) | The eight steps every unit goes through, the dossier, runtime verification, crash reports, and porting a large file a few methods at a time | Before any unit. The orchestrator knows it thoroughly |
+| [lifecycle.md](lifecycle.md) | The eight steps of the full path, the dossier, runtime verification, crash reports, porting a large file a few methods at a time, and the light path for leaf units | Before any unit. The orchestrator knows it thoroughly |
 | [translation-rules.md](translation-rules.md) | How each Objective-C construct is written in Swift: integers, nil, things that trap, Foundation types, control flow, the shape of a stage-one class, unsafe pointers | Every `port` commit and every review of one |
 | [assertions.md](assertions.md) | Which assertion to use, what to assert, what not to | Every `port` commit |
 | [nullability.md](nullability.md) | How header annotations are made and proven, and other claims a header makes to Swift | An `annotate` commit, or a port that touches unannotated API |
@@ -133,22 +138,20 @@ the dated record with reasons; this section states the rules that follow.
   to the rule in `CLAUDE.md`. Nowhere else.
 - Migration commits go directly onto master with linear history, not through
   pull requests (section 5).
-- One orchestrating agent runs the work and commits. Subagents do not work
-  independently (section 7).
 - The work runs mostly unattended. Each change is made by an Opus subagent
   and reviewed by another, always a fresh one, until a review finds nothing
   meaningful. The agents start at midnight, stop at a usage budget tied to
   the day of the week, commit locally, and never push; the owner reviews and
   pushes in the morning ([workflow.md](workflow.md)).
-- The orchestrator does not need the owner's permission to move to the next
-  class, and giant classes need no checkpoints. The owner looks at rule
-  changes, hot paths, and the move from one tier to the next, and helps with
-  units that get stuck in review.
-- The orchestrator parks whatever needs the owner, lists it in
-  [owner-queue.md](owner-queue.md), and continues with other work. It never
-  blocks on the owner.
-- Phase 0 is completed in full before the pilot ([phase0.md](phase0.md)).
-- Every unit gets the full dossier, however small it looks ([lifecycle.md §1](lifecycle.md)).
+- What needs the owner, and what does not, is in section 7.
+- The pilot started on 2026-11-21 with some Phase 0 items unfinished; they
+  continue alongside it ([plan.md §1](plan.md)). No unit after the two
+  pilot units starts without the owner's word ([lifecycle.md §3](lifecycle.md)).
+- A unit on the full path gets the full dossier, however small it looks; a
+  unit that qualifies for the light path gets the short one
+  ([lifecycle.md §3](lifecycle.md)).
+- Bugs found while building tools or porting are recorded in `bugs.md` and
+  not fixed, unless one blocks a port (changed 2026-11-21).
 - Large files are ported a few methods at a time, not in one commit
   ([lifecycle.md §2](lifecycle.md)).
 - Hot paths are left until last. They need individual attention and must not
@@ -244,8 +247,10 @@ the dated record with reasons; this section states the rules that follow.
 
 **Translate or improve, never both.** A commit that moves code to Swift
 reproduces what the Objective-C did, including its bugs. A bug found while
-porting is written down (section 7) and fixed later in its own commit with a
-failing test first. Mixing the two makes a regression impossible to attribute.
+porting is written down (section 7) and fixed later, with the owner's word,
+in its own commit with a failing test first. Mixing the two makes a
+regression impossible to attribute. The one allowed addition, a thread
+assertion, is in [concurrency.md §9](concurrency.md).
 
 **Make risky semantic changes in Objective-C, before the port.** Nullability,
 the move to ARC, and replacing dynamic dispatch with direct calls each change
@@ -282,14 +287,14 @@ class living partly in each language until the last piece goes ([lifecycle.md §
 
 ## 5. Commit kinds and the gate
 
-Every migration commit is exactly one of these kinds. The commit message ends
-with a trailer naming the unit and the kind, for example
-`Swift-Port: iTermFooController kind=port`.
+Every migration commit is exactly one of these kinds, except the session's
+document commit below. The commit message ends with a trailer naming the
+unit and the kind, for example `Swift-Port: iTermFooController kind=port`.
 
 | Kind | What it may change | Behavior change allowed |
 |---|---|---|
 | `tool` | Scripts, lints, test infrastructure | None in the app |
-| `dossier` | A unit's files under `units/`: added when the dossier is written, deleted when the unit closes | None |
+| `dossier` | A unit's files under `units/`: added when the dossier is written, deleted when the unit closes. Later changes to it ride in the unit's other commits | None |
 | `test` | Adds characterization tests against existing code | None |
 | `annotate` | Nullability and other header claims, plus the Swift call sites the compiler then flags | None intended; see [nullability.md](nullability.md) |
 | `arc` | Moves one file from manual reference counting to ARC | None intended; see [arc.md](arc.md) |
@@ -301,27 +306,32 @@ with a trailer naming the unit and the kind, for example
 | `fix` | Fixes one logged bug, test first | Yes, the fix |
 | `improve` | Stage two change to already-ported Swift | Only as stated in the message |
 
-The gate. Steps 1 to 6 run on every commit:
+The gate. Steps 1 to 6 run on every commit; a light-path unit defers some of
+them as [lifecycle.md §3](lifecycle.md) says:
 
-1. `tools/build.sh` succeeds with no warnings. Warnings are errors.
+1. `tools/build.sh` succeeds with no new warning, and none from a file the
+   commit touches. Warnings are errors.
 2. The targeted tests for the unit pass, run without `-parallel` so failures
    are readable.
 3. The fast tier of the suite passes ([test-speed.md](test-speed.md)). Until the fast tier
    exists, the whole suite: `tools/run_tests.expect -parallel`.
 4. For `annotate`, `arc` and `port` commits, the targeted tests also pass in
    the sanitizer configuration ([phase0.md §4](phase0.md)).
-5. The migration lints pass ([phase0.md §6](phase0.md)).
-6. New files are `git add`ed and added to the Xcode project with
-   `tools/add_file_to_xcodeproj.rb`. Renames use `git mv`.
+5. The migration lints pass ([phase0.md §6](phase0.md), which says which
+   run only in the orchestrator's checkout after the commit).
+6. New files are `git add`ed; renames use `git mv`. A port's project-file
+   change is made with `tools/swift_migration/pbxproj_swap.py`
+   ([lifecycle.md §3](lifecycle.md)), never `tools/add_file_to_xcodeproj.rb`.
 
 Steps 7 and 8 run at the close of each unit and before anything is pushed:
 
 7. The full suite passes, normally and in the sanitizer configuration.
 8. The app builds for `x86_64` with no warnings. Several hazards differ
    between the Intel and Apple silicon slices ([warnings.md](warnings.md)), and the native
-   build alone lets an Intel-only error through. Where the targeted tests can
-   run under Rosetta on the build machine, they run for `x86_64` too, at
-   least for units whose dossier lists a `BOOL` or integer-to-`BOOL` hazard.
+   build alone lets an Intel-only error through. Rosetta is not available on
+   the build machine, so nothing runs for `x86_64`: build with
+   `ARCHS=x86_64 ONLY_ACTIVE_ARCH=NO` into a separate directory and read the
+   unit's type encodings with `otool -ov`.
 
 **Where commits go.**
 
@@ -337,6 +347,12 @@ Steps 7 and 8 run at the close of each unit and before anything is pushed:
   before the push.
 - Agents commit locally and never push. The owner reviews each night's work
   in the morning and pushes ([workflow.md §5](workflow.md)).
+- The session's document commit holds only changes that belong to no unit:
+  to the documents under `docs/swift-migration/`, to the agent definitions,
+  and small fixes to existing tools. It has no `Swift-Port` trailer and is
+  amended while unpushed; nothing is folded into a pushed commit. A new
+  tool or a Phase 0 item is its own `tool` commit, reviewed and gated. A
+  unit's dossier rides in the unit's own commits (decisions.md, 2026-11-21).
 
 Live harnesses named in `CLAUDE.md` (AI chat, attachments, Python runtime)
 still apply when a unit touches those areas.
@@ -349,28 +365,20 @@ and reported to the owner.
 
 ## 6. The work at a glance
 
-**Order.** Phase 0 builds the tooling and is completed in full. A pilot of
+**Order.** Phase 0 builds the tooling. A pilot of
 five to ten varied units then exercises the process end to end. After that:
 the roughly 450 files with low fan-in; files with higher fan-in and subclass
 trees, leaf-first; the widely imported foundations; the giant classes, by
 extraction, in parallel once the pilot has proven the method; and hot paths
 last. Details are in [plan.md](plan.md).
 
-**Roles.** One orchestrating agent picks units, assigns steps to subagents,
-runs the gate, and commits. Each change is made by an author subagent and
-reviewed by a fresh reviewer subagent, round after round, until a review
-finds nothing blocking. The work runs unattended at night within a usage
-budget, and the owner reviews and pushes in the morning
-([workflow.md](workflow.md)). The owner is needed only for the things listed
-in section 7.
-
 **A unit** is one implementation file with its header, or a small cluster
-that cannot be separated. Each goes through these steps, described in
-[lifecycle.md](lifecycle.md):
+that cannot be separated. A unit on the full path goes through these steps,
+described in [lifecycle.md](lifecycle.md); the light path keeps a few of
+them ([lifecycle.md §3](lifecycle.md)):
 
 1. **Claim.** The orchestrator records the unit as in progress.
-2. **Dossier.** Everything about the unit that a port could break, in full,
-   for every unit.
+2. **Dossier.** Everything about the unit that a port could break.
 3. **Characterization tests** against the Objective-C, written so the same
    tests run against the port. Oversized functions go through
    [large-code.md](large-code.md) first.
@@ -410,8 +418,6 @@ No agent remembers what another did. The repository is the memory.
   different Opus subagent. A reviewer is never reused: every review is done
   by a fresh subagent that has seen neither the author's reasoning nor any
   earlier round ([workflow.md §1](workflow.md)).
-- Orchestrators have no shared memory either. Everything a new orchestrator
-  needs to continue is in the repository, by the rules below.
 
 **Recurring tasks** for the orchestrator, at a frequency the owner sets:
 
@@ -442,14 +448,14 @@ No agent remembers what another did. The repository is the memory.
   ([workflow.md §3](workflow.md)).
 - `hot-paths.md`: units deferred under [performance.md §2](performance.md), with the reason.
 - `reflective-sites.md`: the registry from [hidden-callers.md §2](hidden-callers.md).
-- `units/<name>.md`: the dossier for a unit in progress. Deleted in the
-  unit's closing commit; the history keeps it.
+- `units/<name>.md`: the dossier for a unit in progress. Its changes ride
+  in the unit's commits; the closing commit deletes it (on the light path,
+  the port commit). The history keeps it.
 
-**A project skill** will encode the unit lifecycle so that each new agent
-follows the same steps and reads the same documents in the same order. It
-names the topic files each lifecycle step needs, so that the orchestrator
-hands each subagent the right ones. It is written after the pilot, when the
-steps have been tried.
+**The project skill** `.claude/skills/swift-migration-unit/SKILL.md`
+encodes the unit lifecycle so that each orchestrator follows the same
+steps and hands each subagent the same documents. It is tracked:
+`.gitignore` ignores `.claude/` except `agents/` and `skills/`.
 
 **What needs the owner.** The orchestrator does not need permission to move
 to the next unit or class, or to work on the giant classes. The owner looks

@@ -68,3 +68,30 @@ Each entry says:
   reference to each counted instance for this reason.
 - **Found in:** `phase0-lifetime-witnesses`, while building the instance
   census.
+
+### A parameter typed as a bridged class raises in the thunk for a wrong-typed object
+
+- **Pattern:** an Objective-C method takes `NSString *` (or another class
+  Swift bridges to a value type) and a caller can pass an object of another
+  class, for example a value read from a profile or a plist.
+- **Naive port:** the Swift parameter is `String` or `String?`. The `@objc`
+  thunk bridges the argument before the body runs, and an object of the
+  wrong class raises there. The Objective-C raised later, after changing
+  state, or not at all.
+- **Write instead:** probe each such boundary with a wrong-typed object and
+  declare any difference in the commit message. Keep the Foundation type
+  (`NSString`) where the difference matters.
+- **Found in:** `iTermCacheableImage`, the port commit (a non-string icon
+  path, reachable only from a hand-edited profile).
+
+### `-init` marked `NS_UNAVAILABLE` becomes a trapping stub
+
+- **Pattern:** the header marks `-init` (and so `+new`) `NS_UNAVAILABLE`.
+  That is a compile-time check only: at run time `-init` is `NSObject`'s,
+  and a reflective caller gets an object whose ivars are zero.
+- **Naive port:** the Swift class declares only its designated
+  initializer. Swift then registers an `-init` stub that traps when called.
+- **Write instead:** nothing, when the census finds no caller; the runtime
+  snapshot comparison lists `-init` under CHECK AGAINST THE SOURCE, and the
+  commit message says that `-init` and `+new` now trap.
+- **Found in:** `iTermColorSuggester`, the port commit.

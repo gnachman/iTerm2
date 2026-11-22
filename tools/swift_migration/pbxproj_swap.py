@@ -3,9 +3,9 @@
 Xcode project file, in place.
 
 Part of the Objective-C to Swift migration (docs/swift-migration/lifecycle.md
-section 3, "Needed before the light path can run in parallel"). A whole-class
-port deletes Foo.h and Foo.m and adds Foo.swift beside them. This tool makes
-the matching project file change, and nothing else:
+section 3, "The project file"). A whole-class port deletes Foo.h and Foo.m
+and adds Foo.swift beside them. This tool makes the matching project file
+change, and nothing else:
 
   - the .m's PBXFileReference becomes a PBXFileReference for the .swift, in
     the same position, with the same attributes except lastKnownFileType

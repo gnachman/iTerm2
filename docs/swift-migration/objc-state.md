@@ -149,9 +149,11 @@ flip or the state gets a deliberate redesign:
 
 - Before choosing what to move, the ivar table produces, for the file,
   a table of every ivar, static variable and static function against the
-  methods that use it (it is being rebuilt as queries on the code database,
-  owner queue P1, and does not exist yet), with each one's type classified as importable,
+  methods that use it, with each one's type classified as importable,
   degraded, or not importable. Methods are grouped by the state they share.
+  The table is the query `codedb.py classstate CLASS` (or `--all`;
+  [phase0.md §10](phase0.md)); it lists ivars and statics with their users,
+  not static functions, and does not group the methods.
 - A group whose state is all remedy 1 or 2 moves early. A group that needs
   several remedy 3 shims is a candidate to stay until the flip.
 - The count of `SWIFT-MIGRATION-SHIM` markers in a file is a cost measure. If
@@ -240,8 +242,8 @@ for the ivar only if all of these hold, and the dossier says so:
   not.
 
 Otherwise the name is treated as taken and misleading, and the ivar table
-flags it. The ivar table tool computes the first three conditions and lists
-the accessors it could not prove trivial (once it exists; see section 1).
+flags it. The ivar table tool (`codedb.py classstate`) computes the first
+three conditions and lists the accessors it could not prove trivial.
 
 **Declaration.** In the class's private header, inside a class extension:
 
@@ -298,8 +300,8 @@ for that preparation commit differs by exactly those methods, and the commit
 message lists them.
 
 **What goes in the per-ivar table.** One row per ivar a moved method uses.
-The ivar table tool fills in everything except the last three columns (once
-it exists; see section 1).
+The ivar table tool (`codedb.py classstate`) fills in everything except
+Frequency and the last three columns, and Guard only for `@synchronized`.
 
 | Column | Content |
 |---|---|

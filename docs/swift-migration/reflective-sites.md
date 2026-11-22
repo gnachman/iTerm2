@@ -40,7 +40,7 @@ reach it by name:
   observability where the site observes the key;
 - put a comment at the method or class naming the site that reaches it
   ([hidden-callers.md section 5](hidden-callers.md)), for example
-  `// Reached by name: TmuxGateway.m:581 (reflective-sites.md).`, so that the
+  `// Reached by name: TmuxGateway.m in -[TmuxGateway currentCommandSelector] (reflective-sites.md).`, so that the
   next reader sees why the name is fixed;
 - add a test that pins the name, for example by sending it with
   `NSSelectorFromString` or looking the class up with `NSClassFromString` and
@@ -95,10 +95,10 @@ every hit read.
 read. Classes that exist only to be found by name were searched for as empty
 `@interface`/`@implementation` pairs, `@compatibility_alias`,
 `setClass:forClassName:` and `setClassName:forClass:`; the only compatibility
-class is `GrowlTrigger` (the Trigger.m:77 entry; the other 28 empty pairs are
+class is `GrowlTrigger` (the Trigger.m in +[Trigger triggerFromUntrustedDict:] entry; the other 28 empty pairs are
 xib custom classes, Core Data classes, Metal transient states, or classes used
 by symbol, such as `iTermModifyOtherKeysMapper2`), and the only class
-substitution is `PreferencePanel.m:1113` (section 5).
+substitution is `PreferencePanel.m` in -[PreferencePanel bigSurSearchFieldToolbarItem] (section 5).
 
 **What it reflects.** Written on 2026-11-20 against the commit “Add a sanitized stored-state corpus and the tools that make and check it”; the
 caller lists, Swift callers and section 5 were rechecked against commit
@@ -163,474 +163,474 @@ Selector and class names used as data (section 5, not database rows): 22 entries
 
 ### Names that must be preserved
 
-The rule: this table is the union of the `Names:` lines of every entry in sections 3, 4, 5 and 6 and of the Swift sites in section 9, and `tools/swift_migration/reflective_registry.py check` checks that it is exactly that union (it also checks that every dynamic reflective call of the database has a bullet in section 3 and no bullet is stale, the bullet lines, and the summary table; it does not check prose line numbers, that each name resolves in the database, or the backticked-selector rule below, which the uncommitted verifier of 2026-11-20 checked). An entry's `Names:` line lists every name the entry can reach: every selector, class, key-value coding key or method-name pattern, including names written as `@selector` literals in tables and arrays, names of SDK and AppKit-private classes and methods (marked in the Note column; a port does not rename them, but a port of the site must keep reaching them), class names that are written to stored state (marked "persisted by name"; including names that AppKit persists, such as window restoration classes, and classes allowed when reading archives), and class names and selectors that cross a process boundary (XPC and pasteboard archives, marked). Three groups are deliberately not listed by name, because a binding test or the census owns them, and the entries that reach them say so: the main-menu action selectors (reached by the menu-dispatch entries), the `window` keys of `iTerm2.sdef` (reached through `iTermScriptingWindow`), and user-defaults keys (not methods). Names that only tests pass are named in the entry text, not here. The rule also requires every backticked selector in an entry's text to be either one of its names or explicitly marked as mentioned but not reached (the helper's own selector, a caller's method).
+The rule: this table is the union of the `Names:` lines of every entry in sections 3, 4, 5 and 6 and of the Swift sites in section 9, and `tools/swift_migration/reflective_registry.py check` checks that it is exactly that union (it also checks that every dynamic reflective call of the database has a bullet in section 3 and no bullet is stale, the bullet lines, and the summary table; it does not check the functions the prose cites, that each name resolves in the database, or the backticked-selector rule below, which the uncommitted verifier of 2026-11-20 checked). An entry's `Names:` line lists every name the entry can reach: every selector, class, key-value coding key or method-name pattern, including names written as `@selector` literals in tables and arrays, names of SDK and AppKit-private classes and methods (marked in the Note column; a port does not rename them, but a port of the site must keep reaching them), class names that are written to stored state (marked "persisted by name"; including names that AppKit persists, such as window restoration classes, and classes allowed when reading archives), and class names and selectors that cross a process boundary (XPC and pasteboard archives, marked). Three groups are deliberately not listed by name, because a binding test or the census owns them, and the entries that reach them say so: the main-menu action selectors (reached by the menu-dispatch entries), the `window` keys of `iTerm2.sdef` (reached through `iTermScriptingWindow`), and user-defaults keys (not methods). Names that only tests pass are named in the entry text, not here. The rule also requires every backticked selector in an entry's text to be either one of its names or explicitly marked as mentioned but not reached (the helper's own selector, a caller's method).
 
-A selector is written as the runtime spells it; `Class.key` is a key-value coding key of that class (its getter, and setter when settable); `Class +prefix*` is every class method of that class whose selector starts with the prefix; `prefix*` alone is every selector with that prefix, on any class. Sites are given as the entry's first database row or site. "Resolves" says how the name was found in the database copy. "Runtime name" is filled for every class: the name `NSStringFromClass` returns today and the one stored or looked up; it differs from the name only for Swift classes without `@objc(Name)` (section 6 says how it was determined), and those rows say not to add or change `@objc(Name)`. Where a selector name is generic (`paste:`, `setDelegate:`, `insertNewline:`, `moveDown:`, `deleteBackward:`), the Note says which classes' implementations the entry reaches.
+A selector is written as the runtime spells it; `Class.key` is a key-value coding key of that class (its getter, and setter when settable); `Class +prefix*` is every class method of that class whose selector starts with the prefix; `prefix*` alone is every selector with that prefix, on any class. Sites are given as the file and function of the entry's first database row or site. Outside the bullets, the registry cites a place by its file and function (or macro, class or declaration), not by line, because line numbers in prose go stale with every edit above them and no tool regenerates them. The bullets keep `FILE:LINE`: those of section 3 are kept current by `reflective_registry.py update`; those of sections 4 to 9 are read by `entry_points.py` in that form, were brought to the tree of 2026-11-21, and are not regenerated (most of them also name their function). "Resolves" says how the name was found in the database copy. "Runtime name" is filled for every class: the name `NSStringFromClass` returns today and the one stored or looked up; it differs from the name only for Swift classes without `@objc(Name)` (section 6 says how it was determined), and those rows say not to add or change `@objc(Name)`. Where a selector name is generic (`paste:`, `setDelegate:`, `insertNewline:`, `moveDown:`, `deleteBackward:`), the Note says which classes' implementations the entry reaches.
 
 | Name | Resolves | Runtime name | Note | Sites |
 |---|---|---|---|---|
-| `_crashOnException:` | not in database: SDK or AppKit-private name |  | SDK or AppKit-private | AppKit/iTermApplication.m:119 |
-| `_moveToDisplay:` | not in database: SDK or AppKit-private name |  | SDK or AppKit-private | Settings/MenuItemPopupView.swift:58 |
-| `_NSKeyboardFocusClipView` | not in database: SDK or AppKit-private name | `_NSKeyboardFocusClipView` | SDK or AppKit-private | AppKit/iTermApplication.m:186 |
-| `_NSThemeZoomWidgetCell` | not in database: SDK or AppKit-private name | `_NSThemeZoomWidgetCell` | SDK or AppKit-private | Categories/NSObject+iTerm.m:130 |
-| `_toggleIPad:` | not in database: SDK or AppKit-private name |  | SDK or AppKit-private | Settings/MenuItemPopupView.swift:58 |
-| `_updateDividerLayerForController:animated:` | selector |  | SDK or AppKit-private | Infrastructure/iTermSelectorSwizzler.m:31 |
-| `_windowResizeNorthEastSouthWestCursor` | not in database: SDK or AppKit-private name |  | SDK or AppKit-private; Swift site (section 9) | FloatingPanes/iTermFloatingPaneView.swift:280 |
-| `_windowResizeNorthWestSouthEastCursor` | not in database: SDK or AppKit-private name |  | SDK or AppKit-private; Swift site (section 9) | FloatingPanes/iTermFloatingPaneView.swift:280 |
-| `actionsDidChange:` | selector |  |  | Notifications/iTermNotificationCenter.m:52 |
-| `add:` | selector |  |  | Toolbelt/iTermToolActions.m:53, Toolbelt/iTermToolSnippets.m:110 |
-| `addAndCommit:` | selector |  |  | StatusBar/Components/iTermStatusBarGitComponent.m:365 |
-| `addAnnotationWithCompletion:startX:startY:endX:endY:text:` | selector |  |  | Language/iTermBuiltInFunctions.m:558, Language/iTermReflection.m:154 |
-| `addDeleteClicked:` | selector |  |  | Settings/GeneralPreferencesViewController.m:577 |
-| `addNote:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `addTrigger:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `adjustBottom:` | selector |  |  | Settings/iTermBadgeConfigurationWindowController.m:224 |
-| `adjustLeft:` | selector |  |  | Settings/iTermBadgeConfigurationWindowController.m:224 |
-| `adjustRight:` | selector |  |  | Settings/iTermBadgeConfigurationWindowController.m:224 |
-| `adjustTop:` | selector |  |  | Settings/iTermBadgeConfigurationWindowController.m:224 |
-| `AlertTrigger` | class | `AlertTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `AnnotateTrigger` | class | `AnnotateTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `apiAddTabToGroupWithCompletion:tab_id:group_id:` | selector |  |  | Language/iTermBuiltInFunctions.m:558, Language/iTermReflection.m:154 |
-| `apiCreateTabGroupWithCompletion:tab_ids:name:color:parent_group_id:` | selector |  |  | Language/iTermBuiltInFunctions.m:558, Language/iTermReflection.m:154 |
-| `apiMenuItem:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:969 |
-| `apiRemoveTabFromGroupWithCompletion:tab_id:` | selector |  |  | Language/iTermBuiltInFunctions.m:558, Language/iTermReflection.m:154 |
-| `appendRequestsForNode:toArray:` | selector |  |  | tmux/TmuxLayoutParser.m:292 |
-| `apply:` | selector |  |  | Toolbelt/iTermToolActions.m:53, Toolbelt/iTermToolSnippets.m:110 |
-| `BellTrigger` | class | `BellTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `bogusSelector` | selector |  |  | StatusBar/Components/iTermStatusBarGitComponent.m:365 |
-| `BounceTrigger` | class | `BounceTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `bringFloatingPaneToFrontFromContextMenu:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `browse:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `browserEvalJSWithCompletion:js:connectionKey:cancellation:` | selector |  |  | Language/iTermBuiltInFunctions.m:558, Language/iTermReflection.m:154 |
-| `browserSetToolbarHiddenWithCompletion:hidden:` | selector |  |  | Language/iTermBuiltInFunctions.m:558, Language/iTermReflection.m:154 |
-| `buriedPanesDidOpen:` | selector |  |  | tmux/TmuxWindowOpener.m:367, tmux/TmuxWindowOpener.m:547, tmux/TmuxWindowOpener.m:709 |
-| `bury:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `buttonPressed:` | selector |  |  | TIps/iTermTipCardActionButton.m:127, TIps/iTermTipCardActionButton.m:328 |
-| `cancelFindExistingFileRequest:reply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m:90 |
-| `cancelNewAccount:` | selector |  |  | PasswordManager/iTermPasswordManagerWindowController.m:92 |
-| `CaptureTrigger` | class | `CaptureTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `carbonHotkeyPressed:siblings:` | selector |  |  | Hotkey/iTermCarbonHotKeyController.m:371 |
-| `checkForUTF8Response:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `checkIfDirectoryExists:withReply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m:90 |
-| `checkIfExecutableRegularFile:searchPaths:withReply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m:90 |
-| `checkout:` | selector |  |  | StatusBar/Components/iTermStatusBarGitComponent.m:365 |
-| `clearTextViewBuffer:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `closeCurrentSession:` | selector |  |  | Companion/CompanionWizardWindowController.swift:1012 |
-| `closeTabGroup:` | selector |  |  | TerminalView/PseudoTerminal.m:10407 |
-| `closeTabsOutsideGroup:` | selector |  |  | TerminalView/PseudoTerminal.m:10407 |
-| `closeTabsRightOfGroup:` | selector |  |  | TerminalView/PseudoTerminal.m:10407 |
-| `closeTextViewSession:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `collapseTabGroupFromMenu:` | selector |  |  | TerminalView/PseudoTerminal.m:10407 |
-| `commit:` | selector |  |  | StatusBar/Components/iTermStatusBarGitComponent.m:365 |
-| `configureComponent:` | selector |  |  | StatusBar/Setup/iTermStatusBarSetupDestinationCollectionViewController.m:193 |
-| `contextMenuAction*` | 8 selectors with prefix |  | selector prefix pattern (PTYTextView.m:599) | TerminalView/PTYTextView.m:599 |
-| `contextMenuActionCopy:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:391, ContextMenu/iTermTextViewContextMenuHelper.m:59, ContextMenu/iTermTextViewContextMenuHelper.m:877, SemanticHistory/iTermURLActionFactory.m:574, SemanticHistory/iTermURLActionHelper.m:480, TerminalView/PTYTextView.m:599 |
-| `contextMenuActionOpenFile:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:391, ContextMenu/iTermTextViewContextMenuHelper.m:59, ContextMenu/iTermTextViewContextMenuHelper.m:877, SemanticHistory/iTermURLActionFactory.m:574, SemanticHistory/iTermURLActionHelper.m:480, TerminalView/PTYTextView.m:599 |
-| `contextMenuActionOpenURL:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:391, ContextMenu/iTermTextViewContextMenuHelper.m:59, ContextMenu/iTermTextViewContextMenuHelper.m:877, SemanticHistory/iTermURLActionFactory.m:574, SemanticHistory/iTermURLActionHelper.m:480, TerminalView/PTYTextView.m:599 |
-| `contextMenuActionRunCommand:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:391, ContextMenu/iTermTextViewContextMenuHelper.m:59, ContextMenu/iTermTextViewContextMenuHelper.m:877, SemanticHistory/iTermURLActionFactory.m:574, SemanticHistory/iTermURLActionHelper.m:480, TerminalView/PTYTextView.m:599 |
-| `contextMenuActionRunCommandInWindow:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:391, ContextMenu/iTermTextViewContextMenuHelper.m:59, ContextMenu/iTermTextViewContextMenuHelper.m:877, SemanticHistory/iTermURLActionFactory.m:574, SemanticHistory/iTermURLActionHelper.m:480, TerminalView/PTYTextView.m:599 |
-| `contextMenuActionRunCoprocess:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:391, ContextMenu/iTermTextViewContextMenuHelper.m:59, ContextMenu/iTermTextViewContextMenuHelper.m:877, SemanticHistory/iTermURLActionFactory.m:574, SemanticHistory/iTermURLActionHelper.m:480, TerminalView/PTYTextView.m:599 |
-| `contextMenuActionSendText:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:391, ContextMenu/iTermTextViewContextMenuHelper.m:59, ContextMenu/iTermTextViewContextMenuHelper.m:877, SemanticHistory/iTermURLActionFactory.m:574, SemanticHistory/iTermURLActionHelper.m:480, TerminalView/PTYTextView.m:599 |
-| `CoprocessTrigger` | class | `CoprocessTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `copy:` | selector |  | SDK or AppKit-private | PTYSession/PTYSession.m:26718 |
-| `copyData:` | selector |  |  | ContextMenu/iTermContextMenuUtilities.m:360 |
-| `copyImage:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:444, ContextMenu/iTermTextViewContextMenuHelper.m:59 |
-| `copySelection:` | selector |  |  | Toolbelt/ToolPasteHistory.m:125 |
-| `copyString:` | selector |  |  | ContextMenu/iTermContextMenuUtilities.m:360 |
-| `copyWithControlSequences:` | selector |  |  | PTYSession/PTYSession.m:26718 |
-| `copyWithStyles:` | selector |  |  | PTYSession/PTYSession.m:26718 |
-| `debug` | selector |  |  | StatusBar/Components/iTermStatusBarGitComponent.m:365 |
-| `decodeImageFromData:withReply:` | selector |  | XPC wire format (selector sent by name) | XPC/iTermSandboxedWorkerClient.m:24 |
-| `decodeImageFromSixelData:withReply:` | selector |  | XPC wire format (selector sent by name) | XPC/iTermSandboxedWorkerClient.m:24 |
-| `decorateWindowPane:` | selector |  |  | tmux/TmuxLayoutParser.m:292 |
-| `deleteBackward:` | selector |  | SDK or AppKit-private; defined on: `iTermStatusBarSetupDestinationCollectionViewController` (line 177), the collection view's delegate | StatusBar/Setup/iTermStatusBarSetupDestinationCollectionViewController.m:53 |
-| `deleteColorPreset:` | selector |  |  | Settings/ProfilesColorsPreferencesViewController.m:620 |
-| `didChangeWhetherPaneFloats:request:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `didFetch:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `didFetchDefaultTerminal:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `didFetchNow:completion:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `didFetchTmuxPid:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `didGetCurrentWindow:beforeSelecting:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `didListClients:completion:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `didListPanes:forBuriedPanes:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `didListWindows:forSession:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxController.m:4660 |
-| `didListWindows:userData:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `didListWindowsSubsequentToSettingLayout:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `didLoadServerIdentity:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `didLoadTmuxClientName:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `didMakeFloatingPane:completion:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `didPause:panes:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `didSelectWindow:selection:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `didSetLayout:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `didSetLayoutWithMovedDivider:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `didSplit:state:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `didSubscribe:handleID:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `didSwapWindows:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `dismissByKeyboard:` | selector |  |  | Hotkey/iTermCarbonHotKeyController.m:371 |
-| `dockFloatingPaneFromContextMenu:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `downloadWithSCP:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `dumpHistoryResponse:paneAndAlternate:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `dumpStateResponse:pane:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `duplicateTabGroup:` | selector |  |  | TerminalView/PseudoTerminal.m:10407 |
-| `edit:` | selector |  |  | Toolbelt/iTermToolActions.m:53, Toolbelt/iTermToolSnippets.m:110 |
-| `editControlClicked:` | selector |  |  | Settings/GeneralPreferencesViewController.m:577 |
-| `editTextViewSession:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `effectiveAppearance` | not in database: SDK or AppKit-private name |  | SDK or AppKit-private | Language/iTermGlobalScopeController.m:35 |
-| `executeShellCommand:args:dir:env:reply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m:90 |
-| `expandTabGroupFromMenu:` | selector |  |  | TerminalView/PseudoTerminal.m:10407 |
-| `exportColorPreset:` | selector |  |  | Settings/ProfilesColorsPreferencesViewController.m:620 |
-| `fetchDirectoryListingOfPath:completion:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m:90 |
-| `fetchRecentBranchesAt:count:completion:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m:90 |
-| `fetchTimeOffsetWithCompletion:` | selector |  |  | Language/iTermBuiltInFunctions.m:558, Language/iTermReflection.m:154 |
-| `fetchUserShellWithReply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m:90 |
-| `findCompletionsWithPrefix:inDirectories:pwd:maxCount:executable:withReply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m:90 |
-| `findExistingFileWithPrefix:suffix:workingDirectory:trimWhitespace:pathsToIgnore:allowNetworkMounts:reqid:reply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m:90 |
-| `getAffinitiesResponse:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `getBuriedIndexesResponse:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `getCoprocessWithCompletion:` | selector |  |  | Language/iTermBuiltInFunctions.m:558, Language/iTermReflection.m:154 |
-| `getHiddenWindowsResponse:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `getHotkeysResponse:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `getOriginsResponse:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `getPaneIDsResponseAndSetHotkeys:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `getPaneIDsResponseAndSetTabColors:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `getPendingOutputResponse:pane:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `getPerTabSettingsResponse:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `getPerWindowSettingsResponse:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `getProcessInfoForProcessID:flavor:arg:size:reqid:withReply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m:90 |
-| `getSessionGuidResponse:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `getTabColorsResponse:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `getTabGroupParentsResponse:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `getTabGroupsResponse:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `getUserVarsResponse:pane:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `GrowlTrigger` | class (empty @interface and @implementation, iTermUserNotificationTrigger.m:20 to 24; no method rows) | `GrowlTrigger` | persisted by name | Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `guessVersion18Response:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `guessVersion21Response:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `guessVersion22Response:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `guessVersion23Response:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `handle:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `handleDisplayMessageVersion:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `handleListKeys:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `handlePingResponse:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `handleResizeWindowResponse:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `handleShowBuffer:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `handleShowSetTitles:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `handleShowSize:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `handleStatusIntervalResponse:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `handleStatusResponse:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `handshakeWithReply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m:90 |
-| `HighlightBrowserTrigger` | class | `iTerm2SharedARC.HighlightBrowserTrigger` | persisted by name; do not add or change `@objc(Name)`: the stored name is the current runtime name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `HighlightTrigger` | class | `HighlightTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `hotKeyPressed:siblings:` | selector |  |  | Hotkey/iTermCarbonHotKeyController.m:371 |
-| `hotkeyPressed:siblings:` | selector |  |  | Hotkey/iTermCarbonHotKeyController.m:371 |
-| `HyperlinkBrowserTrigger` | class | `iTerm2SharedARC.HyperlinkBrowserTrigger` | persisted by name; do not add or change `@objc(Name)`: the stored name is the current runtime name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `imageRectForBounds:` | not in database: SDK or AppKit-private name |  | SDK or AppKit-private | Categories/NSTableView+iTerm.m:196 |
-| `importColorPreset:` | selector |  |  | Settings/ProfilesColorsPreferencesViewController.m:620 |
-| `initialListWindowsResponse:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `initWithConfiguration:scope:` | selector |  |  | StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112 |
-| `initWithDictionary:` | selector |  |  | DataStructuresAlgorithms/IntervalTree.m:517, Marks/iTermMark.m:77 |
-| `InjectJavascriptContentTrigger` | class | `InjectJavascriptContentTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `InjectJavascriptURLTrigger` | class | `InjectJavascriptURLTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `insertNewline:` | selector |  | SDK or AppKit-private; defined on: `iTermStatusBarKnobNumericViewController` (line 96) and `iTermStatusBarKnobTextViewController` (line 132) | StatusBar/Setup/Knobs/iTermStatusBarKnobNumericViewController.m:88, StatusBar/Setup/Knobs/iTermStatusBarKnobTextViewController.m:124 |
-| `inspectImage:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:444, ContextMenu/iTermTextViewContextMenuHelper.m:59 |
-| `installShellIntegration:` | selector |  |  | ShellIntegration/iTermShellHistoryController.m:365 |
-| `it_intlistValue` | selector |  |  | tmux/TmuxStateParser.m:167 |
-| `it_numberValue` | selector |  |  | tmux/TmuxStateParser.m:167 |
-| `it_paneIdNumberValue` | selector |  |  | tmux/TmuxStateParser.m:167 |
-| `it_redrawPeriodically:` | selector |  |  | Categories/NSTimer+iTerm.m:54 |
-| `iterm_undoSafety_viewWillMoveToWindow:` | selector |  |  | Categories/NSTextView+iTermUndoSafety.m:40 |
-| `iTermAdvancedSettingsModel +advancedSettingsModelDictionary_*` | 515 class methods with prefix |  |  | Settings/iTermAdvancedSettingsModel.m:331, Settings/iTermAdvancedSettingsModel.m:342 |
-| `iTermAdvancedSettingsModel +deprecated_*` | 1 class methods with prefix |  |  | Settings/iTermAdvancedSettingsModel.m:354 |
-| `iTermAdvancedSettingsModel +load_*` | 516 class methods with prefix |  |  | Settings/iTermAdvancedSettingsModel.m:331, Settings/iTermAdvancedSettingsModel.m:342 |
-| `iTermBadgeConfigurationWindowController` | class | `iTermBadgeConfigurationWindowController` | nib name derived from class name | Composer/iTermMinimalComposerViewController.m:140 (also iTermHotkeyPreferencesWindowController.m:43 |
-| `iTermBlockMark` | class | `iTermBlockMark` | persisted by name | DataStructuresAlgorithms/IntervalTree.m:1312, DataStructuresAlgorithms/IntervalTree.m:1433, DataStructuresAlgorithms/IntervalTree.m:517, Marks/iTermMark.m:77 |
-| `iTermBufferInputTrigger` | class | `iTermBufferInputTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `iTermButtonMark` | class | `iTermButtonMark` | persisted by name | DataStructuresAlgorithms/IntervalTree.m:1312, DataStructuresAlgorithms/IntervalTree.m:1433, DataStructuresAlgorithms/IntervalTree.m:517, Marks/iTermMark.m:77 |
-| `iTermCapturedOutputMark` | class (empty @implementation, iTermCapturedOutputMark.m; no method rows) | `iTermCapturedOutputMark` | persisted by name | DataStructuresAlgorithms/IntervalTree.m:1312, DataStructuresAlgorithms/IntervalTree.m:1433, DataStructuresAlgorithms/IntervalTree.m:517, Marks/iTermMark.m:77 |
-| `iTermDirectoryEntry` | class | `iTermDirectoryEntry` | crosses a process boundary by name (XPC); compiled into two targets | SlowOperationXPC/iTermSlowOperationGateway.m:90 |
-| `iTermEditSnippetWindowController` | class | `iTermEditSnippetWindowController` | nib name derived from class name | Composer/iTermMinimalComposerViewController.m:140 (also iTermHotkeyPreferencesWindowController.m:43 |
-| `iTermEnterWorkgroupBrowserTrigger` | class | `iTermEnterWorkgroupBrowserTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `iTermEnterWorkgroupTrigger` | class | `iTermEnterWorkgroupTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `iTermExitWorkgroupBrowserTrigger` | class | `iTermExitWorkgroupBrowserTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `iTermExitWorkgroupTrigger` | class | `iTermExitWorkgroupTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `iTermFoldMark` | class | `iTermFoldMark` | persisted by name | DataStructuresAlgorithms/IntervalTree.m:1312, DataStructuresAlgorithms/IntervalTree.m:1433, DataStructuresAlgorithms/IntervalTree.m:517, Marks/iTermMark.m:77 |
-| `iTermFoldTrigger` | class | `iTermFoldTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `iTermGitFileStatus` | class | `iTermGitFileStatus` | crosses a process boundary by name (XPC); compiled into two targets | SlowOperationXPC/iTermSlowOperationGateway.m:90 |
-| `iTermGitState` | class | `iTermGitState` | crosses a process boundary by name (XPC); compiled into two targets | SlowOperationXPC/iTermSlowOperationGateway.m:90 |
-| `iTermHighlightLineTrigger` | class | `iTermHighlightLineTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `iTermHotkeyPreferencesWindowController` | class | `iTermHotkeyPreferencesWindowController` | nib name derived from class name | Composer/iTermMinimalComposerViewController.m:140 (also iTermHotkeyPreferencesWindowController.m:43 |
-| `iTermHyperlinkTrigger` | class | `iTermHyperlinkTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `iTermImage` | class | `iTermImage` | crosses a process boundary by name (XPC); compiled into two targets | XPC/iTermSandboxedWorkerClient.m:24 |
-| `iTermImageMark` | class | `iTermImageMark` | persisted by name | DataStructuresAlgorithms/IntervalTree.m:1312, DataStructuresAlgorithms/IntervalTree.m:1433, DataStructuresAlgorithms/IntervalTree.m:517, Marks/iTermMark.m:77 |
-| `iTermInjectTrigger` | class | `iTermInjectTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `iTermMark` | class | `iTermMark` | persisted by name | DataStructuresAlgorithms/IntervalTree.m:1312, DataStructuresAlgorithms/IntervalTree.m:1433, DataStructuresAlgorithms/IntervalTree.m:517, Marks/iTermMark.m:77 |
-| `iTermMinimalComposerViewController` | class | `iTermMinimalComposerViewController` | nib name derived from class name | Composer/iTermMinimalComposerViewController.m:140 (also iTermHotkeyPreferencesWindowController.m:43 |
-| `iTermPathMark` | class | `iTermPathMark` | persisted by name | DataStructuresAlgorithms/IntervalTree.m:1312, DataStructuresAlgorithms/IntervalTree.m:1433, DataStructuresAlgorithms/IntervalTree.m:517, Marks/iTermMark.m:77 |
-| `iTermProfilesWindowRestorer` | class | `iTermProfilesWindowRestorer` | persisted by name by AppKit (saved application state) | Settings/Profiles/iTermProfilesWindowController.m:169 |
-| `iTermRPCTrigger` | class | `iTermRPCTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `iTermScriptCallCancellation` | class | `iTermScriptCallCancellation` | class name read from a type encoding | Language/iTermBuiltInFunctions.m:464 |
-| `iTermSetNamedMarkTrigger` | class | `iTermSetNamedMarkTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `iTermSetProfileBooleanTrigger` | class | `iTermSetProfileBooleanTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `iTermSetTabStatusTrigger` | class | `iTermSetTabStatusTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `iTermSetTitleTrigger` | class | `iTermSetTitleTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `iTermSetUserVariableTrigger` | class | `iTermSetUserVariableTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `iTermSGRTrigger` | class | `iTermSGRTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `iTermShellPromptTrigger` | class | `iTermShellPromptTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `iTermStatusBarActionComponent` | class | `iTermStatusBarActionComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarActionMenuComponent` | class | `iTermStatusBarActionMenuComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarAttributedTextComponent` | class | `iTermStatusBarAttributedTextComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarBatteryComponent` | class | `iTermStatusBarBatteryComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarBuiltInComponentFactory` | class | `iTermStatusBarBuiltInComponentFactory` | crosses a process boundary by name (pasteboard archive) | Categories/NSData+iTerm.m:292 |
-| `iTermStatusBarClockComponent` | class | `iTermStatusBarClockComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarComposerComponent` | class | `iTermStatusBarComposerComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarCPUUtilizationComponent` | class | `iTermStatusBarCPUUtilizationComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarFilterComponent` | class | `iTermStatusBarFilterComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarFixedSpacerComponent` | class | `iTermStatusBarFixedSpacerComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarFunctionCallComponent` | class | `iTermStatusBarFunctionCallComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarGitComponent` | class | `iTermStatusBarGitComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarHostnameComponent` | class | `iTermStatusBarHostnameComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarJobComponent` | class | `iTermStatusBarJobComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarMemoryUtilizationComponent` | class | `iTermStatusBarMemoryUtilizationComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarNetworkUtilizationComponent` | class | `iTermStatusBarNetworkUtilizationComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarPlaceholderComponent` | class | `iTermStatusBarPlaceholderComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarProgressComponent` | class | `iTermStatusBarProgressComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarRPCComponentFactory` | class | `iTermStatusBarRPCComponentFactory` | crosses a process boundary by name (pasteboard archive) | Categories/NSData+iTerm.m:292 |
-| `iTermStatusBarRPCProvidedAttributedTextComponent` | class | `iTermStatusBarRPCProvidedAttributedTextComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarRPCProvidedTextComponent` | class | `iTermStatusBarRPCProvidedTextComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarSearchFieldComponent` | class | `iTermStatusBarSearchFieldComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarSetupElement` | class | `iTermStatusBarSetupElement` | crosses a process boundary by name (pasteboard archive) | Categories/NSData+iTerm.m:292 |
-| `iTermStatusBarSnippetMenuComponent` | class | `iTermStatusBarSnippetMenuComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarSparklinesComponent` | class | `iTermStatusBarSparklinesComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarSpringComponent` | class | `iTermStatusBarSpringComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarSwiftyStringComponent` | class | `iTermStatusBarSwiftyStringComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarTextComponent` | class | `iTermStatusBarTextComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarTmuxLeftComponent` | class | `iTermStatusBarTmuxLeftComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarTmuxRightComponent` | class | `iTermStatusBarTmuxRightComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarTriggersComponent` | class | `iTermStatusBarTriggersComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarUsernameComponent` | class | `iTermStatusBarUsernameComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarVariableBaseComponent` | class | `iTermStatusBarVariableBaseComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermStatusBarWorkingDirectoryComponent` | class | `iTermStatusBarWorkingDirectoryComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m:134, StatusBar/Components/iTermStatusBarBaseComponent.m:51, StatusBar/Core/iTermStatusBarLayout.m:112, StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70) |
-| `iTermTuple` | class | `iTermTuple` | persisted by name (allowed when reading state-restoration archives) | Categories/NSData+iTerm.m:331 |
-| `iTermUserNotificationTrigger` | class | `iTermUserNotificationTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `listedWindowsToOpenOne:forWindowIdAndAffinities:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `listSessionsResponse:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `listWindowsResponse:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `loadURLWithCompletion:url:connectionKey:cancellation:` | selector |  |  | Language/iTermBuiltInFunctions.m:558, Language/iTermReflection.m:154 |
-| `log:` | selector |  |  | StatusBar/Components/iTermStatusBarGitComponent.m:365 |
-| `mail:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `MarkTrigger` | class | `MarkTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `maybePollForWorkingDirectory` | selector |  |  | Infrastructure/iTermRateLimitedUpdate.m:140 |
-| `moveDown:` | selector |  | SDK or AppKit-private; defined on: `iTermFindDriver` (iTermFindDriver.m:766) | SearchingFiltering/iTermFindDriver.m:761 |
-| `movePane:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `moveSessionToFloatingPaneFromContextMenu:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `moveTabGroupToNewWindow:` | selector |  |  | TerminalView/PseudoTerminal.m:10407 |
-| `MuteCoprocessTrigger` | class | `MuteCoprocessTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `newSessionInTabAtIndex:` | selector |  |  | Settings/Profiles/iTermProfilesMenuController.m:99, iTermController/iTermController.m:1050 |
-| `newSessionInWindowAtIndex:` | selector |  |  | Settings/Profiles/iTermProfilesMenuController.m:99, iTermController/iTermController.m:1050 |
-| `newSessionsInNewWindow:` | selector |  |  | Settings/Profiles/iTermProfilesMenuController.m:99, iTermController/iTermController.m:1050 |
-| `newSessionsInWindow:` | selector |  |  | Settings/Profiles/iTermProfilesMenuController.m:99, iTermController/iTermController.m:1050 |
-| `newTabInGroup:` | selector |  |  | TerminalView/PseudoTerminal.m:10407 |
-| `newWindowWithAffinityCreated:affinityWindowAndCompletion:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `noop:` | selector |  | compared by name at iTermFocusReportingTextField.m:95 (Cocoa text system command); also an action of ours | Infrastructure/Views/iTermFocusReportingTextField.m:95, StatusBar/Setup/iTermStatusBarSetupViewController.m:216 |
-| `NSArray` | class | `NSArray` | SDK or AppKit-private | Language/iTermBuiltInFunctions.m:464 |
-| `NSNumber` | class | `NSNumber` | SDK or AppKit-private | Language/iTermBuiltInFunctions.m:464 |
-| `NSOutlineButtonCell_iTermCustomImageRect` | class made at run time by objc_allocateClassPair (NSTableView+iTerm.m:198) | `NSOutlineButtonCell_iTermCustomImageRect` | created at run time | Categories/NSTableView+iTerm.m:196 |
-| `NSPanel.ViewBridge.rendezvous` | not in database: SDK or AppKit-private name | `NSPanel.ViewBridge.rendezvous` | SDK or AppKit-private | AppKit/iTermApplication.m:186 |
-| `NSPanelViewBridge` | not in database: SDK or AppKit-private name | `NSPanelViewBridge` | SDK or AppKit-private | AppKit/iTermApplication.m:186 |
-| `NSSearchFieldCell` | not in database: SDK or AppKit-private name | `NSSearchFieldCell` | SDK or AppKit-private | Settings/PreferencePanel.m:1113 |
-| `NSString` | class | `NSString` | SDK or AppKit-private | Language/iTermBuiltInFunctions.m:464 |
-| `NSTitlebarContainerView` | not in database: SDK or AppKit-private name | `NSTitlebarContainerView` | SDK or AppKit-private | Infrastructure/iTermSelectorSwizzler.m:31 |
-| `NSToolbarFullScreenWindow` | not in database: SDK or AppKit-private name | `NSToolbarFullScreenWindow` | SDK or AppKit-private | AppKit/iTermApplication.m:186 |
-| `NSToolTipPanel` | not in database: SDK or AppKit-private name | `NSToolTipPanel` | SDK or AppKit-private | AppKit/iTermApplication.m:186 |
-| `object_browserBundleID` | selector |  |  | Settings/iTermAdvancedSettingsViewController.m:354 |
-| `object_enableSecureKeyboardEntryAutomatically` | selector |  |  | Settings/iTermAdvancedSettingsViewController.m:354 |
-| `openImage:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:444, ContextMenu/iTermTextViewContextMenuHelper.m:59 |
-| `openInAdvancedPaste:` | selector |  |  | Toolbelt/ToolPasteHistory.m:125, Toolbelt/iTermToolSnippets.m:110 |
-| `openURLInFloatingPane:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `openURLInHorizontalSplitPane:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `openURLInVerticalSplitPane:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `original_imageRectForBounds:` | selector |  |  | Categories/NSTableView+iTerm.m:196 |
-| `panesDidUnpause:` | selector |  |  | tmux/TmuxWindowOpener.m:367, tmux/TmuxWindowOpener.m:547, tmux/TmuxWindowOpener.m:709 |
-| `parseListWindowsResponseAndUpdateLayouts:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `PasswordTrigger` | class | `PasswordTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `paste:` | selector |  | SDK or AppKit-private; defined on: any responder (the first responder of the front terminal window, PasteboardHistory.m:328, if it responds) | Categories/NSObject+iTerm.m:292 |
-| `pasteNextChunkAndScheduleTimer` | selector |  |  | Pasting/iTermPasteHelper.m:1117 |
-| `performBlockIfNeeded:` | selector |  |  | Categories/NSTimer+iTerm.m:54, Infrastructure/iTermGCDTimer.m:92 |
-| `performFindPanelAction:` | selector |  | SDK or AppKit-private | Infrastructure/Views/iTermFocusReportingTextField.m:40 |
-| `phonyCommandDidComplete:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `poll` | selector |  |  | Categories/NSTimer+iTerm.m:54 |
-| `PortholeMark` | class | `iTerm2SharedARC.PortholeMark` | persisted by name; do not add or change `@objc(Name)`: the stored name is the current runtime name | DataStructuresAlgorithms/IntervalTree.m:1312, DataStructuresAlgorithms/IntervalTree.m:1433, DataStructuresAlgorithms/IntervalTree.m:517, Marks/iTermMark.m:77 |
-| `postInvalidateNotification` | selector |  |  | Infrastructure/iTermRateLimitedUpdate.m:140 |
-| `postUpdateSessionNameNotification` | selector |  |  | Infrastructure/iTermRateLimitedUpdate.m:140 |
-| `preferenceDidChange:` | selector |  |  | Notifications/iTermNotificationCenter.m:52 |
-| `pressDownloadsMenu` | selector |  |  | FileTransfer/FileTransferManager.m:254 |
-| `pressUploadsMenu` | selector |  |  | FileTransfer/FileTransferManager.m:254 |
-| `printTmuxCommandOutputToScreen:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `ProfileTableRow.command` | property |  |  | Settings/Profiles/ProfileListView.m:784 |
-| `ProfileTableRow.name` | property |  |  | Settings/Profiles/ProfileListView.m:784 |
-| `ProfileTableRow.shortcut` | property |  |  | Settings/Profiles/ProfileListView.m:784 |
-| `PseudoTerminalRestorer` | class | `PseudoTerminalRestorer` | persisted by name by AppKit (saved application state) | TerminalView/PseudoTerminal.m:913 |
-| `PTYAnnotation` | class | `PTYAnnotation` | persisted by name | DataStructuresAlgorithms/IntervalTree.m:1312, DataStructuresAlgorithms/IntervalTree.m:1433, DataStructuresAlgorithms/IntervalTree.m:517, Marks/iTermMark.m:77 |
-| `pull:` | selector |  |  | StatusBar/Components/iTermStatusBarGitComponent.m:365 |
-| `push:` | selector |  |  | StatusBar/Components/iTermStatusBarGitComponent.m:365 |
-| `quickLook:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `ReaderModeBrowserTrigger` | class | `iTerm2SharedARC.ReaderModeBrowserTrigger` | persisted by name; do not add or change `@objc(Name)`: the stored name is the current runtime name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `reallyAdd:` | selector |  |  | PasswordManager/iTermPasswordManagerWindowController.m:92 |
-| `recordPanes:state:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `redo:` | selector |  | SDK or AppKit-private | AppKit/iTermApplicationDelegate.m:3428 |
-| `reevaluateTimer:` | selector |  |  | Categories/NSTimer+iTerm.m:54 |
-| `refreshMenuBarNow` | selector |  |  | FileTransfer/FileTransferManager.m:254 |
-| `ReloadBrowserTrigger` | class | `ReloadBrowserTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `remove:` | selector |  |  | Toolbelt/iTermToolActions.m:53, Toolbelt/iTermToolSnippets.m:110 |
-| `renameTabGroupFromMenu:` | selector |  |  | TerminalView/PseudoTerminal.m:10407 |
-| `requestDidComplete` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `requestGitStateForPath:gitBase:timeout:includeDiffStats:completion:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m:90 |
-| `resolvePathOfDirectory:withReply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m:90 |
-| `responseForListWindows:toSetPartialOrder:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `restartSession:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `restoreWindowArrangement:` | selector |  |  | Settings/WindowArrangements.m:195 |
-| `restoreWindowArrangementAfterDelay:` | selector |  |  | Settings/WindowArrangements.m:195 |
-| `restoreWindowArrangementAfterDelayAsTabs:` | selector |  |  | Settings/WindowArrangements.m:195 |
-| `restoreWindowArrangementAsTabs:` | selector |  |  | Settings/WindowArrangements.m:195 |
-| `restoreWindowWithIdentifier:state:completionHandler:` | selector |  | sent by AppKit to the restoration class found by name | Settings/Profiles/iTermProfilesWindowController.m:169, TerminalView/PseudoTerminal.m:913 |
-| `runCoprocessWithCompletion:commandLine:mute:` | selector |  |  | Language/iTermBuiltInFunctions.m:558, Language/iTermReflection.m:154 |
-| `runModal` | selector |  | SDK or AppKit-private | AppKit/iTermApplicationDelegate.m:303 |
-| `runShellScript:shell:mode:withReply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m:90 |
-| `saveColorPreset:` | selector |  |  | Settings/ProfilesColorsPreferencesViewController.m:620 |
-| `savedGridExpirationTimer:` | selector |  |  | Infrastructure/iTermGCDTimer.m:92 |
-| `saveImageAs:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:444, ContextMenu/iTermTextViewContextMenuHelper.m:59 |
-| `saveSelectionAsSnippet:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `saveTabGroupAsWindowArrangement:` | selector |  |  | TerminalView/PseudoTerminal.m:10407 |
-| `saveWindowOriginsResponse:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `ScriptTrigger` | class | `ScriptTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `searchInBrowser:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `searchMore:` | selector |  |  | Categories/NSTimer+iTerm.m:54 |
-| `searchParseTree:forWindowPane:` | selector |  |  | tmux/TmuxLayoutParser.m:292 |
-| `selectAll:` | selector |  | SDK or AppKit-private | Infrastructure/Views/iTermKeyboardNavigatableTableView.m:25 |
-| `selector:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `selectPaneInDirectionWithCompletion:direction:` | selector |  |  | Language/iTermBuiltInFunctions.m:558, Language/iTermReflection.m:154 |
-| `sendFloatingPaneToBackFromContextMenu:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `sendSelection:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `SendTextTrigger` | class | `SendTextTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `sendTmuxCommandMethodDidComplete:completion:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `sendTmuxCommandWithCompletion:command:` | selector |  |  | Language/iTermBuiltInFunctions.m:558, Language/iTermReflection.m:154 |
-| `setDelegate:` | selector |  | SDK or AppKit-private; defined on: the key mapper chosen at PTYSession.m:7120 to 7139, if it responds: `iTermStandardKeyMapper`, `iTermModernKeyMapper`, `iTermTermkeyKeyMapper`, `iTermModifyOtherKeysMapper1`, `iTermModifyOtherKeysMapper2` (property inherited from `iTermModifyOtherKeysMapper`); `iTermRawKeyMapper` has none | Categories/NSObject+iTerm.m:292 |
-| `SetDirectoryTrigger` | class | `SetDirectoryTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `setFromObject_BrowserBundleID:` | selector |  |  | Settings/iTermAdvancedSettingsViewController.m:354 |
-| `setFromObject_EnableSecureKeyboardEntryAutomatically:` | selector |  |  | Settings/iTermAdvancedSettingsViewController.m:354 |
-| `SetHostnameTrigger` | class | `SetHostnameTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `setNameWithCompletion:name:` | selector |  |  | Language/iTermBuiltInFunctions.m:558, Language/iTermReflection.m:154 |
-| `setStatusBarComponentUnreadCountWithCompletion:identifier:count:` | selector |  |  | Language/iTermBuiltInFunctions.m:558, Language/iTermReflection.m:154 |
-| `settingChanged:` | selector |  |  | Settings/iTermSlider.m:187 |
-| `setTitleWithCompletion:title:` | selector |  |  | Language/iTermBuiltInFunctions.m:558, Language/iTermReflection.m:154 |
-| `setWindows:forSession:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxController.m:4660 |
-| `showMenu:` | selector |  | SDK or AppKit-private | Categories/NSObject+iTerm.m:130 |
-| `showNotes:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `showWindowOptionsResponse:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
-| `snippetsDidChange:` | selector |  |  | Notifications/iTermNotificationCenter.m:52 |
-| `splitTextViewHorizontally:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `splitTextViewVertically:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `stash:` | selector |  |  | StatusBar/Components/iTermStatusBarGitComponent.m:365 |
-| `statFile:withReply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m:90 |
-| `stopCoprocess:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `stopCoprocessWithCompletion:` | selector |  |  | Language/iTermBuiltInFunctions.m:558, Language/iTermReflection.m:154 |
-| `StopTrigger` | class | `StopTrigger` | persisted by name | Settings/TriggerController.m:385, Triggers/Trigger.m:563, Triggers/Trigger.m:77 |
-| `swapSessions:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `swizzled__NSThemeZoomWidgetCell_showMenu:` | selector |  |  | Categories/NSObject+iTerm.m:130 |
-| `terminalStateSetEmulationLevel:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:811 |
-| `terminalStateToggleAlternateScreen:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:811 |
-| `terminalStateToggleApplicationCursor:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:811 |
-| `terminalStateToggleApplicationKeypad:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:811 |
-| `terminalStateToggleFocusReporting:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:811 |
-| `terminalStateToggleLiteralMode:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:811 |
-| `terminalStateToggleMouseReporting:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:811 |
-| `terminalStateTogglePasteBracketing:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:811 |
-| `terminalToggleKeyboardMode:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:811 |
-| `textFieldSubmitted` | selector |  | Swift site (section 9) | Browser/UI/iTermURLTextField.swift:236 |
-| `threeFingerTap:` | selector |  |  | MousePointer/ThreeFingerTapGestureRecognizer.m:78 |
-| `timeout` | selector |  |  | Infrastructure/iTermGCDTimer.m:92 |
-| `toggleBroadcastingInput:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:563 |
-| `toggleCheckmark:` | selector |  |  | Toolbelt/CapturedOutput/ToolCapturedOutputView.m:396 |
-| `togglePauseAnimatingImage:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m:444, ContextMenu/iTermTextViewContextMenuHelper.m:59 |
-| `toggleStar:` | selector |  |  | Toolbelt/ToolDirectoriesView.m:333 |
-| `toggleTriggerEnabled:` | selector |  |  | AppKit/iTermApplicationDelegate.m:647, Categories/NSObject+iTerm.m:292 |
-| `toolProfilesNewFloatingPane:` | selector |  |  | Toolbelt/ToolProfiles.m:227 |
-| `toolProfilesNewHorizontalSplit:` | selector |  |  | Toolbelt/ToolProfiles.m:227 |
-| `toolProfilesNewTab:` | selector |  |  | Toolbelt/ToolProfiles.m:227 |
-| `toolProfilesNewVerticalSplit:` | selector |  |  | Toolbelt/ToolProfiles.m:227 |
-| `toolProfilesNewWindow:` | selector |  |  | Toolbelt/ToolProfiles.m:227 |
-| `undo:` | selector |  | SDK or AppKit-private | AppKit/iTermApplicationDelegate.m:3428, PTYSession/PTYSession.m:5547 |
-| `ungroupTabGroup:` | selector |  |  | TerminalView/PseudoTerminal.m:10407 |
-| `update:` | selector |  |  | Categories/NSTimer+iTerm.m:54, Infrastructure/iTermGCDTimer.m:92 |
-| `updateDisplay` | selector |  |  | Categories/NSTimer+iTerm.m:54 |
-| `updateDownloadBrowserPluginButtonHidden` | selector |  |  | Categories/NSTimer+iTerm.m:54 |
-| `updateIfNeeded` | selector |  |  | Infrastructure/iTermRateLimitedUpdate.m:140 |
-| `updateStringValue:` | selector |  |  | ThirdParty/PSMTabBarControl/source/PSMTabBarCell.m:166 |
-| `validateMenuItem:` | selector |  | SDK or AppKit-private | Infrastructure/Views/iTermFocusReportingTextField.m:40 |
-| `viewWillMoveToWindow:` | selector |  | SDK or AppKit-private | Categories/NSTextView+iTermUndoSafety.m:40 |
-| `visitGallery:` | selector |  |  | Settings/ProfilesColorsPreferencesViewController.m:620 |
-| `VT100MutableScreenConfiguration.alertOnNextMark` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.allowAlternateMouseScroll` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.allowTitleReporting` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.allowTitleSetting` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.appendToScrollbackWithStatusBar` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.audibleBell` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.autoComposerEnabled` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.backingScaleFactor` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.cellSize` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.clearScrollbackAllowed` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.clipboardAccessAllowed` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.cursorBlinks` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.darkMode` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.desiredComposerRows` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.dimmingAmount` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.dimOnlyText` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.enableTriggersInInteractiveApps` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.faintTextAlpha` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.flashBell` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.globalWindowFrame` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.iconTitle` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.isDirty` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.isTmuxClient` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.loggingEnabled` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.maximumTheoreticalImageDimension` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.maxScrollbackLines` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.miniaturized` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.minimumContrast` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.mutingAmount` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.normalization` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.optionIsMetaForSpecialChars` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.osc52` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.postUserNotifications` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.printingAllowed` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.profileName` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.publishing` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.reduceFlicker` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.saveToScrollbackInAlternateScreen` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.screenFrames` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.sessionGuid` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.sessionIsVisible` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.shouldPlacePromptAtFirstColumn` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.showBellIndicator` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.stableID` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.terminalCanChangeBlink` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.terminfoValues` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.theoreticalGridSize` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.treatAmbiguousCharsAsDoubleWidth` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.triggerParametersUseInterpolatedStrings` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.triggerProfileDicts` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.unicodeVersion` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.unlimitedScrollback` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.useLineStyleMarks` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.useSeparateColorsForLightAndDarkMode` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.wantsCommandChangeNotifications` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.windowFrame` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100MutableScreenConfiguration.windowTitle` | property |  |  | VT100Screen/VT100ScreenConfiguration.m:347 |
-| `VT100RemoteHost` | class | `VT100RemoteHost` | persisted by name | DataStructuresAlgorithms/IntervalTree.m:1312, DataStructuresAlgorithms/IntervalTree.m:1433, DataStructuresAlgorithms/IntervalTree.m:517, Marks/iTermMark.m:77 |
-| `VT100ScreenMark` | class | `VT100ScreenMark` | persisted by name | DataStructuresAlgorithms/IntervalTree.m:1312, DataStructuresAlgorithms/IntervalTree.m:1433, DataStructuresAlgorithms/IntervalTree.m:517, Marks/iTermMark.m:77 |
-| `VT100WorkingDirectory` | class | `VT100WorkingDirectory` | persisted by name | DataStructuresAlgorithms/IntervalTree.m:1312, DataStructuresAlgorithms/IntervalTree.m:1433, DataStructuresAlgorithms/IntervalTree.m:517, Marks/iTermMark.m:77 |
-| `weaklyReferencedObject` | selector |  |  | Infrastructure/iTermWeakReference.m:42, Infrastructure/iTermWeakReference.m:45 |
-| `windowDidOpen:` | selector |  |  | tmux/TmuxWindowOpener.m:367, tmux/TmuxWindowOpener.m:547, tmux/TmuxWindowOpener.m:709 |
-| `windowPaneBrokeOutWithWindowId:setAffinityTo:` | selector |  |  | tmux/TmuxController.m:3683 (also TmuxGateway.m:1283), tmux/TmuxGateway.m:581 |
+| `_crashOnException:` | not in database: SDK or AppKit-private name |  | SDK or AppKit-private | AppKit/iTermApplication.m in iTermInstallCrashOnExceptionHook |
+| `_moveToDisplay:` | not in database: SDK or AppKit-private name |  | SDK or AppKit-private | Settings/MenuItemPopupView.swift in NSMenuItem.isWindowMenuItem(parent:) |
+| `_NSKeyboardFocusClipView` | not in database: SDK or AppKit-private name | `_NSKeyboardFocusClipView` | SDK or AppKit-private | AppKit/iTermApplication.m in -[iTermApplication it_windowDidOrderOnScreen:] |
+| `_NSThemeZoomWidgetCell` | not in database: SDK or AppKit-private name | `_NSThemeZoomWidgetCell` | SDK or AppKit-private | Categories/NSObject+iTerm.m in +[NSObject(iTerm) load] |
+| `_toggleIPad:` | not in database: SDK or AppKit-private name |  | SDK or AppKit-private | Settings/MenuItemPopupView.swift in NSMenuItem.isWindowMenuItem(parent:) |
+| `_updateDividerLayerForController:animated:` | selector |  | SDK or AppKit-private | Infrastructure/iTermSelectorSwizzler.m in +[iTermSelectorSwizzler permanentlySwizzleSelector:fromClass:withBlock:] |
+| `_windowResizeNorthEastSouthWestCursor` | not in database: SDK or AppKit-private name |  | SDK or AppKit-private; Swift site (section 9) | FloatingPanes/iTermFloatingPaneView.swift in iTermFloatingPaneView.cursor(for:) |
+| `_windowResizeNorthWestSouthEastCursor` | not in database: SDK or AppKit-private name |  | SDK or AppKit-private; Swift site (section 9) | FloatingPanes/iTermFloatingPaneView.swift in iTermFloatingPaneView.cursor(for:) |
+| `actionsDidChange:` | selector |  |  | Notifications/iTermNotificationCenter.m in +[iTermBaseNotification subscribe:selector:] |
+| `add:` | selector |  |  | Toolbelt/iTermToolActions.m in iTermToolActionsNewButton, Toolbelt/iTermToolSnippets.m in iTermToolSnippetsNewButton |
+| `addAndCommit:` | selector |  |  | StatusBar/Components/iTermStatusBarGitComponent.m in -[iTermStatusBarGitComponent openMenuWithView:] |
+| `addAnnotationWithCompletion:startX:startY:endX:endY:text:` | selector |  |  | Language/iTermBuiltInFunctions.m in -[iTermBuiltInMethod callWithArguments:connectionKey:cancellation:completion:], Language/iTermReflection.m in -[iTermReflection reflectedArguments] |
+| `addDeleteClicked:` | selector |  |  | Settings/GeneralPreferencesViewController.m in -[iTermManualAIModelsPanelController makeSegmentedControlWithSegments:action:] |
+| `addNote:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `addTrigger:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `adjustBottom:` | selector |  |  | Settings/iTermBadgeConfigurationWindowController.m in -[iTermBadgeConfigurationBadgeView mouseDragged:] |
+| `adjustLeft:` | selector |  |  | Settings/iTermBadgeConfigurationWindowController.m in -[iTermBadgeConfigurationBadgeView mouseDragged:] |
+| `adjustRight:` | selector |  |  | Settings/iTermBadgeConfigurationWindowController.m in -[iTermBadgeConfigurationBadgeView mouseDragged:] |
+| `adjustTop:` | selector |  |  | Settings/iTermBadgeConfigurationWindowController.m in -[iTermBadgeConfigurationBadgeView mouseDragged:] |
+| `AlertTrigger` | class | `AlertTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `AnnotateTrigger` | class | `AnnotateTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `apiAddTabToGroupWithCompletion:tab_id:group_id:` | selector |  |  | Language/iTermBuiltInFunctions.m in -[iTermBuiltInMethod callWithArguments:connectionKey:cancellation:completion:], Language/iTermReflection.m in -[iTermReflection reflectedArguments] |
+| `apiCreateTabGroupWithCompletion:tab_ids:name:color:parent_group_id:` | selector |  |  | Language/iTermBuiltInFunctions.m in -[iTermBuiltInMethod callWithArguments:connectionKey:cancellation:completion:], Language/iTermReflection.m in -[iTermReflection reflectedArguments] |
+| `apiMenuItem:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in +[iTermTextViewContextMenuHelper menuItemsForAPIRegistrationRequests:scope:target:action:] |
+| `apiRemoveTabFromGroupWithCompletion:tab_id:` | selector |  |  | Language/iTermBuiltInFunctions.m in -[iTermBuiltInMethod callWithArguments:connectionKey:cancellation:completion:], Language/iTermReflection.m in -[iTermReflection reflectedArguments] |
+| `appendRequestsForNode:toArray:` | selector |  |  | tmux/TmuxLayoutParser.m in -[TmuxLayoutParser depthFirstSearchParseTree:callingSelector:onTarget:withObject:] |
+| `apply:` | selector |  |  | Toolbelt/iTermToolActions.m in iTermToolActionsNewButton, Toolbelt/iTermToolSnippets.m in iTermToolSnippetsNewButton |
+| `BellTrigger` | class | `BellTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `bogusSelector` | selector |  |  | StatusBar/Components/iTermStatusBarGitComponent.m in -[iTermStatusBarGitComponent openMenuWithView:] |
+| `BounceTrigger` | class | `BounceTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `bringFloatingPaneToFrontFromContextMenu:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `browse:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `browserEvalJSWithCompletion:js:connectionKey:cancellation:` | selector |  |  | Language/iTermBuiltInFunctions.m in -[iTermBuiltInMethod callWithArguments:connectionKey:cancellation:completion:], Language/iTermReflection.m in -[iTermReflection reflectedArguments] |
+| `browserSetToolbarHiddenWithCompletion:hidden:` | selector |  |  | Language/iTermBuiltInFunctions.m in -[iTermBuiltInMethod callWithArguments:connectionKey:cancellation:completion:], Language/iTermReflection.m in -[iTermReflection reflectedArguments] |
+| `buriedPanesDidOpen:` | selector |  |  | tmux/TmuxWindowOpener.m in -[TmuxWindowOpener finishErroneously], tmux/TmuxWindowOpener.m in -[TmuxWindowOpener requestDidComplete], tmux/TmuxWindowOpener.m in -[TmuxWindowOpener requestDidComplete] |
+| `bury:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `buttonPressed:` | selector |  |  | TIps/iTermTipCardActionButton.m in -[iTermTipCardActionButton accessibilityPerformPress], TIps/iTermTipCardActionButton.m in -[iTermTipCardActionButton mouseUp:] |
+| `cancelFindExistingFileRequest:reply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m in -[iTermSlowOperationGateway connect] |
+| `cancelNewAccount:` | selector |  |  | PasswordManager/iTermPasswordManagerWindowController.m in iTermPWMakePushButton |
+| `CaptureTrigger` | class | `CaptureTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `carbonHotkeyPressed:siblings:` | selector |  |  | Hotkey/iTermCarbonHotKeyController.m in -[iTermCarbonHotKeyController handleEvent:] |
+| `checkForUTF8Response:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `checkIfDirectoryExists:withReply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m in -[iTermSlowOperationGateway connect] |
+| `checkIfExecutableRegularFile:searchPaths:withReply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m in -[iTermSlowOperationGateway connect] |
+| `checkout:` | selector |  |  | StatusBar/Components/iTermStatusBarGitComponent.m in -[iTermStatusBarGitComponent openMenuWithView:] |
+| `clearTextViewBuffer:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `closeCurrentSession:` | selector |  |  | Companion/CompanionWizardWindowController.swift in CompanionWizardWindowController.validateMenuItem(_:) |
+| `closeTabGroup:` | selector |  |  | TerminalView/PseudoTerminal.m in -[PseudoTerminal reconcileTabGroupDefinitionForTab:] |
+| `closeTabsOutsideGroup:` | selector |  |  | TerminalView/PseudoTerminal.m in -[PseudoTerminal reconcileTabGroupDefinitionForTab:] |
+| `closeTabsRightOfGroup:` | selector |  |  | TerminalView/PseudoTerminal.m in -[PseudoTerminal reconcileTabGroupDefinitionForTab:] |
+| `closeTextViewSession:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `collapseTabGroupFromMenu:` | selector |  |  | TerminalView/PseudoTerminal.m in -[PseudoTerminal reconcileTabGroupDefinitionForTab:] |
+| `commit:` | selector |  |  | StatusBar/Components/iTermStatusBarGitComponent.m in -[iTermStatusBarGitComponent openMenuWithView:] |
+| `configureComponent:` | selector |  |  | StatusBar/Setup/iTermStatusBarSetupDestinationCollectionViewController.m in -[iTermStatusBarSetupDestinationCollectionViewController configureStatusBarComponentWithIdentifier:] |
+| `contextMenuAction*` | 8 selectors with prefix |  | selector prefix pattern (PTYTextView.m in -[PTYTextView validateMenuItem:]) | TerminalView/PTYTextView.m in -[PTYTextView validateMenuItem:] |
+| `contextMenuActionCopy:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper validateMenuItem:], ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper smartSelectionActionSelectorDictionary], ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper selectorForSmartSelectionAction:], SemanticHistory/iTermURLActionFactory.m in -[iTermURLActionFactory computeURLActionForSmartSelection:], SemanticHistory/iTermURLActionHelper.m in -[iTermURLActionHelper finishOpeningTargetWithEvent:coord:inBackground:style:action:generation:smartSelectionActionsOnly:], TerminalView/PTYTextView.m in -[PTYTextView validateMenuItem:] |
+| `contextMenuActionOpenFile:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper validateMenuItem:], ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper smartSelectionActionSelectorDictionary], ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper selectorForSmartSelectionAction:], SemanticHistory/iTermURLActionFactory.m in -[iTermURLActionFactory computeURLActionForSmartSelection:], SemanticHistory/iTermURLActionHelper.m in -[iTermURLActionHelper finishOpeningTargetWithEvent:coord:inBackground:style:action:generation:smartSelectionActionsOnly:], TerminalView/PTYTextView.m in -[PTYTextView validateMenuItem:] |
+| `contextMenuActionOpenURL:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper validateMenuItem:], ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper smartSelectionActionSelectorDictionary], ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper selectorForSmartSelectionAction:], SemanticHistory/iTermURLActionFactory.m in -[iTermURLActionFactory computeURLActionForSmartSelection:], SemanticHistory/iTermURLActionHelper.m in -[iTermURLActionHelper finishOpeningTargetWithEvent:coord:inBackground:style:action:generation:smartSelectionActionsOnly:], TerminalView/PTYTextView.m in -[PTYTextView validateMenuItem:] |
+| `contextMenuActionRunCommand:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper validateMenuItem:], ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper smartSelectionActionSelectorDictionary], ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper selectorForSmartSelectionAction:], SemanticHistory/iTermURLActionFactory.m in -[iTermURLActionFactory computeURLActionForSmartSelection:], SemanticHistory/iTermURLActionHelper.m in -[iTermURLActionHelper finishOpeningTargetWithEvent:coord:inBackground:style:action:generation:smartSelectionActionsOnly:], TerminalView/PTYTextView.m in -[PTYTextView validateMenuItem:] |
+| `contextMenuActionRunCommandInWindow:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper validateMenuItem:], ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper smartSelectionActionSelectorDictionary], ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper selectorForSmartSelectionAction:], SemanticHistory/iTermURLActionFactory.m in -[iTermURLActionFactory computeURLActionForSmartSelection:], SemanticHistory/iTermURLActionHelper.m in -[iTermURLActionHelper finishOpeningTargetWithEvent:coord:inBackground:style:action:generation:smartSelectionActionsOnly:], TerminalView/PTYTextView.m in -[PTYTextView validateMenuItem:] |
+| `contextMenuActionRunCoprocess:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper validateMenuItem:], ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper smartSelectionActionSelectorDictionary], ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper selectorForSmartSelectionAction:], SemanticHistory/iTermURLActionFactory.m in -[iTermURLActionFactory computeURLActionForSmartSelection:], SemanticHistory/iTermURLActionHelper.m in -[iTermURLActionHelper finishOpeningTargetWithEvent:coord:inBackground:style:action:generation:smartSelectionActionsOnly:], TerminalView/PTYTextView.m in -[PTYTextView validateMenuItem:] |
+| `contextMenuActionSendText:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper validateMenuItem:], ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper smartSelectionActionSelectorDictionary], ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper selectorForSmartSelectionAction:], SemanticHistory/iTermURLActionFactory.m in -[iTermURLActionFactory computeURLActionForSmartSelection:], SemanticHistory/iTermURLActionHelper.m in -[iTermURLActionHelper finishOpeningTargetWithEvent:coord:inBackground:style:action:generation:smartSelectionActionsOnly:], TerminalView/PTYTextView.m in -[PTYTextView validateMenuItem:] |
+| `CoprocessTrigger` | class | `CoprocessTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `copy:` | selector |  | SDK or AppKit-private | PTYSession/PTYSession.m in -[PTYSession composerManagerHandleKeyDown:] |
+| `copyData:` | selector |  |  | ContextMenu/iTermContextMenuUtilities.m in +[iTermContextMenuUtilities addMenuItemForBase64Encoded:menu:index:selector:target:] |
+| `copyImage:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:], ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper smartSelectionActionSelectorDictionary] |
+| `copySelection:` | selector |  |  | Toolbelt/ToolPasteHistory.m in -[ToolPasteHistory validateMenuItem:] |
+| `copyString:` | selector |  |  | ContextMenu/iTermContextMenuUtilities.m in +[iTermContextMenuUtilities addMenuItemForBase64Encoded:menu:index:selector:target:] |
+| `copyWithControlSequences:` | selector |  |  | PTYSession/PTYSession.m in -[PTYSession composerManagerHandleKeyDown:] |
+| `copyWithStyles:` | selector |  |  | PTYSession/PTYSession.m in -[PTYSession composerManagerHandleKeyDown:] |
+| `debug` | selector |  |  | StatusBar/Components/iTermStatusBarGitComponent.m in -[iTermStatusBarGitComponent openMenuWithView:] |
+| `decodeImageFromData:withReply:` | selector |  | XPC wire format (selector sent by name) | XPC/iTermSandboxedWorkerClient.m in +[iTermSandboxedWorkerClient connection] |
+| `decodeImageFromSixelData:withReply:` | selector |  | XPC wire format (selector sent by name) | XPC/iTermSandboxedWorkerClient.m in +[iTermSandboxedWorkerClient connection] |
+| `decorateWindowPane:` | selector |  |  | tmux/TmuxLayoutParser.m in -[TmuxLayoutParser depthFirstSearchParseTree:callingSelector:onTarget:withObject:] |
+| `deleteBackward:` | selector |  | SDK or AppKit-private; defined on: `iTermStatusBarSetupDestinationCollectionViewController`, the collection view's delegate | StatusBar/Setup/iTermStatusBarSetupDestinationCollectionViewController.m in -[iTermStatusBarSetupDestinationCollectionView doCommandBySelector:] |
+| `deleteColorPreset:` | selector |  |  | Settings/ProfilesColorsPreferencesViewController.m in -[ProfilesColorsPreferencesViewController addPresetItemWithTitle:action:] |
+| `didChangeWhetherPaneFloats:request:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `didFetch:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `didFetchDefaultTerminal:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `didFetchNow:completion:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `didFetchTmuxPid:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `didGetCurrentWindow:beforeSelecting:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `didListClients:completion:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `didListPanes:forBuriedPanes:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `didListWindows:forSession:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxController.m in -[TmuxController didListWindows:userData:] |
+| `didListWindows:userData:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `didListWindowsSubsequentToSettingLayout:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `didLoadServerIdentity:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `didLoadTmuxClientName:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `didMakeFloatingPane:completion:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `didPause:panes:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `didSelectWindow:selection:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `didSetLayout:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `didSetLayoutWithMovedDivider:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `didSplit:state:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `didSubscribe:handleID:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `didSwapWindows:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `dismissByKeyboard:` | selector |  |  | Hotkey/iTermCarbonHotKeyController.m in -[iTermCarbonHotKeyController handleEvent:] |
+| `dockFloatingPaneFromContextMenu:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `downloadWithSCP:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `dumpHistoryResponse:paneAndAlternate:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `dumpStateResponse:pane:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `duplicateTabGroup:` | selector |  |  | TerminalView/PseudoTerminal.m in -[PseudoTerminal reconcileTabGroupDefinitionForTab:] |
+| `edit:` | selector |  |  | Toolbelt/iTermToolActions.m in iTermToolActionsNewButton, Toolbelt/iTermToolSnippets.m in iTermToolSnippetsNewButton |
+| `editControlClicked:` | selector |  |  | Settings/GeneralPreferencesViewController.m in -[iTermManualAIModelsPanelController makeSegmentedControlWithSegments:action:] |
+| `editTextViewSession:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `effectiveAppearance` | not in database: SDK or AppKit-private name |  | SDK or AppKit-private | Language/iTermGlobalScopeController.m in -[iTermGlobalScopeControllerModernImpl init] |
+| `executeShellCommand:args:dir:env:reply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m in -[iTermSlowOperationGateway connect] |
+| `expandTabGroupFromMenu:` | selector |  |  | TerminalView/PseudoTerminal.m in -[PseudoTerminal reconcileTabGroupDefinitionForTab:] |
+| `exportColorPreset:` | selector |  |  | Settings/ProfilesColorsPreferencesViewController.m in -[ProfilesColorsPreferencesViewController addPresetItemWithTitle:action:] |
+| `fetchDirectoryListingOfPath:completion:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m in -[iTermSlowOperationGateway connect] |
+| `fetchRecentBranchesAt:count:completion:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m in -[iTermSlowOperationGateway connect] |
+| `fetchTimeOffsetWithCompletion:` | selector |  |  | Language/iTermBuiltInFunctions.m in -[iTermBuiltInMethod callWithArguments:connectionKey:cancellation:completion:], Language/iTermReflection.m in -[iTermReflection reflectedArguments] |
+| `fetchUserShellWithReply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m in -[iTermSlowOperationGateway connect] |
+| `findCompletionsWithPrefix:inDirectories:pwd:maxCount:executable:withReply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m in -[iTermSlowOperationGateway connect] |
+| `findExistingFileWithPrefix:suffix:workingDirectory:trimWhitespace:pathsToIgnore:allowNetworkMounts:reqid:reply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m in -[iTermSlowOperationGateway connect] |
+| `getAffinitiesResponse:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `getBuriedIndexesResponse:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `getCoprocessWithCompletion:` | selector |  |  | Language/iTermBuiltInFunctions.m in -[iTermBuiltInMethod callWithArguments:connectionKey:cancellation:completion:], Language/iTermReflection.m in -[iTermReflection reflectedArguments] |
+| `getHiddenWindowsResponse:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `getHotkeysResponse:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `getOriginsResponse:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `getPaneIDsResponseAndSetHotkeys:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `getPaneIDsResponseAndSetTabColors:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `getPendingOutputResponse:pane:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `getPerTabSettingsResponse:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `getPerWindowSettingsResponse:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `getProcessInfoForProcessID:flavor:arg:size:reqid:withReply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m in -[iTermSlowOperationGateway connect] |
+| `getSessionGuidResponse:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `getTabColorsResponse:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `getTabGroupParentsResponse:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `getTabGroupsResponse:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `getUserVarsResponse:pane:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `GrowlTrigger` | class (empty @interface and @implementation, iTermUserNotificationTrigger.m in the GrowlTrigger class; no method rows) | `GrowlTrigger` | persisted by name | Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `guessVersion18Response:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `guessVersion21Response:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `guessVersion22Response:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `guessVersion23Response:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `handle:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `handleDisplayMessageVersion:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `handleListKeys:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `handlePingResponse:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `handleResizeWindowResponse:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `handleShowBuffer:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `handleShowSetTitles:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `handleShowSize:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `handleStatusIntervalResponse:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `handleStatusResponse:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `handshakeWithReply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m in -[iTermSlowOperationGateway connect] |
+| `HighlightBrowserTrigger` | class | `iTerm2SharedARC.HighlightBrowserTrigger` | persisted by name; do not add or change `@objc(Name)`: the stored name is the current runtime name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `HighlightTrigger` | class | `HighlightTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `hotKeyPressed:siblings:` | selector |  |  | Hotkey/iTermCarbonHotKeyController.m in -[iTermCarbonHotKeyController handleEvent:] |
+| `hotkeyPressed:siblings:` | selector |  |  | Hotkey/iTermCarbonHotKeyController.m in -[iTermCarbonHotKeyController handleEvent:] |
+| `HyperlinkBrowserTrigger` | class | `iTerm2SharedARC.HyperlinkBrowserTrigger` | persisted by name; do not add or change `@objc(Name)`: the stored name is the current runtime name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `imageRectForBounds:` | not in database: SDK or AppKit-private name |  | SDK or AppKit-private | Categories/NSTableView+iTerm.m in -[iTermToolbeltOutlineView makeViewWithIdentifier:owner:] |
+| `importColorPreset:` | selector |  |  | Settings/ProfilesColorsPreferencesViewController.m in -[ProfilesColorsPreferencesViewController addPresetItemWithTitle:action:] |
+| `initialListWindowsResponse:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `initWithConfiguration:scope:` | selector |  |  | StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:] |
+| `initWithDictionary:` | selector |  |  | DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromDictionary:], Marks/iTermMark.m in +[iTermMark intervalTreeObjectWithDictionaryWithTypeInformation:] |
+| `InjectJavascriptContentTrigger` | class | `InjectJavascriptContentTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `InjectJavascriptURLTrigger` | class | `InjectJavascriptURLTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `insertNewline:` | selector |  | SDK or AppKit-private; defined on: `iTermStatusBarKnobNumericViewController` and `iTermStatusBarKnobTextViewController` | StatusBar/Setup/Knobs/iTermStatusBarKnobNumericViewController.m in -[iTermStatusBarKnobNumericViewController control:textView:doCommandBySelector:], StatusBar/Setup/Knobs/iTermStatusBarKnobTextViewController.m in -[iTermStatusBarKnobTextViewController control:textView:doCommandBySelector:] |
+| `inspectImage:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:], ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper smartSelectionActionSelectorDictionary] |
+| `installShellIntegration:` | selector |  |  | ShellIntegration/iTermShellHistoryController.m in +[iTermShellHistoryController showInformationalMessageInWindow:] |
+| `it_intlistValue` | selector |  |  | tmux/TmuxStateParser.m in +[TmuxStateParser dictionaryForState:workAroundTabBug:] |
+| `it_numberValue` | selector |  |  | tmux/TmuxStateParser.m in +[TmuxStateParser dictionaryForState:workAroundTabBug:] |
+| `it_paneIdNumberValue` | selector |  |  | tmux/TmuxStateParser.m in +[TmuxStateParser dictionaryForState:workAroundTabBug:] |
+| `it_redrawPeriodically:` | selector |  |  | Categories/NSTimer+iTerm.m in -[iTermTimerProxy timerDidFire:] |
+| `iterm_undoSafety_viewWillMoveToWindow:` | selector |  |  | Categories/NSTextView+iTermUndoSafety.m in +[NSTextView(iTermUndoSafety) load] |
+| `iTermAdvancedSettingsModel +advancedSettingsModelDictionary_*` | 515 class methods with prefix |  |  | Settings/iTermAdvancedSettingsModel.m in +[iTermAdvancedSettingsModel enumerateMethods:], Settings/iTermAdvancedSettingsModel.m in +[iTermAdvancedSettingsModel enumerateDictionaries:] |
+| `iTermAdvancedSettingsModel +deprecated_*` | 1 class methods with prefix |  |  | Settings/iTermAdvancedSettingsModel.m in +[iTermAdvancedSettingsModel settingIsDeprecated:] |
+| `iTermAdvancedSettingsModel +load_*` | 516 class methods with prefix |  |  | Settings/iTermAdvancedSettingsModel.m in +[iTermAdvancedSettingsModel enumerateMethods:], Settings/iTermAdvancedSettingsModel.m in +[iTermAdvancedSettingsModel enumerateDictionaries:] |
+| `iTermBadgeConfigurationWindowController` | class | `iTermBadgeConfigurationWindowController` | nib name derived from class name | Composer/iTermMinimalComposerViewController.m in -[iTermMinimalComposerViewController init] (also iTermHotkeyPreferencesWindowController.m in -[iTermHotkeyPreferencesWindowController init] |
+| `iTermBlockMark` | class | `iTermBlockMark` | persisted by name | DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree dictionaryValueWithOffset:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromGraphRecord:offset:largeContentProvider:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromDictionary:], Marks/iTermMark.m in +[iTermMark intervalTreeObjectWithDictionaryWithTypeInformation:] |
+| `iTermBufferInputTrigger` | class | `iTermBufferInputTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `iTermButtonMark` | class | `iTermButtonMark` | persisted by name | DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree dictionaryValueWithOffset:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromGraphRecord:offset:largeContentProvider:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromDictionary:], Marks/iTermMark.m in +[iTermMark intervalTreeObjectWithDictionaryWithTypeInformation:] |
+| `iTermCapturedOutputMark` | class (empty @implementation, iTermCapturedOutputMark.m; no method rows) | `iTermCapturedOutputMark` | persisted by name | DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree dictionaryValueWithOffset:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromGraphRecord:offset:largeContentProvider:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromDictionary:], Marks/iTermMark.m in +[iTermMark intervalTreeObjectWithDictionaryWithTypeInformation:] |
+| `iTermDirectoryEntry` | class | `iTermDirectoryEntry` | crosses a process boundary by name (XPC); compiled into two targets | SlowOperationXPC/iTermSlowOperationGateway.m in -[iTermSlowOperationGateway connect] |
+| `iTermEditSnippetWindowController` | class | `iTermEditSnippetWindowController` | nib name derived from class name | Composer/iTermMinimalComposerViewController.m in -[iTermMinimalComposerViewController init] (also iTermHotkeyPreferencesWindowController.m in -[iTermHotkeyPreferencesWindowController init] |
+| `iTermEnterWorkgroupBrowserTrigger` | class | `iTermEnterWorkgroupBrowserTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `iTermEnterWorkgroupTrigger` | class | `iTermEnterWorkgroupTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `iTermExitWorkgroupBrowserTrigger` | class | `iTermExitWorkgroupBrowserTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `iTermExitWorkgroupTrigger` | class | `iTermExitWorkgroupTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `iTermFoldMark` | class | `iTermFoldMark` | persisted by name | DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree dictionaryValueWithOffset:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromGraphRecord:offset:largeContentProvider:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromDictionary:], Marks/iTermMark.m in +[iTermMark intervalTreeObjectWithDictionaryWithTypeInformation:] |
+| `iTermFoldTrigger` | class | `iTermFoldTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `iTermGitFileStatus` | class | `iTermGitFileStatus` | crosses a process boundary by name (XPC); compiled into two targets | SlowOperationXPC/iTermSlowOperationGateway.m in -[iTermSlowOperationGateway connect] |
+| `iTermGitState` | class | `iTermGitState` | crosses a process boundary by name (XPC); compiled into two targets | SlowOperationXPC/iTermSlowOperationGateway.m in -[iTermSlowOperationGateway connect] |
+| `iTermHighlightLineTrigger` | class | `iTermHighlightLineTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `iTermHotkeyPreferencesWindowController` | class | `iTermHotkeyPreferencesWindowController` | nib name derived from class name | Composer/iTermMinimalComposerViewController.m in -[iTermMinimalComposerViewController init] (also iTermHotkeyPreferencesWindowController.m in -[iTermHotkeyPreferencesWindowController init] |
+| `iTermHyperlinkTrigger` | class | `iTermHyperlinkTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `iTermImage` | class | `iTermImage` | crosses a process boundary by name (XPC); compiled into two targets | XPC/iTermSandboxedWorkerClient.m in +[iTermSandboxedWorkerClient connection] |
+| `iTermImageMark` | class | `iTermImageMark` | persisted by name | DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree dictionaryValueWithOffset:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromGraphRecord:offset:largeContentProvider:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromDictionary:], Marks/iTermMark.m in +[iTermMark intervalTreeObjectWithDictionaryWithTypeInformation:] |
+| `iTermInjectTrigger` | class | `iTermInjectTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `iTermMark` | class | `iTermMark` | persisted by name | DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree dictionaryValueWithOffset:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromGraphRecord:offset:largeContentProvider:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromDictionary:], Marks/iTermMark.m in +[iTermMark intervalTreeObjectWithDictionaryWithTypeInformation:] |
+| `iTermMinimalComposerViewController` | class | `iTermMinimalComposerViewController` | nib name derived from class name | Composer/iTermMinimalComposerViewController.m in -[iTermMinimalComposerViewController init] (also iTermHotkeyPreferencesWindowController.m in -[iTermHotkeyPreferencesWindowController init] |
+| `iTermPathMark` | class | `iTermPathMark` | persisted by name | DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree dictionaryValueWithOffset:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromGraphRecord:offset:largeContentProvider:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromDictionary:], Marks/iTermMark.m in +[iTermMark intervalTreeObjectWithDictionaryWithTypeInformation:] |
+| `iTermProfilesWindowRestorer` | class | `iTermProfilesWindowRestorer` | persisted by name by AppKit (saved application state) | Settings/Profiles/iTermProfilesWindowController.m in -[iTermProfilesWindowController initWithWindowNibName:] |
+| `iTermRPCTrigger` | class | `iTermRPCTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `iTermScriptCallCancellation` | class | `iTermScriptCallCancellation` | class name read from a type encoding | Language/iTermBuiltInFunctions.m in +[iTermBuiltInMethod argumentDictionaryFromArray:] |
+| `iTermSetNamedMarkTrigger` | class | `iTermSetNamedMarkTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `iTermSetProfileBooleanTrigger` | class | `iTermSetProfileBooleanTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `iTermSetTabStatusTrigger` | class | `iTermSetTabStatusTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `iTermSetTitleTrigger` | class | `iTermSetTitleTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `iTermSetUserVariableTrigger` | class | `iTermSetUserVariableTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `iTermSGRTrigger` | class | `iTermSGRTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `iTermShellPromptTrigger` | class | `iTermShellPromptTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `iTermStatusBarActionComponent` | class | `iTermStatusBarActionComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarActionMenuComponent` | class | `iTermStatusBarActionMenuComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarAttributedTextComponent` | class | `iTermStatusBarAttributedTextComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarBatteryComponent` | class | `iTermStatusBarBatteryComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarBuiltInComponentFactory` | class | `iTermStatusBarBuiltInComponentFactory` | crosses a process boundary by name (pasteboard archive) | Categories/NSData+iTerm.m in +[NSData(iTerm) it_dataWithArchivedObject:] |
+| `iTermStatusBarClockComponent` | class | `iTermStatusBarClockComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarComposerComponent` | class | `iTermStatusBarComposerComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarCPUUtilizationComponent` | class | `iTermStatusBarCPUUtilizationComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarFilterComponent` | class | `iTermStatusBarFilterComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarFixedSpacerComponent` | class | `iTermStatusBarFixedSpacerComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarFunctionCallComponent` | class | `iTermStatusBarFunctionCallComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarGitComponent` | class | `iTermStatusBarGitComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarHostnameComponent` | class | `iTermStatusBarHostnameComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarJobComponent` | class | `iTermStatusBarJobComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarMemoryUtilizationComponent` | class | `iTermStatusBarMemoryUtilizationComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarNetworkUtilizationComponent` | class | `iTermStatusBarNetworkUtilizationComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarPlaceholderComponent` | class | `iTermStatusBarPlaceholderComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarProgressComponent` | class | `iTermStatusBarProgressComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarRPCComponentFactory` | class | `iTermStatusBarRPCComponentFactory` | crosses a process boundary by name (pasteboard archive) | Categories/NSData+iTerm.m in +[NSData(iTerm) it_dataWithArchivedObject:] |
+| `iTermStatusBarRPCProvidedAttributedTextComponent` | class | `iTermStatusBarRPCProvidedAttributedTextComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarRPCProvidedTextComponent` | class | `iTermStatusBarRPCProvidedTextComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarSearchFieldComponent` | class | `iTermStatusBarSearchFieldComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarSetupElement` | class | `iTermStatusBarSetupElement` | crosses a process boundary by name (pasteboard archive) | Categories/NSData+iTerm.m in +[NSData(iTerm) it_dataWithArchivedObject:] |
+| `iTermStatusBarSnippetMenuComponent` | class | `iTermStatusBarSnippetMenuComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarSparklinesComponent` | class | `iTermStatusBarSparklinesComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarSpringComponent` | class | `iTermStatusBarSpringComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarSwiftyStringComponent` | class | `iTermStatusBarSwiftyStringComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarTextComponent` | class | `iTermStatusBarTextComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarTmuxLeftComponent` | class | `iTermStatusBarTmuxLeftComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarTmuxRightComponent` | class | `iTermStatusBarTmuxRightComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarTriggersComponent` | class | `iTermStatusBarTriggersComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarUsernameComponent` | class | `iTermStatusBarUsernameComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarVariableBaseComponent` | class | `iTermStatusBarVariableBaseComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermStatusBarWorkingDirectoryComponent` | class | `iTermStatusBarWorkingDirectoryComponent` | persisted by name | StatusBar/Components/iTermStatusBarBaseComponent.m in +[iTermStatusBarBaseComponent statusBarComponentIdentifier], StatusBar/Components/iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], StatusBar/Core/iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], StatusBar/Core/iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (also iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]) |
+| `iTermTuple` | class | `iTermTuple` | persisted by name (allowed when reading state-restoration archives) | Categories/NSData+iTerm.m in -[NSData(iTerm) it_unarchivedObjectOfBasicClassesWithError:] |
+| `iTermUserNotificationTrigger` | class | `iTermUserNotificationTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `listedWindowsToOpenOne:forWindowIdAndAffinities:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `listSessionsResponse:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `listWindowsResponse:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `loadURLWithCompletion:url:connectionKey:cancellation:` | selector |  |  | Language/iTermBuiltInFunctions.m in -[iTermBuiltInMethod callWithArguments:connectionKey:cancellation:completion:], Language/iTermReflection.m in -[iTermReflection reflectedArguments] |
+| `log:` | selector |  |  | StatusBar/Components/iTermStatusBarGitComponent.m in -[iTermStatusBarGitComponent openMenuWithView:] |
+| `mail:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `MarkTrigger` | class | `MarkTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `maybePollForWorkingDirectory` | selector |  |  | Infrastructure/iTermRateLimitedUpdate.m in -[iTermRateLimitedUpdate performRateLimitedSelector:onTarget:withObject:] |
+| `moveDown:` | selector |  | SDK or AppKit-private; defined on: `iTermFindDriver` (iTermFindDriver.m in -[iTermFindDriver moveDown:]) | SearchingFiltering/iTermFindDriver.m in -[iTermFindDriver doCommandBySelector:] |
+| `movePane:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `moveSessionToFloatingPaneFromContextMenu:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `moveTabGroupToNewWindow:` | selector |  |  | TerminalView/PseudoTerminal.m in -[PseudoTerminal reconcileTabGroupDefinitionForTab:] |
+| `MuteCoprocessTrigger` | class | `MuteCoprocessTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `newSessionInTabAtIndex:` | selector |  |  | Settings/Profiles/iTermProfilesMenuController.m in +[iTermProfilesMenuController addOpenAllToMenu:params:identifier:], iTermController/iTermController.m in -[iTermController addBookmarksToMenu:supermenu:withSelector:openAllSelector:startingAt:] |
+| `newSessionInWindowAtIndex:` | selector |  |  | Settings/Profiles/iTermProfilesMenuController.m in +[iTermProfilesMenuController addOpenAllToMenu:params:identifier:], iTermController/iTermController.m in -[iTermController addBookmarksToMenu:supermenu:withSelector:openAllSelector:startingAt:] |
+| `newSessionsInNewWindow:` | selector |  |  | Settings/Profiles/iTermProfilesMenuController.m in +[iTermProfilesMenuController addOpenAllToMenu:params:identifier:], iTermController/iTermController.m in -[iTermController addBookmarksToMenu:supermenu:withSelector:openAllSelector:startingAt:] |
+| `newSessionsInWindow:` | selector |  |  | Settings/Profiles/iTermProfilesMenuController.m in +[iTermProfilesMenuController addOpenAllToMenu:params:identifier:], iTermController/iTermController.m in -[iTermController addBookmarksToMenu:supermenu:withSelector:openAllSelector:startingAt:] |
+| `newTabInGroup:` | selector |  |  | TerminalView/PseudoTerminal.m in -[PseudoTerminal reconcileTabGroupDefinitionForTab:] |
+| `newWindowWithAffinityCreated:affinityWindowAndCompletion:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `noop:` | selector |  | compared by name at iTermFocusReportingTextField.m in -[iTermFocusReportingSearchField doCommandBySelector:] (Cocoa text system command); also an action of ours | Infrastructure/Views/iTermFocusReportingTextField.m in -[iTermFocusReportingSearchField doCommandBySelector:], StatusBar/Setup/iTermStatusBarSetupViewController.m in -[iTermStatusBarSetupViewController initializeColorWell:withAction:color:alphaAllowed:] |
+| `NSArray` | class | `NSArray` | SDK or AppKit-private | Language/iTermBuiltInFunctions.m in +[iTermBuiltInMethod argumentDictionaryFromArray:] |
+| `NSNumber` | class | `NSNumber` | SDK or AppKit-private | Language/iTermBuiltInFunctions.m in +[iTermBuiltInMethod argumentDictionaryFromArray:] |
+| `NSOutlineButtonCell_iTermCustomImageRect` | class made at run time by objc_allocateClassPair (NSTableView+iTerm.m in -[iTermToolbeltOutlineView makeViewWithIdentifier:owner:]) | `NSOutlineButtonCell_iTermCustomImageRect` | created at run time | Categories/NSTableView+iTerm.m in -[iTermToolbeltOutlineView makeViewWithIdentifier:owner:] |
+| `NSPanel.ViewBridge.rendezvous` | not in database: SDK or AppKit-private name | `NSPanel.ViewBridge.rendezvous` | SDK or AppKit-private | AppKit/iTermApplication.m in -[iTermApplication it_windowDidOrderOnScreen:] |
+| `NSPanelViewBridge` | not in database: SDK or AppKit-private name | `NSPanelViewBridge` | SDK or AppKit-private | AppKit/iTermApplication.m in -[iTermApplication it_windowDidOrderOnScreen:] |
+| `NSSearchFieldCell` | not in database: SDK or AppKit-private name | `NSSearchFieldCell` | SDK or AppKit-private | Settings/PreferencePanel.m in -[PreferencePanel bigSurSearchFieldToolbarItem] |
+| `NSString` | class | `NSString` | SDK or AppKit-private | Language/iTermBuiltInFunctions.m in +[iTermBuiltInMethod argumentDictionaryFromArray:] |
+| `NSTitlebarContainerView` | not in database: SDK or AppKit-private name | `NSTitlebarContainerView` | SDK or AppKit-private | Infrastructure/iTermSelectorSwizzler.m in +[iTermSelectorSwizzler permanentlySwizzleSelector:fromClass:withBlock:] |
+| `NSToolbarFullScreenWindow` | not in database: SDK or AppKit-private name | `NSToolbarFullScreenWindow` | SDK or AppKit-private | AppKit/iTermApplication.m in -[iTermApplication it_windowDidOrderOnScreen:] |
+| `NSToolTipPanel` | not in database: SDK or AppKit-private name | `NSToolTipPanel` | SDK or AppKit-private | AppKit/iTermApplication.m in -[iTermApplication it_windowDidOrderOnScreen:] |
+| `object_browserBundleID` | selector |  |  | Settings/iTermAdvancedSettingsViewController.m in -[iTermAdvancedSettingsViewController toggleOnOff:] |
+| `object_enableSecureKeyboardEntryAutomatically` | selector |  |  | Settings/iTermAdvancedSettingsViewController.m in -[iTermAdvancedSettingsViewController toggleOnOff:] |
+| `openImage:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:], ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper smartSelectionActionSelectorDictionary] |
+| `openInAdvancedPaste:` | selector |  |  | Toolbelt/ToolPasteHistory.m in -[ToolPasteHistory validateMenuItem:], Toolbelt/iTermToolSnippets.m in iTermToolSnippetsNewButton |
+| `openURLInFloatingPane:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `openURLInHorizontalSplitPane:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `openURLInVerticalSplitPane:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `original_imageRectForBounds:` | selector |  |  | Categories/NSTableView+iTerm.m in -[iTermToolbeltOutlineView makeViewWithIdentifier:owner:] |
+| `panesDidUnpause:` | selector |  |  | tmux/TmuxWindowOpener.m in -[TmuxWindowOpener finishErroneously], tmux/TmuxWindowOpener.m in -[TmuxWindowOpener requestDidComplete], tmux/TmuxWindowOpener.m in -[TmuxWindowOpener requestDidComplete] |
+| `parseListWindowsResponseAndUpdateLayouts:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `PasswordTrigger` | class | `PasswordTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `paste:` | selector |  | SDK or AppKit-private; defined on: any responder (the first responder of the front terminal window, PasteboardHistory.m in -[PasteboardHistoryWindowController rowSelected:], if it responds) | Categories/NSObject+iTerm.m in -[NSObject(iTerm) it_performNonObjectReturningSelector:withObject:] |
+| `pasteNextChunkAndScheduleTimer` | selector |  |  | Pasting/iTermPasteHelper.m in -[iTermPasteHelper scheduledTimerWithTimeInterval:target:selector:userInfo:repeats:] |
+| `performBlockIfNeeded:` | selector |  |  | Categories/NSTimer+iTerm.m in -[iTermTimerProxy timerDidFire:], Infrastructure/iTermGCDTimer.m in -[iTermGCDTimer didFire] |
+| `performFindPanelAction:` | selector |  | SDK or AppKit-private | Infrastructure/Views/iTermFocusReportingTextField.m in -[iTermTextView validateMenuItem:] |
+| `phonyCommandDidComplete:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `poll` | selector |  |  | Categories/NSTimer+iTerm.m in -[iTermTimerProxy timerDidFire:] |
+| `PortholeMark` | class | `iTerm2SharedARC.PortholeMark` | persisted by name; do not add or change `@objc(Name)`: the stored name is the current runtime name | DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree dictionaryValueWithOffset:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromGraphRecord:offset:largeContentProvider:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromDictionary:], Marks/iTermMark.m in +[iTermMark intervalTreeObjectWithDictionaryWithTypeInformation:] |
+| `postInvalidateNotification` | selector |  |  | Infrastructure/iTermRateLimitedUpdate.m in -[iTermRateLimitedUpdate performRateLimitedSelector:onTarget:withObject:] |
+| `postUpdateSessionNameNotification` | selector |  |  | Infrastructure/iTermRateLimitedUpdate.m in -[iTermRateLimitedUpdate performRateLimitedSelector:onTarget:withObject:] |
+| `preferenceDidChange:` | selector |  |  | Notifications/iTermNotificationCenter.m in +[iTermBaseNotification subscribe:selector:] |
+| `pressDownloadsMenu` | selector |  |  | FileTransfer/FileTransferManager.m in -[FileTransferManager performMenuActionOnRunLoop:inModes:] |
+| `pressUploadsMenu` | selector |  |  | FileTransfer/FileTransferManager.m in -[FileTransferManager performMenuActionOnRunLoop:inModes:] |
+| `printTmuxCommandOutputToScreen:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `ProfileTableRow.command` | property |  |  | Settings/Profiles/ProfileListView.m in -[ProfileListView tableView:didClickTableColumn:] |
+| `ProfileTableRow.name` | property |  |  | Settings/Profiles/ProfileListView.m in -[ProfileListView tableView:didClickTableColumn:] |
+| `ProfileTableRow.shortcut` | property |  |  | Settings/Profiles/ProfileListView.m in -[ProfileListView tableView:didClickTableColumn:] |
+| `PseudoTerminalRestorer` | class | `PseudoTerminalRestorer` | persisted by name by AppKit (saved application state) | TerminalView/PseudoTerminal.m in -[PseudoTerminal finishInitializationWithSmartLayout:windowType:savedWindowType:percentage:screen:hotkeyWindowType:profile:] |
+| `PTYAnnotation` | class | `PTYAnnotation` | persisted by name | DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree dictionaryValueWithOffset:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromGraphRecord:offset:largeContentProvider:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromDictionary:], Marks/iTermMark.m in +[iTermMark intervalTreeObjectWithDictionaryWithTypeInformation:] |
+| `pull:` | selector |  |  | StatusBar/Components/iTermStatusBarGitComponent.m in -[iTermStatusBarGitComponent openMenuWithView:] |
+| `push:` | selector |  |  | StatusBar/Components/iTermStatusBarGitComponent.m in -[iTermStatusBarGitComponent openMenuWithView:] |
+| `quickLook:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `ReaderModeBrowserTrigger` | class | `iTerm2SharedARC.ReaderModeBrowserTrigger` | persisted by name; do not add or change `@objc(Name)`: the stored name is the current runtime name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `reallyAdd:` | selector |  |  | PasswordManager/iTermPasswordManagerWindowController.m in iTermPWMakePushButton |
+| `recordPanes:state:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `redo:` | selector |  | SDK or AppKit-private | AppKit/iTermApplicationDelegate.m in -[iTermApplicationDelegate performUndoRedoSelector:sender:] |
+| `reevaluateTimer:` | selector |  |  | Categories/NSTimer+iTerm.m in -[iTermTimerProxy timerDidFire:] |
+| `refreshMenuBarNow` | selector |  |  | FileTransfer/FileTransferManager.m in -[FileTransferManager performMenuActionOnRunLoop:inModes:] |
+| `ReloadBrowserTrigger` | class | `ReloadBrowserTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `remove:` | selector |  |  | Toolbelt/iTermToolActions.m in iTermToolActionsNewButton, Toolbelt/iTermToolSnippets.m in iTermToolSnippetsNewButton |
+| `renameTabGroupFromMenu:` | selector |  |  | TerminalView/PseudoTerminal.m in -[PseudoTerminal reconcileTabGroupDefinitionForTab:] |
+| `requestDidComplete` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `requestGitStateForPath:gitBase:timeout:includeDiffStats:completion:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m in -[iTermSlowOperationGateway connect] |
+| `resolvePathOfDirectory:withReply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m in -[iTermSlowOperationGateway connect] |
+| `responseForListWindows:toSetPartialOrder:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `restartSession:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `restoreWindowArrangement:` | selector |  |  | Settings/WindowArrangements.m in +[WindowArrangements refreshRestoreArrangementsMenu:withSelector:defaultShortcut:identifier:] |
+| `restoreWindowArrangementAfterDelay:` | selector |  |  | Settings/WindowArrangements.m in +[WindowArrangements refreshRestoreArrangementsMenu:withSelector:defaultShortcut:identifier:] |
+| `restoreWindowArrangementAfterDelayAsTabs:` | selector |  |  | Settings/WindowArrangements.m in +[WindowArrangements refreshRestoreArrangementsMenu:withSelector:defaultShortcut:identifier:] |
+| `restoreWindowArrangementAsTabs:` | selector |  |  | Settings/WindowArrangements.m in +[WindowArrangements refreshRestoreArrangementsMenu:withSelector:defaultShortcut:identifier:] |
+| `restoreWindowWithIdentifier:state:completionHandler:` | selector |  | sent by AppKit to the restoration class found by name | Settings/Profiles/iTermProfilesWindowController.m in -[iTermProfilesWindowController initWithWindowNibName:], TerminalView/PseudoTerminal.m in -[PseudoTerminal finishInitializationWithSmartLayout:windowType:savedWindowType:percentage:screen:hotkeyWindowType:profile:] |
+| `runCoprocessWithCompletion:commandLine:mute:` | selector |  |  | Language/iTermBuiltInFunctions.m in -[iTermBuiltInMethod callWithArguments:connectionKey:cancellation:completion:], Language/iTermReflection.m in -[iTermReflection reflectedArguments] |
+| `runModal` | selector |  | SDK or AppKit-private | AppKit/iTermApplicationDelegate.m in -[iTermApplicationDelegate init] |
+| `runShellScript:shell:mode:withReply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m in -[iTermSlowOperationGateway connect] |
+| `saveColorPreset:` | selector |  |  | Settings/ProfilesColorsPreferencesViewController.m in -[ProfilesColorsPreferencesViewController addPresetItemWithTitle:action:] |
+| `savedGridExpirationTimer:` | selector |  |  | Infrastructure/iTermGCDTimer.m in -[iTermGCDTimer didFire] |
+| `saveImageAs:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:], ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper smartSelectionActionSelectorDictionary] |
+| `saveSelectionAsSnippet:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `saveTabGroupAsWindowArrangement:` | selector |  |  | TerminalView/PseudoTerminal.m in -[PseudoTerminal reconcileTabGroupDefinitionForTab:] |
+| `saveWindowOriginsResponse:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `ScriptTrigger` | class | `ScriptTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `searchInBrowser:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `searchMore:` | selector |  |  | Categories/NSTimer+iTerm.m in -[iTermTimerProxy timerDidFire:] |
+| `searchParseTree:forWindowPane:` | selector |  |  | tmux/TmuxLayoutParser.m in -[TmuxLayoutParser depthFirstSearchParseTree:callingSelector:onTarget:withObject:] |
+| `selectAll:` | selector |  | SDK or AppKit-private | Infrastructure/Views/iTermKeyboardNavigatableTableView.m in -[iTermKeyboardNavigatableTableView respondsToSelector:] |
+| `selector:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `selectPaneInDirectionWithCompletion:direction:` | selector |  |  | Language/iTermBuiltInFunctions.m in -[iTermBuiltInMethod callWithArguments:connectionKey:cancellation:completion:], Language/iTermReflection.m in -[iTermReflection reflectedArguments] |
+| `sendFloatingPaneToBackFromContextMenu:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `sendSelection:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `SendTextTrigger` | class | `SendTextTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `sendTmuxCommandMethodDidComplete:completion:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `sendTmuxCommandWithCompletion:command:` | selector |  |  | Language/iTermBuiltInFunctions.m in -[iTermBuiltInMethod callWithArguments:connectionKey:cancellation:completion:], Language/iTermReflection.m in -[iTermReflection reflectedArguments] |
+| `setDelegate:` | selector |  | SDK or AppKit-private; defined on: the key mapper chosen at PTYSession.m in -[PTYSession updateKeyMapper], if it responds: `iTermStandardKeyMapper`, `iTermModernKeyMapper`, `iTermTermkeyKeyMapper`, `iTermModifyOtherKeysMapper1`, `iTermModifyOtherKeysMapper2` (property inherited from `iTermModifyOtherKeysMapper`); `iTermRawKeyMapper` has none | Categories/NSObject+iTerm.m in -[NSObject(iTerm) it_performNonObjectReturningSelector:withObject:] |
+| `SetDirectoryTrigger` | class | `SetDirectoryTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `setFromObject_BrowserBundleID:` | selector |  |  | Settings/iTermAdvancedSettingsViewController.m in -[iTermAdvancedSettingsViewController toggleOnOff:] |
+| `setFromObject_EnableSecureKeyboardEntryAutomatically:` | selector |  |  | Settings/iTermAdvancedSettingsViewController.m in -[iTermAdvancedSettingsViewController toggleOnOff:] |
+| `SetHostnameTrigger` | class | `SetHostnameTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `setNameWithCompletion:name:` | selector |  |  | Language/iTermBuiltInFunctions.m in -[iTermBuiltInMethod callWithArguments:connectionKey:cancellation:completion:], Language/iTermReflection.m in -[iTermReflection reflectedArguments] |
+| `setStatusBarComponentUnreadCountWithCompletion:identifier:count:` | selector |  |  | Language/iTermBuiltInFunctions.m in -[iTermBuiltInMethod callWithArguments:connectionKey:cancellation:completion:], Language/iTermReflection.m in -[iTermReflection reflectedArguments] |
+| `settingChanged:` | selector |  |  | Settings/iTermSlider.m in -[iTermSlider performAction] |
+| `setTitleWithCompletion:title:` | selector |  |  | Language/iTermBuiltInFunctions.m in -[iTermBuiltInMethod callWithArguments:connectionKey:cancellation:completion:], Language/iTermReflection.m in -[iTermReflection reflectedArguments] |
+| `setWindows:forSession:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxController.m in -[TmuxController didListWindows:userData:] |
+| `showMenu:` | selector |  | SDK or AppKit-private | Categories/NSObject+iTerm.m in +[NSObject(iTerm) load] |
+| `showNotes:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `showWindowOptionsResponse:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
+| `snippetsDidChange:` | selector |  |  | Notifications/iTermNotificationCenter.m in +[iTermBaseNotification subscribe:selector:] |
+| `splitTextViewHorizontally:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `splitTextViewVertically:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `stash:` | selector |  |  | StatusBar/Components/iTermStatusBarGitComponent.m in -[iTermStatusBarGitComponent openMenuWithView:] |
+| `statFile:withReply:` | selector |  | XPC wire format (selector sent by name) | SlowOperationXPC/iTermSlowOperationGateway.m in -[iTermSlowOperationGateway connect] |
+| `stopCoprocess:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `stopCoprocessWithCompletion:` | selector |  |  | Language/iTermBuiltInFunctions.m in -[iTermBuiltInMethod callWithArguments:connectionKey:cancellation:completion:], Language/iTermReflection.m in -[iTermReflection reflectedArguments] |
+| `StopTrigger` | class | `StopTrigger` | persisted by name | Settings/TriggerController.m in -[TriggerController indexOfAction:], Triggers/Trigger.m in -[Trigger dictionaryValue], Triggers/Trigger.m in +[Trigger triggerFromUntrustedDict:] |
+| `swapSessions:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `swizzled__NSThemeZoomWidgetCell_showMenu:` | selector |  |  | Categories/NSObject+iTerm.m in +[NSObject(iTerm) load] |
+| `terminalStateSetEmulationLevel:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `terminalStateToggleAlternateScreen:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `terminalStateToggleApplicationCursor:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `terminalStateToggleApplicationKeypad:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `terminalStateToggleFocusReporting:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `terminalStateToggleLiteralMode:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `terminalStateToggleMouseReporting:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `terminalStateTogglePasteBracketing:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `terminalToggleKeyboardMode:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `textFieldSubmitted` | selector |  | Swift site (section 9) | Browser/UI/iTermURLTextField.swift in iTermURLTextField.textView(_:doCommandBy:) |
+| `threeFingerTap:` | selector |  |  | MousePointer/ThreeFingerTapGestureRecognizer.m in -[ThreeFingerTapGestureRecognizer touchesEndedWithEvent:] |
+| `timeout` | selector |  |  | Infrastructure/iTermGCDTimer.m in -[iTermGCDTimer didFire] |
+| `toggleBroadcastingInput:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] |
+| `toggleCheckmark:` | selector |  |  | Toolbelt/CapturedOutput/ToolCapturedOutputView.m in -[ToolCapturedOutputView validateMenuItem:] |
+| `togglePauseAnimatingImage:` | selector |  |  | ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:], ContextMenu/iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper smartSelectionActionSelectorDictionary] |
+| `toggleStar:` | selector |  |  | Toolbelt/ToolDirectoriesView.m in -[ToolDirectoriesView validateMenuItem:] |
+| `toggleTriggerEnabled:` | selector |  |  | AppKit/iTermApplicationDelegate.m in -[iTermApplicationDelegate firstResponderForMenuItem:], Categories/NSObject+iTerm.m in -[NSObject(iTerm) it_performNonObjectReturningSelector:withObject:] |
+| `toolProfilesNewFloatingPane:` | selector |  |  | Toolbelt/ToolProfiles.m in -[ToolProfiles open:] |
+| `toolProfilesNewHorizontalSplit:` | selector |  |  | Toolbelt/ToolProfiles.m in -[ToolProfiles open:] |
+| `toolProfilesNewTab:` | selector |  |  | Toolbelt/ToolProfiles.m in -[ToolProfiles open:] |
+| `toolProfilesNewVerticalSplit:` | selector |  |  | Toolbelt/ToolProfiles.m in -[ToolProfiles open:] |
+| `toolProfilesNewWindow:` | selector |  |  | Toolbelt/ToolProfiles.m in -[ToolProfiles open:] |
+| `undo:` | selector |  | SDK or AppKit-private | AppKit/iTermApplicationDelegate.m in -[iTermApplicationDelegate performUndoRedoSelector:sender:], PTYSession/PTYSession.m in +[PTYSession _recursiveSelectMenuWithSelector:inMenu:] |
+| `ungroupTabGroup:` | selector |  |  | TerminalView/PseudoTerminal.m in -[PseudoTerminal reconcileTabGroupDefinitionForTab:] |
+| `update:` | selector |  |  | Categories/NSTimer+iTerm.m in -[iTermTimerProxy timerDidFire:], Infrastructure/iTermGCDTimer.m in -[iTermGCDTimer didFire] |
+| `updateDisplay` | selector |  |  | Categories/NSTimer+iTerm.m in -[iTermTimerProxy timerDidFire:] |
+| `updateDownloadBrowserPluginButtonHidden` | selector |  |  | Categories/NSTimer+iTerm.m in -[iTermTimerProxy timerDidFire:] |
+| `updateIfNeeded` | selector |  |  | Infrastructure/iTermRateLimitedUpdate.m in -[iTermRateLimitedUpdate performRateLimitedSelector:onTarget:withObject:] |
+| `updateStringValue:` | selector |  |  | ThirdParty/PSMTabBarControl/source/PSMTabBarCell.m in -[PSMWeakTimer timerDidFire:] |
+| `validateMenuItem:` | selector |  | SDK or AppKit-private | Infrastructure/Views/iTermFocusReportingTextField.m in -[iTermTextView validateMenuItem:] |
+| `viewWillMoveToWindow:` | selector |  | SDK or AppKit-private | Categories/NSTextView+iTermUndoSafety.m in +[NSTextView(iTermUndoSafety) load] |
+| `visitGallery:` | selector |  |  | Settings/ProfilesColorsPreferencesViewController.m in -[ProfilesColorsPreferencesViewController addPresetItemWithTitle:action:] |
+| `VT100MutableScreenConfiguration.alertOnNextMark` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.allowAlternateMouseScroll` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.allowTitleReporting` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.allowTitleSetting` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.appendToScrollbackWithStatusBar` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.audibleBell` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.autoComposerEnabled` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.backingScaleFactor` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.cellSize` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.clearScrollbackAllowed` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.clipboardAccessAllowed` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.cursorBlinks` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.darkMode` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.desiredComposerRows` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.dimmingAmount` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.dimOnlyText` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.enableTriggersInInteractiveApps` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.faintTextAlpha` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.flashBell` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.globalWindowFrame` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.iconTitle` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.isDirty` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.isTmuxClient` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.loggingEnabled` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.maximumTheoreticalImageDimension` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.maxScrollbackLines` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.miniaturized` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.minimumContrast` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.mutingAmount` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.normalization` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.optionIsMetaForSpecialChars` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.osc52` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.postUserNotifications` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.printingAllowed` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.profileName` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.publishing` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.reduceFlicker` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.saveToScrollbackInAlternateScreen` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.screenFrames` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.sessionGuid` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.sessionIsVisible` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.shouldPlacePromptAtFirstColumn` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.showBellIndicator` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.stableID` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.terminalCanChangeBlink` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.terminfoValues` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.theoreticalGridSize` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.treatAmbiguousCharsAsDoubleWidth` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.triggerParametersUseInterpolatedStrings` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.triggerProfileDicts` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.unicodeVersion` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.unlimitedScrollback` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.useLineStyleMarks` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.useSeparateColorsForLightAndDarkMode` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.wantsCommandChangeNotifications` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.windowFrame` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100MutableScreenConfiguration.windowTitle` | property |  |  | VT100Screen/VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] |
+| `VT100RemoteHost` | class | `VT100RemoteHost` | persisted by name | DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree dictionaryValueWithOffset:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromGraphRecord:offset:largeContentProvider:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromDictionary:], Marks/iTermMark.m in +[iTermMark intervalTreeObjectWithDictionaryWithTypeInformation:] |
+| `VT100ScreenMark` | class | `VT100ScreenMark` | persisted by name | DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree dictionaryValueWithOffset:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromGraphRecord:offset:largeContentProvider:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromDictionary:], Marks/iTermMark.m in +[iTermMark intervalTreeObjectWithDictionaryWithTypeInformation:] |
+| `VT100WorkingDirectory` | class | `VT100WorkingDirectory` | persisted by name | DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree dictionaryValueWithOffset:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromGraphRecord:offset:largeContentProvider:], DataStructuresAlgorithms/IntervalTree.m in -[IntervalTree restoreFromDictionary:], Marks/iTermMark.m in +[iTermMark intervalTreeObjectWithDictionaryWithTypeInformation:] |
+| `weaklyReferencedObject` | selector |  |  | Infrastructure/iTermWeakReference.m in -[iTermWeakReference respondsToSelector:], Infrastructure/iTermWeakReference.m in -[iTermWeakReference respondsToSelector:] |
+| `windowDidOpen:` | selector |  |  | tmux/TmuxWindowOpener.m in -[TmuxWindowOpener finishErroneously], tmux/TmuxWindowOpener.m in -[TmuxWindowOpener requestDidComplete], tmux/TmuxWindowOpener.m in -[TmuxWindowOpener requestDidComplete] |
+| `windowPaneBrokeOutWithWindowId:setAffinityTo:` | selector |  |  | tmux/TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:] (also TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:]), tmux/TmuxGateway.m in -[TmuxGateway currentCommandSelector] |
 
 Not listed by name, because a binding test or the census owns the list: every main-menu action selector (reached by the menu-dispatch sites, see `NSMenu+iTerm.m`, `iTermAPIHelper.m`, `iTermOpenQuicklyWindowController.m`) and the `window` keys of `iTerm2.sdef` (reached through `iTermScriptingWindow`).
 
@@ -645,16 +645,16 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 - `sources/ContextMenu/iTermTextViewContextMenuHelper.m:877` in `-[iTermTextViewContextMenuHelper selectorForSmartSelectionAction:]`: `NSSelectorFromString` on `dictionary[@(contextMenuAction)]`
 - `sources/ContextMenu/iTermTextViewContextMenuHelper.m:920` in `-[iTermTextViewContextMenuHelper addCustomActionsToMenu:matchingText:line:]`: `initWithTitle:action:keyEquivalent:` on `mySelector`
 
-  **CLOSED.** `smartSelectionActionSelectorDictionary` (iTermTextViewContextMenuHelper.m:56) maps each `ContextMenuActions` value to `NSStringFromSelector(@selector(...))`; an action dict whose kind is not in the table gives nil (no action). Reach: `contextMenuActionOpenFile:`, `contextMenuActionOpenURL:`, `contextMenuActionRunCommand:`, `contextMenuActionRunCoprocess:`, `contextMenuActionSendText:`, `contextMenuActionRunCommandInWindow:`, `contextMenuActionCopy:`. `validateMenuItem:` (line 391) compares `NSStringFromSelector(item.action)` against the same table, so these names must also stay in that table.
+  **CLOSED.** `smartSelectionActionSelectorDictionary` (iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper smartSelectionActionSelectorDictionary]) maps each `ContextMenuActions` value to `NSStringFromSelector(@selector(...))`; an action dict whose kind is not in the table gives nil (no action). Reach: `contextMenuActionOpenFile:`, `contextMenuActionOpenURL:`, `contextMenuActionRunCommand:`, `contextMenuActionRunCoprocess:`, `contextMenuActionSendText:`, `contextMenuActionRunCommandInWindow:`, `contextMenuActionCopy:`. `validateMenuItem:` compares `NSStringFromSelector(item.action)` against the same table, so these names must also stay in that table.
 
   Names: `contextMenuActionOpenFile:`, `contextMenuActionOpenURL:`, `contextMenuActionRunCommand:`, `contextMenuActionRunCoprocess:`, `contextMenuActionSendText:`, `contextMenuActionRunCommandInWindow:`, `contextMenuActionCopy:`.
 
 #### `sources/SemanticHistory/iTermURLActionFactory.m`
 
-- `sources/SemanticHistory/iTermURLActionFactory.m:574` in `-[iTermURLActionFactory computeURLActionForSmartSelection:]`: `NSSelectorFromString` on `self.selectors[@(value)]`
-- `sources/SemanticHistory/iTermURLActionFactory.m:574` in `-[iTermURLActionFactory computeURLActionForSmartSelection:]`: `setSelector:` on `NSSelectorFromString(self.selectors[@(value)])`
+- `sources/SemanticHistory/iTermURLActionFactory.m:584` in `-[iTermURLActionFactory computeURLActionForSmartSelection:]`: `NSSelectorFromString` on `self.selectors[@(value)]`
+- `sources/SemanticHistory/iTermURLActionFactory.m:584` in `-[iTermURLActionFactory computeURLActionForSmartSelection:]`: `setSelector:` on `NSSelectorFromString(self.selectors[@(value)])`
 
-  **CLOSED.** `self.selectors` is passed in at iTermURLActionHelper.m:106, which asks the helper's delegate; the only implementation (PTYTextView+ARC.m:1500) returns `-[iTermTextViewContextMenuHelper smartSelectionActionSelectorDictionary]`, the table at iTermTextViewContextMenuHelper.m:56. The selector is performed later at iTermURLActionHelper.m:480 on `smartSelectionActionTarget`, which is the context menu helper (PTYTextView.m:326). Reach: the seven `contextMenuAction...:` selectors of that table.
+  **CLOSED.** `self.selectors` is passed in at iTermURLActionHelper.m in -[iTermURLActionHelper urlActionForClickAtCoord:respectingHardNewlines:alternate:completion:], which asks the helper's delegate; the only implementation (PTYTextView+ARC.m in -[PTYTextView(ARC) urlActionHelperSmartSelectionRules:]) returns `-[iTermTextViewContextMenuHelper smartSelectionActionSelectorDictionary]`, the table at iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper smartSelectionActionSelectorDictionary]. The selector is performed later at iTermURLActionHelper.m in -[iTermURLActionHelper finishOpeningTargetWithEvent:coord:inBackground:style:action:generation:smartSelectionActionsOnly:] on `smartSelectionActionTarget`, which is the context menu helper (PTYTextView.m in -[PTYTextView initWithFrame:]). Reach: the seven `contextMenuAction...:` selectors of that table.
 
   Names: `contextMenuActionOpenFile:`, `contextMenuActionOpenURL:`, `contextMenuActionRunCommand:`, `contextMenuActionRunCoprocess:`, `contextMenuActionSendText:`, `contextMenuActionRunCommandInWindow:`, `contextMenuActionCopy:`.
 
@@ -663,7 +663,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 - `sources/Settings/iTermAdvancedSettingsModel.m:375` in `+[iTermAdvancedSettingsModel settingIsDeprecated:]`: `NSSelectorFromString` on `string`
 - `sources/Settings/iTermAdvancedSettingsModel.m:376` in `+[iTermAdvancedSettingsModel settingIsDeprecated:]`: `respondsToSelector:` on `selector`
 
-  **CLOSED.** Builds `@"deprecated_" + name` for each setting name found by `enumerateDictionaries:` (iTermAdvancedSettingsModel.m:340) and tests it with `respondsToSelector:`. Only `DEFINE_DEPRECATED_STRING` (iTermAdvancedSettingsModel.m:286) defines `deprecated_<name>`; it is used once, for `autoLogFormat` (line 726). Reach: `+deprecated_autoLogFormat`; for every other setting the answer must stay NO.
+  **CLOSED.** Builds `@"deprecated_" + name` for each setting name found by `enumerateDictionaries:` (iTermAdvancedSettingsModel.m in +[iTermAdvancedSettingsModel enumerateDictionaries:]) and tests it with `respondsToSelector:`. Only `DEFINE_DEPRECATED_STRING` (iTermAdvancedSettingsModel.m in the DEFINE_DEPRECATED_STRING macro) defines `deprecated_<name>`; it is used once, for `autoLogFormat`. Reach: `+deprecated_autoLogFormat`; for every other setting the answer must stay NO.
 
   Names: `iTermAdvancedSettingsModel +deprecated_*`.
 
@@ -676,7 +676,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 - `sources/Settings/iTermAdvancedSettingsViewController.m:603` in `iTermAdvancedSettingsSaveSecureString`: `NSSelectorFromString` on `selectorName`
 - `sources/Settings/iTermAdvancedSettingsViewController.m:604` in `iTermAdvancedSettingsSaveSecureString`: `performSelector:withObject:` on `selector`
 
-  **CLOSED.** Getter and setter names come from the setting dictionary keys `kAdvancedSettingGetter` and `kAdvancedSettingSetter`, which only `DEFINE_SECURE_BOILERPLATE` sets (iTermAdvancedSettingsModel.m:177, 178: `object_<name>` and `setFromObject_<CapitalizedName>:`). It is used twice: `DEFINE_SECURE_BOOL(enableSecureKeyboardEntryAutomatically, ...)` (line 519) and `DEFINE_SECURE_STRING(browserBundleID, ...)` (line 613). Reach: `+object_enableSecureKeyboardEntryAutomatically`, `+setFromObject_EnableSecureKeyboardEntryAutomatically:`, `+object_browserBundleID`, `+setFromObject_BrowserBundleID:`.
+  **CLOSED.** Getter and setter names come from the setting dictionary keys `kAdvancedSettingGetter` and `kAdvancedSettingSetter`, which only `DEFINE_SECURE_BOILERPLATE` sets (iTermAdvancedSettingsModel.m in the DEFINE_SECURE_BOILERPLATE macro: `object_<name>` and `setFromObject_<CapitalizedName>:`). It is used twice: `DEFINE_SECURE_BOOL(enableSecureKeyboardEntryAutomatically, ...)` and `DEFINE_SECURE_STRING(browserBundleID, ...)`. Reach: `+object_enableSecureKeyboardEntryAutomatically`, `+setFromObject_EnableSecureKeyboardEntryAutomatically:`, `+object_browserBundleID`, `+setFromObject_BrowserBundleID:`.
 
   Names: `object_enableSecureKeyboardEntryAutomatically`, `setFromObject_EnableSecureKeyboardEntryAutomatically:`, `object_browserBundleID`, `setFromObject_BrowserBundleID:`.
 
@@ -684,7 +684,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/tmux/TmuxController.m:4660` in `-[TmuxController didListWindows:userData:]`: `NSSelectorFromString` on `userData[1]`
 
-  **CLOSED.** `userData[1]` is `NSStringFromSelector(selector)` stored by `-listWindowsInSessionNumber:target:selector:object:` (TmuxController.m:3670) and carried through `listWindowsTimerFired:` (internal string round trip). Callers pass `@selector(setWindows:forSession:)` (TmuxDashboardController.m:278, iTermTmuxWindowCache.m:172 and 185) and `@selector(didListWindows:forSession:)` (iTermTmuxWindowCache.m:256). No Swift callers (database Swift rows). Reach: `-[TmuxDashboardController setWindows:forSession:]`, `-[iTermTmuxWindowCache setWindows:forSession:]`, `-[iTermTmuxWindowCache didListWindows:forSession:]`.
+  **CLOSED.** `userData[1]` is `NSStringFromSelector(selector)` stored by `-listWindowsInSessionNumber:target:selector:object:` (TmuxController.m in -[TmuxController listWindowsInSessionNumber:target:selector:object:]) and carried through `listWindowsTimerFired:` (internal string round trip). Callers pass `@selector(setWindows:forSession:)` (TmuxDashboardController.m in -[TmuxDashboardController reloadWindows], iTermTmuxWindowCache.m in -[iTermTmuxWindowCache tmuxControllerSessionsDidChange:] and -[iTermTmuxWindowCache tmuxControllerWindowsDidChange:]) and `@selector(didListWindows:forSession:)` (iTermTmuxWindowCache.m in -[iTermTmuxWindowCache tmuxControllerRegistryDidChange:]). No Swift callers (database Swift rows). Reach: `-[TmuxDashboardController setWindows:forSession:]`, `-[iTermTmuxWindowCache setWindows:forSession:]`, `-[iTermTmuxWindowCache didListWindows:forSession:]`.
 
   Names: `setWindows:forSession:`, `didListWindows:forSession:`.
 
@@ -692,7 +692,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/tmux/TmuxGateway.m:581` in `-[TmuxGateway currentCommandSelector]`: `NSSelectorFromString` on `theString`
 
-  **CLOSED.** `currentCommandSelector` converts back the string stored by `-dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:` (TmuxGateway.m:1283, `NSStringFromSelector`), then `invokeCurrentCallbackWithError:` (TmuxGateway.m:621, 631, 635) calls it with `it_performNonObjectReturningSelector:withObject:withObject:`. The selectors are the `responseSelector:` arguments of `sendCommand:...`, `sendGuardedCommand:...` and `dictionaryForCommand:...`. A `git grep` of every `responseSelector:` argument finds only `@selector`/`#selector` literals, `nil`/`NULL`, and TmuxGateway.m:1360, 1382, 1414, which forward the parameter. Reach (by that scheme, 68 names): `checkForUTF8Response:`, `didChangeWhetherPaneFloats:request:`, `didFetch:`, `didFetchDefaultTerminal:`, `didFetchNow:completion:`, `didFetchTmuxPid:`, `didGetCurrentWindow:beforeSelecting:`, `didListPanes:forBuriedPanes:`, `didListWindows:userData:`, `didListWindowsSubsequentToSettingLayout:`, `didLoadServerIdentity:`, `didLoadTmuxClientName:`, `didMakeFloatingPane:completion:`, `didPause:panes:`, `didSelectWindow:selection:`, `didSetLayout:`, `didSetLayoutWithMovedDivider:`, `didSplit:state:`, `didSubscribe:handleID:`, `didSwapWindows:`, `dumpHistoryResponse:paneAndAlternate:`, `dumpStateResponse:pane:`, `getAffinitiesResponse:`, `getBuriedIndexesResponse:`, `getHiddenWindowsResponse:`, `getHotkeysResponse:`, `getOriginsResponse:`, `getPaneIDsResponseAndSetHotkeys:`, `getPaneIDsResponseAndSetTabColors:`, `getPendingOutputResponse:pane:`, `getPerTabSettingsResponse:`, `getPerWindowSettingsResponse:`, `getSessionGuidResponse:`, `getTabColorsResponse:`, `getTabGroupParentsResponse:`, `getTabGroupsResponse:`, `getUserVarsResponse:pane:`, `guessVersion18Response:`, `guessVersion21Response:`, `guessVersion22Response:`, `guessVersion23Response:`, `handleDisplayMessageVersion:`, `handleListKeys:`, `handlePingResponse:`, `handleResizeWindowResponse:`, `handleShowBuffer:`, `handleShowSetTitles:`, `handleShowSize:`, `handleStatusIntervalResponse:`, `handleStatusResponse:`, `initialListWindowsResponse:`, `listedWindowsToOpenOne:forWindowIdAndAffinities:`, `listSessionsResponse:`, `listWindowsResponse:`, `newWindowWithAffinityCreated:affinityWindowAndCompletion:`, `parseListWindowsResponseAndUpdateLayouts:`, `phonyCommandDidComplete:`, `printTmuxCommandOutputToScreen:`, `recordPanes:state:`, `requestDidComplete`, `responseForListWindows:toSetPartialOrder:`, `saveWindowOriginsResponse:`, `selector:`, `sendTmuxCommandMethodDidComplete:completion:`, `showWindowOptionsResponse:`, `windowPaneBrokeOutWithWindowId:setAffinityTo:`, `handle:`, `didListClients:completion:`. Swift: `#selector(TmuxGatewayReply.handle(_:))` (TmuxGateway+Replies.swift) and `#selector(didListClients(_:completion:))` (iTermTmuxClientTracker.swift:52). Tests also pass `TmuxTestReply.handle(_:)` and, in Objective-C tests, `recordReply:`, `handleResponse:`, `handleOtherReply:` and `handleGuardReply:` (ModernTests only, not listed as names). Rechecked against the database: the `@selector` arguments of all 145 sends of the four selectors and the Swift calls (TmuxGateway+Replies.swift:14, 31, 58, iTermTmuxClientTracker.swift:50) give exactly this set plus the test names. Regenerate with `git grep -h -o 'responseSelector: *@selector([^)]*)' -- sources` plus the Swift `#selector` form.
+  **CLOSED.** `currentCommandSelector` converts back the string stored by `-dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:` (TmuxGateway.m in -[TmuxGateway dictionaryForCommand:responseTarget:responseSelector:responseObject:flags:], `NSStringFromSelector`), then `invokeCurrentCallbackWithError:` (TmuxGateway.m in -[TmuxGateway invokeCurrentCallbackWithError:]) calls it with `it_performNonObjectReturningSelector:withObject:withObject:`. The selectors are the `responseSelector:` arguments of `sendCommand:...`, `sendGuardedCommand:...` and `dictionaryForCommand:...`. A `git grep` of every `responseSelector:` argument finds only `@selector`/`#selector` literals, `nil`/`NULL`, and TmuxGateway.m in -[TmuxGateway sendCommand:responseTarget:responseSelector:], -[TmuxGateway sendCommand:responseTarget:responseSelector:responseObject:flags:] and -[TmuxGateway sendGuardedCommand:responseTarget:responseSelector:responseObject:flags:], which forward the parameter. Reach (by that scheme, 68 names): `checkForUTF8Response:`, `didChangeWhetherPaneFloats:request:`, `didFetch:`, `didFetchDefaultTerminal:`, `didFetchNow:completion:`, `didFetchTmuxPid:`, `didGetCurrentWindow:beforeSelecting:`, `didListPanes:forBuriedPanes:`, `didListWindows:userData:`, `didListWindowsSubsequentToSettingLayout:`, `didLoadServerIdentity:`, `didLoadTmuxClientName:`, `didMakeFloatingPane:completion:`, `didPause:panes:`, `didSelectWindow:selection:`, `didSetLayout:`, `didSetLayoutWithMovedDivider:`, `didSplit:state:`, `didSubscribe:handleID:`, `didSwapWindows:`, `dumpHistoryResponse:paneAndAlternate:`, `dumpStateResponse:pane:`, `getAffinitiesResponse:`, `getBuriedIndexesResponse:`, `getHiddenWindowsResponse:`, `getHotkeysResponse:`, `getOriginsResponse:`, `getPaneIDsResponseAndSetHotkeys:`, `getPaneIDsResponseAndSetTabColors:`, `getPendingOutputResponse:pane:`, `getPerTabSettingsResponse:`, `getPerWindowSettingsResponse:`, `getSessionGuidResponse:`, `getTabColorsResponse:`, `getTabGroupParentsResponse:`, `getTabGroupsResponse:`, `getUserVarsResponse:pane:`, `guessVersion18Response:`, `guessVersion21Response:`, `guessVersion22Response:`, `guessVersion23Response:`, `handleDisplayMessageVersion:`, `handleListKeys:`, `handlePingResponse:`, `handleResizeWindowResponse:`, `handleShowBuffer:`, `handleShowSetTitles:`, `handleShowSize:`, `handleStatusIntervalResponse:`, `handleStatusResponse:`, `initialListWindowsResponse:`, `listedWindowsToOpenOne:forWindowIdAndAffinities:`, `listSessionsResponse:`, `listWindowsResponse:`, `newWindowWithAffinityCreated:affinityWindowAndCompletion:`, `parseListWindowsResponseAndUpdateLayouts:`, `phonyCommandDidComplete:`, `printTmuxCommandOutputToScreen:`, `recordPanes:state:`, `requestDidComplete`, `responseForListWindows:toSetPartialOrder:`, `saveWindowOriginsResponse:`, `selector:`, `sendTmuxCommandMethodDidComplete:completion:`, `showWindowOptionsResponse:`, `windowPaneBrokeOutWithWindowId:setAffinityTo:`, `handle:`, `didListClients:completion:`. Swift: `#selector(TmuxGatewayReply.handle(_:))` (TmuxGateway+Replies.swift) and `#selector(didListClients(_:completion:))` (iTermTmuxClientTracker.swift in TmuxClientTracker.updateClients(completion:)). Tests also pass `TmuxTestReply.handle(_:)` and, in Objective-C tests, `recordReply:`, `handleResponse:`, `handleOtherReply:` and `handleGuardReply:` (ModernTests only, not listed as names). Rechecked against the database: the `@selector` arguments of all 145 sends of the four selectors and the Swift calls (TmuxGateway+Replies.swift in TmuxGateway.send(_:reply:), TmuxGateway.sendList(_:replies:) and TmuxGateway.sendGuardedForBranchReply(_:reply:), iTermTmuxClientTracker.swift in TmuxClientTracker.updateClients(completion:)) give exactly this set plus the test names. Regenerate with `git grep -h -o 'responseSelector: *@selector([^)]*)' -- sources` plus the Swift `#selector` form.
 
   Names: `checkForUTF8Response:`, `didChangeWhetherPaneFloats:request:`, `didFetch:`, `didFetchDefaultTerminal:`, `didFetchNow:completion:`, `didFetchTmuxPid:`, `didGetCurrentWindow:beforeSelecting:`, `didListPanes:forBuriedPanes:`, `didListWindows:userData:`, `didListWindowsSubsequentToSettingLayout:`, `didLoadServerIdentity:`, `didLoadTmuxClientName:`, `didMakeFloatingPane:completion:`, `didPause:panes:`, `didSelectWindow:selection:`, `didSetLayout:`, `didSetLayoutWithMovedDivider:`, `didSplit:state:`, `didSubscribe:handleID:`, `didSwapWindows:`, `dumpHistoryResponse:paneAndAlternate:`, `dumpStateResponse:pane:`, `getAffinitiesResponse:`, `getBuriedIndexesResponse:`, `getHiddenWindowsResponse:`, `getHotkeysResponse:`, `getOriginsResponse:`, `getPaneIDsResponseAndSetHotkeys:`, `getPaneIDsResponseAndSetTabColors:`, `getPendingOutputResponse:pane:`, `getPerTabSettingsResponse:`, `getPerWindowSettingsResponse:`, `getSessionGuidResponse:`, `getTabColorsResponse:`, `getTabGroupParentsResponse:`, `getTabGroupsResponse:`, `getUserVarsResponse:pane:`, `guessVersion18Response:`, `guessVersion21Response:`, `guessVersion22Response:`, `guessVersion23Response:`, `handleDisplayMessageVersion:`, `handleListKeys:`, `handlePingResponse:`, `handleResizeWindowResponse:`, `handleShowBuffer:`, `handleShowSetTitles:`, `handleShowSize:`, `handleStatusIntervalResponse:`, `handleStatusResponse:`, `initialListWindowsResponse:`, `listedWindowsToOpenOne:forWindowIdAndAffinities:`, `listSessionsResponse:`, `listWindowsResponse:`, `newWindowWithAffinityCreated:affinityWindowAndCompletion:`, `parseListWindowsResponseAndUpdateLayouts:`, `phonyCommandDidComplete:`, `printTmuxCommandOutputToScreen:`, `recordPanes:state:`, `requestDidComplete`, `responseForListWindows:toSetPartialOrder:`, `saveWindowOriginsResponse:`, `selector:`, `sendTmuxCommandMethodDidComplete:completion:`, `showWindowOptionsResponse:`, `windowPaneBrokeOutWithWindowId:setAffinityTo:`, `handle:`, `didListClients:completion:`.
 
@@ -711,7 +711,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `ThirdParty/PSMTabBarControl/source/PSMTabBarCell.m:166` in `-[PSMWeakTimer timerDidFire:]`: `methodForSelector:` on `_selector`
 
-  **GENERIC.** Private weak timer in PSMTabBarCell.m. One caller: `-[PSMTabBarCell reallySetStringValue:]` (PSMTabBarCell.m:377) passes `@selector(updateStringValue:)`, static. Reach: `-[PSMTabBarCell updateStringValue:]`.
+  **GENERIC.** Private weak timer in PSMTabBarCell.m. One caller: `-[PSMTabBarCell reallySetStringValue:]` (PSMTabBarCell.m in -[PSMTabBarCell reallySetStringValue:]) passes `@selector(updateStringValue:)`, static. Reach: `-[PSMTabBarCell updateStringValue:]`.
 
   Names: `updateStringValue:`.
 
@@ -728,7 +728,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 - `sources/AppKit/iTermApplicationDelegate.m:3428` in `-[iTermApplicationDelegate performUndoRedoSelector:sender:]`: `performSelector:withObject:` on `selector`
 - `sources/AppKit/iTermApplicationDelegate.m:3449` in `-[iTermApplicationDelegate responderForUndoRedoSelector:menuItem:]`: `respondsToSelector:` on `selector`
 
-  **CLOSED.** `performUndoRedoSelector:sender:` is called only with `@selector(undo:)` and `@selector(redo:)` (iTermApplicationDelegate.m:3387, 3391); `responderForUndoRedoSelector:menuItem:` also from `validateUndoRedoMenuItem:selector:allowMigration:` with the same two selectors (lines 491, 493). Reach: `undo:` and `redo:` on any responder in the key window chain that also conforms to NSMenuItemValidation (for example settings window controllers with private undo managers).
+  **CLOSED.** `performUndoRedoSelector:sender:` is called only with `@selector(undo:)` and `@selector(redo:)` (iTermApplicationDelegate.m in -[iTermApplicationDelegate performUndo:] and -[iTermApplicationDelegate performRedo:]); `responderForUndoRedoSelector:menuItem:` also from `validateUndoRedoMenuItem:selector:allowMigration:` with the same two selectors. Reach: `undo:` and `redo:` on any responder in the key window chain that also conforms to NSMenuItemValidation (for example settings window controllers with private undo managers).
 
   Names: `undo:`, `redo:`.
 
@@ -736,7 +736,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/Categories/NSMenu+iTerm.m:64` in `-[NSMenu(iTermAdditions) it_selectMenuItemWithTitle:identifier:]`: `sendAction:to:from:` on `[target action]`
 
-  **OPEN-EXTERNAL.** Fires a main-menu item chosen by title and identifier. Callers: `+[PTYSession selectMenuItem:]` (PTYSession.m:5687), reached from key binding actions of type Select Menu Item (PTYSession.m:13000, 13204; the parameter comes from the user's key mappings in preferences), `-[PTYSession textViewSelectMenuItemWithIdentifier:title:]` (PTYSession.m:14652, called from `-[PTYTextView(PointerDelegate) selectMenuItemWithIdentifier:title:event:]`, PTYTextView.m:8920, a pointer action from the user's pointer bindings), and in Swift `iTermBrowserPointerActionPerformer.selectMenuItem(withIdentifier:title:event:)` (iTermBrowserPointerActionPerformer.swift:157, `NSApp.mainMenu?.it_selectItem(withTitle:identifier:)`, the Swift name of the same method; the browser's pointer actions). Allowlist: only items that exist in `NSApp.mainMenu`, with a recursion guard. Reach: every main-menu action selector (MainMenu.xib plus code-built items); see the entry-point census.
+  **OPEN-EXTERNAL.** Fires a main-menu item chosen by title and identifier. Callers: `+[PTYSession selectMenuItem:]` (PTYSession.m in +[PTYSession selectMenuItem:]), reached from key binding actions of type Select Menu Item (PTYSession.m in +[PTYSession performKeyBindingAction:event:] and -[PTYSession reallyPerformKeyBindingAction:event:]; the parameter comes from the user's key mappings in preferences), `-[PTYSession textViewSelectMenuItemWithIdentifier:title:]` (PTYSession.m in -[PTYSession textViewSelectMenuItemWithIdentifier:title:], called from `-[PTYTextView(PointerDelegate) selectMenuItemWithIdentifier:title:event:]`, PTYTextView.m in -[PTYTextView(PointerDelegate) selectMenuItemWithIdentifier:title:event:], a pointer action from the user's pointer bindings), and in Swift `iTermBrowserPointerActionPerformer.selectMenuItem(withIdentifier:title:event:)` (iTermBrowserPointerActionPerformer.swift in iTermBrowserPointerActionPerformer.selectMenuItem(withIdentifier:title:event:), `NSApp.mainMenu?.it_selectItem(withTitle:identifier:)`, the Swift name of the same method; the browser's pointer actions). Allowlist: only items that exist in `NSApp.mainMenu`, with a recursion guard. Reach: every main-menu action selector (MainMenu.xib plus code-built items); see the entry-point census.
 
   Names: none.
 
@@ -746,7 +746,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 - `sources/Categories/NSObject+iTerm.m:274` in `-[NSObject(iTerm) it_performNonObjectReturningSelector:withObject:withObject:]`: `methodForSelector:` on `selector`
 - `sources/Categories/NSObject+iTerm.m:280` in `-[NSObject(iTerm) it_performAutoreleasedObjectReturningSelector:withObject:]`: `methodForSelector:` on `selector`
 
-  **GENERIC.** Category helpers that call `methodForSelector:` on a selector argument. Callers are listed below as separate entries under "Callers of generic helpers"; static callers: PTYSession.m:7149 (`setDelegate:`), PasteboardHistory.m:330 (`paste:`), iTermApplicationDelegate.m:4678 (`_cmd`, `toggleTriggerEnabled:`). `it_performAutoreleasedObjectReturningSelector:withObject:` has no callers. A three-object variant, `it_performNonObjectReturningSelector:withObject:object:object:`, lost its only caller, `-[iTermThread newCallbackWithWeakTarget:selector:userInfo:]`, when that was deleted as dead code on 2026-11-20, and was itself deleted the same day (unit `dead-code-followup`). Rechecked with the database's send rows (every send of these selectors) and its Swift rows (no Swift call of any of them).
+  **GENERIC.** Category helpers that call `methodForSelector:` on a selector argument. Callers are listed below as separate entries under "Callers of generic helpers"; static callers: PTYSession.m in -[PTYSession updateKeyMapper] (`setDelegate:`), PasteboardHistory.m in -[PasteboardHistoryWindowController rowSelected:] (`paste:`), iTermApplicationDelegate.m in -[iTermApplicationDelegate toggleTriggerEnabled:] (`_cmd`, `toggleTriggerEnabled:`). `it_performAutoreleasedObjectReturningSelector:withObject:` has no callers. A three-object variant, `it_performNonObjectReturningSelector:withObject:object:object:`, lost its only caller, `-[iTermThread newCallbackWithWeakTarget:selector:userInfo:]`, when that was deleted as dead code on 2026-11-20, and was itself deleted the same day (unit `dead-code-followup`). Rechecked with the database's send rows (every send of these selectors) and its Swift rows (no Swift call of any of them).
 
   Names: `setDelegate:`, `paste:`, `toggleTriggerEnabled:`.
 
@@ -756,7 +756,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 - `sources/Categories/NSTimer+iTerm.m:75` in `+[NSTimer(iTerm) it_weakTimerWithTimeInterval:target:selector:userInfo:repeats:]`: `setSelector:` on `selector`
 - `sources/Categories/NSTimer+iTerm.m:88` in `+[NSTimer(iTerm) it_scheduledWeakTimerWithTimeInterval:target:selector:userInfo:repeats:]`: `setSelector:` on `aSelector`
 
-  **GENERIC.** `iTermTimerProxy` calls the selector given to `+[NSTimer it_weakTimerWithTimeInterval:...]` or `+[NSTimer it_scheduledWeakTimerWithTimeInterval:...]`. Every caller passes `@selector`: iTermGlobalSearchEngine.m:61 `searchMore:`, iTermRateLimitedUpdate.m:84 `performBlockIfNeeded:`, iTermUpdateCadenceController.m:266 and 278 `updateDisplay`, ProfilesGeneralPreferencesViewController.m:1036 `updateDownloadBrowserPluginButtonHidden`, iTermStatusBarContainerView.m:60 `reevaluateTimer:`, iTermGitPoller.m:60 `poll`, iTermTmuxBufferSizeMonitor.m:162 and iTermTmuxOptionMonitor.m:99 `update:`, iTermMTKView.swift:57 `#selector(it_redrawPeriodically(_:))` (Swift name `Timer.it_scheduledWeakTimer(withTimeInterval:target:selector:userInfo:repeats:)`). No dynamic callers.
+  **GENERIC.** `iTermTimerProxy` calls the selector given to `+[NSTimer it_weakTimerWithTimeInterval:...]` or `+[NSTimer it_scheduledWeakTimerWithTimeInterval:...]`. Every caller passes `@selector`: iTermGlobalSearchEngine.m in -[iTermGlobalSearchEngine initWithQuery:sessions:mode:handler:] `searchMore:`, iTermRateLimitedUpdate.m in -[iTermRateLimitedUpdate scheduleTimerAfterDelay:] `performBlockIfNeeded:`, iTermUpdateCadenceController.m in -[iTermUpdateCadenceController setTimerUpdateCadence:liveResizing:force:] `updateDisplay`, ProfilesGeneralPreferencesViewController.m in -[ProfilesGeneralPreferencesViewController downloadBrowserPlugin:] `updateDownloadBrowserPluginButtonHidden`, iTermStatusBarContainerView.m in -[iTermStatusBarContainerView initWithComponent:] `reevaluateTimer:`, iTermGitPoller.m in -[iTermGitPoller startTimer] `poll`, iTermTmuxBufferSizeMonitor.m in -[iTermTmuxBufferSizeMonitor initWithController:pauseAge:] and iTermTmuxOptionMonitor.m in -[iTermTmuxOptionMonitor startTimer] `update:`, iTermMTKView.swift in iTermMTKView.it_schedule() `#selector(it_redrawPeriodically(_:))` (Swift name `Timer.it_scheduledWeakTimer(withTimeInterval:target:selector:userInfo:repeats:)`). No dynamic callers.
 
   Names: `searchMore:`, `performBlockIfNeeded:`, `updateDisplay`, `updateDownloadBrowserPluginButtonHidden`, `reevaluateTimer:`, `poll`, `update:`, `it_redrawPeriodically:`.
 
@@ -764,7 +764,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/FileTransfer/FileTransferManager.m:254` in `-[FileTransferManager performMenuActionOnRunLoop:inModes:]`: `performSelector:withObject:afterDelay:inModes:` on `selector`
 
-  **GENERIC.** `performMenuActionOnRunLoop:inModes:` callers (database send rows) pass `@selector(pressDownloadsMenu)` (FileTransferManager.m:234), `@selector(pressUploadsMenu)` (238) and `@selector(refreshMenuBarNow)` (244). No Swift callers.
+  **GENERIC.** `performMenuActionOnRunLoop:inModes:` callers (database send rows) pass `@selector(pressDownloadsMenu)` (FileTransferManager.m in -[FileTransferManager openDownloadsMenu]), `@selector(pressUploadsMenu)` (-[FileTransferManager openUploadsMenu]) and `@selector(refreshMenuBarNow)` (-[FileTransferManager refreshMenuBarIfNeeded]). No Swift callers.
 
   Names: `pressDownloadsMenu`, `pressUploadsMenu`, `refreshMenuBarNow`.
 
@@ -772,7 +772,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/Hotkey/iTermCarbonHotKeyController.m:371` in `-[iTermCarbonHotKeyController handleEvent:]`: `performSelector:withObject:withObject:` on `hotkey.selector`
 
-  **CLOSED.** `hotkey.selector` is the selector given to `-[iTermCarbonHotKeyController registerShortcut:...selector:...]`. Callers pass `@selector(carbonHotkeyPressed:siblings:)` (iTermBaseHotKey.m:89), `@selector(hotkeyPressed:siblings:)` (iTermSessionHotkeyController.m:37), `@selector(dismissByKeyboard:)` (iTermTipWindowController.m:365), and from Swift, where the method is imported as `register(_:target:selector:userData:)`, `#selector(hotKeyPressed(_:siblings:))` (iTermOpenQuicklyHotKeyProvider.swift:43 to 46; the method is `@objc(hotKeyPressed:siblings:)`, capital K, a different selector from `hotkeyPressed:siblings:`). Reach: those four selectors.
+  **CLOSED.** `hotkey.selector` is the selector given to `-[iTermCarbonHotKeyController registerShortcut:...selector:...]`. Callers pass `@selector(carbonHotkeyPressed:siblings:)` (iTermBaseHotKey.m in -[iTermBaseHotKey registerShortcut:]), `@selector(hotkeyPressed:siblings:)` (iTermSessionHotkeyController.m in -[iTermSessionHotkeyRegistration initWithShortcut:]), `@selector(dismissByKeyboard:)` (iTermTipWindowController.m in -[iTermTipWindowController showTipWindow]), and from Swift, where the method is imported as `register(_:target:selector:userData:)`, `#selector(hotKeyPressed(_:siblings:))` (iTermOpenQuicklyHotKeyProvider.swift in OpenQuicklyHotKeyProvider.invalidate(); the method is `@objc(hotKeyPressed:siblings:)`, capital K, a different selector from `hotkeyPressed:siblings:`). Reach: those four selectors.
 
   Names: `carbonHotkeyPressed:siblings:`, `hotkeyPressed:siblings:`, `dismissByKeyboard:`, `hotKeyPressed:siblings:`.
 
@@ -780,7 +780,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/Infrastructure/iTermRateLimitedUpdate.m:140` in `-[iTermRateLimitedUpdate performRateLimitedSelector:onTarget:withObject:]`: `methodForSelector:` on `selector`
 
-  **GENERIC.** `-[iTermRateLimitedUpdate performRateLimitedSelector:onTarget:withObject:]`. Callers all pass `@selector`: iTermProcessCache.m:136 and 293 `updateIfNeeded`, iTermWorkingDirectoryPoller.m:66 `maybePollForWorkingDirectory`, ProfilesGeneralPreferencesViewController.m:1756 `postUpdateSessionNameNotification`, iTermSearchResultsMinimapView.m:149 `postInvalidateNotification`. No Swift callers (database Swift rows).
+  **GENERIC.** `-[iTermRateLimitedUpdate performRateLimitedSelector:onTarget:withObject:]`. Callers all pass `@selector`: iTermProcessCache.m in -[iTermProcessCache setNeedsUpdate:] and -[iTermProcessCache processMonitor:didChangeFlags:] `updateIfNeeded`, iTermWorkingDirectoryPoller.m in -[iTermWorkingDirectoryPoller didReceiveLineFeed] `maybePollForWorkingDirectory`, ProfilesGeneralPreferencesViewController.m in -[ProfilesGeneralPreferencesViewController sessionNameDidChange] `postUpdateSessionNameNotification`, iTermSearchResultsMinimapView.m in -[iTermBaseMinimapView invalidate] `postInvalidateNotification`. No Swift callers (database Swift rows).
 
   Names: `updateIfNeeded`, `maybePollForWorkingDirectory`, `postUpdateSessionNameNotification`, `postInvalidateNotification`.
 
@@ -788,29 +788,29 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/MousePointer/ThreeFingerTapGestureRecognizer.m:78` in `-[ThreeFingerTapGestureRecognizer touchesEndedWithEvent:]`: `performSelector:withObject:` on `selector_`
 
-  **CLOSED.** `selector_` from `initWithTarget:selector:`; callers pass `@selector(threeFingerTap:)` (EventMonitorView.m:30, PTYTextView.m:334) and, from Swift, `#selector(threeFingerTap(_:))` (iTermBrowserWebView.swift:96, `ThreeFingerTapGestureRecognizer(target:selector:)`).
+  **CLOSED.** `selector_` from `initWithTarget:selector:`; callers pass `@selector(threeFingerTap:)` (EventMonitorView.m in -[EventMonitorView awakeFromNib], PTYTextView.m in -[PTYTextView initWithFrame:]) and, from Swift, `#selector(threeFingerTap(_:))` (iTermBrowserWebView.swift in iTermBrowserWebView.init(frame:configuration:pointerController:), `ThreeFingerTapGestureRecognizer(target:selector:)`).
 
   Names: `threeFingerTap:`.
 
 #### `sources/OpenQuickly/iTermOpenQuicklyWindowController.m`
 
-- `sources/OpenQuickly/iTermOpenQuicklyWindowController.m:476` in `-[iTermOpenQuicklyWindowController openSelectedRow]`: `sendAction:to:from:` on `item.menuItem.action`
+- `sources/OpenQuickly/iTermOpenQuicklyWindowController.m:538` in `-[iTermOpenQuicklyWindowController openSelectedRow]`: `sendAction:to:from:` on `item.menuItem.action`
 
-  **OPEN-INTERNAL.** Open Quickly lists the items of `[NSApp mainMenu]` (iTermOpenQuicklyModel.m:736) and sends the chosen item's action. The user chooses among live menu items; no name comes from outside. Reach: every main-menu action selector (MainMenu.xib plus code-built items), enumerated by the entry-point census and xib binding tests rather than here; a runtime walk of the main menu would enumerate it.
+  **OPEN-INTERNAL.** Open Quickly lists the items of `[NSApp mainMenu]` (iTermOpenQuicklyModel.m in -[iTermOpenQuicklyModel addMenuItemsToItems:withMatcher:]) and sends the chosen item's action. The user chooses among live menu items; no name comes from outside. Reach: every main-menu action selector (MainMenu.xib plus code-built items), enumerated by the entry-point census and xib binding tests rather than here; a runtime walk of the main menu would enumerate it.
 
   Names: none.
 
 #### `sources/PTYSession/PTYSession.m`
 
-- `sources/PTYSession/PTYSession.m:5547` in `+[PTYSession _recursiveSelectMenuWithSelector:inMenu:]`: `sendAction:to:from:` on `[item action]`
+- `sources/PTYSession/PTYSession.m:5545` in `+[PTYSession _recursiveSelectMenuWithSelector:inMenu:]`: `sendAction:to:from:` on `[item action]`
 
-  **CLOSED.** `+_recursiveSelectMenuWithSelector:inMenu:` is called only from `+selectMenuItemWithSelector:` (PTYSession.m:5674), whose callers pass `@selector(undo:)` (PTYSession.m:13012, 13362). Reach: the main-menu item whose action is `undo:`.
+  **CLOSED.** `+_recursiveSelectMenuWithSelector:inMenu:` is called only from `+selectMenuItemWithSelector:` (PTYSession.m in +[PTYSession selectMenuItemWithSelector:]), whose callers pass `@selector(undo:)` (PTYSession.m in +[PTYSession performKeyBindingAction:event:] and -[PTYSession reallyPerformKeyBindingAction:event:]). Reach: the main-menu item whose action is `undo:`.
 
   Names: `undo:`.
 
-- `sources/PTYSession/PTYSession.m:26726` in `-[PTYSession composerManager:forwardMenuItem:]`: `performSelector:withObject:` on `menuItem.action`
+- `sources/PTYSession/PTYSession.m:26735` in `-[PTYSession composerManager:forwardMenuItem:]`: `performSelector:withObject:` on `menuItem.action`
 
-  **CLOSED.** The menu item is the sender of `copy:`, `copyWithStyles:` or `copyWithControlSequences:` on `ComposerTextView` (ComposerTextView.swift:456 to 492), forwarded through `iTermMinimalComposerViewController` and `iTermComposerManager`. Its action is the method that received it. Reach on `PTYTextView`: `copy:`, `copyWithStyles:`, `copyWithControlSequences:`.
+  **CLOSED.** The menu item is the sender of `copy:`, `copyWithStyles:` or `copyWithControlSequences:` on `ComposerTextView` (ComposerTextView.swift in ComposerTextView.copy(_:), ComposerTextView.copyWithStyles(_:) and ComposerTextView.copyWithControlSequences(_:)), forwarded through `iTermMinimalComposerViewController` and `iTermComposerManager`. Its action is the method that received it. Reach on `PTYTextView`: `copy:`, `copyWithStyles:`, `copyWithControlSequences:`.
 
   Names: `copy:`, `copyWithStyles:`, `copyWithControlSequences:`.
 
@@ -818,7 +818,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/Pasting/iTermPasteHelper.m:1117` in `-[iTermPasteHelper scheduledTimerWithTimeInterval:target:selector:userInfo:repeats:]`: `scheduledTimerWithTimeInterval:target:selector:userInfo:repeats:` on `aSelector`
 
-  **GENERIC.** Test seam wrapping `+[NSTimer scheduledTimerWithTimeInterval:...]`. Callers iTermPasteHelper.m:771 and 862 pass `@selector(pasteNextChunkAndScheduleTimer)`.
+  **GENERIC.** Test seam wrapping `+[NSTimer scheduledTimerWithTimeInterval:...]`. Callers iTermPasteHelper.m in -[iTermPasteHelper scheduleNextPasteForCurrentPasteContext] and -[iTermPasteHelper pasteLiteralEventUnconditionallyImmediately:] pass `@selector(pasteNextChunkAndScheduleTimer)`.
 
   Names: `pasteNextChunkAndScheduleTimer`.
 
@@ -826,7 +826,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/iTermController/iTermController.m:918` in `-[iTermController addBookmarksToMenu:supermenu:withSelector:openAllSelector:startingAt:]`: `setSelector:` on `selector`
 
-  **GENERIC.** `addBookmarksToMenu:supermenu:withSelector:openAllSelector:startingAt:` callers: iTermApplicationDelegate.m:2961 (from `newSessionMenu:...`, whose callers at lines 1285 to 1290 pass `newSessionInWindowAtIndex:`/`newSessionsInNewWindow:` and `newSessionInTabAtIndex:`/`newSessionsInWindow:`), PseudoTerminal.m:7634 and 7643 (same selectors). Reach: those four.
+  **GENERIC.** `addBookmarksToMenu:supermenu:withSelector:openAllSelector:startingAt:` callers: iTermApplicationDelegate.m in -[iTermApplicationDelegate newSessionMenu:title:selector:openAllSelector:] (from `newSessionMenu:...`, whose callers in -[iTermApplicationDelegate applicationDockMenu:] pass `newSessionInWindowAtIndex:`/`newSessionsInNewWindow:` and `newSessionInTabAtIndex:`/`newSessionsInWindow:`), PseudoTerminal.m in -[PseudoTerminal menuForEvent:menu:] (same selectors). Reach: those four.
 
   Names: `newSessionInWindowAtIndex:`, `newSessionInTabAtIndex:`, `newSessionsInWindow:`, `newSessionsInNewWindow:`.
 
@@ -835,7 +835,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 - `sources/tmux/TmuxLayoutParser.m:292` in `-[TmuxLayoutParser depthFirstSearchParseTree:callingSelector:onTarget:withObject:]`: `performSelector:withObject:withObject:` on `selector`
 - `sources/tmux/TmuxLayoutParser.m:305` in `-[TmuxLayoutParser depthFirstSearchParseTree:callingSelector:onTarget:withObject:]`: `performSelector:withObject:withObject:` on `selector`
 
-  **GENERIC.** `depthFirstSearchParseTree:callingSelector:onTarget:withObject:`. Callers pass `@selector`: TmuxLayoutParser.m:317 `searchParseTree:forWindowPane:`, TmuxWindowOpener.m:137 `appendRequestsForNode:toArray:`, TmuxWindowOpener.m:752 `decorateWindowPane:`.
+  **GENERIC.** `depthFirstSearchParseTree:callingSelector:onTarget:withObject:`. Callers pass `@selector`: TmuxLayoutParser.m in -[TmuxLayoutParser windowPane:inParseTree:] `searchParseTree:forWindowPane:`, TmuxWindowOpener.m in -[TmuxWindowOpener openWindows:] `appendRequestsForNode:toArray:`, TmuxWindowOpener.m in -[TmuxWindowOpener decorateParseTree:] `decorateWindowPane:`.
 
   Names: `searchParseTree:forWindowPane:`, `appendRequestsForNode:toArray:`, `decorateWindowPane:`.
 
@@ -845,7 +845,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/AppKit/iTermApplicationDelegate.m:647` in `-[iTermApplicationDelegate firstResponderForMenuItem:]`: `respondsToSelector:` on `menuItem.action`
 
-  **CLOSED.** Only caller is `-[iTermApplicationDelegate toggleTriggerEnabled:]` (iTermApplicationDelegate.m:4678), whose sender is the menu item built at iTermApplicationDelegate.m:4637 with `@selector(toggleTriggerEnabled:)`. Reach: `toggleTriggerEnabled:` on the first responder chain (implemented by `PseudoTerminal`, declared in NSResponder+iTerm.h).
+  **CLOSED.** Only caller is `-[iTermApplicationDelegate toggleTriggerEnabled:]` (iTermApplicationDelegate.m in -[iTermApplicationDelegate toggleTriggerEnabled:]), whose sender is the menu item built at iTermApplicationDelegate.m in -[iTermApplicationDelegate menuNeedsUpdate:] with `@selector(toggleTriggerEnabled:)`. Reach: `toggleTriggerEnabled:` on the first responder chain (implemented by `PseudoTerminal`, declared in NSResponder+iTerm.h).
 
   Names: `toggleTriggerEnabled:`.
 
@@ -899,7 +899,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/SearchingFiltering/iTermFindDriver.m:761` in `-[iTermFindDriver doCommandBySelector:]`: `respondsToSelector:` on `selector`
 
-  **OPEN-EXTERNAL.** `-[iTermFindDriver doCommandBySelector:]` is called from `-[iTermDropDownFindViewController control:textView:doCommandBySelector:]` (iTermDropDownFindViewController.m:411) and `-[iTermMiniSearchFieldViewController control:textView:doCommandBySelector:]` (iTermMiniSearchFieldViewController.m:405, the status bar search field) with the command selector of the Cocoa text system, then performs it on self if `respondsToSelector:` (line 762, `it_performNonObjectReturningSelector:withObject:`). Input: the key binding dictionaries of the Cocoa text system (system `StandardKeyBinding.dict` and the user's `~/Library/KeyBindings/DefaultKeyBinding.dict`). Check: `respondsToSelector:` only. Intended reach: `moveDown:` (iTermFindDriver.m:766); any other one-argument method of `iTermFindDriver` whose name a key binding names is also reached.
+  **OPEN-EXTERNAL.** `-[iTermFindDriver doCommandBySelector:]` is called from `-[iTermDropDownFindViewController control:textView:doCommandBySelector:]` (iTermDropDownFindViewController.m in -[iTermDropDownFindViewController control:textView:doCommandBySelector:]) and `-[iTermMiniSearchFieldViewController control:textView:doCommandBySelector:]` (iTermMiniSearchFieldViewController.m in -[iTermMiniSearchFieldViewController control:textView:doCommandBySelector:], the status bar search field) with the command selector of the Cocoa text system, then performs it on self if `respondsToSelector:` (`it_performNonObjectReturningSelector:withObject:`). Input: the key binding dictionaries of the Cocoa text system (system `StandardKeyBinding.dict` and the user's `~/Library/KeyBindings/DefaultKeyBinding.dict`). Check: `respondsToSelector:` only. Intended reach: `moveDown:` (iTermFindDriver.m in -[iTermFindDriver moveDown:]); any other one-argument method of `iTermFindDriver` whose name a key binding names is also reached.
 
   Names: `moveDown:`.
 
@@ -908,7 +908,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 - `sources/ShellIntegration/iTermShellHistoryController.m:365` in `+[iTermShellHistoryController showInformationalMessageInWindow:]`: `respondsToSelector:` on `selector`
 - `sources/ShellIntegration/iTermShellHistoryController.m:402` in `+[iTermShellHistoryController showInformationalMessageInWindow:]`: `performSelector:withObject:` on `selector`
 
-  **CLOSED.** `selector` is the local `@selector(installShellIntegration:)` (iTermShellHistoryController.m:364).
+  **CLOSED.** `selector` is the local `@selector(installShellIntegration:)` (iTermShellHistoryController.m in +[iTermShellHistoryController showInformationalMessageInWindow:]).
 
   Names: `installShellIntegration:`.
 
@@ -916,7 +916,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/StatusBar/Setup/Knobs/iTermStatusBarKnobNumericViewController.m:88` in `-[iTermStatusBarKnobNumericViewController control:textView:doCommandBySelector:]`: `respondsToSelector:` on `commandSelector`
 
-  **OPEN-EXTERNAL.** NSControl delegate `control:textView:doCommandBySelector:`; performs the command selector on self if `respondsToSelector:` (line 89). Input: Cocoa text system key bindings (system and user `DefaultKeyBinding.dict`). Check: `respondsToSelector:` only. Intended reach: `insertNewline:` (line 96).
+  **OPEN-EXTERNAL.** NSControl delegate `control:textView:doCommandBySelector:`; performs the command selector on self if `respondsToSelector:`. Input: Cocoa text system key bindings (system and user `DefaultKeyBinding.dict`). Check: `respondsToSelector:` only. Intended reach: `insertNewline:`.
 
   Names: `insertNewline:`.
 
@@ -924,7 +924,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/StatusBar/Setup/Knobs/iTermStatusBarKnobTextViewController.m:124` in `-[iTermStatusBarKnobTextViewController control:textView:doCommandBySelector:]`: `respondsToSelector:` on `commandSelector`
 
-  **OPEN-EXTERNAL.** Same as the numeric knob (line 125). Intended reach: `insertNewline:` (line 132).
+  **OPEN-EXTERNAL.** Same as the numeric knob. Intended reach: `insertNewline:`.
 
   Names: `insertNewline:`.
 
@@ -932,7 +932,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/StatusBar/Setup/iTermStatusBarSetupDestinationCollectionViewController.m:53` in `-[iTermStatusBarSetupDestinationCollectionView doCommandBySelector:]`: `respondsToSelector:` on `selector`
 
-  **OPEN-EXTERNAL.** Override of `-[NSResponder doCommandBySelector:]` on the collection view; forwards the key-binding command selector to its delegate if the delegate `respondsToSelector:` (line 55). Input: Cocoa text system key bindings. Check: `respondsToSelector:` only. Intended reach: `deleteBackward:` on the delegate (`iTermStatusBarSetupDestinationCollectionViewController`, line 177).
+  **OPEN-EXTERNAL.** Override of `-[NSResponder doCommandBySelector:]` on the collection view; forwards the key-binding command selector to its delegate if the delegate `respondsToSelector:`. Input: Cocoa text system key bindings. Check: `respondsToSelector:` only. Intended reach: `deleteBackward:` on the delegate (`iTermStatusBarSetupDestinationCollectionViewController`).
 
   Names: `deleteBackward:`.
 
@@ -940,7 +940,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/Toolbelt/CapturedOutput/ToolCapturedOutputView.m:396` in `-[ToolCapturedOutputView validateMenuItem:]`: `respondsToSelector:` on `[item action]`
 
-  **CLOSED.** `validateMenuItem:` answers whether self implements the item's action. Its context menu (ToolCapturedOutputView.m:110) has `toggleCheckmark:`. Any other menu item validated against this view is enabled only if the class implements its action, so adding or removing a method with a menu action's name changes enablement.
+  **CLOSED.** `validateMenuItem:` answers whether self implements the item's action. Its context menu (ToolCapturedOutputView.m in -[ToolCapturedOutputView initWithFrame:]) has `toggleCheckmark:`. Any other menu item validated against this view is enabled only if the class implements its action, so adding or removing a method with a menu action's name changes enablement.
 
   Names: `toggleCheckmark:`.
 
@@ -948,7 +948,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/Toolbelt/ToolDirectoriesView.m:333` in `-[ToolDirectoriesView validateMenuItem:]`: `respondsToSelector:` on `[item action]`
 
-  **CLOSED.** Same pattern; context menu (ToolDirectoriesView.m:100) has `toggleStar:`.
+  **CLOSED.** Same pattern; context menu (ToolDirectoriesView.m in -[ToolDirectoriesView initWithFrame:]) has `toggleStar:`.
 
   Names: `toggleStar:`.
 
@@ -956,7 +956,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/Toolbelt/ToolPasteHistory.m:125` in `-[ToolPasteHistory validateMenuItem:]`: `respondsToSelector:` on `[item action]`
 
-  **CLOSED.** Same pattern; context menu (ToolPasteHistory.m:101, 107) has `copySelection:` and `openInAdvancedPaste:`.
+  **CLOSED.** Same pattern; context menu (ToolPasteHistory.m in -[ToolPasteHistory initWithFrame:]) has `copySelection:` and `openInAdvancedPaste:`.
 
   Names: `copySelection:`, `openInAdvancedPaste:`.
 
@@ -968,7 +968,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 - `sources/VT100Screen/VT100ScreenStateSanitizingAdapter.m:119` in `-[VT100ScreenStateSanitizingAdapter methodSignatureForSelector:]`: `methodSignatureForSelector:` on `aSelector`
 - `sources/VT100Screen/VT100ScreenStateSanitizingAdapter.m:123` in `-[VT100ScreenStateSanitizingAdapter forwardInvocation:]`: `respondsToSelector:` on `anInvocation.selector`
 
-  **GENERIC.** `VT100ScreenStateSanitizingAdapter` is an NSProxy, cast to `VT100ScreenState *` at VT100ScreenMutableState.m:222, forwarding to `_impl` or `_impl.source`. Senders are compiler-visible sends on `VT100ScreenState`. Reach: methods of `VT100ScreenState` and `VT100ScreenStateSanitizingAdapterImpl`. Same rule as the color map adapter.
+  **GENERIC.** `VT100ScreenStateSanitizingAdapter` is an NSProxy, cast to `VT100ScreenState *` at VT100ScreenMutableState.m in -[VT100ScreenMutableState initWithSideEffectPerformer:queue:ownsQueue:], forwarding to `_impl` or `_impl.source`. Senders are compiler-visible sends on `VT100ScreenState`. Reach: methods of `VT100ScreenState` and `VT100ScreenStateSanitizingAdapterImpl`. Same rule as the color map adapter.
 
   Names: none.
 
@@ -985,7 +985,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 - `sources/ContextMenu/iTermContextMenuUtilities.m:490` in `+[iTermContextMenuUtilities addMenuItemsToCopyBase64:menu:index:selectorForString:selectorForData:target:]`: `setAction:` on `selectorForData`
 - `sources/ContextMenu/iTermContextMenuUtilities.m:500` in `+[iTermContextMenuUtilities addMenuItemsToCopyBase64:menu:index:selectorForString:selectorForData:target:]`: `setAction:` on `selectorForString`
 
-  **GENERIC.** Menu builders taking the action as a parameter. Callers pass static selectors: iTermTextViewContextMenuHelper.m:474, 481, 484 (`copyData:`, `copyString:`) and iTermBrowserContextMenuHelper.swift:87, 92, 93 (`#selector(copyData(_:))`, `#selector(copyString(_:))`; Swift names `addMenuItem(forBase64Encoded:...)`, `addMenuItems(forNumericConversions:...)`, `addMenuItems(toCopyBase64:...)`).
+  **GENERIC.** Menu builders taking the action as a parameter. Callers pass static selectors: iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] (`copyData:`, `copyString:`) and iTermBrowserContextMenuHelper.swift in iTermBrowserContextMenuHelper.decorate(menu:event:) (`#selector(copyData(_:))`, `#selector(copyString(_:))`; Swift names `addMenuItem(forBase64Encoded:...)`, `addMenuItems(forNumericConversions:...)`, `addMenuItems(toCopyBase64:...)`).
 
   Names: `copyData:`, `copyString:`.
 
@@ -1000,7 +1000,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/ContextMenu/iTermTextViewContextMenuHelper.m:563` in `-[iTermTextViewContextMenuHelper menuAtCoord:]`: `addItemWithTitle:action:keyEquivalent:` on `selector`
 
-  **CLOSED.** Local block `add(title, selector)`; every call passes `@selector(...)` (iTermTextViewContextMenuHelper.m:568 to 769, 28 calls). No string-built selectors. Reach: `addNote:`, `addTrigger:`, `bringFloatingPaneToFrontFromContextMenu:`, `browse:`, `bury:`, `clearTextViewBuffer:`, `closeTextViewSession:`, `dockFloatingPaneFromContextMenu:`, `downloadWithSCP:`, `editTextViewSession:`, `mail:`, `movePane:`, `moveSessionToFloatingPaneFromContextMenu:`, `openURLInFloatingPane:`, `openURLInHorizontalSplitPane:`, `openURLInVerticalSplitPane:`, `quickLook:`, `restartSession:`, `saveSelectionAsSnippet:`, `searchInBrowser:`, `sendFloatingPaneToBackFromContextMenu:`, `sendSelection:`, `showNotes:`, `splitTextViewHorizontally:`, `splitTextViewVertically:`, `stopCoprocess:`, `swapSessions:`, `toggleBroadcastingInput:`.
+  **CLOSED.** Local block `add(title, selector)`; every call passes `@selector(...)` (iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper menuAtCoord:] and the file's imports calls). No string-built selectors. Reach: `addNote:`, `addTrigger:`, `bringFloatingPaneToFrontFromContextMenu:`, `browse:`, `bury:`, `clearTextViewBuffer:`, `closeTextViewSession:`, `dockFloatingPaneFromContextMenu:`, `downloadWithSCP:`, `editTextViewSession:`, `mail:`, `movePane:`, `moveSessionToFloatingPaneFromContextMenu:`, `openURLInFloatingPane:`, `openURLInHorizontalSplitPane:`, `openURLInVerticalSplitPane:`, `quickLook:`, `restartSession:`, `saveSelectionAsSnippet:`, `searchInBrowser:`, `sendFloatingPaneToBackFromContextMenu:`, `sendSelection:`, `showNotes:`, `splitTextViewHorizontally:`, `splitTextViewVertically:`, `stopCoprocess:`, `swapSessions:`, `toggleBroadcastingInput:`.
 
   Names: `addNote:`, `addTrigger:`, `bringFloatingPaneToFrontFromContextMenu:`, `browse:`, `bury:`, `clearTextViewBuffer:`, `closeTextViewSession:`, `dockFloatingPaneFromContextMenu:`, `downloadWithSCP:`, `editTextViewSession:`, `mail:`, `movePane:`, `moveSessionToFloatingPaneFromContextMenu:`, `openURLInFloatingPane:`, `openURLInHorizontalSplitPane:`, `openURLInVerticalSplitPane:`, `quickLook:`, `restartSession:`, `saveSelectionAsSnippet:`, `searchInBrowser:`, `sendFloatingPaneToBackFromContextMenu:`, `sendSelection:`, `showNotes:`, `splitTextViewHorizontally:`, `splitTextViewVertically:`, `stopCoprocess:`, `swapSessions:`, `toggleBroadcastingInput:`.
 
@@ -1013,7 +1013,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/ContextMenu/iTermTextViewContextMenuHelper.m:969` in `+[iTermTextViewContextMenuHelper menuItemsForAPIRegistrationRequests:scope:target:action:]`: `initWithTitle:action:keyEquivalent:` on `action`
 
-  **GENERIC.** `+menuItemsForAPIRegistrationRequests:scope:target:action:` has one caller, iTermTextViewContextMenuHelper.m:944, passing `@selector(apiMenuItem:)`.
+  **GENERIC.** `+menuItemsForAPIRegistrationRequests:scope:target:action:` has one caller, iTermTextViewContextMenuHelper.m in -[iTermTextViewContextMenuHelper addAPIProvidedMenuItems:], passing `@selector(apiMenuItem:)`.
 
   Names: `apiMenuItem:`.
 
@@ -1027,9 +1027,9 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 #### `sources/PTYSession/PTYSession.m`
 
-- `sources/PTYSession/PTYSession.m:12785` in `-[PTYSession sendKeystrokeNotificationForEvent:advanced:]`: `setAction:` on `ITMKeystrokeNotification_Action_KeyDown`
-- `sources/PTYSession/PTYSession.m:12788` in `-[PTYSession sendKeystrokeNotificationForEvent:advanced:]`: `setAction:` on `ITMKeystrokeNotification_Action_KeyUp`
-- `sources/PTYSession/PTYSession.m:12791` in `-[PTYSession sendKeystrokeNotificationForEvent:advanced:]`: `setAction:` on `ITMKeystrokeNotification_Action_FlagsChanged`
+- `sources/PTYSession/PTYSession.m:12783` in `-[PTYSession sendKeystrokeNotificationForEvent:advanced:]`: `setAction:` on `ITMKeystrokeNotification_Action_KeyDown`
+- `sources/PTYSession/PTYSession.m:12786` in `-[PTYSession sendKeystrokeNotificationForEvent:advanced:]`: `setAction:` on `ITMKeystrokeNotification_Action_KeyUp`
+- `sources/PTYSession/PTYSession.m:12789` in `-[PTYSession sendKeystrokeNotificationForEvent:advanced:]`: `setAction:` on `ITMKeystrokeNotification_Action_FlagsChanged`
 
   **NOT-REFLECTIVE.** `keystrokeNotification.action` is a protobuf enum field (`ITMKeystrokeNotification_Action_*`). Extractor false positive.
 
@@ -1039,7 +1039,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/PasswordManager/iTermPasswordManagerWindowController.m:92` in `iTermPWMakePushButton`: `setAction:` on `action`
 
-  **GENERIC.** `iTermPWMakePushButton` callers pass `@selector(reallyAdd:)` and `@selector(cancelNewAccount:)` (iTermPasswordManagerWindowController.m:801, 804).
+  **GENERIC.** `iTermPWMakePushButton` callers pass `@selector(reallyAdd:)` and `@selector(cancelNewAccount:)` (iTermPasswordManagerWindowController.m in -[iTermPasswordManagerWindowController ensureNewAccountPanel]).
 
   Names: `reallyAdd:`, `cancelNewAccount:`.
 
@@ -1047,7 +1047,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/Settings/GeneralPreferencesViewController.m:577` in `-[iTermManualAIModelsPanelController makeSegmentedControlWithSegments:action:]`: `setAction:` on `action`
 
-  **GENERIC.** `makeSegmentedControlWithSegments:action:` callers pass `@selector(addDeleteClicked:)` and `@selector(editControlClicked:)` (GeneralPreferencesViewController.m:449, 453).
+  **GENERIC.** `makeSegmentedControlWithSegments:action:` callers pass `@selector(addDeleteClicked:)` and `@selector(editControlClicked:)` (GeneralPreferencesViewController.m in -[iTermManualAIModelsPanelController buildWindow]).
 
   Names: `addDeleteClicked:`, `editControlClicked:`.
 
@@ -1065,7 +1065,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 - `sources/Settings/Profiles/iTermProfilesMenuController.m:114` in `+[iTermProfilesMenuController addOpenAllToMenu:params:identifier:]`: `initWithTitle:action:keyEquivalent:` on `params.alternateOpenAllSelector`
 - `sources/Settings/Profiles/iTermProfilesMenuController.m:200` in `-[iTermProfilesMenuController addBookmark:toMenu:atPosition:withParams:isAlternate:withTag:identifier:]`: `initWithTitle:action:keyEquivalent:` on `isAlternate ? params.alternateSelector : params.selector`
 
-  **CLOSED.** Selectors from `iTermProfileModelJournalParams`, assigned only with `@selector`: iTermApplicationDelegate.m:2633 to 2651 and iTermController.m:1050 to 1053 (whose own parameters come from `addBookmarksToMenu:...` callers, see iTermController.m:1050). Reach: `newSessionInWindowAtIndex:`, `newSessionInTabAtIndex:`, `newSessionsInWindow:`, `newSessionsInNewWindow:`.
+  **CLOSED.** Selectors from `iTermProfileModelJournalParams`, assigned only with `@selector`: iTermApplicationDelegate.m in -[iTermApplicationDelegate updateAddressBookMenu:] and iTermController.m in -[iTermController addBookmarksToMenu:supermenu:withSelector:openAllSelector:startingAt:] (whose own parameters come from `addBookmarksToMenu:...` callers, see iTermController.m in -[iTermController addBookmarksToMenu:supermenu:withSelector:openAllSelector:startingAt:]). Reach: `newSessionInWindowAtIndex:`, `newSessionInTabAtIndex:`, `newSessionsInWindow:`, `newSessionsInNewWindow:`.
 
   Names: `newSessionInWindowAtIndex:`, `newSessionInTabAtIndex:`, `newSessionsInWindow:`, `newSessionsInNewWindow:`.
 
@@ -1073,7 +1073,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/Settings/ProfilesColorsPreferencesViewController.m:620` in `-[ProfilesColorsPreferencesViewController addPresetItemWithTitle:action:]`: `addItemWithTitle:action:keyEquivalent:` on `action`
 
-  **GENERIC.** `addPresetItemWithTitle:action:` callers pass `@selector`: `importColorPreset:`, `exportColorPreset:`, `saveColorPreset:`, `deleteColorPreset:`, `visitGallery:` (ProfilesColorsPreferencesViewController.m:611 to 615).
+  **GENERIC.** `addPresetItemWithTitle:action:` callers pass `@selector`: `importColorPreset:`, `exportColorPreset:`, `saveColorPreset:`, `deleteColorPreset:`, `visitGallery:` (ProfilesColorsPreferencesViewController.m in -[ProfilesColorsPreferencesViewController rebuildColorPresetsMenu]).
 
   Names: `importColorPreset:`, `exportColorPreset:`, `saveColorPreset:`, `deleteColorPreset:`, `visitGallery:`.
 
@@ -1081,7 +1081,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/Settings/WindowArrangements.m:195` in `+[WindowArrangements refreshRestoreArrangementsMenu:withSelector:defaultShortcut:identifier:]`: `addItemWithTitle:action:keyEquivalent:` on `selector`
 
-  **GENERIC.** `refreshRestoreArrangementsMenu:withSelector:...` has one caller, iTermApplicationDelegate.m:2921, whose selector comes from `restoreWindowArrangementSelectorAsTabs:fromDock:`, which returns one of `@selector(restoreWindowArrangementAfterDelayAsTabs:)`, `restoreWindowArrangementAfterDelay:`, `restoreWindowArrangementAsTabs:`, `restoreWindowArrangement:`.
+  **GENERIC.** `refreshRestoreArrangementsMenu:withSelector:...` has one caller, iTermApplicationDelegate.m in -[iTermApplicationDelegate updateRestoreWindowArrangementsMenu:asTabs:fromDock:], whose selector comes from `restoreWindowArrangementSelectorAsTabs:fromDock:`, which returns one of `@selector(restoreWindowArrangementAfterDelayAsTabs:)`, `restoreWindowArrangementAfterDelay:`, `restoreWindowArrangementAsTabs:`, `restoreWindowArrangement:`.
 
   Names: `restoreWindowArrangementAfterDelayAsTabs:`, `restoreWindowArrangementAfterDelay:`, `restoreWindowArrangementAsTabs:`, `restoreWindowArrangement:`.
 
@@ -1105,18 +1105,18 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/StatusBar/Setup/iTermStatusBarSetupViewController.m:216` in `-[iTermStatusBarSetupViewController initializeColorWell:withAction:color:alphaAllowed:]`: `setAction:` on `selector`
 
-  **GENERIC.** `initializeColorWell:withAction:...` callers pass `@selector(noop:)` (iTermStatusBarSetupViewController.m:177 to 186).
+  **GENERIC.** `initializeColorWell:withAction:...` callers pass `@selector(noop:)` (iTermStatusBarSetupViewController.m in -[iTermStatusBarSetupViewController awakeFromNib]).
 
   Names: `noop:`.
 
 #### `sources/TerminalView/PTYTextView.m`
 
-- `sources/TerminalView/PTYTextView.m:3618` in `-[PTYTextView makeBlockCopyButtonForLine:block:]`: `setAction:` on `^(NSPoint locationInWindow) { [weakSelf copyBlock:block absLine:line+offset screenCoord...`
-- `sources/TerminalView/PTYTextView.m:3660` in `-[PTYTextView makeOrUpdateBlockFoldButtonForLine:block:absLineRange:changed:]`: `setAction:` on `^(NSPoint locationInWindow) { if (wasFolded) { [weakSelf unfoldBlock:block]; } else { [...`
-- `sources/TerminalView/PTYTextView.m:6871` in `-[PTYTextView terminalButtons]`: `setAction:` on `^(NSPoint locationInWindow) { [weakSelf copyBlock:blockID absLine:-1 screenCoordinate:[...`
-- `sources/TerminalView/PTYTextView.m:6886` in `-[PTYTextView terminalButtons]`: `setAction:` on `^(NSPoint locationInWindow) { [weakSelf.delegate textViewSendCustomButtonCode:code]; }`
-- `sources/TerminalView/PTYTextView.m:6893` in `-[PTYTextView terminalButtons]`: `setAction:` on `^(NSPoint locationInWindow) { [weakSelf revealChannelWithUID:uid]; }`
-- `sources/TerminalView/PTYTextView.m:6948` in `-[PTYTextView commandButtonsForMark:line:shouldFloat:offByOne:]`: `setAction:` on `^(NSPoint locationInWindow) { actionBlock(locationInWindow, weakMark); }`
+- `sources/TerminalView/PTYTextView.m:3639` in `-[PTYTextView makeBlockCopyButtonForLine:block:]`: `setAction:` on `^(NSPoint locationInWindow) { [weakSelf copyBlock:block absLine:line+offset screenCoord...`
+- `sources/TerminalView/PTYTextView.m:3681` in `-[PTYTextView makeOrUpdateBlockFoldButtonForLine:block:absLineRange:changed:]`: `setAction:` on `^(NSPoint locationInWindow) { if (wasFolded) { [weakSelf unfoldBlock:block]; } else { [...`
+- `sources/TerminalView/PTYTextView.m:6893` in `-[PTYTextView terminalButtons]`: `setAction:` on `^(NSPoint locationInWindow) { [weakSelf copyBlock:blockID absLine:-1 screenCoordinate:[...`
+- `sources/TerminalView/PTYTextView.m:6908` in `-[PTYTextView terminalButtons]`: `setAction:` on `^(NSPoint locationInWindow) { [weakSelf.delegate textViewSendCustomButtonCode:code]; }`
+- `sources/TerminalView/PTYTextView.m:6915` in `-[PTYTextView terminalButtons]`: `setAction:` on `^(NSPoint locationInWindow) { [weakSelf revealChannelWithUID:uid]; }`
+- `sources/TerminalView/PTYTextView.m:6970` in `-[PTYTextView commandButtonsForMark:line:shouldFloat:offByOne:]`: `setAction:` on `^(NSPoint locationInWindow) { actionBlock(locationInWindow, weakMark); }`
 
   **NOT-REFLECTIVE.** `button.action` is a block property of the terminal button class (`^(NSPoint locationInWindow) {...}`), not a selector. Extractor false positive.
 
@@ -1124,8 +1124,8 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 #### `sources/TerminalView/PseudoTerminal.m`
 
-- `sources/TerminalView/PseudoTerminal.m:10407` in `-[PseudoTerminal tabView:menuForTabGroup:]`: `initWithTitle:action:keyEquivalent:` on `NSSelectorFromString(spec[1])`
-- `sources/TerminalView/PseudoTerminal.m:10408` in `-[PseudoTerminal tabView:menuForTabGroup:]`: `NSSelectorFromString` on `spec[1]`
+- `sources/TerminalView/PseudoTerminal.m:10477` in `-[PseudoTerminal tabView:menuForTabGroup:]`: `initWithTitle:action:keyEquivalent:` on `NSSelectorFromString(spec[1])`
+- `sources/TerminalView/PseudoTerminal.m:10478` in `-[PseudoTerminal tabView:menuForTabGroup:]`: `NSSelectorFromString` on `spec[1]`
 
   **CLOSED.** `spec[1]` comes from the `specs` array literal in the same method (string literals). Target is `self` (PseudoTerminal). Reach: `newTabInGroup:`, `expandTabGroupFromMenu:`, `collapseTabGroupFromMenu:`, `renameTabGroupFromMenu:`, `duplicateTabGroup:`, `moveTabGroupToNewWindow:`, `saveTabGroupAsWindowArrangement:`, `ungroupTabGroup:`, `closeTabGroup:`, `closeTabsOutsideGroup:`, `closeTabsRightOfGroup:`. Line 10416 also compares `spec[1]` with `@"collapseTabGroupFromMenu:"`.
 
@@ -1135,7 +1135,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/Toolbelt/iTermToolActions.m:53` in `iTermToolActionsNewButton`: `setAction:` on `selector`
 
-  **GENERIC.** `iTermToolActionsNewButton` callers pass `@selector`: `apply:`, `add:`, `remove:`, `edit:` (iTermToolActions.m:67 to 70; C function, found with `git grep`).
+  **GENERIC.** `iTermToolActionsNewButton` callers pass `@selector`: `apply:`, `add:`, `remove:`, `edit:` (iTermToolActions.m in -[iTermToolActions initWithFrame:]; C function, found with `git grep`).
 
   Names: `apply:`, `add:`, `remove:`, `edit:`.
 
@@ -1143,7 +1143,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/Toolbelt/iTermToolSnippets.m:110` in `iTermToolSnippetsNewButton`: `setAction:` on `selector`
 
-  **GENERIC.** `iTermToolSnippetsNewButton` callers pass `@selector`: `apply:`, `add:`, `remove:`, `edit:`, `openInAdvancedPaste:` (iTermToolSnippets.m:126 to 130; C function, found with `git grep`).
+  **GENERIC.** `iTermToolSnippetsNewButton` callers pass `@selector`: `apply:`, `add:`, `remove:`, `edit:`, `openInAdvancedPaste:` (iTermToolSnippets.m in -[iTermToolSnippets initWithFrame:]; C function, found with `git grep`).
 
   Names: `apply:`, `add:`, `remove:`, `edit:`, `openInAdvancedPaste:`.
 
@@ -1174,13 +1174,13 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/DataStructuresAlgorithms/IntervalTree.m:517` in `-[IntervalTree restoreFromDictionary:]`: `NSClassFromString` on `className`
 
-  **OPEN-EXTERNAL.** Class name from a saved interval-tree dictionary (window arrangements and session restoration written by this or another version; `restoreFromDictionary:` via `initWithDictionary:`, reached from `-[PTYSession ...]` restore through VT100Screen). Writers store `NSStringFromClass(object.class)` (IntervalTree.m:1319, 1364). Check: `conformsToProtocol:@protocol(IntervalTreeObject)` (a class that does not conform is skipped), then `instancesRespondToSelector:@selector(initWithDictionary:)`, as the graph-record path does (added 2026-11-21, owner queue Q21 item 3; before, only the responds-to check). Names the app writes: interval-tree object classes `iTermMark`, `VT100ScreenMark`, `iTermCapturedOutputMark`, `iTermImageMark`, `iTermBlockMark`, `iTermButtonMark`, `iTermFoldMark`, `iTermPathMark`, the Swift `PortholeMark` (module-qualified runtime name, no `@objc(Name)`), `PTYAnnotation`, `VT100RemoteHost`, `VT100WorkingDirectory` (writers: IntervalTree.m:1319 and 1364 and the `dictionaryValueWithTypeInformation` methods, section 5). Names written by older versions: `iTermURLMark` was an interval-tree object until it was deleted (commit c4b3c4830, issue 11697); saved state that still contains it is skipped here because the class no longer exists. No rename table exists; no other class of this list was renamed (git history of the class files shows only moves).
+  **OPEN-EXTERNAL.** Class name from a saved interval-tree dictionary (window arrangements and session restoration written by this or another version; `restoreFromDictionary:` via `initWithDictionary:`, reached from `-[PTYSession ...]` restore through VT100Screen). Writers store `NSStringFromClass(object.class)` (IntervalTree.m in -[IntervalTree encodeWithEncoder:offset:]). Check: `conformsToProtocol:@protocol(IntervalTreeObject)` (a class that does not conform is skipped), then `instancesRespondToSelector:@selector(initWithDictionary:)`, as the graph-record path does (added 2026-11-21, owner queue Q21 item 3; before, only the responds-to check). Names the app writes: interval-tree object classes `iTermMark`, `VT100ScreenMark`, `iTermCapturedOutputMark`, `iTermImageMark`, `iTermBlockMark`, `iTermButtonMark`, `iTermFoldMark`, `iTermPathMark`, the Swift `PortholeMark` (module-qualified runtime name, no `@objc(Name)`), `PTYAnnotation`, `VT100RemoteHost`, `VT100WorkingDirectory` (writers: IntervalTree.m in -[IntervalTree encodeWithEncoder:offset:] and the `dictionaryValueWithTypeInformation` methods, section 5). Names written by older versions: `iTermURLMark` was an interval-tree object until it was deleted (commit c4b3c4830, issue 11697); saved state that still contains it is skipped here because the class no longer exists. No rename table exists; no other class of this list was renamed (git history of the class files shows only moves).
 
   Names: `initWithDictionary:`, `iTermMark`, `VT100ScreenMark`, `iTermCapturedOutputMark`, `iTermImageMark`, `iTermBlockMark`, `iTermButtonMark`, `iTermFoldMark`, `iTermPathMark`, `PortholeMark`, `PTYAnnotation`, `VT100RemoteHost`, `VT100WorkingDirectory`.
 
 - `sources/DataStructuresAlgorithms/IntervalTree.m:1440` in `-[IntervalTree restoreFromGraphRecord:offset:largeContentProvider:]`: `NSClassFromString` on `className`
 
-  **OPEN-EXTERNAL.** Class name from a graph record of saved state (same writers as line 517). Check: `conformsToProtocol:@protocol(IntervalTreeObject)`. Names: the same interval-tree object classes as IntervalTree.m:517, and the same history (`iTermURLMark` is skipped).
+  **OPEN-EXTERNAL.** Class name from a graph record of saved state (same writers as the entry of -[IntervalTree restoreFromDictionary:]). Check: `conformsToProtocol:@protocol(IntervalTreeObject)`. Names: the same interval-tree object classes as IntervalTree.m in -[IntervalTree restoreFromDictionary:], and the same history (`iTermURLMark` is skipped).
 
   Names: `iTermMark`, `VT100ScreenMark`, `iTermCapturedOutputMark`, `iTermImageMark`, `iTermBlockMark`, `iTermButtonMark`, `iTermFoldMark`, `iTermPathMark`, `PortholeMark`, `PTYAnnotation`, `VT100RemoteHost`, `VT100WorkingDirectory`.
 
@@ -1188,7 +1188,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/Language/iTermBuiltInFunctions.m:464` in `+[iTermBuiltInMethod argumentDictionaryFromArray:]`: `NSClassFromString` on `obj.className`
 
-  **CLOSED.** `obj.className` is parsed by `iTermReflection` from the type encoding of an argument of a registered built-in method (see iTermBuiltInFunctions.m:558). Reach: the classes of the object arguments of the 16 registered methods listed there, read from their declarations: `NSString`, `NSNumber`, `NSArray` and our own `iTermScriptCallCancellation` (the `cancellation:` argument of `loadURLWithCompletion:url:connectionKey:cancellation:` and `browserEvalJSWithCompletion:js:connectionKey:cancellation:`). If a method moves to Swift its type encoding loses the class name, and a Swift `iTermScriptCallCancellation` without `@objc(iTermScriptCallCancellation)` has a module-qualified name, so this lookup changes behavior.
+  **CLOSED.** `obj.className` is parsed by `iTermReflection` from the type encoding of an argument of a registered built-in method (see iTermBuiltInFunctions.m in -[iTermBuiltInMethod callWithArguments:connectionKey:cancellation:completion:]). Reach: the classes of the object arguments of the 16 registered methods listed there, read from their declarations: `NSString`, `NSNumber`, `NSArray` and our own `iTermScriptCallCancellation` (the `cancellation:` argument of `loadURLWithCompletion:url:connectionKey:cancellation:` and `browserEvalJSWithCompletion:js:connectionKey:cancellation:`). If a method moves to Swift its type encoding loses the class name, and a Swift `iTermScriptCallCancellation` without `@objc(iTermScriptCallCancellation)` has a module-qualified name, so this lookup changes behavior.
 
   Names: `NSString`, `NSNumber`, `NSArray`, `iTermScriptCallCancellation`.
 
@@ -1196,7 +1196,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/Marks/iTermMark.m:77` in `+[iTermMark intervalTreeObjectWithDictionaryWithTypeInformation:]`: `NSClassFromString` on `className`
 
-  **OPEN-EXTERNAL.** Class name from `dict[@"class"]` of saved state, written by `-dictionaryValueWithTypeInformation` (iTermMark.m:64, `NSStringFromClass(self.class)`). Check: `conformsToProtocol:@protocol(IntervalTreeObject)` and `instancesRespondToSelector:@selector(initWithDictionary:)`. The same dictionary form is written by `PTYAnnotation`, `VT100RemoteHost` and `VT100WorkingDirectory` (`dictionaryValueWithTypeInformation`, section 5), which also conform. Names: the interval-tree object classes of IntervalTree.m:517, with the same history (`iTermURLMark` is no longer loadable).
+  **OPEN-EXTERNAL.** Class name from `dict[@"class"]` of saved state, written by `-dictionaryValueWithTypeInformation` (iTermMark.m in -[iTermMark dictionaryValueWithTypeInformation], `NSStringFromClass(self.class)`). Check: `conformsToProtocol:@protocol(IntervalTreeObject)` and `instancesRespondToSelector:@selector(initWithDictionary:)`. The same dictionary form is written by `PTYAnnotation`, `VT100RemoteHost` and `VT100WorkingDirectory` (`dictionaryValueWithTypeInformation`, section 5), which also conform. Names: the interval-tree object classes of IntervalTree.m in -[IntervalTree restoreFromDictionary:], with the same history (`iTermURLMark` is no longer loadable).
 
   Names: `initWithDictionary:`, `iTermMark`, `VT100ScreenMark`, `iTermCapturedOutputMark`, `iTermImageMark`, `iTermBlockMark`, `iTermButtonMark`, `iTermFoldMark`, `iTermPathMark`, `PortholeMark`, `PTYAnnotation`, `VT100RemoteHost`, `VT100WorkingDirectory`.
 
@@ -1204,7 +1204,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/Settings/TriggerController.m:385` in `-[TriggerController indexOfAction:]`: `NSClassFromString` on `className`
 
-  **CLOSED.** `className` is `NSStringFromClass(classes[i])` (line 381) over `+triggerClassesForTerminal:` (TriggerController.m:260), a round trip of known classes, used to call `+synonyms`. Reach: the trigger classes in that list (see Trigger.m:77). The same name is also compared (line 382) with `action`, which `-triggerWithAction:` (line 404) passes from a stored trigger dictionary's `kTriggerActionKey` (lines 1331, 1367, 1386, 1409): the class name that `-[Trigger dictionaryValue]` wrote (section 5, Trigger.m:563). A stored name therefore matches only a class whose runtime name is still exactly that string (or one of its `+synonyms`); this is the section 5 use of line 381, covered here.
+  **CLOSED.** `className` is `NSStringFromClass(classes[i])` over `+triggerClassesForTerminal:` (TriggerController.m in +[TriggerController triggerClassesForTerminal:]), a round trip of known classes, used to call `+synonyms`. Reach: the trigger classes in that list (see Trigger.m in +[Trigger triggerFromUntrustedDict:]). The same name is also compared with `action`, which `-triggerWithAction:` passes from a stored trigger dictionary's `kTriggerActionKey` (in -[TriggerController actionDidChange:], -[TriggerController parameterPopUpButtonDidChange:] and -[TriggerController comboBoxSelectionDidChange:]): the class name that `-[Trigger dictionaryValue]` wrote (section 5, Trigger.m in -[Trigger dictionaryValue]). A stored name therefore matches only a class whose runtime name is still exactly that string (or one of its `+synonyms`); this is the section 5 use of `NSStringFromClass(classes[i])`, covered here.
 
   Names: `AlertTrigger`, `AnnotateTrigger`, `BellTrigger`, `BounceTrigger`, `iTermRPCTrigger`, `CaptureTrigger`, `iTermBufferInputTrigger`, `iTermFoldTrigger`, `iTermInjectTrigger`, `iTermEnterWorkgroupTrigger`, `iTermExitWorkgroupTrigger`, `iTermHighlightLineTrigger`, `iTermUserNotificationTrigger`, `iTermSetUserVariableTrigger`, `iTermSetProfileBooleanTrigger`, `iTermShellPromptTrigger`, `iTermSetTitleTrigger`, `iTermSetNamedMarkTrigger`, `iTermSGRTrigger`, `SendTextTrigger`, `ScriptTrigger`, `CoprocessTrigger`, `MuteCoprocessTrigger`, `HighlightTrigger`, `MarkTrigger`, `PasswordTrigger`, `iTermHyperlinkTrigger`, `SetDirectoryTrigger`, `SetHostnameTrigger`, `StopTrigger`, `iTermSetTabStatusTrigger`, `ReaderModeBrowserTrigger`, `HighlightBrowserTrigger`, `HyperlinkBrowserTrigger`, `ReloadBrowserTrigger`, `InjectJavascriptURLTrigger`, `InjectJavascriptContentTrigger`, `iTermEnterWorkgroupBrowserTrigger`, `iTermExitWorkgroupBrowserTrigger`.
 
@@ -1212,7 +1212,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/StatusBar/Components/iTermStatusBarBaseComponent.m:51` in `-[iTermStatusBarBuiltInComponentFactory initWithCoder:]`: `NSClassFromString` on `className`
 
-  **OPEN-EXTERNAL.** `-[iTermStatusBarBuiltInComponentFactory initWithCoder:]` decodes a class name and later calls `[[_class alloc] initWithConfiguration:scope:]`. Input: drag-and-drop data of type `iTermStatusBarElementPasteboardType`, unarchived with `requiresSecureCoding = NO`. Check: non-nil, then `conformsToProtocol:@protocol(iTermStatusBarComponent)` (a class that does not conform makes the factory nil; added 2026-11-21, owner queue Q21 item 3; before, only non-nil). The decoding itself is still not secure coding. The citation for the unarchiving: the effective `requiresSecureCoding = NO` is in `-[NSData it_unarchivedObjectOfClasses:]` (NSData+iTerm.m:305), called at iTermStatusBarSetupDestinationCollectionViewController.m:347; line 346 also sets it on an unarchiver that is never used. Writer: iTermStatusBarBaseComponent.m:70 (section 5). Names the app writes: the component classes listed at iTermStatusBarLayout.m:112, same history.
+  **OPEN-EXTERNAL.** `-[iTermStatusBarBuiltInComponentFactory initWithCoder:]` decodes a class name and later calls `[[_class alloc] initWithConfiguration:scope:]`. Input: drag-and-drop data of type `iTermStatusBarElementPasteboardType`, unarchived with `requiresSecureCoding = NO`. Check: non-nil, then `conformsToProtocol:@protocol(iTermStatusBarComponent)` (a class that does not conform makes the factory nil; added 2026-11-21, owner queue Q21 item 3; before, only non-nil). The decoding itself is still not secure coding. The citation for the unarchiving: the effective `requiresSecureCoding = NO` is in `-[NSData it_unarchivedObjectOfClasses:]` (NSData+iTerm.m in -[NSData(iTerm) it_unarchivedObjectOfClasses:]), called at iTermStatusBarSetupDestinationCollectionViewController.m in -[iTermStatusBarSetupDestinationCollectionViewController collectionView:acceptDrop:indexPath:dropOperation:]; the same method also sets it on an unarchiver that is never used. Writer: iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:] (section 5). Names the app writes: the component classes listed at iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], same history.
 
   Names: `iTermStatusBarActionComponent`, `iTermStatusBarActionMenuComponent`, `iTermStatusBarAttributedTextComponent`, `iTermStatusBarBatteryComponent`, `iTermStatusBarClockComponent`, `iTermStatusBarComposerComponent`, `iTermStatusBarCPUUtilizationComponent`, `iTermStatusBarFixedSpacerComponent`, `iTermStatusBarFunctionCallComponent`, `iTermStatusBarGitComponent`, `iTermStatusBarHostnameComponent`, `iTermStatusBarJobComponent`, `iTermStatusBarMemoryUtilizationComponent`, `iTermStatusBarNetworkUtilizationComponent`, `iTermStatusBarPlaceholderComponent`, `iTermStatusBarProgressComponent`, `iTermStatusBarRPCProvidedAttributedTextComponent`, `iTermStatusBarRPCProvidedTextComponent`, `iTermStatusBarSearchFieldComponent`, `iTermStatusBarSnippetMenuComponent`, `iTermStatusBarSparklinesComponent`, `iTermStatusBarSpringComponent`, `iTermStatusBarSwiftyStringComponent`, `iTermStatusBarTextComponent`, `iTermStatusBarTmuxLeftComponent`, `iTermStatusBarTmuxRightComponent`, `iTermStatusBarUsernameComponent`, `iTermStatusBarVariableBaseComponent`, `iTermStatusBarWorkingDirectoryComponent`, `iTermStatusBarFilterComponent`, `iTermStatusBarTriggersComponent`, `initWithConfiguration:scope:`.
 
@@ -1220,7 +1220,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/StatusBar/Core/iTermStatusBarLayout.m:112` in `+[iTermStatusBarLayout componentsArrayFromDictionary:scope:]`: `NSClassFromString` on `className`
 
-  **OPEN-EXTERNAL.** Class name from a status bar layout dictionary in a profile (user defaults, Dynamic Profiles, the Python API). Check: `conformsToProtocol:@protocol(iTermStatusBarComponent)`, then `initWithConfiguration:scope:`. Names the app writes: the component classes, `iTermStatusBarActionComponent`, `iTermStatusBarActionMenuComponent`, `iTermStatusBarAttributedTextComponent`, `iTermStatusBarBatteryComponent`, `iTermStatusBarClockComponent`, `iTermStatusBarComposerComponent`, `iTermStatusBarCPUUtilizationComponent`, `iTermStatusBarFixedSpacerComponent`, `iTermStatusBarFunctionCallComponent`, `iTermStatusBarGitComponent`, `iTermStatusBarHostnameComponent`, `iTermStatusBarJobComponent`, `iTermStatusBarMemoryUtilizationComponent`, `iTermStatusBarNetworkUtilizationComponent`, `iTermStatusBarPlaceholderComponent`, `iTermStatusBarProgressComponent`, `iTermStatusBarRPCProvidedAttributedTextComponent`, `iTermStatusBarRPCProvidedTextComponent`, `iTermStatusBarSearchFieldComponent`, `iTermStatusBarSnippetMenuComponent`, `iTermStatusBarSparklinesComponent`, `iTermStatusBarSpringComponent`, `iTermStatusBarSwiftyStringComponent`, `iTermStatusBarTextComponent`, `iTermStatusBarTmuxLeftComponent`, `iTermStatusBarTmuxRightComponent`, `iTermStatusBarUsernameComponent`, `iTermStatusBarVariableBaseComponent`, `iTermStatusBarWorkingDirectoryComponent`, `iTermStatusBarFilterComponent`, `iTermStatusBarTriggersComponent` (from `@interface ... : ...Component` in sources and the two Swift classes with `@objc(Name)`). Writers: iTermStatusBarLayout.m:166 (section 5). Names written by older versions: git history of the component files shows only moves, no renamed or deleted component class, and there is no rename table. Persisted by name.
+  **OPEN-EXTERNAL.** Class name from a status bar layout dictionary in a profile (user defaults, Dynamic Profiles, the Python API). Check: `conformsToProtocol:@protocol(iTermStatusBarComponent)`, then `initWithConfiguration:scope:`. Names the app writes: the component classes, `iTermStatusBarActionComponent`, `iTermStatusBarActionMenuComponent`, `iTermStatusBarAttributedTextComponent`, `iTermStatusBarBatteryComponent`, `iTermStatusBarClockComponent`, `iTermStatusBarComposerComponent`, `iTermStatusBarCPUUtilizationComponent`, `iTermStatusBarFixedSpacerComponent`, `iTermStatusBarFunctionCallComponent`, `iTermStatusBarGitComponent`, `iTermStatusBarHostnameComponent`, `iTermStatusBarJobComponent`, `iTermStatusBarMemoryUtilizationComponent`, `iTermStatusBarNetworkUtilizationComponent`, `iTermStatusBarPlaceholderComponent`, `iTermStatusBarProgressComponent`, `iTermStatusBarRPCProvidedAttributedTextComponent`, `iTermStatusBarRPCProvidedTextComponent`, `iTermStatusBarSearchFieldComponent`, `iTermStatusBarSnippetMenuComponent`, `iTermStatusBarSparklinesComponent`, `iTermStatusBarSpringComponent`, `iTermStatusBarSwiftyStringComponent`, `iTermStatusBarTextComponent`, `iTermStatusBarTmuxLeftComponent`, `iTermStatusBarTmuxRightComponent`, `iTermStatusBarUsernameComponent`, `iTermStatusBarVariableBaseComponent`, `iTermStatusBarWorkingDirectoryComponent`, `iTermStatusBarFilterComponent`, `iTermStatusBarTriggersComponent` (from `@interface ... : ...Component` in sources and the two Swift classes with `@objc(Name)`). Writers: iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue] (section 5). Names written by older versions: git history of the component files shows only moves, no renamed or deleted component class, and there is no rename table. Persisted by name.
 
   Names: `iTermStatusBarActionComponent`, `iTermStatusBarActionMenuComponent`, `iTermStatusBarAttributedTextComponent`, `iTermStatusBarBatteryComponent`, `iTermStatusBarClockComponent`, `iTermStatusBarComposerComponent`, `iTermStatusBarCPUUtilizationComponent`, `iTermStatusBarFixedSpacerComponent`, `iTermStatusBarFunctionCallComponent`, `iTermStatusBarGitComponent`, `iTermStatusBarHostnameComponent`, `iTermStatusBarJobComponent`, `iTermStatusBarMemoryUtilizationComponent`, `iTermStatusBarNetworkUtilizationComponent`, `iTermStatusBarPlaceholderComponent`, `iTermStatusBarProgressComponent`, `iTermStatusBarRPCProvidedAttributedTextComponent`, `iTermStatusBarRPCProvidedTextComponent`, `iTermStatusBarSearchFieldComponent`, `iTermStatusBarSnippetMenuComponent`, `iTermStatusBarSparklinesComponent`, `iTermStatusBarSpringComponent`, `iTermStatusBarSwiftyStringComponent`, `iTermStatusBarTextComponent`, `iTermStatusBarTmuxLeftComponent`, `iTermStatusBarTmuxRightComponent`, `iTermStatusBarUsernameComponent`, `iTermStatusBarVariableBaseComponent`, `iTermStatusBarWorkingDirectoryComponent`, `iTermStatusBarFilterComponent`, `iTermStatusBarTriggersComponent`, `initWithConfiguration:scope:`.
 
@@ -1228,7 +1228,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/Triggers/Trigger.m:77` in `+[Trigger triggerFromUntrustedDict:]`: `NSClassFromString` on `className`
 
-  **OPEN-EXTERNAL.** Class name from a trigger dictionary's action key (`kTriggerActionKey`): profiles in user defaults, Dynamic Profiles files, the Python API, and pasteboard imports. Check: `isSubclassOfClass:[Trigger class]` and not `Trigger` itself. Names the app writes: the classes of `+[TriggerController triggerClassesForTerminal:]` (TriggerController.m:260): `AlertTrigger`, `AnnotateTrigger`, `BellTrigger`, `BounceTrigger`, `iTermRPCTrigger`, `CaptureTrigger`, `iTermBufferInputTrigger`, `iTermFoldTrigger`, `iTermInjectTrigger`, `iTermEnterWorkgroupTrigger`, `iTermExitWorkgroupTrigger`, `iTermHighlightLineTrigger`, `iTermUserNotificationTrigger`, `iTermSetUserVariableTrigger`, `iTermSetProfileBooleanTrigger`, `iTermShellPromptTrigger`, `iTermSetTitleTrigger`, `iTermSetNamedMarkTrigger`, `iTermSGRTrigger`, `SendTextTrigger`, `ScriptTrigger`, `CoprocessTrigger`, `MuteCoprocessTrigger`, `HighlightTrigger`, `MarkTrigger`, `PasswordTrigger`, `iTermHyperlinkTrigger`, `SetDirectoryTrigger`, `SetHostnameTrigger`, `StopTrigger`, `iTermSetTabStatusTrigger`, `ReaderModeBrowserTrigger`, `HighlightBrowserTrigger`, `HyperlinkBrowserTrigger`, `ReloadBrowserTrigger`, `InjectJavascriptURLTrigger`, `InjectJavascriptContentTrigger`, `iTermEnterWorkgroupBrowserTrigger`, `iTermExitWorkgroupBrowserTrigger`. Of the Swift ones, `HighlightBrowserTrigger`, `HyperlinkBrowserTrigger` (no `@objc`) and `ReaderModeBrowserTrigger` (`@objc` without a name) have module-qualified runtime names, so the stored name depends on the Swift module name. `GrowlTrigger` is a real class: an empty subclass of `iTermUserNotificationTrigger` (iTermUserNotificationTrigger.m:20 to 24) kept so that triggers saved under that name still load here, and also a synonym (`+synonyms`, line 31) used by `-[TriggerController indexOfAction:]`. Names written by older versions, from the comment at iTermUserNotificationTrigger.m:16 and git history: `GrowlTrigger` (all versions before 3.2.1 and from 3.2.2 on), `iTermUserNotificationTrigger` (3.2.1 and the 3.3.0 betas); `InteractiveScriptTrigger` was renamed to `CoprocessTrigger` long ago (commit bf9dc0159) with no compatibility class, so triggers saved under it no longer load; `iTermPromptStartTrigger` became `iTermShellPromptTrigger` (commits 2cf5a5904 to 7d07124e2, apparently before release). Persisted by name: every class in this list and `GrowlTrigger`.
+  **OPEN-EXTERNAL.** Class name from a trigger dictionary's action key (`kTriggerActionKey`): profiles in user defaults, Dynamic Profiles files, the Python API, and pasteboard imports. Check: `isSubclassOfClass:[Trigger class]` and not `Trigger` itself. Names the app writes: the classes of `+[TriggerController triggerClassesForTerminal:]` (TriggerController.m in +[TriggerController triggerClassesForTerminal:]): `AlertTrigger`, `AnnotateTrigger`, `BellTrigger`, `BounceTrigger`, `iTermRPCTrigger`, `CaptureTrigger`, `iTermBufferInputTrigger`, `iTermFoldTrigger`, `iTermInjectTrigger`, `iTermEnterWorkgroupTrigger`, `iTermExitWorkgroupTrigger`, `iTermHighlightLineTrigger`, `iTermUserNotificationTrigger`, `iTermSetUserVariableTrigger`, `iTermSetProfileBooleanTrigger`, `iTermShellPromptTrigger`, `iTermSetTitleTrigger`, `iTermSetNamedMarkTrigger`, `iTermSGRTrigger`, `SendTextTrigger`, `ScriptTrigger`, `CoprocessTrigger`, `MuteCoprocessTrigger`, `HighlightTrigger`, `MarkTrigger`, `PasswordTrigger`, `iTermHyperlinkTrigger`, `SetDirectoryTrigger`, `SetHostnameTrigger`, `StopTrigger`, `iTermSetTabStatusTrigger`, `ReaderModeBrowserTrigger`, `HighlightBrowserTrigger`, `HyperlinkBrowserTrigger`, `ReloadBrowserTrigger`, `InjectJavascriptURLTrigger`, `InjectJavascriptContentTrigger`, `iTermEnterWorkgroupBrowserTrigger`, `iTermExitWorkgroupBrowserTrigger`. Of the Swift ones, `HighlightBrowserTrigger`, `HyperlinkBrowserTrigger` (no `@objc`) and `ReaderModeBrowserTrigger` (`@objc` without a name) have module-qualified runtime names, so the stored name depends on the Swift module name. `GrowlTrigger` is a real class: an empty subclass of `iTermUserNotificationTrigger` (iTermUserNotificationTrigger.m in the GrowlTrigger class) kept so that triggers saved under that name still load here, and also a synonym (`+synonyms`) used by `-[TriggerController indexOfAction:]`. Names written by older versions, from the comment at iTermUserNotificationTrigger.m in the comment above the GrowlTrigger class and git history: `GrowlTrigger` (all versions before 3.2.1 and from 3.2.2 on), `iTermUserNotificationTrigger` (3.2.1 and the 3.3.0 betas); `InteractiveScriptTrigger` was renamed to `CoprocessTrigger` long ago (commit bf9dc0159) with no compatibility class, so triggers saved under it no longer load; `iTermPromptStartTrigger` became `iTermShellPromptTrigger` (commits 2cf5a5904 to 7d07124e2, apparently before release). Persisted by name: every class in this list and `GrowlTrigger`.
 
   Names: `AlertTrigger`, `AnnotateTrigger`, `BellTrigger`, `BounceTrigger`, `iTermRPCTrigger`, `CaptureTrigger`, `iTermBufferInputTrigger`, `iTermFoldTrigger`, `iTermInjectTrigger`, `iTermEnterWorkgroupTrigger`, `iTermExitWorkgroupTrigger`, `iTermHighlightLineTrigger`, `iTermUserNotificationTrigger`, `iTermSetUserVariableTrigger`, `iTermSetProfileBooleanTrigger`, `iTermShellPromptTrigger`, `iTermSetTitleTrigger`, `iTermSetNamedMarkTrigger`, `iTermSGRTrigger`, `SendTextTrigger`, `ScriptTrigger`, `CoprocessTrigger`, `MuteCoprocessTrigger`, `HighlightTrigger`, `MarkTrigger`, `PasswordTrigger`, `iTermHyperlinkTrigger`, `SetDirectoryTrigger`, `SetHostnameTrigger`, `StopTrigger`, `iTermSetTabStatusTrigger`, `ReaderModeBrowserTrigger`, `HighlightBrowserTrigger`, `HyperlinkBrowserTrigger`, `ReloadBrowserTrigger`, `InjectJavascriptURLTrigger`, `InjectJavascriptContentTrigger`, `iTermEnterWorkgroupBrowserTrigger`, `iTermExitWorkgroupBrowserTrigger`, `GrowlTrigger`.
 
@@ -1251,7 +1251,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 - `sources/Categories/NSUserDefaults+iTerm.m:36` in `-[NSUserDefaults(iTerm) it_addObserverForKey:block:]`: `addObserver:forKeyPath:options:context:` on `key`
 
-  **CLOSED.** KVO on `NSUserDefaults` for a user-defaults key. Callers pass `kPreferenceKeyTabStyle` (iTermApplicationDelegate.m:1460, iTermGlobalScopeController.m:77, PTYSession.m:1261). The key names a defaults entry, not a method; no app method is reached.
+  **CLOSED.** KVO on `NSUserDefaults` for a user-defaults key. Callers pass `kPreferenceKeyTabStyle` (iTermApplicationDelegate.m in -[iTermApplicationDelegate applicationWillFinishLaunching:], iTermGlobalScopeController.m in -[iTermGlobalScopeController init], PTYSession.m in -[PTYSession initSynthetic:]). The key names a defaults entry, not a method; no app method is reached.
 
   Names: none.
 
@@ -1260,7 +1260,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 - `sources/Settings/Profiles/ProfileListView.m:784` in `-[ProfileListView tableView:didClickTableColumn:]`: `initWithKey:ascending:` on `[aTableColumn identifier]`
 - `sources/Settings/Profiles/ProfileListView.m:794` in `-[ProfileListView tableView:didClickTableColumn:]`: `initWithKey:ascending:` on `[aTableColumn identifier]`
 
-  **CLOSED.** Sort key is the clicked column's identifier. ProfileListView creates exactly three columns, with identifiers `name` (line 173), `shortcut` (1023) and `command` (1028). The descriptors sort `ProfileTableRow` objects (ProfileModelWrapper.m:56). Reach: `-[ProfileTableRow name]`, `-[ProfileTableRow shortcut]`, `-[ProfileTableRow command]`.
+  **CLOSED.** Sort key is the clicked column's identifier. ProfileListView creates exactly three columns, with identifiers `name`, `shortcut` and `command`. The descriptors sort `ProfileTableRow` objects (ProfileModelWrapper.m in -[ProfileModelWrapper sort]). Reach: `-[ProfileTableRow name]`, `-[ProfileTableRow shortcut]`, `-[ProfileTableRow command]`.
 
   Names: `ProfileTableRow.name`, `ProfileTableRow.shortcut`, `ProfileTableRow.command`.
 
@@ -1269,7 +1269,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 - `sources/Settings/iTermUserDefaultsObserver.m:39` in `-[iTermUserDefaultsObserver dealloc]`: `removeObserver:forKeyPath:context:` on `key`
 - `sources/Settings/iTermUserDefaultsObserver.m:49` in `-[iTermUserDefaultsObserver observeKey:block:]`: `addObserver:forKeyPath:options:context:` on `key`
 
-  **CLOSED.** KVO on `NSUserDefaults` for user-defaults keys passed to `-observeKey:block:` (iTermKeyMappings.m, PTYSession.m, GeneralPreferencesViewController.m, PreferenceInfo.m, ProfilesSessionPreferencesViewController.m, iTermAdvancedSettingsModel.m:1113, iTermPreferences.m, and Swift callers). Keys are defaults keys (some from data such as advanced-setting identifiers), not methods; no app method is reached. Line drift: database lines 38 and 48 are now 39 and 49.
+  **CLOSED.** KVO on `NSUserDefaults` for user-defaults keys passed to `-observeKey:block:` (iTermKeyMappings.m, PTYSession.m, GeneralPreferencesViewController.m, PreferenceInfo.m, ProfilesSessionPreferencesViewController.m, iTermAdvancedSettingsModel.m in +[iTermAdvancedSettingsModel initialize], iTermPreferences.m, and Swift callers). Keys are defaults keys (some from data such as advanced-setting identifiers), not methods; no app method is reached.
 
   Names: none.
 
@@ -1287,7 +1287,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 - `sources/VT100Screen/VT100ScreenConfiguration.m:347` in `-[VT100MutableScreenConfiguration init]`: `addObserver:forKeyPath:options:context:` on `name`
 - `sources/VT100Screen/VT100ScreenConfiguration.m:358` in `-[VT100MutableScreenConfiguration dealloc]`: `removeObserver:forKeyPath:` on `selectorString`
 
-  **CLOSED.** KVO on self for every `@dynamic` property of `VT100MutableScreenConfiguration` (via `it_enumerateDynamicProperties:`). The set is the 57 `@dynamic` declarations at VT100ScreenConfiguration.m:281 to 338: `shouldPlacePromptAtFirstColumn`, `sessionGuid`, `stableID`, `treatAmbiguousCharsAsDoubleWidth`, `unicodeVersion`, `enableTriggersInInteractiveApps`, `triggerParametersUseInterpolatedStrings`, `triggerProfileDicts`, `isTmuxClient`, `printingAllowed`, `clipboardAccessAllowed`, `miniaturized`, `windowFrame`, `globalWindowFrame`, `screenFrames`, `theoreticalGridSize`, `iconTitle`, `windowTitle`, `clearScrollbackAllowed`, `profileName`, `cellSize`, `backingScaleFactor`, `maximumTheoreticalImageDimension`, `dimOnlyText`, `darkMode`, `useSeparateColorsForLightAndDarkMode`, `minimumContrast`, `faintTextAlpha`, `mutingAmount`, `normalization`, `appendToScrollbackWithStatusBar`, `saveToScrollbackInAlternateScreen`, `unlimitedScrollback`, `reduceFlicker`, `maxScrollbackLines`, `loggingEnabled`, `terminfoValues`, `alertOnNextMark`, `dimmingAmount`, `publishing`, `terminalCanChangeBlink`, `desiredComposerRows`, `autoComposerEnabled`, `useLineStyleMarks`, `optionIsMetaForSpecialChars`, `wantsCommandChangeNotifications`, `osc52`, `sessionIsVisible`, `audibleBell`, `showBellIndicator`, `flashBell`, `postUserNotifications`, `cursorBlinks`, `allowTitleReporting`, `allowTitleSetting`, `allowAlternateMouseScroll`, `isDirty`. Each must stay a KVO-observable property of that class with the `@dynamic` (D) attribute; a Swift port that drops the attribute silently stops the observation (no dirty tracking).
+  **CLOSED.** KVO on self for every `@dynamic` property of `VT100MutableScreenConfiguration` (via `it_enumerateDynamicProperties:`). The set is the 57 `@dynamic` declarations at VT100ScreenConfiguration.m in the @dynamic declarations of @implementation VT100MutableScreenConfiguration: `shouldPlacePromptAtFirstColumn`, `sessionGuid`, `stableID`, `treatAmbiguousCharsAsDoubleWidth`, `unicodeVersion`, `enableTriggersInInteractiveApps`, `triggerParametersUseInterpolatedStrings`, `triggerProfileDicts`, `isTmuxClient`, `printingAllowed`, `clipboardAccessAllowed`, `miniaturized`, `windowFrame`, `globalWindowFrame`, `screenFrames`, `theoreticalGridSize`, `iconTitle`, `windowTitle`, `clearScrollbackAllowed`, `profileName`, `cellSize`, `backingScaleFactor`, `maximumTheoreticalImageDimension`, `dimOnlyText`, `darkMode`, `useSeparateColorsForLightAndDarkMode`, `minimumContrast`, `faintTextAlpha`, `mutingAmount`, `normalization`, `appendToScrollbackWithStatusBar`, `saveToScrollbackInAlternateScreen`, `unlimitedScrollback`, `reduceFlicker`, `maxScrollbackLines`, `loggingEnabled`, `terminfoValues`, `alertOnNextMark`, `dimmingAmount`, `publishing`, `terminalCanChangeBlink`, `desiredComposerRows`, `autoComposerEnabled`, `useLineStyleMarks`, `optionIsMetaForSpecialChars`, `wantsCommandChangeNotifications`, `osc52`, `sessionIsVisible`, `audibleBell`, `showBellIndicator`, `flashBell`, `postUserNotifications`, `cursorBlinks`, `allowTitleReporting`, `allowTitleSetting`, `allowAlternateMouseScroll`, `isDirty`. Each must stay a KVO-observable property of that class with the `@dynamic` (D) attribute; a Swift port that drops the attribute silently stops the observation (no dirty tracking).
 
   Names: `VT100MutableScreenConfiguration.shouldPlacePromptAtFirstColumn`, `VT100MutableScreenConfiguration.sessionGuid`, `VT100MutableScreenConfiguration.stableID`, `VT100MutableScreenConfiguration.treatAmbiguousCharsAsDoubleWidth`, `VT100MutableScreenConfiguration.unicodeVersion`, `VT100MutableScreenConfiguration.enableTriggersInInteractiveApps`, `VT100MutableScreenConfiguration.triggerParametersUseInterpolatedStrings`, `VT100MutableScreenConfiguration.triggerProfileDicts`, `VT100MutableScreenConfiguration.isTmuxClient`, `VT100MutableScreenConfiguration.printingAllowed`, `VT100MutableScreenConfiguration.clipboardAccessAllowed`, `VT100MutableScreenConfiguration.miniaturized`, `VT100MutableScreenConfiguration.windowFrame`, `VT100MutableScreenConfiguration.globalWindowFrame`, `VT100MutableScreenConfiguration.screenFrames`, `VT100MutableScreenConfiguration.theoreticalGridSize`, `VT100MutableScreenConfiguration.iconTitle`, `VT100MutableScreenConfiguration.windowTitle`, `VT100MutableScreenConfiguration.clearScrollbackAllowed`, `VT100MutableScreenConfiguration.profileName`, `VT100MutableScreenConfiguration.cellSize`, `VT100MutableScreenConfiguration.backingScaleFactor`, `VT100MutableScreenConfiguration.maximumTheoreticalImageDimension`, `VT100MutableScreenConfiguration.dimOnlyText`, `VT100MutableScreenConfiguration.darkMode`, `VT100MutableScreenConfiguration.useSeparateColorsForLightAndDarkMode`, `VT100MutableScreenConfiguration.minimumContrast`, `VT100MutableScreenConfiguration.faintTextAlpha`, `VT100MutableScreenConfiguration.mutingAmount`, `VT100MutableScreenConfiguration.normalization`, `VT100MutableScreenConfiguration.appendToScrollbackWithStatusBar`, `VT100MutableScreenConfiguration.saveToScrollbackInAlternateScreen`, `VT100MutableScreenConfiguration.unlimitedScrollback`, `VT100MutableScreenConfiguration.reduceFlicker`, `VT100MutableScreenConfiguration.maxScrollbackLines`, `VT100MutableScreenConfiguration.loggingEnabled`, `VT100MutableScreenConfiguration.terminfoValues`, `VT100MutableScreenConfiguration.alertOnNextMark`, `VT100MutableScreenConfiguration.dimmingAmount`, `VT100MutableScreenConfiguration.publishing`, `VT100MutableScreenConfiguration.terminalCanChangeBlink`, `VT100MutableScreenConfiguration.desiredComposerRows`, `VT100MutableScreenConfiguration.autoComposerEnabled`, `VT100MutableScreenConfiguration.useLineStyleMarks`, `VT100MutableScreenConfiguration.optionIsMetaForSpecialChars`, `VT100MutableScreenConfiguration.wantsCommandChangeNotifications`, `VT100MutableScreenConfiguration.osc52`, `VT100MutableScreenConfiguration.sessionIsVisible`, `VT100MutableScreenConfiguration.audibleBell`, `VT100MutableScreenConfiguration.showBellIndicator`, `VT100MutableScreenConfiguration.flashBell`, `VT100MutableScreenConfiguration.postUserNotifications`, `VT100MutableScreenConfiguration.cursorBlinks`, `VT100MutableScreenConfiguration.allowTitleReporting`, `VT100MutableScreenConfiguration.allowTitleSetting`, `VT100MutableScreenConfiguration.allowAlternateMouseScroll`, `VT100MutableScreenConfiguration.isDirty`.
 
@@ -1326,7 +1326,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 - `sources/Categories/NSObject+iTerm.m:215` in `+[NSObject(iTerm) it_enumerateDynamicProperties:]`: `class_copyPropertyList` on `self`
 - `sources/Categories/NSObject+iTerm.m:223` in `+[NSObject(iTerm) it_enumerateDynamicProperties:]`: `property_getName` on `prop`
 
-  **GENERIC.** `+it_enumerateDynamicProperties:` lists the properties of the receiving class that have the `@dynamic` attribute. Its only callers are VT100ScreenConfiguration.m:346 and 357 (receiver `VT100MutableScreenConfiguration`), classified at those rows.
+  **GENERIC.** `+it_enumerateDynamicProperties:` lists the properties of the receiving class that have the `@dynamic` attribute. Its only callers are VT100ScreenConfiguration.m in -[VT100MutableScreenConfiguration init] and -[VT100MutableScreenConfiguration dealloc] (receiver `VT100MutableScreenConfiguration`), classified at those rows.
 
   Names: none.
 
@@ -1337,7 +1337,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 - `sources/Categories/NSTextView+iTermUndoSafety.m:43` in `+[NSTextView(iTermUndoSafety) load]`: `method_exchangeImplementations` on `originalMethod`
 - `sources/Categories/NSTextView+iTermUndoSafety.m:43` in `+[NSTextView(iTermUndoSafety) load]`: `method_exchangeImplementations` on `replacementMethod`
 
-  **CLOSED.** Swizzle in `+[NSTextView(iTermUndoSafety) load]`: `originalSelector = @selector(viewWillMoveToWindow:)` (line 25), `replacementSelector = @selector(iterm_undoSafety_viewWillMoveToWindow:)`. Reach: `-[NSTextView viewWillMoveToWindow:]` and `-[NSTextView(iTermUndoSafety) iterm_undoSafety_viewWillMoveToWindow:]`.
+  **CLOSED.** Swizzle in `+[NSTextView(iTermUndoSafety) load]`: `originalSelector = @selector(viewWillMoveToWindow:)`, `replacementSelector = @selector(iterm_undoSafety_viewWillMoveToWindow:)`. Reach: `-[NSTextView viewWillMoveToWindow:]` and `-[NSTextView(iTermUndoSafety) iterm_undoSafety_viewWillMoveToWindow:]`.
 
   Names: `iterm_undoSafety_viewWillMoveToWindow:`, `viewWillMoveToWindow:`.
 
@@ -1355,7 +1355,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 - `sources/Infrastructure/iTermSelectorSwizzler.m:20` in `+[iTermSelectorSwizzler permanentlySwizzleSelector:fromClass:withBlock:]`: `imp_implementationWithBlock` on `replacementBlock`
 - `sources/Infrastructure/iTermSelectorSwizzler.m:21` in `+[iTermSelectorSwizzler permanentlySwizzleSelector:fromClass:withBlock:]`: `method_setImplementation` on `originalMethod`
 
-  **GENERIC.** `+permanentlySwizzleSelector:fromClass:withBlock:` has one caller, iTermWindowImpl.m:100: `@selector(_updateDividerLayerForController:animated:)` on `NSClassFromString(@"NSTitlebarContainerView")` (private AppKit, string literal).
+  **GENERIC.** `+permanentlySwizzleSelector:fromClass:withBlock:` has one caller, iTermWindowImpl.m in -preventTitlebarDivider (of each window class that includes the file): `@selector(_updateDividerLayerForController:animated:)` on `NSClassFromString(@"NSTitlebarContainerView")` (private AppKit, string literal).
 
   Names: `_updateDividerLayerForController:animated:`, `NSTitlebarContainerView`.
 
@@ -1366,7 +1366,7 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 - `sources/Language/iTermBuiltInFunctions.m:558` in `-[iTermBuiltInMethod callWithArguments:connectionKey:cancellation:completion:]`: `instanceMethodSignatureForSelector:` on `_action`
 - `sources/Language/iTermBuiltInFunctions.m:561` in `-[iTermBuiltInMethod callWithArguments:connectionKey:cancellation:completion:]`: `setSelector:` on `_action`
 
-  **CLOSED.** `_action` is the selector given to `-[iTermBuiltInMethod initWithName:...action:...]`; `iTermReflection` reads the same method's argument count and names from the runtime (`class_getInstanceMethod`, `method_getName`, split on `:`). Registrations (all `@selector`): PTYSession.m:25593 to 25698, PTYTab.m:10061 and 10071, PseudoTerminal.m:17837 to 17879; ModernTests/ScriptCallCancellationTests.swift:31 registers a test method. Reach: `setNameWithCompletion:name:`, `sendTmuxCommandWithCompletion:command:`, `setStatusBarComponentUnreadCountWithCompletion:identifier:count:`, `stopCoprocessWithCompletion:`, `getCoprocessWithCompletion:`, `runCoprocessWithCompletion:commandLine:mute:`, `addAnnotationWithCompletion:startX:startY:endX:endY:text:`, `fetchTimeOffsetWithCompletion:`, `loadURLWithCompletion:url:connectionKey:cancellation:`, `browserSetToolbarHiddenWithCompletion:hidden:`, `browserEvalJSWithCompletion:js:connectionKey:cancellation:`, `setTitleWithCompletion:title:`, `selectPaneInDirectionWithCompletion:direction:`, `apiCreateTabGroupWithCompletion:tab_ids:name:color:parent_group_id:`, `apiAddTabToGroupWithCompletion:tab_id:group_id:`, `apiRemoveTabFromGroupWithCompletion:tab_id:`. The selector keywords after the first are the scripting-function argument names, so these selectors are part of the scripting API; the methods also depend on their type encodings (argument classes, see iTermBuiltInFunctions.m:464).
+  **CLOSED.** `_action` is the selector given to `-[iTermBuiltInMethod initWithName:...action:...]`; `iTermReflection` reads the same method's argument count and names from the runtime (`class_getInstanceMethod`, `method_getName`, split on `:`). Registrations (all `@selector`): PTYSession.m in -[PTYSession objectMethodRegistry], PTYTab.m in -[PTYTab objectMethodRegistry], PseudoTerminal.m in -[PseudoTerminal broadcastInputHelper:sessionsInTabWithSession:includeExited:] and -[PseudoTerminal broadcastInputHelperDidUpdate:]; ModernTests/ScriptCallCancellationTests.swift in ScriptCallCancellationTestTarget.init() registers a test method. Reach: `setNameWithCompletion:name:`, `sendTmuxCommandWithCompletion:command:`, `setStatusBarComponentUnreadCountWithCompletion:identifier:count:`, `stopCoprocessWithCompletion:`, `getCoprocessWithCompletion:`, `runCoprocessWithCompletion:commandLine:mute:`, `addAnnotationWithCompletion:startX:startY:endX:endY:text:`, `fetchTimeOffsetWithCompletion:`, `loadURLWithCompletion:url:connectionKey:cancellation:`, `browserSetToolbarHiddenWithCompletion:hidden:`, `browserEvalJSWithCompletion:js:connectionKey:cancellation:`, `setTitleWithCompletion:title:`, `selectPaneInDirectionWithCompletion:direction:`, `apiCreateTabGroupWithCompletion:tab_ids:name:color:parent_group_id:`, `apiAddTabToGroupWithCompletion:tab_id:group_id:`, `apiRemoveTabFromGroupWithCompletion:tab_id:`. The selector keywords after the first are the scripting-function argument names, so these selectors are part of the scripting API; the methods also depend on their type encodings (argument classes, see iTermBuiltInFunctions.m in +[iTermBuiltInMethod argumentDictionaryFromArray:]).
 
   Names: `setNameWithCompletion:name:`, `sendTmuxCommandWithCompletion:command:`, `setStatusBarComponentUnreadCountWithCompletion:identifier:count:`, `stopCoprocessWithCompletion:`, `getCoprocessWithCompletion:`, `runCoprocessWithCompletion:commandLine:mute:`, `addAnnotationWithCompletion:startX:startY:endX:endY:text:`, `fetchTimeOffsetWithCompletion:`, `loadURLWithCompletion:url:connectionKey:cancellation:`, `browserSetToolbarHiddenWithCompletion:hidden:`, `browserEvalJSWithCompletion:js:connectionKey:cancellation:`, `setTitleWithCompletion:title:`, `selectPaneInDirectionWithCompletion:direction:`, `apiCreateTabGroupWithCompletion:tab_ids:name:color:parent_group_id:`, `apiAddTabToGroupWithCompletion:tab_id:group_id:`, `apiRemoveTabFromGroupWithCompletion:tab_id:`.
 
@@ -1384,35 +1384,35 @@ Grouped by mechanism, then by file. Each bullet is one database row (file and cu
 
 ## 4. Callers of generic helpers
 
-Sites that are not database rows: they pass a computed selector to an app helper (most often `-[NSObject(iTerm) it_performNonObjectReturningSelector:...]`, `NSObject+iTerm.m:290` to 312) whose own call is a GENERIC row above. Callers that pass `@selector` literals are listed in the helper's entry and need nothing more. Callers in the same method as a database row (`iTermFindDriver.m:762`, the status bar knob controllers, `iTermStatusBarSetupDestinationCollectionViewController.m:55`, `TmuxGateway.m:621` to 635, `TmuxController.m:4662`) are covered by that row's entry.
+Sites that are not database rows: they pass a computed selector to an app helper (most often `-[NSObject(iTerm) it_performNonObjectReturningSelector:...]`, `NSObject+iTerm.m` in -[NSObject(iTerm) it_performNonObjectReturningSelector:withObject:] and its siblings) whose own call is a GENERIC row above. Callers that pass `@selector` literals are listed in the helper's entry and need nothing more. Callers in the same method as a database row (`iTermFindDriver.m` in -[iTermFindDriver doCommandBySelector:], the status bar knob controllers, `iTermStatusBarSetupDestinationCollectionViewController.m` in -[iTermStatusBarSetupDestinationCollectionView doCommandBySelector:], `TmuxGateway.m` in -[TmuxGateway invokeCurrentCallbackWithError:], `TmuxController.m` in -[TmuxController didListWindows:userData:]) are covered by that row's entry.
 
 - `sources/Infrastructure/iTermGCDTimer.m:92` in `-[iTermGCDTimer didFire]`: `it_performNonObjectReturningSelector:withObject: [_selector]`
 
-  **CLOSED.** Selector from `initWithInterval:...target:selector:` and `+scheduledWeakTimerWithTimeInterval:target:selector:queue:`. Callers: iTermEchoProbe.m:69 `timeout`, iTermSwipeTracker.m:198 `update:`, iTermTemporaryDoubleBufferedGridController.m:112 `savedGridExpirationTimer:`, iTermRateLimitedUpdate.m:79 `performBlockIfNeeded:`. No Swift callers.
+  **CLOSED.** Selector from `initWithInterval:...target:selector:` and `+scheduledWeakTimerWithTimeInterval:target:selector:queue:`. Callers: iTermEchoProbe.m in -[iTermEchoProbe beginProbeWithBackspace:password:] `timeout`, iTermSwipeTracker.m in -[iTermSwipeTracker updateTimer] `update:`, iTermTemporaryDoubleBufferedGridController.m in -[iTermTemporaryDoubleBufferedGridController scheduleTimer] `savedGridExpirationTimer:`, iTermRateLimitedUpdate.m in -[iTermRateLimitedUpdate scheduleTimerAfterDelay:] `performBlockIfNeeded:`. No Swift callers.
 
   Names: `timeout`, `update:`, `savedGridExpirationTimer:`, `performBlockIfNeeded:`.
 
 - `sources/Notifications/iTermNotificationCenter.m:52` in `+[iTermBaseNotification subscribe:selector:]`: `it_performNonObjectReturningSelector:withObject: [selector]`
 
-  **CLOSED.** Callers pass `@selector`: iTermActionsMenuController.m:15 `actionsDidChange:`, iTermSnippetsMenuController.m:31 `snippetsDidChange:`, PTYTab.m:615 `preferenceDidChange:`. No Swift callers.
+  **CLOSED.** Callers pass `@selector`: iTermActionsMenuController.m in -[iTermActionsMenuController awakeFromNib] `actionsDidChange:`, iTermSnippetsMenuController.m in -[iTermSnippetsMenuController awakeFromNib] `snippetsDidChange:`, PTYTab.m in -[PTYTab commonInit] `preferenceDidChange:`. No Swift callers.
 
   Names: `actionsDidChange:`, `snippetsDidChange:`, `preferenceDidChange:`.
 
 - `sources/SemanticHistory/iTermURLActionHelper.m:480` in `-[iTermURLActionHelper finishOpeningTargetWithEvent:coord:inBackground:style:action:generation:smartSelectionActionsOnly:]`: `it_performNonObjectReturningSelector:withObject: [action.selector]`
 
-  **CLOSED.** `action.selector` is set at iTermURLActionFactory.m:574 from the smart-selection table (see that entry). Reach: the seven `contextMenuAction...:` selectors on `iTermTextViewContextMenuHelper`.
+  **CLOSED.** `action.selector` is set at iTermURLActionFactory.m in -[iTermURLActionFactory computeURLActionForSmartSelection:] from the smart-selection table (see that entry). Reach: the seven `contextMenuAction...:` selectors on `iTermTextViewContextMenuHelper`.
 
   Names: `contextMenuActionOpenFile:`, `contextMenuActionOpenURL:`, `contextMenuActionRunCommand:`, `contextMenuActionRunCoprocess:`, `contextMenuActionSendText:`, `contextMenuActionRunCommandInWindow:`, `contextMenuActionCopy:`.
 
 - `sources/Settings/iTermBadgeConfigurationWindowController.m:224` in `-[iTermBadgeConfigurationBadgeView mouseDragged:]`: `it_performNonObjectReturningSelector:withObject: [_selector]`
 
-  **CLOSED.** `_selector` is `edge.selector` from the C array at lines 122 to 125: `adjustLeft:`, `adjustRight:`, `adjustTop:`, `adjustBottom:`.
+  **CLOSED.** `_selector` is `edge.selector` from the C array in -[iTermBadgeConfigurationBadgeView edge:]: `adjustLeft:`, `adjustRight:`, `adjustTop:`, `adjustBottom:`.
 
   Names: `adjustLeft:`, `adjustRight:`, `adjustTop:`, `adjustBottom:`.
 
 - `sources/Settings/iTermSlider.m:187` in `-[iTermSlider performAction]`: `it_performNonObjectReturningSelector:withObject: [_action]`
 
-  **CLOSED.** `_action` is copied from the embedded `NSSlider`'s action (iTermSlider.m:121). iTermSlider is used only in PreferencePanel.xib, where all ten embedded sliders have action `settingChanged:` (xib). Reach: `settingChanged:` on the preferences view controllers; pinned by the xib binding tests.
+  **CLOSED.** `_action` is copied from the embedded `NSSlider`'s action (iTermSlider.m in -[iTermSlider awakeFromNib]). iTermSlider is used only in PreferencePanel.xib, where all ten embedded sliders have action `settingChanged:` (xib). Reach: `settingChanged:` on the preferences view controllers; pinned by the xib binding tests.
 
   Names: `settingChanged:`.
 
@@ -1424,37 +1424,37 @@ Sites that are not database rows: they pass a computed selector to an app helper
 
 - `sources/TIps/iTermTipCardActionButton.m:127` in `-[iTermTipCardActionButton accessibilityPerformPress]`: `it_performNonObjectReturningSelector:withObject: [self.action]`
 
-  **CLOSED.** The only assignment of an action is iTermTipCardViewController.m:232, `@selector(buttonPressed:)`; iTermTipWindowController.m:439 and 558 set it to nil.
+  **CLOSED.** The only assignment of an action is iTermTipCardViewController.m in -[iTermTipCardViewController addActionWithTitle:shortcut:icon:block:], `@selector(buttonPressed:)`; iTermTipWindowController.m in -[iTermTipWindowController animateOut] and -[iTermTipWindowController rollInTip:fromRight:] set it to nil.
 
   Names: `buttonPressed:`.
 
 - `sources/TIps/iTermTipCardActionButton.m:328` in `-[iTermTipCardActionButton mouseUp:]`: `it_performNonObjectReturningSelector:withObject: [self.action]`
 
-  **CLOSED.** Same as line 127: `buttonPressed:`.
+  **CLOSED.** Same as the entry of -[iTermTipCardActionButton accessibilityPerformPress]: `buttonPressed:`.
 
   Names: `buttonPressed:`.
 
 - `sources/Toolbelt/ToolProfiles.m:227` in `-[ToolProfiles open:]`: `it_performNonObjectReturningSelector:withObject: [[popup_ selectedItem] action]`
 
-  **CLOSED.** The popup's items are added at ToolProfiles.m:67 to 80 with `@selector(toolProfilesNewTab:)`, `toolProfilesNewWindow:`, `toolProfilesNewHorizontalSplit:`, `toolProfilesNewVerticalSplit:`, `toolProfilesNewFloatingPane:`.
+  **CLOSED.** The popup's items are added at ToolProfiles.m in -[ToolProfiles initWithFrame:] with `@selector(toolProfilesNewTab:)`, `toolProfilesNewWindow:`, `toolProfilesNewHorizontalSplit:`, `toolProfilesNewVerticalSplit:`, `toolProfilesNewFloatingPane:`.
 
   Names: `toolProfilesNewTab:`, `toolProfilesNewWindow:`, `toolProfilesNewHorizontalSplit:`, `toolProfilesNewVerticalSplit:`, `toolProfilesNewFloatingPane:`.
 
 - `sources/tmux/TmuxWindowOpener.m:367` in `-[TmuxWindowOpener finishErroneously]`: `it_performNonObjectReturningSelector:withObject: [self.selector]`
 
-  **CLOSED.** `selector` is assigned only at TmuxController.m:500 and 576 (`windowDidOpen:`), 1381 (`buriedPanesDidOpen:`) and 1950 (`panesDidUnpause:`).
+  **CLOSED.** `selector` is assigned only at TmuxController.m in -[TmuxController openWindowWithIndex:name:size:layout:visibleLayout:affinities:windowFlags:profile:initial:tabIndex:] and -[TmuxController setLayoutInTab:toLayout:visibleLayout:zoomed:] (`windowDidOpen:`), -[TmuxController openBuriedSessionsForParkedWindow:layout:] (`buriedPanesDidOpen:`) and -[TmuxController unpausePanes:] (`panesDidUnpause:`).
 
   Names: `windowDidOpen:`, `buriedPanesDidOpen:`, `panesDidUnpause:`.
 
 - `sources/tmux/TmuxWindowOpener.m:547` in `-[TmuxWindowOpener requestDidComplete]`: `it_performNonObjectReturningSelector:withObject: [self.selector]`
 
-  **CLOSED.** Same as line 367.
+  **CLOSED.** Same as the entry of -[TmuxWindowOpener finishErroneously].
 
   Names: `windowDidOpen:`, `buriedPanesDidOpen:`, `panesDidUnpause:`.
 
 - `sources/tmux/TmuxWindowOpener.m:709` in `-[TmuxWindowOpener requestDidComplete]`: `it_performNonObjectReturningSelector:withObject: [self.selector]`
 
-  **CLOSED.** Same as line 367.
+  **CLOSED.** Same as the entry of -[TmuxWindowOpener finishErroneously].
 
   Names: `windowDidOpen:`, `buriedPanesDidOpen:`, `panesDidUnpause:`.
 
@@ -1470,7 +1470,7 @@ Sites the extractor does not record: a selector or class turned into a string th
 
 - `sources/ContextMenu/iTermTextViewContextMenuHelper.m:391` in `-[iTermTextViewContextMenuHelper validateMenuItem:]`: `containsObject:NSStringFromSelector(item.action)`
 
-  **CLOSED.** Compares the item's action, as a string, with the values of `smartSelectionActionSelectorDictionary` (line 56). Reach: the seven selectors of that table; a renamed method whose table entry is not updated is disabled.
+  **CLOSED.** Compares the item's action, as a string, with the values of `smartSelectionActionSelectorDictionary`. Reach: the seven selectors of that table; a renamed method whose table entry is not updated is disabled.
 
   Names: `contextMenuActionOpenFile:`, `contextMenuActionOpenURL:`, `contextMenuActionRunCommand:`, `contextMenuActionRunCoprocess:`, `contextMenuActionSendText:`, `contextMenuActionRunCommandInWindow:`, `contextMenuActionCopy:`.
 
@@ -1482,25 +1482,25 @@ Sites the extractor does not record: a selector or class turned into a string th
 
 - `sources/Infrastructure/iTermWeakReference.m:42` in `-[iTermWeakReference respondsToSelector:]`: `NSStringFromSelector(aSelector) isEqualToString:NSStringFromSelector(@selector(weaklyReferencedObject))`
 
-  **CLOSED.** Answers YES for `weaklyReferencedObject` by name before forwarding (see the row entry for iTermWeakReference.m:45).
+  **CLOSED.** Answers YES for `weaklyReferencedObject` by name before forwarding (see the row entry for iTermWeakReference.m in -[iTermWeakReference respondsToSelector:]).
 
   Names: `weaklyReferencedObject`.
 
 - `sources/Language/iTermGlobalScopeController.m:35, 43, 53` in `-[iTermGlobalScopeControllerModernImpl init]`: `forKeyPath:NSStringFromSelector(@selector(effectiveAppearance))`
 
-  **CLOSED.** Observes `NSApp` for the key path `effectiveAppearance`, built from the selector, removes the observer in `dealloc` (line 43) and compares the key path in `observeValueForKeyPath:ofObject:change:context:` (line 53). Reach: the AppKit property `-[NSApplication effectiveAppearance]`; nothing of ours.
+  **CLOSED.** Observes `NSApp` for the key path `effectiveAppearance`, built from the selector, removes the observer in `dealloc` and compares the key path in `observeValueForKeyPath:ofObject:change:context:`. Reach: the AppKit property `-[NSApplication effectiveAppearance]`; nothing of ours.
 
   Names: `effectiveAppearance`.
 
 - `sources/Settings/MenuItemPopupView.swift:58, 75` in `MenuItemPopupView`: `NSStringFromSelector(action) == "_toggleIPad:"`
 
-  **CLOSED.** Hides menu items whose action is the private AppKit `_toggleIPad:` (line 58) or `_moveToDisplay:` (line 75), compared by name. AppKit names only.
+  **CLOSED.** Hides menu items whose action is the private AppKit `_toggleIPad:` or `_moveToDisplay:`, compared by name. AppKit names only.
 
   Names: `_toggleIPad:`, `_moveToDisplay:`.
 
 - `sources/AppKit/iTermApplication.m:186, 195, 1122 (also iTermApplicationDelegate.m:4196, iTermSearchFieldCell.m:254, iTermsStatusBarComposerViewController.m:279, iTermStatusBarLargeComposerViewController.m:61, PTYTextView.m:2805, PaneFocusFollowsMouseAppEnvironment.swift:381)` in `-[iTermApplication it_windowDidOrderOnScreen:]`: `NSStringFromClass(object.class) isEqualToString:@"NSPanelViewBridge"`
 
-  **CLOSED.** Class names of AppKit's own objects compared with string literals: `NSPanelViewBridge` (iTermApplication.m:186 in `it_windowDidOrderOnScreen:`, 195 in `it_windowDidOrderOffScreen:`), `NSPanel.ViewBridge.rendezvous` (1122, `it_accentMenuOpen`), `NSToolTipPanel` (iTermApplicationDelegate.m:4196, `hideStuckToolTips`), `_NSKeyboardFocusClipView` (iTermSearchFieldCell.m:254 and iTermsStatusBarComposerViewController.m:279, `reallyUpdateKeyboardClipView:`), a class name containing `Popover` (iTermStatusBarLargeComposerViewController.m:61, `-[iTermComposerView updateBackgroundView]`, a substring match), and `NSToolbarFullScreenWindow` with `object_getClassName` (PTYTextView.m:2805, `isInKeyWindow`; PaneFocusFollowsMouseAppEnvironment.swift:381). SDK and AppKit-private names; none of ours.
+  **CLOSED.** Class names of AppKit's own objects compared with string literals: `NSPanelViewBridge` (iTermApplication.m in `it_windowDidOrderOnScreen:` and `it_windowDidOrderOffScreen:`), `NSPanel.ViewBridge.rendezvous` (`it_accentMenuOpen`), `NSToolTipPanel` (iTermApplicationDelegate.m in -[iTermApplicationDelegate hideStuckToolTips], `hideStuckToolTips`), `_NSKeyboardFocusClipView` (iTermSearchFieldCell.m in -[iTermSearchFieldCell reallyUpdateKeyboardClipView:] and iTermsStatusBarComposerViewController.m in -[iTermComposerComboBoxCell reallyUpdateKeyboardClipView:], `reallyUpdateKeyboardClipView:`), a class name containing `Popover` (iTermStatusBarLargeComposerViewController.m in -[iTermComposerView updateBackgroundView], `-[iTermComposerView updateBackgroundView]`, a substring match), and `NSToolbarFullScreenWindow` with `object_getClassName` (PTYTextView.m in -[PTYTextView isInKeyWindow], `isInKeyWindow`; PaneFocusFollowsMouseAppEnvironment.swift in PaneFocusFollowsMouseAppEnvironment.isInKeyWindow(_:)). SDK and AppKit-private names; none of ours.
 
   Names: `NSPanelViewBridge`, `NSPanel.ViewBridge.rendezvous`, `NSToolTipPanel`, `_NSKeyboardFocusClipView`, `NSToolbarFullScreenWindow`.
 
@@ -1510,27 +1510,27 @@ Sites the extractor does not record: a selector or class turned into a string th
 
   Names: none.
 
-- `sources/DataStructuresAlgorithms/IntervalTree.m:1312, 1357 (also iTermMark.m:64, PTYAnnotation.m:78, VT100RemoteHost.m:169, VT100WorkingDirectory.m:66)` in `-[IntervalTree dictionaryValueWithOffset:]`: `kIntervalTreeClassNameKey: NSStringFromClass(object.class)`
+- `sources/DataStructuresAlgorithms/IntervalTree.m:1319, 1364 (also iTermMark.m:64, PTYAnnotation.m:78, VT100RemoteHost.m:169, VT100WorkingDirectory.m:66)` in `-[IntervalTree dictionaryValueWithOffset:]`: `kIntervalTreeClassNameKey: NSStringFromClass(object.class)`
 
-  **CLOSED.** Writers of persisted class names: `-[IntervalTree dictionaryValueWithOffset:]` (1312) and `-[IntervalTree encodeWithEncoder:offset:]` (1357) store each object's class name in saved session state and window arrangements; the `dictionaryValueWithTypeInformation` methods of `iTermMark`, `PTYAnnotation`, `VT100RemoteHost` and `VT100WorkingDirectory` store it under `class`. Read back by name at IntervalTree.m:517 and 1433 and iTermMark.m:77 (OPEN-EXTERNAL row entries), by this and other versions. Persisted by name: the interval-tree object classes.
+  **CLOSED.** Writers of persisted class names: `-[IntervalTree dictionaryValueWithOffset:]` and `-[IntervalTree encodeWithEncoder:offset:]` store each object's class name in saved session state and window arrangements; the `dictionaryValueWithTypeInformation` methods of `iTermMark`, `PTYAnnotation`, `VT100RemoteHost` and `VT100WorkingDirectory` store it under `class`. Read back by name at IntervalTree.m in -[IntervalTree restoreFromDictionary:] and -[IntervalTree restoreFromGraphRecord:offset:largeContentProvider:] and iTermMark.m in +[iTermMark intervalTreeObjectWithDictionaryWithTypeInformation:] (OPEN-EXTERNAL row entries), by this and other versions. Persisted by name: the interval-tree object classes.
 
   Names: `iTermMark`, `VT100ScreenMark`, `iTermCapturedOutputMark`, `iTermImageMark`, `iTermBlockMark`, `iTermButtonMark`, `iTermFoldMark`, `iTermPathMark`, `PortholeMark`, `PTYAnnotation`, `VT100RemoteHost`, `VT100WorkingDirectory`.
 
 - `sources/Triggers/Trigger.m:563, 127 (also iTermAddTriggerViewController.m:1808, TriggerController.m:1476)` in `-[Trigger dictionaryValue]`: `kTriggerActionKey: NSStringFromClass(self.class)`
 
-  **OPEN-EXTERNAL.** The trigger's action key is its class name: written to profiles by `-[Trigger dictionaryValue]` (563) and by the trigger editor (`-[Trigger action]`, line 127; `-[iTermAddTriggerViewController action]`, iTermAddTriggerViewController.m:1808), and compared with a stored action in `-[TriggerController triggerDidChangeParameterOptions:]` (TriggerController.m:1476). Input: trigger dictionaries in profiles, Dynamic Profiles and the Python API. Read back at Trigger.m:77 and TriggerController.m:385. Persisted by name: the trigger classes and `GrowlTrigger` (see the Trigger.m:77 entry for the history).
+  **OPEN-EXTERNAL.** The trigger's action key is its class name: written to profiles by `-[Trigger dictionaryValue]` and by the trigger editor (`-[Trigger action]`; `-[iTermAddTriggerViewController action]`, iTermAddTriggerViewController.m in -[iTermAddTriggerViewController action]), and compared with a stored action in `-[TriggerController triggerDidChangeParameterOptions:]` (TriggerController.m in -[TriggerController triggerDidChangeParameterOptions:]). Input: trigger dictionaries in profiles, Dynamic Profiles and the Python API. Read back at Trigger.m in +[Trigger triggerFromUntrustedDict:] and TriggerController.m in -[TriggerController indexOfAction:]. Persisted by name: the trigger classes and `GrowlTrigger` (see the Trigger.m in +[Trigger triggerFromUntrustedDict:] entry for the history).
 
   Names: `AlertTrigger`, `AnnotateTrigger`, `BellTrigger`, `BounceTrigger`, `iTermRPCTrigger`, `CaptureTrigger`, `iTermBufferInputTrigger`, `iTermFoldTrigger`, `iTermInjectTrigger`, `iTermEnterWorkgroupTrigger`, `iTermExitWorkgroupTrigger`, `iTermHighlightLineTrigger`, `iTermUserNotificationTrigger`, `iTermSetUserVariableTrigger`, `iTermSetProfileBooleanTrigger`, `iTermShellPromptTrigger`, `iTermSetTitleTrigger`, `iTermSetNamedMarkTrigger`, `iTermSGRTrigger`, `SendTextTrigger`, `ScriptTrigger`, `CoprocessTrigger`, `MuteCoprocessTrigger`, `HighlightTrigger`, `MarkTrigger`, `PasswordTrigger`, `iTermHyperlinkTrigger`, `SetDirectoryTrigger`, `SetHostnameTrigger`, `StopTrigger`, `iTermSetTabStatusTrigger`, `ReaderModeBrowserTrigger`, `HighlightBrowserTrigger`, `HyperlinkBrowserTrigger`, `ReloadBrowserTrigger`, `InjectJavascriptURLTrigger`, `InjectJavascriptContentTrigger`, `iTermEnterWorkgroupBrowserTrigger`, `iTermExitWorkgroupBrowserTrigger`, `GrowlTrigger`.
 
-- `sources/StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:70)` in `-[iTermStatusBarLayout arrayValue]`: `iTermStatusBarLayoutKeyClass: NSStringFromClass([component class])`
+- `sources/StatusBar/Core/iTermStatusBarLayout.m:166 (also iTermStatusBarBaseComponent.m:78)` in `-[iTermStatusBarLayout arrayValue]`: `iTermStatusBarLayoutKeyClass: NSStringFromClass([component class])`
 
-  **CLOSED.** Writers of persisted status bar class names: the layout stored in a profile (iTermStatusBarLayout.m:166) and the drag-and-drop archive (`-[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]`, iTermStatusBarBaseComponent.m:70). Read back at iTermStatusBarLayout.m:112 and iTermStatusBarBaseComponent.m:51. Persisted by name: the component classes.
+  **CLOSED.** Writers of persisted status bar class names: the layout stored in a profile (iTermStatusBarLayout.m in -[iTermStatusBarLayout arrayValue]) and the drag-and-drop archive (`-[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]`, iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory encodeWithCoder:]). Read back at iTermStatusBarLayout.m in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:] and iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:]. Persisted by name: the component classes.
 
   Names: `iTermStatusBarActionComponent`, `iTermStatusBarActionMenuComponent`, `iTermStatusBarAttributedTextComponent`, `iTermStatusBarBatteryComponent`, `iTermStatusBarClockComponent`, `iTermStatusBarComposerComponent`, `iTermStatusBarCPUUtilizationComponent`, `iTermStatusBarFixedSpacerComponent`, `iTermStatusBarFunctionCallComponent`, `iTermStatusBarGitComponent`, `iTermStatusBarHostnameComponent`, `iTermStatusBarJobComponent`, `iTermStatusBarMemoryUtilizationComponent`, `iTermStatusBarNetworkUtilizationComponent`, `iTermStatusBarPlaceholderComponent`, `iTermStatusBarProgressComponent`, `iTermStatusBarRPCProvidedAttributedTextComponent`, `iTermStatusBarRPCProvidedTextComponent`, `iTermStatusBarSearchFieldComponent`, `iTermStatusBarSnippetMenuComponent`, `iTermStatusBarSparklinesComponent`, `iTermStatusBarSpringComponent`, `iTermStatusBarSwiftyStringComponent`, `iTermStatusBarTextComponent`, `iTermStatusBarTmuxLeftComponent`, `iTermStatusBarTmuxRightComponent`, `iTermStatusBarUsernameComponent`, `iTermStatusBarVariableBaseComponent`, `iTermStatusBarWorkingDirectoryComponent`, `iTermStatusBarFilterComponent`, `iTermStatusBarTriggersComponent`.
 
-- `sources/StatusBar/Components/iTermStatusBarBaseComponent.m:134` in `+[iTermStatusBarBaseComponent statusBarComponentIdentifier]`: `[NSString stringWithFormat:@"com.iterm2.%@", NSStringFromClass(self.class)]`
+- `sources/StatusBar/Components/iTermStatusBarBaseComponent.m:142` in `+[iTermStatusBarBaseComponent statusBarComponentIdentifier]`: `[NSString stringWithFormat:@"com.iterm2.%@", NSStringFromClass(self.class)]`
 
-  **OPEN-EXTERNAL.** The identifier of a built-in component is `com.iterm2.` plus its class name. It keys unread counts (iTermStatusBarViewController.m:279), which scripts set through the scripting function `set_status_bar_component_unread_count` (`setStatusBarComponentUnreadCountWithCompletion:identifier:count:`) with an identifier string of their choosing, and it is compared at iTermStatusBarViewController.m:312 and by the composer (iTermComposerManager.m:54 to 194). Renaming a component class, or a Swift component without `@objc(Name)`, changes the identifier that scripts and code use. Names: the component classes that do not override `statusBarComponentIdentifier` (all built-in components except the two RPC-provided ones, which override it).
+  **OPEN-EXTERNAL.** The identifier of a built-in component is `com.iterm2.` plus its class name. It keys unread counts (iTermStatusBarViewController.m in -[iTermStatusBarViewController updateViews]), which scripts set through the scripting function `set_status_bar_component_unread_count` (`setStatusBarComponentUnreadCountWithCompletion:identifier:count:`) with an identifier string of their choosing, and it is compared at iTermStatusBarViewController.m in -[iTermStatusBarViewController componentWithIdentifier:] and by the composer (iTermComposerManager.m in -[iTermComposerManager statusBarComponentIfVisible] and -[iTermComposerManager showComposerInStatusBar:]). Renaming a component class, or a Swift component without `@objc(Name)`, changes the identifier that scripts and code use. Names: the component classes that do not override `statusBarComponentIdentifier` (all built-in components except the two RPC-provided ones, which override it).
 
   Names: `iTermStatusBarActionComponent`, `iTermStatusBarActionMenuComponent`, `iTermStatusBarAttributedTextComponent`, `iTermStatusBarBatteryComponent`, `iTermStatusBarClockComponent`, `iTermStatusBarComposerComponent`, `iTermStatusBarCPUUtilizationComponent`, `iTermStatusBarFixedSpacerComponent`, `iTermStatusBarFunctionCallComponent`, `iTermStatusBarGitComponent`, `iTermStatusBarHostnameComponent`, `iTermStatusBarJobComponent`, `iTermStatusBarMemoryUtilizationComponent`, `iTermStatusBarNetworkUtilizationComponent`, `iTermStatusBarPlaceholderComponent`, `iTermStatusBarProgressComponent`, `iTermStatusBarSearchFieldComponent`, `iTermStatusBarSnippetMenuComponent`, `iTermStatusBarSparklinesComponent`, `iTermStatusBarSpringComponent`, `iTermStatusBarSwiftyStringComponent`, `iTermStatusBarTextComponent`, `iTermStatusBarTmuxLeftComponent`, `iTermStatusBarTmuxRightComponent`, `iTermStatusBarUsernameComponent`, `iTermStatusBarVariableBaseComponent`, `iTermStatusBarWorkingDirectoryComponent`, `iTermStatusBarFilterComponent`, `iTermStatusBarTriggersComponent`.
 
@@ -1540,7 +1540,7 @@ Sites the extractor does not record: a selector or class turned into a string th
 
   Names: `iTermMinimalComposerViewController`, `iTermHotkeyPreferencesWindowController`, `iTermBadgeConfigurationWindowController`, `iTermEditSnippetWindowController`.
 
-- `sources/Settings/PreferencePanel.m:1113` in `-[PreferencePanel bigSurSearchFieldToolbarItem]`: `setClass:[iTermPrefsSearchFieldCell class] forClassName:NSStringFromClass([NSSearchFieldCell class])`
+- `sources/Settings/PreferencePanel.m:1114` in `-[PreferencePanel bigSurSearchFieldToolbarItem]`: `setClass:[iTermPrefsSearchFieldCell class] forClassName:NSStringFromClass([NSSearchFieldCell class])`
 
   **CLOSED.** Unarchives an archived `NSSearchFieldCell` as `iTermPrefsSearchFieldCell`, the only `setClass:forClassName:` in scope. The substitute is named by symbol, so a port renaming it is caught by the compiler; the archived name is AppKit's.
 
@@ -1548,7 +1548,7 @@ Sites the extractor does not record: a selector or class turned into a string th
 
 - `sources/Settings/iTermAdvancedSettingsViewController.m:820 (also iTermPreferencesBaseViewController.m:1310)` in `-[iTermPreferencesBaseViewController documentOwnerIdentifier]`: `return NSStringFromClass(self.class)`
 
-  **CLOSED.** Owner identifier of the preferences search index entries; set from the same method (iTermPreferencesBaseViewController.m:530, iTermAdvancedSettingsViewController.m:831) and compared with it (PreferencePanel.m:1533, ProfilePreferencesViewController.m:551). In-process round trip; not persisted. No names.
+  **CLOSED.** Owner identifier of the preferences search index entries; set from the same method (iTermPreferencesBaseViewController.m in -[iTermPreferencesBaseViewController addViewToSearchIndex:displayName:phrases:key:], iTermAdvancedSettingsViewController.m in -[iTermAdvancedSettingsViewController searchableViewControllerDocuments]) and compared with it (PreferencePanel.m in -[PreferencePanel viewControllerForDocumentOwnerIdentifier:], ProfilePreferencesViewController.m in -[ProfilePreferencesViewController viewControllerWithOwnerIdentifier:]). In-process round trip; not persisted. No names.
 
   Names: none.
 
@@ -1560,31 +1560,31 @@ Sites the extractor does not record: a selector or class turned into a string th
 
 - `sources/Categories/NSImage+iTerm.m:273 (also iTermMetalFrameData.m:457, iTermMetalFrameData.m:461, CPParser+Cache.m:26, iTermKeyboardHandler.m:64)` in `+[NSImage(iTerm) it_cacheableImageNamed:forClass:]`: `cache key from NSStringFromClass(...)`
 
-  **CLOSED.** Class names inside cache and comparison keys: the image cache (NSImage+iTerm.m:273), the Metal renderer transient states (iTermMetalFrameData.m:457, 461), the parser cache file key (CPParser+Cache.m:26; it also contains the app version, so a new build misses the cache anyway) and the key mapper's class in the terminal values digest (iTermKeyboardHandler.m:64, compared within the process at PTYSession.m:20478). A rename changes the key consistently on both sides; nothing is reached by name. No names.
+  **CLOSED.** Class names inside cache and comparison keys: the image cache (NSImage+iTerm.m in +[NSImage(iTerm) it_cacheableImageNamed:forClass:]), the Metal renderer transient states (iTermMetalFrameData.m in -[iTermMetalFrameData transientStateForRenderer:] and -[iTermMetalFrameData setTransientState:forRenderer:]), the parser cache file key (CPParser+Cache.m in +[CPShiftReduceParser(Cache) it_keyWithBNF:start:]; it also contains the app version, so a new build misses the cache anyway) and the key mapper's class in the terminal values digest (iTermKeyboardHandler.m in -[iTermKeyboardHandler dictionaryValue], compared within the process at PTYSession.m in -[PTYSession updateConfigurationFields]). A rename changes the key consistently on both sides; nothing is reached by name. No names.
 
   Names: none.
 
-- `sources/Settings/iTermAdvancedSettingsModel.m:342, 1108, 1131` in `+[iTermAdvancedSettingsModel enumerateDictionaries:]`: `NSString *name = NSStringFromSelector(selector)`
+- `sources/Settings/iTermAdvancedSettingsModel.m:363, 1129, 1152` in `+[iTermAdvancedSettingsModel enumerateDictionaries:]`: `NSString *name = NSStringFromSelector(selector)`
 
-  **CLOSED.** Prefix tests and name slicing on the enumerated method names; part of the row entries for iTermAdvancedSettingsModel.m:331 to 1133.
+  **CLOSED.** Prefix tests and name slicing on the enumerated method names; part of the row entries for iTermAdvancedSettingsModel.m in +[iTermAdvancedSettingsModel enumerateMethods:] and +[iTermAdvancedSettingsModel loadAdvancedSettingsFromUserDefaults].
 
   Names: `iTermAdvancedSettingsModel +advancedSettingsModelDictionary_*`, `iTermAdvancedSettingsModel +load_*`.
 
 - `sources/Language/iTermReflection.m:154` in `-[iTermReflection reflectedArguments]`: `NSStringFromSelector(method_getName(method))`
 
-  **CLOSED.** Splits the selector name on `:` to get the scripting argument names; part of the row entry for iTermBuiltInFunctions.m:558 and iTermReflection.m:152.
+  **CLOSED.** Splits the selector name on `:` to get the scripting argument names; part of the row entry for iTermBuiltInFunctions.m in -[iTermBuiltInMethod callWithArguments:connectionKey:cancellation:completion:] and iTermReflection.m in -[iTermReflection reflectedArguments].
 
   Names: `setNameWithCompletion:name:`, `sendTmuxCommandWithCompletion:command:`, `setStatusBarComponentUnreadCountWithCompletion:identifier:count:`, `stopCoprocessWithCompletion:`, `getCoprocessWithCompletion:`, `runCoprocessWithCompletion:commandLine:mute:`, `addAnnotationWithCompletion:startX:startY:endX:endY:text:`, `fetchTimeOffsetWithCompletion:`, `loadURLWithCompletion:url:connectionKey:cancellation:`, `browserSetToolbarHiddenWithCompletion:hidden:`, `browserEvalJSWithCompletion:js:connectionKey:cancellation:`, `setTitleWithCompletion:title:`, `selectPaneInDirectionWithCompletion:direction:`, `apiCreateTabGroupWithCompletion:tab_ids:name:color:parent_group_id:`, `apiAddTabToGroupWithCompletion:tab_id:group_id:`, `apiRemoveTabFromGroupWithCompletion:tab_id:`.
 
 - `sources/tmux/TmuxController.m:3683 (also TmuxGateway.m:1283)` in `-[TmuxController listWindowsInSessionNumber:target:selector:object:]`: `NSStringFromSelector(selector)`
 
-  **CLOSED.** Selector stored as a string and converted back later; part of the row entries for TmuxController.m:4660 and TmuxGateway.m:581.
+  **CLOSED.** Selector stored as a string and converted back later; part of the row entries for TmuxController.m in -[TmuxController didListWindows:userData:] and TmuxGateway.m in -[TmuxGateway currentCommandSelector].
 
   Names: `setWindows:forSession:`, `didListWindows:forSession:`, `checkForUTF8Response:`, `didChangeWhetherPaneFloats:request:`, `didFetch:`, `didFetchDefaultTerminal:`, `didFetchNow:completion:`, `didFetchTmuxPid:`, `didGetCurrentWindow:beforeSelecting:`, `didListPanes:forBuriedPanes:`, `didListWindows:userData:`, `didListWindowsSubsequentToSettingLayout:`, `didLoadServerIdentity:`, `didLoadTmuxClientName:`, `didMakeFloatingPane:completion:`, `didPause:panes:`, `didSelectWindow:selection:`, `didSetLayout:`, `didSetLayoutWithMovedDivider:`, `didSplit:state:`, `didSubscribe:handleID:`, `didSwapWindows:`, `dumpHistoryResponse:paneAndAlternate:`, `dumpStateResponse:pane:`, `getAffinitiesResponse:`, `getBuriedIndexesResponse:`, `getHiddenWindowsResponse:`, `getHotkeysResponse:`, `getOriginsResponse:`, `getPaneIDsResponseAndSetHotkeys:`, `getPaneIDsResponseAndSetTabColors:`, `getPendingOutputResponse:pane:`, `getPerTabSettingsResponse:`, `getPerWindowSettingsResponse:`, `getSessionGuidResponse:`, `getTabColorsResponse:`, `getTabGroupParentsResponse:`, `getTabGroupsResponse:`, `getUserVarsResponse:pane:`, `guessVersion18Response:`, `guessVersion21Response:`, `guessVersion22Response:`, `guessVersion23Response:`, `handleDisplayMessageVersion:`, `handleListKeys:`, `handlePingResponse:`, `handleResizeWindowResponse:`, `handleShowBuffer:`, `handleShowSetTitles:`, `handleShowSize:`, `handleStatusIntervalResponse:`, `handleStatusResponse:`, `initialListWindowsResponse:`, `listedWindowsToOpenOne:forWindowIdAndAffinities:`, `listSessionsResponse:`, `listWindowsResponse:`, `newWindowWithAffinityCreated:affinityWindowAndCompletion:`, `parseListWindowsResponseAndUpdateLayouts:`, `phonyCommandDidComplete:`, `printTmuxCommandOutputToScreen:`, `recordPanes:state:`, `requestDidComplete`, `responseForListWindows:toSetPartialOrder:`, `saveWindowOriginsResponse:`, `selector:`, `sendTmuxCommandMethodDidComplete:completion:`, `showWindowOptionsResponse:`, `windowPaneBrokeOutWithWindowId:setAffinityTo:`, `handle:`, `didListClients:completion:`.
 
 - `sources/ContextMenu/iTermTextViewContextMenuHelper.m:59, 60, 61, 62, 63, 64, 65, 413, 415, 417, 419, 423, 425, 427, 429, 432` in `-[iTermTextViewContextMenuHelper smartSelectionActionSelectorDictionary]`: `NSStringFromSelector(@selector(...)) as a table value`
 
-  **CLOSED.** Table values converted back with `NSSelectorFromString`: lines 59 to 65 are the smart-selection table (row entries for lines 877 and 920), lines 413 to 432 the image menu (row entry for lines 444 and 445).
+  **CLOSED.** Table values converted back with `NSSelectorFromString`: the smart-selection table of -[iTermTextViewContextMenuHelper smartSelectionActionSelectorDictionary] (row entries in -[iTermTextViewContextMenuHelper selectorForSmartSelectionAction:] and -[iTermTextViewContextMenuHelper addCustomActionsToMenu:matchingText:line:]) and the image menu of -[iTermTextViewContextMenuHelper menuAtCoord:] (row entry in the same method).
 
   Names: `contextMenuActionOpenFile:`, `contextMenuActionOpenURL:`, `contextMenuActionRunCommand:`, `contextMenuActionRunCoprocess:`, `contextMenuActionSendText:`, `contextMenuActionRunCommandInWindow:`, `contextMenuActionCopy:`, `saveImageAs:`, `copyImage:`, `openImage:`, `inspectImage:`, `togglePauseAnimatingImage:`.
 
@@ -1594,7 +1594,7 @@ Sites the extractor does not record: a selector or class turned into a string th
 
   Names: none.
 
-Hits of `NSStringFromSelector`, `sel_getName`, `NSStringFromClass`, `class_getName` and `object_getClassName` in the scope directories (Objective-C and Swift, `git grep`, macro definitions excluded): 225 in all (NSStringFromClass 168, NSStringFromSelector 55, object_getClassName 2). Entered above: 74 (one of them, `TriggerController.m:381`, is covered by the section 3 entry for `TriggerController.m:385`, which compares the name with a stored trigger action). The other 151 were each read and only log, assert, build a `description` or `debugDescription`, build a user-visible error message, or label a debug artifact (Metal pipeline labels, debug-info folder names, timer log strings); none compares, persists or converts back the name. By file:
+Hits of `NSStringFromSelector`, `sel_getName`, `NSStringFromClass`, `class_getName` and `object_getClassName` in the scope directories (Objective-C and Swift, `git grep`, macro definitions excluded): 225 in all (NSStringFromClass 168, NSStringFromSelector 55, object_getClassName 2). Entered above: 74 (one of them, `TriggerController.m` in -[TriggerController indexOfAction:], is covered by the section 3 entry for `TriggerController.m` in -[TriggerController indexOfAction:], which compares the name with a stored trigger action). The other 151 were each read and only log, assert, build a `description` or `debugDescription`, build a user-visible error message, or label a debug artifact (Metal pipeline labels, debug-info folder names, timer log strings); none compares, persists or converts back the name. By file:
 
 `API/iTermOptionalComponentDownloadWindowController.m` (1), `API/iTermWebSocketFrame.m` (1), `Annotations/PTYAnnotation.m` (1), `AutomaticProfileSwitching/iTermAutomaticProfileSwitcher.m` (1), `Browser/Core/iTermBrowserWebView.swift` (1), `Categories/NSEvent+iTerm.m` (2), `Categories/NSObject+iTerm.m` (4), `Categories/NSObject.swift` (1), `Categories/NSScreen+iTerm.m` (1), `Categories/NSTextView+iTermUndoSafety.m` (2), `Categories/NSTimer+iTerm.m` (3), `ColorPicker/ColorPicker/CPKColor.m` (1), `ColorPicker/ColorPicker/CPKKDTreeNode.m` (1), `CommandExecution/iTermBackgroundCommandRunner.m` (2), `DataStructuresAlgorithms/AATree/AATree.m` (1), `DataStructuresAlgorithms/iTermTuple.m` (2), `Drawing/iTermAttributedStringBuilder.m` (1), `Drawing/iTermMutableAttributedStringBuilder.m` (1), `Drawing/iTermSharedImageStore.m` (1), `ExternalSessionState/iTermExternalAttributeIndex.m` (2), `FileTransfer/TransferrableFile.m` (1), `Hotkey/iTermBaseHotKey.m` (1), `Hotkey/iTermCarbonHotKeyController.m` (1), `Hotkey/iTermShortcut.m` (1), `Infrastructure/iTermPromise.m` (1), `Infrastructure/iTermRateLimitedUpdate.m` (1), `Infrastructure/iTermResult.m` (1), `Infrastructure/iTermTaskQueue.mm` (1), `Infrastructure/iTermThreadSafety.m` (1), `Infrastructure/iTermWarning.m` (2), `Infrastructure/iTermWeakReference.m` (1), `Keyboard/iTermKeyboardHandler.m` (4), `Keyboard/iTermKeystroke.m` (1), `Language/iTermBuiltInFunctions.m` (2), `Language/iTermExpressionParser.m` (2), `Language/iTermRecordedVariable.m` (2), `Language/iTermVariableReference.m` (1), `Language/iTermVariableScope.m` (1), `Language/iTermWeakVariables.m` (1), `LineBuffer/LineBlock.mm` (1), `LineBuffer/LineBlockMetadataArray.m` (1), `Marks/VT100ScreenMark.m` (2), `Marks/iTermImageMark.m` (1), `Marks/iTermMark.m` (2), `MetalRenderer/Glue/iTermCharacterSource.m` (2), `MetalRenderer/Infrastructure/iTermMetalCellRenderer.m` (1), `MetalRenderer/Infrastructure/iTermMetalDebugInfo.m` (2), `MetalRenderer/Infrastructure/iTermMetalFrameData.m` (4), `MetalRenderer/Infrastructure/iTermMetalRenderer.m` (3), `MetalRenderer/Infrastructure/iTermSubpixelModelBuilder.mm` (1), `MetalRenderer/Renderers/iTermImageRenderer.m` (1), `MetalRenderer/iTermMetalDriver.m` (3), `PTYSession/PTYSession.m` (1), `PTYSession/PTYSessionHostState.swift` (1), `PTYSession/iTermUpdateCadenceController.m` (1), `ProcessInfo/iTermSyntheticConfParser.m` (1), `ScreenChar/ScreenCharArray.m` (2), `SearchingFiltering/LineBufferHelpers.m` (4), `SearchingFiltering/SearchResult.m` (1), `SearchingFiltering/iTermDropDownFindViewController.m` (1), `Selection/SelectionExtraction.swift` (1), `SemanticHistory/iTermURLActionHelper.m` (1), `SessionCreation/iTermSessionFactory.m` (2), `Settings/PreferencePanel.m` (1), `Settings/Profiles/iTermDynamicProfileManager.m` (1), `Snippets/iTermSnippetsModel.m` (1), `StatusBar/Components/iTermStatusBarBaseComponent.m` (2), `StatusBar/Setup/iTermStatusBarSetupElement.m` (1), `Swipe/iTermScrollWheelStateMachine.m` (1), `Swipe/iTermSwipeState.m` (1), `Tasks/PTYTask.m` (1), `Tasks/iTermFileDescriptorMultiClient.m` (1), `Tasks/iTermFileDescriptorMultiClientChild.m` (1), `Tasks/iTermLegacyJobManager.m` (1), `Tasks/iTermMonoServerJobManager.m` (1), `Tasks/iTermMultiServerJobManager.m` (1), `TerminalView/PTYTab.m` (2), `TerminalView/iTermBackgroundColorView.m` (1), `TerminalView/iTermImageView.m` (1), `TerminalView/iTermTabBarAccessoryViewController.m` (1), `TerminalView/iTermWindowImpl.m` (14), `ThirdParty/PSMTabBarControl/source/PSMCachedTitle.m` (2), `ThirdParty/PSMTabBarControl/source/PSMTabBarCell.m` (1), `ThirdParty/PSMTabBarControl/source/PSMTabBarControl.m` (1), `ThirdParty/PSMTabBarControl/source/PSMTabDragAssistant.m` (3), `Toolbelt/CapturedOutput/CapturedOutput.m` (1), `Triggers/PTYTriggerEvaluator.m` (1), `Triggers/Trigger.m` (3), `Triggers/iTermExpect.m` (2), `VT100/VT100Parser.m` (1), `VT100Screen/VT100ScreenConfiguration.m` (1), `VT100Screen/VT100ScreenMutableState.m` (1), `tmux/TmuxGateway.m` (1), `tmux/iTermTmuxBufferSizeMonitor.m` (1), `tmux/iTermTmuxJobManager.m` (1), `tmux/iTermTmuxOptionMonitor.m` (1), `tmux/iTermTmuxSessionObject.m` (1).
 
@@ -1608,35 +1608,35 @@ Found by `git grep` in the scope (Objective-C and Swift) for `setRestorationClas
 
 - `sources/TerminalView/PseudoTerminal.m:913 (also PseudoTerminalRestorer.h:26, PseudoTerminalRestorer.m:135, PseudoTerminalRestorer.m:154)`: in `-[PseudoTerminal finishInitializationWithSmartLayout:...]`: `setRestorationClass:[PseudoTerminalRestorer class]`
 
-  **OPEN-EXTERNAL.** Every terminal window names `PseudoTerminalRestorer` as its restoration class. AppKit writes the restoration class's name into the saved application state with the window's encoded state, and at the next launch, which may be a different version of the app, looks the class up by that name and sends it `+restoreWindowWithIdentifier:state:completionHandler:` (`PseudoTerminalRestorer.m:135`). No code of ours reads or writes the name; the check between input and call is AppKit's (the class must exist and adopt `NSWindowRestoration`). AppKit still calls it by name when the app uses its own restorable-state controller: the method then ignores the system's state (`PseudoTerminalRestorer.m:154`). The app's own controller calls the same class by symbol (`iTermApplicationDelegate.m:4428`, 4449), which the compiler checks. A port must keep the runtime name `PseudoTerminalRestorer` and the class method's selector, so that state saved by this or an earlier version still restores windows. Persisted by name (by AppKit).
+  **OPEN-EXTERNAL.** Every terminal window names `PseudoTerminalRestorer` as its restoration class. AppKit writes the restoration class's name into the saved application state with the window's encoded state, and at the next launch, which may be a different version of the app, looks the class up by that name and sends it `+restoreWindowWithIdentifier:state:completionHandler:` (`PseudoTerminalRestorer.m` in +[PseudoTerminalRestorer restoreWindowWithIdentifier:state:completionHandler:]). No code of ours reads or writes the name; the check between input and call is AppKit's (the class must exist and adopt `NSWindowRestoration`). AppKit still calls it by name when the app uses its own restorable-state controller: the method then ignores the system's state (`PseudoTerminalRestorer.m` in +[PseudoTerminalRestorer restoreWindowWithIdentifier:pseudoTerminalState:system:completionHandler:]). The app's own controller calls the same class by symbol (`iTermApplicationDelegate.m` in -[iTermApplicationDelegate restorableStateRestoreWithCoder:identifier:completion:] and -[iTermApplicationDelegate restorableStateRestoreWithRecord:identifier:completion:]), which the compiler checks. A port must keep the runtime name `PseudoTerminalRestorer` and the class method's selector, so that state saved by this or an earlier version still restores windows. Persisted by name (by AppKit).
 
   Names: `PseudoTerminalRestorer`, `restoreWindowWithIdentifier:state:completionHandler:`.
 
 - `sources/Settings/Profiles/iTermProfilesWindowController.m:169, 85, 90`: in `-[iTermProfilesWindowController initWithWindowNibName:]`: `setRestorationClass:[iTermProfilesWindowRestorer class]`
 
-  **OPEN-EXTERNAL.** Same mechanism for the Profiles window: AppKit stores the name `iTermProfilesWindowRestorer` (a class declared and implemented in iTermProfilesWindowController.m) in the saved application state and at the next launch sends `+restoreWindowWithIdentifier:state:completionHandler:` (line 90) to the class it finds by that name. Persisted by name (by AppKit).
+  **OPEN-EXTERNAL.** Same mechanism for the Profiles window: AppKit stores the name `iTermProfilesWindowRestorer` (a class declared and implemented in iTermProfilesWindowController.m) in the saved application state and at the next launch sends `+restoreWindowWithIdentifier:state:completionHandler:` to the class it finds by that name. Persisted by name (by AppKit).
 
   Names: `iTermProfilesWindowRestorer`, `restoreWindowWithIdentifier:state:completionHandler:`.
 
 - `sources/ProfilesPanel/iTermProfilesPanel.m:21, 27 (also iTermWindowImpl.m:241, iTermWindowImpl.m:246, PseudoTerminal.m:16987, PseudoTerminal.m:17056, iTermApplicationDelegate.m:1300, iTermApplicationDelegate.m:1340)`: restorable-state overrides and delegate methods
 
-  **NOT-REFLECTIVE.** Overrides of `NSWindow`/`NSResponder` methods (`encodeRestorableStateWithCoder:`, `encodeRestorableStateWithCoder:backgroundQueue:`, `restoreStateWithCoder:`) and `NSWindowDelegate`/`NSApplicationDelegate` methods (`window:willEncodeRestorableState:`, `window:didDecodeRestorableState:`, `application:willEncodeRestorableState:`, `application:didDecodeRestorableState:`) that AppKit calls through declared API; in Swift, `override` and protocol conformance keep their selectors. The coder keys they use (`kTagsOpen`, `kCloseAfterOpening`, `kTerminalWindowStateRestorationWindowArrangementKey`, `iTermWindowStateKeyGUID`, the application delegate's `k...RestorableStateKey` constants) are strings stored in the archive, not class or method names: a port keeps their values, but no runtime name depends on them. What is encoded under them, as far as the code shows: booleans, the window's GUID string, the window arrangement dictionary (PseudoTerminal.m:17074 to 17082, iTermWindowImpl.m:249) and the application delegate's dictionaries and arrays (iTermApplicationDelegate.m:1315 to 1332). AppKit records the class name of each of those objects (see the keyed archives below). No `restorableStateKeyPaths` override exists in the scope (Objective-C or Swift, `git grep`), so no key-value coding names are restored by AppKit.
+  **NOT-REFLECTIVE.** Overrides of `NSWindow`/`NSResponder` methods (`encodeRestorableStateWithCoder:`, `encodeRestorableStateWithCoder:backgroundQueue:`, `restoreStateWithCoder:`) and `NSWindowDelegate`/`NSApplicationDelegate` methods (`window:willEncodeRestorableState:`, `window:didDecodeRestorableState:`, `application:willEncodeRestorableState:`, `application:didDecodeRestorableState:`) that AppKit calls through declared API; in Swift, `override` and protocol conformance keep their selectors. The coder keys they use (`kTagsOpen`, `kCloseAfterOpening`, `kTerminalWindowStateRestorationWindowArrangementKey`, `iTermWindowStateKeyGUID`, the application delegate's `k...RestorableStateKey` constants) are strings stored in the archive, not class or method names: a port keeps their values, but no runtime name depends on them. What is encoded under them, as far as the code shows: booleans, the window's GUID string, the window arrangement dictionary (PseudoTerminal.m in -[PseudoTerminal setRestorableStateDecodePending:], iTermWindowImpl.m in -encodeRestorableStateWithCoder: (of each window class that includes the file)) and the application delegate's dictionaries and arrays (iTermApplicationDelegate.m in -[iTermApplicationDelegate application:willEncodeRestorableState:]). AppKit records the class name of each of those objects (see the keyed archives below). No `restorableStateKeyPaths` override exists in the scope (Objective-C or Swift, `git grep`), so no key-value coding names are restored by AppKit.
 
   Names: none.
 
 ### Classes and selectors sent between processes
 
-Found by `git grep` in the scope for `NSXPCInterface`, `interfaceWithProtocol:`, `setClasses:`, `NSXPCConnection`, `NSXPCListener`, `exportedInterface`, `remoteObjectInterface` and `xpc_`. Two XPC interfaces; the protocols are `pidinfoProtocol` and `iTerm2SandboxedWorkerProtocol`, and their selectors and argument and reply types are part of a wire format. Other inter-process channels, checked by category: keyed archives on a pipe, one (the pidinfo child process, below); on the pasteboard, see the archive table; distributed notifications with archived payloads, none found (the three uses, iTermKeyCodeZeroCharacters.swift:92, PasswordManagerDataSourceProvider.swift:63 and iTermPasswordManagerWindowController.m:279, only observe system notifications, and nothing posts one); distributed objects (`NSConnection`, `NSPortCoder`, `CFMessagePort`), none found (the `NSMachPort` uses only keep run loops alive); the multi-server protocol (`iTermMultiServerProtocol.c`) sends C structures over a socket, with no class names (its class-name uses are descriptions, section 5); the Companion transport (`Companion/`, `sources/Companion/`), no `NSKeyedArchiver`, `NSCoding` or `NSSecureCoding`, none found; the scripting API sends protocol buffers, not archives.
+Found by `git grep` in the scope for `NSXPCInterface`, `interfaceWithProtocol:`, `setClasses:`, `NSXPCConnection`, `NSXPCListener`, `exportedInterface`, `remoteObjectInterface` and `xpc_`. Two XPC interfaces; the protocols are `pidinfoProtocol` and `iTerm2SandboxedWorkerProtocol`, and their selectors and argument and reply types are part of a wire format. Other inter-process channels, checked by category: keyed archives on a pipe, one (the pidinfo child process, below); on the pasteboard, see the archive table; distributed notifications with archived payloads, none found (the three uses, iTermKeyCodeZeroCharacters.swift in iTermKeyCodeZeroCharacters.startObservingIfNeeded(), PasswordManagerDataSourceProvider.swift in PasswordManagerDataSourceProvider.init(browser:) and iTermPasswordManagerWindowController.m in -[iTermPasswordManagerWindowController awakeFromNib], only observe system notifications, and nothing posts one); distributed objects (`NSConnection`, `NSPortCoder`, `CFMessagePort`), none found (the `NSMachPort` uses only keep run loops alive); the multi-server protocol (`iTermMultiServerProtocol.c`) sends C structures over a socket, with no class names (its class-name uses are descriptions, section 5); the Companion transport (`Companion/`, `sources/Companion/`), no `NSKeyedArchiver`, `NSCoding` or `NSSecureCoding`, none found; the scripting API sends protocol buffers, not archives.
 
 - `sources/SlowOperationXPC/iTermSlowOperationGateway.m:90, 158, 188 (also pidinfo/main.m:23, iTermGitState.m:113, PIDInfoGitState.m:36, pidinfo.m:1000)`: XPC service `com.iterm2.pidinfo`: `pidinfoProtocol`
 
-  **CLOSED.** The app (`iTermSlowOperationGateway.m`, target iTerm2SharedARC) connects to the `pidinfo` XPC service (`pidinfo/main.m`, target pidinfo) with the interface `pidinfoProtocol` (`pidinfo/pidinfoProtocol.h`). NSXPC sends each message as the selector's name plus its arguments, and encodes object arguments and replies with `NSSecureCoding`, recording each object's class name; the receiving side looks the class up by name and accepts it only if it is in the classes allowed for that argument (`setClasses:forSelector:argumentIndex:ofReply:` calls at iTermSlowOperationGateway.m:110 to 197, or the declared type). So the protocol's 15 selectors and the classes of its arguments and replies are a wire format: both sides must keep them. Our classes in it: `iTermGitState` (reply of `requestGitStateForPath:gitBase:timeout:includeDiffStats:completion:`, line 158), `iTermGitFileStatus` (inside `iTermGitState`, iTermGitState.m:93 and 113) and `iTermDirectoryEntry` (reply of `fetchDirectoryListingOfPath:completion:`, line 188); the other argument and reply classes are Foundation (`NSNumber`, `NSData`, `NSString`, `NSArray`, `NSDictionary`) and scalars. The service also passes `iTermGitState` through a pipe: it runs a copy of itself (pidinfo.m:926 onward) whose `PIDInfoGetGitState` writes a keyed archive of the state to standard output (PIDInfoGitState.m:36), which the parent decodes by class (pidinfo.m:993, 1000). Both sides are built from the same sources into the same app bundle, so a rename is consistent, provided the class's runtime name is the same in every target that compiles it: `iTermGitState.m` and `iTermDirectoryEntry.m` are compiled into both iTerm2SharedARC and pidinfo (project file). A Swift port without `@objc(Name)` would give each target its own module-qualified name (`iTerm2SharedARC.iTermGitState` in the app, `pidinfo.iTermGitState` in the service), and every reply would fail to decode. Crosses a process boundary by name.
+  **CLOSED.** The app (`iTermSlowOperationGateway.m`, target iTerm2SharedARC) connects to the `pidinfo` XPC service (`pidinfo/main.m`, target pidinfo) with the interface `pidinfoProtocol` (`pidinfo/pidinfoProtocol.h`). NSXPC sends each message as the selector's name plus its arguments, and encodes object arguments and replies with `NSSecureCoding`, recording each object's class name; the receiving side looks the class up by name and accepts it only if it is in the classes allowed for that argument (`setClasses:forSelector:argumentIndex:ofReply:` calls at iTermSlowOperationGateway.m in -[iTermSlowOperationGateway connect], or the declared type). So the protocol's 15 selectors and the classes of its arguments and replies are a wire format: both sides must keep them. Our classes in it: `iTermGitState` (reply of `requestGitStateForPath:gitBase:timeout:includeDiffStats:completion:`), `iTermGitFileStatus` (inside `iTermGitState`, iTermGitState.m in -[iTermGitState encodeWithCoder:] and -[iTermGitState initWithCoder:]) and `iTermDirectoryEntry` (reply of `fetchDirectoryListingOfPath:completion:`); the other argument and reply classes are Foundation (`NSNumber`, `NSData`, `NSString`, `NSArray`, `NSDictionary`) and scalars. The service also passes `iTermGitState` through a pipe: it runs a copy of itself (pidinfo.m in -[pidinfo requestGitStateForPath:gitBase:timeout:includeDiffStats:completion:] onward) whose `PIDInfoGetGitState` writes a keyed archive of the state to standard output (PIDInfoGitState.m in PIDInfoGetGitState), which the parent decodes by class (pidinfo.m in -[pidinfo requestGitStateForPath:gitBase:timeout:includeDiffStats:completion:]). Both sides are built from the same sources into the same app bundle, so a rename is consistent, provided the class's runtime name is the same in every target that compiles it: `iTermGitState.m` and `iTermDirectoryEntry.m` are compiled into both iTerm2SharedARC and pidinfo (project file). A Swift port without `@objc(Name)` would give each target its own module-qualified name (`iTerm2SharedARC.iTermGitState` in the app, `pidinfo.iTermGitState` in the service), and every reply would fail to decode. Crosses a process boundary by name.
 
   Names: `getProcessInfoForProcessID:flavor:arg:size:reqid:withReply:`, `handshakeWithReply:`, `checkIfDirectoryExists:withReply:`, `checkIfExecutableRegularFile:searchPaths:withReply:`, `statFile:withReply:`, `resolvePathOfDirectory:withReply:`, `runShellScript:shell:mode:withReply:`, `findCompletionsWithPrefix:inDirectories:pwd:maxCount:executable:withReply:`, `requestGitStateForPath:gitBase:timeout:includeDiffStats:completion:`, `fetchRecentBranchesAt:count:completion:`, `findExistingFileWithPrefix:suffix:workingDirectory:trimWhitespace:pathsToIgnore:allowNetworkMounts:reqid:reply:`, `cancelFindExistingFileRequest:reply:`, `executeShellCommand:args:dir:env:reply:`, `fetchDirectoryListingOfPath:completion:`, `fetchUserShellWithReply:`, `iTermGitState`, `iTermGitFileStatus`, `iTermDirectoryEntry`.
 
 - `sources/XPC/iTermSandboxedWorkerClient.m:24 (also iTerm2SandboxedWorker/main.m:68, iTerm2SandboxedWorkerProtocol.h:14, iTerm2SandboxedWorkerProtocol.h:15)`: XPC service `com.iterm2.sandboxed-worker`: `iTerm2SandboxedWorkerProtocol`
 
-  **CLOSED.** The app (`iTermSandboxedWorkerClient.m`, compiled into iTerm2SharedARC) connects to the sandboxed image decoder (`iTerm2SandboxedWorker/main.m`, target iTerm2SandboxedWorker) with the interface `iTerm2SandboxedWorkerProtocol` (`sources/XPC/iTerm2SandboxedWorkerProtocol.h`). No `setClasses:` call: the reply's allowed class comes from the declared block parameter type, `iTermImage`. Its two selectors and the reply class are a wire format, as above. `iTermImage.m` is compiled into both iTerm2SharedARC and iTerm2SandboxedWorker, so the same two-target rule applies; what it encodes inside is Foundation (`NSMutableArray`, `NSNumber`, `NSData`, iTermImage.m:80 to 106). Crosses a process boundary by name.
+  **CLOSED.** The app (`iTermSandboxedWorkerClient.m`, compiled into iTerm2SharedARC) connects to the sandboxed image decoder (`iTerm2SandboxedWorker/main.m`, target iTerm2SandboxedWorker) with the interface `iTerm2SandboxedWorkerProtocol` (`sources/XPC/iTerm2SandboxedWorkerProtocol.h`). No `setClasses:` call: the reply's allowed class comes from the declared block parameter type, `iTermImage`. Its two selectors and the reply class are a wire format, as above. `iTermImage.m` is compiled into both iTerm2SharedARC and iTerm2SandboxedWorker, so the same two-target rule applies; what it encodes inside is Foundation (`NSMutableArray`, `NSNumber`, `NSData`, iTermImage.m in -[iTermImage encodeWithCoder:] and -[iTermImage initWithCoder:]). Crosses a process boundary by name.
 
   Names: `decodeImageFromData:withReply:`, `decodeImageFromSixelData:withReply:`, `iTermImage`.
 
@@ -1648,23 +1648,23 @@ The sites that create an archive in the scope (`git grep` for `NSKeyedArchiver` 
 
 | Site | What is archived (class names recorded, as far as the code shows) | Where the data goes | Read back |
 |---|---|---|---|
-| `ColorPicker/ColorPicker/CPKFavorite.m:65` | `-[CPKFavorite encodeWithCoder:]` sent to the archiver directly, so `CPKFavorite` itself is not recorded; recorded: the classes of its name, color and identifier (Foundation, AppKit `NSColor`) | **pasteboard (may cross processes and app versions running side by side)**: type `kCPKFavoriteUTI`, dragging a favorite | CPKFavorite.m:78 |
-| `ColorPicker/ColorPicker/CPKFavoritesView.m:237` | same encoding of each `CPKFavorite` | **disk or user defaults (persisted across versions)**: user defaults key `kCPFavoritesUserDefaultsKey` | CPKFavoritesView.m:92 |
-| `pidinfo/PIDInfoGitState.m:36` | `iTermGitState` (root, key `state`), `iTermGitFileStatus`, `NSArray`, `NSString` | **another process (same build)**: a pipe: standard output of a child pidinfo process, read by the parent pidinfo process (XPC entry above) | pidinfo.m:993, 1000 |
-| `sources/Categories/NSColor+iTerm.m:523` | `-[NSColor encodeWithCoder:]` sent directly; AppKit's own objects only | **disk or user defaults (persisted across versions)**: base64 string read back by `+colorWithString:` (NSColor+iTerm.m:500), which the highlight triggers use for their stored parameters (HighlightTrigger.m:431, iTermHighlightLineTrigger.m:144) | NSColor+iTerm.m:512 |
-| `sources/Categories/NSData+iTerm.m:292` | `+it_dataWithArchivedObject:` (key `object`). Callers: iTermRecordingCodec.m:189, an `NSDictionary` of the recording and its profile; iTermStatusBarSetupElement.m:115, iTermStatusBarSetupViewController.m:426 and iTermStatusBarSetupDestinationCollectionViewController.m:293, an `iTermStatusBarSetupElement`, which encodes an `iTermStatusBarBuiltInComponentFactory` or `iTermStatusBarRPCComponentFactory` and a knob dictionary (iTermStatusBarSetupElement.m:97 to 104) | **persisted and pasteboard (one helper, several callers)**: the recording: a file the user saves; the status bar element: type `iTermStatusBarElementPasteboardType` | iTermRecordingCodec.m:61; iTermStatusBarSetupDestinationCollectionViewController.m:347; iTermStatusBarSetupElement.m:127 |
-| `sources/Categories/NSData+iTerm.m:311` | `+it_dataWithSecurelyArchivedObject:error:`. Callers: iTermEncoderGraphRecord.m:403, iTermGraphEncoder.m:79 and 124, property-list values of the state-restoration graph | **disk or user defaults (persisted across versions)**: the state-restoration graph database | `-it_unarchivedObjectOfBasicClassesWithError:` (NSData+iTerm.m:321; iTermGraphDatabase.m:706, iTermGraphTableTransformer.m:38), which also allows `iTermTuple` |
-| `sources/Categories/NSObject+iTerm.m:423` | `-it_keyValueCodedData` (key `root`). Caller: PTYSession.m:8118, `_conductor.tree`, an `NSDictionary` (Conductor.swift:1834) | **disk or user defaults (persisted across versions)**: session arrangement (window arrangements and state restoration) | PTYSession.m:2522, through NSObject+iTerm.m:430 (allows `NSArray`, `NSDictionary`, `NSString`, `NSNumber`, `NSDate`) |
-| `sources/Codecs/CodableColor.swift:48` | `NSColor.encode(with:)` sent directly; AppKit's own objects only | **disk or user defaults (persisted across versions)**: inside the property-list encoding of saved colors (VT100SavedColors.swift:72, 138), stored in terminal state (VT100Terminal.m:6290, VT100ScreenState.m:1534) | CodableColor.swift:36 |
-| `sources/Language/CPParser+Cache.m:131` | the CoreParse parser's `-encodeWithCoder:` sent directly; CoreParse classes (ThirdParty/CoreParse, outside the scope) | **disk or user defaults (persisted across versions)**: a cache file; its key includes the app version (section 5, CPParser+Cache.m:26), so a new build does not read an old file | CPParser+Cache.m:101 |
-| `sources/Popups/PasteboardHistory.m:137` | `NSDictionary` of an array of dictionaries of strings and numbers (`_entriesToDict`, line 104) | **disk or user defaults (persisted across versions)**: the paste history file | PasteboardHistory.m:159 |
-| `sources/SSH/SSHFilePanelFileList.swift:896` | `NSDictionary` of the SSH identity's user-defaults object, strings and a boolean | **pasteboard (may cross processes and app versions running side by side)**: types `sshFileNodePasteboardType`, `sshFileNodeDirectoryPasteboardType` | SSHFilePanelSidebar.swift:577 |
-| `sources/SSH/SSHFilePanelFileList.swift:937` | same, for each dragged item | **pasteboard (may cross processes and app versions running side by side)**: same types | SSHFilePanelSidebar.swift:577 |
-| `sources/Settings/PreferencePanel.m:1108` | an `NSSearchFieldCell` (AppKit) | **in-process only**: unarchived at once with a class substitution (section 5, PreferencePanel.m:1113) | PreferencePanel.m:1111 |
-| `sources/Settings/Profiles/ProfileListView.m:287` | `NSMutableArray` of GUID strings | **pasteboard (may cross processes and app versions running side by side)**: dragging profile rows | ProfileListView.m:331 |
-| `sources/Settings/TriggerController.m:757` | `NSMutableArray` of `NSNumber` row indexes | **pasteboard (may cross processes and app versions running side by side)**: type `kiTermTriggerControllerPasteboardType` | TriggerController.m:793 |
-| `sources/StateRestoration/iTermRestorableStateSQLite.m:42` | an integer only (`index`) | **in-process only**: unarchived at once (line 47) | iTermRestorableStateSQLite.m:47 |
-| `sources/StateRestoration/iTermRestorableStateSaver.m:128` | what `-restorableStateEncodeWithCoder:window:` encodes (iTermApplicationDelegate.m:4475): the window's GUID string or arrangement dictionary (PseudoTerminal.m:17058, iTermWindowImpl.m:249) and `NSWindow`'s own restorable state | **disk or user defaults (persisted across versions)**: encrypted restorable-state files | iTermRestorableStateRecord.m:196 |
+| `ColorPicker/ColorPicker/CPKFavorite.m` in -[CPKFavorite pasteboardPropertyListForType:] | `-[CPKFavorite encodeWithCoder:]` sent to the archiver directly, so `CPKFavorite` itself is not recorded; recorded: the classes of its name, color and identifier (Foundation, AppKit `NSColor`) | **pasteboard (may cross processes and app versions running side by side)**: type `kCPKFavoriteUTI`, dragging a favorite | CPKFavorite.m in -[CPKFavorite initWithPasteboardPropertyList:ofType:] |
+| `ColorPicker/ColorPicker/CPKFavoritesView.m` in -[CPKFavoritesView encodedFavorites] | same encoding of each `CPKFavorite` | **disk or user defaults (persisted across versions)**: user defaults key `kCPFavoritesUserDefaultsKey` | CPKFavoritesView.m in -[CPKFavoritesView initWithFrame:colorSpace:] |
+| `pidinfo/PIDInfoGitState.m` in PIDInfoGetGitState | `iTermGitState` (root, key `state`), `iTermGitFileStatus`, `NSArray`, `NSString` | **another process (same build)**: a pipe: standard output of a child pidinfo process, read by the parent pidinfo process (XPC entry above) | pidinfo.m in -[pidinfo requestGitStateForPath:gitBase:timeout:includeDiffStats:completion:] |
+| `sources/Categories/NSColor+iTerm.m` in -[NSColor(iTerm) stringValue] | `-[NSColor encodeWithCoder:]` sent directly; AppKit's own objects only | **disk or user defaults (persisted across versions)**: base64 string read back by `+colorWithString:` (NSColor+iTerm.m in +[NSColor(iTerm) colorWithString:]), which the highlight triggers use for their stored parameters (HighlightTrigger.m in +[HighlightTrigger colorsPreservingColorSpace:param:], iTermHighlightLineTrigger.m in -[iTermHighlightLineTrigger colorsPreservingColorSpace:param:]) | NSColor+iTerm.m in +[NSColor(iTerm) colorWithString:] |
+| `sources/Categories/NSData+iTerm.m` in +[NSData(iTerm) it_dataWithArchivedObject:] | `+it_dataWithArchivedObject:` (key `object`). Callers: iTermRecordingCodec.m in +[iTermRecordingCodec exportRecording:from:to:window:], an `NSDictionary` of the recording and its profile; iTermStatusBarSetupElement.m in -[iTermStatusBarSetupElement pasteboardPropertyListForType:], iTermStatusBarSetupViewController.m in -[iTermStatusBarSetupViewController collectionView:pasteboardWriterForItemAtIndex:] and iTermStatusBarSetupDestinationCollectionViewController.m in -[iTermStatusBarSetupDestinationCollectionViewController collectionView:pasteboardWriterForItemAtIndex:], an `iTermStatusBarSetupElement`, which encodes an `iTermStatusBarBuiltInComponentFactory` or `iTermStatusBarRPCComponentFactory` and a knob dictionary (iTermStatusBarSetupElement.m in -[iTermStatusBarSetupElement encodeWithCoder:]) | **persisted and pasteboard (one helper, several callers)**: the recording: a file the user saves; the status bar element: type `iTermStatusBarElementPasteboardType` | iTermRecordingCodec.m in +[iTermRecordingCodec loadRecording:]; iTermStatusBarSetupDestinationCollectionViewController.m in -[iTermStatusBarSetupDestinationCollectionViewController collectionView:acceptDrop:indexPath:dropOperation:]; iTermStatusBarSetupElement.m in -[iTermStatusBarSetupElement initWithPasteboardPropertyList:ofType:] |
+| `sources/Categories/NSData+iTerm.m` in +[NSData(iTerm) it_dataWithSecurelyArchivedObject:error:] | `+it_dataWithSecurelyArchivedObject:error:`. Callers: iTermEncoderGraphRecord.m in -[iTermEncoderGraphRecord data], iTermGraphEncoder.m in -[iTermGraphEncoder encodePropertyList:withKey:] and -[iTermGraphEncoder encodeObject:key:], property-list values of the state-restoration graph | **disk or user defaults (persisted across versions)**: the state-restoration graph database | `-it_unarchivedObjectOfBasicClassesWithError:` (NSData+iTerm.m in -[NSData(iTerm) it_unarchivedObjectOfBasicClassesWithError:]; iTermGraphDatabase.m in -[iTermGraphDatabase loadLargeDataForRowID:], iTermGraphTableTransformer.m in iTermGraphDeltaEncoderMakeGraphRecord), which also allows `iTermTuple` |
+| `sources/Categories/NSObject+iTerm.m` in -[NSObject(iTerm) it_keyValueCodedData] | `-it_keyValueCodedData` (key `root`). Caller: PTYSession.m in -[PTYSession encodeArrangementWithContents:encoder:replacementProfile:saveProgram:pendingJumps:options:], `_conductor.tree`, an `NSDictionary` (Conductor.swift in Conductor.tree) | **disk or user defaults (persisted across versions)**: session arrangement (window arrangements and state restoration) | PTYSession.m in +[PTYSession sessionFromArrangement:named:inView:withDelegate:forObjectType:partialAttachments:options:], through NSObject+iTerm.m in +[NSObject(iTerm) it_fromKeyValueCodedData:] (allows `NSArray`, `NSDictionary`, `NSString`, `NSNumber`, `NSDate`) |
+| `sources/Codecs/CodableColor.swift` in CodableColor.encode(to:) | `NSColor.encode(with:)` sent directly; AppKit's own objects only | **disk or user defaults (persisted across versions)**: inside the property-list encoding of saved colors (VT100SavedColors.swift in SavedColors.plist and SavedColorsSlot.plist), stored in terminal state (VT100Terminal.m in -[VT100Terminal stateDictionary], VT100ScreenState.m in -[VT100ScreenState savedState]) | CodableColor.swift in CodableColor.init(from:) |
+| `sources/Language/CPParser+Cache.m` in -[CPShiftReduceParser(Cache) it_writeToFile:] | the CoreParse parser's `-encodeWithCoder:` sent directly; CoreParse classes (ThirdParty/CoreParse, outside the scope) | **disk or user defaults (persisted across versions)**: a cache file; its key includes the app version (section 5, CPParser+Cache.m in +[CPShiftReduceParser(Cache) it_keyWithBNF:start:]), so a new build does not read an old file | CPParser+Cache.m in +[CPShiftReduceParser(Cache) it_cachedFromFile:] |
+| `sources/Popups/PasteboardHistory.m` in -[PasteboardHistory _writeHistoryToDisk] | `NSDictionary` of an array of dictionaries of strings and numbers (`_entriesToDict`) | **disk or user defaults (persisted across versions)**: the paste history file | PasteboardHistory.m in -[PasteboardHistory _loadHistoryFromDisk] |
+| `sources/SSH/SSHFilePanelFileList.swift` in SSHFilePanelFileList.outlineView(_:pasteboardWriterForItem:) | `NSDictionary` of the SSH identity's user-defaults object, strings and a boolean | **pasteboard (may cross processes and app versions running side by side)**: types `sshFileNodePasteboardType`, `sshFileNodeDirectoryPasteboardType` | SSHFilePanelSidebar.swift in SSHFilePanelSidebar.outlineView(_:acceptDrop:item:childIndex:) |
+| `sources/SSH/SSHFilePanelFileList.swift` in SSHFilePanelFileList.outlineView(_:draggingSession:willBeginAt:forItems:) | same, for each dragged item | **pasteboard (may cross processes and app versions running side by side)**: same types | SSHFilePanelSidebar.swift in SSHFilePanelSidebar.outlineView(_:acceptDrop:item:childIndex:) |
+| `sources/Settings/PreferencePanel.m` in -[PreferencePanel bigSurSearchFieldToolbarItem] | an `NSSearchFieldCell` (AppKit) | **in-process only**: unarchived at once with a class substitution (section 5, PreferencePanel.m in -[PreferencePanel bigSurSearchFieldToolbarItem]) | PreferencePanel.m in -[PreferencePanel bigSurSearchFieldToolbarItem] |
+| `sources/Settings/Profiles/ProfileListView.m` in -[ProfileListView dataForRow:] | `NSMutableArray` of GUID strings | **pasteboard (may cross processes and app versions running side by side)**: dragging profile rows | ProfileListView.m in -[ProfileListView tableView:acceptDrop:row:dropOperation:] |
+| `sources/Settings/TriggerController.m` in -[TriggerController tableView:writeRowsWithIndexes:toPasteboard:] | `NSMutableArray` of `NSNumber` row indexes | **pasteboard (may cross processes and app versions running side by side)**: type `kiTermTriggerControllerPasteboardType` | TriggerController.m in -[TriggerController tableView:acceptDrop:row:dropOperation:] |
+| `sources/StateRestoration/iTermRestorableStateSQLite.m` in -[iTermRestorableStateSQLiteRecord unarchiver] | an integer only (`index`) | **in-process only**: unarchived at once | iTermRestorableStateSQLite.m in -[iTermRestorableStateSQLiteRecord unarchiver] |
+| `sources/StateRestoration/iTermRestorableStateSaver.m` in -[iTermRestorableStateSaver restorableStateForWindow:] | what `-restorableStateEncodeWithCoder:window:` encodes (iTermApplicationDelegate.m in -[iTermApplicationDelegate restorableStateEncodeWithCoder:window:]): the window's GUID string or arrangement dictionary (PseudoTerminal.m in -[PseudoTerminal openPartialAttachmentsForArrangement:timeout:completion:], iTermWindowImpl.m in -encodeRestorableStateWithCoder: (of each window class that includes the file)) and `NSWindow`'s own restorable state | **disk or user defaults (persisted across versions)**: encrypted restorable-state files | iTermRestorableStateRecord.m in -[iTermRestorableStateRecord unarchiver] |
 
 Totals: 17 sites; disk or user defaults (persisted across versions) 8, pasteboard (may cross processes and app versions running side by side) 5, persisted and pasteboard (one helper, several callers) 1, another process (same build) 1, in-process only 2.
 
@@ -1672,15 +1672,15 @@ Of the classes recorded, the ones of ours that persist or cross a process bounda
 
 This is to be checked against stored data by the Phase 0 binding tests: [phase0.md section 3](phase0.md), "For every `NSCoding` class name found in the stored-state corpus, `NSClassFromString` finds it." The corpus now exists (`tests/stored-state-corpus/`); the reviewer of that corpus found that its archives hold Foundation classes only, and a scan of its property lists and SQLite blobs for this revision agrees (244 keyed archives; class names `NSArray`, `NSDictionary`, `NSMutableArray`, `NSMutableData`, `NSMutableDictionary`, `NSMutableSet`, `NSNull`). So the corpus does not yet exercise any class of ours; the classes listed here are the ones a corpus entry would need to cover.
 
-- `sources/Categories/NSData+iTerm.m:292 (also iTermStatusBarSetupElement.m:115, iTermStatusBarSetupElement.m:98, iTermStatusBarBaseComponent.m:146, iTermStatusBarRPCProvidedTextComponent.m:256)`: status bar setup elements archived onto the pasteboard
+- `sources/Categories/NSData+iTerm.m:292 (also iTermStatusBarSetupElement.m:115, iTermStatusBarSetupElement.m:98, iTermStatusBarBaseComponent.m:154, iTermStatusBarRPCProvidedTextComponent.m:256)`: status bar setup elements archived onto the pasteboard
 
-  **OPEN-EXTERNAL.** The keyed archive on the drag pasteboard records the class names `iTermStatusBarSetupElement` (root) and `iTermStatusBarBuiltInComponentFactory` or `iTermStatusBarRPCComponentFactory` (its `componentFactory`); the built-in factory also stores its component class's name as a string (section 3, iTermStatusBarBaseComponent.m:51). The reader (iTermStatusBarSetupDestinationCollectionViewController.m:347) finds these classes by name. Pasteboard data can come from another running copy of the app, possibly a different version. Crosses a process boundary by name (pasteboard archive).
+  **OPEN-EXTERNAL.** The keyed archive on the drag pasteboard records the class names `iTermStatusBarSetupElement` (root) and `iTermStatusBarBuiltInComponentFactory` or `iTermStatusBarRPCComponentFactory` (its `componentFactory`); the built-in factory also stores its component class's name as a string (section 3, iTermStatusBarBaseComponent.m in -[iTermStatusBarBuiltInComponentFactory initWithCoder:]). The reader (iTermStatusBarSetupDestinationCollectionViewController.m in -[iTermStatusBarSetupDestinationCollectionViewController collectionView:acceptDrop:indexPath:dropOperation:]) finds these classes by name. Pasteboard data can come from another running copy of the app, possibly a different version. Crosses a process boundary by name (pasteboard archive).
 
   Names: `iTermStatusBarSetupElement`, `iTermStatusBarBuiltInComponentFactory`, `iTermStatusBarRPCComponentFactory`.
 
 - `sources/Categories/NSData+iTerm.m:331 (also iTermURLStore.m:195, iTermURLStore.m:189)`: `iTermTuple` allowed when reading state-restoration archives
 
-  **OPEN-EXTERNAL.** `-it_unarchivedObjectOfBasicClassesWithError:` allows `iTermTuple` (NSData+iTerm.m:331) when decoding values of the state-restoration graph, and the URL store loads its keys as `iTermTuple` (iTermURLStore.m:195). No current writer was found that archives a tuple (`-[iTermURLStore encodeGraphWithEncoder:]`, line 189, writes nothing), and the stored-state corpus holds none, but an archive that contains one is decoded by that class name. Persisted by name (allowed on read).
+  **OPEN-EXTERNAL.** `-it_unarchivedObjectOfBasicClassesWithError:` allows `iTermTuple` (NSData+iTerm.m in -[NSData(iTerm) it_unarchivedObjectOfBasicClassesWithError:]) when decoding values of the state-restoration graph, and the URL store loads its keys as `iTermTuple` (iTermURLStore.m in -[iTermURLStore loadFromGraphRecord:]). No current writer was found that archives a tuple (`-[iTermURLStore encodeGraphWithEncoder:]` writes nothing), and the stored-state corpus holds none, but an archive that contains one is decoded by that class name. Persisted by name (allowed on read).
 
   Names: `iTermTuple`.
 
@@ -1690,32 +1690,32 @@ Every Swift class in the scope whose name is persisted or looked up by name in a
 
 | Class | Declared at | Runtime name | How the name is set |
 |---|---|---|---|
-| `HighlightBrowserTrigger` | `sources/Triggers/HighlightBrowserTrigger.swift:8` | `iTerm2SharedARC.HighlightBrowserTrigger` | no `@objc(Name)`; module iTerm2SharedARC; do not add or change `@objc(Name)`: the stored name is the current runtime name |
-| `HyperlinkBrowserTrigger` | `sources/Triggers/HyperlinkBrowserTrigger.swift:8` | `iTerm2SharedARC.HyperlinkBrowserTrigger` | no `@objc(Name)`; module iTerm2SharedARC; do not add or change `@objc(Name)`: the stored name is the current runtime name |
-| `InjectJavascriptContentTrigger` | `sources/Triggers/InjectJavascriptTrigger.swift:65` | `InjectJavascriptContentTrigger` | `@objc(InjectJavascriptContentTrigger)` |
-| `InjectJavascriptURLTrigger` | `sources/Triggers/InjectJavascriptTrigger.swift:9` | `InjectJavascriptURLTrigger` | `@objc(InjectJavascriptURLTrigger)` |
-| `iTermBlockMark` | `sources/Marks/BlockMark.swift:15` | `iTermBlockMark` | `@objc(iTermBlockMark)` |
-| `iTermBufferInputTrigger` | `sources/Triggers/BufferInputTrigger.swift:10` | `iTermBufferInputTrigger` | `@objc(iTermBufferInputTrigger)` |
-| `iTermButtonMark` | `sources/Marks/ButtonMark.swift:60` | `iTermButtonMark` | `@objc(iTermButtonMark)` |
-| `iTermEnterWorkgroupBrowserTrigger` | `sources/Triggers/EnterWorkgroupBrowserTrigger.swift:14` | `iTermEnterWorkgroupBrowserTrigger` | `@objc(iTermEnterWorkgroupBrowserTrigger)` |
-| `iTermEnterWorkgroupTrigger` | `sources/Triggers/EnterWorkgroupTrigger.swift:17` | `iTermEnterWorkgroupTrigger` | `@objc(iTermEnterWorkgroupTrigger)` |
-| `iTermExitWorkgroupBrowserTrigger` | `sources/Triggers/ExitWorkgroupBrowserTrigger.swift:12` | `iTermExitWorkgroupBrowserTrigger` | `@objc(iTermExitWorkgroupBrowserTrigger)` |
-| `iTermExitWorkgroupTrigger` | `sources/Triggers/ExitWorkgroupTrigger.swift:15` | `iTermExitWorkgroupTrigger` | `@objc(iTermExitWorkgroupTrigger)` |
-| `iTermFoldMark` | `sources/Marks/FoldMark.swift:379` | `iTermFoldMark` | `@objc(iTermFoldMark)` |
-| `iTermFoldTrigger` | `sources/Triggers/FoldTrigger.swift:9` | `iTermFoldTrigger` | `@objc(iTermFoldTrigger)` |
-| `iTermInjectTrigger` | `sources/Triggers/InjectTrigger.swift:11` | `iTermInjectTrigger` | `@objc(iTermInjectTrigger)` |
-| `iTermPathMark` | `sources/Marks/PathMark.swift:19` | `iTermPathMark` | `@objc(iTermPathMark)` |
-| `iTermScriptCallCancellation` | `sources/Language/iTermScriptCallCancellation.swift:15` | `iTermScriptCallCancellation` | `@objc(iTermScriptCallCancellation)` |
-| `iTermSetNamedMarkTrigger` | `sources/Triggers/SetNamedMarkTrigger.swift:9` | `iTermSetNamedMarkTrigger` | `@objc(iTermSetNamedMarkTrigger)` |
-| `iTermSetProfileBooleanTrigger` | `sources/Triggers/SetProfileBooleanTrigger.swift:16` | `iTermSetProfileBooleanTrigger` | `@objc(iTermSetProfileBooleanTrigger)` |
-| `iTermSetTabStatusTrigger` | `sources/Triggers/SetTabStatusTrigger.swift:4` | `iTermSetTabStatusTrigger` | `@objc(iTermSetTabStatusTrigger)` |
-| `iTermSetUserVariableTrigger` | `sources/Triggers/SetUserVariableTrigger.swift:48` | `iTermSetUserVariableTrigger` | `@objc(iTermSetUserVariableTrigger)` |
-| `iTermSGRTrigger` | `sources/Triggers/SGRTrigger.swift:11` | `iTermSGRTrigger` | `@objc(iTermSGRTrigger)` |
-| `iTermStatusBarFilterComponent` | `sources/StatusBar/Components/StatusBarFilterComponent.swift:11` | `iTermStatusBarFilterComponent` | `@objc(iTermStatusBarFilterComponent)` |
-| `iTermStatusBarTriggersComponent` | `sources/StatusBar/Components/iTermStatusBarTriggersComponent.swift:21` | `iTermStatusBarTriggersComponent` | `@objc(iTermStatusBarTriggersComponent)` |
-| `PortholeMark` | `sources/Portholes/Porthole.swift:16` | `iTerm2SharedARC.PortholeMark` | no `@objc(Name)`; module iTerm2SharedARC; do not add or change `@objc(Name)`: the stored name is the current runtime name |
-| `ReaderModeBrowserTrigger` | `sources/Triggers/ReaderModeBrowserTrigger.swift:9` | `iTerm2SharedARC.ReaderModeBrowserTrigger` | no `@objc(Name)`; module iTerm2SharedARC; do not add or change `@objc(Name)`: the stored name is the current runtime name |
-| `ReloadBrowserTrigger` | `sources/Triggers/ReloadBrowserTrigger.swift:9` | `ReloadBrowserTrigger` | `@objc(ReloadBrowserTrigger)` |
+| `HighlightBrowserTrigger` | `sources/Triggers/HighlightBrowserTrigger.swift` in the HighlightBrowserTrigger class | `iTerm2SharedARC.HighlightBrowserTrigger` | no `@objc(Name)`; module iTerm2SharedARC; do not add or change `@objc(Name)`: the stored name is the current runtime name |
+| `HyperlinkBrowserTrigger` | `sources/Triggers/HyperlinkBrowserTrigger.swift` in the HyperlinkBrowserTrigger class | `iTerm2SharedARC.HyperlinkBrowserTrigger` | no `@objc(Name)`; module iTerm2SharedARC; do not add or change `@objc(Name)`: the stored name is the current runtime name |
+| `InjectJavascriptContentTrigger` | `sources/Triggers/InjectJavascriptTrigger.swift` in the InjectJavascriptContentTrigger class | `InjectJavascriptContentTrigger` | `@objc(InjectJavascriptContentTrigger)` |
+| `InjectJavascriptURLTrigger` | `sources/Triggers/InjectJavascriptTrigger.swift` in the InjectJavascriptURLTrigger class | `InjectJavascriptURLTrigger` | `@objc(InjectJavascriptURLTrigger)` |
+| `iTermBlockMark` | `sources/Marks/BlockMark.swift` in the BlockMark class | `iTermBlockMark` | `@objc(iTermBlockMark)` |
+| `iTermBufferInputTrigger` | `sources/Triggers/BufferInputTrigger.swift` in the BufferInputTrigger class | `iTermBufferInputTrigger` | `@objc(iTermBufferInputTrigger)` |
+| `iTermButtonMark` | `sources/Marks/ButtonMark.swift` in the ButtonMark class | `iTermButtonMark` | `@objc(iTermButtonMark)` |
+| `iTermEnterWorkgroupBrowserTrigger` | `sources/Triggers/EnterWorkgroupBrowserTrigger.swift` in the EnterWorkgroupBrowserTrigger class | `iTermEnterWorkgroupBrowserTrigger` | `@objc(iTermEnterWorkgroupBrowserTrigger)` |
+| `iTermEnterWorkgroupTrigger` | `sources/Triggers/EnterWorkgroupTrigger.swift` in the EnterWorkgroupTrigger class | `iTermEnterWorkgroupTrigger` | `@objc(iTermEnterWorkgroupTrigger)` |
+| `iTermExitWorkgroupBrowserTrigger` | `sources/Triggers/ExitWorkgroupBrowserTrigger.swift` in the ExitWorkgroupBrowserTrigger class | `iTermExitWorkgroupBrowserTrigger` | `@objc(iTermExitWorkgroupBrowserTrigger)` |
+| `iTermExitWorkgroupTrigger` | `sources/Triggers/ExitWorkgroupTrigger.swift` in the ExitWorkgroupTrigger class | `iTermExitWorkgroupTrigger` | `@objc(iTermExitWorkgroupTrigger)` |
+| `iTermFoldMark` | `sources/Marks/FoldMark.swift` in the FoldMark class | `iTermFoldMark` | `@objc(iTermFoldMark)` |
+| `iTermFoldTrigger` | `sources/Triggers/FoldTrigger.swift` in the FoldTrigger class | `iTermFoldTrigger` | `@objc(iTermFoldTrigger)` |
+| `iTermInjectTrigger` | `sources/Triggers/InjectTrigger.swift` in the InjectTrigger class | `iTermInjectTrigger` | `@objc(iTermInjectTrigger)` |
+| `iTermPathMark` | `sources/Marks/PathMark.swift` in the PathMark class | `iTermPathMark` | `@objc(iTermPathMark)` |
+| `iTermScriptCallCancellation` | `sources/Language/iTermScriptCallCancellation.swift` in the iTermScriptCallCancellation class | `iTermScriptCallCancellation` | `@objc(iTermScriptCallCancellation)` |
+| `iTermSetNamedMarkTrigger` | `sources/Triggers/SetNamedMarkTrigger.swift` in the SetNamedMarkTrigger class | `iTermSetNamedMarkTrigger` | `@objc(iTermSetNamedMarkTrigger)` |
+| `iTermSetProfileBooleanTrigger` | `sources/Triggers/SetProfileBooleanTrigger.swift` in the SetProfileBooleanTrigger class | `iTermSetProfileBooleanTrigger` | `@objc(iTermSetProfileBooleanTrigger)` |
+| `iTermSetTabStatusTrigger` | `sources/Triggers/SetTabStatusTrigger.swift` in the SetTabStatusTrigger class | `iTermSetTabStatusTrigger` | `@objc(iTermSetTabStatusTrigger)` |
+| `iTermSetUserVariableTrigger` | `sources/Triggers/SetUserVariableTrigger.swift` in the SetUserVariableTrigger class | `iTermSetUserVariableTrigger` | `@objc(iTermSetUserVariableTrigger)` |
+| `iTermSGRTrigger` | `sources/Triggers/SGRTrigger.swift` in the SGRTrigger class | `iTermSGRTrigger` | `@objc(iTermSGRTrigger)` |
+| `iTermStatusBarFilterComponent` | `sources/StatusBar/Components/StatusBarFilterComponent.swift` in the StatusBarFilterComponent class | `iTermStatusBarFilterComponent` | `@objc(iTermStatusBarFilterComponent)` |
+| `iTermStatusBarTriggersComponent` | `sources/StatusBar/Components/iTermStatusBarTriggersComponent.swift` in the StatusBarTriggersComponent class | `iTermStatusBarTriggersComponent` | `@objc(iTermStatusBarTriggersComponent)` |
+| `PortholeMark` | `sources/Portholes/Porthole.swift` in the PortholeMark class | `iTerm2SharedARC.PortholeMark` | no `@objc(Name)`; module iTerm2SharedARC; do not add or change `@objc(Name)`: the stored name is the current runtime name |
+| `ReaderModeBrowserTrigger` | `sources/Triggers/ReaderModeBrowserTrigger.swift` in the ReaderModeBrowserTrigger class | `iTerm2SharedARC.ReaderModeBrowserTrigger` | no `@objc(Name)`; module iTerm2SharedARC; do not add or change `@objc(Name)`: the stored name is the current runtime name |
+| `ReloadBrowserTrigger` | `sources/Triggers/ReloadBrowserTrigger.swift` in the ReloadBrowserTrigger class | `ReloadBrowserTrigger` | `@objc(ReloadBrowserTrigger)` |
 
 ## 7. OPEN-EXTERNAL sites without an allowlist
 
@@ -1729,18 +1729,18 @@ assessment.
 
 | Site | Input | Check between input and call |
 |---|---|---|
-| `sources/StatusBar/Components/iTermStatusBarBaseComponent.m:51`, `-[iTermStatusBarBuiltInComponentFactory initWithCoder:]` | Drag-and-drop data of type `iTermStatusBarElementPasteboardType`, unarchived with `requiresSecureCoding = NO` by `-[NSData it_unarchivedObjectOfClasses:]` (`NSData+iTerm.m:305`), called at `iTermStatusBarSetupDestinationCollectionViewController.m:347` | Fixed 2026-11-21 (owner queue Q21 item 3): the class must conform to `iTermStatusBarComponent`. The archive is still decoded without secure coding (the follow-up queued in owner queue Q22) |
-| `sources/DataStructuresAlgorithms/IntervalTree.m:517`, `-[IntervalTree restoreFromDictionary:]` | Saved interval-tree dictionaries (window arrangements, session restoration) | Fixed 2026-11-21 (owner queue Q21 item 3): the class must conform to `IntervalTreeObject`, as on the graph-record path |
-| `sources/SearchingFiltering/iTermFindDriver.m:761` (and the call at 762; reached from the find bar, iTermDropDownFindViewController.m:411, and the status bar search field, iTermMiniSearchFieldViewController.m:405) | Cocoa text system key bindings, including the user's `~/Library/KeyBindings/DefaultKeyBinding.dict` | `respondsToSelector:` on `iTermFindDriver`; any one-argument method of that class named by a binding is called |
-| `sources/StatusBar/Setup/Knobs/iTermStatusBarKnobNumericViewController.m:88` | Same key bindings | `respondsToSelector:` on the view controller |
-| `sources/StatusBar/Setup/Knobs/iTermStatusBarKnobTextViewController.m:124` | Same key bindings | `respondsToSelector:` on the view controller |
-| `sources/StatusBar/Setup/iTermStatusBarSetupDestinationCollectionViewController.m:53` | Same key bindings | `respondsToSelector:` on the collection view's delegate |
+| `sources/StatusBar/Components/iTermStatusBarBaseComponent.m` in -[iTermStatusBarBuiltInComponentFactory initWithCoder:], `-[iTermStatusBarBuiltInComponentFactory initWithCoder:]` | Drag-and-drop data of type `iTermStatusBarElementPasteboardType`, unarchived with `requiresSecureCoding = NO` by `-[NSData it_unarchivedObjectOfClasses:]` (`NSData+iTerm.m` in -[NSData(iTerm) it_unarchivedObjectOfClasses:]), called at `iTermStatusBarSetupDestinationCollectionViewController.m` in -[iTermStatusBarSetupDestinationCollectionViewController collectionView:acceptDrop:indexPath:dropOperation:] | Fixed 2026-11-21 (owner queue Q21 item 3): the class must conform to `iTermStatusBarComponent`. The archive is still decoded without secure coding (the follow-up queued in owner queue Q22) |
+| `sources/DataStructuresAlgorithms/IntervalTree.m` in -[IntervalTree restoreFromDictionary:], `-[IntervalTree restoreFromDictionary:]` | Saved interval-tree dictionaries (window arrangements, session restoration) | Fixed 2026-11-21 (owner queue Q21 item 3): the class must conform to `IntervalTreeObject`, as on the graph-record path |
+| `sources/SearchingFiltering/iTermFindDriver.m` in -[iTermFindDriver doCommandBySelector:] (and the call at 762; reached from the find bar, iTermDropDownFindViewController.m in -[iTermDropDownFindViewController control:textView:doCommandBySelector:], and the status bar search field, iTermMiniSearchFieldViewController.m in -[iTermMiniSearchFieldViewController control:textView:doCommandBySelector:]) | Cocoa text system key bindings, including the user's `~/Library/KeyBindings/DefaultKeyBinding.dict` | `respondsToSelector:` on `iTermFindDriver`; any one-argument method of that class named by a binding is called |
+| `sources/StatusBar/Setup/Knobs/iTermStatusBarKnobNumericViewController.m` in -[iTermStatusBarKnobNumericViewController control:textView:doCommandBySelector:] | Same key bindings | `respondsToSelector:` on the view controller |
+| `sources/StatusBar/Setup/Knobs/iTermStatusBarKnobTextViewController.m` in -[iTermStatusBarKnobTextViewController control:textView:doCommandBySelector:] | Same key bindings | `respondsToSelector:` on the view controller |
+| `sources/StatusBar/Setup/iTermStatusBarSetupDestinationCollectionViewController.m` in -[iTermStatusBarSetupDestinationCollectionView doCommandBySelector:] | Same key bindings | `respondsToSelector:` on the collection view's delegate |
 
 The other OPEN-EXTERNAL sites check a class against a protocol or base class
-(`Trigger.m:77`, `iTermStatusBarLayout.m:112`, `IntervalTree.m:1433`,
-`iTermMark.m:77`), resolve names only against the sdef (`iTermScriptingWindow`),
-or only fire items that already exist in the main menu (`NSMenu+iTerm.m:64`,
-`iTermAPIHelper.m:3698`). The trigger action and status bar identifier entries
+(`Trigger.m` in +[Trigger triggerFromUntrustedDict:], `iTermStatusBarLayout.m` in +[iTermStatusBarLayout componentsArrayFromDictionary:scope:], `IntervalTree.m` in -[IntervalTree restoreFromGraphRecord:offset:largeContentProvider:],
+`iTermMark.m` in +[iTermMark intervalTreeObjectWithDictionaryWithTypeInformation:]), resolve names only against the sdef (`iTermScriptingWindow`),
+or only fire items that already exist in the main menu (`NSMenu+iTerm.m` in -[NSMenu(iTermAdditions) it_selectMenuItemWithTitle:identifier:],
+`iTermAPIHelper.m` in -[iTermAPIHelper apiServerMenuItem:handler:]). The trigger action and status bar identifier entries
 of section 5 are writers or in-process uses of the same names. The OPEN-EXTERNAL
 entries of section 6 are checked by the framework: AppKit requires a window
 restoration class to adopt `NSWindowRestoration`, and an unarchiver accepts
@@ -1770,33 +1770,33 @@ receiver is that class.
 
 | Kind | Name | Sites | Resolves | Where |
 |---|---|---|---|---|
-| class | `NSAutoresizingMaskLayoutConstraint` | 1 | not in database (SDK or private) | Categories/NSView+iTerm.m:341 NSClassFromString |
-| class | `NSTitlebarContainerView` | 1 | not in database (SDK or private) | TerminalView/iTermWindowImpl.m:101 NSClassFromString |
-| class | `WKPreferences` | 1 | not in database (SDK or private) | Infrastructure/Views/iTermWebViewWrapperViewController.m:132 NSClassFromString |
-| class | `WKWebViewConfiguration` | 1 | not in database (SDK or private) | Infrastructure/Views/iTermWebViewWrapperViewController.m:116 NSClassFromString |
-| class | `WKWebsiteDataStore` | 1 | not in database (SDK or private) | Infrastructure/Views/iTermWebViewWrapperViewController.m:144 NSClassFromString |
-| class | `XCTestCase` | 1 | class in database | AppKit/iTermApplicationDelegate.m:449 NSClassFromString |
-| class | `_NSThemeZoomWidgetCell` | 1 | not in database (SDK or private) | Categories/NSObject+iTerm.m:124 NSClassFromString |
-| key | `Log Smart Selection Debug Info` | 1 | no getter in database (SDK or dictionary key) | Settings/SmartSelectionController.m:579 valueForKey: |
-| key | `developerExtrasEnabled` | 2 | no getter in database (SDK or dictionary key) | Infrastructure/Views/iTermWebViewWrapperViewController.m:136 setValue:forKey:; Toolbelt/ToolWebView.m:63 setValue:forKey: |
-| key | `enabled` | 2 | getter in database | Toolbelt/ToolProfiles.m:62 bind:toObject:withKeyPath:options:; Toolbelt/ToolProfiles.m:92 bind:toObject:withKeyPath:options: |
-| key | `position` | 1 | getter in database | StatusBar/Components/iTermStatusBarSparklinesComponent.m:161 valueForKey: |
-| key | `title` | 1 | getter in database | ThirdParty/PSMTabBarControl/source/PSMTabBarControl.m:4861 bind:toObject:withKeyPath:options: |
-| key-path | `@sum.floatValue` | 1 | collection operator | ThirdParty/PSMTabBarControl/source/PSMYosemiteTabStyle.m:333 valueForKeyPath: |
-| key-path | `doubleValue` | 2 | no getter in database (SDK or dictionary key) | Settings/iTermSlider.m:122 addObserver:forKeyPath:options:context:; Settings/iTermSlider.m:150 removeObserver:forKeyPath:context: |
-| key-path | `effectiveAppearance` | 2 | no getter in database (SDK or dictionary key) | PTYSession/PTYSession.m:1265 addObserver:forKeyPath:options:context:; PTYSession/PTYSession.m:1301 removeObserver:forKeyPath: |
-| key-path | `enabled` | 2 | getter in database | Settings/iTermSlider.m:126 addObserver:forKeyPath:options:context:; Settings/iTermSlider.m:151 removeObserver:forKeyPath:context: |
-| key-path | `hasSelection` | 2 | getter in database | Toolbelt/ToolProfiles.m:62 bind:toObject:withKeyPath:options:; Toolbelt/ToolProfiles.m:92 bind:toObject:withKeyPath:options: |
-| key-path | `label` | 1 | getter in database | ThirdParty/PSMTabBarControl/source/PSMTabBarControl.m:4861 bind:toObject:withKeyPath:options: |
-| key-path | `lastUse` | 1 | getter in database | ShellIntegration/iTermShellHistoryController.m:749 initWithKey:ascending:selector: |
-| key-path | `modalWindow` | 2 | no getter in database (SDK or dictionary key) | AppKit/iTermApplication.m:147 removeObserver:forKeyPath:; AppKit/iTermApplication.m:157 addObserver:forKeyPath:options:context: |
-| key-path | `score` | 1 | getter in database | Popups/PopupModel.m:116 initWithKey:ascending: |
-| predicate-format | `SELF MATCHES %@` | 1 | n/a | Categories/NSStringITerm.m:2892 predicateWithFormat: |
-| predicate-format | `lastUse < %f and starred == 0` | 1 | n/a | ShellIntegration/iTermShellHistoryController.m:734 predicateWithFormat: |
-| predicate-format | `starred == 0` | 1 | n/a | ShellIntegration/iTermShellHistoryController.m:756 predicateWithFormat: |
-| predicate-format | `time < %f` | 1 | n/a | ShellIntegration/iTermShellHistoryController.m:715 predicateWithFormat: |
-| selector | `_crashOnException:` | 2 | no method in database | AppKit/iTermApplication.m:114 NSSelectorFromString; AppKit/iTermApplication.m:114 class_getClassMethod |
-| selector | `installPythonRuntime:` | 2 | method in database | API/iTermScriptsMenuController.m:678 NSSelectorFromString; API/iTermScriptsMenuController.m:678 setAction: |
+| class | `NSAutoresizingMaskLayoutConstraint` | 1 | not in database (SDK or private) | Categories/NSView+iTerm.m in -[NSView(iTerm) it_authoredConstraintCount] NSClassFromString |
+| class | `NSTitlebarContainerView` | 1 | not in database (SDK or private) | TerminalView/iTermWindowImpl.m in -preventTitlebarDivider (of each window class that includes the file) NSClassFromString |
+| class | `WKPreferences` | 1 | not in database (SDK or private) | Infrastructure/Views/iTermWebViewWrapperViewController.m in -[iTermWebViewFactory webViewWithDelegate:] NSClassFromString |
+| class | `WKWebViewConfiguration` | 1 | not in database (SDK or private) | Infrastructure/Views/iTermWebViewWrapperViewController.m in -[iTermWebViewFactory webViewWithDelegate:] NSClassFromString |
+| class | `WKWebsiteDataStore` | 1 | not in database (SDK or private) | Infrastructure/Views/iTermWebViewWrapperViewController.m in -[iTermWebViewFactory registerUserScriptInConfiguration:delegate:] NSClassFromString |
+| class | `XCTestCase` | 1 | class in database | AppKit/iTermApplicationDelegate.m in -[iTermApplicationDelegate awakeFromNib] NSClassFromString |
+| class | `_NSThemeZoomWidgetCell` | 1 | not in database (SDK or private) | Categories/NSObject+iTerm.m in +[NSObject(iTerm) load] NSClassFromString |
+| key | `Log Smart Selection Debug Info` | 1 | no getter in database (SDK or dictionary key) | Settings/SmartSelectionController.m in +[SmartSelectionController logDebugInfo] valueForKey: |
+| key | `developerExtrasEnabled` | 2 | no getter in database (SDK or dictionary key) | Infrastructure/Views/iTermWebViewWrapperViewController.m in -[iTermWebViewFactory webViewWithDelegate:] setValue:forKey:; Toolbelt/ToolWebView.m in -[ToolWebView initWithFrame:URL:identifier:] setValue:forKey: |
+| key | `enabled` | 2 | getter in database | Toolbelt/ToolProfiles.m in -[ToolProfiles initWithFrame:] bind:toObject:withKeyPath:options:; Toolbelt/ToolProfiles.m in -[ToolProfiles initWithFrame:] bind:toObject:withKeyPath:options: |
+| key | `position` | 1 | getter in database | StatusBar/Components/iTermStatusBarSparklinesComponent.m in -[iTermStatusBarTimeSeriesLayer animationToMoveLayer:positionXBy:] valueForKey: |
+| key | `title` | 1 | getter in database | ThirdParty/PSMTabBarControl/source/PSMTabBarControl.m in -[PSMTabBarControl bindPropertiesForCell:andTabViewItem:] bind:toObject:withKeyPath:options: |
+| key-path | `@sum.floatValue` | 1 | collection operator | ThirdParty/PSMTabBarControl/source/PSMYosemiteTabStyle.m in -[PSMYosemiteTabStyle frameForAddTabButtonWithCellWidths:height:] valueForKeyPath: |
+| key-path | `doubleValue` | 2 | no getter in database (SDK or dictionary key) | Settings/iTermSlider.m in -[iTermSlider awakeFromNib] addObserver:forKeyPath:options:context:; Settings/iTermSlider.m in -[iTermSlider dealloc] removeObserver:forKeyPath:context: |
+| key-path | `effectiveAppearance` | 2 | no getter in database (SDK or dictionary key) | PTYSession/PTYSession.m in -[PTYSession initSynthetic:] addObserver:forKeyPath:options:context:; PTYSession/PTYSession.m in -[PTYSession dealloc] removeObserver:forKeyPath: |
+| key-path | `enabled` | 2 | getter in database | Settings/iTermSlider.m in -[iTermSlider awakeFromNib] addObserver:forKeyPath:options:context:; Settings/iTermSlider.m in -[iTermSlider dealloc] removeObserver:forKeyPath:context: |
+| key-path | `hasSelection` | 2 | getter in database | Toolbelt/ToolProfiles.m in -[ToolProfiles initWithFrame:] bind:toObject:withKeyPath:options:; Toolbelt/ToolProfiles.m in -[ToolProfiles initWithFrame:] bind:toObject:withKeyPath:options: |
+| key-path | `label` | 1 | getter in database | ThirdParty/PSMTabBarControl/source/PSMTabBarControl.m in -[PSMTabBarControl bindPropertiesForCell:andTabViewItem:] bind:toObject:withKeyPath:options: |
+| key-path | `lastUse` | 1 | getter in database | ShellIntegration/iTermShellHistoryController.m in -[iTermShellHistoryController removeOldData] initWithKey:ascending:selector: |
+| key-path | `modalWindow` | 2 | no getter in database (SDK or dictionary key) | AppKit/iTermApplication.m in -[iTermApplication dealloc] removeObserver:forKeyPath:; AppKit/iTermApplication.m in +[iTermApplication sharedApplication] addObserver:forKeyPath:options:context: |
+| key-path | `score` | 1 | getter in database | Popups/PopupModel.m in -[PopupModel sortByScore] initWithKey:ascending: |
+| predicate-format | `SELF MATCHES %@` | 1 | n/a | Categories/NSStringITerm.m in -[NSString(iTerm) sanitizedUsername] predicateWithFormat: |
+| predicate-format | `lastUse < %f and starred == 0` | 1 | n/a | ShellIntegration/iTermShellHistoryController.m in -[iTermShellHistoryController removeOldData] predicateWithFormat: |
+| predicate-format | `starred == 0` | 1 | n/a | ShellIntegration/iTermShellHistoryController.m in -[iTermShellHistoryController removeOldData] predicateWithFormat: |
+| predicate-format | `time < %f` | 1 | n/a | ShellIntegration/iTermShellHistoryController.m in -[iTermShellHistoryController removeOldData] predicateWithFormat: |
+| selector | `_crashOnException:` | 2 | no method in database | AppKit/iTermApplication.m in iTermInstallCrashOnExceptionHook NSSelectorFromString; AppKit/iTermApplication.m in iTermInstallCrashOnExceptionHook class_getClassMethod |
+| selector | `installPythonRuntime:` | 2 | method in database | API/iTermScriptsMenuController.m in -[iTermScriptsMenuController updateInstallRuntimeMenuItem] NSSelectorFromString; API/iTermScriptsMenuController.m in -[iTermScriptsMenuController updateInstallRuntimeMenuItem] setAction: |
 
 Names that resolve to nothing in the database: the classes
 `NSAutoresizingMaskLayoutConstraint`, `NSTitlebarContainerView`,
@@ -1808,7 +1808,7 @@ avoid a link dependency or because they are private); the selector
 `modalWindow` (AppKit properties of SDK classes, not declared in parsed code)
 and `Log Smart Selection Debug Info` (a dictionary key read with
 `valueForKey:`). None of them is a dead name of ours. `installPythonRuntime:`
-is the only string-literal selector of our own (`iTermScriptsMenuController.m:678`).
+is the only string-literal selector of our own (`iTermScriptsMenuController.m` in -[iTermScriptsMenuController updateInstallRuntimeMenuItem]).
 
 ## 9. Known gaps
 
@@ -1839,13 +1839,13 @@ The dynamic-looking ones; their names are in the names table:
 
 - `sources/FloatingPanes/iTermFloatingPaneView.swift:280, 281, 282`: `NSSelectorFromString(diagonal)`, then `NSCursor.responds(to:)` and `NSCursor.perform(_:)`
 
-  **CLOSED.** `diagonal` is one of two literals (lines 278 and 279), private `NSCursor` class methods.
+  **CLOSED.** `diagonal` is one of two literals, private `NSCursor` class methods.
 
   Names: `_windowResizeNorthWestSouthEastCursor`, `_windowResizeNorthEastSouthWestCursor`.
 
 - `sources/Browser/UI/iTermURLTextField.swift:236 (also iTermURLBar.swift:319)`: `target.perform(action, with: self)`
 
-  **CLOSED.** The field's action is set only at `iTermURLBar.swift:319`, `#selector(textFieldSubmitted)` (`-[iTermURLBar textFieldSubmitted]`, line 446, no arguments).
+  **CLOSED.** The field's action is set only at `iTermURLBar.swift` in iTermURLBarGuts.setupTextFieldDelegate(), `#selector(textFieldSubmitted)` (`-[iTermURLBar textFieldSubmitted]`, no arguments).
 
   Names: `textFieldSubmitted`.
 
@@ -1869,18 +1869,18 @@ The dynamic-looking ones; their names are in the names table:
 
 - `sources/Browser/Core/iTermBrowserManager.swift:920 (also iTermBrowserWebView.swift:1011)`: `receiver.doCommand(by: sel)` replays a key-binding command selector
 
-  **OPEN-EXTERNAL.** The selector, received from one broadcasting web view, is replayed on the other web views. It comes from the Cocoa text system key bindings (system and user `DefaultKeyBinding.dict`); `iTermBrowserWebView` overrides `doCommand(by:)` (iTermBrowserWebView.swift:1011) and passes it to `WKWebView`, which handles editing commands. Any method of `iTermBrowserWebView` named like a key-binding command would also be reached through `NSResponder`. None is today: a search of iTermBrowserWebView.swift for the command families (`insert...`, `move...`, `delete...`, `scroll...`, `page...`, `select...`, `cancelOperation`) finds only `insertText(_:replacementRange:)` and `scrollWheel(with:)`, which are not commands. So no names. Found while rechecking Swift callers of `doCommandBySelector:` with the database's Swift rows.
+  **OPEN-EXTERNAL.** The selector, received from one broadcasting web view, is replayed on the other web views. It comes from the Cocoa text system key bindings (system and user `DefaultKeyBinding.dict`); `iTermBrowserWebView` overrides `doCommand(by:)` (iTermBrowserWebView.swift in iTermBrowserWebView.doCommand(by:)) and passes it to `WKWebView`, which handles editing commands. Any method of `iTermBrowserWebView` named like a key-binding command would also be reached through `NSResponder`. None is today: a search of iTermBrowserWebView.swift for the command families (`insert...`, `move...`, `delete...`, `scroll...`, `page...`, `select...`, `cancelOperation`) finds only `insertText(_:replacementRange:)` and `scrollWheel(with:)`, which are not commands. So no names. Found while rechecking Swift callers of `doCommandBySelector:` with the database's Swift rows.
 
   Names: none.
 
-The type-name forms (`"\(type(of: x))"`, `String(describing: type(of: x))`, `\(Self.self)`) give the Swift type name, not the runtime name, and were each read: all but one build a `description`, a log or assertion message, or an error string. The one data use is `TerminalButtonRenderer.swift:182`, where `String(describing: type(of: button.terminalButton))` is part of a texture cache key (`TextureKey.buttonClassName`) inside the process; a rename changes the key consistently and reaches nothing by name. Key-path KVO in Swift (`observe(\.bounds, ...)` and the like, 7 sites) names the property with a key-path literal that the compiler checks, so it is not a reflective site.
+The type-name forms (`"\(type(of: x))"`, `String(describing: type(of: x))`, `\(Self.self)`) give the Swift type name, not the runtime name, and were each read: all but one build a `description`, a log or assertion message, or an error string. The one data use is `TerminalButtonRenderer.swift` in TerminalButtonRenderer.texture(for:tState:), where `String(describing: type(of: button.terminalButton))` is part of a texture cache key (`TextureKey.buttonClassName`) inside the process; a rename changes the key consistently and reaches nothing by name. Key-path KVO in Swift (`observe(\.bounds, ...)` and the like, 7 sites) names the property with a key-path literal that the compiler checks, so it is not a reflective site.
 
-Literal uses worth knowing: `MenuItemPopupView.swift:58` and 75 compare
+Literal uses worth knowing: `MenuItemPopupView.swift` in NSMenuItem.isWindowMenuItem(parent:) and NSMenuItem.isMoveToDisplayItem(parent:) compare
 `NSStringFromSelector` with the private AppKit names `_toggleIPad:` and
-`_moveToDisplay:`; `iTermBrowserKeyBindingActionPerformer.swift:152` fires
+`_moveToDisplay:`; `iTermBrowserKeyBindingActionPerformer.swift` in iTermBrowserKeyBindingActionPerformer.perform(keyBindingAction:event:) fires
 the main-menu item whose action is `NSSelectorFromString("copy:")`. The
 database's Swift side also records 50 `dynamic` references (optional protocol
-requirements and `AnyObject` lookups); apart from `iTermURLTextField.swift:236`
+requirements and `AnyObject` lookups); apart from `iTermURLTextField.swift` in iTermURLTextField.textView(_:doCommandBy:)
 above they name their selector statically. The Swift side of the database was
 not current when this was written (all 11 modules missing), so the survey is
 by text only.
@@ -1904,12 +1904,12 @@ to the scope directories:
   sources, the five `SignedArchive` files and the two unbuilt files below for
   every reflective form of [hidden-callers.md section 3](hidden-callers.md)
   (the compiled `ColorPicker.framework` binary excluded) finds:
-  `performSelector` 1 (`iTermTests.m:36`), `respondsToSelector:` 3
-  (`CPKColorWell.m:104`, `respondsToSelector:@selector(__target)`, a literal;
-  `iTermTests.m:32`, 37), `NSStringFromSelector` 1 (`iTermTests.m:30`),
-  `NSStringFromClass` 2 (descriptions in `CPKColor.m:47`, `CPKKDTreeNode.m:7`),
+  `performSelector` 1 (`iTermTests.m` in RunTestsInObject), `respondsToSelector:` 3
+  (`CPKColorWell.m` in -[CPKColorWellView dealloc], `respondsToSelector:@selector(__target)`, a literal;
+  `iTermTests.m` in RunTestsInObject), `NSStringFromSelector` 1 (`iTermTests.m` in RunTestsInObject),
+  `NSStringFromClass` 2 (descriptions in `CPKColor.m` in -[CPKColor description], `CPKKDTreeNode.m` in -[CPKKDTreeNode description]),
   NSControl `sendAction:to:` 3 (below), runtime functions 2
-  (`iTermTests.m:27`, 29), `setAction:` 9 (all `@selector` literals in
+  (`iTermTests.m` in RunTestsInObject), `setAction:` 9 (all `@selector` literals in
   `CPKColorWell.m`, `CPKControlsView.m`, `CPKSelectionView.m`), and none of
   `NSSelectorFromString`, `sel_registerName`, `sel_getUid`, `sel_getName`,
   `instancesRespondToSelector:`, `NSClassFromString`, `objc_getClass`,
@@ -1935,17 +1935,17 @@ yet.
 
 NSControl `-sendAction:to:` (two arguments) is not recorded either; only
 `-[NSApplication sendAction:to:from:]` is. The sites in scope, by `git grep`:
-`sources/Infrastructure/Views/iTermKeyboardNavigatableTableView.m:65` and 144
+`sources/Infrastructure/Views/iTermKeyboardNavigatableTableView.m` in -[iTermAutomaticKeyboardNavigatableTableView insertNewline:] and -[iTermAutomaticKeyboardNavigatableOutlineView insertNewline:]
 (`-insertNewline:` of `iTermAutomaticKeyboardNavigatableTableView` and
 `iTermAutomaticKeyboardNavigatableOutlineView` sends `[self doubleAction]` to
 `[self target]`; **GENERIC**: the reach is whatever double action the owner of
 each instance sets with `setDoubleAction:` or in a xib; no xib sets a
 `doubleAction` on these classes (`git grep`), and the code that sets double
-actions passes `@selector` or `#selector` literals), and `ColorPicker/ColorPicker/CPKColorWell.m:449`, 453 and 524
+actions passes `@selector` or `#selector` literals), and `ColorPicker/ColorPicker/CPKColorWell.m` in -[CPKColorWell load] and -[CPKColorWell colorChangedByDrag:]
 (the color well sends its own `action` to its `target`; **GENERIC**: the
 reach is the action set on each color well, in xibs or with `setAction:`, and
 those are pinned by the xib binding tests). In Swift the only `sendAction`
-override is `PopoverHelpButton.swift:42` (above). App helpers that take a selector and call it
+override is `PopoverHelpButton.swift` in PopoverHelpButton.sendAction(_:to:) (above). App helpers that take a selector and call it
 through an IMP (for example `it_performNonObjectReturningSelector:`) are not
 in the table either; they were found because their implementations are
 recorded rows, and their callers are section 4.
@@ -1965,7 +1965,7 @@ recorded rows, and their callers are section 4.
   section 3 and the writers in section 5; class names that the frameworks
   record (keyed archives, NSXPC, window restoration) are section 6, which
   also lists the archives written to the pasteboard
-  (`iTermStatusBarSetupElement.m:115` and others) and to disk. The
+  (`iTermStatusBarSetupElement.m` in -[iTermStatusBarSetupElement pasteboardPropertyListForType:] and others) and to disk. The
   stored-state corpus and the binding tests check them against real data.
 
 ## 10. Not yet classified

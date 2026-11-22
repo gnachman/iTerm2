@@ -22,9 +22,10 @@ wrong is answered with evidence, never ignored and never silently obeyed.
 Standing rules, each with its reason:
 
 - Never commit or push, because the orchestrator commits after the gate and the owner pushes after the morning review.
-- Stage only your own unit's files and never touch, unstage or revert other agents' staged work, because several agents share one checkout.
-- Never `git add` a submodule, because the owner must approve every submodule change.
-- Never run `tools/add_file_to_xcodeproj.rb` for a file under `ModernTests/` or any other synchronized folder, because it rewrites `iTerm2.xcodeproj/project.pbxproj` wholesale and drops settings; if `git status` shows the project file modified and your unit did not intend it, restore it with `git checkout -- iTerm2.xcodeproj/project.pbxproj` and say so in your report.
+- Work only in the lane your brief names, starting every shell command with `cd LANE &&`; the only state-changing git commands you run are `git add <named files>` and, for a port's deleted files, `git rm <named files>` (never `-A`, never a submodule), because the orchestrator collects your change from the lane and the owner approves every submodule change.
+- Create no git repository inside any checkout or lane, and make every script stop on a failed `cd`, because a git command run in the wrong directory acts on the real repository.
+- Edit the project file only with `tools/swift_migration/pbxproj_swap.py` for a port (lifecycle.md section 3, "The project file"), never with `tools/add_file_to_xcodeproj.rb`, because the latter rewrites the file wholesale.
+- Shell: use `/usr/bin/grep` (`grep` is shadowed), and zsh does not split an unquoted `$VAR`; query the main checkout's code database with its `codedb.py` and `--root`, since a lane has none.
 - Never write an em dash anywhere (code, comments, messages, reports), because the owner forbids them.
 - Never run the app, and if a brief explicitly tells you to, never without `-suite`, because an unsuited instance fights the owner's running iTerm2.
 - Run `xcodebuild`, `tools/build.sh`, `tools/run_tests.expect` or a whole-tree `codedb.py update` only if your brief says you hold the build lane, because concurrent builds in one checkout corrupt each other.
@@ -32,7 +33,7 @@ Standing rules, each with its reason:
 - Stream large data and keep only what you need, never loading a large file or dump whole, because that exhausts memory.
 - Run each mutation in its own session with a timeout and kill its whole process group with SIGKILL when it expires, because a hung mutant otherwise runs forever.
 - Never wait with `until ! pgrep -f NAME` loops and never use `pkill -f` patterns, because they can match another agent's process or your own shell.
-- Leave no background process running when you finish, and say in your report that none is left, because nobody else knows to stop it.
+- Do not hand back while a build, test or other background job you started is running, and say in your report that none is left, because the lane is reset after you finish and nobody else knows to stop it.
 - Put scratch work in a new directory under `tmp/`, because the tree must stay clean apart from your unit's files.
 - Write tests first and show them failing for every behavior change, because a test never seen failing proves nothing.
 - Never weaken, disable or delete a test, because that needs the owner.

@@ -9,6 +9,9 @@ A unit is one implementation file with its header, or a small cluster that
 cannot be separated (a class with its private categories, or a subclass tree
 small enough to move together).
 
+A unit takes the light path where §3 allows it, and otherwise the full path
+below; §3 also says when units may start.
+
 One orchestrating agent runs this lifecycle. It picks units, assigns steps to
 subagents, runs the gate, and commits. Subagents do not commit on their own
 ([README.md §7](README.md)).
@@ -18,11 +21,9 @@ subagents, runs the gate, and commits. Subagents do not commit on their own
 where the previous one stopped.
 
 **Step 2. Dossier.** Produce the unit's dossier. It is the input to every later
-step and to the reviewer. Every unit on the full path gets the full dossier,
-however small or simple the unit looks; a unit that qualifies for the light
-path ([§3](#3-the-light-path-for-leaf-units)) gets the short one described
-there. A section with nothing in it says so, and says how
-that was established. It lists:
+step and to the reviewer. On the full path it is complete however small the
+unit looks (the light path's is in §3). A section with nothing in it says
+so, and how that was established. It lists:
 
 - Public and private API, with the census output for every selector.
 - The runtime snapshot of each class in the unit ([phase0.md §9](phase0.md)).
@@ -57,7 +58,10 @@ that was established. It lists:
 **Step 3. Characterization tests** (`test` commits). If a function in the
 unit is too large or too entangled to test or to port as it stands, follow
 [large-code.md §2](large-code.md) before continuing. Written in Swift against
-the `@objc` interface, so the same tests run unchanged against the port. Cover
+the `@objc` interface, so the same tests run unchanged against the port. An
+Objective-C test declares the class locally with its own `@interface` and
+never imports the unit's header: the port deletes the header, and
+`ModernTests` cannot import `iTerm2SharedARC-Swift.h`. Cover
 normal behavior, the nil-argument cases found in the dossier, boundary integer
 values, and round trips of stored state. Tests must be deterministic and must
 not depend on timing.
@@ -80,7 +84,8 @@ the gate:
 whole: the Swift class keeps the Objective-C name with `@objc(Name)`, the
 Objective-C `.h` and `.m` are deleted in the same commit, and Objective-C
 files that imported the header now import `iTerm2SharedARC-Swift.h` in their
-`.m` and use `@class` in their `.h`. A large file is ported incrementally
+`.m` and use `@class` in their `.h`. The project file is edited as in §3.
+A large file is ported incrementally
 over many commits (section 2). Steps 6 and 7 apply to each port commit.
 
 **Verifying runtime behavior.** Tests cannot reach everything: the responder
@@ -143,7 +148,8 @@ Reverting a port after dependents have been ported on top of it is decided
 case by case with the owner.
 
 **Step 8. Close.** New traps discovered go into the trap catalogue. Bugs found
-go into the bug ledger. The claim is released.
+go into the bug ledger. The closing commit deletes the dossier, and the claim
+is released.
 
 ## 2. Porting a large file incrementally
 
@@ -216,20 +222,26 @@ handled as in [large-code.md §2](large-code.md).
 
 ## 3. The light path for leaf units
 
-Agreed in principle by the owner on 2026-11-21, after the first pilot unit: a
-44-line class took about 3.3 hours, five commits, three reviews, a 780-line
-dossier and four runs of the whole suite, nearly all of it overhead that does
-not depend on the unit's size. This section is to be tried, timed, on the
-second pilot unit and revised from what that shows. Until then it is a
-proposal, and no unit uses it without the owner's word.
+Tried on the second pilot unit, `iTermColorSuggester` ("(pilot 2)" below).
+**Both pilot units are done. No further unit starts, on either path, until
+the owner says so** (owner queue Q23 item 14). When he does, a unit that
+passes every qualifying check below takes the light path.
 
-The second pilot unit, `iTermColorSuggester` (74 lines, one user), ran on
-it on 2026-11-21: 52 minutes for the author, of which about 30 were builds
-and test runs, under 10 minutes for the one review, and one run of the
-whole suite. The points marked "(pilot 2)" below come from it.
-
-**Which units qualify.** Every condition must hold, each established by the
-tool named, not by reading:
+**Which units qualify.** Every condition must hold, each established by a
+tool, or by reading only where the tool says it cannot decide. The checks are
+`tools/swift_migration/qualify_unit.py` ([phase0.md §12](phase0.md)),
+which prints each condition PASS, FAIL or MANUAL with its evidence; the
+callers' thread, which no tool decides, is answered by the orchestrator
+from the call sites and recorded with `--callers-thread` (printed as
+RECORDED). A MANUAL condition is one the tool cannot decide: an agent
+resolves it by reading (the owner, 2026-11-21), in the unit's dossier,
+quoting the tool's evidence line, what was read, and the conclusion; the
+reviewer checks each one. A MANUAL that reading does not clearly settle
+in the unit's favor counts as a FAIL, and a FAIL is never overridden by
+reading. The tool needs only the repository and a current code
+database, so it runs in any checkout; the nightly clone first brings its
+own database up to date (orchestration.md, the steps after new code
+arrives).
 
 - The unit's implementation is 500 lines or fewer. (Pilot 2 was chosen
   from files of 150 lines or fewer; nothing larger has been tried.)
@@ -241,6 +253,8 @@ tool named, not by reading:
   entry-point census finds nothing but ordinary sends).
 - It has no C++, no `+load` or `+initialize`, no `-dealloc` that does more
   than release, no atomic property, no associated object, no swizzling.
+- No instance variable of it is accessed from outside the unit (an
+  `@public` ivar used through `->`): Swift cannot express a public ivar.
 - It takes no lock, uses no dispatch queue and no thread API, and every
   caller is on one known thread.
 - It is not on the hot-path list ([performance.md §2](performance.md)).
@@ -253,17 +267,14 @@ this list.
 
 **What the light path keeps.**
 
-- The claim (step 1).
-- Characterization tests written and seen passing against the Objective-C
-  before the port, and unchanged after it. An Objective-C test declares the
-  class locally instead of importing the unit's header, so that it survives
-  the header's deletion.
+- The claim, and characterization tests written and seen passing against the Objective-C
+  before the port, and unchanged after it (§1, step 3).
 - The whole-class port in one commit, a translation.
 - The runtime snapshot comparison before and after, and the comparison of
   the generated Objective-C declaration with the old header.
 - A probe of each bridging boundary whose parameter type changes meaning
   (for example `NSString *` to `String?`), with any difference declared in
-  the commit message.
+  the commit message (traps.md).
 - One fresh reviewer, for the tests and the port together.
 - The token lints, a build with no new warning, and the unit's targeted
   tests under the nullability and integer sanitizers.
@@ -273,36 +284,38 @@ this list.
 - The dossier is one file of at most 60 lines: what the unit is, who uses
   it, the output of the qualifying checks (generated by script), the planned
   Swift declaration, the test list, and open questions. There is no evidence
-  file. It is deleted in the port commit.
+  file. It is added in the `test` commit and deleted in the port commit.
 - No separate `annotate` commit: the header is deleted by the port, so its
-  nullability is stated once, in the Swift. Headers are exposed to the Swift
-  tests in bulk, not per unit.
-- A bug found is recorded in bugs.md and translated faithfully, unless the
-  port cannot be written without fixing it.
+  nullability is stated once, in the Swift. The `test` commit adds the
+  header to the bridging header for the Swift tests, and the port removes
+  it (pilot 2).
 - Two commits, `test` then `port`. Several qualifying units with no
   dependency on each other may run at once in separate lanes. The author
   saves the `test` change set as a patch before starting the port, because
-  the port undoes part of it (the bridging-header line) and one index
-  cannot hold both (pilot 2).
+  the port undoes the bridging-header line and one index cannot hold both.
 - A parameter or result the header called nonnull, or did not annotate,
   may be declared optional in the Swift when the Objective-C tolerated nil
-  there; that is the safe direction, and the commit message says so. The
-  reverse needs the full path's `annotate` evidence (pilot 2).
-- A test of a loop whose end depends on its input is given inputs known to
-  end; a test that hangs costs minutes (pilot 2).
-- The whole suite, the thread sanitizer run and the x86_64 build are run
-  once per night over everything that landed, not once per unit. A failure
-  there is traced to its unit, which is reverted or fixed before more units
-  start.
-- Mutation of the Objective-C to prove each test can fail is done for the
-  behaviors the dossier lists, by script, not exhaustively by hand.
+  there; that is the safe direction, and the commit message says so. A
+  nonnull claim the header did not make needs the full path's `annotate`
+  evidence ([nullability.md §6](nullability.md); pilot 2).
+- Until a nightly whole-suite run is a scripted step, the orchestrator
+  runs the whole suite once on each port before committing it (pilot 2).
+  The thread sanitizer run and the x86_64 build are deferred: the
+  orchestrator runs them at the end of the session over the ports that
+  landed. A failure there is fixed by a new commit or undone with
+  `git revert`, never a reset or a rewrite, since the port may already be
+  pushed; the night's report lists any port they have not yet covered.
+- Mutation to prove each test can fail covers the behaviors the dossier
+  lists, by script, not exhaustively.
 
-**Needed before the light path can run in parallel.** The project file is
-edited by `tools/swift_migration/pbxproj_swap.py`, which replaces a `.m` and
-`.h` with a `.swift` and refuses anything it cannot match exactly
-(`tools/add_file_to_xcodeproj.rb` cannot remove files and is not trusted);
-when units run in parallel the orchestrator runs it at commit time so that
-lanes never conflict in the project file. Still needed: the script that
-prints the qualifying checks for a unit, as a tool (pilot 2 wrote it as
-scratch; it takes about 28 seconds a class); and the triage of the nullability report that every test creating a
-`PTYSession` reaches (bugs.md).
+**The project file.** `tools/swift_migration/pbxproj_swap.py` replaces a
+`.m` and `.h` with a `.swift` and refuses anything it cannot match exactly.
+The author runs it in its lane, so that the port builds and is tested
+there. The orchestrator takes that change with the port (`collect
+--to-index --allow-project`) if no other port landed in between, and
+otherwise runs the swap again in its own checkout and stages it. Either
+way the swap is staged before the gate runs, so the tree gated is the tree
+committed.
+
+Still needed: the triage of the nullability report that every test creating a `PTYSession` reaches
+(bugs.md; owner queue Q23 item 12).

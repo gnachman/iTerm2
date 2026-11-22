@@ -21,11 +21,11 @@
 # The framer two-hop simulations. The owner's decision (owner-queue.md Q22)
 # covers the two slowest tests of the suite; the other eight are here by the
 # one-second rule like the entries at the end of this file.
-FramerFlowTwoHopSimulationTests/testANestedFloodRecoversWhenAJitteryOuterHopSpeedsUp  owner decision (owner-queue.md Q22): one of the two slowest tests; median 224.329 s, max 270.949 s in 21 asan runs
-FramerFlowTwoHopSimulationTests/testANestedFloodRecoversWhenTheOuterHopSpeedsUpAtAnyMoment  owner decision (owner-queue.md Q22): one of the two slowest tests; median 98.388 s, max 122.293 s in 21 asan runs
-FramerFlowTwoHopSimulationTests/testASlowOuterHopBoundsCtrlCAtTheInnerHost  ceiling: median 17.323 s, max 22.039 s in 21 asan runs
-FramerFlowTwoHopSimulationTests/testAJitteryOuterHopStillBoundsCtrlC  ceiling: median 10.000 s, max 12.681 s in 21 asan runs
-FramerFlowTwoHopSimulationTests/testFloodsOnBothHostsShareTheOuterHop  one second: median 7.303 s, max 9.408 s in 21 asan runs
+FramerFlowTwoHopSimulationTests/testANestedFloodRecoversWhenAJitteryOuterHopSpeedsUp  owner decision (owner-queue.md Q22): one of the two slowest tests; median 224.329 s, max 270.949 s in 21 asan runs; 28.457 s alone with asan on 2026-11-22 (load average about 50) after unit slow-tests-over-5s ran its 15 simulations per jitter at once
+FramerFlowTwoHopSimulationTests/testANestedFloodRecoversWhenTheOuterHopSpeedsUpAtAnyMoment  owner decision (owner-queue.md Q22): one of the two slowest tests; median 98.388 s, max 122.293 s in 21 asan runs; 12.727 s alone with asan on 2026-11-22 (load average about 50) after unit slow-tests-over-5s ran its 15 simulations per jitter at once
+FramerFlowTwoHopSimulationTests/testASlowOuterHopBoundsCtrlCAtTheInnerHost  one second: 1.832 s alone with asan on 2026-11-22 after unit slow-tests-over-5s ran its 14 simulations at once (14.165 s before, same conditions); median 17.323 s, max 22.039 s in 21 asan runs
+FramerFlowTwoHopSimulationTests/testAJitteryOuterHopStillBoundsCtrlC  one second: 1.360 s alone with asan on 2026-11-22 after unit slow-tests-over-5s ran its 12 simulations at once (8.909 s before); median 10.000 s, max 12.681 s in 21 asan runs
+FramerFlowTwoHopSimulationTests/testFloodsOnBothHostsShareTheOuterHop  one second: 0.917 s and 1.042 s in two runs alone with asan on 2026-11-22 after unit slow-tests-over-5s ran its 14 simulations at once (6.254 s before); median 7.303 s, max 9.408 s in 21 asan runs
 FramerFlowTwoHopSimulationTests/testAFloodAfterTypingOverASlowInnerHopUsesTheHop  one second: median 3.190 s, max 3.971 s in 21 asan runs
 FramerFlowTwoHopSimulationTests/testTheCostPerByteIsSteadyOnAJitteryHop  one second: median 3.132 s, max 4.264 s in 21 asan runs
 FramerFlowTwoHopSimulationTests/testASlowInnerHopBoundsCtrlCAtTheInnerHost  one second: median 1.637 s, max 2.060 s in 21 asan runs
@@ -65,47 +65,62 @@ ToolStatusShortcutReloadTests  on screen: skipped unless ITERM2_ONSCREEN_TESTS=1
 # Over the ceiling (median 10 s or more: test-speed.md section 2 says such a
 # test fails the gate) or at or over one second (test-speed.md section 2:
 # the fast tier is everything except tests that take a second or more, and a
-# test over one second needs a reason or goes to the slow tier). None of
-# these has a recorded reason yet. Generated with
+# test over one second needs a reason or goes to the slow tier). Generated with
 #   test_tiers.py propose --slow-tier tools/swift_migration/slow_tier.txt LOG ...
 # from the 21 logs. The ceiling tests are the work list of test-tiers.md
 # section 4: they are to be fixed, not left here.
-SmartSelectionTranslationLayoutTests/testLinksFit  ceiling: median 41.054 s, max 50.201 s in 21 asan runs
-ManualAIModelEditorCredentialPopupWidthTests/testTranslatedAutomaticChoicesFit  ceiling: median 40.882 s, max 52.169 s in 21 asan runs
-PSMTabGroupDragInvariantTests/testEveryPairOfItems  ceiling: median 27.494 s, max 35.113 s in 21 asan runs
-SmartSelectionTranslationLayoutTests/testRegexLabelFits  ceiling: median 12.281 s, max 39.875 s in 21 asan runs
-ShellIntegrationInstallerStepsLayoutTests/testStepsFitInEveryLanguage  ceiling: median 11.816 s, max 20.501 s in 21 asan runs
-SmartSelectionTranslationLayoutTests/testBottomRowFits  one second: median 9.310 s, max 11.538 s in 21 asan runs
-FramerFlowSimulationTests/testWatchingTheControllerDoesNotChangeWhatItDoes  one second: median 8.928 s, max 10.706 s in 21 asan runs
-AISafetyRefusalParserTests/testEachStreamingFixtureProducesNonEmptyMessage  one second: median 7.484 s, max 9.170 s in 21 asan runs
-TmuxDividerMoverPropertyTests/testNonFiniteAndExtremeMeasurementsDoNotCrash  one second: median 7.438 s, max 8.959 s in 21 asan runs
+#
+# Unit phase0-test-items (2026-11-21) made SmartSelectionTranslationLayoutTests
+# and ManualAIModelEditorCredentialPopupWidthTests fast; the medians below
+# for testLinksFit and testTranslatedAutomaticChoicesFit are from before, and
+# in one loaded address sanitizer run after it they took 1.5 s and 8.0 s,
+# still a second or more. testRegexLabelFits and testBottomRowFits (0.14 s
+# and 0.63 s in that run) were taken out, as test_tiers.py propose-removals
+# listed them (test-tiers.md section 4).
+#
+# Unit slow-tests-over-5s (2026-11-22) worked through every test that took
+# five seconds or more (test-tiers.md section 4). The entries it changed say
+# so, with their times alone with the address sanitizer before and after;
+# the ones still at or over five seconds name the app code or the design
+# that makes them slow. They still start with "one second", so
+# test_tiers.py propose-removals can take them out once fast-tier runs show
+# them under a second. It took out the tests it made fast (under one second
+# alone): every TokenExecutorPermitTests, SwiftyStringTextFieldRenameTests
+# and ToolStatusCellViewJobExitTests entry,
+# HotkeySettingsLabelLayoutTests/testLabelsFitEveryTranslation and
+# PSMTabGroupDragTests/testStillMouseBeforeParentChipSettlesWhenDraggingCollapsedSubgroup,
+# which is now four tests; the first of them, at 1.3 s, is listed. The new
+# tests it added that take a second or more, by the median of three runs of
+# their class alone, are listed with those runs.
+SmartSelectionTranslationLayoutTests/testLinksFit  one second: 1.234 s alone with asan on 2026-11-22 (measured by unit slow-tests-over-5s); median 41.054 s, max 50.201 s in 21 asan runs, before unit phase0-test-items
+ManualAIModelEditorCredentialPopupWidthTests/testTranslatedAutomaticChoicesFit  one second: 7.129 s alone with asan on 2026-11-22; app code: it builds 123 editors, one per case, and almost all its time is in -[iTermManualAIModelEditorController initWithConfiguration:isEditing:] (AppKit sizing its controls), about 50 ms each (unit slow-tests-over-5s, test-tiers.md section 4); median 40.882 s, max 52.169 s in 21 asan runs, before unit phase0-test-items
+PSMTabGroupDragInvariantTests/testEveryPairStartingWithAGroupStartingWithAnExpandedSubgroup  one second: median 3.231 s (3.418, 3.231, 3.215) in three runs of its class alone with asan on 2026-11-22; one of the eight tests unit slow-tests-over-5s split testEveryPairOfItems into (22.801 s alone before; median 27.494 s, max 35.113 s in 21 asan runs); most of the rest is app code, the drag animation reading the scrollable-tab-bar preference on every tick
+PSMTabGroupDragInvariantTests/testEveryPairStartingWithAGroupEndingInAnExpandedSubgroup  one second: median 3.082 s (3.120, 3.082, 3.062) in three runs of its class alone with asan on 2026-11-22; one of the eight tests unit slow-tests-over-5s split testEveryPairOfItems into (22.801 s alone before; median 27.494 s, max 35.113 s in 21 asan runs); most of the rest is app code, the drag animation reading the scrollable-tab-bar preference on every tick
+PSMTabGroupDragInvariantTests/testEveryPairStartingWithAGroupStartingWithACollapsedSubgroup  one second: median 2.500 s (2.501, 2.500, 2.450) in three runs of its class alone with asan on 2026-11-22; one of the eight tests unit slow-tests-over-5s split testEveryPairOfItems into (22.801 s alone before; median 27.494 s, max 35.113 s in 21 asan runs); most of the rest is app code, the drag animation reading the scrollable-tab-bar preference on every tick
+PSMTabGroupDragInvariantTests/testEveryPairStartingWithAGroupEndingInACollapsedSubgroup  one second: median 2.331 s (2.351, 2.331, 2.309) in three runs of its class alone with asan on 2026-11-22; one of the eight tests unit slow-tests-over-5s split testEveryPairOfItems into (22.801 s alone before; median 27.494 s, max 35.113 s in 21 asan runs); most of the rest is app code, the drag animation reading the scrollable-tab-bar preference on every tick
+PSMTabGroupDragInvariantTests/testEveryPairStartingWithAnExpandedGroup  one second: median 1.816 s (1.816, 1.830, 1.781) in three runs of its class alone with asan on 2026-11-22; one of the eight tests unit slow-tests-over-5s split testEveryPairOfItems into (22.801 s alone before; median 27.494 s, max 35.113 s in 21 asan runs); most of the rest is app code, the drag animation reading the scrollable-tab-bar preference on every tick
+PSMTabGroupDragInvariantTests/testEveryPairStartingWithACollapsedGroupWithASubgroup  one second: median 1.233 s (1.243, 1.207, 1.233) in three runs of its class alone with asan on 2026-11-22; one of the eight tests unit slow-tests-over-5s split testEveryPairOfItems into (22.801 s alone before; median 27.494 s, max 35.113 s in 21 asan runs); most of the rest is app code, the drag animation reading the scrollable-tab-bar preference on every tick
+PSMTabGroupDragInvariantTests/testEveryPairStartingWithACollapsedGroup  one second: median 1.185 s (1.185, 1.191, 1.173) in three runs of its class alone with asan on 2026-11-22; one of the eight tests unit slow-tests-over-5s split testEveryPairOfItems into (22.801 s alone before; median 27.494 s, max 35.113 s in 21 asan runs); most of the rest is app code, the drag animation reading the scrollable-tab-bar preference on every tick
+ShellIntegrationInstallerStepsLayoutTests/testStepsFitInEveryLanguage  one second: median 1.351 s (1.343, 1.351, 1.411) in three runs of its class alone with asan on 2026-11-22, after unit slow-tests-over-5s kept each parsed strings table and the nib for the run and filled them in the class +setUp (about 0.75 s, counted for no test); 8.505 s alone before; median 11.816 s, max 20.501 s in 21 asan runs
+ShellIntegrationInstallerStepsLayoutTests/testGermanNushellStepsNeedMoreThanTheNibHeight  one second: median 1.252 s (5.720, 1.009, 1.252) in three runs of its class alone with asan on 2026-11-22; it runs first in its class and pays for the first instantiation of the nib in the process (most likely AppKit setting up, since the class +setUp has already read the nib and parsed the tables); median 5.160 s, max 10.621 s in 21 asan runs
+FramerFlowSimulationTests/testWatchingTheControllerDoesNotChangeWhatItDoes  one second: 7.670 s alone with asan on 2026-11-22; by design: it snapshots the controller twice every simulated millisecond for 60 s, and most of its time is in FramerFlowController.snapshot(now:), app code (unit slow-tests-over-5s); median 8.928 s, max 10.706 s in 21 asan runs
+AISafetyRefusalParserTests/testEachStreamingFixtureProducesNonEmptyMessage  one second: 6.176 s alone with asan on 2026-11-22; app code: almost all its time is in ResponsesResponseStreamingParser.splitFirstJSONEvent(from:), whose SplitServerSentEvents searches the remaining stream with String.range(of:) for each event (unit slow-tests-over-5s); median 7.484 s, max 9.170 s in 21 asan runs
+TmuxDividerMoverPropertyTests/testNonFiniteAndExtremeMeasurementsDoNotCrash  one second: 6.352 s alone with asan on 2026-11-22; app code: about 70 percent in TmuxDividerMover and -[iTermTmuxLayoutBuilder layoutString], run for every divider of ten random layouts (unit slow-tests-over-5s); median 7.438 s, max 8.959 s in 21 asan runs
 TwoTierTokenQueueTests/testTokensAddedDuringFirstAccessAreNotLost  one second: median 6.426 s, max 10.855 s in 21 asan runs
-ManualAIModelEditorTranslationLayoutTests/testFetchModelsButtonFitsEveryTitle  one second: median 6.410 s, max 11.282 s in 21 asan runs
-TmuxDividerMoverPropertyTests/testDividerMovesMonotonically  one second: median 6.252 s, max 7.881 s in 21 asan runs
-ManualAIModelEditorKeyHintLayoutTests/testEveryTranslatedHintFitsTheEditor  one second: median 6.163 s, max 9.901 s in 21 asan runs
-TokenExecutorPermitTests/testWaiterInCopyModePassesThePermitOn  one second: median 6.091 s, max 6.181 s in 21 asan runs
-ManualAIModelEditorTranslationLayoutTests/testTranslatedTitlesFit  one second: median 6.045 s, max 8.961 s in 21 asan runs
-TmuxDividerMoverPropertyTests/testArbitraryMeasurementsGiveValidLayouts  one second: median 5.818 s, max 7.449 s in 21 asan runs
-TmuxDividerMoverPropertyTests/testAnyReachableLayoutRoundTrips  one second: median 5.807 s, max 7.936 s in 21 asan runs
-PSMTabGroupDragTests/testStillMouseBeforeParentChipSettlesWhenDraggingCollapsedSubgroup  one second: median 5.762 s, max 21.725 s in 21 asan runs
+ManualAIModelEditorTranslationLayoutTests/testFetchModelsButtonFitsEveryTitle  one second: 3.079 s alone with asan on 2026-11-22 (3.019 s before unit slow-tests-over-5s); app code: one editor per language, as ManualAIModelEditorCredentialPopupWidthTests; median 6.410 s, max 11.282 s in 21 asan runs
+TmuxDividerMoverPropertyTests/testDividerMovesMonotonically  one second: 5.619 s alone with asan on 2026-11-22; app code, as testNonFiniteAndExtremeMeasurementsDoNotCrash (unit slow-tests-over-5s); median 6.252 s, max 7.881 s in 21 asan runs
+ManualAIModelEditorKeyHintLayoutTests/testEveryTranslatedHintFitsTheEditor  one second: 1.958 s alone with asan on 2026-11-22 (5.494 s before unit slow-tests-over-5s); app code: one editor per language; median 6.163 s, max 9.901 s in 21 asan runs
+ManualAIModelEditorTranslationLayoutTests/testTranslatedTitlesFit  one second: 3.255 s alone with asan on 2026-11-22 (4.477 s before unit slow-tests-over-5s); app code: one editor per language, as ManualAIModelEditorCredentialPopupWidthTests; median 6.045 s, max 8.961 s in 21 asan runs
+TmuxDividerMoverPropertyTests/testArbitraryMeasurementsGiveValidLayouts  one second: 5.173 s alone with asan on 2026-11-22; app code, as testNonFiniteAndExtremeMeasurementsDoNotCrash (unit slow-tests-over-5s); median 5.818 s, max 7.449 s in 21 asan runs
+TmuxDividerMoverPropertyTests/testAnyReachableLayoutRoundTrips  one second: 5.296 s alone with asan on 2026-11-22; app code, as testNonFiniteAndExtremeMeasurementsDoNotCrash (unit slow-tests-over-5s); median 5.807 s, max 7.936 s in 21 asan runs
 ShellIntegrationInstallerButtonLayoutTests/testInternetFreePageBottomButtonsFit  one second: median 5.727 s, max 9.572 s in 21 asan runs
 PTYSessionSelectedCommandSearchTests/testDeselectingByTypingSearchesEverythingWithoutSelectingAResult  one second: median 5.610 s, max 22.849 s in 21 asan runs
-HotkeySettingsLabelLayoutTests/testLabelsFitEveryTranslation  one second: median 5.160 s, max 12.756 s in 21 asan runs
-ShellIntegrationInstallerStepsLayoutTests/testGermanNushellStepsNeedMoreThanTheNibHeight  one second: median 5.160 s, max 10.621 s in 21 asan runs
-ToolStatusCellViewJobExitTests/test_jobExitAfterReconfigureUpdatesTheRow  one second: median 5.160 s, max 5.263 s in 21 asan runs
-SwiftyStringTextFieldRenameTests/test_renameAfterReuseUpdatesTheField  one second: median 5.079 s, max 5.255 s in 21 asan runs
-TokenExecutorPermitTests/testSessionFreedWhileWaitingLeavesTheLine  one second: median 5.073 s, max 5.180 s in 21 asan runs
-ProgramStatusDisplayRecordTests/testBatchOfNewRecordsAndClearsIsHandled  one second: median 5.047 s, max 6.182 s in 21 asan runs
+ProgramStatusDisplayRecordTests/testBatchOfNewRecordsAndClearsIsHandled  one second: 4.505 s alone with asan on 2026-11-22; by design: a guard against quadratic handling over 100,000 reports, three quarters of its time in ProgramStatusController.handle(_:), app code (unit slow-tests-over-5s); median 5.047 s, max 6.182 s in 21 asan runs
 TaskIOMonitorCharacterizationTests/testStress  one second: median 4.853 s, max 11.536 s in 21 asan runs
 TaskIOMonitorCharacterizationTests/testBlockedReadDoesNotStallOtherTasks  one second: median 4.698 s, max 8.633 s in 21 asan runs
 ShellIntegrationInstallerFirstPageLayoutTests/testLearnMoreLinksUseTheLabelFont  one second: median 4.430 s, max 9.062 s in 21 asan runs
-LocalizationFormatSpecifierParityTests/testTranslationsPreserveFormatArgumentCount  one second: median 4.404 s, max 8.073 s in 21 asan runs
+LocalizationFormatSpecifierParityTests/testTranslationsPreserveFormatArgumentCount  one second: 1.699 s alone with asan on 2026-11-22 after unit slow-tests-over-5s compiled its pattern once (3.431 s before); median 4.404 s, max 8.073 s in 21 asan runs
 FlowControlMonitorViewTests/testEveryConnectionGetsASection  one second: median 4.253 s, max 5.991 s in 21 asan runs
-SwiftyStringTextFieldRenameTests/test_recycledFieldFollowsTheNewSession  one second: median 4.074 s, max 4.203 s in 21 asan runs
-TokenExecutorPermitTests/testIdlePermitGoesWhereItIsNeeded  one second: median 4.065 s, max 4.269 s in 21 asan runs
-TokenExecutorPermitTests/testSessionFreedWhileHoldingAnIdlePermitGivesItUp  one second: median 4.060 s, max 4.350 s in 21 asan runs
-TokenExecutorPermitTests/testSessionWaitsForAPermitAndRunsWhenOneFrees  one second: median 4.049 s, max 4.154 s in 21 asan runs
-TokenExecutorPermitTests/testSessionThatRunsOutOfTokensKeepsItsPermitIdle  one second: median 4.048 s, max 4.126 s in 21 asan runs
 UKCrashReporterExplanationLayoutTests/testEveryExplanationFits  one second: median 3.999 s, max 20.187 s in 21 asan runs
 PSMTabGroupNestedDropSettlingTests/testStillMouseAtEndOfSubgroupAndParentSettles  one second: median 3.823 s, max 8.084 s in 21 asan runs
 ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testWholeInstallWithTheDotfileReturnsToTheUserShell  one second: median 3.572 s, max 3.692 s in 21 asan runs
@@ -114,15 +129,6 @@ ShellIntegrationOfflineTcshFromZshInstallerTests/testWholeInstallTypesOnlyShortL
 TmuxDividerMoverPropertyTests/testParseTreeIsNotModified  one second: median 3.200 s, max 3.959 s in 21 asan runs
 ShellIntegrationOfflineTcshFromZshInstallerTests/testWholeInstallWithTheDotfileReturnsToTheUserShell  one second: median 3.141 s, max 3.431 s in 21 asan runs
 FramerPaneJobManagerTests/testInputSizeAndKillGoToThePane  one second: median 3.126 s, max 16.657 s in 21 asan runs
-TokenExecutorPermitTests/testExecutionOnTheMainThreadStillNeedsAPermit  one second: median 3.105 s, max 4.268 s in 21 asan runs
-ToolStatusCellViewJobExitTests/test_jobExitWithoutStatusChangeUpdatesTheRow  one second: median 3.064 s, max 3.191 s in 21 asan runs
-SwiftyStringTextFieldRenameTests/test_renameUpdatesTheField  one second: median 3.048 s, max 3.163 s in 21 asan runs
-TokenExecutorPermitTests/testWaiterWithDiscardedTokensDoesNotKeepThePermit  one second: median 3.048 s, max 3.194 s in 21 asan runs
-TokenExecutorPermitTests/testWaiterWithoutADelegateDoesNotKeepThePermit  one second: median 3.047 s, max 3.183 s in 21 asan runs
-TokenExecutorPermitTests/testTokensArrivingAfterTheQueueWasFoundEmptyStillNeedAPermit  one second: median 3.045 s, max 3.253 s in 21 asan runs
-TokenExecutorPermitTests/testPauseThatBeginsDuringAJoinGivesUpThePermitAfterIt  one second: median 3.044 s, max 3.127 s in 21 asan runs
-TokenExecutorPermitTests/testPauseOtherThanAJoinGivesUpThePermit  one second: median 3.043 s, max 3.149 s in 21 asan runs
-TokenExecutorPermitTests/testJoiningASessionWaitingForAPermitDoesNotWait  one second: median 3.042 s, max 3.190 s in 21 asan runs
 ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testSendAgainWhileTypingTheArchiveReturnsToTheUserShell  one second: median 3.019 s, max 3.140 s in 21 asan runs
 ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testSecondSendAgainAfterTheArchiveEndedDoesNotStopTyping  one second: median 3.016 s, max 18.801 s in 21 asan runs
 ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testSendAgainWhileTypingTheArchiveInstalls  one second: median 3.012 s, max 3.233 s in 21 asan runs
@@ -146,13 +152,10 @@ It2gitParityTests/testAheadAndBehindUpstream  one second: median 2.188 s, max 3.
 PeriodicSchedulerRateLimitedTests/testSuccessiveFlushesRespectMinimumInterval  one second: median 2.116 s, max 2.129 s in 21 asan runs
 ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testSecondSendAgainAfterTheArchiveEndedDoesNotStopTyping  one second: median 2.116 s, max 2.318 s in 21 asan runs
 PSMTabGroupDragInvariantTests/testFieldLayouts  one second: median 2.082 s, max 2.557 s in 21 asan runs
-SwiftyStringTextFieldRenameTests/test_asyncOnlyReadIsObserved  one second: median 2.068 s, max 2.125 s in 21 asan runs
+PSMTabGroupDragTests/testStillMouseBeforeParentChipSettlesWhenDraggingCollapsedSubgroupFrom130  one second: median 1.344 s (1.325, 1.391, 1.344) in three runs of its class alone with asan on 2026-11-22; the first of the four tests unit slow-tests-over-5s split testStillMouseBeforeParentChipSettlesWhenDraggingCollapsedSubgroup into (8.158 s alone before); its own mouse positions cost more, since the other three took 0.60 to 0.65 s and 0.75 s when run without it
 PeriodicSchedulerDeferredTests/testSoonerDeferredRequestSupersedesArmedOne  one second: median 2.061 s, max 2.099 s in 21 asan runs
 PeriodicSchedulerDeferredTests/testExpeditePullsInAnArmedDeferredFlush  one second: median 2.060 s, max 2.068 s in 21 asan runs
-TokenExecutorPermitTests/testSessionYieldsAtTheEndOfItsSliceEvenIfAJoinPausesIt  one second: median 2.036 s, max 2.150 s in 21 asan runs
 ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests/testCancelStopsTypingTheArchive  one second: median 2.031 s, max 2.098 s in 21 asan runs
-TokenExecutorPermitTests/testInjectedTokensRunBeforeYielding  one second: median 2.031 s, max 2.143 s in 21 asan runs
-TokenExecutorPermitTests/testSessionYieldsAtTheEndOfItsSliceToAWaiter  one second: median 2.031 s, max 2.152 s in 21 asan runs
 ShellIntegrationInstallerButtonLayoutTests/testInternetFreePagePreviewCommandButtonsFit  one second: median 2.013 s, max 89.753 s in 21 asan runs
 ShellIntegrationOfflineDashInstallerTests/testWholeInstallTypesOnlyShortLines  one second: median 1.992 s, max 2.275 s in 21 asan runs
 KittyDnDOfferTests/testOversizedImageIsRejectedWithEFBIG  one second: median 1.991 s, max 2.713 s in 21 asan runs
@@ -307,10 +310,6 @@ TaskIOCharacterizationTests/testDeallocatingACoprocessClosesItsPipes  one second
 ShellIntegrationOfflineDashInstallerTests/testDiscoveryAfterCancelBeforeTheHelpersPromptAsksTheUserShell  one second: median 1.022 s, max 1.092 s in 21 asan runs
 ShellIntegrationOfflineDashDeferredCompletionInstallerTests/testInstallUtilitiesReportsFailureWhenTheArchiveDoesNotExtract  one second: median 1.020 s, max 1.127 s in 21 asan runs
 TaskIOMonitorCharacterizationTests/testDeallocatingACoprocessClosesItsPipes  one second: median 1.019 s, max 1.129 s in 21 asan runs
-TokenExecutorPermitTests/testJoinOfASessionPausedForAnotherReasonDoesNotExecuteAfterward  one second: median 1.018 s, max 1.042 s in 21 asan runs
-TokenExecutorPermitTests/testSessionStillYieldsAfterAJoin  one second: median 1.018 s, max 1.058 s in 21 asan runs
-TokenExecutorPermitTests/testJoiningOneSessionLeavesAnotherExecuting  one second: median 1.017 s, max 1.042 s in 21 asan runs
-TokenExecutorPermitTests/testSessionPausedForAJoinKeepsItsPermit  one second: median 1.017 s, max 1.085 s in 21 asan runs
 It2gitParityTests/testBisect  one second: median 1.016 s, max 2.041 s in 21 asan runs
 ConductorKeystrokeOrderTests/testReturnAfterPasteReachesRemoteAfterWholePasteForEveryReplyTiming  one second: median 1.011 s, max 2.049 s in 21 asan runs
 ShellIntegrationOfflineDashInstallerTests/testCancelWhileTypingTheArchiveReturnsToTheUserShell  one second: median 1.011 s, max 1.141 s in 21 asan runs

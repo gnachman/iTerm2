@@ -53,9 +53,47 @@ pseudo-terminal), "recorded an expected failure" results that the timing
 script did not parse, and suites that `-skip-testing` emptied taken for
 damage (`test_timing.py --skip-list`).
 
-**The budget is not set.** It needs runs on a quiet machine
-(test-speed.md section 3: the measured time, including the build, plus a
-quarter).
+**The third run** (2026-11-21, unit `phase0-test-items`, lane-1, at the
+master tip with that unit's test changes; the machine was loaded by other
+agents' builds, load average about 100 when the evening started):
+
+| | Run 3 |
+|---|---|
+| Command | `tools/swift_migration/fast_tests.sh` |
+| Build (`sanitizer_tests.sh plain --build-only`, no plain build directory before, so a full build, though other builds' caches were warm) | 145 s (`** TEST BUILD SUCCEEDED ** [145.060 sec]`) |
+| Test phase, wall time (parallel) | 128 s (`Tests finished with status 0 in 128 seconds`; end marker `** TEST EXECUTE SUCCEEDED ** [125.807 sec]`) |
+| Whole command, wall time | 280 s |
+| Passed, failed, skipped | 12,144, 0, 448 (12,592 results) |
+| Serial sum of test times | 524 s |
+| Tests at or over 10 s | none (slowest 8.4 s, `EditKeyActionMenuItemTests/testChangingOnlyTheKeystrokePreservesTheMenuItem`) |
+| Tests at or over 1 s | 85 |
+| Exit status | 0 |
+| Log | `tmp/fast-tests/runs/20261121-201852/` in lane-1 (not committed) |
+
+**The budget:** 77 s, set on 2026-11-22 from a quiet run of 61 s (build
+about 21 s, tests 40 s). The run: the owner had quit his other programs,
+the tool called the machine quiet (load average 2.33, 3.92 over one and
+five minutes), no agent or build was running, the plain build directory
+was up to date, and one Swift file of the app was touched first so the
+build did real work.
+
+| | Run 4 (the budget's run) |
+|---|---|
+| Command | `/usr/bin/time -p tools/swift_migration/fast_tests.sh` in the main checkout, on the app sources of "Port iTermColorSuggester to Swift" plus the nullable `-screenRestoreState:` annotation and the two sped-up translation layout tests |
+| Whole command, wall time | 61.19 s (`real`) |
+| Test phase, wall time (parallel) | 40 s (`Tests finished with status 0 in 40 seconds`; end marker `** TEST EXECUTE SUCCEEDED ** [39.585 sec]`) |
+| Build | the rest, about 21 s |
+| Passed, failed, skipped | 12,147, 0, 447 (12,594 results) |
+| Serial sum of test times | 156 s |
+| Tests at or over 10 s | none |
+| Exit status | 0 |
+| Log | `tmp/fast-tests/runs/20261122-100907/` (not committed) |
+
+The budget is the whole command's wall time times 1.25, as test-speed.md
+section 3 sets it. A cold build is not in it: whether one is to be budgeted
+is not decided (owner-queue.md Q24 item 3; the ceiling and the malloc
+settings are Q23 item 4). An untimed run a quarter of an hour earlier on
+the same machine also passed with no test at or over ten seconds.
 
 ## 2. The data (2026-11-20)
 
@@ -153,7 +191,10 @@ timings):
 
 ## 3. The slow tier and the fast tier's time
 
-**The slow tier** (`slow_tier.txt`, 280 entries):
+**The slow tier** (`slow_tier.txt`, 257 entries; 280 until unit
+`phase0-test-items` took out two, and 278 until unit `slow-tests-over-5s`
+took out 27 and replaced one test with seven of the eight it split it into
+and another with one of the four, section 4):
 
 - The ten tests of `FramerFlowTwoHopSimulationTests`, each listed: the two
   slowest by the owner's decision (owner-queue.md Q22), the other eight by
@@ -164,9 +205,14 @@ timings):
 - 20 classes that put windows on screen and skip themselves unless
   `ITERM2_ONSCREEN_TESTS=1` (every test of each was skipped in all 21 runs),
   so the fast tier stays off screen even when the variable is set.
-- 249 other tests with a median of one second or more: 5 over the
-  10-second ceiling, marked "ceiling", and 244 marked "one second". None
-  has a recorded reason to stay in the fast tier (test-speed.md section 2).
+- 226 other tests marked "one second": a median of one second or more in
+  the 21 runs, or, for the entries unit `slow-tests-over-5s` changed or
+  measured, a second or more alone after it (247 before 2026-11-22, of
+  which 4 were marked "ceiling"; 249 before 2026-11-21). None is over the
+  10-second ceiling any longer. The entries still at or over five seconds
+  alone name the app code or the design that keeps them slow (section 4);
+  none has a recorded reason to stay in the fast tier (test-speed.md
+  section 2).
 
 The one-second rule is test-speed.md's; measuring it by the median of the
 address sanitizer runs was this unit's choice, made because those were the
@@ -196,6 +242,25 @@ classes that would lose the most:
 | `ShellIntegrationOfflineDashDeferredCompletionInstallerTests` | 2 | 20 |
 | `RemoteGitStateParityTests` | 2 | 15 |
 
+**Checked against the runs of 2026-11-21** (unit `phase0-test-items`, both
+on a loaded machine):
+
+- *Over the ceiling and not listed:* none. The fast tier run (section 1,
+  run 3) had no test at or over 10 s; its slowest took 8.4 s.
+- *At or over one second and not listed:* 85 fast-tier tests in that one
+  run (`test_tiers.py budget --mode fast`). One loaded run is not enough to
+  move them (the rule is the median); `test_tiers.py propose --mode fast`
+  over several fast-tier runs lists them.
+- *Listed and now under one second:* in the one full address sanitizer run
+  (`tools/run_tests.expect -parallel`, all 13,093 results, none failed),
+  `test_tiers.py propose-removals --mode asan --min-runs 1` lists 21 timing
+  entries. Two of them are tests this unit changed
+  (`SmartSelectionTranslationLayoutTests/testRegexLabelFits` and
+  `testBottomRowFits`, 0.14 s and 0.63 s against medians of 12.3 s and
+  9.3 s), a change of the code and not of the load, so they were taken
+  out of `slow_tier.txt`. The other 19 were not changed and have only this
+  one run under a second (most of them just under it); they stay until
+  the tool lists them over the three runs it asks for.
 
 Not in the slow tier: the three weak-reference tests
 (`PromptMarkExcludedSubrangeTests.test_codable_foldRC_deadWeakBox_encodesAsInvalid`,
@@ -249,65 +314,284 @@ those tests be fixed first and the ceiling then enforced per run?
 Until the owner switches gate step 3 ([README.md §5](README.md)) to the
 fast tier, the gate runs the whole suite.
 
-## 4. Work list: the ten slowest tests
+## 4. Work list: the slow tests
 
-Why each is slow, from reading the test (none was profiled, except that
-owner-queue.md Q22 records 91 percent of the two-hop simulations' time
-inside `FramerFlowController`), and what a fix would be. Nothing here has
-been changed. Medians are from the address sanitizer runs.
+**Tests over five seconds on 2026-11-21**, from one full address sanitizer
+run in lane-1 (`tools/run_tests.expect -parallel`, 432 s wall time with
+its build, 13,093 results, none failed, after this unit's changes; a
+loaded machine): 31 tests, 563 s of the 1,226 s serial total. The ten
+slowest:
 
-1. **`FramerFlowTwoHopSimulationTests/testANestedFloodRecoversWhenAJitteryOuterHopSpeedsUp`**
-   (224 s). `checkRecovery` runs 15 simulations of 100 simulated seconds
-   (the speed-up moment from 30.0 to 39.8 s in steps of 0.7), once for each
-   of two jitters: 30 simulations, each stepping both `FramerFlowController`s
-   every simulated millisecond (100,000 steps). Fix: an event-driven loop
-   that jumps to the next arrival or controller tick instead of stepping
-   every millisecond. Fewer speed-up moments would change what it proves.
-   The owner put the class in the slow tier and `FramerFlowController` is
-   not to change.
-2. **`FramerFlowTwoHopSimulationTests/testANestedFloodRecoversWhenTheOuterHopSpeedsUpAtAnyMoment`**
-   (98 s). The same with one jitter: 15 simulations. Same fix.
-3. **`SmartSelectionTranslationLayoutTests/testLinksFit`** (41 s). For each
-   of 125 titles it builds a controller whose six frames are each found by
-   an XPath search (`//*[@id='...']`) of the whole 1.2 MB
-   `PreferencePanel.xib` document, with two more searches per title:
-   about 1,000 searches of the document. `-setUp` parses the xib again for
-   every test. Fix: parse it once per class and index the elements by id in
-   one pass.
-4. **`ManualAIModelEditorCredentialPopupWidthTests/testTranslatedAutomaticChoicesFit`**
-   (41 s; 5.6 s in the plain run without MallocStackLogging). For each of
-   41 languages it parses the whole `Localizable.strings` (1.3 MB in the
-   German build) and creates three editor controllers. The large gap
-   between the address sanitizer and plain runs points at the
-   allocation-heavy parse. Fix: parse each language's table once per
-   process and reuse one editor.
-5. **`PSMTabGroupDragInvariantTests/testEveryPairOfItems`** (27 s). A
-   deliberate exhaustive check: 64 bar layouts, every draggable group in
-   each, a sweep across the bar and back in 4-point steps, holding 24 ticks
-   of the real drag animation at each position and fingerprinting the bar
-   every tick. Splitting it into several test methods (for example by the
-   first item) lets parallel workers share it without changing what it
-   proves. Fewer ticks or wider steps would change what it proves and need
-   the owner.
-6. **`FramerFlowTwoHopSimulationTests/testASlowOuterHopBoundsCtrlCAtTheInnerHost`**
-   (17 s). 14 simulations of 60 simulated seconds at one-millisecond steps
-   (two, then six nearby paths for each of two designs). Same fix as 1.
-7. **`SmartSelectionTranslationLayoutTests/testRegexLabelFits`** (12 s). 41
-   controllers, seven whole-document XPath searches each. Same fix as 3.
-8. **`ShellIntegrationInstallerStepsLayoutTests/testStepsFitInEveryLanguage`**
-   (12 s). `-stringForKey:language:` parses the whole 1.3 MB
-   `Localizable.strings` for every key it looks up: eight keys for each of
-   41 languages, 328 parses, and the nib is instantiated 82 times. Fix: parse
-   each language's table once.
-9. **`FramerFlowTwoHopSimulationTests/testAJitteryOuterHopStillBoundsCtrlC`**
-   (10 s). 12 simulations of 60 simulated seconds at one-millisecond steps.
-   Same fix as 1.
-10. **`SmartSelectionTranslationLayoutTests/testBottomRowFits`** (9.3 s). 41
-    controllers, six whole-document XPath searches each. Same fix as 3.
+| Test | s |
+|---|---|
+| `FramerFlowTwoHopSimulationTests/testANestedFloodRecoversWhenAJitteryOuterHopSpeedsUp` | 233.4 |
+| `FramerFlowTwoHopSimulationTests/testANestedFloodRecoversWhenTheOuterHopSpeedsUpAtAnyMoment` | 108.5 |
+| `PSMTabGroupDragInvariantTests/testEveryPairOfItems` | 26.2 |
+| `FramerFlowTwoHopSimulationTests/testASlowOuterHopBoundsCtrlCAtTheInnerHost` | 20.0 |
+| `ShellIntegrationInstallerStepsLayoutTests/testStepsFitInEveryLanguage` | 11.3 |
+| `FramerFlowTwoHopSimulationTests/testAJitteryOuterHopStillBoundsCtrlC` | 9.6 |
+| `FramerFlowSimulationTests/testWatchingTheControllerDoesNotChangeWhatItDoes` | 8.7 |
+| `FramerFlowTwoHopSimulationTests/testFloodsOnBothHostsShareTheOuterHop` | 8.6 |
+| `ManualAIModelEditorCredentialPopupWidthTests/testTranslatedAutomaticChoicesFit` | 8.0 |
+| `ManualAIModelEditorKeyHintLayoutTests/testEveryTranslatedHintFitsTheEditor` | 7.6 |
 
-Nine of the ten share two causes: re-parsing large localization or xib files
-inside loops (3, 4, 7, 8, 10) and millisecond-stepped simulations (1, 2, 6,
-9).
+The other 21, each between 5.0 and 7.2 s: `TmuxDividerMoverPropertyTests`
+(four), `AISafetyRefusalParserTests/testEachStreamingFixtureProducesNonEmptyMessage`,
+`TwoTierTokenQueueTests/testTokensAddedDuringFirstAccessAreNotLost`,
+`ShellIntegrationInstallerStepsLayoutTests/testGermanNushellStepsNeedMoreThanTheNibHeight`,
+`TaskIOMonitorCharacterizationTests` (two),
+`TokenExecutorPermitTests` (two),
+`ProfileBoolSettingPickerTests/testOnOffChangeWithClosedDropdownKeepsKeyAndUpdatesValue`,
+`ManualAIModelEditorTranslationLayoutTests` (two),
+`CharsetPerformanceTests/testPerf_ascii`,
+`ExecutorUpdateTickerTests/testNoUpdateIsLostUnderConcurrency`,
+`PTYSessionSelectedCommandSearchTests/testDeselectingByTypingSearchesEverythingWithoutSelectingAResult`,
+`ToolStatusCellViewJobExitTests/test_jobExitAfterReconfigureUpdatesTheRow`,
+`HotkeySettingsLabelLayoutTests/testLabelsFitEveryTranslation`,
+`SwiftyStringTextFieldRenameTests/test_renameAfterReuseUpdatesTheField` and
+`ProgramStatusDisplayRecordTests/testBatchOfNewRecordsAndClearsIsHandled`.
+`tools/swift_migration/test_timing.py --threshold 5 LOG` prints the list.
+
+**Fixed on 2026-11-21** (unit `phase0-test-items`, kind `test`; test code
+only, no assertion, input or iteration changed). Times are single runs
+alone with the address sanitizer (`tools/run_tests.expect`), on a loaded
+machine:
+
+- **`SmartSelectionTranslationLayoutTests`** (`testLinksFit`
+  39.5 s to 1.4 s, `testRegexLabelFits` 11.7 s to 0.13 s,
+  `testBottomRowFits` 8.9 s to 0.53 s; the class 61 s to 2.2 s). The cause
+  was as item 3 of the old list said: every frame was found by an XPath
+  search of the whole 1.2 MB `PreferencePanel.xib` (about 66 ms each), about
+  1,000 times, and `-setUp` parsed the xib for every test; each string was
+  looked up by parsing its whole table. The xib is now parsed once per
+  process, each found frame and each parsed table is kept for the run, and
+  a missing element or table is not kept, so it still fails every test
+  that asks for it. Mutation: without
+  `[self growLinkToFit:_visualizationButton]` in
+  `-[SmartSelectionController layoutForTranslations]`, `testLinksFit`
+  fails (for example “206 is less than 233”); restored byte for byte.
+- **`ManualAIModelEditorCredentialPopupWidthTests/testTranslatedAutomaticChoicesFit`**
+  (32.9 s, and 44.9 s in a second run, to 8.0 s). Item 4 of the old list
+  blamed the parse of `Localizable.strings`; a `sample` of the running test
+  showed the main thread almost entirely in building editors, with most
+  samples in the Objective-C runtime's weak reference table
+  (`weak_unregister_no_lock`, `weak_entry_for_referent`) and in adding
+  notification observers: all 123 editors and their controls stayed alive
+  until the test ended, and each new one cost more. Each iteration now runs
+  in an `@autoreleasepool`. Still 8 s, about 65 ms per editor under the
+  address sanitizer; making it faster means sharing an editor between
+  iterations, which would change what is measured
+  (`-sizeCredentialPopupToFit` reads the key field's right edge, which a
+  clipped popup moves), so it is not done. Mutation: with the popup's width
+  fixed at `kAICredentialPopupMinimumWidth` in `-sizeCredentialPopupToFit`,
+  the test fails 74 assertions; restored byte for byte.
+
+**Not changed on 2026-11-21, with the reason** (each was taken up on
+2026-11-22, below):
+
+1. **The framer two-hop simulations** (`FramerFlowTwoHopSimulationTests`,
+   233 s, 108 s, 20 s, 9.6 s, 8.6 s and less). Each simulation steps both
+   `FramerFlowController`s every simulated millisecond, and owner-queue.md
+   Q22 records 91 percent of the time inside `FramerFlowController`. There
+   is no sleep, wait or repeated setup to remove, and no clock to inject
+   (the simulation already runs on simulated time). Making it fast means
+   an event-driven loop that jumps to the next arrival or tick, which
+   changes when the controllers are called and so what is simulated, or
+   making `FramerFlowController` itself cheaper, which the owner ruled out
+   (Q22). Fewer speed-up moments would weaken it. The owner put the two
+   slowest in the slow tier; the others are there by the one-second rule.
+2. **`PSMTabGroupDragInvariantTests/testEveryPairOfItems`** (26 s). A
+   deliberate exhaustive check (64 bar layouts, every draggable group, a
+   sweep in 4-point steps, 24 animation ticks at each position). Splitting
+   it into several test methods would spread it over parallel workers but
+   not reduce the work; fewer ticks or wider steps would weaken it.
+3. **`ShellIntegrationInstallerStepsLayoutTests/testStepsFitInEveryLanguage`**
+   (11 s) and `testGermanNushellStepsNeedMoreThanTheNibHeight` (6 s). Not
+   attempted (the brief was the two slowest that could be fixed).
+   `-stringForKey:language:` parses the whole 1.3 MB `Localizable.strings`
+   for every key: 328 parses. Keeping each language's parsed table for the
+   run, as `ShellIntegrationInstallerButtonLayoutTests` already does for
+   the string catalog, should remove most of it without changing what it
+   checks. Next in line.
+4. **`FramerFlowSimulationTests/testWatchingTheControllerDoesNotChangeWhatItDoes`**
+   (8.7 s). The one-hop simulation, same reason as 1.
+5. **`ManualAIModelEditorKeyHintLayoutTests/testEveryTranslatedHintFitsTheEditor`**
+   (7.6 s) and **`ManualAIModelEditorTranslationLayoutTests`** (5.9 and
+   5.2 s). Not read. They build many `iTermManualAIModelEditorController`s
+   too, so the cause found for the credential popup test (editors kept alive
+   until the test ends) is the first thing to check.
+
+**Worked through on 2026-11-22** (unit `slow-tests-over-5s`, kind `test`;
+test code and `slow_tier.txt` only, no app code). The list was every test
+at five seconds or more in the medians of section 2 or in either of two
+full address sanitizer runs of 2026-11-21 in lane-1 (`tmp/rebase-tests.out`
+and `tmp/gate-tests.out`): 41 tests, not counting the two framer tests
+the owner put in the slow tier. "Before" and "after" are each one serial run of those
+tests alone with the address sanitizer (`tools/run_tests.expect` with the
+test and class names) in lane-2: before at the master tip, load average 7
+to 12, and after with the change, load average 10 to 17; logs in lane-2's
+`tmp/slow5/` (`before.log`, `after.log`, and `after-psmdrag.log` for the
+split drag test), not committed. Together the 85 results before took
+244 s and the 93 after 118 s. Every changed test still passes, and the
+evidence that each still fails when it should is below the table.
+
+| Test | Why it was slow | Change | Before s | After s |
+|---|---|---|---|---|
+| `TokenExecutorPermitTests`, all 23 (two over five seconds) | Each wait was an `XCTNSPredicateExpectation`, which checks its predicate about once a second, so every wait cost up to a second after the condition held | Each wait spins the main run loop and checks after every pass, with the same condition and 30-second limit; it fails with "Gave up waiting" | 59.3 for the class (6.2 and 5.1) | 0.6 for the class, each under 0.1 |
+| `ToolStatusCellViewJobExitTests/test_jobExitAfterReconfigureUpdatesTheRow` | The same | The same, with a 10-second limit | 5.09 | 0.02 |
+| `SwiftyStringTextFieldRenameTests/test_renameAfterReuseUpdatesTheField` | The same | The same | 5.11 | 0.003 |
+| `PSMTabGroupDragInvariantTests/testEveryPairOfItems` | 64 layouts in one test; a third of the time was the test's own fingerprint of the bar, made on every hold tick though only the last 8 of 24 are compared | Split into eight tests, one per first building block, the same 64 layouts in the same order, plus a test that there are still 8 building blocks; the fingerprint is made in one pass over the bar's array, and only on the 8 compared ticks (every tick still runs) | 22.8 | eight tests, 0.73 to 3.23 by the median of three class runs (seven at a second or more, listed) |
+| `PSMTabGroupDragTests/testStillMouseBeforeParentChipSettlesWhenDraggingCollapsedSubgroup` | 141 mouse positions in one test, each building a bar and starting and ending a drag; it slowed as it went (a quarter of the positions takes 0.6 s, the whole 9.4 s), most likely from what each drag leaves behind until the test ends | Split into four tests by mouse position (130 to 147.5, 148 to 165.5, 166 to 183.5, 184 to 200, in half points); each position still builds its own bar and drag | 8.16 (9.36 after the other changes) | four tests: medians 1.34 for `From130` (listed; its positions cost more, not its place in the class) and 0.60 to 0.64 for the others |
+| `FramerFlowTwoHopSimulationTests/testASlowOuterHopBoundsCtrlCAtTheInnerHost` | 14 independent 60-second simulations one after another, almost all the time in `FramerFlowController` (owner-queue.md Q22) | The simulations run at once (`DispatchQueue.concurrentPerform`) and the assertions run afterwards on the main thread; each simulation has its own controllers and paths and the controller has no shared state | 14.17 | 1.83 |
+| `FramerFlowTwoHopSimulationTests/testAJitteryOuterHopStillBoundsCtrlC` | 12 such simulations | The same | 8.91 | 1.36 |
+| `FramerFlowTwoHopSimulationTests/testFloodsOnBothHostsShareTheOuterHop` | 14 such simulations | The same | 6.25 | 0.92 |
+| The owner's two (`testANestedFloodRecovers...`), still in the slow tier by Q22 | 15 simulations of 100 seconds per jitter | The same | 240.6 and 111.5 in a full parallel run (not run alone before) | 28.5 and 12.7 alone, load average about 50 |
+| `ShellIntegrationInstallerStepsLayoutTests/testStepsFitInEveryLanguage` | Parsed the 1.3 MB `Localizable.strings` once per key (9 keys, 41 languages) and read the nib from disk for each of 82 view controllers | Each language's parsed table and the `NSNib` are kept for the run and filled in the class `+setUp` (a table that fails to load is not kept); each view controller is still a fresh instantiation; a pool per case | 8.51 | 1.35 by the median of three class runs, plus about 0.75 in `+setUp` that no test is charged for |
+| `ManualAIModelEditorKeyHintLayoutTests/testEveryTranslatedHintFitsTheEditor` | Kept all 41 editors alive, the cause found for the credential popup test, and parsed each table again | A pool per language; each parsed table kept for the run | 5.49 | 1.96 |
+| `ManualAIModelEditorTranslationLayoutTests/testTranslatedTitlesFit` | The same | The same | 4.48 | 3.26 |
+| `HotkeySettingsLabelLayoutTests/testLabelsFitEveryTranslation` | Parsed the 1.2 MB `PreferencePanel.xib` for each test and searched it by XPath once per label per language | The xib is parsed once and each found frame kept, as `SmartSelectionTranslationLayoutTests` does | 4.17 | 0.38 |
+| `LocalizationFormatSpecifierParityTests/testTranslationsPreserveFormatArgumentCount` | Compiled its regular expression once per string counted | Compiled once | 3.43 | 1.70 |
+
+Evidence that the changed tests still fail when they should (each change
+to app code made alone, the tests run, then the file restored byte for
+byte and checked with `git diff`):
+
+- Without the dependency install in the completion block of
+  `-[iTermGenericEvaluator evaluateSynchronously:sideEffectsAllowed:completion:]`
+  (the fix the rename tests guard), all five
+  `SwiftyStringTextFieldRenameTests` and both `ToolStatusCellViewJobExitTests`
+  fail, the waits at their 10-second limit, for example “Evaluator observes only
+  ["id"]” and “Field shows “-zsh”, expected “QA45C (-zsh)””.
+- With `-[iTermShellIntegrationPasteShellCommandsViewController sizeStepListToFit]`
+  returning before growing the list (`delta >= 0`),
+  `testStepsFitInEveryLanguage` fails 27 assertions (“steps clipped”).
+- With `ExecutionPermits.handOff` never waking the waiter it gives a permit
+  to, `testSessionWaitsForAPermitAndRunsWhenOneFrees` and
+  `testWaiterInCopyModePassesThePermitOn` fail with “Gave up waiting: b ran”
+  and “Gave up waiting: c ran”. (Two other mutations, making a paused
+  waiter count as runnable and dropping the copy-mode check from the
+  executor's `settle`, left `testWaiterInCopyModePassesThePermitOn`
+  passing; the path that passes the permit on lies elsewhere and was not
+  traced.)
+- The parallel simulations give the serial results: with a temporary check
+  in `testFloodsOnBothHostsShareTheOuterHop` that ran its 14 simulations a
+  second time one after another, every field of every result
+  (`worstInnerWait`, `worstPaneWait`, `innerRate`, `paneRate`,
+  `worstHost1Buffer`, `innerWindows`) was equal.
+- The new fingerprint gives the old one: a temporary check computing both on
+  every call compared 109,200 fingerprints in two of the invariant tests,
+  all equal. Both temporary checks were removed.
+
+What the faster waits change in `TokenExecutorPermitTests`: the old
+`XCTNSPredicateExpectation` waited about a second even when its condition
+already held, so a check that something did not happen, made after a wait
+(b has run no token while a holds the only permit, b has run none in copy
+mode or after its tokens were discarded, a has run only one token while
+paused), used to look about a second later and now looks at once. That
+second was an accident, in effect a sleep, and the checks were racy before
+too, but a session that wrongly ran shortly afterwards was more likely to
+be caught. Each such check now records the event itself: b's or a's
+delegate notes any token that runs before the release, during copy mode or
+during the pause, and the test asserts on that note after the session has
+finished, so the check holds however late the wrong run happens. After its
+tokens are discarded b has no note to make, so that test first waits for
+anything already queued on b's queue (`b.queue.sync {}`) and then checks;
+a wrong run scheduled later than that would still be missed.
+No mutation was found that shows the new notes failing: the one tried,
+letting `ExecutionPermits.acquire` succeed without a permit, stopped first
+at the app's own assertion in `park` (“Parking a permit in state
+waiting”).
+
+The framer simulations, now run at once, were run under the thread
+sanitizer (`tools/swift_migration/sanitizer_tests.sh thread
+ModernTests/FramerFlowTwoHopSimulationTests`, lane-2
+`tmp/sanitizers/runs/thread-20261122-120836`): all 10 tests passed, no
+report, `Verdict: PASS: 0 report(s) outside the baseline, 0 unmatchable; 0
+accepted.` The slowest took 53.3 s and 22.8 s, the others 1.5 to 3.8 s.
+
+Measured again after review, three runs of the four classes alone with the
+address sanitizer (lane-2 `tmp/slow5/r2-1.log` to `r2-3.log`, load average
+10 to 14): `ShellIntegrationInstallerStepsLayoutTests/testGermanNushellStepsNeedMoreThanTheNibHeight`
+took 5.72, 1.01 and 1.25 s. It runs first in its class and pays for the
+first instantiation of the nib in the process, most likely AppKit setting
+up, since the class `+setUp` has already read the nib and parsed every table
+(the 0.05 s of the first measurement came from a process that had already
+done that). It is back in the slow tier. All 55 tests of the four classes
+passed in each run.
+
+**At or over five seconds alone and not made fast**, in the slow tier with
+the reason (each `slow_tier.txt` line names it):
+
+- `ManualAIModelEditorCredentialPopupWidthTests/testTranslatedAutomaticChoicesFit`
+  (6.59 before, 7.13 after, unchanged): 123 editors, one per case;
+  `sample` shows almost all the time in
+  `-[iTermManualAIModelEditorController initWithConfiguration:isEditing:]`,
+  AppKit sizing the editor's controls. Sharing an editor would change what
+  is measured (2026-11-21 entry above).
+- `FramerFlowSimulationTests/testWatchingTheControllerDoesNotChangeWhatItDoes`
+  (7.65, 7.67): its point is a snapshot of the controller twice every
+  simulated millisecond for a minute, and most of the time is in
+  `FramerFlowController.snapshot(now:)`. Its other simulation is a tenth of
+  the time, so running the two at once would not help.
+- `AISafetyRefusalParserTests/testEachStreamingFixtureProducesNonEmptyMessage`
+  (6.08, 6.18): almost all the time is in
+  `ResponsesResponseStreamingParser.splitFirstJSONEvent(from:)`, whose
+  `SplitServerSentEvents` searches the remaining stream with
+  `String.range(of:)` for every event, so a whole recorded stream costs
+  time quadratic in its length. App code; reported, not changed.
+- `TmuxDividerMoverPropertyTests`, four tests (5.2 to 6.4, unchanged):
+  `sample` puts about 70 percent in `TmuxDividerMover` and
+  `-[iTermTmuxLayoutBuilder layoutString]`, run for every divider of ten
+  random layouts; the rest is the test's own reading and checking of each
+  result.
+
+Under five seconds alone but at or over it in a loaded full run, not
+changed: `ProgramStatusDisplayRecordTests/testBatchOfNewRecordsAndClearsIsHandled`
+(4.5; a guard against quadratic handling over 100,000 reports, three
+quarters of the time in `ProgramStatusController.handle(_:)`),
+`TaskIOMonitorCharacterizationTests/testStress` (4.0 to 4.3, real ptys and
+threads), `CharsetPerformanceTests/testPerf_ascii` (3.9 and 1.8, a
+`measure` block of app code; not in the slow tier),
+`ManualAIModelEditorTranslationLayoutTests/testFetchModelsButtonFitsEveryTitle`
+(3.0, 3.1; one editor per language), and tests under two seconds alone
+that took five seconds or more only in a loaded parallel run
+(`TaskIOMonitorCharacterizationTests/testBlockedReadDoesNotStallOtherTasks`,
+`TaskIOCharacterizationWithChildReaperTests/testCoprocessRoundTrip`,
+`ExecutorUpdateTickerTests/testNoUpdateIsLostUnderConcurrency`,
+`TwoTierTokenQueueTests/testTokensAddedDuringFirstAccessAreNotLost`,
+`PTYSessionSelectedCommandSearchTests/testDeselectingByTypingSearchesEverythingWithoutSelectingAResult`,
+`ProfileBoolSettingPickerTests/testOnOffChangeWithClosedDropdownKeepsKeyAndUpdatesValue`,
+`PSMTabGroupNestedDropSettlingTests/testStillMouseAtEndOfSubgroupAndParentSettles`,
+`It2sshEndSSHAnswerTests/testBareControlCEndsTheWaitAndReturnsSSHStatus`,
+`SwiftMigrationBetaAssertionFailsTestTests/testBetaAssertFailsTheRunningTest`,
+`SearchableComboViewSelectionTests/testFailedSelectionClearsSelection`,
+`ShellIntegrationInstallerButtonLayoutTests/testInternetFreePageBottomButtonsFit`,
+`ShellIntegrationInstallerFirstPageLayoutTests/testLearnMoreLinksUseTheLabelFont`).
+
+**The whole suite after it** (one run, `tools/run_tests.expect -parallel`
+in lane-2 with the change, the build already up to date; load average 12
+at the start and 58 at the end, other agents building; log
+`tmp/slow5/full.log` in lane-2, not committed): 13,104 results, 12,415
+passed, 0 failed, 689 skipped; `** TEST SUCCEEDED ** [132.216 sec]`, 134 s
+for the whole command; a serial total of 849 s (1,226 s and 1,301 s in the
+two lane-1 runs of 2026-11-21). 28 tests took five seconds or more. 23 are
+in the slow tier, among them the owner's two framer tests (30.2 s and
+13.4 s), `TmuxDividerMoverPropertyTests/testAnyReachableLayoutRoundTrips`
+(18.4 s; 4.8 s alone just after) and git parity tests that run `git`. The
+other five had medians under a second in the 21 runs and took 0.14 to 1.13 s
+alone straight after (`tmp/slow5/outliers.log`), so the load, not the
+tests, put them over: `RemoteGitStateParityTests/testBinaryFileCountsNoLines`
+(11.9 s), `iTermGitClientTests/testAheadCountsLocalCommitsNotPushed` (9.1),
+`EditKeyActionEncodingTests/testEncodingParameterRoundTripsThroughEditor`
+(7.5; 1.13 alone, so a candidate for the slow tier by the one-second rule),
+`It2gitParityTests/testCleanRepo` (5.6) and
+`RemoteGitStateParityTests/testCleanRepo` (5.4).
+
+So on this evidence no test that takes five seconds or more alone with the
+address sanitizer is outside the slow tier, and the only tests over the
+10-second ceiling alone are the owner's two. Whether a loaded parallel run
+may push a fast-tier test over five seconds is the open question on the
+ceiling above.
 
 ## 5. Regenerating
 

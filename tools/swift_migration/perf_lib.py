@@ -24,6 +24,7 @@ import os
 import re
 import statistics
 import subprocess
+import time
 
 SCHEMA = 'iterm2-migration-perf/1'
 
@@ -46,7 +47,15 @@ QUIET_THRESHOLDS = {
     'build_process_names': ['xcodebuild', 'swift-frontend', 'swift-driver', 'clang', 'clang++', 'ld',
                             'swift-build', 'ibtool', 'actool'],
     'require_ac_power': True,
+    # The after-run check: how long to wait, polling, for the 1-minute load
+    # average to fall back under the limit once the last scenario is done.
+    'after_settle_seconds': 180,
+    'after_poll_seconds': 15,
 }
+
+AFTER_RULE = ('after the run: the 1-minute load average within after_settle_seconds (the 5-minute '
+              'average is not used, since the run itself raises it); every other condition in '
+              'every sample')
 
 # Scenarios. "xctest" scenarios run one test of the PerformanceTests target in
 # the release configuration, in a test host started with -suite. "stress"
@@ -83,7 +92,8 @@ SCENARIOS = [
     {'name': 'app.stress_clearcodes_1tab', 'kind': 'stress', 'mode': 'clearcodes', 'tabs': 1, 'fps': None,
      'what': 'run_stress_test.sh --mode=clearcodes, 1 tab'},
     {'name': 'app.stress_flood_1tab', 'kind': 'stress', 'mode': 'flood', 'tabs': 1, 'fps': None,
-     'what': 'run_stress_test.sh --mode=flood (yes), 1 tab'},
+     'rate': False, 'what': 'run_stress_test.sh --mode=flood (yes), 1 tab; no iteration rate, since '
+     '`yes` writes no iteration counts and the script always reports 0'},
     {'name': 'app.stress_normal_10tabs', 'kind': 'stress', 'mode': 'normal', 'tabs': 10, 'fps': None,
      'what': 'run_stress_test.sh --mode=normal, 10 tabs (the script default)'},
     {'name': 'app.stress_htop_unthrottled_1tab', 'kind': 'stress', 'mode': 'htop', 'tabs': 1, 'fps': 0,
@@ -355,6 +365,19 @@ def pids_with_executable(pids, executable, path_of=executable_path):
     return [pid for pid in pids if path_of(pid) == executable]
 
 
+def executable_may_be_running(executable, pids=None, path_of=None):
+    """False only when the process table was read and no process's binary
+    is exactly `executable`, by proc_pidpath. Other copies of the same app
+    (another checkout's build, the owner's release) do not count. An empty
+    process table means ps failed, and counts as "may be running", the safe
+    answer for deciding whether to start a second instance of this path."""
+    if pids is None:
+        pids = all_pids()
+    if not pids:
+        return True
+    return bool(pids_with_executable(pids, executable, path_of=path_of or executable_path))
+
+
 def dirty_paths(porcelain):
     """Paths from `git status --porcelain --untracked-files=no
     --ignore-submodules=dirty` that make a tree unfit for a baseline. Only
@@ -384,7 +407,7 @@ def machine_state():
     energy, low_power = parse_energy_mode(_run(['/usr/bin/pmset', '-g', 'custom']), power)
     thermal, limit = parse_thermal(_run(['/usr/bin/pmset', '-g', 'therm']))
     return {
-        'load_average': parse_loadavg(_run(['/usr/sbin/sysctl', '-n', 'vm.loadavg'])),
+        'load_average': load_average(),
         'logical_cpus': int(_run(['/usr/sbin/sysctl', '-n', 'hw.logicalcpu']).strip() or 0),
         'memory_free_percent': parse_memory_free_percent(_run(['/usr/bin/memory_pressure'])),
         'swap_used_mb': parse_swap_used_mb(_run(['/usr/sbin/sysctl', '-n', 'vm.swapusage'])),
@@ -397,15 +420,87 @@ def machine_state():
     }
 
 
-def assess_quiet(state, thresholds=QUIET_THRESHOLDS):
-    """(quiet, reasons). Each reason names one condition that failed."""
-    reasons = []
+def load_average():
+    return parse_loadavg(_run(['/usr/sbin/sysctl', '-n', 'vm.loadavg']))
+
+
+def _load_limit(state, thresholds):
     cpus = state.get('logical_cpus') or 1
-    limit = thresholds['max_load_per_cpu'] * cpus
+    return thresholds['max_load_per_cpu'] * cpus, cpus
+
+
+def assess_quiet(state, thresholds=QUIET_THRESHOLDS):
+    """(quiet, reasons). Each reason names one condition that failed. The
+    strict rule, used before the run: the 1- and 5-minute averages."""
+    reasons = []
+    limit, cpus = _load_limit(state, thresholds)
     load = state.get('load_average') or []
     if len(load) < 2 or load[0] > limit or load[1] > limit:
         reasons.append('load average %s exceeds %.1f (%.2f per logical CPU, %d CPUs)'
                        % (load, limit, thresholds['max_load_per_cpu'], cpus))
+    reasons += _non_load_reasons(state, thresholds)
+    return not reasons, reasons
+
+
+def _one_minute_settled(state, thresholds):
+    limit, _ = _load_limit(state, thresholds)
+    load = state.get('load_average') or []
+    return bool(load) and load[0] <= limit
+
+
+def judge_after(samples, thresholds=QUIET_THRESHOLDS):
+    """The after-run verdict from the samples taken once the last scenario
+    finished, in time order, each a machine state with 'elapsed_s'. Load the
+    run made itself raises the 5-minute average for minutes, so only the
+    1-minute average is used, and it passes if it is under the limit in the
+    last sample (settle_after stops as soon as it is). Every other condition
+    must hold in every sample, so a build or thermal limit seen while waiting
+    still refuses."""
+    reasons = []
+    for state in samples:
+        for reason in _non_load_reasons(state, thresholds):
+            if reason not in reasons:
+                reasons.append(reason)
+    last = samples[-1] if samples else {}
+    settled = bool(samples) and _one_minute_settled(last, thresholds)
+    if not settled:
+        limit, cpus = _load_limit(last, thresholds)
+        reasons.append('1-minute load average did not fall to %.1f (%.2f per logical CPU, %d CPUs) within '
+                       '%d s after the run; last %s'
+                       % (limit, thresholds['max_load_per_cpu'], cpus, thresholds['after_settle_seconds'],
+                          last.get('load_average')))
+    return {
+        'quiet': not reasons,
+        'reasons': reasons,
+        'rule': AFTER_RULE,
+        'load_settled': settled,
+        'settled_after_s': last.get('elapsed_s', 0) if settled else None,
+        'samples': [{'elapsed_s': s.get('elapsed_s', 0), 'load_average': s.get('load_average'),
+                     'reasons': _non_load_reasons(s, thresholds)} for s in samples],
+    }
+
+
+def settle_after(take_state, thresholds=QUIET_THRESHOLDS, monotonic=time.monotonic, sleep=time.sleep):
+    """Samples the machine after the run until the after check passes, a
+    non-load condition fails (waiting cannot help), or after_settle_seconds
+    pass. Returns the samples, each with 'elapsed_s'."""
+    start = monotonic()
+    samples = []
+    while True:
+        state = dict(take_state())
+        state['elapsed_s'] = round(monotonic() - start, 1)
+        samples.append(state)
+        verdict = judge_after(samples, thresholds)
+        if verdict['quiet'] or verdict['load_settled'] or _non_load_reasons(state, thresholds):
+            return samples
+        remaining = thresholds['after_settle_seconds'] - (monotonic() - start)
+        if remaining <= 0:
+            return samples
+        sleep(min(thresholds['after_poll_seconds'], remaining))
+
+
+def _non_load_reasons(state, thresholds):
+    reasons = []
     free = state.get('memory_free_percent')
     if free is None or free < thresholds['min_memory_free_percent']:
         reasons.append('memory free %s%% is below %d%%' % (free, thresholds['min_memory_free_percent']))
@@ -422,7 +517,7 @@ def assess_quiet(state, thresholds=QUIET_THRESHOLDS):
         reasons.append('; '.join(power_problems))
     if state.get('thermal_warning'):
         reasons.append('thermal or CPU speed limit in effect (CPU_Speed_Limit=%s)' % state.get('cpu_speed_limit'))
-    return not reasons, reasons
+    return reasons
 
 
 def run_label(baseline, quiet_before, quiet_after):
@@ -479,6 +574,34 @@ def redact_path(path, checkout):
 # ---------------------------------------------------------------------------
 # Statistics
 
+# Which statistic estimates a metric, decided by its unit and nowhere else.
+# Units that measure speed (a duration, or a rate of work) are estimated by
+# the best sample: the owner, 2026-11-22, "Given the variance you should take
+# the fastest time, since that's our best estimate." Interference from the
+# rest of the machine usually makes a run slower, so the fastest run is
+# usually the closest to what the code itself costs; the app rates have
+# fast outliers too, and a busy machine slows the fastest run as well
+# (performance.md section 3, "Read with care"). Everything else (memory in
+# kB, counts, and any unit not listed) keeps the median, a proposal the
+# owner has not confirmed.
+BEST_SAMPLE_UNITS = frozenset({'s', 'ms', 'us', 'ns', 'iterations/s'})
+
+
+def statistic_for(unit):
+    """'best' or 'median': the statistic perf_compare.py compares for a metric
+    measured in `unit`."""
+    return 'best' if unit in BEST_SAMPLE_UNITS else 'median'
+
+
+def best_sample(values, better):
+    """The best of `values`: the minimum when lower is better, otherwise the
+    maximum. None when there are no values."""
+    values = [float(v) for v in values]
+    if not values:
+        return None
+    return min(values) if better == 'lower' else max(values)
+
+
 def summarize(values):
     values = [float(v) for v in values]
     if not values:
@@ -490,8 +613,20 @@ def summarize(values):
             'mean': statistics.fmean(values), 'mad': mad, 'robust_rel_spread_percent': spread}
 
 
+def summarize_metric(unit, better, samples):
+    """summarize() plus the best sample and the statistic compared for the
+    metric. Older result files lack 'best' and 'statistic'; readers compute
+    them from the samples, which every file has."""
+    summary = summarize(samples)
+    if summary['n']:
+        summary['best'] = best_sample(samples, better)
+        summary['statistic'] = statistic_for(unit)
+    return summary
+
+
 def metric_entry(unit, better, samples):
-    return {'unit': unit, 'better': better, 'samples': list(samples), 'summary': summarize(samples)}
+    return {'unit': unit, 'better': better, 'samples': list(samples),
+            'summary': summarize_metric(unit, better, samples)}
 
 
 # ---------------------------------------------------------------------------
@@ -520,11 +655,12 @@ def collect_xctest_scenario(scenario, output, exit_code, perf_lines='', xcresult
     return {'status': 'ok', 'reason': '', 'source': scenario['test'], 'metrics': metrics}
 
 
-def stress_metrics(runs):
+def stress_metrics(runs, rate=True):
     """Metrics for a stress scenario from its runs. Each run has
     'iterations_per_sec' and 'rss_kb', the app's resident size sampled once a
-    second. Steady state is the median of the second half of a run's samples."""
-    rates = [r['iterations_per_sec'] for r in runs if r.get('iterations_per_sec') is not None]
+    second. Steady state is the median of the second half of a run's samples.
+    rate=False leaves out the iteration rate, for a mode that counts none."""
+    rates = [r['iterations_per_sec'] for r in runs if rate and r.get('iterations_per_sec') is not None]
     peaks = [max(r['rss_kb']) for r in runs if r.get('rss_kb')]
     steady = []
     for r in runs:
@@ -541,11 +677,16 @@ def stress_metrics(runs):
 
 
 def assemble_result(baseline_requested, state_before, state_after, commit, dirty, configuration, arch,
-                    machine, scenarios, settings):
+                    machine, scenarios, settings, after_samples=None):
+    """after_samples: the states settle_after took, the last being
+    state_after; without them state_after is judged alone by the after rule."""
     before = dict(state_before)
     after = dict(state_after)
     before['quiet'], before['reasons'] = assess_quiet(state_before)
-    after['quiet'], after['reasons'] = assess_quiet(state_after)
+    verdict = judge_after(list(after_samples) if after_samples else [dict(state_after)])
+    after['quiet'], after['reasons'] = verdict['quiet'], verdict['reasons']
+    for key in ('rule', 'settled_after_s', 'samples'):
+        after[key] = verdict[key]
     is_baseline, label = run_label(baseline_requested, before['quiet'], after['quiet'])
     failed = sorted(name for name, entry in scenarios.items()
                     if (entry or {}).get('status') not in ('ok', 'skipped'))

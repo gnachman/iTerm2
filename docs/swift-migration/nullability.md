@@ -265,6 +265,12 @@ optional in Swift and guarded at the top of the method with a clear failure
 Swift parameter is undefined behavior rather than a clean crash. When the last
 Objective-C caller is gone, stage two makes it non-optional.
 
+A light-path port ([lifecycle.md §3](lifecycle.md)) has no `annotate`
+commit, since it deletes the header. Its Swift signatures keep the header's
+claims or move in the safe direction: optional for a result, and for a
+parameter whose nil the Objective-C tolerated. A nonnull claim the header
+did not make needs the full path.
+
 ## 7. Runtime checking
 
 The suite is run with `-fsanitize=nullability` ([phase0.md §4](phase0.md)). A test on the

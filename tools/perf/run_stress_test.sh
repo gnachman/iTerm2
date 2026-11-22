@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Bash 5.2 and later treat & in a ${var//pattern/replacement} replacement as
+# the matched text; the AppleScript templates below substitute a path that
+# may contain &.
+shopt -u patsub_replacement 2>/dev/null || true
 
-# Check that no iTerm2 instance is already running
-if pgrep -x iTerm2 >/dev/null 2>&1; then
-  echo "Error: iTerm2 is already running. Please close all iTerm2 instances." >&2
-  exit 1
-fi
+# The app under test is addressed only by its path (AppleScript) and its PID
+# (everything else), never by name, so other iTerm2 instances (the user's own,
+# builds from other checkouts) may keep running and are never sent anything.
+# The script refuses to start only if an instance of the same app path is
+# already running, because then it could not tell which one it launched.
 
 # Get script directory early (needed for relative paths)
 script_dir_early="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -318,6 +322,80 @@ if [[ ! -d "$app_path" ]]; then
   exit 1
 fi
 
+# Absolute path with symlinks resolved, as the running process reports it.
+app_path="$(cd "$app_path" && pwd -P)"
+app_executable_name=$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$app_path/Contents/Info.plist" 2>/dev/null || echo "iTerm2")
+app_executable="$app_path/Contents/MacOS/$app_executable_name"
+# The path as the body of an AppleScript string literal.
+as_app_path="${app_path//\\/\\\\}"
+as_app_path="${as_app_path//\"/\\\"}"
+
+# PIDs of processes running this app's executable, one per line. Matches the
+# full executable path exactly (ps reports it for apps that LaunchServices
+# starts), never the process name, so other copies of iTerm2 do not match.
+pids_of_app_under_test() {
+  local pid comm
+  ps -axo pid=,comm= | while read -r pid comm; do
+    if [[ "$comm" == "$app_executable" ]]; then
+      echo "$pid"
+    fi
+  done
+}
+
+running_pids="$(pids_of_app_under_test | tr '\n' ' ')"
+if [[ -n "${running_pids// /}" ]]; then
+  echo "Error: an instance of $app_path is already running (PID ${running_pids% }). Quit it first." >&2
+  echo "       Other iTerm2 instances, at other paths, may keep running." >&2
+  exit 1
+fi
+
+# Launches a new instance of the app under test (open -n, so one starts even
+# while another app with the same bundle identifier runs) and sets iterm_pid
+# to its PID. Returns 1 if it cannot find exactly one new instance.
+launch_app_under_test() {
+  iterm_pid=""
+  local existing
+  existing="$(pids_of_app_under_test | tr '\n' ' ')"
+  if [[ -n "${existing// /}" ]]; then
+    echo "Error: an instance of $app_path is still running (PID ${existing% }); not launching another" >&2
+    return 1
+  fi
+
+  # Launch iTerm2 with suite isolation
+  if [[ -n "$suite_name" ]]; then
+    open -n -a "$app_path" --args -suite "$suite_name"
+  else
+    open -n -a "$app_path"
+  fi
+  sleep 2
+
+  local found=""
+  for _ in {1..10}; do
+    found="$(pids_of_app_under_test | tr '\n' ' ')"
+    if [[ -n "${found// /}" ]]; then
+      break
+    fi
+    sleep 0.5
+  done
+  found="${found% }"
+  if [[ -z "$found" ]]; then
+    echo "Error: Could not find a process running $app_executable" >&2
+    return 1
+  fi
+  if [[ "$found" == *" "* ]]; then
+    echo "Error: more than one process is running $app_executable (PIDs $found)" >&2
+    return 1
+  fi
+  iterm_pid="$found"
+}
+
+# Runs a one-line AppleScript command addressed to the app under test by its
+# path, only while that path is running. Sending an event to a path that is
+# not running would launch it, without -suite.
+tell_app_under_test() {
+  osascript -e "if application \"$as_app_path\" is running then tell application \"$as_app_path\" to $1"
+}
+
 # Extract build metadata from app's Info.plist
 app_plist="$app_path/Contents/Info.plist"
 if [[ -f "$app_plist" ]]; then
@@ -352,11 +430,6 @@ fi
 
 # Video mode validation
 if [[ "$video_mode" == true ]]; then
-  # Check for GetWindowID tool
-  if ! command -v GetWindowID &>/dev/null; then
-    echo "Error: --video requires GetWindowID (brew install smokris/getwindowid/getwindowid)" >&2
-    exit 1
-  fi
   # Validate output directory
   video_output_dir="${video_output_dir/#\~/$HOME}"
   if [[ ! -d "$video_output_dir" ]]; then
@@ -411,9 +484,20 @@ declare -a RESULT_CADENCE_MISMATCH_PCT=()
 # Derived metrics
 declare -a RESULT_ITERS_PER_FRAME=()
 
+# Writes an AppleScript template to a file with __APP_PATH__ replaced by the
+# app under test's path. The scripts address the app by that literal path,
+# which is also where their terminology comes from; addressing by path reaches
+# the instance running from that path, not another copy with the same bundle
+# identifier.
+write_applescript() {
+  local template
+  template="$(cat)"
+  printf '%s\n' "${template//__APP_PATH__/$as_app_path}" > "$1"
+}
+
 # Create AppleScript file once (reused across runs)
 applescript_file=$(mktemp)
-cat > "$applescript_file" <<'APPLESCRIPT'
+write_applescript "$applescript_file" <<'APPLESCRIPT'
 on run argv
   set tabCount to (item 1 of argv) as integer
   set scriptPath to item 2 of argv
@@ -425,7 +509,9 @@ on run argv
   set fpsArg to item 8 of argv
   set tmuxPrefix to item 9 of argv
 
-  tell application "iTerm2"
+  -- An event sent to a path that is not running would launch it without -suite.
+  if not (application "__APP_PATH__" is running) then error "The app under test is not running."
+  tell application "__APP_PATH__"
       activate
       -- Use the existing window (opened by app launch) instead of creating a new one
       set theWindow to current window
@@ -473,6 +559,7 @@ on run argv
 
       -- Poll until all sessions complete
       repeat
+        if not (application "__APP_PATH__" is running) then exit repeat
         set doneCount to 0
         repeat with s in sessionList
           try
@@ -495,7 +582,7 @@ APPLESCRIPT
 
 # Create AppleScript for forever mode (no polling, no close)
 applescript_forever_file=$(mktemp)
-cat > "$applescript_forever_file" <<'APPLESCRIPT'
+write_applescript "$applescript_forever_file" <<'APPLESCRIPT'
 on run argv
   set tabCount to (item 1 of argv) as integer
   set scriptPath to item 2 of argv
@@ -505,7 +592,9 @@ on run argv
   set fpsArg to item 6 of argv
   set tmuxPrefix to item 7 of argv
 
-  tell application "iTerm2"
+  -- An event sent to a path that is not running would launch it without -suite.
+  if not (application "__APP_PATH__" is running) then error "The app under test is not running."
+  tell application "__APP_PATH__"
       activate
       set theWindow to current window
 
@@ -544,6 +633,30 @@ on run argv
   end tell
 end run
 APPLESCRIPT
+
+# JavaScript for Automation that prints the window number of the first normal
+# on-screen window owned by the PID in argv[0], or nothing. It asks the window
+# server; it sends nothing to any app.
+window_id_script=""
+if [[ "$video_mode" == true ]]; then
+  window_id_script=$(mktemp)
+  cat > "$window_id_script" <<'JXA'
+ObjC.import('CoreGraphics');
+function run(argv) {
+  var pid = parseInt(argv[0], 10);
+  var options = $.kCGWindowListOptionOnScreenOnly | $.kCGWindowListExcludeDesktopElements;
+  var list = ObjC.castRefToObject($.CGWindowListCopyWindowInfo(options, $.kCGNullWindowID));
+  var windows = ObjC.deepUnwrap(list) || [];
+  for (var i = 0; i < windows.length; i++) {
+    var w = windows[i];
+    if (w.kCGWindowOwnerPID === pid && w.kCGWindowLayer === 0) {
+      return String(w.kCGWindowNumber);
+    }
+  }
+  return '';
+}
+JXA
+fi
 
 # Get power source from pmset
 get_power_source() {
@@ -602,6 +715,9 @@ cleanup() {
   if [[ -n "${applescript_forever_file:-}" && -f "${applescript_forever_file:-}" ]]; then
     rm -f "$applescript_forever_file"
   fi
+  if [[ -n "${window_id_script:-}" && -f "${window_id_script:-}" ]]; then
+    rm -f "$window_id_script"
+  fi
   # Try to quit the test iTerm2 by PID if we have it (best effort)
   if [[ -n "$test_iterm_pid" ]]; then
     kill -TERM "$test_iterm_pid" 2>/dev/null || true
@@ -640,26 +756,9 @@ run_single_test() {
     fi
   fi
 
-  # Launch iTerm2 with suite isolation
-  if [[ -n "$suite_name" ]]; then
-    open -a "$app_path" --args -suite "$suite_name"
-  else
-    open -a "$app_path"
-  fi
-  sleep 2
-
-  # Find iTerm2 PID
+  # Launch a new instance of the app under test and find its PID
   local iterm_pid=""
-  for _ in {1..10}; do
-    iterm_pid=$(pgrep -x iTerm2 || true)
-    if [[ -n "$iterm_pid" ]]; then
-      break
-    fi
-    sleep 0.5
-  done
-
-  if [[ -z "$iterm_pid" ]]; then
-    echo "Error: Could not find iTerm2 process" >&2
+  if ! launch_app_under_test; then
     [[ -n "$sync_dir" && -d "$sync_dir" ]] && rm -rf "$sync_dir"
     return 1
   fi
@@ -668,7 +767,7 @@ run_single_test() {
   test_iterm_pid="$iterm_pid"  # Store globally for cleanup
 
   # Size and position window consistently (needed before video capture)
-  osascript -e 'tell application "iTerm2" to set bounds of current window to {864, 34, 1728, 1117}'
+  tell_app_under_test 'set bounds of current window to {864, 34, 1728, 1117}'
 
   # Set up profile output file
   local timestamp
@@ -683,9 +782,9 @@ run_single_test() {
   if [[ "$video_mode" == true ]]; then
     video_file="${video_output_dir}/iterm2_perf_${tab_count}tabs_${timestamp}.mov"
     local video_duration=$((duration + 10))  # Add buffer for startup/shutdown
-    # Get window ID (first non-empty title - safe since we ensure single instance)
+    # Get the ID of a normal window owned by the test instance's PID
     local window_id
-    window_id=$(GetWindowID iTerm2 --list | grep -v '^""' | head -1 | sed 's/.*id=//')
+    window_id=$(osascript -l JavaScript "$window_id_script" "$iterm_pid" 2>/dev/null || true)
     if [[ -z "$window_id" ]]; then
       echo "Warning: Could not get iTerm2 window ID, skipping video recording"
     else
@@ -829,20 +928,26 @@ run_single_test() {
           # Periodic keyboard input (every 500ms)
           # Send a single character to exercise keyboard input latency path
           if (( tick % keyboard_ticks == 0 )); then
-            osascript -e 'tell application "iTerm2" to tell current session of current window to write text "."' 2>/dev/null || true
+            tell_app_under_test 'tell current session of current window to write text "."' 2>/dev/null || true
             keyboard_count=$((keyboard_count + 1))
           fi
 
           # Periodic scroll events (every 2s)
-          # Alternate between Page Down and Page Up to stay in view
+          # Alternate between Page Down and Page Up to stay in view.
+          # System Events posts key codes to whichever app is frontmost, so
+          # the key is sent only if the test instance (by PID) is frontmost
+          # at that moment; otherwise this tick is skipped. A switch of
+          # focus between that check and the key code can still deliver one
+          # key to another app.
           if (( tick % scroll_ticks == 0 )); then
-            if (( scroll_direction == 1 )); then
-              # Page Down (key code 121)
-              osascript -e 'tell application "System Events" to tell process "iTerm2" to key code 121' 2>/dev/null || true
-            else
-              # Page Up (key code 116)
-              osascript -e 'tell application "System Events" to tell process "iTerm2" to key code 116' 2>/dev/null || true
+            local key_code=121  # Page Down
+            if (( scroll_direction != 1 )); then
+              key_code=116  # Page Up
             fi
+            osascript -e 'tell application "System Events"' \
+                      -e "set testProcess to first process whose unix id is $iterm_pid" \
+                      -e "if frontmost of testProcess then key code $key_code" \
+                      -e 'end tell' 2>/dev/null || true
             scroll_direction=$((scroll_direction * -1))
             scroll_count=$((scroll_count + 1))
           fi
@@ -850,7 +955,7 @@ run_single_test() {
           # Periodic tab switches (every 3s)
           if (( tick % tab_ticks == 0 )); then
             current_tab=$(( (current_tab % tab_count) + 1 ))
-            osascript -e "tell application \"iTerm2\" to tell current window to select tab $current_tab" 2>/dev/null || true
+            tell_app_under_test "tell current window to select tab $current_tab" 2>/dev/null || true
             tab_switch_count=$((tab_switch_count + 1))
           fi
 
@@ -936,12 +1041,17 @@ run_single_test() {
   kill -TERM "$iterm_pid" 2>/dev/null || true
 
   # Wait for app to fully terminate (needed for MTPerfWriteToFile to complete)
-  for _ in {1..30}; do
-    if ! pgrep -f "$app_path" >/dev/null 2>&1; then
+  for _ in {1..150}; do
+    if ! kill -0 "$iterm_pid" 2>/dev/null; then
       break
     fi
     sleep 0.2
   done
+  if kill -0 "$iterm_pid" 2>/dev/null; then
+    echo "Warning: test iTerm2 (PID $iterm_pid) has not exited after 30 seconds" >&2
+  else
+    test_iterm_pid=""
+  fi
 
   # Parse and display DTrace UX metrics (only if --dtrace was specified)
   local content_frames="0" refreshes="0" metal_frames="0"
@@ -1450,26 +1560,9 @@ run_forever() {
     fi
   fi
 
-  # Launch iTerm2 with suite isolation
-  if [[ -n "$suite_name" ]]; then
-    open -a "$app_path" --args -suite "$suite_name"
-  else
-    open -a "$app_path"
-  fi
-  sleep 2
-
-  # Find iTerm2 PID
+  # Launch a new instance of the app under test and find its PID
   local iterm_pid=""
-  for _ in {1..10}; do
-    iterm_pid=$(pgrep -x iTerm2 || true)
-    if [[ -n "$iterm_pid" ]]; then
-      break
-    fi
-    sleep 0.5
-  done
-
-  if [[ -z "$iterm_pid" ]]; then
-    echo "Error: Could not find iTerm2 process" >&2
+  if ! launch_app_under_test; then
     exit 1
   fi
 

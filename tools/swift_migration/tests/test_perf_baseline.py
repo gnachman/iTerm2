@@ -418,21 +418,26 @@ class CompareTests(unittest.TestCase):
         self.assertEqual(report['exit_code'], 0)
 
     def test_noise_widens_threshold(self):
+        # A median metric: since 2026-11-22 a time metric compares best to
+        # best and its threshold is not widened by noise (BestSampleTests).
         base = copy.deepcopy(self.base)
         cand = copy.deepcopy(self.base)
         noisy = [10.0, 10.4, 9.6, 10.3, 9.7, 10.2, 9.8, 10.0, 10.5, 9.5]
-        base['scenarios']['parse.mixed_1mb']['metrics']['time']['samples'] = noisy
-        cand['scenarios']['parse.mixed_1mb']['metrics']['time']['samples'] = [x * 1.07 for x in noisy]
+        for result, samples in ((base, noisy), (cand, [x * 1.07 for x in noisy])):
+            result['scenarios']['parse.mixed_1mb']['metrics']['time'].update(unit='kB', samples=samples)
         _, rows = self.rows(base=base, cand=cand)
         row = rows[('parse.mixed_1mb', 'time')]
         self.assertGreater(row['threshold_percent'], 7.0)
         self.assertEqual(row['verdict'], 'no change')
 
     def test_too_noisy_is_inconclusive(self):
+        # A median metric: a best-of metric is never inconclusive for noise.
+        base = copy.deepcopy(self.base)
         cand = copy.deepcopy(self.base)
-        cand['scenarios']['parse.mixed_1mb']['metrics']['time']['samples'] = [
-            0.05, 0.08, 0.03, 0.09, 0.02, 0.07, 0.04, 0.10, 0.05, 0.06]
-        report, rows = self.rows(cand=cand)
+        base['scenarios']['parse.mixed_1mb']['metrics']['time']['unit'] = 'kB'
+        cand['scenarios']['parse.mixed_1mb']['metrics']['time'].update(unit='kB', samples=[
+            0.05, 0.08, 0.03, 0.09, 0.02, 0.07, 0.04, 0.10, 0.05, 0.06])
+        report, rows = self.rows(base=base, cand=cand)
         self.assertEqual(rows[('parse.mixed_1mb', 'time')]['verdict'], 'inconclusive')
 
     def test_too_few_samples_is_inconclusive(self):
@@ -810,6 +815,202 @@ class ThresholdBoundaryTests(unittest.TestCase):
         self.assertEqual(self.verdict(over, over, 'lower')[0], 'inconclusive')
 
 
+def _one_metric(scenario, metric, unit, better, samples, summary=None):
+    """A minimal baseline-labeled result holding one metric."""
+    result = load_result('result_baseline.json')
+    entry = {'unit': unit, 'better': better, 'samples': list(samples)}
+    if summary is not None:
+        entry['summary'] = summary
+    result['scenarios'] = {scenario: {'status': 'ok', 'reason': '', 'source': 'fixture',
+                                      'metrics': {metric: entry}}}
+    return result
+
+
+class BestSampleTests(unittest.TestCase):
+    """Owner, 2026-11-22: "Given the variance you should take the fastest
+    time, since that's our best estimate." Time and rate metrics compare the
+    best sample; memory and count metrics keep the median."""
+
+    TEN_TABS = [2056, 953, 2340, 959, 953]
+
+    def row(self, unit, better, base_samples, cand_samples, scenario='app.stress_normal_10tabs',
+            metric='iterations_per_sec'):
+        base = _one_metric(scenario, metric, unit, better, base_samples)
+        cand = _one_metric(scenario, metric, unit, better, cand_samples)
+        report = perf_compare.compare(base, cand)
+        self.assertEqual(len(report['rows']), 1, report['rows'])
+        return report, report['rows'][0]
+
+    def test_statistic_is_derived_from_the_unit(self):
+        for unit in ('s', 'ms', 'us', 'ns', 'iterations/s'):
+            self.assertEqual(perf_lib.statistic_for(unit), 'best', unit)
+        for unit in ('kB', 'count', 'items', 'u', None):
+            self.assertEqual(perf_lib.statistic_for(unit), 'median', unit)
+
+    def test_ten_tab_rate_best_within_5_percent_median_much_lower_is_no_change(self):
+        cand = [2250, 700, 690, 710, 705]  # best 3.8% below 2340; median 705 against 959
+        report, row = self.row('iterations/s', 'higher', self.TEN_TABS, cand)
+        self.assertEqual(row['statistic'], 'best')
+        self.assertEqual(row['verdict'], 'no change')
+        self.assertEqual(row['baseline_best'], 2340)
+        self.assertEqual(row['candidate_best'], 2250)
+        self.assertAlmostEqual(row['change_percent'], 100.0 * 90 / 2340, places=6)
+        # The median and the spread are still reported. The old median rule
+        # called this a 26% regression: the robust spread of these bimodal
+        # samples is small (MAD 6 around 959), so it never made them
+        # inconclusive.
+        self.assertEqual(row['baseline_median'], 959)
+        self.assertEqual(row['candidate_median'], 705)
+        self.assertIn('noise_percent', row)
+        self.assertEqual(row['threshold_percent'], 5.0)
+        self.assertEqual(report['exit_code'], 0)
+
+    def test_ten_tab_rate_best_6_percent_worse_is_a_regression(self):
+        cand = [2199.6, 2199, 2100, 2150, 2190]  # best 6% below 2340; median far above 959
+        report, row = self.row('iterations/s', 'higher', self.TEN_TABS, cand)
+        self.assertEqual(row['verdict'], 'regression')
+        self.assertAlmostEqual(row['change_percent'], 6.0, places=6)
+        self.assertEqual(report['exit_code'], 1)
+
+    def test_high_spread_does_not_make_a_best_of_metric_inconclusive(self):
+        clearcodes = [870, 752, 1177, 764, 851]  # app.stress_clearcodes_1tab in the baseline: 15% spread
+        _, row = self.row('iterations/s', 'higher', clearcodes, clearcodes)
+        self.assertGreater(row['noise_percent'], 10.0)
+        self.assertEqual(row['verdict'], 'no change')
+
+    def test_fewer_than_five_samples_stays_inconclusive(self):
+        _, row = self.row('iterations/s', 'higher', self.TEN_TABS, [2340, 2340, 2340, 2340])
+        self.assertEqual(row['verdict'], 'inconclusive')
+        _, row = self.row('s', 'lower', [1.0] * 4, [2.0] * 5)
+        self.assertEqual(row['verdict'], 'inconclusive')
+
+    BASE_TIME = [1.0, 1.3, 1.1, 1.5, 1.2]
+
+    def test_lower_is_better_time_best_within_5_percent_is_no_change(self):
+        cand = [1.04, 1.6, 1.7, 1.8, 1.9]  # fastest 4% slower; median 1.7 against 1.2
+        _, row = self.row('s', 'lower', self.BASE_TIME, cand, scenario='parse.mixed_1mb', metric='time')
+        self.assertEqual(row['statistic'], 'best')
+        self.assertEqual(row['baseline_best'], 1.0)
+        self.assertEqual(row['candidate_best'], 1.04)
+        self.assertEqual(row['verdict'], 'no change')
+
+    def test_lower_is_better_time_best_6_percent_slower_is_a_regression(self):
+        cand = [1.06, 1.07, 1.06, 1.08, 1.06]  # median 1.06, better than 1.2
+        _, row = self.row('s', 'lower', self.BASE_TIME, cand, scenario='parse.mixed_1mb', metric='time')
+        self.assertEqual(row['verdict'], 'regression')
+        self.assertAlmostEqual(row['change_percent'], 6.0, places=6)
+
+    def test_lower_is_better_time_best_6_percent_faster_is_an_improvement(self):
+        cand = [0.94, 1.9, 1.9, 1.9, 1.9]
+        _, row = self.row('ms', 'lower', self.BASE_TIME, cand, scenario='draw.x', metric='time_per_frame')
+        self.assertEqual(row['verdict'], 'improvement')
+
+    def test_best_of_floor_boundaries(self):
+        for better, base, worse, better_value in (('lower', 1.0, 1.051, 0.949), ('higher', 100.0, 94.9, 105.1)):
+            self.assertEqual(self.row('s', better, [base] * 5, [worse] * 5)[1]['verdict'], 'regression')
+            self.assertEqual(self.row('s', better, [base] * 5, [better_value] * 5)[1]['verdict'], 'improvement')
+        self.assertEqual(self.row('s', 'lower', [1.0] * 5, [1.049] * 5)[1]['verdict'], 'no change')
+        self.assertEqual(self.row('s', 'higher', [100.0] * 5, [95.1] * 5)[1]['verdict'], 'no change')
+
+    def test_memory_metric_is_still_judged_on_the_median(self):
+        # The best sample is 10% better, the median 20% worse.
+        _, row = self.row('kB', 'lower', [100.0] * 5, [90.0, 120.0, 120.0, 120.0, 120.0],
+                          scenario='app.stress_normal_10tabs', metric='rss_peak')
+        self.assertEqual(row['statistic'], 'median')
+        self.assertEqual(row['verdict'], 'regression')
+        self.assertAlmostEqual(row['change_percent'], 20.0, places=6)
+        self.assertEqual(row['baseline_best'], 100.0)
+        self.assertEqual(row['candidate_best'], 90.0)
+
+    def test_count_metric_keeps_the_median_noise_rule(self):
+        noisy = [93.2] * 3 + [100.0] * 4 + [106.8] * 3
+        _, row = self.row('count', 'lower', noisy, noisy, scenario='memory.x', metric='blocks')
+        self.assertEqual(row['verdict'], 'inconclusive')
+
+    def test_old_format_file_without_best_is_computed_from_samples(self):
+        # Every result file has samples; older ones have no 'best' in the
+        # summary, and the test fixtures have no summary at all.
+        base = _one_metric('parse.mixed_1mb', 'time', 's', 'lower', self.BASE_TIME,
+                           summary={'n': 5, 'median': 1.2, 'min': 1.0, 'max': 1.5})
+        cand = _one_metric('parse.mixed_1mb', 'time', 's', 'lower', [1.06] * 5)
+        row = perf_compare.compare(base, cand)['rows'][0]
+        self.assertEqual(row['baseline_best'], 1.0)
+        self.assertEqual(row['verdict'], 'regression')
+        report = perf_compare.compare(load_result('result_baseline.json'), load_result('result_candidate.json'))
+        rows = {(r['scenario'], r['metric']): r for r in report['rows']}
+        self.assertEqual(rows[('parse.mixed_1mb', 'time')]['baseline_best'], 0.049)
+        self.assertEqual(rows[('app.stress_normal_1tab', 'iterations_per_sec')]['baseline_best'], 9300)
+
+    def test_zero_baseline_is_inconclusive_with_an_accurate_note(self):
+        for unit in ('s', 'kB'):
+            _, row = self.row(unit, 'lower', [0.0] * 5, [1.0] * 5, scenario='x', metric='m')
+            self.assertEqual(row['verdict'], 'inconclusive')
+            self.assertNotIn('no samples', row['note'])
+            self.assertIn('zero', row['note'])
+        _, row = self.row('s', 'lower', [], [1.0] * 5, scenario='x', metric='m')
+        self.assertEqual(row['note'], 'no samples')
+
+    def test_rendered_report_shows_statistic_best_and_median(self):
+        report, _ = self.row('iterations/s', 'higher', self.TEN_TABS, [2250, 700, 690, 710, 705])
+        text = perf_compare.render(report)
+        self.assertIn('best', text)
+        self.assertIn('median', text.lower())
+        line = next(l for l in text.splitlines() if l.startswith('app.stress_normal_10tabs'))
+        for value in ('2340', '2250', '959', '705'):
+            self.assertIn(value, line)
+
+    def test_rule_names_the_best_sample(self):
+        report, _ = self.row('s', 'lower', [1.0] * 5, [1.0] * 5)
+        self.assertIn('best', report['rule'])
+        self.assertIn('2026-11-22', report['rule'])
+
+
+class SummaryBestTests(unittest.TestCase):
+    """The result file and the printed summary carry the best sample."""
+
+    def test_metric_entry_summary_has_best_and_statistic(self):
+        rate = perf_lib.metric_entry('iterations/s', 'higher', [2056, 953, 2340, 959, 953])
+        self.assertEqual(rate['summary']['best'], 2340)
+        self.assertEqual(rate['summary']['median'], 959)
+        self.assertEqual(rate['summary']['statistic'], 'best')
+        time_ = perf_lib.metric_entry('s', 'lower', [0.3, 0.1, 0.2])
+        self.assertEqual(time_['summary']['best'], 0.1)
+        memory = perf_lib.metric_entry('kB', 'lower', [300, 100, 200])
+        self.assertEqual(memory['summary']['best'], 100)
+        self.assertEqual(memory['summary']['statistic'], 'median')
+
+    def test_stress_metrics_carry_best(self):
+        runs = [{'iterations_per_sec': 9000, 'rss_kb': [100, 300]},
+                {'iterations_per_sec': 9100, 'rss_kb': [100, 310]}]
+        metrics = perf_lib.stress_metrics(runs)
+        self.assertEqual(metrics['iterations_per_sec']['summary']['best'], 9100)
+        self.assertEqual(metrics['rss_peak']['summary']['best'], 300)
+
+    def test_print_summary_shows_best_and_median(self):
+        result = {'label': 'baseline', 'scenarios': {
+            'app.stress_normal_10tabs': {'status': 'ok', 'metrics': {
+                'iterations_per_sec': perf_lib.metric_entry('iterations/s', 'higher', [2056, 953, 2340, 959, 953]),
+                'rss_peak': perf_lib.metric_entry('kB', 'lower', [3, 1, 2])}}}}
+        with redirect_stdout(io.StringIO()) as out:
+            perf_baseline.print_summary(result)
+        lines = out.getvalue().splitlines()
+        rate = next(l for l in lines if 'iterations_per_sec' in l)
+        self.assertIn('best 2340', rate)
+        self.assertIn('median 959', rate)
+        self.assertIn('compared on best', rate)
+        rss = next(l for l in lines if 'rss_peak' in l)
+        self.assertIn('best 1', rss)
+        self.assertIn('compared on median', rss)
+
+    def test_print_summary_of_an_old_summary_without_best(self):
+        result = {'label': 'baseline', 'scenarios': {'parse.mixed_1mb': {'status': 'ok', 'metrics': {
+            'time': {'unit': 's', 'better': 'lower', 'samples': [0.3, 0.1, 0.2],
+                     'summary': perf_lib.summarize([0.3, 0.1, 0.2])}}}}}
+        with redirect_stdout(io.StringIO()) as out:
+            perf_baseline.print_summary(result)
+        self.assertIn('best 0.1', out.getvalue())
+
+
 class ComparabilityWarningTests(unittest.TestCase):
     """Review N6: Xcode and OS versions differ -> warning, not refusal."""
 
@@ -855,6 +1056,62 @@ class SafetyTests(unittest.TestCase):
         def boom(*a, **k):
             raise OSError('no pgrep')
         self.assertTrue(perf_lib.process_may_be_running('iTerm2', run=boom))
+
+    def test_executable_may_be_running_matches_only_this_path(self):
+        mine = '/x/lane-3/Build/Deployment/iTerm2.app/Contents/MacOS/iTerm2'
+        others = {735: '/Users/u/Applications/iTerm 3.7.5.app/Contents/MacOS/iTerm2',
+                  736: '/x/lane-30/Build/Deployment/iTerm2.app/Contents/MacOS/iTerm2'}
+        self.assertFalse(perf_lib.executable_may_be_running(
+            mine, pids=sorted(others), path_of=others.get))
+        both = dict(others)
+        both[737] = mine
+        self.assertTrue(perf_lib.executable_may_be_running(
+            mine, pids=sorted(both), path_of=both.get))
+
+    def test_executable_may_be_running_when_the_process_list_is_unreadable(self):
+        # ps failing gives no PIDs at all; that must not read as "not running".
+        self.assertTrue(perf_lib.executable_may_be_running(
+            '/x/iTerm2.app/Contents/MacOS/iTerm2', pids=[], path_of=lambda pid: None))
+
+    def _stress_with(self, running_paths):
+        """run_stress_scenarios for one scenario with the process table
+        mocked to `running_paths` (PID to executable) and the stress script
+        mocked to exit 1 without output. Nothing is launched."""
+        from unittest import mock
+        launched = []
+
+        def fake_run_bounded(args, timeout, log_path, on_line=None):
+            launched.append(args)
+            return 1, ''
+
+        with tempfile.TemporaryDirectory() as repo:
+            os.makedirs(os.path.join(repo, 'Build', 'Deployment', 'iTerm2.app'))
+            with mock.patch.object(perf_baseline, 'REPO', repo), \
+                    mock.patch.object(perf_baseline, 'run_bounded', fake_run_bounded), \
+                    mock.patch.object(perf_lib, 'process_may_be_running', lambda name, run=None: True), \
+                    mock.patch.object(perf_lib, 'all_pids', lambda: sorted(running_paths)), \
+                    mock.patch.object(perf_lib, 'executable_path',
+                                      lambda pid: running_paths.get(pid, '').replace('REPO', repo) or None), \
+                    redirect_stdout(io.StringIO()):
+                results = perf_baseline.run_stress_scenarios(
+                    [{'name': 'app.stress_normal_1tab', 'mode': 'normal', 'tabs': 1}],
+                    'Deployment', 1, 1, repo)
+        return results['app.stress_normal_1tab'], launched
+
+    def test_other_iterm2_instances_do_not_skip_app_scenarios(self):
+        entry, launched = self._stress_with({
+            735: '/Users/u/Applications/iTerm 3.7.5.app/Contents/MacOS/iTerm2',
+            736: '/x/iterm2-alt11/Build/Development/iTerm2.app/Contents/MacOS/iTerm2'})
+        self.assertEqual(len(launched), 1)
+        self.assertEqual(entry['status'], 'failed')
+
+    def test_an_instance_of_the_app_under_test_skips_app_scenarios(self):
+        entry, launched = self._stress_with({
+            735: '/Users/u/Applications/iTerm 3.7.5.app/Contents/MacOS/iTerm2',
+            737: 'REPO/Build/Deployment/iTerm2.app/Contents/MacOS/iTerm2'})
+        self.assertEqual(launched, [])
+        self.assertEqual(entry['status'], 'skipped')
+        self.assertIn('already running', entry['reason'])
 
     def test_pids_with_exact_executable(self):
         paths = {101: '/x/lane-3/Build/Deployment/iTerm2.app/Contents/MacOS/iTerm2',
@@ -947,6 +1204,170 @@ class SafetyTests(unittest.TestCase):
             following = parser_help[index:index + 400].splitlines()
             described = len(line.split()) > 2 or (len(following) > 1 and following[1].startswith(' ' * 10))
             self.assertTrue(described, option)
+
+
+class AfterCheckTests(unittest.TestCase):
+    """The after-run check discounts load the run made itself: it waits,
+    bounded, for the 1-minute average to come back under the limit and ignores
+    the 5-minute average; every other condition must hold in every sample."""
+
+    # 16 logical CPUs, so the load limit is 4.0.
+    LIMIT_EXCEEDING_5MIN = [2.69, 5.56, 5.21]
+
+    def _settle(self, states, bound=None, poll=None):
+        """settle_after with a fake clock: each sample advances time by the
+        poll interval. Returns (samples, seconds slept)."""
+        thresholds = dict(perf_lib.QUIET_THRESHOLDS)
+        if bound is not None:
+            thresholds['after_settle_seconds'] = bound
+        if poll is not None:
+            thresholds['after_poll_seconds'] = poll
+        clock = {'now': 1000.0, 'slept': 0.0}
+        feed = iter(states)
+        last = {}
+
+        def take():
+            last['state'] = next(feed, last.get('state'))
+            return dict(last['state'])
+
+        def sleep(seconds):
+            clock['now'] += seconds
+            clock['slept'] += seconds
+        samples = perf_lib.settle_after(take, thresholds, monotonic=lambda: clock['now'], sleep=sleep)
+        return samples, clock['slept']
+
+    def _result(self, after_samples, state_before=None):
+        return perf_lib.assemble_result(
+            baseline_requested=True, state_before=state_before or dict(QUIET),
+            state_after=after_samples[-1], after_samples=after_samples,
+            commit='abc', dirty=False, configuration='Deployment', arch='arm64',
+            machine={}, scenarios={}, settings={})
+
+    def test_high_5min_low_1min_after_is_a_baseline(self):
+        samples, slept = self._settle([dict(QUIET, load_average=[2.69, 5.56, 5.21])])
+        self.assertEqual(len(samples), 1)
+        self.assertEqual(slept, 0)
+        result = self._result(samples)
+        self.assertTrue(result['is_baseline'], result['label'])
+        self.assertEqual(result['label'], 'baseline')
+        after = result['machine_state']['after']
+        self.assertTrue(after['quiet'])
+        self.assertIn('1-minute', after['rule'])
+        self.assertEqual(after['samples'][0]['load_average'], [2.69, 5.56, 5.21])
+        self.assertEqual(after['settled_after_s'], 0)
+
+    def test_waits_for_1min_average_to_settle(self):
+        states = [dict(QUIET, load_average=[9.0, 6.0, 5.0]),
+                  dict(QUIET, load_average=[6.0, 6.0, 5.0]),
+                  dict(QUIET, load_average=[3.5, 5.8, 5.0]),
+                  dict(QUIET, load_average=[9.0, 9.0, 9.0])]
+        samples, slept = self._settle(states, bound=180, poll=15)
+        self.assertEqual([s['load_average'][0] for s in samples], [9.0, 6.0, 3.5])
+        self.assertEqual(slept, 30)
+        result = self._result(samples)
+        self.assertTrue(result['is_baseline'], result['label'])
+        self.assertEqual(result['machine_state']['after']['settled_after_s'], 30)
+        self.assertEqual(len(result['machine_state']['after']['samples']), 3)
+
+    def test_1min_average_that_never_settles_is_not_a_baseline(self):
+        samples, slept = self._settle([dict(QUIET, load_average=[6.0, 6.0, 5.0])], bound=180, poll=15)
+        self.assertLessEqual(slept, 180)
+        self.assertGreaterEqual(slept, 165)
+        result = self._result(samples)
+        self.assertFalse(result['is_baseline'])
+        self.assertEqual(result['label'], 'not a baseline: machine became busy during the run')
+        after = result['machine_state']['after']
+        self.assertFalse(after['quiet'])
+        self.assertIsNone(after['settled_after_s'])
+        self.assertTrue(any('1-minute' in r for r in after['reasons']), after['reasons'])
+
+    def test_build_process_after_the_run_refuses_without_waiting(self):
+        samples, slept = self._settle([dict(QUIET, load_average=[6.0, 6.0, 5.0],
+                                            build_processes={'clang': 2})])
+        self.assertEqual(slept, 0)
+        result = self._result(samples)
+        self.assertFalse(result['is_baseline'])
+        self.assertTrue(any('clang' in r for r in result['machine_state']['after']['reasons']))
+
+    def test_build_process_with_low_load_refuses(self):
+        samples, _ = self._settle([dict(QUIET, build_processes={'swift-frontend': 1})])
+        result = self._result(samples)
+        self.assertFalse(result['is_baseline'])
+        self.assertEqual(result['label'], 'not a baseline: machine became busy during the run')
+
+    def test_thermal_limit_in_any_after_sample_refuses(self):
+        # Thermal limiting seen while waiting for the load to settle still
+        # refuses, even when it is gone by the last sample.
+        samples = [dict(QUIET, load_average=[6.0, 6.0, 5.0], elapsed_s=0),
+                   dict(QUIET, load_average=[5.0, 6.0, 5.0], thermal_warning=True, cpu_speed_limit=80,
+                        elapsed_s=15),
+                   dict(QUIET, load_average=[1.0, 5.0, 5.0], elapsed_s=30)]
+        result = self._result(samples)
+        self.assertFalse(result['is_baseline'])
+        self.assertTrue(any('thermal' in r for r in result['machine_state']['after']['reasons']))
+
+    def test_settle_stops_at_thermal_limit(self):
+        samples, slept = self._settle([dict(QUIET, load_average=[6.0, 6.0, 5.0], thermal_warning=True)])
+        self.assertEqual(slept, 0)
+        self.assertEqual(len(samples), 1)
+
+    def test_before_check_still_counts_the_5min_average(self):
+        samples, _ = self._settle([dict(QUIET)])
+        result = self._result(samples, state_before=dict(QUIET, load_average=[1.0, 4.5, 1.0]))
+        self.assertFalse(result['is_baseline'])
+        self.assertEqual(result['label'], 'not a baseline: machine busy')
+
+    def test_without_after_samples_the_after_state_is_judged_alone_by_the_after_rule(self):
+        result = perf_lib.assemble_result(
+            baseline_requested=True, state_before=dict(QUIET),
+            state_after=dict(QUIET, load_average=[1.0, 5.0, 5.0]),
+            commit='abc', dirty=False, configuration='Deployment', arch='arm64',
+            machine={}, scenarios={}, settings={})
+        self.assertTrue(result['is_baseline'], result['label'])
+
+    def test_settle_bound_is_recorded_in_thresholds(self):
+        self.assertIn('after_settle_seconds', perf_lib.QUIET_THRESHOLDS)
+        self.assertIn('after_poll_seconds', perf_lib.QUIET_THRESHOLDS)
+
+
+class StressScenarioTests(unittest.TestCase):
+    def _run(self, scenario_name, rate):
+        saved = (perf_baseline.REPO, perf_baseline.run_bounded, perf_baseline.app_under_test_running,
+                 perf_lib.load_average)
+        output = 'Found iTerm2 PID: 4242\n  Total iterations: 0\n  Rate: %d iterations/sec\n' % rate
+        with tempfile.TemporaryDirectory() as repo:
+            try:
+                os.makedirs(os.path.join(repo, 'Build', 'Deployment', 'iTerm2.app'))
+                perf_baseline.REPO = repo
+                perf_baseline.run_bounded = lambda *a, **k: (0, output)
+                perf_baseline.app_under_test_running = lambda configuration: False
+                perf_lib.load_average = lambda: [3.0, 2.0, 1.0]
+                with redirect_stdout(io.StringIO()):
+                    return perf_baseline.run_stress_scenarios(
+                        [perf_lib.scenario_named(scenario_name)], 'Deployment', runs=2, duration=1,
+                        work_dir=repo)[scenario_name]
+            finally:
+                (perf_baseline.REPO, perf_baseline.run_bounded, perf_baseline.app_under_test_running,
+                 perf_lib.load_average) = saved
+
+    def test_flood_does_not_report_an_iteration_rate(self):
+        # `yes` writes no iteration counts, so the script always reports 0.
+        entry = self._run('app.stress_flood_1tab', 0)
+        self.assertEqual(entry['status'], 'ok', entry['reason'])
+        self.assertNotIn('iterations_per_sec', entry['metrics'])
+
+    def test_normal_reports_an_iteration_rate(self):
+        entry = self._run('app.stress_normal_1tab', 9000)
+        self.assertEqual(entry['metrics']['iterations_per_sec']['samples'], [9000, 9000])
+
+    def test_each_scenario_records_the_load_average_after_it(self):
+        entry = self._run('app.stress_normal_1tab', 9000)
+        self.assertEqual(entry['load_average_after'], [3.0, 2.0, 1.0])
+
+    def test_stress_metrics_without_rate(self):
+        runs = [{'iterations_per_sec': 0, 'rss_kb': [1, 2]}]
+        self.assertNotIn('iterations_per_sec', perf_lib.stress_metrics(runs, rate=False))
+        self.assertIn('rss_peak', perf_lib.stress_metrics(runs, rate=False))
 
 
 class ResultFileTests(unittest.TestCase):

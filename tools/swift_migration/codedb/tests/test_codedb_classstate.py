@@ -445,7 +445,7 @@ class FactsTest(unittest.TestCase):
     def test_clean_update_and_schema_version(self):
         self.assertEqual(self.status, 0)
         self.assertEqual(rows(self.paths.db, 'PRAGMA user_version'), [(codedb.SCHEMA_VERSION,)])
-        self.assertEqual(codedb.SCHEMA_VERSION, 12)
+        self.assertEqual(codedb.SCHEMA_VERSION, 13)
 
     def test_ivar_import_facts_and_encodings(self):
         got = dict((n, (c, f, e)) for n, c, f, e in rows(
@@ -763,7 +763,7 @@ class ClassStateQueryTest(unittest.TestCase):
         finally:
             sys.stderr = saved
         self.assertEqual(status, 2)
-        self.assertIn('schema version 11, not 12', err.getvalue())
+        self.assertIn('schema version 11, not 13', err.getvalue())
 
 
 class ClassStateIncompleteTest(unittest.TestCase):
@@ -1054,6 +1054,22 @@ class VerifyInventoryTest(unittest.TestCase):
             'build-variant ASan)'])
         self.assertIn('  unexplained: 5', lines)
 
+    def test_snapshot_in_format_3(self):
+        # runtime_snapshot.sh writes format 3 (ivar ownership, the ivar
+        # layouts and the ARC flag); verifyinventory refused it, so no
+        # snapshot the tool writes today could be compared.
+        import re
+        text = OWNER_SNAPSHOT.replace('format 2', 'format 3')
+        text = re.sub(r'^(  ivar \S+ types=\S*)$', r'\1 ownership=scalar layout=', text, flags=re.M)
+        text = text.replace('  image iTerm2.debug.dylib\n  protocol Drawing\n',
+                            '  image iTerm2.debug.dylib\n  ivar-arc-flag set\n  strong-ivar-layout 0200\n'
+                            '  weak-ivar-layout\n  protocol Drawing\n')
+        self.assertIn('ownership=scalar layout=\n', text)
+        status, lines = self.ask(snapshot=self.write('owner3.snapshot', text), only_snapshot=True)
+        _, want = self.ask(snapshot=self.write('owner2b.snapshot', OWNER_SNAPSHOT), only_snapshot=True)
+        self.assertEqual(status, 1, '\n'.join(lines))
+        self.assertEqual(lines, want)
+
     def test_snapshot_method_defined_in_swift(self):
         # A method the Swift tables say a Swift extension of the class
         # defines is explained. The fixtures have no Swift capture, so a copy
@@ -1113,3 +1129,395 @@ class VerifyInventoryTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+# A runtime snapshot of Owner in format 3: _weakThing and _other agree with
+# the compiler, _count (an int) is labelled strong, which contradicts it,
+# _sel is a scalar the runtime calls a selector, _strongBox a struct the
+# runtime cannot tell from a C++ object, and _phantom exists only at run
+# time.
+OWNER_SNAPSHOT_3 = '''# Objective-C runtime snapshot, format 3
+architecture arm64
+build-configuration Development
+build-variant ASan
+class Owner
+  language objc
+  superclass Root
+  image iTerm2.debug.dylib
+  ivar-arc-flag set
+  strong-ivar-layout 0200
+  weak-ivar-layout
+  ivar _count types=i ownership=strong layout=s
+  ivar _other types=@"Thing" ownership=strong layout=s
+  ivar _phantom types=i ownership=scalar layout=
+  ivar _sel types=: ownership=selector layout=
+  ivar _strongBox types={?="obj"@"n"i} ownership=struct-or-cxx-object layout=
+  ivar _weakThing types=@"Thing" ownership=weak layout=w
+end class Owner
+class Swifty
+  language swift
+  superclass Root
+  image iTerm2.debug.dylib
+  ivar value types= ownership=swift layout=
+end class Swifty
+'''
+
+
+class StubTable:
+    """An ImportTable with fixed answers, for refine_visibility alone."""
+
+    def __init__(self, answers, module='App', module_ok=True, note=''):
+        self.answers, self.module, self.module_ok, self.note = answers, module, module_ok, note
+
+    def is_repository(self, kind, name):
+        return (kind, name) in self.answers
+
+    def judge_class(self, name):
+        return self.answers[('class', name)]
+
+    def judge_protocol(self, name):
+        return self.answers[('protocol', name)]
+
+    def judge_record(self, name):
+        return self.answers[('record', name)]
+
+
+U_MISSING = ('not-imported', 'class U is declared in the repository and absent from the import table of App')
+P_MISSING = ('not-imported', 'protocol P is declared in the repository and absent from the import table of App')
+SEEN = ('visible', 'class NSArray is an SDK class, imported as its framework module')
+
+
+class NestedVisibilityTest(unittest.TestCase):
+    """Review round 1, B1: a class or protocol Swift does not import, inside
+    a block, type arguments, a C array or a pointee. The verdict for each
+    position is what swiftc did with a property (or, for a C array, a
+    global) of that type whose class is only forward-declared to the
+    bridging header (tmp/p0state/probe in the unit's lane, 2026-11-21)."""
+
+    def table(self):
+        answers = {('class', 'U'): U_MISSING, ('protocol', 'P'): P_MISSING}
+        for c in ('NSArray', 'NSDictionary', 'NSMutableArray', 'NSCache', 'NSPointerArray', 'NSString', 'Gen'):
+            answers[('class', c)] = ('visible', 'class %s is visible' % c)
+        return StubTable(answers)
+
+    def refine(self, type_class, facts, typ, object_class=None, protocols=None):
+        row = {'type_class': type_class, 'import_facts': facts, 'type': typ, 'object_class': object_class,
+               'object_protocols': protocols}
+        return classstate.refine_visibility(self.table(), row, *classstate.importability(type_class, facts))
+
+    def test_block_parameter_and_result(self):
+        # iTermBackgroundCommandRunnerPromise._terminationBlock.
+        v, why = self.refine('block', '', 'void (^__strong)(U *, int)')
+        self.assertEqual(v, 'no', why)
+        self.assertIn('class U', why)
+        self.assertEqual(self.refine('block', '', 'U *(^__strong)(void)')[0], 'no')
+        self.assertEqual(self.refine('block', '', 'void (^__strong)(id<P>)')[0], 'no')
+
+    def test_bridged_collection_and_repository_generic(self):
+        # iTermToolActions._actions.
+        v, why = self.refine('object', 'generic-bridged type-args', 'NSArray<U *> *__strong', 'NSArray')
+        self.assertEqual(v, 'no', why)
+        self.assertEqual(self.refine('object', 'generic-bridged type-args', 'NSDictionary<NSString *,U *> *',
+                                     'NSDictionary')[0], 'no')
+        self.assertEqual(self.refine('object', 'generic-bridged type-args', 'NSArray<id<P>> *', 'NSArray')[0], 'no')
+        self.assertEqual(self.refine('object', 'generic-repository type-args', 'Gen<U *> *', 'Gen')[0], 'no')
+
+    def test_sdk_generics_by_their_api_notes(self):
+        v, why = self.refine('object', 'generic-sdk type-args', 'NSMutableArray<U *> *__strong', 'NSMutableArray')
+        self.assertEqual(v, 'degraded', why)
+        self.assertIn('erased', why)
+        self.assertEqual(self.refine('object', 'generic-sdk type-args', 'NSCache<NSString *,U *> *', 'NSCache')[0],
+                         'no')
+        v, why = self.refine('object', 'generic-sdk type-args', 'NSPointerArray<U *> *', 'NSPointerArray')
+        self.assertEqual(v, 'unknown', why)
+        self.assertIn('visibility: not checked for the parts of this type', why)
+
+    def test_array_pointee_and_function_pointer(self):
+        # iTermASCIITextureGroup._textures.
+        self.assertEqual(self.refine('array', '', 'U *__strong[8]')[0], 'no')
+        v, why = self.refine('c-pointer', 'object-pointee', 'U *__autoreleasing *')
+        self.assertEqual(v, 'degraded', why)
+        self.assertIn('OpaquePointer', why)
+        self.assertEqual(self.refine('c-pointer', 'function-pointer', 'void (*)(U *)')[0], 'degraded')
+
+    def test_deeper_nesting_is_not_claimed(self):
+        v, why = self.refine('object', 'generic-bridged in-generic-bridged in-type-args type-args',
+                             'NSArray<NSArray<U *> *> *', 'NSArray')
+        self.assertEqual(v, 'unknown', why)
+        self.assertIn('visibility: not checked for the parts of this type', why)
+
+    def test_nothing_unimported_inside(self):
+        v, why = self.refine('object', 'generic-bridged type-args', 'NSArray<NSString *> *', 'NSArray')
+        self.assertEqual(v, 'yes', why)
+        self.assertNotIn('names no class, protocol or record', why)
+
+    def test_names_by_their_place_in_the_type(self):
+        # A protocol and a class of one name (iTermPromiseSeal), a record's
+        # path note, and a struct tag are not read as classes.
+        self.assertEqual(classstate.type_names('__strong id<S>'), [('protocol', 'S')])
+        self.assertEqual(classstate.type_names('NSArray<id<P>> *'), [('protocol', 'P'), ('class', 'NSArray')])
+        self.assertEqual(classstate.type_names('void (^)(U * _Nonnull __strong, int)'), [('class', 'U')])
+        self.assertEqual(classstate.type_names('struct (unnamed at /x/Owner.m:3:8)[5]'), [])
+        self.assertEqual(classstate.type_names('struct Owner *'), [])
+        v, why = self.refine('object', '', '__strong id<P>', 'id', 'P')
+        self.assertEqual(v, 'no', why)
+        self.assertNotIn('class P', why)
+
+    def test_framework_protocol_at_the_top_is_unknown(self):
+        table = StubTable({('protocol', 'CPKDelegate'): ('unknown', 'protocol CPKDelegate is declared in the '
+                                                         'framework target ColorPicker:ColorPicker')})
+        row = {'type_class': 'object', 'import_facts': '', 'type': 'id<CPKDelegate>', 'object_class': 'id',
+               'object_protocols': 'CPKDelegate'}
+        v, why = classstate.refine_visibility(table, row, *classstate.importability('object', ''))
+        self.assertEqual(v, 'unknown', why)
+        self.assertIn('ColorPicker:ColorPicker', why)
+
+    def test_framework_protocol_is_not_judged_by_the_bridging_header(self):
+        # N1: CPKColorWellViewDelegate is declared only by the ColorPicker
+        # framework target.
+        con = sqlite3.connect(':memory:')
+        con.executescript("""
+            CREATE TABLE tu(id INTEGER PRIMARY KEY, target TEXT);
+            CREATE TABLE objc_method(container_kind TEXT, container_name TEXT, tu INTEGER);
+            CREATE TABLE objc_adoption(container_kind TEXT, class_or_category TEXT, tu INTEGER);
+            CREATE TABLE swift_import(module TEXT, usr TEXT);
+            INSERT INTO tu VALUES (1, 'ColorPicker:ColorPicker'), (2, 'iTerm2SharedARC');
+            INSERT INTO objc_method VALUES ('protocol', 'CPKDelegate', 1), ('protocol', 'AppProto', 2);
+        """)
+        table = classstate.ImportTable.__new__(classstate.ImportTable)
+        table.con, table.module, table.cache, table.sdk_protocols = con, 'App', {}, set()
+        table.swift_classes = {'SwiftProto'}
+        # A protocol declared in Swift (FontProviderProtocol) has members in
+        # the Swift tables and is seen by Swift as it is.
+        self.assertEqual(table.judge_protocol('SwiftProto'), ('visible', 'protocol SwiftProto is declared in Swift'))
+        state, text = table.judge_protocol('CPKDelegate')
+        self.assertEqual(state, 'unknown', text)
+        self.assertIn('ColorPicker:ColorPicker', text)
+        self.assertEqual(table.judge_protocol('AppProto')[0], 'not-imported')
+
+
+class StaticWrittenTest(unittest.TestCase):
+    """Review round 1, B2 and N2."""
+
+    def test_cxx_object(self):
+        # iTermLegacyAtomicMutableArrayOfWeakObjectsLockCount += 1 is
+        # recorded as a read.
+        row = {'type': 'std::atomic<int>', 'type_class': 'cxx-object', 'import_facts': 'cxx-record cxx-template',
+               'is_const': False}
+        refs = [{'access': 'read', 'in_constant_false_branch': False, 'in_once_block': False, 'function': 'f'}]
+        self.assertEqual(classstate.static_written(codedb, refs, row),
+                         'not decided: C++ object; operator and member calls are recorded as reads')
+
+    def test_once_token(self):
+        row = {'type': 'dispatch_once_t', 'type_class': 'scalar', 'import_facts': '', 'is_const': False}
+        refs = [{'access': 'once-token', 'in_constant_false_branch': False, 'in_once_block': False, 'function': 'f'}]
+        self.assertTrue(classstate.static_written(codedb, refs, row).startswith('once token'))
+
+
+class ClassStateAdditionsTest(unittest.TestCase):
+    """The import table's verdict on visibility, the runtime snapshot's
+    ownership, how a static is written, statics used but defined elsewhere,
+    and --all."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.root, cls.paths, _ = make_fixture_root()
+
+    def ask(self, cls, paths=None, **kw):
+        out = io.StringIO()
+        status = classstate.classstate(codedb, paths or self.paths, cls, as_json=True, out=out, **kw)
+        return status, json.loads(out.getvalue())
+
+    def with_import_table(self, usrs):
+        """A copy of the database whose import table, for one module, holds
+        these USRs."""
+        d = base.make_temp('codedb-classstate-imports-')
+        db = os.path.join(d, 'copy.sqlite')
+        shutil.copy(self.paths.db, db)
+        con = sqlite3.connect(db)
+        sys.path.insert(0, os.path.dirname(os.path.dirname(HERE)))
+        import swift_interface
+        swift_interface.ensure_import_schema(con)
+        con.execute("INSERT INTO swift_import_unit(module, compiler, created_at, incomplete) VALUES ('App', 'swiftc', "
+                    "'2026-11-21T00:00:00Z', '')")
+        for usr in usrs:
+            name, _, _ = swift_interface.objc_name_of(usr)
+            con.execute("INSERT INTO swift_import(module, usr, objc_name, swift_name, kind, access, declaration, "
+                        "throws, async, refined, availability) VALUES ('App', ?, ?, ?, 'class', 'open', '', 0, 0, 0, "
+                        "'')", (usr, name, name))
+        con.commit()
+        con.close()
+        return codedb.Paths(self.root, db=db, cdb=self.paths.cdb, extractor=base.EXTRACTOR)
+
+    def test_visibility_from_the_import_table(self):
+        # Thing is imported; the protocol Drawing is not, so id<Drawing> is
+        # dropped by Swift whatever its type facts say.
+        status, doc = self.ask('Owner', paths=self.with_import_table(['c:objc(cs)Thing']))
+        self.assertEqual(status, 0)
+        ivars = by_name(doc['ivars'])
+        other = ivars['_other']['importable']
+        self.assertEqual(other['verdict'], 'yes')
+        # The fixtures have no Swift capture, so the rows' staleness cannot be
+        # checked, and the reason says so.
+        self.assertEqual(other['reason'], 'object; visibility (import table of App, whose rows could not be checked '
+                                          'for staleness): class Thing is imported through the bridging header')
+        drawer = ivars['_drawer']['importable']
+        self.assertEqual(drawer['verdict'], 'no')
+        self.assertTrue(drawer['reason'].startswith('protocol Drawing is declared in the repository and absent from '
+                                                    'the import table of App: Swift drops a member of this type'),
+                        drawer['reason'])
+        # A scalar names nothing.
+        self.assertEqual(ivars['_pub']['importable']['reason'], 'C scalar; visibility (import table of App, whose rows '
+                                                                'could not be checked for staleness): the type names '
+                                                                'no class or protocol of the repository (classes and '
+                                                                'protocols are looked for anywhere in the type; '
+                                                                'records, typedefs and enums inside it are not '
+                                                                'judged)')
+
+    def test_visibility_with_the_class_not_imported(self):
+        status, doc = self.ask('Owner', paths=self.with_import_table(['c:objc(pl)Drawing']))
+        ivars = by_name(doc['ivars'])
+        self.assertEqual(ivars['_other']['importable']['verdict'], 'no')
+        self.assertIn('class Thing is declared in the repository and absent from the import table of App',
+                      ivars['_other']['importable']['reason'])
+        self.assertEqual(ivars['_drawer']['importable']['verdict'], 'yes')
+
+    def test_refine_visibility_rules(self):
+        forward = classstate.importability('object', 'forward-declared-class')
+        self.assertEqual(forward[0], 'unknown')
+        row = {'type_class': 'object', 'object_class': 'Fwd', 'import_facts': 'forward-declared-class'}
+        seen = StubTable({('class', 'Fwd'): ('visible', 'class Fwd is imported through the bridging header')})
+        self.assertEqual(classstate.refine_visibility(seen, row, *forward),
+                         ('yes', 'the class or protocol is only forward-declared in this unit, but Swift sees it: '
+                                 'visibility (import table of App): class Fwd is imported through the bridging header'))
+        unseen = StubTable({('class', 'Fwd'): ('not-imported', 'class Fwd is absent')})
+        self.assertEqual(classstate.refine_visibility(unseen, row, *forward)[0], 'no')
+        stale = StubTable({}, module_ok=False, note='visibility: not decided (stale)')
+        self.assertEqual(classstate.refine_visibility(stale, {'type_class': 'scalar'}, *classstate.importability(
+            'scalar', '')), ('yes', 'C scalar; visibility: not decided (stale)'))
+        record = {'type_class': 'struct', 'record_name': 'CGRect', 'import_facts': ''}
+        unknown = StubTable({('record', 'CGRect'): ('unknown', 'record CGRect is absent from the import table')})
+        self.assertEqual(classstate.refine_visibility(unknown, record, *classstate.importability('struct', '')),
+                         ('yes', 'C struct; visibility (import table of App): record CGRect is absent from the import '
+                                 'table'))
+        # A lock note after the visibility clause stays.
+        lock = classstate.importability('struct', 'lock-type')
+        self.assertTrue(classstate.refine_visibility(unknown, record, *lock)[1].endswith(classstate.LOCK_NOTE))
+
+    def test_runtime_ownership(self):
+        snap = os.path.join(os.path.dirname(self.root), 'owner3.snapshot')
+        with open(snap, 'w') as f:
+            f.write(OWNER_SNAPSHOT_3)
+        status, doc = self.ask('Owner', snapshot=snap)
+        ivars = by_name(doc['ivars'])
+        self.assertEqual(ivars['_weakThing']['runtime']['verdict'], 'agrees')
+        self.assertEqual(ivars['_other']['runtime']['verdict'], 'agrees')
+        self.assertEqual(ivars['_count']['runtime']['verdict'], 'DISAGREES')
+        self.assertEqual(ivars['_strongBox']['runtime']['verdict'], 'compiler')
+        self.assertEqual(ivars['_pub']['runtime'], {'verdict': 'not in the snapshot', 'text': 'the snapshot lists no '
+                         'ivar _pub (a conditional ivar, or a snapshot older than the database)'})
+        self.assertEqual(doc['runtime'], [{'disagrees': False, 'text': 'ivar _phantom is in the snapshot (scalar) and '
+                                                                       'not in the database'}])
+        self.assertEqual(doc['ownership_disagreements'], 1)
+        out = io.StringIO()
+        classstate.classstate(codedb, self.paths, 'Owner', out=out, snapshot=snap)
+        lines = out.getvalue().splitlines()
+        self.assertIn('ownership against the runtime snapshot %s: 1 disagreement' % snap, lines)
+        self.assertIn('    runtime      strong layout=s [strong (runtime layout)]: OWNERSHIP DISAGREES; compiler: int '
+                      '(scalar, ARC)', lines)
+        # Without a snapshot no row has a runtime answer, and the text says so.
+        status, doc = self.ask('Owner')
+        self.assertFalse([r for r in doc['ivars'] if r['runtime'] is not None])
+        out = io.StringIO()
+        classstate.classstate(codedb, self.paths, 'Owner', out=out)
+        self.assertIn('ownership against the runtime: not cross-checked (give --snapshot)', out.getvalue().splitlines())
+
+    def test_a_snapshot_without_ownership_is_refused(self):
+        snap = os.path.join(os.path.dirname(self.root), 'format2.snapshot')
+        with open(snap, 'w') as f:
+            f.write(SNAPSHOT_HEADER + 'class Owner\n  language objc\nend class Owner\n')
+        with self.assertRaises(codedb.CodeDBError):
+            classstate.classstate(codedb, self.paths, 'Owner', out=io.StringIO(), snapshot=snap)
+
+    def test_static_written_after_initialization(self):
+        status, doc = self.ask('Owner')
+        statics = by_name(doc['statics'])
+        self.assertEqual(statics['sHits']['written'], 'after initialization (counting address-of and by-reference '
+                                                      'uses), from 1 function: -[Owner work:]')
+        self.assertEqual(statics['sShared']['written'], 'no write, address-of or by-reference use recorded after its '
+                                                        'initialization')
+        self.assertEqual(statics['gOwnerTotal']['written'], 'after initialization (counting address-of and '
+                                                            'by-reference uses), from 2 functions: -[Owner work:], '
+                                                            '-[Peer reach:]')
+        refs = [{'access': 'write', 'in_constant_false_branch': False, 'in_once_block': True, 'function': 'f'}]
+        self.assertEqual(classstate.static_written(codedb, refs), 'only in a dispatch_once block (every write, '
+                                                                  'address-of or by-reference use recorded)')
+        refs[0]['in_constant_false_branch'] = True
+        self.assertTrue(classstate.static_written(codedb, refs).startswith('no write'))
+
+    def test_statics_used_but_defined_elsewhere(self):
+        # peer.m defines no static but writes Owner's global gOwnerTotal.
+        status, doc = self.ask('Peer')
+        used = doc['used_elsewhere']
+        self.assertEqual([(u['kind'], u['name'], u['type'], u['declared']) for u in used],
+                         [('global', 'gOwnerTotal', 'int', {'kind': 'global', 'file': 'sources/owner.m', 'line': 4})])
+        self.assertEqual([(r['function'], r['access'], r['line']) for r in used[0]['references']],
+                         [('-[Peer reach:]', 'rmw', 11)])
+        self.assertTrue(used[0]['written_anywhere'].startswith('after initialization'))
+        status, doc = self.ask('Owner')
+        self.assertEqual(doc['used_elsewhere'], [])
+
+    def test_all(self):
+        out = io.StringIO()
+        status = classstate.classstate_all(codedb, self.paths, as_json=True, out=out)
+        self.assertEqual(status, 0)
+        docs = [json.loads(line) for line in out.getvalue().splitlines()]
+        classes = [d['class'] for d in docs[:-1]]
+        want = sorted(set(r[0] for r in rows(self.paths.db, 'SELECT class_name FROM objc_impl WHERE category IS NULL '
+                                                            'AND in_migration_scope = 1')))
+        self.assertEqual(classes, want)
+        self.assertIn('Owner', classes)
+        owner = docs[classes.index('Owner')]
+        _, single = self.ask('Owner')
+        self.assertEqual(owner['ivars'], single['ivars'])
+        summary = docs[-1]['summary']
+        self.assertEqual(summary['classes'], len(want))
+        self.assertEqual(summary['ivars'], sum(len(d['ivars']) for d in docs[:-1]))
+        self.assertIn('not made by --all', summary['not_made'])
+        out = io.StringIO()
+        classstate.classstate_all(codedb, self.paths, out=out)
+        text = out.getvalue().splitlines()
+        self.assertEqual(text[0], 'Class state of every class with an @implementation in the migration\'s scope: %d '
+                                  'classes' % len(want))
+        self.assertIn('Class state of Owner: 26 ivars, 4 statics in its implementation files', text)
+        # N3: every class's header repeats that the text searches were not made.
+        owner = text.index('Class state of Owner: 26 ivars, 4 statics in its implementation files')
+        self.assertIn('not made: ' + classstate.ALL_NOT_SEARCHED, text[owner:owner + 6])
+        self.assertIn('%d classes, %d ivars, %d statics defined in their files (%d distinct: a file with several '
+                      'classes lists its statics under each), %d uses of statics defined elsewhere' %
+                      (len(want), summary['ivars'], summary['statics'], summary['distinct_statics'],
+                       summary['used_elsewhere']), text)
+
+    def test_all_leaves_out_generated_code(self):
+        # The whole-tree run listed some 500 protobuf statics under each of
+        # the 170 classes of Api.pbobjc.m, which README.md section 2 puts out
+        # of scope.
+        con = sqlite3.connect(':memory:')
+        con.execute('CREATE TABLE objc_impl(class_name TEXT, category TEXT, file TEXT, in_migration_scope INTEGER)')
+        con.executemany('INSERT INTO objc_impl VALUES (?, ?, ?, 1)', [
+            ('ITMRequest', None, 'sources/proto/Api.pbobjc.m'), ('Mine', None, 'sources/Mine.m'),
+            ('Mine', 'Cat', 'sources/proto/Api.pbobjc.m')])
+        self.assertEqual(classstate.all_classes(con), (['Mine'], collections.Counter({'generated (protobuf)': 1})))
+
+    def test_command_line(self):
+        err = io.StringIO()
+        saved = sys.stderr
+        sys.stderr = err
+        try:
+            common = ['--root', self.root, '--db', self.paths.db, '--cdb', self.paths.cdb, '--extractor',
+                      base.EXTRACTOR, 'classstate']
+            self.assertEqual(codedb.main(common), 2)
+            self.assertEqual(codedb.main(common + ['--all', 'Owner']), 2)
+        finally:
+            sys.stderr = saved
+        self.assertIn('a CLASS or --all', err.getvalue())

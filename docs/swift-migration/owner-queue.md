@@ -107,6 +107,41 @@ Things only the owner can do, noted on 2026-11-20 at his request.
 
 ## Needs a decision
 
+### Q24. From the Phase 0 test items (2026-11-21, late evening)
+
+Work continues without the answers.
+
+1. **A flaky test is disabled:**
+   `TabLifetimeWitnessTests.testClosedTabIsFreedWithItsSession` failed once,
+   after 473 seconds, in the full thread sanitizer run, and passed alone in
+   thread mode on the same build. It is skipped by the flaky test rule and
+   recorded in bugs.md. While it waited, the test process had 25 terminal
+   windows open (left by earlier test classes, presumably) and
+   `kRefreshTerminalNotification` was posted about 450 times, refitting all
+   25 windows each time; who posted it was not found. Someone should debug
+   whether the test or the window code is at fault.
+   **Answered (2026-11-21):** “Run that test by itself. When you run the
+   full suite sometimes all of memory gets used up and everything gets very
+   slow.” Run alone, the class passed five times in the normal build and
+   once under the thread sanitizer, so the test is re-enabled and the
+   refresh storm is not investigated further. If it fails again in a full
+   run, record the machine's memory pressure before disabling it (bugs.md).
+2. **A second Metal false report is in the thread baseline** (entry 2.3 of
+   thread-baseline.md): the scheduled handler of
+   `-[iTermMetalDriver finishDrawingWithCommandBuffer:frameData:]`, the
+   same mechanism as entry 2.1. For your information; it was judged from
+   the source, not suppressed. `TabLifetimeWitnessTests` is now known to
+   draw with Metal, if you prefer excluding Metal tests (concurrency.md
+   section 10).
+3. **The fast tier budget and the build.** test-speed.md section 3 counts
+   the build in the budget. A cold build of the plain directory took 145 s
+   of the fast tier's 280 s on a loaded machine; a commit's gate normally
+   meets an incremental build. Recommended: set the budget from a quiet run
+   with the plain build up to date apart from a small change, and leave the
+   cold build out. The orchestrator's quiet run (test-tiers.md section 1)
+   waits for this only in what it records; it can measure both. Q23 item 4
+   (the ceiling, the malloc settings) is still open.
+
 ### Q23. Questions from the evening of 2026-11-20
 
 Recommendations are first in each item. Work continues without the answers
@@ -119,8 +154,10 @@ except where an item says it waits.
    failure. Still open: `+load`, `+initialize` and a `-dealloc` whose port
    has no `deinit` fail the comparison until a rule exists
    ([phase0.md §9](phase0.md)).
-2. **The stress harness.** `tools/perf/run_stress_test.sh` cannot run beside
-   another iTerm2 (it drives the app by name). Recommended: accept
+2. **The stress harness.** `tools/perf/run_stress_test.sh` could not run beside
+   another iTerm2 when this was asked (it drove the app by name; since
+   2026-11-22 it addresses the app by path and process, and runs beside
+   other instances). Recommended at the time: accept
    `ModernTests/StressStreamReplayTests.swift` in its place for the integer
    discovery run of [translation-rules.md §1](translation-rules.md). The
    replay does not reach PTY reading and task code, the text view, Metal or
@@ -128,10 +165,27 @@ except where an item says it waits.
    build with every other iTerm2 quit
    ([integer-findings.md](integer-findings.md), Limits).
 3. **The performance regression rule.** [performance.md §1](performance.md)
-   says "beyond noise" without defining it. Proposed in
-   `perf_compare.py`: a median worse by more than the larger of 5% and three
-   times the measured spread; fewer than five samples or spread over 10% is
-   inconclusive. And where the baseline file lives, if it is committed.
+   says "beyond noise" without defining it. DECIDED 2026-11-22: time and
+   rate metrics are estimated by the best sample (“Given the variance you
+   should take the fastest time, since that's our best estimate.”;
+   decisions.md). Proposed, not confirmed, and implemented in
+   `perf_compare.py` ([performance.md §3](performance.md), **Comparison**):
+   a best-of metric whose best is worse by more than 5% is a regression;
+   spread never makes a best-of row inconclusive; memory and count metrics
+   keep the median, worse by more than the larger of 5% and three times the
+   measured spread, with spread over 10% inconclusive; fewer than five
+   samples is inconclusive for both. Evidence against the fixed 5%: a run
+   alone on the same app and test code as the baseline
+   (`busy-after-2026-11-22.json`, the nearest thing to a clean repeat)
+   reads `screen.gang_fast_path` 7.81% and
+   `screen.parse_execute_mixed_1mb` 5.86% worse best against best, and
+   two busier runs flag three in-process time metrics each, by up
+   to 10.7% ([performance.md §3](performance.md), "Read with care"). The
+   alternatives are a wider threshold for best-of metrics, the old
+   widening by spread (14.4% for gang) applied to the best, or requiring a
+   quiet candidate and a rerun before a regression counts. Please confirm
+   or change these. Still open: where the baseline file lives, if it is
+   committed.
 4. **The fast test tier** ([test-tiers.md](test-tiers.md)). The 10 second
    ceiling is reported, not enforced, because 46 fast tests exceeded it in
    single runs on a loaded machine while their medians are under a second:
@@ -179,6 +233,57 @@ except where an item says it waits.
     such tests until this is triaged as a wrong annotation or a bug. May
     it be fixed as an exception to "log, do not fix", since it blocks
     ports?
+13. **Thread assertions in a port** (added 2026-11-21).
+    [concurrency.md §9](concurrency.md) adds a beta assertion at the entry
+    of every ported method whose thread is known; README.md §4 allows it
+    as the one addition to a translation. You called it appropriate where
+    the code depends on confinement (unsynchronized state, AppKit,
+    `drand48` in `iTermColorSuggester`). May the rule be narrowed to code
+    that depends on confinement, adding nothing where the thread is merely
+    known? Until you answer, ports add it wherever the thread is known and
+    the commit message names the dependence, or says none was found.
+14. **Further units after pilot 2** (added 2026-11-21). Both pilot units
+    are committed; no further unit starts until you say so
+    ([lifecycle.md §3](lifecycle.md)). Please review pilot 2
+    (`git log --grep='Swift-Port: iTermColorSuggester'`) and say whether
+    further light-path units may start, and whether in parallel lanes.
+15. **MANUAL qualifying conditions** (added 2026-11-21).
+    `tools/swift_migration/qualify_unit.py` prints some light-path
+    conditions as MANUAL when the code database cannot decide them (a
+    census hit on a selector another class shares, a key-value coding key
+    sent to an object of unknown class, a send to a method that stores, a
+    use from per-frame code, a timer). May an agent resolve a MANUAL
+    qualifying condition by reading, or does any MANUAL mean the full path?
+    ANSWERED 2026-11-21: an agent resolves it by reading (“the agent can
+    figure that out better than me usually”); recorded in the dossier and
+    checked by the reviewer ([lifecycle.md §3](lifecycle.md)).
+
+16. **The census's error bar** (added 2026-11-21). 743 in-scope methods
+    have no caller found. Two hand-checked samples (20 and 40 rows) found
+    one missed mechanism, since fixed (protocols of prebuilt frameworks),
+    and none after. That bounds the miss rate at about 7.5%, about 56
+    methods. The checklist item is ticked on that evidence; say if you
+    want a larger sample before any of that code is deleted. Nothing has
+    been deleted.
+17. **The lifecycle skill was not tracked** (added 2026-11-21; RESOLVED
+    2026-11-22: the owner said "Now complete phase 0", the skill is the
+    checklist's item, and it is tracked; what follows is as it was asked). `.gitignore`
+    ignores `.claude/` except `agents/`, so
+    `.claude/skills/swift-migration-unit/SKILL.md` exists only in this
+    checkout. Allowing it takes `!/.claude/skills/`.
+18. **The baseline is taken; three app rates in it are not steady** (added
+    2026-11-22). The numbers are in [performance.md §3](performance.md).
+    `app.stress_normal_10tabs` ran at two levels (about 950 and about 2,200
+    iterations per second) within five runs, and `app.stress_normal_1tab`
+    and `app.stress_clearcodes_1tab` ranged by half again. The cause is not
+    known. DECIDED 2026-11-22: rates are estimated by their best sample
+    (item 3). Under the proposed 5% threshold a clean candidate shows a
+    false regression on at least one of those three rates about 70% of the
+    time, if the levels are random; that and what else best against best
+    does not protect against are in [performance.md §3](performance.md),
+    "Read with care". Still open from
+    item 3: where the baseline file is kept (it is in `tmp/`, which git
+    ignores).
 
 ### Q22. Questions raised on 2026-11-20 and answered the same day
 
