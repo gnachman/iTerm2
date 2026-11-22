@@ -402,7 +402,25 @@ NS_INLINE void iTermLineBlockDidMutateInPlace(__unsafe_unretained LineBlock *lin
         if (!data || data.length / sizeof(screen_char_t) >= INT_MAX) {
             return nil;
         }
-        _characterBuffer = [[iTermCharacterBuffer alloc] initWithData:data];
+        // Only the used prefix of the buffer is saved. Restore the original capacity so appends
+        // behave as they did before the block was saved. Older saves contain the whole buffer, in
+        // which case the data is at least as large as the capacity.
+        // Real blocks have at most about one LineBuffer block size (8192 by default) of unused
+        // capacity. Ignore a saved capacity implying much more than that so a corrupt value can't
+        // cause a huge allocation. Falling back to the data length is always safe: a full last
+        // block just means the next append starts a new block.
+        const NSInteger maxUnusedCapacity = 1024 * 1024;
+        const NSInteger dataLength = data.length / sizeof(screen_char_t);
+        const NSInteger savedCapacity = [dictionary[kLineBlockBufferSizeKey] integerValue];
+        const BOOL capacityIsSane = (savedCapacity > dataLength &&
+                                     savedCapacity - dataLength <= maxUnusedCapacity &&
+                                     savedCapacity < INT_MAX);
+        if (!capacityIsSane && savedCapacity > dataLength) {
+            DLog(@"Ignoring implausible saved capacity %@ for data length %@",
+                 @(savedCapacity), @(dataLength));
+        }
+        _characterBuffer = [[iTermCharacterBuffer alloc] initWithData:data
+                                                             capacity:capacityIsSane ? (int)savedCapacity : (int)dataLength];
 
         [self setBufferStartOffset:[dictionary[kLineBlockBufferStartOffsetKey] intValue]];
         _firstEntry = [dictionary[kLineBlockFirstEntryKey] intValue];
@@ -618,7 +636,9 @@ NS_INLINE void iTermLineBlockDidMutateInPlace(__unsafe_unretained LineBlock *lin
             return NO;
         }
     }
-    return [_characterBuffer deepIsEqual:other->_characterBuffer];
+    // Characters past rawSpaceUsed are not meaningful (and may be uninitialized), so don't compare
+    // them.
+    return [_characterBuffer deepIsEqual:other->_characterBuffer prefixLength:self.rawSpaceUsed];
 }
 
 - (int)rawSpaceUsed {
@@ -2839,7 +2859,9 @@ crossBlockResultCount:(NSInteger *)crossBlockResultCount {
 }
 
 - (NSDictionary *)dictionary {
-    return @{ kLineBlockRawBufferV3Key: _characterBuffer.data,
+    // Save only the characters in use. Blocks are often sealed when they are only partly full, so
+    // saving the whole buffer would mostly save unused capacity.
+    return @{ kLineBlockRawBufferV3Key: [_characterBuffer dataWithLength:self.rawSpaceUsed],
               kLineBlockBufferStartOffsetKey: @(self.bufferStartOffset),
               kLineBlockStartOffsetKey: @(self.bufferStartOffset),
               kLineBlockFirstEntryKey: @(_firstEntry),

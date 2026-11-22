@@ -315,6 +315,12 @@
 
 - (NSArray *)encodedArray {
     NSMutableArray *metadataArray = [NSMutableArray array];
+    // Consecutive lines often have identical metadata (e.g., runs of empty lines or lines without
+    // timestamps). NSKeyedArchiver encodes each distinct array instance separately at a cost of
+    // ~150 bytes, but a repeated instance costs only a reference. Reuse the previous line's array
+    // when it is equal so runs are archived once. Comparing with only the previous line keeps this
+    // linear (NSArray's hash is just its count, so a dictionary-based intern table would not be).
+    NSArray *previous = nil;
     for (int i = 0; i < _guts->_numEntries; i++) {
         // The array is defined as base objects followed by any number of metadata objects (none of
         // which may be arrays). Optionally, it may be followed by an empty array followed by a
@@ -333,7 +339,12 @@
             [combined addObject:@[]];
             [combined addObject:_guts->_array[i].bidi_display_info.dictionaryValue];
         }
-        [metadataArray addObject:combined];
+        if (previous && [previous isEqualToArray:combined]) {
+            [metadataArray addObject:previous];
+        } else {
+            previous = [combined copy];
+            [metadataArray addObject:previous];
+        }
     }
     return metadataArray;
 }

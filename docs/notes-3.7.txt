@@ -31,6 +31,10 @@ Improvements:
   Dot and a Text color well. Leave a well empty
   to keep the color the program chose. Issue
   13130.
+- Saved window state takes much less disk space
+  for sessions with long scrollback history, so
+  restoring windows at launch is faster. Issue
+  9360.
 
 Bug Fixes:
 - When a program turned on light/dark mode

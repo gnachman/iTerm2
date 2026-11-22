@@ -22,9 +22,19 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithSize:(int)size;
 - (instancetype)initWithData:(NSData *)data;
 
+// Copies `data` into a buffer with room for at least `capacity` characters. Characters past the
+// end of `data` are zeroed.
+- (instancetype)initWithData:(NSData *)data capacity:(int)capacity;
+
+// Returns the first `length` characters, which must not exceed `size`.
+- (NSData *)dataWithLength:(int)length;
+
 - (void)resize:(int)newSize;
 - (iTermCharacterBuffer *)clone;
 - (BOOL)deepIsEqual:(id)object;
+
+// Compares only the first `length` characters, which must not exceed either buffer's size.
+- (BOOL)deepIsEqual:(id)object prefixLength:(int)length;
 
 @end
 

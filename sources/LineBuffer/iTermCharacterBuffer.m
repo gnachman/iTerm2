@@ -6,6 +6,7 @@
 //
 
 #import "iTermCharacterBuffer.h"
+#import "DebugLogging.h"
 #import "iTermMalloc.h"
 
 @implementation iTermCharacterBuffer {
@@ -45,6 +46,11 @@
     return [NSData dataWithBytes:(void *)_buffer length:_size * sizeof(screen_char_t)];
 }
 
+- (NSData *)dataWithLength:(int)length {
+    ITAssertWithMessage(length >= 0 && length <= _size, @"length=%@ size=%@", @(length), @(_size));
+    return [NSData dataWithBytes:(void *)_buffer length:length * sizeof(screen_char_t)];
+}
+
 - (instancetype)initWithSize:(int)size {
     self = [super init];
     if (self) {
@@ -57,6 +63,20 @@
 - (instancetype)initWithData:(NSData *)data {
     return [self initWithChars:(screen_char_t *)data.bytes 
                           size:data.length / sizeof(screen_char_t)];
+}
+
+- (instancetype)initWithData:(NSData *)data capacity:(int)capacity {
+    const int length = data.length / sizeof(screen_char_t);
+    if (capacity <= length) {
+        return [self initWithData:data];
+    }
+    self = [super init];
+    if (self) {
+        _buffer = iTermCalloc(capacity, sizeof(screen_char_t));
+        memcpy(_buffer, data.bytes, length * sizeof(screen_char_t));
+        _size = capacity;
+    }
+    return self;
 }
 
 // Makes a copy
@@ -87,6 +107,20 @@
         return NO;
     }
     return _size == other->_size && !memcmp(_buffer, other->_buffer, _size * sizeof(screen_char_t));
+}
+
+- (BOOL)deepIsEqual:(id)object prefixLength:(int)length {
+    if (object == self) {
+        return YES;
+    }
+    iTermCharacterBuffer *other = [iTermCharacterBuffer castFrom:object];
+    if (!other) {
+        return NO;
+    }
+    if (length > _size || length > other->_size) {
+        return NO;
+    }
+    return !memcmp(_buffer, other->_buffer, length * sizeof(screen_char_t));
 }
 
 @end

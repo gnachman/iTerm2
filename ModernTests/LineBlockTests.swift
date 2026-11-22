@@ -1092,6 +1092,97 @@ class LineBlockTests: XCTestCase {
         }
     }
 
+    func testDictionarySavesOnlyUsedCharactersAndRestoresCapacity() {
+        // Given a mostly-empty block with a large capacity
+        let capacity: Int32 = 1000
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
+        XCTAssertTrue(block.appendLineString(makeLineString("Hello"), width: 80))
+        XCTAssertTrue(block.appendLineString(makeLineString("World!"), width: 80))
+        let used = Int(block.rawSpaceUsed())
+        XCTAssertEqual(used, 11)
+
+        // When serialized, only the used characters are saved...
+        let dict = block.dictionary()
+        guard let raw = dict["Raw Buffer v3"] as? Data else {
+            return XCTFail("Raw buffer missing")
+        }
+        XCTAssertEqual(raw.count, used * MemoryLayout<screen_char_t>.stride)
+
+        // ...but the restored block has the original capacity, so appends that fit before
+        // still fit.
+        guard let restored = LineBlock(dictionary: dict, absoluteBlockNumber: 1) else {
+            return XCTFail("Restore failed")
+        }
+        XCTAssertTrue(block.isEqual(restored))
+        let big = makeLineString(String(repeating: "x", count: Int(capacity) - used - 1))
+        XCTAssertTrue(restored.appendLineString(big, width: 80),
+                      "Restored block should have the original free space")
+        XCTAssertEqual(restored.screenCharArray(forRawLine: 0).stringValue, "Hello")
+        XCTAssertEqual(restored.screenCharArray(forRawLine: 1).stringValue, "World!")
+    }
+
+    func testDictionaryRestoresLegacyFullBuffer() {
+        // Older versions saved the whole buffer, including unused capacity.
+        let capacity: Int32 = 100
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
+        XCTAssertTrue(block.appendLineString(makeLineString("Legacy"), width: 80))
+        var dict = block.dictionary()
+        guard var raw = dict["Raw Buffer v3"] as? Data else {
+            return XCTFail("Raw buffer missing")
+        }
+        raw.append(Data(count: (Int(capacity) - Int(block.rawSpaceUsed())) * MemoryLayout<screen_char_t>.stride))
+        dict["Raw Buffer v3"] = raw
+
+        guard let restored = LineBlock(dictionary: dict, absoluteBlockNumber: 1) else {
+            return XCTFail("Restore failed")
+        }
+        XCTAssertTrue(block.isEqual(restored))
+        XCTAssertEqual(restored.screenCharArray(forRawLine: 0).stringValue, "Legacy")
+    }
+
+    func testDictionaryIgnoresImplausibleBufferSize() {
+        // A corrupt Buffer Size must not cause a huge allocation on restore.
+        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 1)
+        XCTAssertTrue(block.appendLineString(makeLineString("Corrupt"), width: 80))
+        var dict = block.dictionary()
+        dict["Buffer Size"] = NSNumber(value: Int32.max)
+
+        guard let restored = LineBlock(dictionary: dict, absoluteBlockNumber: 1) else {
+            return XCTFail("Restore failed")
+        }
+        XCTAssertEqual(restored.screenCharArray(forRawLine: 0).stringValue, "Corrupt")
+        XCTAssertEqual(restored.rawSpaceUsed(), block.rawSpaceUsed())
+        // The block is full (capacity == data length), so another line doesn't fit.
+        XCTAssertFalse(restored.appendLineString(makeLineString("More"), width: 80))
+    }
+
+    func testDictionaryReusesIdenticalConsecutiveMetadata() {
+        // Given many consecutive empty lines with identical metadata
+        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 1)
+        for _ in 0..<50 {
+            XCTAssertTrue(block.appendLineString(makeLineString(""), width: 80))
+        }
+        let dict = block.dictionary()
+        guard let entries = dict["Metadata"] as? [NSArray] else {
+            return XCTFail("Metadata missing")
+        }
+        XCTAssertEqual(entries.count, 50)
+
+        // Then they share one array instance, so NSKeyedArchiver encodes it once.
+        let distinct = Set(entries.map { ObjectIdentifier($0) })
+        XCTAssertEqual(distinct.count, 1)
+
+        let archived = try! NSKeyedArchiver.archivedData(withRootObject: dict, requiringSecureCoding: false)
+        XCTAssertLessThan(archived.count, 3000, "50 identical metadata entries should archive compactly")
+
+        // And it still round-trips.
+        guard let restored = LineBlock(dictionary: dict, absoluteBlockNumber: 1) else {
+            return XCTFail("Restore failed")
+        }
+        XCTAssertEqual(restored.numRawLines(), 50)
+        XCTAssertTrue(block.isEqual(restored))
+    }
+
     func testRestoreLegacy3611BidiMetadataDoesNotCrash() {
         // Regression test for a launch-blocking crash restoring 3.6.11 scrollback.
         // 3.6.11 shipped bidi display info before the lineAttribute metadata scalar
