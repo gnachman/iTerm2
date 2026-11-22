@@ -9,8 +9,7 @@
 //  nonnull; that returned nil, but the nullability sanitizer aborts on it.
 //  These tests pin the result for a nil path (nil) and that the cache keeps
 //  its behavior around such a call. They were written in Objective-C before
-//  the header was visible to Swift. See
-//  docs/swift-migration/units/iTermCacheableImage.md.
+//  the header was visible to Swift.
 //
 
 #import <XCTest/XCTest.h>

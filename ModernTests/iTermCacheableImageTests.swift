@@ -6,7 +6,6 @@
 //  session's custom tab icon. Written against the Objective-C class before
 //  its port to Swift and meant to run unchanged against the port: they use
 //  only the selector -imageAtPath:ofSize:flipped:, as Swift imports it.
-//  See docs/swift-migration/units/iTermCacheableImage.md.
 //
 //  Every fixture is generated here, in a fresh temporary directory. Nothing
 //  depends on the display's scale: sizes are those the cache returns, and
