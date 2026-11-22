@@ -1499,9 +1499,13 @@ static const int kMaxScreenRows = 4096;
     }
 }
 
-- (void)sendDarkModeDSR {
+- (NSData *)darkModeDSR {
     const int subcode = [_delegate terminalIsInDarkMode] ? 1 : 2;
-    [_delegate terminalSendReport:[self.output reportDECDSR:997 :subcode]];
+    return [self.output reportDECDSR:997 :subcode];
+}
+
+- (void)sendDarkModeDSR {
+    [_delegate terminalSendReport:[self darkModeDSR]];
 }
 
 static int VT100TerminalSaturatingAdd(int a, int b) {

@@ -379,6 +379,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)noSyncNeverAskAboutDEC2048Frustration;
 + (void)setNoSyncNeverAskAboutMouseReportingFrustration:(BOOL)value;
 + (void)setNoSyncNeverAskAboutDEC2048Frustration:(BOOL)value;
++ (BOOL)noSyncNeverAskAboutDEC2031Frustration;
++ (void)setNoSyncNeverAskAboutDEC2031Frustration:(BOOL)value;
 + (BOOL)noSyncNeverRemindPrefsChangesLostForFile;
 + (BOOL)noSyncNeverRemindPrefsChangesLostForUrl;
 + (BOOL)noSyncReplaceProfileWarning;

@@ -260,11 +260,13 @@ static NSString *const kSilenceAnnoyingBellAutomatically = @"NoSyncSilenceAnnoyi
 static NSString *const kTurnOffMouseReportingOnHostChangeUserDefaultsKey = @"NoSyncTurnOffMouseReportingOnHostChange";
 static NSString *const kTurnOffFocusReportingOnHostChangeUserDefaultsKey = @"NoSyncTurnOffFocusReportingOnHostChange";
 static NSString *const kTurnOffDEC2048OnHostChangeUserDefaultsKey = @"NoSyncTurnOffDEC2048OnHostChange";
+static NSString *const kTurnOffDEC2031OnHostChangeUserDefaultsKey = @"NoSyncTurnOffDEC2031OnHostChange";
 
 // This used to be only for host change but now it also runs off an expectation
 static NSString *const kTurnOffMouseReportingOnAutodetectAnnouncementIdentifier = @"TurnOffMouseReportingOnHostChange";
 static NSString *const kTurnOffFocusReportingOnHostChangeAnnouncementIdentifier = @"TurnOffFocusReportingOnHostChange";
 static NSString *const kTurnOffDEC2048OnAutodetectAnnouncementIdentifier = @"TurnOffDEC2048OnHostChange";
+static NSString *const kTurnOffDEC2031OnAutodetectAnnouncementIdentifier = @"TurnOffDEC2031OnHostChange";
 
 static NSString *const kShellIntegrationOutOfDateAnnouncementIdentifier =
     @"kShellIntegrationOutOfDateAnnouncementIdentifier";
@@ -422,7 +424,9 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
 
 typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     PTYSessionTurdTypeMouseReporting,
-    PTYSessionTurdTypeDEC2048
+    PTYSessionTurdTypeDEC2048,
+    // Unsolicited light/dark mode reports (CSI ? 997 ; Ps n).
+    PTYSessionTurdTypeDEC2031
 };
 
 @interface PTYSession(AppSwitching)<iTermAppSwitchingPreventionDetectorDelegate>
@@ -15302,6 +15306,20 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 }
 
+// We don't want a really short expectation because it'll fire when it oughtn't.
+static NSUInteger PTYSessionMinimumTurdLength(PTYSessionTurdType turdType) {
+    switch (turdType) {
+        case PTYSessionTurdTypeMouseReporting:
+        case PTYSessionTurdTypeDEC2048:
+            return 7;
+        case PTYSessionTurdTypeDEC2031:
+            // The dark mode report leaves only "997;1n" after the shell eats the
+            // ESC [ ?, but it's distinctive enough to match on.
+            return 6;
+    }
+    return 7;
+}
+
 - (void)detectTurdsForReportData:(NSData *)data type:(PTYSessionTurdType)turdType {
     DLog(@"Will report %@ (%@)", [data stringWithEncoding:NSUTF8StringEncoding], [[data stringWithEncoding:NSUTF8StringEncoding] hexEncodedString]);
     NSMutableData *modified = nil;
@@ -15343,8 +15361,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                length:0];
     }
     NSString *string = [modified stringWithEncoding:NSUTF8StringEncoding];
-    // We don't want a really short expectation because it'll fire when it oughtn't.
-    if (string.length > 6) {
+    if (string.length >= PTYSessionMinimumTurdLength(turdType)) {
         __weak __typeof(self) weakSelf = self;
         DLog(@"Expect %@ (%@), regex %@", string, string.hexEncodedString, string.it_escapedForRegex);
         _turdDetector = [_expect expectRegularExpression:[string it_escapedForRegex]
@@ -15389,6 +15406,19 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                                      id<VT100ScreenDelegate> delegate) {
                 if (terminal.sendResizeNotifications) {
                     [self turnOffDEC2048OrOffer:terminal];
+                }
+            }];
+            break;
+        case PTYSessionTurdTypeDEC2031:
+            DLog(@"begin");
+            if ([iTermAdvancedSettingsModel noSyncNeverAskAboutDEC2031Frustration]) {
+                return;
+            }
+            [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                     VT100ScreenMutableState *mutableState,
+                                                     id<VT100ScreenDelegate> delegate) {
+                if (terminal.sendUnsolicitedDarkModeDSR) {
+                    [self turnOffDEC2031OrOffer:terminal];
                 }
             }];
             break;
@@ -15647,6 +15677,21 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)notifyTerminalOfDarknessChange {
+    __block NSData *report = nil;
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        report = [[mutableState unsolicitedDarkModeReport] retain];
+    }];
+    [report autorelease];
+    if (!report) {
+        return;
+    }
+    // A program may have turned on DEC 2031 and exited without turning it off. If the shell
+    // echoes the report back, offer to turn it off (issue 13228). The expectation must be in
+    // place before the report is written so it can't miss a quick echo.
+    if (![iTermAdvancedSettingsModel noSyncNeverAskAboutDEC2031Frustration] &&
+        ![self hasAnnouncementWithIdentifier:kTurnOffDEC2031OnAutodetectAnnouncementIdentifier]) {
+        [self detectTurdsForReportData:report type:PTYSessionTurdTypeDEC2031];
+    }
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState darknessDidChange];
     }];
@@ -19599,6 +19644,21 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
     }
 }
 
+- (void)turnOffDEC2031OrOffer:(VT100Terminal *)terminal {
+    DLog(@"begin");
+    switch ([[self suppressionForTurdType:PTYSessionTurdTypeDEC2031] savedAlwaysOrNeverChoice]) {
+        case iTermSavedAlwaysOrNeverChoiceAsk:
+            [self offerToStopMakingTurds:PTYSessionTurdTypeDEC2031];
+            break;
+        case iTermSavedAlwaysOrNeverChoiceAlways:
+            DLog(@"Turn off DEC 2031 automatically");
+            terminal.sendUnsolicitedDarkModeDSR = NO;
+            break;
+        case iTermSavedAlwaysOrNeverChoiceNever:
+            break;
+    }
+}
+
 - (void)turnOffDEC2048OrOffer:(VT100Terminal *)terminal {
     DLog(@"begin");
     switch ([[self suppressionForTurdType:PTYSessionTurdTypeDEC2048] savedAlwaysOrNeverChoice]) {
@@ -19642,6 +19702,10 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
         if (terminal.sendResizeNotifications) {
             DLog(@"Turning off DEC 2048 mode");
             terminal.sendResizeNotifications = NO;
+        }
+        if (terminal.sendUnsolicitedDarkModeDSR) {
+            DLog(@"Turning off DEC 2031 mode");
+            terminal.sendUnsolicitedDarkModeDSR = NO;
         }
     }];
 }
@@ -19705,6 +19769,9 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
         case PTYSessionTurdTypeDEC2048:
             return [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:kTurnOffDEC2048OnHostChangeUserDefaultsKey
                                                                           title:NSLocalizedStringWithDefaultValue(@"PTYSession.ResizeReportingLeftOn", nil, [NSBundle mainBundle], @"Looks like resize reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?", @"Announcement offering to turn off resize reporting that was left enabled")];
+        case PTYSessionTurdTypeDEC2031:
+            return [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:kTurnOffDEC2031OnHostChangeUserDefaultsKey
+                                                                          title:NSLocalizedStringWithDefaultValue(@"PTYSession.DarkModeReportingLeftOn", nil, [NSBundle mainBundle], @"Looks like light/dark mode change reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?", @"Announcement offering to turn off reporting of light/dark color scheme changes (DEC mode 2031) that was left enabled")];
         case PTYSessionTurdTypeMouseReporting:
             return [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey
                                                                           title:NSLocalizedStringWithDefaultValue(@"PTYSession.MouseReportingLeftOn", nil, [NSBundle mainBundle], @"Looks like mouse reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?", @"Announcement offering to turn off mouse reporting that was left enabled")];
@@ -19718,6 +19785,9 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
     switch (turdType) {
         case PTYSessionTurdTypeDEC2048:
             identifier = kTurnOffDEC2048OnAutodetectAnnouncementIdentifier;
+            break;
+        case PTYSessionTurdTypeDEC2031:
+            identifier = kTurnOffDEC2031OnAutodetectAnnouncementIdentifier;
             break;
         case PTYSessionTurdTypeMouseReporting:
             identifier = kTurnOffMouseReportingOnAutodetectAnnouncementIdentifier;
@@ -19749,6 +19819,9 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
                     switch (turdType) {
                         case PTYSessionTurdTypeDEC2048:
                             terminal.sendResizeNotifications = NO;
+                            break;
+                        case PTYSessionTurdTypeDEC2031:
+                            terminal.sendUnsolicitedDarkModeDSR = NO;
                             break;
                         case PTYSessionTurdTypeMouseReporting:
                             terminal.mouseMode = MOUSE_REPORTING_NONE;

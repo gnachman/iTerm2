@@ -33,6 +33,14 @@ Improvements:
   13130.
 
 Bug Fixes:
+- When a program turned on light/dark mode
+  change reports and exited without turning
+  them off, text like 997;1n appeared at the
+  prompt each time you switched between light
+  and dark mode. iTerm2 now offers to turn the
+  reports off, and turns them off when shell
+  integration sees the host change. Issue
+  13228.
 - A floating Session Note could be drawn behind
   the Clippings panel. It now stays on top.
 - Saving settings to a custom folder and Export

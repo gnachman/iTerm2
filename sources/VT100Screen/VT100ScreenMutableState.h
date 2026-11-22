@@ -616,6 +616,10 @@ lengthExcludingInBandSignaling:(int)lengthExcludingInBandSignaling
 - (void)mutateColorMap:(void (^)(iTermColorMap *colorMap))block;
 - (void)darknessDidChange;
 
+// The report darknessDidChange would send, or nil if the terminal has not
+// asked for unsolicited dark mode reports (DEC mode 2031).
+- (nullable NSData *)unsolicitedDarkModeReport;
+
 #pragma mark - Cross-Thread Sync
 
 - (void)willSynchronize;

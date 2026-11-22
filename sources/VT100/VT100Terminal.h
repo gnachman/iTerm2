@@ -234,6 +234,9 @@ typedef NS_ENUM(NSUInteger, VT100TerminalResetReason) {
 
 - (void)sendDarkModeDSR;
 
+// The CSI ? 997 ; Ps n report that sendDarkModeDSR sends.
+- (NSData *)darkModeDSR;
+
 @property (nonatomic) iTermEmulationLevel emulationLevel;
 
 @end

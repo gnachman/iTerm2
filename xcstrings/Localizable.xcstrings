@@ -145392,6 +145392,270 @@
         }
       }
     },
+    "AdvancedSetting.noSyncNeverAskAboutDEC2031Frustration" : {
+      "comment" : "Advanced setting: noSyncNeverAskAboutDEC2031Frustration. DEC mode 2031 makes the terminal report changes between light and dark color schemes.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omet la notificació que pregunta si vols desactivar l’informe de canvi entre mode clar i fosc"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nezobrazovat oznámení s dotazem, zda chcete vypnout hlášení přepnutí mezi světlým a tmavým režimem"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skjul notifikationen, der spørger, om du vil slå rapportering af skift mellem lys og mørk tilstand fra"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Benachrichtigung unterdrücken, die fragt, ob Sie die Meldung von Wechseln zwischen hellem und dunklem Modus deaktivieren möchten"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Απόκρυψη της γνωστοποίησης που ρωτά αν θέλετε να απενεργοποιήσετε την αναφορά αλλαγής μεταξύ φωτεινής και σκοτεινής λειτουργίας"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Suppress the notification asking if you want to disable light/dark mode change reporting"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suppress the notification asking if you want to disable light/dark mode change reporting"
+          }
+        },
+        "en-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suppress the notification asking if you want to disable light/dark mode change reporting"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suppress the notification asking if you want to disable light/dark mode change reporting"
+          }
+        },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suppress the notification asking if you want to disable light/dark mode change reporting"
+          }
+        },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suppress the notification asking if you want to disable light/dark mode change reporting"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suprime la notificación que pregunta si quieres desactivar el informe de cambios entre modo claro y oscuro"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suprime la notificación que pregunta si quieres desactivar el reporte de cambios entre modo claro y oscuro"
+          }
+        },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suprime la notificación que pregunta si quieres desactivar el reporte de cambios entre modo claro y oscuro"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vaimenna ilmoitus, joka kysyy, haluatko poistaa vaalean ja tumman tilan vaihdon raportoinnin käytöstä"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactiver la notification demandant si vous voulez désactiver le signalement des passages entre les modes clair et sombre"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactiver la notification demandant si vous voulez désactiver le signalement des passages entre les modes clair et sombre"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "लाइट/डार्क मोड बदलाव रिपोर्टिंग अक्षम करने के बारे में पूछने वाली सूचना फिर से न दिखाएँ"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne prikazuj obavijest koja pita želite li onemogućiti izvještavanje o promjeni između svijetlog i tamnog načina"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A világos és sötét mód közötti váltás jelentésének letiltását felkínáló értesítés mellőzése"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jangan tampilkan lagi notifikasi yang menanyakan apakah Anda ingin menonaktifkan pelaporan perubahan mode terang/gelap"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disattiva la notifica che chiede se vuoi disabilitare la segnalazione del passaggio tra modalità chiara e scura"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ライト/ダークモード変更のレポートを無効にするかどうかを尋ねる通知を表示しない"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "라이트/다크 모드 변경 리포팅을 끌지 묻는 알림 표시 안 함"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jangan tunjukkan pemberitahuan lagi yang bertanya sama ada anda mahu menyahdayakan pelaporan perubahan mod cerah/gelap"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikke vis varselet som spør om du vil deaktivere rapportering av bytte mellom lys og mørk modus"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onderdruk de melding waarin wordt gevraagd of je de rapportage van wisselingen tussen lichte en donkere modus wilt uitschakelen"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie pokazuj powiadomienia z pytaniem, czy wyłączyć raportowanie zmiany trybu jasnego/ciemnego"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suprimir a notificação que pergunta se você deseja desativar o relato de mudança entre modo claro e escuro"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suprimir a notificação que pergunta se pretende desativar o relato de mudança entre modo claro e escuro"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nu mai afișați notificarea care întreabă dacă doriți să dezactivați raportarea schimbării între modul luminos și cel întunecat"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отключить уведомление с вопросом, хотите ли вы отключить сообщение о переключении между светлым и тёмным режимом"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nezobrazovať hlásenie s otázkou, či chcete vypnúť hlásenie prepnutia medzi svetlým a tmavým režimom"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne prikaži obvestila, ki vpraša, ali želite onemogočiti poročanje o preklopu med svetlim in temnim načinom"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dölj notisen som frågar om du vill avaktivera rapportering av byte mellan ljust och mörkt läge"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ไม่ต้องแสดงการแจ้งเตือนที่ถามว่าคุณต้องการปิดใช้การรายงานการสลับโหมดสว่าง/มืดหรือไม่"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Açık/koyu mod değişikliği raporlamasını devre dışı bırakmak isteyip istemediğinizi soran bildirimi bir daha gösterme"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не показувати сповіщення із запитанням, чи вимкнути звітування про перемикання між світлим і темним режимом"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không hiển thị thông báo hỏi có muốn tắt báo cáo chuyển đổi chế độ sáng/tối không"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不再显示询问是否要停用浅色/深色模式变更报告的通知"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不再顯示詢問是否停用淺色/深色模式變更回報的通知"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不再显示询问是否禁用浅色/深色模式变更报告的提示"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不再顯示詢問是否停用淺色/深色模式變更回報的通知"
+          }
+        }
+      }
+    },
     "AdvancedSetting.noSyncNeverAskAboutDEC2048Frustration" : {
       "comment" : "Advanced setting: noSyncNeverAskAboutDEC2048Frustration",
       "extractionState" : "extracted_with_value",
@@ -801349,6 +801613,270 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "某個 App 嘗試使用 DECRQCRA 讀取螢幕內容。要啟用此功能嗎？"
+          }
+        }
+      }
+    },
+    "PTYSession.DarkModeReportingLeftOn" : {
+      "comment" : "Announcement offering to turn off reporting of light/dark color scheme changes (DEC mode 2031) that was left enabled",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sembla que l’informe del canvi entre mode clar i fosc s’ha quedat activat perquè una sessió ssh ha acabat de manera inesperada o una app s’ha comportat malament. Vols desactivar-lo?"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vypadá to, že hlášení přepnutí mezi světlým a tmavým režimem zůstalo zapnuté po neočekávaném ukončení relace ssh nebo chybě aplikace. Vypnout ho?"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Det ser ud til, at rapportering af skift mellem lys og mørk tilstand blev ladt slået til, da en ssh-session sluttede uventet, eller et program fungerede forkert. Vil du slå den fra?"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anscheinend wurde die Meldung von Wechseln zwischen hellem und dunklem Modus aktiviert gelassen, als eine SSH-Sitzung unerwartet endete oder sich eine App fehlerhaft verhielt. Ausschalten?"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Φαίνεται ότι η αναφορά αλλαγής μεταξύ φωτεινής και σκοτεινής λειτουργίας έμεινε ενεργή όταν μια συνεδρία ssh τερματίστηκε απροσδόκητα ή μια εφαρμογή δεν λειτούργησε σωστά. Να απενεργοποιηθεί;"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Looks like light/dark mode change reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looks like light/dark mode change reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?"
+          }
+        },
+        "en-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looks like light/dark mode change reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looks like light/dark mode change reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?"
+          }
+        },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looks like light/dark mode change reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?"
+          }
+        },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looks like light/dark mode change reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parece que el informe de cambios entre modo claro y oscuro se quedó activado cuando una sesión ssh terminó de forma inesperada o una app se comportó mal. ¿Desactivarlo?"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parece que el reporte de cambios entre modo claro y oscuro se quedó activado cuando una sesión ssh terminó de forma inesperada o una app se comportó mal. ¿Desactivarlo?"
+          }
+        },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parece que el reporte de cambios entre modo claro y oscuro se quedó activado cuando una sesión ssh terminó de forma inesperada o una app se comportó mal. ¿Desactivarlo?"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vaalean ja tumman tilan vaihdon raportointi näyttää jääneen päälle, kun ssh-istunto päättyi odottamatta tai sovellus toimi virheellisesti. Laitetaanko se pois päältä?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il semble que le signalement des passages entre les modes clair et sombre soit resté activé après la fin inattendue d’une session ssh ou le dysfonctionnement d’une app. Le désactiver ?"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il semble que le signalement des passages entre les modes clair et sombre soit resté activé après la fin inattendue d’une session ssh ou le dysfonctionnement d’une app. Le désactiver?"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "लगता है कि ssh सत्र अनपेक्षित रूप से समाप्त होने या किसी ऐप के गलत व्यवहार करने पर लाइट/डार्क मोड बदलाव रिपोर्टिंग चालू रह गई। इसे बंद करें?"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izgleda da je izvještavanje o promjeni između svijetlog i tamnog načina ostalo uključeno nakon neočekivanog prekida ssh sesije ili neispravnog rada aplikacije. Isključiti ga?"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Úgy tűnik, a világos és sötét mód közötti váltás jelentése bekapcsolva maradt, miután egy ssh-munkamenet váratlanul véget ért, vagy egy alkalmazás hibásan működött. Kikapcsolja?"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sepertinya pelaporan perubahan mode terang/gelap tertinggal menyala saat sesi ssh berakhir tak terduga atau sebuah app bermasalah. Matikan?"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sembra che la segnalazione del passaggio tra modalità chiara e scura sia rimasta attiva dopo la fine inattesa di una sessione ssh o il malfunzionamento di un’app. Vuoi disattivarla?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSHセッションが予期せず終了したか、アプリが誤動作したため、ライト/ダークモード変更のレポートがオンのままになっているようです。オフにしますか？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH 세션이 예기치 않게 종료되었거나 앱이 오작동하여 라이트/다크 모드 변경 리포팅이 켜진 채로 남아 있는 것 같습니다. 끄겠습니까?"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nampaknya pelaporan perubahan mod cerah/gelap dibiarkan hidup apabila sesi ssh tamat tanpa dijangka atau sesuatu app bertingkah laku salah. Matikannya?"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Det ser ut til at rapportering av bytte mellom lys og mørk modus ble stående på da en ssh-økt tok uventet slutt eller et program oppførte seg feil. Vil du slå den av?"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Het lijkt erop dat rapportage van wisselingen tussen lichte en donkere modus is blijven aanstaan nadat een ssh-sessie onverwacht eindigde of een app zich misdroeg. Wil je het uitschakelen?"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wygląda na to, że raportowanie zmiany trybu jasnego/ciemnego pozostało włączone po nieoczekiwanym zakończeniu sesji ssh lub nieprawidłowym działaniu aplikacji. Wyłączyć je?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parece que o relatório de mudança entre modo claro e escuro ficou ativado quando uma sessão ssh terminou inesperadamente ou um app se comportou mal. Desativá-lo?"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parece que o relatório de mudança entre modo claro e escuro ficou ativado quando uma sessão ssh terminou inesperadamente ou uma app se comportou mal. Desativá-lo?"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se pare că raportarea schimbării între modul luminos și cel întunecat a rămas activată după ce o sesiune ssh s-a încheiat neașteptat sau o aplicație a funcționat defectuos. O dezactivați?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Похоже, отслеживание переключения между светлым и тёмным режимом осталось включённым после неожиданного завершения SSH-сессии или сбоя приложения. Отключить его?"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zdá sa, že hlásenie prepnutia medzi svetlým a tmavým režimom zostalo zapnuté po neočakávanom skončení relácie ssh alebo nesprávnom správaní aplikácie. Vypnúť ho?"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Videti je, da je poročanje o preklopu med svetlim in temnim načinom ostalo vklopljeno, ker se je seja SSH nepričakovano končala ali pa se je aplikacija nepravilno obnašala. Ga želite izklopiti?"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Det ser ut som att rapportering av byte mellan ljust och mörkt läge lämnades på när en ssh-session avslutades oväntat eller ett program betedde sig fel. Vill du stänga av den?"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ดูเหมือนว่าการรายงานการสลับโหมดสว่าง/มืดยังเปิดค้างอยู่ เมื่อเซสชั่น ssh สิ้นสุดลงโดยไม่คาดคิดหรือแอปทำงานผิดปกติ ต้องการปิดหรือไม่"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir ssh oturumu beklenmedik şekilde sona erdiğinde veya bir uygulama hatalı davrandığında açık/koyu mod değişikliği raporlama açık kalmış gibi görünüyor. Kapatılsın mı?"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Схоже, звітування про перемикання між світлим і темним режимом залишилося ввімкненим, бо сеанс ssh несподівано завершився або програма працювала неправильно. Вимкнути його?"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Có vẻ báo cáo chuyển đổi chế độ sáng/tối đã bị để bật khi một phiên ssh kết thúc bất ngờ hoặc một ứng dụng hoạt động sai. Tắt nó đi?"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "似乎在ssh会话意外结束或某个App运行异常时，浅色/深色模式变更报告被一直开着。要将其关闭吗？"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "看來在 ssh 工作階段意外結束或 App 行為異常時，淺色/深色模式變更回報被保持開啟。要將它關閉嗎？"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "看起来 ssh 会话意外结束或应用异常时，浅色/深色模式变更上报仍处于开启状态。要关闭吗？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "看來在 ssh 工作階段意外結束或 App 行為異常時，淺色/深色模式變更回報被保持開啟。要將它關閉嗎？"
           }
         }
       }
