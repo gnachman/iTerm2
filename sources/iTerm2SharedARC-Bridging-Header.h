@@ -20,7 +20,6 @@
 #import "iTermCursor.h"
 #import "iTermCache.h"
 #import "iTermColorMap.h"
-#import "iTermColorSuggester.h"
 #import "iTermCommandRunner.h"
 #import "iTermConfigGenerationTracker.h"
 #import "iTermData.h"

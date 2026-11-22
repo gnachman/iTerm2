@@ -101,7 +101,6 @@
 #import "iTermCharacterSource.h"
 #import "iTermColorMap.h"
 #import "iTermColorPresets.h"
-#import "iTermColorSuggester.h"
 #import "iTermCommandHistoryCommandUseMO+Additions.h"
 #import "iTermCommandRunnerPool.h"
 #import "iTermComposerManager.h"

@@ -1275,8 +1275,7 @@
 		A6024B7A254C93DA0036D6CF /* NSSet+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6024B78254C93DA0036D6CF /* NSSet+iTerm.m */; };
 		A6024B81254CE2000036D6CF /* iTermAddTriggerViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6024B7E254CE2000036D6CF /* iTermAddTriggerViewController.h */; };
 		A6024B82254CE2000036D6CF /* iTermAddTriggerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6024B7F254CE2000036D6CF /* iTermAddTriggerViewController.m */; };
-		A6024B88254D367E0036D6CF /* iTermColorSuggester.h in Headers */ = {isa = PBXBuildFile; fileRef = A6024B86254D367E0036D6CF /* iTermColorSuggester.h */; };
-		A6024B89254D367E0036D6CF /* iTermColorSuggester.m in Sources */ = {isa = PBXBuildFile; fileRef = A6024B87254D367E0036D6CF /* iTermColorSuggester.m */; };
+		04D4CFFD06ED18C50CA6244D /* iTermColorSuggester.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53C1CC1876665E69B48938C9 /* iTermColorSuggester.swift */; };
 		A60251681CCD3E5E009BABF1 /* NSURL+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60251661CCD3E5E009BABF1 /* NSURL+iTerm.h */; };
 		A602AAE32B0BCDB100E6C965 /* whitebox_logo@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A602AAE12B0BCDB000E6C965 /* whitebox_logo@2x.png */; };
 		A602AAE52B0BCDB100E6C965 /* whitebox_logo@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A602AAE12B0BCDB000E6C965 /* whitebox_logo@2x.png */; };
@@ -6329,8 +6328,7 @@
 		A6024B78254C93DA0036D6CF /* NSSet+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSSet+iTerm.m"; sourceTree = "<group>"; };
 		A6024B7E254CE2000036D6CF /* iTermAddTriggerViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAddTriggerViewController.h; sourceTree = "<group>"; };
 		A6024B7F254CE2000036D6CF /* iTermAddTriggerViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermAddTriggerViewController.m; sourceTree = "<group>"; };
-		A6024B86254D367E0036D6CF /* iTermColorSuggester.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermColorSuggester.h; sourceTree = "<group>"; };
-		A6024B87254D367E0036D6CF /* iTermColorSuggester.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermColorSuggester.m; sourceTree = "<group>"; };
+		53C1CC1876665E69B48938C9 /* iTermColorSuggester.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermColorSuggester.swift; sourceTree = "<group>"; };
 		A60251661CCD3E5E009BABF1 /* NSURL+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSURL+iTerm.h"; sourceTree = "<group>"; };
 		A60251671CCD3E5E009BABF1 /* NSURL+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSURL+iTerm.m"; sourceTree = "<group>"; };
 		A602AAE12B0BCDB000E6C965 /* whitebox_logo@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "whitebox_logo@2x.png"; path = "images/sponsors/whitebox_logo@2x.png"; sourceTree = "<group>"; };
@@ -14631,8 +14629,7 @@
 				53850902212FA8910039AFC7 /* iTermMetaFrustrationDetector.m */,
 				A6E180E823D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.h */,
 				A6E180E923D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.m */,
-				A6024B86254D367E0036D6CF /* iTermColorSuggester.h */,
-				A6024B87254D367E0036D6CF /* iTermColorSuggester.m */,
+				53C1CC1876665E69B48938C9 /* iTermColorSuggester.swift */,
 				A6936B471D2D756200521B04 /* iTermWindowOcclusionChangeMonitor.h */,
 				A6936B481D2D756200521B04 /* iTermWindowOcclusionChangeMonitor.m */,
 			);
@@ -16635,7 +16632,6 @@
 				5312269A20CB1D3A004831C6 /* iTermBuiltInFunctions.h in Headers */,
 				A62A77C22F987ABD007CAA0B /* SplitPanel.h in Headers */,
 				A61A85B924FC260700B03880 /* iTermTextViewContextMenuHelper.h in Headers */,
-				A6024B88254D367E0036D6CF /* iTermColorSuggester.h in Headers */,
 				A63F0A5A2BF435200096633F /* iTermSSHHelpers.h in Headers */,
 				A6A39EBB24B99AC000A64433 /* iTermGraphicsUtilities.h in Headers */,
 				A66719471DCE36C3000CE608 /* NSTableColumn+iTerm.h in Headers */,
@@ -19962,7 +19958,7 @@
 				A6CBB8042E091DE600B2CCCB /* iTermBrowserPasswordManagerHandler.swift in Sources */,
 				A69A260C21640F3F0091C16D /* iTermFlexibleView.m in Sources */,
 				A6D1A3EB2C7E99E100FECDF2 /* NSSize+iTerm.swift in Sources */,
-				A6024B89254D367E0036D6CF /* iTermColorSuggester.m in Sources */,
+				04D4CFFD06ED18C50CA6244D /* iTermColorSuggester.swift in Sources */,
 				A6D420A52E53999B00E8D3EF /* StreamingUpdate.swift in Sources */,
 				A6253D6929F89814007AEDE9 /* iTermDragHandleView.m in Sources */,
 				A656185A2D65A2780059CD35 /* ChatSearchResultsViewController.swift in Sources */,
