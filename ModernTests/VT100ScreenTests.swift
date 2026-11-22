@@ -2411,6 +2411,10 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
 
+    func screenHandlePulse(_ string: String?, depth: Int32) {
+
+    }
+
     func screenWillBeginSSHIntegration() {
 
     }

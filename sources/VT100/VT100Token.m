@@ -345,6 +345,7 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
                 @(SSH_RECOVERY_BOUNDARY):           @"SSH_RECOVERY_BOUNDARY",
                 @(SSH_SIDE_CHANNEL):                @"SSH_SIDE_CHANNEL",
                 @(SSH_IT2):                         @"SSH_IT2",
+                @(SSH_PULSE):                       @"SSH_PULSE",
                 
                 @(VT100_LITERAL):                   @"VT100_LITERAL",
                 @(VT100_GANG):                      @"VT100_GANG",

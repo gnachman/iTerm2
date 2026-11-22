@@ -914,6 +914,7 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // distinct conductors (even sharing an ssh display name) get distinct announcements and
 // cannot cross-cancel each other's prompt. Exposed for testing.
 + (NSString *)it2AuthorizationAnnouncementIdentifierForGUID:(NSString *)guid;
++ (NSString *)audioAuthorizationAnnouncementIdentifierForGUID:(NSString *)guid;
 
 #if DEBUG
 // Presses button `index` of the it2 authorization announcement for conductor `guid`, exactly as a

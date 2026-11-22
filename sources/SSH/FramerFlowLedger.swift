@@ -85,6 +85,8 @@ final class FramerFlowLedger: NSObject {
 
     /// The flow code of it2 data in `.arrived`.
     @objc static let it2Flow: Int32 = -1
+    /// The flow code of PulseAudio socket data in `.arrived`.
+    @objc static let pulseFlow: Int32 = -2
 
     /// Called on the thread that reads the session's output.
     @objc(frameDidArriveWithLength:sendMilliseconds:flags:flow:)

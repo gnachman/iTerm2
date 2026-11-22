@@ -31,6 +31,8 @@ final class FramerFlowController {
         case pane(Int32)
         /// Data for it2 commands.
         case it2
+        /// Data for PulseAudio streams.
+        case pulse
 
         var description: String {
             switch self {
@@ -40,6 +42,8 @@ final class FramerFlowController {
                 return "pane \(pid)"
             case .it2:
                 return "it2"
+            case .pulse:
+                return "pulse"
             }
         }
     }
@@ -68,6 +72,8 @@ final class FramerFlowController {
         var floorTime: TimeInterval = 0.025
         var floorMinimum = 2.0 * 1024
         var floorMaximum = 16.0 * 1024
+        /// Minimum window for `.pulse` audio so PCM streams never stall behind 8 KiB terminal floods.
+        var pulseMinimumWindow = 256.0 * 1024
         /// The baseline window L is at least this long.
         var minimumBaselineWindow: TimeInterval = 10
         /// A drain repeats after this many times the previous drain's length.
@@ -432,6 +438,10 @@ final class FramerFlowController {
         return min(max(rate * parameters.floorTime, parameters.floorMinimum), parameters.floorMaximum)
     }
 
+    private func minimumWindow(of flow: Flow, floor: Double) -> Double {
+        flow == .pulse ? max(floor, parameters.pulseMinimumWindow) : floor
+    }
+
     /// Readings measured to a carrying frame hold none of their own transmission.
     private var correctsForSize: Bool {
         measuresToCarrier != true
@@ -574,7 +584,7 @@ final class FramerFlowController {
         guard flows[flow] == nil else {
             return
         }
-        flows[flow] = FlowState(window: floor(now: now))
+        flows[flow] = FlowState(window: minimumWindow(of: flow, floor: floor(now: now)))
         if !isDraining {
             distribute(now: now, elapsed: 0)
             topUp(flow, now: now)
@@ -609,7 +619,7 @@ final class FramerFlowController {
         }
         if flows[flow] == nil {
             // Output of a flow nobody announced, such as a pane started before a recovery.
-            flows[flow] = FlowState(window: floor(now: now))
+            flows[flow] = FlowState(window: minimumWindow(of: flow, floor: floor(now: now)))
         }
         if !exempt {
             flows[flow]!.arrived += bytes
@@ -855,6 +865,8 @@ final class FramerFlowController {
                 return (0, 0)
             case .it2:
                 return (1, 0)
+            case .pulse:
+                return (1, 1)
             case .pane(let pid):
                 return (2, pid)
             }
@@ -879,6 +891,13 @@ final class FramerFlowController {
         let frames = deliveryRate(now: now, peeking: peeking).map { 2 * Double(busy * parameters.frameSize) / $0 } ?? 0
         return max(activeHorizon(now: now, peeking: peeking),
                    rttMin(now: now, peeking: peeking) + target(now: now, peeking: peeking)) + frames
+    }
+
+    /// Sends a credit top-up for `flow` immediately if not draining and its refill threshold is met.
+    func replenish(_ flow: Flow, now: TimeInterval) {
+        if !isDraining {
+            topUp(flow, now: now)
+        }
     }
 
     /// Grants the flow what its window allows, if that is worth a grant.
@@ -922,23 +941,28 @@ final class FramerFlowController {
         // sending adds at most the floor to the path before it counts as busy.
         var pool = window
         for flow in flows.keys where !active.contains(flow) {
-            flows[flow]!.window = floor
+            flows[flow]!.window = minimumWindow(of: flow, floor: floor)
         }
         // Water-filling: a flow capped below an equal share gets its cap, and the rest share
         // what it leaves.
-        var remaining = active.sorted { (flows[$0]!.cap ?? .infinity) < (flows[$1]!.cap ?? .infinity) }
+        var remaining = active.sorted { a, b in
+            let cap0 = flows[a]!.cap.map { max(minimumWindow(of: a, floor: floor), $0) } ?? .infinity
+            let cap1 = flows[b]!.cap.map { max(minimumWindow(of: b, floor: floor), $0) } ?? .infinity
+            return cap0 < cap1
+        }
         while let first = remaining.first {
             let share = pool / Double(remaining.count)
-            guard let cap = flows[first]!.cap, cap < share else {
+            let minFlow = minimumWindow(of: first, floor: floor)
+            guard let cap = flows[first]!.cap, max(minFlow, cap) < share else {
                 break
             }
-            let capped = max(floor, cap)
+            let capped = max(minFlow, cap)
             flows[first]!.window = capped
             pool -= capped
             remaining.removeFirst()
         }
         for flow in remaining {
-            flows[flow]!.window = max(floor, pool / Double(remaining.count))
+            flows[flow]!.window = max(minimumWindow(of: flow, floor: floor), pool / Double(remaining.count))
         }
     }
 
@@ -1038,15 +1062,27 @@ final class FramerFlowController {
     /// Whether far more credit is out than the window allows while frames queue far beyond the
     /// target: the path has slowed since the credit was granted.
     private func creditIsExcessive(now: TimeInterval) -> Bool {
-        let notArrived = Double(granted - arrived)
-        guard notArrived > parameters.excessCreditFactor * window,
-              notArrived - window >= parameters.excessCreditMinimum,
+        let pulseIdleUnarrived: Int
+        if let pulse = flows[.pulse], pulse.arrived == 0 {
+            pulseIdleUnarrived = max(0, pulse.granted - pulse.arrived)
+        } else {
+            pulseIdleUnarrived = 0
+        }
+        let notArrived = Double((granted - arrived) - pulseIdleUnarrived)
+        let effectiveWindow: Double
+        if let pulse = flows[.pulse], pulse.arrived > 0 {
+            effectiveWindow = max(window, flows.values.reduce(0) { $0 + $1.window })
+        } else {
+            effectiveWindow = window
+        }
+        guard notArrived > parameters.excessCreditFactor * effectiveWindow,
+              notArrived - effectiveWindow >= parameters.excessCreditMinimum,
               let dq = queueingDelay(now: now),
               dq > parameters.excessQueueingFactor * target(now: now) else {
             return false
         }
         record(String(format: "Queueing %.0f ms against a target of %.0f ms, with %.0f KB not arrived for a window of %.0f KB: drain to take back credit",
-                      dq * 1000, target(now: now) * 1000, notArrived / 1024, window / 1024), now: now)
+                      dq * 1000, target(now: now) * 1000, notArrived / 1024, effectiveWindow / 1024), now: now)
         return true
     }
 

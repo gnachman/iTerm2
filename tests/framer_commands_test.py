@@ -151,8 +151,8 @@ class DispatchTests(CommandTestCase):
     def test_every_handler_is_registered(self):
         self.assertEqual(sorted(self.framer.HANDLERS), sorted(
             "run login pane panesize send kill quit register deregister poll reset reset2 "
-            "autopoll recover save file eval getenv runpy it2listen it2send it2close flow panes "
-            "drain ping".split()))
+            "autopoll recover save file eval getenv runpy it2listen it2send it2close "
+            "pulselisten pulsesend pulseclose flow panes drain ping".split()))
 
     def test_identifiers_are_unique_and_alphanumeric(self):
         ids = [self.framer.makeid() for _ in range(500)]

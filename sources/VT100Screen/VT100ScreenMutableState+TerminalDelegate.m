@@ -4232,6 +4232,16 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
     } name:@"handle it2"];
 }
 
+- (void)terminalHandlePulse:(NSString *)string depth:(int)depth {
+    if (!string) {
+        return;
+    }
+    DLog(@"terminalHandlePulse:%@ depth:%@", string, @(depth));
+    [self addUrgentSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenHandlePulse:string depth:depth];
+    } name:@"handle pulse"];
+}
+
 - (void)terminalBeginSSHIntegeration:(NSString *)args {
     RLog(@"begin %@", args);
     if (args) {

@@ -639,6 +639,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)terminalHandleSSHTerminatePID:(int)pid withCode:(int)code depth:(int)depth;
 - (void)terminalHandleIT2:(nullable NSString *)string depth:(int)depth;
+- (void)terminalHandlePulse:(nullable NSString *)string depth:(int)depth;
 - (void)terminalUpdateEnv:(NSString *)value;
 - (void)terminalBeginSSHIntegeration:(nullable NSString *)args;
 - (void)terminalSendConductor:(NSString *)args;

@@ -94,6 +94,22 @@ IT2_WRITE_BUFFER_MAX = 4 * 1024 * 1024  # 4 MiB
 # demux reassembles the it2.py wire frames across chunks.
 IT2_READ_CHUNK = 1024
 
+# PulseAudio-over-ssh: unix-socket server that remote libpulse clients connect to via
+# PULSE_SERVER=unix:<path>, relayed over %pulse <connid> open|data <b64>|close frames.
+PULSE_SERVER_OBJ = None
+PULSE_CONNS = {}
+PULSE_LOCALLY_CLOSED = set()
+PULSE_SOCKET_PATH = None
+PULSE_LOCK_FD = None
+PULSE_LOCK_PATH = None
+PULSE_TMP_SOCKET_PREFIX = ".it2-pulse-"
+PULSE_SOCKET_TMPDIR = None
+PULSE_CURRENT_LINK_NAME = "current"
+PULSE_WRITE_BUFFER_MAX = 4 * 1024 * 1024  # 4 MiB
+# Keep OSC 134 frames modest to avoid quadratic accumulation in VT100ConductorParser while
+# remaining large enough for low-overhead PCM streaming.
+PULSE_READ_CHUNK = 4096
+
 def squash(i):
     a = list(map(chr, list(range(48,58))+list(range(65,91))+list(range(97,123))))
     b = len(a)
@@ -183,6 +199,7 @@ FLOW_FLAG_EXEMPT = 2
 # Flows. A pane's flow is its pid.
 FLOW_LEADER = 'leader'
 FLOW_IT2 = 'it2'
+FLOW_PULSE = 'pulse'
 
 def _flow_clock():
     """A clock that never jumps and counts time asleep, so its offset from iTerm2's stays put."""
@@ -259,7 +276,7 @@ class FlowControl:
 
     def controls(self, flow):
         """Whether reading from `flow` needs credit."""
-        return self.enabled and (self.version >= 2 or flow != FLOW_IT2)
+        return self.enabled and (self.version >= 2 or flow not in (FLOW_IT2, FLOW_PULSE))
 
     @property
     def credit(self):
@@ -442,6 +459,7 @@ PUMP_TASKS = set()
 FLOW_TICK_HANDLE = None
 ECHO_TIMER = None
 IT2_GATE = None
+PULSE_GATE = None
 
 def add_source(source):
     os.set_blocking(source.fd, False)
@@ -580,6 +598,11 @@ def flow_changed():
             IT2_GATE.set()
         else:
             IT2_GATE.clear()
+    if PULSE_GATE is not None:
+        if pulse_may_read():
+            PULSE_GATE.set()
+        else:
+            PULSE_GATE.clear()
     _schedule_flow_tick()
     if FLOW.has_credit():
         _schedule_pump()
@@ -625,8 +648,24 @@ async def it2_gate():
             IT2_GATE.set()
     await IT2_GATE.wait()
 
+def pulse_may_read():
+    """In version 1, pulse data is not under credit, except during a drain. In version 2 it reads
+    only with credit of its own."""
+    if FLOW.draining:
+        return False
+    return FLOW.budget(FLOW_PULSE) > 0
+
+async def pulse_gate():
+    """Waits until pulse data may be read."""
+    global PULSE_GATE
+    if PULSE_GATE is None:
+        PULSE_GATE = asyncio.Event()
+        if pulse_may_read():
+            PULSE_GATE.set()
+    await PULSE_GATE.wait()
+
 def _parse_flow(token):
-    if token in (FLOW_LEADER, FLOW_IT2):
+    if token in (FLOW_LEADER, FLOW_IT2, FLOW_PULSE):
         return token
     pid = int(token)
     if pid <= 0:
@@ -717,6 +756,8 @@ class Process:
         master, slave = pty.openpty()
         try:
             env = dict(os.environ)
+            if PULSE_SOCKET_PATH is not None:
+                env.setdefault("PULSE_SERVER", "unix:" + PULSE_SOCKET_PATH)
             env["LANG"] = "C"
             # A process group of its own lets a signal reach everything the shell started.
             # /bin/sh does not always exec a lone command (dash forks it), and signaling only
@@ -931,6 +972,8 @@ def login_shell_environment():
     PATH is known, before the shell's own login files run (which may reorder it: macOS's
     path_helper in /etc/csh.login does)."""
     env = dict(os.environ)
+    if PULSE_SOCKET_PATH is not None:
+        env.setdefault("PULSE_SERVER", "unix:" + PULSE_SOCKET_PATH)
     if not PUT_IT2_BIN_ON_PATH:
         return env
     bin_dir = os.path.join(os.path.expanduser("~"), ".iterm2", "bin")
@@ -2297,6 +2340,7 @@ async def handle_recover(identifier, args):
     # reader interleave that line into the recovery block.
     reset()
     _it2_close_connections()
+    _pulse_close_connections()
     FLOW.recover()
     flow_changed()
     send_esc(q, f'begin-recovery')
@@ -2470,6 +2514,7 @@ async def handle_quit(identifier, args):
             log('autopoll is now canceled')
         AUTOPOLL_TASK = None
     _it2_teardown_socket()
+    _pulse_teardown_socket()
     cancel_search()
     return True
 
@@ -2743,6 +2788,7 @@ def _on_terminating_signal(signum, frame):
     signal as before."""
     if os.getpid() == TERMINATING_SIGNAL_PID:
         _it2_remove_socket_files()
+        _pulse_remove_socket_files()
     signal.signal(signum, signal.SIG_DFL)
     os.kill(os.getpid(), signum)
 
@@ -2756,8 +2802,10 @@ def install_terminating_signal_handlers():
             signal.signal(sig, _on_terminating_signal)
 
 def _it2_is_tmp_socket_dir(socket_dir):
+    base = os.path.basename(socket_dir)
     return (os.path.dirname(socket_dir) == IT2_TMP_SOCKET_ROOT and
-            os.path.basename(socket_dir).startswith(IT2_TMP_SOCKET_PREFIX))
+            base.startswith(IT2_TMP_SOCKET_PREFIX) and
+            not base.startswith(PULSE_TMP_SOCKET_PREFIX))
 
 def _it2_sweep_stale_tmp_socket_dirs(keep_dir):
     """Remove /tmp/.it2-* directories of this user that no live framer uses, left by framers
@@ -2772,10 +2820,10 @@ def _it2_sweep_stale_tmp_socket_dirs(keep_dir):
     uid = os.getuid()
     now = time.time()
     for name in names:
-        if not name.startswith(IT2_TMP_SOCKET_PREFIX):
+        if not name.startswith(IT2_TMP_SOCKET_PREFIX) or name.startswith(PULSE_TMP_SOCKET_PREFIX):
             continue
         full = os.path.join(IT2_TMP_SOCKET_ROOT, name)
-        if full == keep_dir:
+        if full in (keep_dir, PULSE_SOCKET_TMPDIR):
             continue
         try:
             st = os.lstat(full)
@@ -3080,6 +3128,316 @@ async def handle_it2close(identifier, args):
     end(q, identifier, 0)
 
 
+def _pulse_teardown_socket():
+    """Close the PulseAudio unix server, unlink its socket and lock sidecar, and remove any
+    per-connection /tmp directory. Idempotent and safe from atexit."""
+    global PULSE_SERVER_OBJ, PULSE_SOCKET_PATH, PULSE_LOCK_FD, PULSE_LOCK_PATH, PULSE_SOCKET_TMPDIR
+    socket_path = PULSE_SOCKET_PATH
+    socket_dir = os.path.dirname(socket_path) if socket_path else None
+    if PULSE_SERVER_OBJ is not None:
+        with contextlib.suppress(Exception):
+            PULSE_SERVER_OBJ.close()
+        PULSE_SERVER_OBJ = None
+    if PULSE_SOCKET_PATH is not None:
+        with contextlib.suppress(OSError):
+            os.unlink(PULSE_SOCKET_PATH)
+        PULSE_SOCKET_PATH = None
+    if PULSE_LOCK_PATH is not None:
+        with contextlib.suppress(OSError):
+            os.unlink(PULSE_LOCK_PATH)
+        PULSE_LOCK_PATH = None
+    if PULSE_LOCK_FD is not None:
+        with contextlib.suppress(OSError):
+            os.close(PULSE_LOCK_FD)
+        PULSE_LOCK_FD = None
+    if PULSE_SOCKET_TMPDIR is not None:
+        with contextlib.suppress(OSError):
+            os.rmdir(PULSE_SOCKET_TMPDIR)
+        PULSE_SOCKET_TMPDIR = None
+    if socket_dir:
+        with contextlib.suppress(Exception):
+            _pulse_refresh_or_remove_current_link(socket_dir, removed_path=socket_path)
+
+atexit.register(_pulse_teardown_socket)
+
+def _pulse_remove_socket_files():
+    """Signal-safe unlink of the PulseAudio socket, lock file, and /tmp directory."""
+    for path in (PULSE_SOCKET_PATH, PULSE_LOCK_PATH):
+        if path is not None:
+            with contextlib.suppress(OSError):
+                os.unlink(path)
+    if PULSE_LOCK_FD is not None:
+        with contextlib.suppress(OSError):
+            os.close(PULSE_LOCK_FD)
+    if PULSE_SOCKET_TMPDIR is not None:
+        with contextlib.suppress(OSError):
+            os.rmdir(PULSE_SOCKET_TMPDIR)
+
+def _pulse_is_tmp_socket_dir(socket_dir):
+    return (os.path.dirname(socket_dir) == IT2_TMP_SOCKET_ROOT and
+            os.path.basename(socket_dir).startswith(PULSE_TMP_SOCKET_PREFIX))
+
+def _pulse_update_current_link(socket_path):
+    """Point `<socket_dir>/current` atomically at the active session's PulseAudio socket."""
+    socket_dir = os.path.dirname(socket_path)
+    if not socket_dir or _pulse_is_tmp_socket_dir(socket_dir):
+        return
+    link_path = os.path.join(socket_dir, PULSE_CURRENT_LINK_NAME)
+    tmp_path = os.path.join(socket_dir, ".%s.%d.tmp" % (PULSE_CURRENT_LINK_NAME, os.getpid()))
+    with contextlib.suppress(OSError):
+        os.unlink(tmp_path)
+    os.symlink(os.path.basename(socket_path), tmp_path)
+    os.replace(tmp_path, link_path)
+
+def _pulse_refresh_or_remove_current_link(socket_dir, removed_path=None):
+    """Keep `current` if its target is still alive, otherwise fail over to a live socket or unlink."""
+    if not socket_dir or _pulse_is_tmp_socket_dir(socket_dir):
+        return
+    link_path = os.path.join(socket_dir, PULSE_CURRENT_LINK_NAME)
+    if os.path.islink(link_path):
+        with contextlib.suppress(OSError):
+            target = os.readlink(link_path)
+            target_abs = target if os.path.isabs(target) else os.path.join(socket_dir, target)
+            if (removed_path is None or target_abs != removed_path) and os.path.exists(target_abs):
+                if _it2_lock_is_held(_it2_lock_path(target_abs)):
+                    return
+    try:
+        names = os.listdir(socket_dir)
+    except OSError:
+        return
+    live = []
+    for name in names:
+        if not (name.endswith(".sock") or name == "native"):
+            continue
+        full = os.path.join(socket_dir, name)
+        if removed_path is not None and full == removed_path:
+            continue
+        if not os.path.exists(full):
+            continue
+        if _it2_lock_is_held(_it2_lock_path(full)):
+            with contextlib.suppress(OSError):
+                live.append((os.lstat(full).st_mtime, full))
+    if live:
+        live.sort(key=lambda item: item[0], reverse=True)
+        _pulse_update_current_link(live[0][1])
+        return
+    with contextlib.suppress(OSError):
+        os.unlink(link_path)
+
+def _pulse_sweep_stale_sockets(socket_dir, keep):
+    """Reclaim leaked PulseAudio sockets (`*.sock` or `native`) whose `.lock` sidecar is unheld."""
+    try:
+        names = os.listdir(socket_dir)
+    except OSError:
+        return
+    for name in names:
+        full = os.path.join(socket_dir, name)
+        if (name.endswith(".sock") or name == "native") and full != keep:
+            if not _it2_lock_is_held(_it2_lock_path(full)):
+                with contextlib.suppress(OSError):
+                    os.unlink(full)
+                with contextlib.suppress(OSError):
+                    os.unlink(_it2_lock_path(full))
+        elif name.endswith(".lock") and (keep is None or full != _it2_lock_path(keep)):
+            sock_path = full[: -len(".lock")]
+            if (sock_path.endswith(".sock") or os.path.basename(sock_path) == "native"):
+                if not os.path.exists(sock_path) and not _it2_lock_is_held(full):
+                    with contextlib.suppress(OSError):
+                        os.unlink(full)
+    _pulse_refresh_or_remove_current_link(socket_dir, removed_path=None)
+
+def _pulse_sweep_stale_tmp_socket_dirs(keep_dir):
+    """Remove stale /tmp/.it2-pulse-* directories owned by this user."""
+    try:
+        names = os.listdir(IT2_TMP_SOCKET_ROOT)
+    except OSError:
+        return
+    uid = os.getuid()
+    now = time.time()
+    for name in names:
+        if not name.startswith(PULSE_TMP_SOCKET_PREFIX):
+            continue
+        full = os.path.join(IT2_TMP_SOCKET_ROOT, name)
+        if full in (keep_dir, IT2_SOCKET_TMPDIR):
+            continue
+        try:
+            st = os.lstat(full)
+        except OSError:
+            continue
+        if not stat.S_ISDIR(st.st_mode) or st.st_uid != uid:
+            continue
+        _pulse_sweep_stale_sockets(full, keep=None)
+        if now - st.st_mtime < IT2_TMP_SOCKET_DIR_GRACE:
+            continue
+        with contextlib.suppress(OSError):
+            os.rmdir(full)
+
+def _pulse_close_connections():
+    """Abort every accepted PulseAudio client connection on recovery while keeping the listener."""
+    global PULSE_CONNS
+    for connid, writer in list(PULSE_CONNS.items()):
+        PULSE_LOCALLY_CLOSED.add(connid)
+        with contextlib.suppress(Exception):
+            writer.transport.abort()
+    PULSE_CONNS = {}
+
+async def handle_pulselisten(identifier, args):
+    q = begin(identifier)
+    global PULSE_SERVER_OBJ
+    if PULSE_SERVER_OBJ is not None:
+        end(q, identifier, 0)
+        return
+    if not args:
+        end(q, identifier, 1)
+        return
+    path = args[0]
+    global PULSE_SOCKET_PATH, PULSE_LOCK_FD, PULSE_LOCK_PATH, PULSE_SOCKET_TMPDIR
+    acquired_lock = False
+    try:
+        socket_dir = os.path.dirname(path)
+        if socket_dir:
+            os.makedirs(socket_dir, mode=0o700, exist_ok=True)
+            if _pulse_is_tmp_socket_dir(socket_dir):
+                st = os.lstat(socket_dir)
+                if not stat.S_ISDIR(st.st_mode) or st.st_uid != os.getuid():
+                    raise OSError("%s is not a directory of this user's" % socket_dir)
+            os.chmod(socket_dir, stat.S_IRWXU)
+            _pulse_sweep_stale_sockets(socket_dir, keep=path)
+            if _pulse_is_tmp_socket_dir(socket_dir):
+                PULSE_SOCKET_TMPDIR = socket_dir
+                _pulse_sweep_stale_tmp_socket_dirs(keep_dir=socket_dir)
+        lock_path = _it2_lock_path(path)
+        lock_fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            os.close(lock_fd)
+            raise
+        PULSE_LOCK_FD = lock_fd
+        PULSE_LOCK_PATH = lock_path
+        acquired_lock = True
+        with contextlib.suppress(OSError):
+            os.unlink(path)
+        old_umask = os.umask(0o077)
+        try:
+            PULSE_SERVER_OBJ = await asyncio.start_unix_server(handle_pulse_connection, path=path)
+        finally:
+            os.umask(old_umask)
+        os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
+        PULSE_SOCKET_PATH = path
+        _pulse_update_current_link(path)
+        end(q, identifier, 0)
+    except Exception as e:
+        log(f'handle_pulselisten failed: {e}')
+        if PULSE_SERVER_OBJ is not None:
+            with contextlib.suppress(Exception):
+                PULSE_SERVER_OBJ.close()
+            PULSE_SERVER_OBJ = None
+        PULSE_SOCKET_PATH = None
+        if acquired_lock:
+            with contextlib.suppress(OSError):
+                os.unlink(path)
+            if PULSE_LOCK_FD is not None:
+                with contextlib.suppress(OSError):
+                    os.close(PULSE_LOCK_FD)
+                PULSE_LOCK_FD = None
+            with contextlib.suppress(OSError):
+                os.unlink(_it2_lock_path(path))
+            PULSE_LOCK_PATH = None
+        if PULSE_SOCKET_TMPDIR is not None:
+            with contextlib.suppress(OSError):
+                os.rmdir(PULSE_SOCKET_TMPDIR)
+            PULSE_SOCKET_TMPDIR = None
+        end(q, identifier, 1)
+
+async def handle_pulse_connection(reader, writer):
+    connid = makeid()
+    try:
+        PULSE_CONNS[connid] = writer
+        q = lock()
+        send_esc(q, f'%pulse {connid} open')
+        unlock(q)
+        held = b''
+        while True:
+            if not held and FLOW.controls(FLOW_PULSE) and not pulse_may_read():
+                held = await reader.read(1)
+                if not held:
+                    break
+            await pulse_gate()
+            if held:
+                data, held = held, b''
+            else:
+                size = PULSE_READ_CHUNK
+                if FLOW.controls(FLOW_PULSE):
+                    size = min(size, max(1, FLOW.budget(FLOW_PULSE)))
+                data = await reader.read(size)
+                if not data:
+                    break
+            FLOW.spend(len(data), FLOW_PULSE)
+            q = lock()
+            send_esc(q, f'%pulse {connid} data {base64.b64encode(data).decode("ascii")}{flow_suffix(FLOW_PULSE)}')
+            unlock(q)
+            if FLOW.controls(FLOW_PULSE):
+                flow_changed()
+    except Exception as e:
+        log(f'pulse connection {connid}: {e}')
+    finally:
+        PULSE_CONNS.pop(connid, None)
+        locally_closed = connid in PULSE_LOCALLY_CLOSED
+        PULSE_LOCALLY_CLOSED.discard(connid)
+        if not locally_closed:
+            with contextlib.suppress(Exception):
+                q = lock()
+                send_esc(q, f'%pulse {connid} close')
+                unlock(q)
+        with contextlib.suppress(Exception):
+            writer.close()
+
+async def handle_pulsesend(identifier, args):
+    q = begin(identifier)
+    if len(args) < 2 or args[0] not in PULSE_CONNS:
+        end(q, identifier, 1)
+        return
+    writer = PULSE_CONNS[args[0]]
+    try:
+        buffered = writer.transport.get_write_buffer_size()
+    except Exception:
+        buffered = 0
+    if buffered > PULSE_WRITE_BUFFER_MAX:
+        log(f'handle_pulsesend: write buffer {buffered} over cap for {args[0]}; dropping connection')
+        PULSE_CONNS.pop(args[0], None)
+        with contextlib.suppress(Exception):
+            writer.transport.abort()
+        end(q, identifier, 1)
+        return
+    try:
+        payload = base64.b64decode(args[1])
+    except (ValueError, TypeError) as e:
+        log(f'handle_pulsesend: bad base64 for {args[0]}: {e}; dropping this frame')
+        end(q, identifier, 1)
+        return
+    try:
+        writer.write(payload)
+    except Exception as e:
+        log(f'handle_pulsesend: {e}')
+        PULSE_CONNS.pop(args[0], None)
+        with contextlib.suppress(Exception):
+            writer.transport.abort()
+        end(q, identifier, 1)
+        return
+    end(q, identifier, 0)
+
+async def handle_pulseclose(identifier, args):
+    q = begin(identifier)
+    connid = args[0] if args else None
+    writer = PULSE_CONNS.pop(connid, None) if connid is not None else None
+    if writer is not None:
+        PULSE_LOCALLY_CLOSED.add(connid)
+        with contextlib.suppress(Exception):
+            writer.transport.abort()
+    end(q, identifier, 0)
+
+
 HANDLERS = {
     "run": handle_run,
     "login": handle_login,
@@ -3104,6 +3462,9 @@ HANDLERS = {
     "it2listen": handle_it2listen,
     "it2send": handle_it2send,
     "it2close": handle_it2close,
+    "pulselisten": handle_pulselisten,
+    "pulsesend": handle_pulsesend,
+    "pulseclose": handle_pulseclose,
     "flow": handle_flow,
     "drain": handle_drain,
     "ping": handle_ping
