@@ -160,7 +160,9 @@
     if (registration) {
         [registration.weakSessions removeObjectAtIndex:index];
     }
-    if (registration.weakSessions.count == 0) {
+    // registration is nil when the session has no hotkey. -removeObject: is
+    // declared nonnull and does nothing with nil, as does -unregister.
+    if (registration && registration.weakSessions.count == 0) {
         [registration unregister];
         [_registrations removeObject:registration];
     }

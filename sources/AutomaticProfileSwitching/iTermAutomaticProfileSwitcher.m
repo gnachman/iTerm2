@@ -159,13 +159,17 @@ expressionValueProvider:(nullable id<iTermAutomaticProfileSwitchingExpressionVal
         return;
     }
     NSString *guid = [self.delegate automaticProfileSwitcherCurrentProfile][KEY_GUID];
+    // The last values are nil before the first update and whenever a field
+    // was unknown, and guid is nil without a current profile.
+    // -isEqualToString: is declared nonnull and returns NO for nil, so a nil
+    // argument counts as a change, as before.
     if (!_dirty &&
-        [hostname isEqualToString:_lastHostname] &&
-        [username isEqualToString:_lastUsername] &&
-        [path isEqualToString:_lastPath] &&
-        [job isEqualToString:_lastJob] &&
-        [commandLine isEqualToString:_lastCommandLine] &&
-        [_lastProfileGUID isEqualToString:guid]) {
+        _lastHostname && [hostname isEqualToString:_lastHostname] &&
+        _lastUsername && [username isEqualToString:_lastUsername] &&
+        _lastPath && [path isEqualToString:_lastPath] &&
+        _lastJob && [job isEqualToString:_lastJob] &&
+        _lastCommandLine && [commandLine isEqualToString:_lastCommandLine] &&
+        guid && [_lastProfileGUID isEqualToString:guid]) {
         APSLog(@"Nothing changed.");
         return;
     }

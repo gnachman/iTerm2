@@ -270,7 +270,9 @@ NSString *const iTermBroadcastDomainsDidChangeNotification = @"iTermBroadcastDom
 - (BOOL)shouldBroadcastToSessionWithID:(NSString *)sessionID
                    fromSessionWithGUID:(NSString *)sender {
     NSSet<NSString *> *domain = [self domainContainingSession:sessionID];
-    if ([self.sources intersectsSet:domain] && sender != nil) {
+    // domain is nil when the session is in no broadcast domain.
+    // -intersectsSet: is declared nonnull and returns NO for nil.
+    if (domain && [self.sources intersectsSet:domain] && sender != nil) {
         // This domain has a broadcast source.
         if (![self.sources containsObject:sender]) {
             // This sender is not the broadcast source.

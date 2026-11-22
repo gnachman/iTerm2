@@ -101,7 +101,9 @@ NSString *const iTermDrawInCellIndexAttribute = @"iTermDrawInCellIndexAttribute"
 }
 
 - (void)setAttributes:(NSDictionary *)attributes {
-    if ([attributes isEqualToDictionary:_attributes]) {
+    // _attributes is nil until the first attributes are set.
+    // -isEqualToDictionary: is declared nonnull and returns NO for nil.
+    if (_attributes && [attributes isEqualToDictionary:_attributes]) {
         return;
     }
     if (self.length > 0) {

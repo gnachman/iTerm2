@@ -45,7 +45,11 @@ static NSDictionary<NSString *, NSDictionary *> *gTouchBarMappings;
     gTouchBarMappings = [[iTermUserDefaults userDefaults] objectForKey:@"GlobalTouchBarMap"];
     if (!gTouchBarMappings) {
         NSString *plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"DefaultGlobalTouchBarMap" ofType:@"plist"];
-        gTouchBarMappings = [NSDictionary dictionaryWithContentsOfFile:plistFile] ?: @{};
+        // plistFile is nil when the bundle lacks the resource (a test
+        // bundle, for example). -dictionaryWithContentsOfFile: is declared
+        // nonnull and returns nil for nil.
+        NSDictionary *defaultMappings = plistFile ? [NSDictionary dictionaryWithContentsOfFile:plistFile] : nil;
+        gTouchBarMappings = defaultMappings ?: @{};
     }
 }
 

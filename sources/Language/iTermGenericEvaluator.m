@@ -211,7 +211,11 @@
         [strongSelf installReferencesFromScope:scope
                                     generation:generation
                                   keepExisting:NO];
-        [strongSelf->_missingFunctions unionSet:missing];
+        // -[iTermExpressionEvaluator missingValues] is nullable, and
+        // -unionSet: is declared nonnull. With nil it would do nothing.
+        if (missing) {
+            [strongSelf->_missingFunctions unionSet:missing];
+        }
         if (error) {
             NSString *message =
             [NSString stringWithFormat:@"Invocation of “%@” failed with error:\n%@\n",

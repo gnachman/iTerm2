@@ -43,7 +43,10 @@
     entry.action = action;
     entry.guid = [[profile objectForKey:KEY_GUID] copy];
     entry.model = model;
-    entry.tags = [[NSArray alloc] initWithArray:[profile objectForKey:KEY_TAGS]];
+    // A profile with no tags has no KEY_TAGS. -initWithArray: is declared
+    // nonnull and gives the same empty array for nil as -init does.
+    NSArray *tags = [profile objectForKey:KEY_TAGS];
+    entry.tags = tags ? [[NSArray alloc] initWithArray:tags] : [[NSArray alloc] init];
     return entry;
 }
 

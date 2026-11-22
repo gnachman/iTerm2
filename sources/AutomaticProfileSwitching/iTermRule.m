@@ -194,7 +194,9 @@
         }
     }
 
-    if ([username isEqualToString:self.username]) {
+    // A rule without a user name has a nil username. -isEqualToString: is
+    // declared nonnull and returns NO for nil.
+    if (self.username && [username isEqualToString:self.username]) {
         score += kUserExactMatchScore;
     } else if (self.username.length) {
         return 0;

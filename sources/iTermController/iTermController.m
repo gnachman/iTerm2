@@ -1129,6 +1129,12 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 }
 
 - (NSUInteger)indexOfTerminal:(PseudoTerminal*)terminal {
+    if (!terminal) {
+        // A session with no window passes nil. -indexOfObject: is declared
+        // nonnull and returns NSNotFound for nil; after -cleanUpIfNeeded the
+        // array is nil and the message gave 0.
+        return _terminalWindows ? NSNotFound : 0;
+    }
     return [_terminalWindows indexOfObject:terminal];
 }
 

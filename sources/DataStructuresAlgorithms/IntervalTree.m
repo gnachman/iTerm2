@@ -1053,13 +1053,16 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
     }
     long long bestLimit = MIN(MIN(selfLimit, leftLimit), rightLimit);
     NSMutableArray *result = [NSMutableArray array];
-    if (selfLimit == bestLimit) {
+    // A subtree that was not searched, or a node with no object at the best
+    // limit, has a nil array. -addObjectsFromArray: is declared nonnull and
+    // does nothing with nil.
+    if (selfLimit == bestLimit && myObjects) {
         [result addObjectsFromArray:myObjects];
     }
-    if (leftLimit == bestLimit) {
+    if (leftLimit == bestLimit && leftObjects) {
         [result addObjectsFromArray:leftObjects];
     }
-    if (rightLimit == bestLimit) {
+    if (rightLimit == bestLimit && rightObjects) {
         [result addObjectsFromArray:rightObjects];
     }
 
@@ -1140,13 +1143,16 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
     long long bestLimit = MAX(MAX(leftLimit, rightLimit), myLimit);
 
     NSMutableArray *result = [NSMutableArray array];
-    if (myLimit == bestLimit) {
+    // A subtree that was not searched, or a node with no object at the best
+    // limit, has a nil array. -addObjectsFromArray: is declared nonnull and
+    // does nothing with nil.
+    if (myLimit == bestLimit && myObjects) {
         [result addObjectsFromArray:myObjects];
     }
-    if (leftLimit == bestLimit) {
+    if (leftLimit == bestLimit && leftObjects) {
         [result addObjectsFromArray:leftObjects];
     }
-    if (rightLimit == bestLimit) {
+    if (rightLimit == bestLimit && rightObjects) {
         [result addObjectsFromArray:rightObjects];
     }
     return result.count ? result : nil;

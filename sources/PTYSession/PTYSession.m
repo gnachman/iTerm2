@@ -7067,7 +7067,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (void)setSubtitleFormat:(NSString *)subtitleFormat {
-    if ([subtitleFormat isEqualToString:_subtitleSwiftyString.swiftyString]) {
+    // The current format is nil the first time, before there is a subtitle
+    // string. -isEqualToString: is declared nonnull and returns NO for nil.
+    NSString *currentFormat = _subtitleSwiftyString.swiftyString;
+    if (currentFormat && [subtitleFormat isEqualToString:currentFormat]) {
         return;
     }
     __weak __typeof(self) weakSelf = self;
@@ -7094,7 +7097,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (void)setBadgeFormat:(NSString *)badgeFormat {
-    if ([badgeFormat isEqualToString:_badgeSwiftyString.swiftyString]) {
+    // The current format is nil the first time, before there is a badge
+    // string. -isEqualToString: is declared nonnull and returns NO for nil.
+    NSString *currentFormat = _badgeSwiftyString.swiftyString;
+    if (currentFormat && [badgeFormat isEqualToString:currentFormat]) {
         return;
     }
     __weak __typeof(self) weakSelf = self;

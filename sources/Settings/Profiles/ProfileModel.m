@@ -636,17 +636,41 @@ static NSInteger gLessLoggingCount;
     }
 }
 
+// Each helper fetches a's value before b's, as the message it replaces
+// evaluated its receiver before its argument. A field absent from b (or from
+// both) differs: -isEqualToString: and -isEqualToArray: are declared nonnull
+// and return NO for nil on every Foundation string and array, and so does a
+// nil receiver. A value of another class (a malformed profile) still gets the
+// message with nil, as before, whatever that does.
+static BOOL iTermProfileStringFieldDiffers(Profile *a, Profile *b, NSString *key) {
+    id lhs = [a objectForKey:key];
+    id rhs = [b objectForKey:key];
+    if (!rhs && (!lhs || [lhs isKindOfClass:[NSString class]])) {
+        return YES;
+    }
+    return ![lhs isEqualToString:rhs];
+}
+
+static BOOL iTermProfileArrayFieldDiffers(Profile *a, Profile *b, NSString *key) {
+    id lhs = [a objectForKey:key];
+    id rhs = [b objectForKey:key];
+    if (!rhs && (!lhs || [lhs isKindOfClass:[NSArray class]])) {
+        return YES;
+    }
+    return ![lhs isEqualToArray:rhs];
+}
+
 // A change in bookmarks is journal-worthy only if the name, shortcut, tags, or guid changes.
 - (BOOL)bookmark:(Profile*)a differsJournalablyFrom:(Profile*)b
 {
     // Any field that is shown in a view (profiles window, menus, bookmark list views, etc.) must
     // be a criteria for journalability for it to be updated immediately.
-    if (![[a objectForKey:KEY_NAME] isEqualToString:[b objectForKey:KEY_NAME]] ||
-        ![[a objectForKey:KEY_SHORTCUT] isEqualToString:[b objectForKey:KEY_SHORTCUT]] ||
-        ![[a objectForKey:KEY_TAGS] isEqualToArray:[b objectForKey:KEY_TAGS]] ||
-        ![[a objectForKey:KEY_GUID] isEqualToString:[b objectForKey:KEY_GUID]] ||
-        ![[a objectForKey:KEY_COMMAND_LINE] isEqualToString:[b objectForKey:KEY_COMMAND_LINE]] ||
-        ![[a objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:[b objectForKey:KEY_CUSTOM_COMMAND]]) {
+    if (iTermProfileStringFieldDiffers(a, b, KEY_NAME) ||
+        iTermProfileStringFieldDiffers(a, b, KEY_SHORTCUT) ||
+        iTermProfileArrayFieldDiffers(a, b, KEY_TAGS) ||
+        iTermProfileStringFieldDiffers(a, b, KEY_GUID) ||
+        iTermProfileStringFieldDiffers(a, b, KEY_COMMAND_LINE) ||
+        iTermProfileStringFieldDiffers(a, b, KEY_CUSTOM_COMMAND)) {
         return YES;
     } else {
         return NO;
@@ -843,6 +867,11 @@ static NSInteger gLessLoggingCount;
 
 - (Profile*)bookmarkWithGuid:(NSString*)guid
 {
+    if (!guid) {
+        // -isEqualToString: is declared nonnull. With nil it returns NO for
+        // every profile, so the search below would find nothing.
+        return nil;
+    }
     int count = [bookmarks_ count];
     for (int i = 0; i < count; ++i) {
         if ([[[bookmarks_ objectAtIndex:i] objectForKey:KEY_GUID] isEqualToString:guid]) {

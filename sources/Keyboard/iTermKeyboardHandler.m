@@ -66,7 +66,12 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
 }
 
 - (nullable NSString *)stringForEventWithoutSideEffects:(NSEvent *)event encoding:(NSStringEncoding)encoding {
-    return [[NSString alloc] initWithData:[_keyMapper keyMapperDataForPostCocoaEvent:event] encoding:encoding];
+    // The data is nil when there is no key mapper (while a session is
+    // created, for example). -initWithData:encoding: is declared nonnull; it
+    // gives the same empty string for nil as for empty data, in every
+    // available encoding.
+    NSData *data = [_keyMapper keyMapperDataForPostCocoaEvent:event] ?: [NSData data];
+    return [[NSString alloc] initWithData:data encoding:encoding];
 }
 
 // I haven't figured out how to test this code automatically, but a few things to try:

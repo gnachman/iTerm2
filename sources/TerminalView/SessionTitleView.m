@@ -251,7 +251,9 @@ static const CGFloat kLockButtonSize = 14;
 }
 
 - (void)setTitle:(NSString *)title {
-    if ([title isEqualToString:title_]) {
+    // title_ is nil until the first title is set. -isEqualToString: is
+    // declared nonnull and returns NO for nil.
+    if (title_ && [title isEqualToString:title_]) {
         return;
     }
     title_ = [title copy];

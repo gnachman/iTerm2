@@ -349,7 +349,12 @@ static NSMutableArray *iTermExpressionEvaluatorGlobalStore(void) {
             dispatch_group_enter(group);
         }
         [innerEvaluator evaluateWithTimeout:timeout sideEffectsAllowed:sideEffectsAllowed completion:^(iTermExpressionEvaluator *evaluator) {
-            [missingFunctionSignatures unionSet:evaluator.missingValues];
+            // missingValues is nullable, and -unionSet: is declared nonnull.
+            // With nil it would do nothing.
+            NSSet<NSString *> *innerMissing = evaluator.missingValues;
+            if (innerMissing) {
+                [missingFunctionSignatures unionSet:innerMissing];
+            }
             if (evaluator.error) {
                 firstError = evaluator.error;
                 [self logError:evaluator.error invocation:invocation];
@@ -423,7 +428,12 @@ static NSMutableArray *iTermExpressionEvaluatorGlobalStore(void) {
                                  completion:^(iTermExpressionEvaluator *evaluator) {
             assert(!alreadyRun);
             alreadyRun = YES;
-            [missing unionSet:evaluator.missingValues];
+            // missingValues is nullable, and -unionSet: is declared nonnull.
+            // With nil it would do nothing.
+            NSSet<NSString *> *innerMissing = evaluator.missingValues;
+            if (innerMissing) {
+                [missing unionSet:innerMissing];
+            }
             if (evaluator.error) {
                 errorOut = evaluator.error;
             } else {

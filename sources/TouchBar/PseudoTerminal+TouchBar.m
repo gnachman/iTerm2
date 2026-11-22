@@ -139,7 +139,15 @@ ITERM_IGNORE_PARTIAL_BEGIN
     }
     if (IsTouchBarAvailable()) {
         NSTouchBar *replacement = [self amendTouchBar:[self makeGenericTouchBar]];
-        if (force || ![replacement.customizationIdentifier isEqualToString:self.touchBar.customizationIdentifier]) {
+        // The current identifier is nil before the window has a touch bar.
+        // -isEqualToString: is declared nonnull and returns NO for nil.
+        BOOL replace = force;
+        if (!replace) {
+            NSString *currentIdentifier = self.touchBar.customizationIdentifier;
+            replace = (!currentIdentifier ||
+                       ![replacement.customizationIdentifier isEqualToString:currentIdentifier]);
+        }
+        if (replace) {
             self.touchBar = replacement;
         } else {
             NSScrubber *scrubber = (NSScrubber *)self.tabsTouchBarItem.view;

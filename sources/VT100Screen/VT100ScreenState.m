@@ -662,6 +662,11 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
 }
 
 - (iTermBlockMark *)blockMarkWithID:(NSString *)blockID {
+    if (!blockID) {
+        // A line in no block passes nil. -objectForKeyedSubscript: is declared
+        // nonnull and finds nothing for nil, so this returned nil below.
+        return nil;
+    }
     NSNumber *n = self.blockStartAbsLine[blockID];
     if (!n) {
         return nil;

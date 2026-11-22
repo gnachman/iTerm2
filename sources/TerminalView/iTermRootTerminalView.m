@@ -2490,7 +2490,12 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
             [_statusBarViewController.view removeFromSuperview];
         }
         if (statusBarViewController.view.superview != _statusBarContainer) {
-            [_statusBarContainer addSubview:statusBarViewController.view];
+            // There is no view controller when no status bar is shown. -addSubview:
+            // is declared nonnull and does nothing with nil.
+            NSView *statusBarView = statusBarViewController.view;
+            if (statusBarView) {
+                [_statusBarContainer addSubview:statusBarView];
+            }
             statusBarViewController.view.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
             statusBarViewController.view.frame = _statusBarContainer.bounds;
         }
@@ -2525,7 +2530,12 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
             [_statusBarViewController.view removeFromSuperview];
         }
         if (statusBarViewController.view.superview != _statusBarContainer) {
-            [_statusBarContainer addSubview:statusBarViewController.view];
+            // There is no view controller when no status bar is shown. -addSubview:
+            // is declared nonnull and does nothing with nil.
+            NSView *statusBarView = statusBarViewController.view;
+            if (statusBarView) {
+                [_statusBarContainer addSubview:statusBarView];
+            }
             statusBarViewController.view.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
             statusBarViewController.view.frame = _statusBarContainer.bounds;
         }

@@ -611,7 +611,13 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                                 sideEffectsAllowed:sideEffectsAllowed
                                         completion:^(NSError *error, id value, NSSet<NSString *> *innerMissing) {
                                             [weakSelf didEvaluateArgument:key];
-                                            [missing unionSet:innerMissing];
+                                            // innerMissing is nil for an argument with no
+                                            // function call (a literal, for example), and
+                                            // -unionSet: is declared nonnull. With nil it
+                                            // would do nothing.
+                                            if (innerMissing) {
+                                                [missing unionSet:innerMissing];
+                                            }
                                             if (error) {
                                                 depError = error;
                                                 *stop = YES;

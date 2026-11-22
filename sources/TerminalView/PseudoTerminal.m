@@ -10109,7 +10109,9 @@ deferringExpansion:(BOOL)deferExpansion {
     });
     NSSet<PTYTab *> *moving = [NSSet setWithArray:movingTabs];
     NSArray<iTermTabGroup *> *groups = [[self tabGroupsInWindow] filteredArrayUsingBlock:^BOOL(iTermTabGroup *group) {
-        if (moving.count == 0 || [group.uniqueIdentifier isEqualToString:parentGroupID]) {
+        // parentGroupID is nil for a top-level group. -isEqualToString: is
+        // declared nonnull and returns NO for nil.
+        if (moving.count == 0 || (parentGroupID && [group.uniqueIdentifier isEqualToString:parentGroupID])) {
             return YES;
         }
         return [[self tabsInGroup:group.uniqueIdentifier] anyWithBlock:^BOOL(PTYTab *tab) {
@@ -10504,8 +10506,13 @@ deferringExpansion:(BOOL)deferExpansion {
 - (void)addTabGroupNestingItemsToMenu:(NSMenu *)menu forGroupID:(NSString *)groupID {
     NSMenu *submenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
     for (iTermTabGroup *group in [self tabGroupsInWindow]) {
-        if (group.parentIdentifier ||
-            [group.uniqueIdentifier isEqualToString:[self parentIDOfTabGroup:groupID]] ||
+        if (group.parentIdentifier) {
+            continue;
+        }
+        // A top-level group has no parent ID. -isEqualToString: is declared
+        // nonnull and returns NO for nil.
+        NSString *currentParentID = [self parentIDOfTabGroup:groupID];
+        if ((currentParentID && [group.uniqueIdentifier isEqualToString:currentParentID]) ||
             [self reasonTabGroup:groupID cannotMoveToParent:group.uniqueIdentifier]) {
             continue;
         }
@@ -12158,12 +12165,18 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (BOOL)autoCommandHistoryEnabledForSession:(PTYSession *)session {
-    return ([session.guid isEqualToString:self.autoCommandHistorySessionGuid] ||
+    // The GUID is nil while no session shows the auto command history.
+    // -isEqualToString: is declared nonnull and returns NO for nil.
+    NSString *autoCommandHistorySessionGuid = self.autoCommandHistorySessionGuid;
+    return ((autoCommandHistorySessionGuid && [session.guid isEqualToString:autoCommandHistorySessionGuid]) ||
             [iTermPreferences boolForKey:kPreferenceAutoCommandHistory]);
 }
 
 - (void)hideAutoCommandHistoryForSession:(PTYSession *)session {
-    if ([session.guid isEqualToString:self.autoCommandHistorySessionGuid]) {
+    // The GUID is nil while no session shows the auto command history.
+    // -isEqualToString: is declared nonnull and returns NO for nil.
+    NSString *autoCommandHistorySessionGuid = self.autoCommandHistorySessionGuid;
+    if (autoCommandHistorySessionGuid && [session.guid isEqualToString:autoCommandHistorySessionGuid]) {
         [self hideAutoCommandHistory];
         RLog(@"ACH Cancel delayed perform of show ACH window");
         [NSObject cancelPreviousPerformRequestsWithTarget:self
@@ -12173,7 +12186,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (BOOL)wantsCommandHistoryUpdatesFromSession:(PTYSession *)session {
-    if ([session.guid isEqualToString:self.autoCommandHistorySessionGuid]) {
+    // The GUID is nil while no session shows the auto command history.
+    // -isEqualToString: is declared nonnull and returns NO for nil.
+    NSString *autoCommandHistorySessionGuid = self.autoCommandHistorySessionGuid;
+    if (autoCommandHistorySessionGuid && [session.guid isEqualToString:autoCommandHistorySessionGuid]) {
         return YES;
     }
     if (_autocompleteCandidateListItem && session == self.currentSession) {
@@ -12189,7 +12205,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                               popIfNeeded:(BOOL)popIfNeeded {
     // prefix is the partial command line the user is typing; keep it out of the ring.
     RLog(@"ACH prefix=%@ session=%@ popIfNeeded=%@", RLogRedact(prefix, @(prefix.length)), session, @(popIfNeeded));
-    if ([session.guid isEqualToString:self.autoCommandHistorySessionGuid]) {
+    // The GUID is nil while no session shows the auto command history.
+    // -isEqualToString: is declared nonnull and returns NO for nil.
+    NSString *autoCommandHistorySessionGuid = self.autoCommandHistorySessionGuid;
+    if (autoCommandHistorySessionGuid && [session.guid isEqualToString:autoCommandHistorySessionGuid]) {
         if (!commandHistoryPopup) {
             commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] initForAutoComplete:YES];
         }
@@ -14439,7 +14458,15 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (NSColor *)windowDecorationColor {
-    const BOOL fakeWindowTitleBar = ([self.tabView indexOfTabViewItem:self.tabView.selectedTabViewItem] == 0 &&
+    // There is no selected item while the window is initialized, before it
+    // has a tab. -indexOfTabViewItem: is declared nonnull, and with nil it
+    // returns NSNotFound, so nil counts as not the first tab. A nil tab view
+    // would give 0, which is kept.
+    NSTabViewItem *selectedItem = self.tabView.selectedTabViewItem;
+    const BOOL firstTabSelected = (selectedItem ?
+                                   [self.tabView indexOfTabViewItem:selectedItem] == 0 :
+                                   self.tabView == nil);
+    const BOOL fakeWindowTitleBar = (firstTabSelected &&
                             !self.tabBarAlwaysVisible);
     if (self.currentSession.tabColor &&
         fakeWindowTitleBar &&
