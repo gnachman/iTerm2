@@ -16,7 +16,6 @@ extern NSString *const kScreenStateKey;
 extern NSString *const kScreenStateTabStopsKey;
 extern NSString *const kScreenStateTerminalKey;
 extern NSString *const kScreenStateLineDrawingModeKey;
-extern NSString *const kScreenStateNonCurrentGridKey;
 extern NSString *const kScreenStateCurrentGridIsPrimaryKey;
 extern NSString *const kScreenStateIntervalTreeKey;
 extern NSString *const kScreenStateSavedIntervalTreeKey;

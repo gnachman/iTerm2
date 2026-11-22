@@ -14,6 +14,7 @@ extern "C" {
 #import "DebugLogging.h"
 #import "FindContext.h"
 #import "iTermCharacterBuffer.h"
+#import "iTermGeneration.h"
 #import "iTermCoreSearch.h"
 #import "iTermExternalAttributeIndex.h"
 #import "iTermLegacyAtomicMutableArrayOfWeakObjects.h"
@@ -195,33 +196,15 @@ static inline void ModifyLineBlock(LineBlock *self,
 @synthesize progenitor = _progenitor;
 @synthesize absoluteBlockNumber = _absoluteBlockNumber;
 
-// Globally-unique, monotonically increasing counter for LineBlock content
-// identity. Deliberately separate from VT100LineInfo's grid-line generation
-// counter, not a duplicate to consolidate: this one must ALWAYS advance because
-// the reloadBidiInfo watermark keys on _mutationCounter, whereas the grid counter
-// is gated on the (default-off) per-row cache. The cache key's `source` field
-// (grid vs history) discriminates the two, so they need not share a sequence.
-static std::atomic<NSInteger> nextGeneration(1);
-
-NS_INLINE NSInteger iTermAllocateGeneration(void) {
-    return nextGeneration.fetch_add(1, std::memory_order_relaxed);
-}
-
-// Ensure nextGeneration is at least minValue so future allocations are higher.
-static void LineBlockSetMinimumGeneration(NSInteger minValue) {
-    NSInteger expected = nextGeneration.load(std::memory_order_relaxed);
-    while (expected < minValue &&
-           !nextGeneration.compare_exchange_weak(expected, minValue,
-                                                 std::memory_order_relaxed,
-                                                 std::memory_order_relaxed)) {
-        // expected is updated by compare_exchange_weak on failure
-    }
-}
-
+// Both _generation and _mutationCounter come from the shared generation counter (see
+// iTermGeneration.h), so every value is globally unique and increasing. _generation is what the
+// state restoration delta encoder compares. _mutationCounter keys the per-row draw cache and the
+// reloadBidiInfo watermark. It is deliberately separate from VT100LineInfo's grid-line generation
+// counter: this one must ALWAYS advance, whereas the grid counter is gated on the (default-off)
+// per-row cache. The cache key's `source` field (grid vs history) discriminates the two.
 NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock, const char * reason) {
-    const NSInteger g = iTermAllocateGeneration();
-    lineBlock->_generation = g;
-    lineBlock->_mutationCounter = iTermAllocateGeneration();
+    lineBlock->_generation = iTermGenerationNext();
+    lineBlock->_mutationCounter = iTermGenerationNext();
 }
 
 // Central hook for an IN-PLACE content mutation: a cell/bidi/rtlStatus rewrite
@@ -231,7 +214,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
 // Every in-place mutator must call this so "content changed" and "identity
 // advanced" cannot diverge (the per-row draw cache keys on the counter).
 NS_INLINE void iTermLineBlockDidMutateInPlace(__unsafe_unretained LineBlock *lineBlock, const char *reason) {
-    lineBlock->_mutationCounter = iTermAllocateGeneration();
+    lineBlock->_mutationCounter = iTermGenerationNext();
 }
 
 - (instancetype)initWithCharacterBuffer:(iTermCharacterBuffer *)characterBuffer
@@ -395,9 +378,9 @@ NS_INLINE void iTermLineBlockDidMutateInPlace(__unsafe_unretained LineBlock *lin
         if (savedGeneration) {
             _generation = savedGeneration.integerValue;
             // Ensure future allocations are higher than restored values.
-            LineBlockSetMinimumGeneration(_generation + 1);
+            iTermGenerationRaiseFloorAbove(_generation);
         } else {
-            _generation = iTermAllocateGeneration();
+            _generation = iTermGenerationNext();
         }
         if (!data || data.length / sizeof(screen_char_t) >= INT_MAX) {
             return nil;

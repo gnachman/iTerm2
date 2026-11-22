@@ -32,7 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Monotonically increasing value used for both synchronization among related
 // instances and for delta encoding during state restoration. Allocated from a
-// global counter via iTermAllocateGeneration(). When restoring from a dictionary,
+// global counter via iTermGenerationNext(). When restoring from a dictionary,
 // the saved generation is restored and the global counter is bumped to ensure
 // future allocations exceed it. This allows the delta encoder to detect changes:
 // if a block's generation equals the database record's generation, it's unchanged.
@@ -40,7 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Advanced on every content mutation, including in-place ones that do NOT bump
 // `generation` (setBidiForLastRawLine:, RTL erasure, reloadBidiInfo). Each bump
-// takes a fresh GLOBALLY-unique value from iTermAllocateGeneration() (not a
+// takes a fresh GLOBALLY-unique value from iTermGenerationNext() (not a
 // per-block ++), and copies preserve it verbatim. Combined with `generation` it
 // forms a collision-free content identity for the per-row draw cache: because
 // the value is globally unique, two COW copies of a block that each take a

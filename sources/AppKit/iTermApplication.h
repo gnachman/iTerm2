@@ -77,7 +77,6 @@ extern NSNotificationName const iTermApplicationCharacterAccentMenuVisibilityDid
 // Mirrors isActive, tracked from the did-become/resign-active notifications. Unlike isActive it may
 // be read from any thread.
 @property(atomic, readonly) BOOL it_isActiveThreadSafe;
-@property(nonatomic) BOOL it_restorableStateInvalid;
 @property(nonatomic, readonly) NSEventModifierFlags it_modifierFlags;
 @property(nonatomic, readonly) BOOL it_accentMenuOpen;
 

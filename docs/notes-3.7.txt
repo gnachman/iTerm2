@@ -35,6 +35,11 @@ Improvements:
   for sessions with long scrollback history, so
   restoring windows at launch is faster. Issue
   9360.
+- Switching away from iTerm2 no longer stalls
+  as long when you have many sessions or long
+  scrollback with Shell Integration. Saving
+  window state for restoration now skips what
+  hasn’t changed and writes less to disk.
 
 Bug Fixes:
 - When a program turned on light/dark mode
@@ -85,3 +90,8 @@ Bug Fixes:
   longer open connections that iTerm2 will reject
   when a busy Mac is slow to check their
   permission. Issue 13230.
+- Checkmarks in the Captured Output tool are
+  now kept when windows are restored.
+- Double-clicking a line in the Captured Output
+  tool did nothing when the Capture Output
+  trigger’s command used session variables.

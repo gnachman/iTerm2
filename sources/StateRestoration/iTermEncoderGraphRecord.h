@@ -31,6 +31,16 @@ extern NSString *const iTermEncoderGraphRecordGenerationKeySuffix;
 @property (nonatomic, readonly) NSData *data;  // encoded pod
 @property (nonatomic, readonly) NSString *compactDescription;
 
+// YES if this was encoded with iTermGenerationAlwaysEncode: it is re-encoded on every save, and
+// its generation stays the same across saves rather than signaling a change. Not persisted, so
+// records loaded from the database have NO.
+@property (nonatomic) BOOL alwaysEncoded;
+
+// SHA-256 of the data last written to this record's row, or nil if unknown. Set by the database
+// for always-encoded records so a later save can skip the row when its data is unchanged. The
+// in-memory pod can't be compared instead because it may hold values the caller still mutates.
+@property (nullable, nonatomic, copy) NSData *writtenDigest;
+
 // For lazy loading of large blobs
 @property (nonatomic) BOOL hasLargeData;
 @property (nonatomic, weak, nullable) iTermGraphDatabase *database;

@@ -9,6 +9,7 @@
 #import "VT100ScreenState.h"
 #import "VT100ScreenDelegate.h"
 
+@protocol CapturedOutputReading;
 @protocol VT100ScreenConfiguration;
 @class iTermByteBudget;
 @class iTermEchoProbe;
@@ -353,6 +354,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                               aid:(NSString * _Nullable)aid;
 - (void)didUpdatePromptLocation;
 - (void)incrementClearCountForCommandMark:(id<VT100ScreenMarkReading>)screenMarkDoppelganger;
+
+// `mark` is a progenitor. `capturedOutput` is the main-thread copy of one of its captured outputs.
+- (void)setState:(BOOL)state
+ofCapturedOutput:(id<CapturedOutputReading>)capturedOutput
+          inMark:(id<VT100ScreenMarkReading>)mark;
 - (void)pauseAtNextPrompt:(nullable void (^)(void))paused;
 
 #pragma mark Command

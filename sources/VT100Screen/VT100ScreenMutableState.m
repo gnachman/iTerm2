@@ -2456,6 +2456,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [iTermRCClearToEndNotification postWithGuid:self.uniqueIdentifier
                                                absY:absLine
                                   intervalConverter:intervalConverter];
+        // That moved resilient coordinates in the tree's marks, which the tree can't see.
+        [self.mutableIntervalTree noteContentsChanged];
     }
 
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
@@ -5513,6 +5515,31 @@ static NSString *iTermOSC7MachineIDFromComponents(NSURLComponents *components) {
     }];
 }
 
+- (void)setState:(BOOL)state
+ofCapturedOutput:(id<CapturedOutputReading>)capturedOutput
+          inMark:(id<VT100ScreenMarkReading>)mark {
+    iTermEventuallyConsistentIntervalTree *tree = nil;
+    if ([self.mutableIntervalTree containsObject:mark]) {
+        tree = self.mutableIntervalTree;
+    } else if ([self.mutableSavedIntervalTree containsObject:mark]) {
+        tree = self.mutableSavedIntervalTree;
+    } else {
+        DLog(@"Mark %@ is not in a tree; not setting state of %@", mark, capturedOutput);
+        return;
+    }
+    // The block runs on the progenitor, which holds progenitor captured outputs, and later on the
+    // doppelganger, which holds their doppelgangers.
+    [tree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
+        VT100ScreenMark *mutableMark = (VT100ScreenMark *)obj;
+        for (CapturedOutput *candidate in mutableMark.capturedOutput) {
+            const BOOL matches = candidate.isDoppelganger ? candidate == capturedOutput : candidate.doppelganger == capturedOutput;
+            if (matches) {
+                candidate.state = state;
+            }
+        }
+    }];
+}
+
 - (void)pauseAtNextPrompt:(void (^)(void))paused {
     _nextPromptBlock = [paused copy];
 }
@@ -6341,6 +6368,8 @@ static NSString *iTermOSC7MachineIDFromComponents(NSURLComponents *components) {
             [[NSNotificationCenter defaultCenter] postNotificationName:iTermRCNotificationNames.linesShifted
                                                                 object:strongSelf.uniqueIdentifier
                                                               userInfo:userInfo];
+            // That moved resilient coordinates in the tree's marks, which the tree can't see.
+            [strongSelf.mutableIntervalTree noteContentsChanged];
         };
         if (deferredPostOut) {
             *deferredPostOut = [postBlock copy];
@@ -8437,6 +8466,17 @@ lengthExcludingInBandSignaling:data.length
             [mutableMark addCapturedOutput:(CapturedOutput *)capturedOutput.doppelganger];
         }
     }];
+    if (!capturedOutput.promisedCommand.maybeValue) {
+        // The mark encodes the command, which may arrive later without going through the tree.
+        // Note the change as it arrives, on whatever thread that is, so no save sees the command
+        // under the tree's old generation. The mark may have moved to the other tree by then.
+        __weak iTermEventuallyConsistentIntervalTree *weakIntervalTree = self.mutableIntervalTree;
+        __weak iTermEventuallyConsistentIntervalTree *weakSavedIntervalTree = self.mutableSavedIntervalTree;
+        [capturedOutput.promisedCommand then:^(NSString *command) {
+            [weakIntervalTree noteContentsChanged];
+            [weakSavedIntervalTree noteContentsChanged];
+        }];
+    }
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerSideEffectDidCaptureOutput];
     } name:@"trigger did capture output"];

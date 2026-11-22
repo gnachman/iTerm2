@@ -30,7 +30,6 @@ NSString *const kScreenStateKey = @"Screen State";
 NSString *const kScreenStateTabStopsKey = @"Tab Stops";
 NSString *const kScreenStateTerminalKey = @"Terminal State";
 NSString *const kScreenStateLineDrawingModeKey = @"Line Drawing Modes";
-NSString *const kScreenStateNonCurrentGridKey = @"Non-current Grid";
 NSString *const kScreenStateCurrentGridIsPrimaryKey = @"Showing Primary Grid";
 NSString *const kScreenStateIntervalTreeKey = @"Interval Tree";
 NSString *const kScreenStateSavedIntervalTreeKey = @"Saved Interval Tree";

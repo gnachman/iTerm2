@@ -9,6 +9,7 @@
 #import "CapturedOutput.h"
 #import "CaptureTrigger.h"
 #import "iTermCapturedOutputMark.h"
+#import "iTermGeneration.h"
 #import "iTermPromise.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -24,6 +25,9 @@ NSString *const kCapturedOutputAbsoluteLineNumberKey = @"Absolute Line Number";
 
 @implementation CapturedOutput {
     CapturedOutput *_doppelganger;
+    NSInteger _generation;
+    // Whether _generation already accounts for promisedCommand having a value.
+    BOOL _generationIncludesPromisedCommand;
 }
 
 @synthesize line = _line;
@@ -33,6 +37,63 @@ NSString *const kCapturedOutputAbsoluteLineNumberKey = @"Absolute Line Number";
 @synthesize mark = _mark;
 @synthesize absoluteLineNumber = _absoluteLineNumber;
 @synthesize markGuid = _markGuid;
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _generation = iTermGenerationNext();
+    }
+    return self;
+}
+
+#pragma mark - Setters
+
+// Every property that -dictionaryValue reads takes a fresh generation when it changes.
+
+- (void)didChangeEncodedState {
+    _generation = iTermGenerationNext();
+}
+
+- (void)setLine:(NSString *)line {
+    _line = [line copy];
+    [self didChangeEncodedState];
+}
+
+- (void)setValues:(NSArray *)values {
+    _values = [values copy];
+    [self didChangeEncodedState];
+}
+
+- (void)setPromisedCommand:(iTermPromise<NSString *> *)promisedCommand {
+    _promisedCommand = promisedCommand;
+    _generationIncludesPromisedCommand = NO;
+    [self didChangeEncodedState];
+}
+
+- (void)setState:(BOOL)state {
+    _state = state;
+    [self didChangeEncodedState];
+}
+
+- (void)setMark:(id<iTermCapturedOutputMarkReading>)mark {
+    _mark = mark;
+    [self didChangeEncodedState];
+}
+
+- (void)setAbsoluteLineNumber:(long long)absoluteLineNumber {
+    _absoluteLineNumber = absoluteLineNumber;
+    [self didChangeEncodedState];
+}
+
+- (NSInteger)generation {
+    // The promise can resolve long after it was set, changing -dictionaryValue without any
+    // mutation. Account for that the first time it is seen.
+    if (!_generationIncludesPromisedCommand && _promisedCommand.maybeValue != nil) {
+        _generationIncludesPromisedCommand = YES;
+        [self didChangeEncodedState];
+    }
+    return _generation;
+}
 
 + (instancetype)capturedOutputWithDictionary:(NSDictionary *)dict {
     CapturedOutput *capturedOutput = [[CapturedOutput alloc] init];
@@ -102,6 +163,11 @@ NSString *const kCapturedOutputAbsoluteLineNumberKey = @"Absolute Line Number";
         if (!_doppelganger) {
             _doppelganger = [self copy];
             _doppelganger->_isDoppelganger = YES;
+            if (!_promisedCommand.maybeValue) {
+                // The copy's promise holds only a value that had already arrived, so share the
+                // pending promise to get the command when it does. Promises are thread-safe.
+                _doppelganger.promisedCommand = _promisedCommand;
+            }
         }
         return _doppelganger;
     }

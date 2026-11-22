@@ -8,10 +8,10 @@
 
 #import "VT100Grid.h"
 
-#import <stdatomic.h>
 
 #import "DebugLogging.h"
 #import "iTermEncoderAdapter.h"
+#import "iTermGeneration.h"
 #import "iTermExternalAttributeIndex.h"
 #import "iTermMetadata.h"
 #import "CVector.h"
@@ -42,35 +42,18 @@ static NSString *const kGridSizeKey = @"Size";
 // on any mutation that -encode: serializes (cell content, cursor, scroll
 // regions, size, saved default char) and preserved across copies so a synced or
 // copied grid keeps its content identity. It is persisted in the POD by -encode:
-// and restored by -initWithDictionary:..., which bumps the global minimum so a
-// restored value stays above anything already written (so the delta encoder does
-// not have to self-heal). This mirrors LineBlock's block.generation exactly. The
-// grid nodes use new keys (PrimaryGridV2/AltGridV2) so pre-upgrade AlwaysEncode
-// nodes, whose generations live in a different (per-save +1) namespace, are
-// orphaned rather than colliding with this counter.
-static _Atomic int64_t gVT100GridNextContentGeneration = 1;
-
-static int64_t VT100GridAllocateContentGeneration(void) {
-    return atomic_fetch_add_explicit(&gVT100GridNextContentGeneration, 1, memory_order_relaxed);
-}
-
+// and restored by -initWithDictionary:..., so an unchanged restored grid is not
+// rewritten. Values come from the shared counter in iTermGeneration.h, which
+// keeps them distinct from anything already in the db. The grid nodes use new
+// keys (PrimaryGridV2/AltGridV2) so pre-upgrade AlwaysEncode nodes are orphaned
+// rather than compared against this counter.
+//
 // Bump *generation to a fresh value to record that something -encode: serializes
 // changed. A plain C function taking the ivar by pointer rather than an
 // Objective-C method because the callers (per-cell dirtying, cursor moves) are
 // hot and this avoids objc_msgSend on those paths.
 static inline void VT100GridDidChangeContent(int64_t *generation) {
-    *generation = VT100GridAllocateContentGeneration();
-}
-
-// Ensure future allocations exceed minValue so a generation restored from saved
-// state stays above anything previously written to the db.
-static void VT100GridSetMinimumContentGeneration(int64_t minValue) {
-    int64_t expected = atomic_load_explicit(&gVT100GridNextContentGeneration, memory_order_relaxed);
-    while (expected < minValue &&
-           !atomic_compare_exchange_weak_explicit(&gVT100GridNextContentGeneration, &expected, minValue,
-                                                  memory_order_relaxed, memory_order_relaxed)) {
-        // expected is updated by compare_exchange_weak on failure.
-    }
+    *generation = iTermGenerationNext();
 }
 
 @implementation VT100Grid {
@@ -99,7 +82,7 @@ static void VT100GridSetMinimumContentGeneration(int64_t minValue) {
     BOOL _bidiDirty;  // Did _bidiInfo change?
     // Number of lines counting from the top that we know are DWC-free.
     int _knownDWCFreeLines;
-    // See gVT100GridNextContentGeneration. Identifies this grid's encoded content
+    // See VT100GridDidChangeContent. Identifies this grid's encoded content
     // for restorable-state delta encoding.
     int64_t _contentGeneration;
     // Scroll region read from a saved state, kept until the restored grid has
@@ -125,6 +108,7 @@ static void VT100GridSetMinimumContentGeneration(int64_t minValue) {
 - (instancetype)initWithSize:(VT100GridSize)size delegate:(id<VT100GridDelegate>)delegate {
     self = [super init];
     if (self) {
+        _contentGeneration = iTermGenerationNext();
         delegate_ = delegate;
         [self setSize:size withSideEffects:NO];
         scrollRegionRows_ = VT100GridRangeMake(0, size_.height);
@@ -138,6 +122,7 @@ static void VT100GridSetMinimumContentGeneration(int64_t minValue) {
                           delegate:(id<VT100GridDelegate>)delegate {
     self = [super init];
     if (self) {
+        _contentGeneration = iTermGenerationNext();
         delegate_ = delegate;
         NSArray<NSString *> *requiredKeys = @[ @"size", @"cursor" ];
         for (NSString *requiredKey in requiredKeys) {
@@ -216,15 +201,14 @@ static void VT100GridSetMinimumContentGeneration(int64_t minValue) {
         _savedScrollRegionCols = scrollRegionCols_;
         _savedUseScrollRegionCols = useScrollRegionCols_;
         [self markAllCharsDirty:YES updateTimestamps:NO];
-        // Restore the content generation from the POD (the value -encode: wrote), and
-        // bump the global minimum so future allocations stay above it and the delta
-        // encoder never has to self-heal. A pre-upgrade save lacks this key; such a
-        // grid starts at 0 and is re-saved under the new (…V2) key as a fresh node,
-        // so no migration fallback is needed.
+        // Restore the content generation from the POD (the value -encode: wrote) so an
+        // unchanged restored grid is not rewritten, and raise the shared floor so future
+        // allocations stay above it. A pre-upgrade save lacks this key; such a grid keeps
+        // the fresh value assigned above and is re-saved under the new (…V2) key.
         NSNumber *savedContentGeneration = [NSNumber castFrom:dictionary[@"contentGeneration"]];
         if (savedContentGeneration) {
             _contentGeneration = savedContentGeneration.longLongValue;
-            VT100GridSetMinimumContentGeneration(_contentGeneration + 1);
+            iTermGenerationRaiseFloorAbove(_contentGeneration);
         }
     }
     return self;

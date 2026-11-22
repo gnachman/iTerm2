@@ -431,14 +431,16 @@ NSString *const iTermEncoderGraphRecordGenerationKeySuffix = @"_Generation";
         [seen addObject:tuple];
         [children addObject:[child deepCopyForRecovery]];
     }
-    return [[iTermEncoderGraphRecord alloc] initWithPODs:[self.pod copy]
-                                                  graphs:children
-                                              generation:_generation
-                                                     key:_key
-                                              identifier:_identifier
-                                                   rowid:nil
-                                            hasLargeData:NO
-                                                database:nil];
+    iTermEncoderGraphRecord *copy = [[iTermEncoderGraphRecord alloc] initWithPODs:[self.pod copy]
+                                                                           graphs:children
+                                                                       generation:_generation
+                                                                              key:_key
+                                                                       identifier:_identifier
+                                                                            rowid:nil
+                                                                     hasLargeData:NO
+                                                                         database:nil];
+    copy.alwaysEncoded = _alwaysEncoded;
+    return copy;
 }
 
 @end

@@ -1308,6 +1308,8 @@ static void SwapInt(int *a, int *b) {
     NSString *savedMutationGuid = self.savedTreeMutationThreadDataSource.rcGuid;
     if (savedMutationGuid) {
         [iTermRCResizeNotification postWithGuid:savedMutationGuid converter:converter];
+        // That moved resilient coordinates in the tree's marks, which the tree can't see.
+        [self.mutableSavedIntervalTree noteContentsChanged];
     }
     NSString *savedMainGuid = self.savedTreeMainThreadDataSource.rcGuid;
     if (savedMainGuid && delegate) {
@@ -1525,6 +1527,8 @@ static void SwapInt(int *a, int *b) {
     // bound to self.uniqueIdentifier; the converter uses self.linebuffer
     // (primary content).
     [iTermRCResizeNotification postWithGuid:self.uniqueIdentifier converter:resizeConverter];
+    // That moved resilient coordinates in the tree's marks, which the tree can't see.
+    [self.mutableIntervalTree noteContentsChanged];
     [delegate screenResizeResilientCoordinates:resizeConverter];
 
     // Reflow the saved-tree marks against the alt content. Only does

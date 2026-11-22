@@ -208,4 +208,43 @@ final class GraphEncoderTests: XCTestCase {
         let b = makeRecord(key: "k", identifier: "b", rowid: 3)
         XCTAssertEqual(makeRecord(graphs: [a, b]), makeRecord(graphs: [b, a]))
     }
+
+    // MARK: - encodeObject
+
+    // Property-list values go straight into the POD without a trial archive. The
+    // database archives the POD later, so it must still archive and round-trip.
+    func testEncodeObjectStoresNestedPropertyListInPOD() throws {
+        let value: NSDictionary = [
+            "string": "s",
+            "number": NSNumber(value: 3),
+            "data": Data("d".utf8),
+            "date": Date(timeIntervalSinceReferenceDate: 12345),
+            "null": NSNull(),
+            "array": ["a", NSNumber(value: 1), ["nested": NSNull()]],
+            NSNumber(value: 7): "numeric key",
+        ]
+        let encoder = iTermGraphEncoder(key: "root", identifier: "", generation: 1)
+        XCTAssertTrue(encoder.encode(value, key: "plist"))
+        let record = try XCTUnwrap(encoder.record)
+        XCTAssertTrue(record.graphRecords.isEmpty)
+        XCTAssertEqual(record.pod["plist"] as? NSDictionary, value)
+
+        let data = record.data
+        XCTAssertFalse(data.isEmpty)
+        let decoded = try XCTUnwrap(try (data as NSData).it_unarchivedObjectOfBasicClasses() as? NSDictionary)
+        XCTAssertEqual(decoded["plist"] as? NSDictionary, value)
+    }
+
+    // A value holding a securely codable object that is not a property-list class
+    // is not recognized by the fast path, so the trial archive decides. It succeeds,
+    // so the value still goes in the POD.
+    func testEncodeObjectStoresSecurelyCodableNonPropertyListInPOD() throws {
+        let tuple = iTermTuple<NSString, NSString>(object: "a", andObject: "b")
+        let value: NSArray = [tuple]
+        let encoder = iTermGraphEncoder(key: "root", identifier: "", generation: 1)
+        XCTAssertTrue(encoder.encode(value, key: "tuples"))
+        let record = try XCTUnwrap(encoder.record)
+        XCTAssertTrue(record.graphRecords.isEmpty)
+        XCTAssertEqual(record.pod["tuples"] as? NSArray, value)
+    }
 }

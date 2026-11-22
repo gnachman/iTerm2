@@ -7,6 +7,7 @@
 
 #import "iTermChangeTrackingDictionary.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermGeneration.h"
 
 @implementation iTermChangeTrackingDictionary {
     NSMutableDictionary *_impl;
@@ -37,8 +38,11 @@
 
 - (void)setObject:(id)anObject forKey:(id<NSCopying>)aKey {
     _impl[aKey] = anObject;
-    _generations[aKey] = @(_generations[aKey].integerValue + 1);
-    _generation += 1;
+    // Fresh numbers from the shared counter, never in-place increments, so they can't equal a
+    // generation saved by an earlier run. See iTermGeneration.h.
+    const NSInteger generation = iTermGenerationNext();
+    _generations[aKey] = @(generation);
+    _generation = generation;
 }
 
 - (id)objectForKeyedSubscript:(id)key {
@@ -94,8 +98,13 @@
               keyClass:(Class)keyClass
             valueClass:(Class)valueClass {
     iTermEncoderGraphRecord *root = [record childRecordWithKey:@"changeTrackingDictionary" identifier:@""];
-    // Preserve generation so unchanged state can skip re-encoding.
-    _generation = root.generation;
+    if (!root) {
+        return;
+    }
+    // Loading merges into the existing contents, which may have changed before the saved state
+    // loaded. See iTermGenerationAdopt. Each key's generation is adopted as-is below because its
+    // value is replaced by the saved one.
+    _generation = iTermGenerationAdopt(_generation, root.generation);
 
     [root.index enumerateKeysAndObjectsUsingBlock:^(iTermTuple<NSString *,NSString *> * _Nonnull key,
                                                     iTermEncoderGraphRecord * _Nonnull subrecord,
@@ -109,6 +118,7 @@
         if (dictionaryKey && dictionaryValue) {
             _impl[dictionaryKey] = dictionaryValue;
             _generations[dictionaryKey] = @(generation);
+            iTermGenerationRaiseFloorAbove(generation);
         }
     }];
 }

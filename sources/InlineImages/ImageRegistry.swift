@@ -7,10 +7,39 @@
 
 import Foundation
 
+/// Supplies the values a MonotonicCounter takes. Without one, the counter counts up locally.
+protocol MonotonicCounterDataSource {
+    /// The value to take when advancing from `current`. Must be greater than `current`.
+    func value(after current: Int) -> Int
+
+    /// The value to take when restoring `minimum` from saved state.
+    func value(restoring minimum: Int, current: Int) -> Int
+}
+
+/// Values from the shared restorable-state generation counter (see iTermGeneration.h), so they
+/// never equal a generation that anything else saved or will save, including in an earlier launch.
+struct SharedGenerationDataSource: MonotonicCounterDataSource {
+    func value(after current: Int) -> Int {
+        return iTermGenerationNext()
+    }
+
+    /// The saved value is a generation for state that is merged into the current state, so it is
+    /// adopted only if the counter hasn't advanced since launch.
+    func value(restoring minimum: Int, current: Int) -> Int {
+        return iTermGenerationAdopt(current, minimum)
+    }
+}
+
 @objc(iTermMonotonicCounter)
 class MonotonicCounter: NSObject {
     private var _value = 0
     private let mutex = Mutex()
+    private let dataSource: MonotonicCounterDataSource?
+
+    init(dataSource: MonotonicCounterDataSource? = nil) {
+        self.dataSource = dataSource
+        super.init()
+    }
 
     @objc var value: Int {
         return mutex.sync { _value }
@@ -18,7 +47,7 @@ class MonotonicCounter: NSObject {
 
     @objc var next: Int {
         return mutex.sync {
-            _value += 1
+            _value = dataSource?.value(after: _value) ?? _value + 1
             return _value
         }
     }
@@ -27,11 +56,13 @@ class MonotonicCounter: NSObject {
         _ = next
     }
 
-    /// Set the minimum value. If current value is already >= minimum, no change occurs.
-    /// Used to initialize from database during restoration.
+    /// Used to initialize from saved state during restoration. Without a data source, the counter
+    /// only moves up to `minimum`.
     @objc func setMinimum(_ minimum: Int) {
         mutex.sync {
-            if _value < minimum {
+            if let dataSource {
+                _value = dataSource.value(restoring: minimum, current: _value)
+            } else if _value < minimum {
                 _value = minimum
             }
         }
@@ -40,7 +71,7 @@ class MonotonicCounter: NSObject {
 
 @objc(iTermScreenCharGeneration)
 class ScreenCharGeneration: NSObject {
-    @objc static let counter = MonotonicCounter()
+    @objc static let counter = MonotonicCounter(dataSource: SharedGenerationDataSource())
 }
 
 @objc(iTermImageRegistry)

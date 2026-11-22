@@ -54,6 +54,55 @@ int kVT100ScreenMinRows = 2;
 const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 
+#if BETA
+// A tree's generation promises that what it encodes is unchanged. Objects that track their own
+// generations give a cheap way to catch a change that bypassed the tree.
+typedef struct {
+    NSInteger treeGeneration;
+    NSUInteger count;
+    NSInteger maximumObjectGeneration;
+    NSUInteger reuses;
+} VT100ScreenIntervalTreeSaveAudit;
+
+static void VT100ScreenIntervalTreeFingerprint(id<IntervalTreeReading> tree,
+                                               NSUInteger *countOut,
+                                               NSInteger *maximumObjectGenerationOut) {
+    NSArray<id<IntervalTreeImmutableObject>> *objects = tree.allObjects;
+    NSInteger maximum = 0;
+    for (id<IntervalTreeImmutableObject> object in objects) {
+        if ([object respondsToSelector:@selector(generation)]) {
+            maximum = MAX(maximum, [(id)object generation]);
+        }
+    }
+    *countOut = objects.count;
+    *maximumObjectGenerationOut = maximum;
+}
+
+// Call after encoding `tree`. Walking the tree costs as much as encoding it, so a reused tree is
+// checked only on some saves.
+static void VT100ScreenAuditIntervalTreeSave(id<IntervalTreeReading> tree,
+                                             NSString *name,
+                                             VT100ScreenIntervalTreeSaveAudit *audit) {
+    const NSInteger treeGeneration = tree.generation;
+    if (treeGeneration != audit->treeGeneration) {
+        audit->treeGeneration = treeGeneration;
+        audit->reuses = 0;
+        VT100ScreenIntervalTreeFingerprint(tree, &audit->count, &audit->maximumObjectGeneration);
+        return;
+    }
+    audit->reuses += 1;
+    if (audit->reuses % 16 != 0) {
+        return;
+    }
+    NSUInteger count = 0;
+    NSInteger maximumObjectGeneration = 0;
+    VT100ScreenIntervalTreeFingerprint(tree, &count, &maximumObjectGeneration);
+    ITBetaAssert(count == audit->count && maximumObjectGeneration == audit->maximumObjectGeneration,
+                 @"%@ changed without a new generation: count %@ -> %@, max object generation %@ -> %@",
+                 name, @(audit->count), @(count), @(audit->maximumObjectGeneration), @(maximumObjectGeneration));
+}
+#endif
+
 @implementation VT100Screen {
     // Read on the main thread, added to on the read thread.
     _Atomic(long long) _bytesReceived;
@@ -71,6 +120,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
     // Automatically tells objects when a sync is going to happen so they can break any dependencies on the current state.
     iTermSyncDistributor *_syncDistributor;
+
+    // The offset the main interval tree was last encoded with. Saved intervals depend on it.
+    long long _lastIntervalTreeEncodingOffset;
+#if BETA
+    VT100ScreenIntervalTreeSaveAudit _intervalTreeSaveAudit;
+    VT100ScreenIntervalTreeSaveAudit _savedIntervalTreeSaveAudit;
+#endif
 }
 
 @synthesize dvr = dvr_;
@@ -90,6 +146,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (self) {
         _mutableState = queue ? [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self queue:queue ownsQueue:ownsQueue]
                               : [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self];
+        _lastIntervalTreeEncodingOffset = LLONG_MIN;
         if (_mutableState.ownsQueue) {
             // Sessions on the shared queue keep sending updates with their own timers.
             __weak __typeof(self) weakSelf = self;
@@ -800,6 +857,21 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     PTYAnnotation *progenitor = (PTYAnnotation *)annotation.progenitor;
     [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState removeAnnotation:progenitor];
+    }];
+}
+
+- (void)setState:(BOOL)state
+ofCapturedOutput:(id<CapturedOutputReading>)capturedOutput
+          inMark:(id<VT100ScreenMarkReading>)mark {
+    id<VT100ScreenMarkReading> progenitor = (id<VT100ScreenMarkReading>)[(iTermMark *)mark progenitor];
+    if (!progenitor) {
+        return;
+    }
+    // Optimistically set the main-thread copy so the UI updates now. The mutation sets it again
+    // when it replays.
+    ((CapturedOutput *)capturedOutput).state = state;
+    [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState setState:state ofCapturedOutput:capturedOutput inMark:progenitor];
     }];
 }
 
@@ -1610,8 +1682,16 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
             }
         }
 
-        // Encode interval tree using graph encoding for efficient delta encoding
-        id<IntervalTreeReading> intervalTree = _state.intervalTree;
+        // Encode the mutation thread's interval trees. Each one's generation covers everything that
+        // changes its encoding, which lets a save reuse an unchanged tree's record without visiting
+        // its objects. Their objects change only while threads are joined, as they are now.
+        IntervalTree *intervalTree = mutableState.mutableIntervalTree;
+        IntervalTree *savedIntervalTree = mutableState.mutableSavedIntervalTree;
+        if (capturedIntervalOffset != _lastIntervalTreeEncodingOffset) {
+            // Saved intervals are relative to this offset, so the tree's encoding changed.
+            _lastIntervalTreeEncodingOffset = capturedIntervalOffset;
+            [intervalTree noteContentsChanged];
+        }
 
         [encoder encodeDictionaryWithKey:kScreenStateKey
                               generation:iTermGenerationAlwaysEncode
@@ -1623,7 +1703,6 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
                                                   @([_state.charsetUsesLineDrawingMode containsObject:@1]),
                                                   @([_state.charsetUsesLineDrawingMode containsObject:@2]),
                                                   @([_state.charsetUsesLineDrawingMode containsObject:@3]) ],
-               kScreenStateNonCurrentGridKey: [self contentsOfNonCurrentGrid] ?: @{},
                kScreenStateCurrentGridIsPrimaryKey: @(_state.primaryGrid == _state.currentGrid),
                kScreenStateCommandStartXKey: @(_state.commandStartCoord.x),
                kScreenStateCommandStartYKey: @(_state.commandStartCoord.y),
@@ -1650,42 +1729,29 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 
             // Encode interval trees using graph encoding for efficient delta encoding of large marks
             [encoder encodeDictionaryWithKey:kScreenStateIntervalTreeKey
-                                  generation:iTermGenerationAlwaysEncode
+                                  generation:intervalTree.generation
                                        block:^BOOL(id<iTermEncoderAdapter> subencoder) {
                 [intervalTree encodeWithEncoder:subencoder offset:capturedIntervalOffset];
                 return YES;
             }];
-            id<IntervalTreeReading> savedIntervalTree = _state.savedIntervalTree;
-            if (savedIntervalTree.allObjects.count > 0) {
+#if BETA
+            VT100ScreenAuditIntervalTreeSave(intervalTree, @"Interval tree", &_intervalTreeSaveAudit);
+#endif
+            if (savedIntervalTree.count > 0) {
                 [encoder encodeDictionaryWithKey:kScreenStateSavedIntervalTreeKey
-                                      generation:iTermGenerationAlwaysEncode
+                                      generation:savedIntervalTree.generation
                                            block:^BOOL(id<iTermEncoderAdapter> subencoder) {
                     [savedIntervalTree encodeWithEncoder:subencoder offset:0];
                     return YES;
                 }];
+#if BETA
+                VT100ScreenAuditIntervalTreeSave(savedIntervalTree, @"Saved interval tree", &_savedIntervalTreeSaveAudit);
+#endif
             }
             return YES;
         }];
     }];
     return YES;
-}
-
-// Deprecated - old format
-- (NSDictionary *)contentsOfNonCurrentGrid {
-    LineBuffer *temp = [[[LineBuffer alloc] initWithBlockSize:4096] autorelease];
-    VT100Grid *grid;
-    if (_state.currentGrid == _state.primaryGrid) {
-        grid = _state.altGrid;
-    } else {
-        grid = _state.primaryGrid;
-    }
-    if (!grid) {
-        return @{};
-    }
-    [grid appendLines:grid.size.height toLineBuffer:temp];
-    iTermMutableDictionaryEncoderAdapter *encoder = [[[iTermMutableDictionaryEncoderAdapter alloc] init] autorelease];
-    [temp encode:encoder maxLines:10000];
-    return encoder.mutableDictionary;
 }
 
 - (id<iTermTemporaryDoubleBufferedGridControllerReading>)temporaryDoubleBuffer {

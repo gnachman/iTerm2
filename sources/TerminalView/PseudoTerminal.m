@@ -17615,6 +17615,12 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     [self.currentSession performActionForCapturedOutput:capturedOutput];
 }
 
+- (void)toolbeltSetState:(BOOL)state
+        ofCapturedOutput:(CapturedOutput *)capturedOutput
+                  inMark:(id<VT100ScreenMarkReading>)mark {
+    [self.currentSession.screen setState:state ofCapturedOutput:capturedOutput inMark:mark];
+}
+
 - (BOOL)toolbeltCurrentSessionHasGuid:(NSString *)guid {
     return [self.currentSession.guid isEqualToString:guid];
 }

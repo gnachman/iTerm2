@@ -41,6 +41,9 @@
 - (void)toolbeltDidSelectMark:(id<iTermMark>)mark;
 - (void)toolbeltDidSelectNamedMark:(id<iTermGenericNamedMarkReading>)mark;
 - (void)toolbeltActivateTriggerForCapturedOutputInCurrentSession:(CapturedOutput *)capturedOutput;
+- (void)toolbeltSetState:(BOOL)state
+        ofCapturedOutput:(CapturedOutput *)capturedOutput
+                  inMark:(id<VT100ScreenMarkReading>)mark;
 - (BOOL)toolbeltCurrentSessionHasGuid:(NSString *)guid;
 - (NSString *)toolbeltCurrentSessionGUID;
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)toolbeltCommandUsesForCurrentSession;

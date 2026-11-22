@@ -1,6 +1,8 @@
 #import "IntervalTree.h"
 #import "DebugLogging.h"
 #import "iTermEncoderAdapter.h"
+#import "iTermGeneration.h"
+#import <stdatomic.h>
 #import "iTermGraphEncoder.h"
 #import "iTermLargeContentObject.h"
 #import "iTerm2SharedARC-Swift.h"
@@ -466,6 +468,8 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
 @implementation IntervalTree {
     AATree *_tree;
     int _count;
+    // Atomic because -noteContentsChanged may be called from any thread.
+    _Atomic(NSInteger) _generation;
 }
 
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
@@ -484,8 +488,17 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
         }];
         assert(_tree);
         _tree.delegate = self;
+        atomic_store(&_generation, iTermGenerationNext());
     }
     return self;
+}
+
+- (NSInteger)generation {
+    return atomic_load(&_generation);
+}
+
+- (void)noteContentsChanged {
+    atomic_store(&_generation, iTermGenerationNext());
 }
 
 - (void)dealloc {
@@ -537,6 +550,7 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
 
 - (void)removeAllObjects {
     DLog(@"%p: removeAllObjects", self);
+    [self noteContentsChanged];
     for (id<IntervalTreeObject> obj in [self objectsInInterval:[Interval maxInterval]]) {
         obj.entry = nil;
     }
@@ -570,6 +584,7 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
     }
     object.entry = entry;
     ++_count;
+    [self noteContentsChanged];
 #if DEBUG
     [self sanityCheck];
 #endif
@@ -602,6 +617,7 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
             [_tree notifyValueChangedForKey:@(theLocation)];
         }
         --_count;
+        [self noteContentsChanged];
         return YES;
     } else {
         DLog(@"Failed to remove object not in tree");
@@ -1364,9 +1380,10 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
             kIntervalTreeClassNameKey: NSStringFromClass(object.class)
         }];
 
-        // Content - use generation if available (e.g., FoldMark), otherwise always encode.
-        // Objects with a generation property (like FoldMark) have immutable content, so we only
-        // need to encode them once; the delta encoder will skip subsequent saves.
+        // Content - use generation if available, otherwise always encode. An object with a
+        // generation promises it changes whenever the content may have: FoldMark's content is
+        // immutable so it is constant, and VT100ScreenMark tracks changes (see iTermGeneration.h).
+        // The delta encoder skips re-encoding content whose generation matches the saved record.
         NSInteger gen = iTermGenerationAlwaysEncode;
         if ([object respondsToSelector:@selector(generation)]) {
             gen = [(id)object generation];
@@ -1512,6 +1529,10 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
 
 - (NSString *)debugString {
     return [_source debugString];
+}
+
+- (NSInteger)generation {
+    return [_source generation];
 }
 
 - (NSArray<id<IntervalTreeImmutableObject>> *)objectsInInterval:(Interval *)interval {

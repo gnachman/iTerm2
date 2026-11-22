@@ -16,6 +16,43 @@
 
 NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
 
+// Returns YES if obj is built only from property-list classes, all of which support secure
+// coding. This lets -encodeObject:key: skip a trial NSKeyedArchiver pass, which is expensive for
+// big values like profiles and is otherwise repeated for every session on every save. A NO means
+// "unknown", not "unarchivable": the caller falls back to the trial archive.
+static BOOL iTermGraphEncoderIsPlainPropertyList(id obj, int depth) {
+    if (depth > 64) {
+        return NO;
+    }
+    if ([obj isKindOfClass:[NSString class]] ||
+        [obj isKindOfClass:[NSNumber class]] ||
+        [obj isKindOfClass:[NSData class]] ||
+        [obj isKindOfClass:[NSDate class]] ||
+        [obj isKindOfClass:[NSNull class]]) {
+        return YES;
+    }
+    if ([obj isKindOfClass:[NSArray class]]) {
+        for (id element in (NSArray *)obj) {
+            if (!iTermGraphEncoderIsPlainPropertyList(element, depth + 1)) {
+                return NO;
+            }
+        }
+        return YES;
+    }
+    if ([obj isKindOfClass:[NSDictionary class]]) {
+        __block BOOL ok = YES;
+        [(NSDictionary *)obj enumerateKeysAndObjectsUsingBlock:^(id key, id value, BOOL *stop) {
+            if (!iTermGraphEncoderIsPlainPropertyList(key, depth + 1) ||
+                !iTermGraphEncoderIsPlainPropertyList(value, depth + 1)) {
+                ok = NO;
+                *stop = YES;
+            }
+        }];
+        return ok;
+    }
+    return NO;
+}
+
 @implementation iTermGraphEncoder {
     NSMutableDictionary<NSString *, id> *_pod;
     NSString *_identifier;
@@ -38,6 +75,7 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
             _generation = generation;
         } else {
             _generation = 0;
+            _alwaysEncoded = YES;
         }
         _pod = [NSMutableDictionary dictionary];
         _children = [NSMutableArray array];
@@ -120,16 +158,24 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
         [self encodeNullForKey:key];
         return YES;
     }
+    if (iTermGraphEncoderIsPlainPropertyList(obj, 0)) {
+        _pod[key] = obj;
+        return YES;
+    }
     NSError *error = nil;
     [NSData it_dataWithSecurelyArchivedObject:obj error:&error];
     if (!error) {
         _pod[key] = obj;
         return YES;
     }
+    // The fallback below encodes obj as child nodes, which are reused whenever their generation
+    // matches the saved one. An always-encoded node keeps the same generation across saves, so its
+    // children must be always-encoded too or changes to obj would never be saved.
+    const NSInteger childGeneration = _alwaysEncoded ? iTermGenerationAlwaysEncode : _generation;
     if ([obj isKindOfClass:[NSArray class]]) {
         NSArray *array = obj;
         [self encodeArrayWithKey:key
-                      generation:_generation
+                      generation:childGeneration
                      identifiers:[NSArray stringSequenceWithRange:NSMakeRange(0, array.count)]
                          options:0
                            block:^BOOL (NSString * _Nonnull identifier,
@@ -143,7 +189,7 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
     }
     if ([obj isKindOfClass:[NSDictionary class]]) {
         NSDictionary *dict = obj;
-        [self encodeDictionary:dict withKey:key generation:_generation];
+        [self encodeDictionary:dict withKey:key generation:childGeneration];
         return YES;
     }
     assert(NO);
@@ -258,6 +304,7 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
                                                     key:_key
                                              identifier:_identifier
                                                   rowid:nil];
+            _record.alwaysEncoded = _alwaysEncoded;
             _state = iTermGraphEncoderStateCommitted;
             return _record;
 

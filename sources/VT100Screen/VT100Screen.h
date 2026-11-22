@@ -22,6 +22,7 @@
 @class iTermNotificationController;
 @class iTermMark;
 @class iTermStringLine;
+@protocol CapturedOutputReading;
 @protocol iTermTemporaryDoubleBufferedGridControllerReading;
 @class LineBuffer;
 @class LineBufferPosition;
@@ -223,6 +224,13 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (nullable id<VT100RemoteHostReading>)remoteHostOnLine:(int)line;
 - (nullable id<VT100ScreenMarkReading>)lastCommandMark;  // last mark representing a command
 - (nullable id<VT100ScreenMarkReading>)penultimateCommandMark;
+
+// Sets the user-defined state of a captured output belonging to `mark`. Both are main-thread
+// copies. The change goes through the interval tree so the mutation thread's copy matches and the
+// next save sees it.
+- (void)setState:(BOOL)state
+ofCapturedOutput:(id<CapturedOutputReading>)capturedOutput
+          inMark:(id<VT100ScreenMarkReading>)mark;
 
 - (BOOL)encodeContents:(id<iTermEncoderAdapter>)encoder
           linesDropped:(int * _Nullable)linesDroppedOut

@@ -129,8 +129,6 @@ static void iTermInstallCrashOnExceptionHook(void) {
     BOOL _it_characterPanelShouldOpenSoon;
     // Are we within one spin of didBecomeActive?
     BOOL _it_justBecameActive;
-    // Have we received didBecomeActive without a subsequent didResignActive?
-    BOOL _it_restorableStateInvalid;
     BOOL _leader;
     BOOL _activated;
     NSTimeInterval _activationStartTime;
@@ -1185,11 +1183,6 @@ static void iTermInstallCrashOnExceptionHook(void) {
     self.it_windowBecomingKey = window;
     [window makeKeyAndOrderFront:nil];
     self.it_windowBecomingKey = saved;
-}
-
-- (void)invalidateRestorableState {
-    [super invalidateRestorableState];
-    _it_restorableStateInvalid = YES;
 }
 
 - (void)toggleLeader {

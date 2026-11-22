@@ -25,6 +25,10 @@
 // Used for finding the |mark| later on while deserializing.
 @property(nonatomic, copy, readonly) NSString *markGuid;
 
+// Restorable-state generation of -dictionaryValue. Changes whenever it may have, including when
+// promisedCommand resolves. See iTermGeneration.h.
+@property(nonatomic, readonly) NSInteger generation;
+
 - (NSDictionary *)dictionaryValue;
 - (id<CapturedOutputReading>)doppelganger;
 @end

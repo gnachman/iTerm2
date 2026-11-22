@@ -203,6 +203,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, copy, readwrite, nullable) NSArray<NSString *> *ancestorAids;
 @property(nonatomic, copy, readwrite, nullable) NSArray<iTermResilientCoordinateRange *> *excludedSubranges;
 
+// Restorable-state generation. The interval tree's graph encoder skips re-encoding the mark when
+// this matches the saved record. It changes whenever -dictionaryValue may have, including when a
+// held coordinate moves or a held captured output changes. See iTermGeneration.h.
+@property(nonatomic, readonly) NSInteger generation;
+
 // Appends `range` to excludedSubranges (creating the array if nil). The
 // appended range is typically unbound; on the doppelganger side the
 // EventuallyConsistentIntervalTree's add/mutate hook binds it to the

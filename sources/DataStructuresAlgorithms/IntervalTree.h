@@ -75,6 +75,11 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol IntervalTreeReading<NSObject>
 
 @property(nonatomic, readonly) NSString *debugString;
+
+// Restorable-state generation. Changes whenever the tree's contents change through its own
+// methods, or when someone calls -noteContentsChanged because its objects now encode differently.
+// A save reuses the tree's whole record while this is unchanged. See iTermGeneration.h.
+@property(nonatomic, readonly) NSInteger generation;
 - (NSArray<id<IntervalTreeImmutableObject>> *)objectsInInterval:(Interval *)interval;
 - (NSArray<id<IntervalTreeImmutableObject>> *)allObjects;
 - (BOOL)containsObject:(id<IntervalTreeImmutableObject> _Nullable)object;
@@ -134,6 +139,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)addObject:(id<IntervalTreeObject>)object withInterval:(Interval *)interval;
 - (BOOL)removeObject:(id<IntervalTreeObject>)object;
 - (NSArray<id<IntervalTreeObject>> *)mutableObjectsInInterval:(Interval *)interval;
+
+// Call when something the tree can't see changed what its objects encode, such as an object
+// mutated in place. Gives the tree a new generation. Safe to call from any thread.
+- (void)noteContentsChanged;
 
 // NOTE: This leaves the entry set on objects so you can recover the interval. You must nil it out
 // before adding an object to another tree.

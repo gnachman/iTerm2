@@ -243,7 +243,9 @@ class PortholeRegistry: NSObject {
     }
 
     func incrementGeneration() {
-        _generation += 1
+        // A fresh number from the shared counter, never an in-place increment, so it can't equal
+        // a generation saved by an earlier run. See iTermGeneration.h.
+        _generation = iTermGenerationNext()
         DispatchQueue.main.async {
             NSApp.invalidateRestorableState()
         }
@@ -267,7 +269,8 @@ class PortholeRegistry: NSObject {
                 let generation = dictionary[generationKey] as? Int,
                let portholes = dictionary[portholesKey] as? [String: NSDictionary] {
                 self.pending = pending.merging(portholes) { lhs, _ in lhs }
-                self.generation = generation
+                // Merges into existing state. See iTermGenerationAdopt.
+                _generation = iTermGenerationAdopt(_generation, generation)
             }
         }
     }
@@ -295,8 +298,8 @@ class PortholeRegistry: NSObject {
 
     @objc(decodeRecord:) func decode(record: iTermEncoderGraphRecord) {
         mutex.sync {
-            // Preserve generation so unchanged state can skip re-encoding.
-            _generation = max(_generation, record.generation)
+            // Merges into existing state. See iTermGenerationAdopt.
+            _generation = iTermGenerationAdopt(_generation, record.generation)
             record.enumerateArray(withKey: "portholes") { identifier, index, plist, stop in
                 guard let dict = plist as? NSDictionary else {
                     return

@@ -123,6 +123,7 @@ class EventuallyConsistentIntervalTree: IntervalTree {
 #endif
         let mutable = object as! IntervalTreeObject
         closure(mutable)
+        noteContentsChanged()
         // Bind any unbound RCs the closure attached to the progenitor.
         // (The doppelganger side is handled later by addSideEffect.)
         bindUnresolvedRCsOnProgenitor(mutable)
@@ -145,6 +146,7 @@ class EventuallyConsistentIntervalTree: IntervalTree {
 #endif
             let mutable = object as! IntervalTreeObject
             closure(mutable)
+            noteContentsChanged()
             bindUnresolvedRCsOnProgenitor(mutable)
 #if ITERM_DEBUG
             super.sanityCheck()

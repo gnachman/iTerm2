@@ -208,17 +208,87 @@ class iTermGraphDeltaEncoderTests: XCTestCase {
             return true
         }
 
-        // Then the record should be enumerated with updated generation
+        // Then the record is enumerated, flagged as always encoded, and keeps the saved generation.
+        // The flag (not a changed generation) is what makes it get re-examined, and the stable
+        // generation lets the database skip the row when its data is unchanged.
         var foundChild = false
         _ = encoder.enumerateRecords { before, after, parent, path, stop in
             if after?.key == "child" && after?.identifier == "1" {
                 foundChild = true
-                // Generation should be incremented from previous
-                XCTAssertEqual(after!.generation, 6, "Generation should be previous + 1")
+                XCTAssertTrue(after!.alwaysEncoded)
+                XCTAssertEqual(after!.generation, 5, "Generation should be kept from the previous revision")
+                XCTAssertEqual(after!.pod["key"] as? String, "forced_update")
             }
         }
 
         XCTAssertTrue(foundChild, "Should find child node")
+    }
+
+    func testOlderGenerationGetsAFreshGenerationThatCannotCollide() {
+        // Given a saved record whose generation is the newest one the shared counter handed out,
+        // as it is right after the database raises the floor above the highest saved generation.
+        let savedGeneration = iTermGenerationNext()
+        let child = createRecord(key: "child", identifier: "1", generation: savedGeneration, rowid: 10)
+        let previousRoot = createRecord(
+            key: "",
+            identifier: "",
+            generation: 1,
+            rowid: 1,
+            children: [child]
+        )
+
+        // When the object still reports an older generation (e.g., it hasn't been restored yet).
+        let encoder = iTermGraphDeltaEncoder(previousRevision: previousRoot)
+        _ = encoder.encodeChild(withKey: "child", identifier: "1", generation: 0) { child in
+            child.encode("unrestored", forKey: "key")
+            return true
+        }
+
+        var writtenGeneration: Int?
+        _ = encoder.enumerateRecords { before, after, parent, path, stop in
+            if after?.key == "child" && after?.identifier == "1" {
+                writtenGeneration = after!.generation
+            }
+        }
+
+        // Then the written generation moves past the saved one, and the next generation the object
+        // can get from the counter is different, so its next change isn't mistaken for this record.
+        let written = try! XCTUnwrap(writtenGeneration)
+        XCTAssertGreaterThan(written, savedGeneration)
+        XCTAssertNotEqual(iTermGenerationNext(), written)
+    }
+
+    func testNonArchivableArrayUnderAlwaysEncodedParentIsReencodedOnEverySave() {
+        // An array that fails the trial secure archive is encoded as child nodes. Under an
+        // always-encoded parent, those children must be re-encoded on every save too.
+        func save(_ value: String, previous: iTermEncoderGraphRecord?) -> iTermEncoderGraphRecord {
+            let encoder = iTermGraphDeltaEncoder(previousRevision: previous)
+            _ = encoder.encodeChild(withKey: "parent", identifier: "", generation: iTermGenerationAlwaysEncode) { parent in
+                parent.encode([GraphEncoderIgnoredObject(), value], key: "x")
+                return true
+            }
+            return encoder.record!
+        }
+        func arrayValues(_ root: iTermEncoderGraphRecord) -> [String] {
+            let parent = root.childRecord(withKey: "parent", identifier: "")
+            let array = parent?.childRecord(withKey: "__array", identifier: "x")
+            return (array?.graphRecords ?? []).compactMap { $0.pod["__arrayValue"] as? String }
+        }
+
+        // The database normally assigns rowids, and a previous revision must have them.
+        var nextRowid = 1
+        func assignRowids(_ record: iTermEncoderGraphRecord) {
+            record.rowid = NSNumber(value: nextRowid)
+            nextRowid += 1
+            record.graphRecords.forEach { assignRowids($0) }
+        }
+
+        let first = save("a", previous: nil)
+        XCTAssertEqual(arrayValues(first), ["a"])
+        assignRowids(first)
+
+        let second = save("b", previous: first)
+        XCTAssertEqual(arrayValues(second), ["b"])
     }
 
     // MARK: - Baseline Enumeration Count Test
@@ -289,5 +359,13 @@ class iTermGraphDeltaEncoderTests: XCTestCase {
         }
 
         XCTAssertEqual(afterRowid, 42, "Rowid should be preserved for unchanged node")
+    }
+}
+
+// Not secure-codable, so an array containing it fails the trial archive and is encoded as child
+// nodes. The encoder skips it.
+private class GraphEncoderIgnoredObject: NSObject, iTermGraphEncodable {
+    func graphEncoderShouldIgnore() -> Bool {
+        return true
     }
 }

@@ -32,6 +32,9 @@ typedef NS_OPTIONS(NSUInteger, iTermGraphEncoderArrayOptions) {
 // nil if rolled back.
 @property (nullable, nonatomic, readonly) iTermEncoderGraphRecord *record;
 @property (nonatomic, readonly) iTermGraphEncoderState state;
+// Copied to the record. Initialized to whether the generation passed to the initializer was
+// iTermGenerationAlwaysEncode. Must be set before the record is committed.
+@property (nonatomic) BOOL alwaysEncoded;
 
 - (void)encodeString:(NSString *)string forKey:(NSString *)key;
 - (void)encodeNumber:(NSNumber *)number forKey:(NSString *)key;

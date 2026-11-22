@@ -7,6 +7,7 @@
 //
 
 #import "VT100ScreenMark.h"
+#import "iTermGeneration.h"
 #import "CapturedOutput.h"
 #import "DebugLogging.h"
 #import "NSArray+iTerm.h"
@@ -61,6 +62,9 @@ static NSString *const kMarkExcludedSubranges = @"Excluded Subranges";
 @end
 
 @implementation VT100ScreenMark {
+    // Restorable-state generation of the mark's own fields. -generation combines it with the
+    // generations of the objects it holds. See iTermGeneration.h.
+    NSInteger _ownGeneration;
     NSMutableArray<CapturedOutput *> *_capturedOutput;
     iTermPromise<NSNumber *> *_returnCodePromise;
     id<iTermPromiseSeal> _codeSeal;
@@ -124,6 +128,7 @@ static NSString *const kMarkExcludedSubranges = @"Excluded Subranges";
 - (instancetype)initRegistered:(BOOL)shouldRegister {
     self = [super init];
     if (self) {
+        _ownGeneration = iTermGenerationNext();
         if (shouldRegister) {
             @synchronized([VT100ScreenMark class]) {
                 [[self.class registry] setObject:self forKey:self.guid];
@@ -147,6 +152,7 @@ static NSString *const kMarkExcludedSubranges = @"Excluded Subranges";
 - (instancetype)initWithDictionary:(NSDictionary *)dict shouldRegister:(BOOL)shouldRegister {
     self = [super initWithDictionary:dict];
     if (self) {
+        _ownGeneration = iTermGenerationNext();
         _code = [dict[kMarkCodeKey] intValue];
         _promptDetectedByTrigger = [dict[kMarkPromptDetectedByTrigger] boolValue];
         _lineStyle = [dict[kMarkLineStyleKey] boolValue];
@@ -432,6 +438,7 @@ static BOOL IT_RC_STATUS_IS_USABLE(iTermResilientCoordinate *rc) {
 - (void)setPromptRange:(VT100GridAbsCoordRange)range {
     _promptRangeRC =
         [[iTermResilientCoordinateRange alloc] initUnboundWithAbsRange:range];
+    [self didChangeEncodedState];
 }
 
 - (VT100GridAbsCoordRange)commandRange {
@@ -448,6 +455,7 @@ static BOOL IT_RC_STATUS_IS_USABLE(iTermResilientCoordinate *rc) {
 - (void)setCommandRange:(VT100GridAbsCoordRange)range {
     _commandRangeRC =
         [[iTermResilientCoordinateRange alloc] initUnboundWithAbsRange:range];
+    [self didChangeEncodedState];
 }
 
 - (VT100GridAbsCoord)outputStart {
@@ -462,6 +470,95 @@ static BOOL IT_RC_STATUS_IS_USABLE(iTermResilientCoordinate *rc) {
 
 - (void)setOutputStart:(VT100GridAbsCoord)coord {
     _outputStartRC = [[iTermResilientCoordinate alloc] initUnboundWithAbsCoord:coord];
+    [self didChangeEncodedState];
+}
+
+// MARK: - Restorable state generation
+
+// Every change to a field that -dictionaryValue reads must call this. Changes to the coordinate
+// and captured output objects the mark holds are caught by -generation instead, because those
+// objects can change without the mark's involvement.
+- (void)didChangeEncodedState {
+    _ownGeneration = iTermGenerationNext();
+}
+
+- (NSInteger)generation {
+    NSInteger result = _ownGeneration;
+    result = MAX(result, _promptRangeRC.generation);
+    result = MAX(result, _commandRangeRC.generation);
+    result = MAX(result, _outputStartRC.generation);
+    for (iTermResilientCoordinateRange *range in _excludedSubranges) {
+        result = MAX(result, range.generation);
+    }
+    for (id<CapturedOutputReading> capturedOutput in _capturedOutput) {
+        result = MAX(result, capturedOutput.generation);
+    }
+    return result;
+}
+
+- (void)setIsPrompt:(BOOL)isPrompt {
+    _isPrompt = isPrompt;
+    [self didChangeEncodedState];
+}
+
+- (void)setPromptDetectedByTrigger:(BOOL)promptDetectedByTrigger {
+    _promptDetectedByTrigger = promptDetectedByTrigger;
+    [self didChangeEncodedState];
+}
+
+- (void)setLineStyle:(BOOL)lineStyle {
+    _lineStyle = lineStyle;
+    [self didChangeEncodedState];
+}
+
+- (void)setStartDate:(NSDate *)startDate {
+    _startDate = startDate;
+    [self didChangeEncodedState];
+}
+
+- (void)setEndDate:(NSDate *)endDate {
+    _endDate = endDate;
+    [self didChangeEncodedState];
+}
+
+- (void)setSessionGuid:(NSString *)sessionGuid {
+    _sessionGuid = sessionGuid;
+    [self didChangeEncodedState];
+}
+
+- (void)setName:(NSString *)name {
+    _name = [name copy];
+    [self didChangeEncodedState];
+}
+
+- (void)setPromptText:(NSArray<ScreenCharArray *> *)promptText {
+    _promptText = [promptText copy];
+    [self didChangeEncodedState];
+}
+
+- (void)setKind:(VT100PromptKind)kind {
+    _kind = kind;
+    [self didChangeEncodedState];
+}
+
+- (void)setAid:(NSString *)aid {
+    _aid = [aid copy];
+    [self didChangeEncodedState];
+}
+
+- (void)setParentAid:(NSString *)parentAid {
+    _parentAid = [parentAid copy];
+    [self didChangeEncodedState];
+}
+
+- (void)setAncestorAids:(NSArray<NSString *> *)ancestorAids {
+    _ancestorAids = [ancestorAids copy];
+    [self didChangeEncodedState];
+}
+
+- (void)setExcludedSubranges:(NSArray<iTermResilientCoordinateRange *> *)excludedSubranges {
+    _excludedSubranges = [excludedSubranges copy];
+    [self didChangeEncodedState];
 }
 
 // MARK: - iTermResilientCoordinateHolder
@@ -641,20 +738,16 @@ static BOOL IT_RC_STATUS_IS_USABLE(iTermResilientCoordinate *rc) {
 }
 
 - (void)appendExcludedSubrange:(iTermResilientCoordinateRange *)range {
-    // VT100ScreenMark intentionally does NOT implement -generation. The
-    // IntervalTree graph encoder treats marks without that method as
-    // iTermGenerationAlwaysEncode (see -encodeWithGraphEncoder: in
-    // IntervalTree.m's gen lookup for IntervalTreeObject classes), so any
-    // append to excludedSubranges is automatically picked up by the next
-    // save pass. No explicit counter bump needed.
     if (_excludedSubranges) {
         _excludedSubranges = [_excludedSubranges arrayByAddingObject:range];
     } else {
         _excludedSubranges = @[range];
     }
+    [self didChangeEncodedState];
 }
 
 - (void)addCapturedOutput:(CapturedOutput *)capturedOutput {
+    [self didChangeEncodedState];
     if (!_capturedOutput) {
         _capturedOutput = [[NSMutableArray alloc] init];
     } else if ([self mergeCapturedOutputIfPossible:capturedOutput]) {
@@ -684,6 +777,7 @@ static BOOL IT_RC_STATUS_IS_USABLE(iTermResilientCoordinate *rc) {
         [self.delegate markDidBecomeCommandMark:self];
     }
     _firstLineOfCommand = [command copy];
+    [self didChangeEncodedState];
     // Callers set startDate explicitly. Stamping [NSDate date] here would give
     // the doppelganger a later date than the progenitor, since mutations are
     // replayed onto it when the threads next sync.
@@ -693,11 +787,13 @@ static BOOL IT_RC_STATUS_IS_USABLE(iTermResilientCoordinate *rc) {
     // Fires for every command under shell integration; keep it out of the ring.
     RLog(@"Set fullCommand of %@ to %@", self.guid, RLogRedact(command, @(command.length)));
     _fullCommand = [command copy];
+    [self didChangeEncodedState];
 }
 
 - (void)setCode:(int)code {
     _code = code;
     _hasCode = YES;
+    [self didChangeEncodedState];
     [_codeSeal fulfill:@(code)];
     _codeSeal = nil;
 }

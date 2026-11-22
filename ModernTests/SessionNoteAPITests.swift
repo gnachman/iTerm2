@@ -277,8 +277,10 @@ final class SessionNoteAPITests: XCTestCase {
         XCTAssertEqual(model?.isVisible, true)
     }
 
-    // A restored model that restarted near zero could later reach the generation the record was
-    // saved at, and the delta encoder would then reuse the stale record instead of the edits.
+    // A restored model must never fall behind the generation its record was saved at, or a later
+    // change could land on it and the delta encoder would reuse the stale record instead of the
+    // edits. Restoring the properties takes fresh numbers from the shared counter, which already
+    // exceed the saved one.
     func testRestoredModelResumesTheSavedGeneration() {
         let model = SessionNoteModel()
         model.text = "typed"
@@ -291,7 +293,7 @@ final class SessionNoteAPITests: XCTestCase {
 
         let restored = SessionNoteModel.fromArrangement(encodedArrangement(model))!
 
-        XCTAssertEqual(restored.generation, savedGeneration)
+        XCTAssertGreaterThanOrEqual(restored.generation, savedGeneration)
         XCTAssertEqual(restored.text, "typed even more")
         XCTAssertEqual(restored.isCollapsed, true)
         XCTAssertEqual(restored.noteFrame, NSRect(x: 1, y: 2, width: 300, height: 200))

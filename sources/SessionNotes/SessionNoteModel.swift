@@ -72,22 +72,25 @@ class SessionNoteModel: NSObject {
     @objc var text: String = "" {
         didSet {
             if text != oldValue {
-                generation += 1
+                generation = iTermGenerationNext()
                 NotificationCenter.default.post(name: SessionNoteModel.textDidChangeNotification,
                                                 object: self)
             }
         }
     }
 
-    @objc private(set) var generation: Int = 0
+    /// Always a fresh number from the shared counter (see iTermGeneration.h), never an in-place
+    /// increment, so it can't equal a generation saved by an earlier run.
+    @objc private(set) var generation: Int = iTermGenerationNext()
 
     /// Raises `generation` so it is strictly greater than `floor`. A session calls this when it
     /// installs a replacement model, so the delta encoder never sees the new model at the same
     /// generation as the record it saved for the old one.
     @objc(advanceGenerationPast:)
     func advanceGeneration(past floor: Int) {
+        iTermGenerationRaiseFloorAbove(floor)
         if generation <= floor {
-            generation = floor + 1
+            generation = iTermGenerationNext()
         }
     }
 
@@ -95,7 +98,7 @@ class SessionNoteModel: NSObject {
     @objc var noteFrame: NSRect = NSRect.zero {
         didSet {
             if !NSEqualRects(noteFrame, oldValue) {
-                generation += 1
+                generation = iTermGenerationNext()
             }
         }
     }
@@ -103,7 +106,7 @@ class SessionNoteModel: NSObject {
     @objc var isCollapsed: Bool = false {
         didSet {
             if isCollapsed != oldValue {
-                generation += 1
+                generation = iTermGenerationNext()
             }
         }
     }
@@ -116,7 +119,7 @@ class SessionNoteModel: NSObject {
     @objc var isVisible: Bool = false {
         didSet {
             if isVisible != oldValue {
-                generation += 1
+                generation = iTermGenerationNext()
             }
         }
     }

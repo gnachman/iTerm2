@@ -419,26 +419,37 @@ class iTermDeltaEncoderSkipTests: XCTestCase {
     }
 
     func testAlwaysEncodeGenerationPreventsSkipping() {
-        // Given a previous revision
-        let child = createRecord(key: "child", identifier: "c1", generation: 5, rowid: NSNumber(value: 10))
+        // Given a previous revision whose child has a grandchild
+        let grandchild = createRecord(key: "grandchild", identifier: "gc1", generation: 1, rowid: NSNumber(value: 100))
+        let child = createRecord(key: "child", identifier: "c1", generation: 5, rowid: NSNumber(value: 10), children: [grandchild])
         let previousRoot = createRecord(key: "", identifier: "", generation: 1, rowid: NSNumber(value: 1), children: [child])
 
-        // When we encode with iTermGenerationAlwaysEncode
+        // When we encode the child with iTermGenerationAlwaysEncode and change the grandchild
         let encoder = iTermGraphDeltaEncoder(previousRevision: previousRoot)
         _ = encoder.encodeChild(withKey: "child", identifier: "c1", generation: iTermGenerationAlwaysEncode) { childEncoder in
             childEncoder.encode("forced", forKey: "key")
-            return true
-        }
-
-        // Then the node should be visited with incremented generation
-        var foundChildGeneration: Int?
-        _ = encoder.enumerateRecords { before, after, parent, path, stop in
-            if after?.key == "child" {
-                foundChildGeneration = after?.generation
+            return childEncoder.encodeChild(withKey: "grandchild", identifier: "gc1", generation: 2) { gc in
+                gc.encode("changed", forKey: "value")
+                return true
             }
         }
 
-        XCTAssertEqual(foundChildGeneration, 6, "Generation should be incremented from previous")
+        // Then the child keeps its saved generation, is flagged as always encoded, and its subtree
+        // is still visited.
+        var foundChild: iTermEncoderGraphRecord?
+        var foundGrandchild: iTermEncoderGraphRecord?
+        _ = encoder.enumerateRecords { before, after, parent, path, stop in
+            if after?.key == "child" {
+                foundChild = after
+            }
+            if after?.key == "grandchild" {
+                foundGrandchild = after
+            }
+        }
+
+        XCTAssertEqual(foundChild?.generation, 5, "Generation should be kept from the previous revision")
+        XCTAssertEqual(foundChild?.alwaysEncoded, true)
+        XCTAssertEqual(foundGrandchild?.pod["value"] as? String, "changed", "Subtree should not be skipped")
     }
 
     func testSkipRequiresMatchingRowID() {

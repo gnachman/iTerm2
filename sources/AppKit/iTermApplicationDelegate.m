@@ -170,8 +170,6 @@ NSString *const iTermDownloadsMenuAXIdentifier = @"iTerm.DownloadsMenu";
 NSString *const iTermUploadsMenuAXIdentifier = @"iTerm.UploadsMenu";
 
 static BOOL gStartupActivitiesPerformed = NO;
-// Generation for app state delta encoding. Initialized from database on restore.
-static NSInteger gAppStateGeneration = 0;
 // Prior to 8/7/11, there was only one window arrangement, always called Default.
 static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
 static BOOL hasBecomeActive = NO;
@@ -4487,14 +4485,12 @@ static iTermKeyEventReplayer *gReplayer;
 // ********
 // If you change this also change -application:willEncodeRestorableState:.
 - (BOOL)encodeGraphWithEncoder:(iTermGraphEncoder *)encoder {
-    if ([[iTermApplication sharedApplication] it_restorableStateInvalid] ||
-        [[iTermHotKeyController sharedInstance] anyProfileHotkeyWindowHasInvalidState]) {
-        ++gAppStateGeneration;
-    }
-    [iTermApplication sharedApplication].it_restorableStateInvalid = NO;
+    // Always re-encoded. It holds hotkey windows and buried sessions, whose live sessions change
+    // without invalidating restorable state. The registries below have their own generations, so
+    // they still skip when unchanged.
     return [encoder encodeChildWithKey:@"app"
                             identifier:@""
-                            generation:gAppStateGeneration
+                            generation:iTermGenerationAlwaysEncode
                                  block:^BOOL(iTermGraphEncoder * _Nonnull encoder) {
         DLog(@"app encoding restorable state");
         NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
@@ -4549,8 +4545,6 @@ static iTermKeyEventReplayer *gReplayer;
         DLog(@"No app record");
         return;
     }
-    // Preserve generation from the record so unchanged state can skip re-encoding.
-    gAppStateGeneration = app.generation;
 
     iTermEncoderGraphRecord *screenCharRecord = [app childRecordWithKey:kScreenCharRestorableStateKey identifier:@""];
     if (screenCharRecord) {

@@ -67,11 +67,22 @@ class ResilientCoordinate: NSObject {
     }
     fileprivate var location: Location {
         didSet {
+            // dictionaryValue depends on location, plus whether a fold or porthole mark is still
+            // alive. Losing that mark encodes as invalid without a new generation, so the saved
+            // record keeps the old guid. That is fine: on restore the guid fails to resolve and the
+            // coordinate stays unresolved, which behaves the same as invalid.
+            // Notifications (resize, clear, lines shifted) move the location without the owning
+            // mark's knowledge; the mark's generation includes this one to catch that.
+            generation = iTermGenerationNext()
             if case .invalid = location {
                 NotificationCenter.default.removeObserver(self)
             }
         }
     }
+
+    /// Restorable-state generation. Changes whenever the encoded form may have. See
+    /// iTermGeneration.h.
+    @objc private(set) var generation: Int = iTermGenerationNext()
 
     // YES for the end of a half-open ResilientCoordinateRange. An exclusive end may sit one past the
     // last column (x == width) to include a row's last cell, as a right prompt that ends at the
@@ -249,6 +260,12 @@ class ResilientCoordinateRange: NSObject {
         self.end = end
         end.isExclusiveEnd = true
         super.init()
+    }
+
+    /// Restorable-state generation of the encoded form. Both endpoints draw from the shared
+    /// counter, so the max changes whenever either one does.
+    @objc var generation: Int {
+        return max(start.generation, end.generation)
     }
 
     @objc convenience init(dataSource: ResilientCoordinateDataSource,

@@ -12,6 +12,7 @@
 #import "NSObject+iTerm.h"
 #import "NSURL+iTerm.h"
 #import "iTermChangeTrackingDictionary.h"
+#import "iTermGeneration.h"
 #import "iTermGraphEncoder.h"
 #import "iTermTuple.h"
 
@@ -59,7 +60,7 @@
 
 - (void)retainCode:(unsigned int)code {
     @synchronized (self) {
-        _generation++;
+        _generation = iTermGenerationNext();
         dispatch_async(dispatch_get_main_queue(), ^{
             [NSApp invalidateRestorableState];
         });
@@ -72,7 +73,7 @@
 
 - (void)releaseCode:(unsigned int)code {
     @synchronized (self) {
-        _generation++;
+        _generation = iTermGenerationNext();
         dispatch_async(dispatch_get_main_queue(), ^{
             [NSApp invalidateRestorableState];
         });
@@ -126,7 +127,7 @@
         dispatch_async(dispatch_get_main_queue(), ^{
             [NSApp invalidateRestorableState];
         });
-        _generation++;
+        _generation = iTermGenerationNext();
         return number.unsignedIntValue;
     }
 }
@@ -203,8 +204,9 @@ static NSString *iTermURLStoreGetParamForKey(NSString *params, NSString *key) {
     [_referenceCounts loadFromRecord:[record childRecordWithKey:@"referenceCounts" identifier:@""]
                             keyClass:[NSNumber class]
                           valueClass:[NSNumber class]];
-    // Preserve generation from the record so unchanged state can skip re-encoding.
-    _generation = record.generation;
+    // Loading merges into the existing contents, which may have changed before the saved state
+    // loaded. See iTermGenerationAdopt.
+    _generation = iTermGenerationAdopt(_generation, record.generation);
 }
 
 - (iTermTuple<NSString *, NSString *> *)migratedKey:(id)unknownKey {

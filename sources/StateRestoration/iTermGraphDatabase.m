@@ -13,6 +13,7 @@
 #import "NSData+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermGeneration.h"
 #import "iTermGraphDeltaEncoder.h"
 #import "iTermGraphTableTransformer.h"
 #import "iTermWarning.h"
@@ -149,8 +150,29 @@
     }
     DLogCyclic(_log, @"Loaded ok. Root record: key=%@ id=%@ gen=%@ rowid=%@",
                self.record.key, self.record.identifier, @(self.record.generation), self.record.rowid);
+    [self addGenerationBaselineAboveRecord:self.record];
 
     return YES;
+}
+
+// Everything allocated from now on must differ from every generation in the saved state, or the
+// delta encoder could mistake changed content for a saved record. See iTermGeneration.h.
+- (void)addGenerationBaselineAboveRecord:(iTermEncoderGraphRecord *)root {
+    if (!root) {
+        return;
+    }
+    NSInteger maximum = 0;
+    NSMutableArray<iTermEncoderGraphRecord *> *stack = [NSMutableArray arrayWithObject:root];
+    while (stack.count) {
+        iTermEncoderGraphRecord *record = stack.lastObject;
+        [stack removeLastObject];
+        if (record.generation != iTermGenerationAlwaysEncode) {
+            maximum = MAX(maximum, record.generation);
+        }
+        [stack addObjectsFromArray:record.graphRecords];
+    }
+    DLogCyclic(_log, @"Add generation baseline above %@", @(maximum));
+    iTermGenerationAddBaseline(maximum + 1);
 }
 
 // NOTE: It is critical that the completion block not be called synchronously.
@@ -455,6 +477,9 @@
                 *stop = YES;
                 return;
             }
+            if (after.alwaysEncoded) {
+                after.writtenDigest = nodeData.it_sha256;
+            }
             NSNumber *lastInsertRowID = state.db.lastInsertRowId;
             if (parent.integerValue == 0) {
                 RLog(@"Insert root node with path %@, rowid %@", path, lastInsertRowID);
@@ -475,8 +500,7 @@
             if (after.rowid == nil) {
                 after.rowid = before.rowid;
             } else {
-                if (before.generation == after.generation &&
-                    after.generation != iTermGenerationAlwaysEncode) {
+                if (before.generation == after.generation && !after.alwaysEncoded) {
                     DLog(@"Don't update rowid %@ %@[%@] because it is unchanged", before.rowid, after.key, after.identifier);
                     return;
                 }
@@ -485,6 +509,22 @@
 
             // Put data in large_data column if key is iTermLargeContentMetadata.largeContentKey (for lazy loading)
             NSData *nodeData = after.data;
+
+            // Most nodes are re-encoded on every save (iTermGenerationAlwaysEncode). They keep their
+            // generation across saves, so when the bytes written last time are also unchanged the
+            // row is already correct. Compare digests of the archived bytes rather than pods: the
+            // previous record's pod may alias a container the caller has since mutated in place.
+            NSData *digest = nil;
+            if (after.alwaysEncoded) {
+                digest = nodeData.it_sha256;
+                if (before.generation == after.generation &&
+                    before.writtenDigest &&
+                    [before.writtenDigest isEqual:digest]) {
+                    DLog(@"Don't update rowid %@ %@[%@] because its data is unchanged", before.rowid, after.key, after.identifier);
+                    after.writtenDigest = digest;
+                    return;
+                }
+            }
             NSData *smallData = nil;
             NSData *largeData = nil;
             BOOL useLargeDataColumn = [after.key isEqualToString:iTermLargeContentMetadata.largeContentKey];
@@ -497,7 +537,9 @@
             if (![state.db executeUpdate:@"update Node set data=?, generation=?, large_data=? where rowid=?",
                   smallData ?: [NSData data], @(after.generation), largeData ?: [NSNull null], before.rowid]) {
                 *stop = YES;
+                return;
             }
+            after.writtenDigest = digest;
             return;
         }
         assert(NO);

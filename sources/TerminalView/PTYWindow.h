@@ -95,7 +95,6 @@ typedef NS_ENUM(NSUInteger, PTYWindowTitleBarFlavor) {
 @property(nonatomic, readonly) BOOL it_resizingForTiling;
 @property (nonatomic) BOOL it_becomingKey;
 @property (nonatomic) NSInteger it_accessibilityResizing;
-@property(nonatomic) BOOL it_restorableStateInvalid;
 @property(nonatomic) BOOL it_preventFrameChange;
 @property(nonatomic, readonly) BOOL it_isMovingScreen;
 - (NSColor *)it_terminalWindowDecorationBackgroundColor;

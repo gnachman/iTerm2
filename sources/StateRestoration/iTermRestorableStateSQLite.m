@@ -8,6 +8,7 @@
 #import "iTermRestorableStateSQLite.h"
 
 #import "DebugLogging.h"
+#import "iTermGeneration.h"
 #import "iTermGraphDatabase.h"
 #import "iTermThreadSafety.h"
 #import "NSArray+iTerm.h"
@@ -114,8 +115,6 @@
 
 @implementation iTermRestorableStateSQLite {
     iTermGraphDatabase *_db;
-    NSInteger _generation;
-    BOOL _generationInitialized;
     NSURL *_url;
 }
 
@@ -156,12 +155,6 @@
     };
     iTermGraphDatabase *db = [[iTermGraphDatabase alloc] initWithDatabase:sqliteDb];
     _db = db;
-
-    // Initialize _generation from the loaded database as soon as it's ready.
-    // This must happen before any save to avoid generation regression.
-    [_db whenReady:^{
-        [self initializeGenerationFromRecord:self->_db.record];
-    }];
 }
 
 - (void)loadRestorableStateIndexWithCompletion:(void (^)(id<iTermRestorableStateIndex>))completion {
@@ -175,35 +168,6 @@
         completion([[iTermRestorableStateSQLiteIndex alloc] initWithGraphRecord:self->_db.record]);
         [self->_db doHousekeeping];
     }];
-}
-
-- (void)initializeGenerationFromRecord:(iTermEncoderGraphRecord *)record {
-    if (_generationInitialized) {
-        return;
-    }
-    _generationInitialized = YES;
-    if (!record) {
-        return;
-    }
-    // Get generation from the windows array container to avoid regression.
-    iTermEncoderGraphRecord *windowsRecord = [record childRecordWithKey:@"__array"
-                                                             identifier:@"windows"];
-    _generation = MAX(_generation, windowsRecord.generation);
-}
-
-- (void)initializeGenerationFromRecordSynchronously {
-    if (_generationInitialized) {
-        return;
-    }
-    if (!_db) {
-        // Can't initialize without a database (e.g., lock held by another process).
-        // Don't set _generationInitialized so we retry on the next save after
-        // initializeDb successfully creates _db.
-        return;
-    }
-    // Wait for database to be ready, then initialize generation
-    [_db waitUntilReady];
-    [self initializeGenerationFromRecord:_db.record];
 }
 
 - (void)restoreWindowWithRecord:(id<iTermRestorableStateRecord>)record
@@ -264,14 +228,6 @@
 
     [self initializeDb];
 
-    // Ensure _generation is initialized from database before incrementing.
-    // This handles the case where save is triggered before restore completes.
-    if (!_generationInitialized) {
-        [self initializeGenerationFromRecordSynchronously];
-    }
-
-    _generation += 1;
-    const NSInteger generation = _generation;
     NSArray<NSWindow *> *windows = [self.delegate restorableStateWindows];
     NSArray<NSString *> *identifiers = [windows mapWithBlock:^id(NSWindow *window) {
         if (![window.delegate conformsToProtocol:@protocol(iTermGraphCodable)]) {
@@ -284,6 +240,10 @@
         return identifiable.stringUniqueIdentifier;
     }];
     void (^update)(iTermGraphEncoder * _Nonnull) = ^(iTermGraphEncoder * _Nonnull encoder) {
+        // The windows array is rewritten on every save. Allocate here rather than earlier because
+        // the database runs this only after loading, which raises the generation floor above
+        // everything it holds.
+        const NSInteger generation = iTermGenerationNext();
         // Encode state for each window.
         [encoder encodeArrayWithKey:@"windows"
                          generation:generation

@@ -58,9 +58,6 @@ extern NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID;
 - (NSInteger)createHiddenWindowsFromRestorableStates:(NSArray *)states;  // legacy
 - (BOOL)createHiddenWindowsByDecoding:(iTermEncoderGraphRecord *)record;  // sqlite
 
-// Resets invalidation state.
-- (BOOL)anyProfileHotkeyWindowHasInvalidState;
-
 // Auto hide all hotkey windows, if needed and possible.
 - (void)autoHideHotKeyWindows;
 

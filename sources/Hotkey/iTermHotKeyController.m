@@ -210,14 +210,6 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
     return YES;
 }
 
-- (BOOL)anyProfileHotkeyWindowHasInvalidState {
-    return [[[self profileHotkeyWindowsIndex] values] filteredArrayUsingBlock:^BOOL(iTermProfileHotKey *obj) {
-        const BOOL result = obj.windowController.ptyWindow.it_restorableStateInvalid;
-        obj.windowController.ptyWindow.it_restorableStateInvalid = NO;
-        return result;
-    }].count == 0;
-}
-
 - (NSArray *)restorableStates {
     NSMutableArray *array = [NSMutableArray array];
     for (__kindof iTermBaseHotKey *hotkey in _hotKeys) {

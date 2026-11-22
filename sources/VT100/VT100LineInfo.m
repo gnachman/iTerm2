@@ -14,7 +14,7 @@
 // (not per-line) so a generation value identifies a line's content uniquely
 // across all lines, which the per-row draw cache relies on to avoid collisions.
 //
-// This is deliberately separate from LineBlock's iTermAllocateGeneration counter,
+// This is deliberately separate from LineBlock's counter (iTermGenerationNext),
 // not a duplicate to consolidate: the two have different policies. This grid
 // counter is gated (below) because its only consumer is the default-off per-row
 // cache, whereas the LineBlock counter must always advance because the bidi

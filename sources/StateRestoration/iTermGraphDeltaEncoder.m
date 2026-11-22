@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "NSArray+iTerm.h"
+#import "iTermGeneration.h"
 #import "iTermOrderedDictionary.h"
 
 @implementation iTermGraphDeltaEncoder
@@ -71,17 +72,25 @@
         return YES;
     }
     // Same key+id, new generation.
+    const BOOL alwaysEncode = (generation == iTermGenerationAlwaysEncode);
     NSInteger realGeneration = generation;
-    if (generation == iTermGenerationAlwaysEncode || record.generation >= generation) {
-        // Generation regression can happen when the DB lock was held by another
-        // process during init, preventing generation counters from being restored.
-        // Bump forward to ensure monotonic progress.
-        realGeneration = record.generation + 1;
+    if (alwaysEncode) {
+        // Re-encoded on every save. Keep the saved generation rather than inventing a new one: the
+        // alwaysEncoded flag, not a changed generation, is what makes this get re-examined, and a
+        // stable generation lets the database skip the row when its data is unchanged.
+        realGeneration = record.generation;
+    } else if (record.generation >= generation) {
+        // The object reports a generation no newer than the saved one, e.g. because it hasn't
+        // been restored yet. Move past the saved generation with a fresh value from the shared
+        // counter rather than record.generation + 1: the counter may hand out exactly that value
+        // to the object on its next change, and then the change would be mistaken for this record.
+        realGeneration = iTermGenerationNext();
     }
     iTermGraphEncoder *encoder = [[iTermGraphDeltaEncoder alloc] initWithKey:key
                                                                   identifier:identifier
                                                                   generation:realGeneration
                                                             previousRevision:record];
+    encoder.alwaysEncoded = alwaysEncode;
     if (!block(encoder)) {
         return NO;
     }
@@ -163,7 +172,7 @@
                                 before.rowid != nil &&
                                 [before.rowid isEqual:after.rowid] &&
                                 before.generation == after.generation &&
-                                after.generation != iTermGenerationAlwaysEncode);
+                                !after.alwaysEncoded);
                 if (!canSkip) {
                     ok = [self enumerateBefore:before
                                          after:after

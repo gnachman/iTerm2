@@ -378,7 +378,10 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
     NSInteger index = [tableView_ clickedRow];
     if (index >= 0) {
         CapturedOutput *capturedOutput = filteredEntries_[index];
-        capturedOutput.state = !capturedOutput.state;
+        iTermToolWrapper *wrapper = self.toolWrapper;
+        [wrapper.delegate.delegate toolbeltSetState:!capturedOutput.state
+                                   ofCapturedOutput:capturedOutput
+                                             inMark:mark_];
     }
     [tableView_ reloadData];
 }
