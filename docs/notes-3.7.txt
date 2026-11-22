@@ -40,6 +40,16 @@ Improvements:
   scrollback with Shell Integration. Saving
   window state for restoration now skips what
   hasn’t changed and writes less to disk.
+- A new advanced setting lays out a line that
+  starts with a Latin word right-to-left once
+  it has a minimum number of right-to-left
+  words. It helps with programs such as Claude
+  Code that wrap Persian, Arabic, or Hebrew
+  paragraphs into rows themselves, where a row
+  that begins with a Latin word used to flip to
+  left-to-right on its own. Off by default.
+  Search Settings > Advanced for “right-to-left
+  words”.
 
 Bug Fixes:
 - When a program turned on light/dark mode

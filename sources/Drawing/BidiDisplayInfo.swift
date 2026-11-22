@@ -298,17 +298,47 @@ fileprivate func makeLookupTable(_ string: NSString,
 // scalars, not UTF-16 units: surrogate halves never form a scalar, so a UTF-16
 // walk would ignore supplementary-plane strong-RTL scripts (Adlam, Hanifi
 // Rohingya) and misdetect lines written in them.
+//
+// The advanced setting rtlParagraphMinimumWords (default 0, which is exactly
+// first-strong) adds one case: a line whose first strong character is
+// left-to-right still lays out right-to-left once it holds that many
+// right-to-left words. Programs that wrap a right-to-left paragraph into rows
+// themselves send each row as its own line, so a row that happens to begin
+// with a Latin word would otherwise flip on its own. UAX #9 allows this kind
+// of override of P3 (HL1).
+//
+// A word is a maximal group of strong-RTL characters. A space or a strong-LTR
+// character ends it; neutrals and marks (the ZWNJ inside دانش‌آموزان, combining
+// marks) do not, so such a word counts once.
 fileprivate func detectedParagraphIsRTL(_ s: NSString) -> Bool {
     guard let ltr = NSCharacterSet.strongLTRCodePoints(),
           let rtl = NSCharacterSet.strongRTLCodePoints() else {
         return false
     }
+    let minimumWords = Int(iTermAdvancedSettingsModel.rtlParagraphMinimumWords())
+    var opensLTR = false
+    var rtlWordCount = 0
+    var inRTLWord = false
     for scalar in (s as String).unicodeScalars {
         if rtl.contains(scalar) {
-            return true
-        }
-        if ltr.contains(scalar) {
-            return false
+            if !opensLTR {
+                return true
+            }
+            if !inRTLWord {
+                inRTLWord = true
+                rtlWordCount += 1
+                if rtlWordCount >= minimumWords {
+                    return true
+                }
+            }
+        } else if ltr.contains(scalar) {
+            if minimumWords <= 0 {
+                return false
+            }
+            opensLTR = true
+            inRTLWord = false
+        } else if scalar == " " {
+            inRTLWord = false
         }
     }
     return false
