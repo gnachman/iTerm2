@@ -95,3 +95,7 @@ Bug Fixes:
 - Double-clicking a line in the Captured Output
   tool did nothing when the Capture Output
   trigger’s command used session variables.
+- Right-to-left text no longer flashes
+  unreordered for a frame while a program
+  that uses synchronized updates (such as
+  Claude Code) repaints the screen.

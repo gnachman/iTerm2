@@ -447,4 +447,46 @@ class BidiTUIRepaintTests: XCTestCase {
         XCTAssertEqual(histRow1.visual, gridRow1.visual,
                        "continuation row must render the same from history as on the grid, not scrambled")
     }
+
+    // A TUI that brackets each repaint in a synchronized update (DECSET 2026)
+    // makes the terminal draw a saved copy of the grid until the update ends.
+    // The saved copy is taken between syncs, when the grid's bidi tables are
+    // not marked dirty. It has to carry them anyway. Otherwise every RTL row
+    // is drawn unreordered for as long as the saved copy is on screen, which
+    // shows up as the whole page flashing while you type.
+    func testSynchronizedUpdateSnapshotKeepsBidiInfo() {
+        let screen = makeScreen()
+        // The sync at the end of the joined block computes the row's bidi info
+        // and copies it to the main-thread state.
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.appendString(atCursor: self.persian)
+            mutableState.appendCarriageReturnLineFeed()
+        })
+        let live = screen.bidiInfo(forLine: 0)
+        assertHasRTLRuns(live, "live grid before the synchronized update")
+
+        // Begin a synchronized update. The sync at the end of this block hands
+        // the saved grid to the main-thread state.
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            // Keep the one-second expiration timer out of the test.
+            mutableState.unconditionalTemporaryDoubleBuffer.manualExpirationForTesting = true
+            mutableState.terminalSynchronizedUpdate(true)
+        })
+
+        // What the renderer consumes while the update is open.
+        var drewSavedGrid = false
+        var saved: BidiDisplayInfoObjc?
+        screen.performBlock(savedGrid: { state in
+            drewSavedGrid = (state != nil)
+            saved = screen.bidiInfo(forLine: 0)
+        })
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.terminalSynchronizedUpdate(false)
+        })
+
+        XCTAssertTrue(drewSavedGrid, "probe: the saved grid must be in use during a synchronized update")
+        XCTAssertEqual(saved, live,
+                       "the saved grid must draw the row with the same bidi info as the live grid")
+    }
 }

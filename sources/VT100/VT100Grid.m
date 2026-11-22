@@ -3652,6 +3652,11 @@ static void DumpBuf(screen_char_t* p, int n) {
     theCopy->_allDirtyGenerationBase = _allDirtyGenerationBase;
     theCopy->_allDirtyTimestamp = _allDirtyTimestamp;
     [self copyMiscellaneousStateTo:theCopy];
+    // copyMiscellaneousStateTo: copies the bidi tables only when they changed since the last sync
+    // or the destination has none. That suits copyDirtyFromGrid:, but a fresh copy already has
+    // empty tables from -initializeBidi, so it would keep those and draw every RTL row
+    // unreordered. A copy always needs the source's tables.
+    theCopy->_bidiInfo = [_bidiInfo mutableCopy];
     // Preserve content identity across the copy (copyMiscellaneousStateTo: may
     // have bumped it via the scalar setters). A copy has the same encoded content
     // as the original, so it must report the same generation.
