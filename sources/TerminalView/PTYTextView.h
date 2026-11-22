@@ -890,6 +890,12 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries;
 // line; this returns the tight bounding visual span (correct for VoiceOver focus
 // in the common contiguous case). Identity when there is no bidi info. Exposed
 // for testing.
+// The coordinate to send in a mouse report when the mouse is over `visualCoord`,
+// a column and a row of the live screen. A program that tracks the mouse knows
+// only the cells it wrote, so on a bidi-reordered line it gets the cell that is
+// drawn under the mouse, not the column the mouse is in.
+- (VT100GridCoord)mouseReportCoordForVisualCoord:(VT100GridCoord)visualCoord;
+
 + (VT100GridRange)accessibilityVisualColumnSpanForLogicalStartX:(int)startX
                                                            endX:(int)endX
                                                        bidiInfo:(iTermBidiDisplayInfo *)bidiInfo;

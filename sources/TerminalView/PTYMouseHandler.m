@@ -1459,7 +1459,9 @@ typedef NS_ENUM(NSUInteger, iTermScrollWheelDisposition) {
         *reportableOut = YES;
     }
 
-    VT100GridCoord coord = [self.mouseDelegate mouseHandlerCoordForPointInView:point];
+    const VT100GridCoord coord =
+        [self.mouseDelegate mouseHandler:self
+           reportableCoordForVisualCoord:[self.mouseDelegate mouseHandlerCoordForPointInView:point]];
     const CGSize delta = [self.mouseDelegate mouseHandlerAccumulatedDelta:self forEvent:event];
     DLog(@"delta=%@", NSStringFromSize(delta));
     if (deltaOut) {

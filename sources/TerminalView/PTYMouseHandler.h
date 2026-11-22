@@ -60,6 +60,10 @@ NS_ASSUME_NONNULL_BEGIN
 // bidi-reordered, so left-to-right text is unaffected.
 - (VT100GridCoord)mouseHandler:(PTYMouseHandler *)handler
         logicalCoordForVisualCoord:(VT100GridCoord)visualCoord;
+// Converts the live-screen coordinate the mouse is over to the one to send in a
+// mouse report. A no-op unless the line is bidi-reordered.
+- (VT100GridCoord)mouseHandler:(PTYMouseHandler *)handler
+    reportableCoordForVisualCoord:(VT100GridCoord)visualCoord;
 
 - (NSPoint)mouseHandlerReportablePointForPointInView:(NSPoint)point;
 - (void)mouseHandlerMoveCursorToCoord:(VT100GridCoord)coord

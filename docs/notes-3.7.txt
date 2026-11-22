@@ -95,3 +95,9 @@ Bug Fixes:
 - Double-clicking a line in the Captured Output
   tool did nothing when the Capture Output
   trigger’s command used session variables.
+- Programs that track the mouse, such as
+  Claude Code, now get the right cell when you
+  click or drag on right-to-left text. Before,
+  they got the column the mouse was in, so
+  selecting Persian text selected something
+  else.
