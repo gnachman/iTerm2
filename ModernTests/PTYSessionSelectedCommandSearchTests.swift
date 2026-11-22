@@ -220,6 +220,8 @@ final class PTYSessionSelectedCommandSearchTests: XCTestCase {
         XCTAssertFalse(after.isEmpty, "Selecting another command must search inside it")
         XCTAssertTrue(after.allSatisfy { commands.thirdLines.contains($0) },
                       "Results must come from the newly selected command: \(after) vs \(commands.thirdLines)")
+        XCTAssertNil(helper.selectedResult,
+                     "Selecting a command happens on a plain click, so it must not select, and so scroll to, a result")
     }
 
     /// Typing deselects the command. The search must then cover everything

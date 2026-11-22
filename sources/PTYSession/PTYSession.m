@@ -9004,9 +9004,9 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
 
 // Call after _selectedScreenMark changes. The search is restricted to the
 // selected command, so the results found so far are for the wrong range and
-// the search must run again. Only scroll to the first result when a command
-// was selected: deselecting happens on every keystroke and must not move the
-// view.
+// the search must run again. Never scroll to the first result: a plain click
+// in the terminal selects the command under it and typing deselects it, and
+// neither should move the view.
 - (void)selectedCommandDidChange {
     const BOOL refresh = [self searchIsActive];
     if (refresh) {
@@ -9016,7 +9016,7 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
     }
     [self updateSearchRange];
     if (refresh) {
-        [self refreshSearchIfActiveScrollingToFirstResult:self.selectedCommandMark != nil];
+        [self refreshSearchIfActiveScrollingToFirstResult:NO];
     }
 }
 

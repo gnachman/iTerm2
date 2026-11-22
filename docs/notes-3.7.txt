@@ -39,3 +39,6 @@ Bug Fixes:
   All Settings and Data failed if any profile
   had a hotkey of Control-Space recorded, even a
   disabled one. Fixed.
+- With Find open, clicking a command in the
+  terminal no longer scrolls the view to the
+  first match in that command.
