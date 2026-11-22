@@ -11659,6 +11659,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [self closeInstantReplayWindow];
     } else {
         _instantReplayWindowController = [[iTermInstantReplayWindowController alloc] init];
+        _instantReplayWindowController.window.appearance =
+            [NSAppearance it_appearanceForSessionBackgroundColor:self.currentSession.effectiveUnprocessedBackgroundColor];
         NSPoint origin =
             [self originForAccessoryOfSize:_instantReplayWindowController.window.frame.size];
         [_instantReplayWindowController.window setFrameOrigin:origin];

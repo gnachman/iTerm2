@@ -18,6 +18,12 @@ NS_ASSUME_NONNULL_BEGIN
 // Converts a tab style if automatic.
 - (iTermPreferencesTabStyle)it_tabStyle:(iTermPreferencesTabStyle)tabStyle;
 + (instancetype)it_appearanceForCurrentTheme;
+// The appearance a window should be given so it matches a session with this
+// background color. Returns nil when the window should inherit NSApp's
+// appearance, which already follows the theme (see -[iTermApplication
+// updateAppearance]); only the Minimal theme with a known background color
+// needs an override.
++ (nullable instancetype)it_appearanceForSessionBackgroundColor:(nullable NSColor *)backgroundColor;
 + (void)it_performBlockWithCurrentAppearanceSetToAppearanceForCurrentTheme:(void (^)(void))block;
 - (void)it_performAsCurrentDrawingAppearance:(void (^NS_NOESCAPE)(void))block;
 

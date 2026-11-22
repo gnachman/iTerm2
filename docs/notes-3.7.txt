@@ -72,3 +72,10 @@ Bug Fixes:
   the one that copies a rectangle puts the copy
   at the requested row and column instead of
   swapping them.
+- Toasts, Global Search, Instant Replay,
+  autocomplete popups, and the About window now
+  follow the theme: light under the Light
+  themes, dark under the Dark themes, and under
+  the Minimal theme, light or dark to match the
+  current session’s background color. Toasts
+  used to always be dark.

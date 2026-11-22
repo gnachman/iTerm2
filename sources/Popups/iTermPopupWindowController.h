@@ -39,6 +39,9 @@
 // delegate can't tell. The auto command history popup uses it to decide what
 // to insert, since what was typed when it last loaded may be stale.
 - (NSString *)popupTypedCommand;
+
+@optional
+- (NSColor *)popupWindowBackgroundColor;
 @end
 
 @protocol iTermPopupWindowHosting

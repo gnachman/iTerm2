@@ -9,6 +9,7 @@
 #import "iTermAboutWindowController.h"
 
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermController.h"
 #import "iTermLaunchExperienceController.h"
 #import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
@@ -16,6 +17,8 @@
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "PseudoTerminal.h"
+#import "PTYSession.h"
 
 static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-new/";
 static NSString *const iTermAboutWindowHomePageURLString = @"https://iterm2.com/";
@@ -625,6 +628,15 @@ static NSColor *iTermAboutBakedBackgroundColorOfImage(NSImage *image) {
         });
     }
     return self;
+}
+
+// The window is shared, so its appearance is set each time it is shown: under
+// the Minimal theme it follows the current session's background rather than
+// the system setting, like the other panels.
+- (void)showWindow:(id)sender {
+    PTYSession *session = [[iTermController sharedInstance] currentTerminal].currentSession;
+    self.window.appearance = [NSAppearance it_appearanceForSessionBackgroundColor:session.effectiveUnprocessedBackgroundColor];
+    [super showWindow:sender];
 }
 
 - (iTermAboutWindowContentView *)aboutContentView {

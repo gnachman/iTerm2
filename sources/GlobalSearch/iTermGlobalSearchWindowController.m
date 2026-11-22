@@ -10,6 +10,7 @@
 #import "FindContext.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermController.h"
+#import "NSAppearance+iTerm.h"
 #import "iTermFocusReportingTextField.h"
 #import "iTermGlobalSearchEngine.h"
 #import "iTermGlobalSearchOutlineView.h"
@@ -257,6 +258,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)activate {
+    // The controller is created once and reused, so the appearance is updated
+    // each time it is shown to follow the current theme and session.
+    PTYSession *session = [[iTermController sharedInstance] currentTerminal].currentSession;
+    self.window.appearance = [NSAppearance it_appearanceForSessionBackgroundColor:session.effectiveUnprocessedBackgroundColor];
+    DLog(@"Global search appearance set to %@", self.window.appearance.name);
     [self.window makeKeyAndOrderFront:nil];
     [_searchField.window makeFirstResponder:_searchField];
 }
