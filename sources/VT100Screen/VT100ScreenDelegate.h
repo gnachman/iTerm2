@@ -521,7 +521,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 
 - (void)screenExecutorDidUpdate:(VT100ScreenTokenExecutorUpdate * _Nonnull)update;
 - (VT100ScreenState * _Nonnull)screenSwitchToSharedState;
-- (void)screenRestoreState:(VT100ScreenState * _Nonnull)state;
+// Nullable because -[VT100ScreenMutableState reallyPerformBlockWithJoinedThreads:delegate:topmost:]
+// passes what messaging a nil delegate for -screenSwitchToSharedState returned, nil, when a joined
+// block runs before the screen has a delegate (as in -[PTYSession initSynthetic:]). An implementer
+// only runs with a delegate, and then gets the non-nil state it returned.
+- (void)screenRestoreState:(VT100ScreenState * _Nullable)state;
 - (VT100MutableScreenConfiguration * _Nonnull)screenConfiguration;
 - (void)screenSyncExpect:(VT100ScreenMutableState * _Nonnull)mutableState;
 - (void)screenConvertAbsoluteRange:(VT100GridAbsCoordRange)range

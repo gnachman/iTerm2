@@ -27,7 +27,10 @@ private class SyncingFakeSession: FakeSession {
         return config
     }()
 
-    override func screenRestore(_ state: VT100ScreenState) {
+    override func screenRestore(_ state: VT100ScreenState?) {
+        guard let state else {
+            return
+        }
         screen?.restore(state)
     }
 

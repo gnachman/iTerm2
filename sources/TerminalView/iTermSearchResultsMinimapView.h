@@ -13,7 +13,9 @@ NS_ASSUME_NONNULL_BEGIN
 @class iTermSearchResultsMinimapView;
 
 @protocol iTermSearchResultsMinimapViewDelegate<NSObject>
-- (NSIndexSet *)searchResultsMinimapViewLocations:(iTermSearchResultsMinimapView *)view;
+// Nil when there are no locations: SessionView forwards this to its weak,
+// nullable delegate. Every caller treats nil as an empty set.
+- (nullable NSIndexSet *)searchResultsMinimapViewLocations:(iTermSearchResultsMinimapView *)view;
 - (NSRange)searchResultsMinimapViewRangeOfVisibleLines:(iTermSearchResultsMinimapView *)view;
 @end
 

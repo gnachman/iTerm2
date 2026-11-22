@@ -2550,7 +2550,10 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     
     // Like PTYSession. Without this, the screen keeps reading the mutable state through the
     // sanitizing adapter after the first join, racing the mutation queue.
-    func screenRestore(_ state: VT100ScreenState) {
+    func screenRestore(_ state: VT100ScreenState?) {
+        guard let state else {
+            return
+        }
         screen?.restore(state)
     }
     

@@ -18,7 +18,12 @@ private class RTLCaseFakeSession: FakeSession {
         c.sessionGuid = "RTLBidiCaseTests"
         return c
     }()
-    override func screenRestore(_ state: VT100ScreenState) { screen?.restore(state) }
+    override func screenRestore(_ state: VT100ScreenState?) {
+        guard let state else {
+            return
+        }
+        screen?.restore(state)
+    }
     override func screenUpdateDisplay(_ redraw: Bool) {
         guard let screen else { return }
         _ = screen.synchronize(withConfig: syncConfig, expect: nil, checkTriggers: .none,

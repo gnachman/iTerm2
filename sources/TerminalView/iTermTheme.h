@@ -66,11 +66,14 @@ NS_ASSUME_NONNULL_BEGIN
                                                  transparencyAlpha:(CGFloat)transparencyAlpha;
 
 
-// Default text color for status bar.
+// Default text color for status bar. PTYSession passes a nil tabStyle when
+// its view's window gives none (the status bar is being set up); tabStyle is
+// passed on to -terminalWindowDecorationTextColorForBackgroundColor:..., which
+// only casts it to PSMMinimalTabStyle, so nil gives a nil minimal-style color.
 - (nullable NSColor *)statusBarTextColorForEffectiveAppearance:(NSAppearance *)effectiveAppearance
                                                    marginColor:(NSColor * _Nullable)marginColor
                                                       colorMap:(iTermColorMap *)colorMap
-                                                      tabStyle:(id<PSMTabStyle>)tabStyle
+                                                      tabStyle:(nullable id<PSMTabStyle>)tabStyle
                                                  mainAndActive:(BOOL)mainAndActive;
 
 // Color for the separator drawn between the status bar and the terminal

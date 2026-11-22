@@ -159,7 +159,10 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
 
 @end
 
-NSString *iTermAmendedColorKey(NSString *baseKey, Profile *profile, BOOL dark);
+// profile is nil while a PTYSession is created, before -setProfile: runs
+// (-[PTYSession updateConfigurationFields] from -initSynthetic:). It is only
+// passed to +boolForKey:inProfile:, which accepts nil.
+NSString *iTermAmendedColorKey(NSString *baseKey, Profile * _Nullable profile, BOOL dark);
 NSString *iTermAmendedColorKey2(NSString *baseKey, BOOL separate, BOOL dark);
 
 NS_ASSUME_NONNULL_END
