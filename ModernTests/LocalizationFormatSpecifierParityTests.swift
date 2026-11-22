@@ -17,12 +17,16 @@
 import XCTest
 
 final class LocalizationFormatSpecifierParityTests: XCTestCase {
+    // Compiled once: the test counts the arguments of every translation of
+    // every string, and compiling the pattern for each was most of its time.
+    private static let specifierRegex = try! NSRegularExpression(
+        pattern: "%(?:([0-9]+)\\$)?(?:hh|ll|h|l|q|L|z|t|j)?([@%diouxXfeEgGscpaA])")
+
     // Number of distinct printf arguments a format string references. Positional
     // specifiers (%1$@) are counted by distinct index; %% (a literal percent) is
     // not an argument.
     private func argumentCount(_ s: String) -> Int {
-        let pattern = "%(?:([0-9]+)\\$)?(?:hh|ll|h|l|q|L|z|t|j)?([@%diouxXfeEgGscpaA])"
-        let regex = try! NSRegularExpression(pattern: pattern)
+        let regex = Self.specifierRegex
         let ns = s as NSString
         var positional = Set<Int>()
         var nonPositional = 0

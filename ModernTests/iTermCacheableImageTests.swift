@@ -278,11 +278,12 @@ final class iTermCacheableImageTests: XCTestCase {
 }
 
 // Kept apart from the tests above because creating a PTYSession reaches an
-// existing, untriaged nullability violation
-// (-[VT100ScreenMutableState reallyPerformBlockWithJoinedThreads:delegate:topmost:]
-// passes nil to -screenRestoreState:, see docs/swift-migration/bugs.md), so
-// this class cannot run clean under the nullability sanitizer until that is
-// resolved, while the class above can.
+// existing, untriaged nullability violation, so this class cannot run clean
+// under the nullability sanitizer while the class above can. The first one
+// (nil passed to -screenRestoreState:) was a wrong annotation, fixed on
+// 2026-11-21; the next is nil passed to -[NSMutableSet unionSet:] in
+// -[iTermGenericEvaluator evaluateSynchronously:sideEffectsAllowed:completion:]
+// (see docs/swift-migration/bugs.md).
 final class iTermCacheableImageSessionTests: XCTestCase {
     private var directory = ""
 

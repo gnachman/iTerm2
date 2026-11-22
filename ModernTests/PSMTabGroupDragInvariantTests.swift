@@ -396,12 +396,22 @@ final class PSMTabGroupDragInvariantTests: XCTestCase {
 
     // Which slots are open and how far, plus the target's position: if this
     // changes while the mouse holds still, something in the bar is moving.
+    // One pass over the bar's own array: bridging it to a Swift array and
+    // filtering it generically on every tick was a third of the test's time.
     private func fingerprint(_ control: PSMTabBarControl) -> String {
-        let all = cells(control)
-        let target = assistant.targetCell().flatMap { t in all.firstIndex { $0 === t } } ?? -1
-        let open = all.enumerated()
-            .filter { $0.element.isPlaceholder && $0.element.currentStep > 0 }
-            .map { "\($0.offset):\($0.element.currentStep)" }
+        let all: NSArray = control.cells()
+        let targetCell = assistant.targetCell()
+        var target = -1
+        var open: [String] = []
+        for i in 0..<all.count {
+            let cell = all[i] as! PSMTabBarCell
+            if target == -1 && cell === targetCell {
+                target = i
+            }
+            if cell.isPlaceholder && cell.currentStep > 0 {
+                open.append("\(i):\(cell.currentStep)")
+            }
+        }
         return "target=\(target) open=[\(open.joined(separator: ","))]"
     }
 
@@ -467,6 +477,9 @@ final class PSMTabGroupDragInvariantTests: XCTestCase {
         // Sweep across the bar and back, holding at each position.
         let positions = Array(stride(from: control.insets.left - 8, through: barEnd + 40, by: 4))
         let holdTicks = 24
+        // Settling is judged on the last ticks of each hold, so only those
+        // are fingerprinted. Every tick still runs.
+        let settleTicks = 8
         var reached = Set<GroupDropOutcome>()
         var unsettled: [String] = []
         var misshapen: [String] = []
@@ -482,12 +495,13 @@ final class PSMTabGroupDragInvariantTests: XCTestCase {
             // Get there in two moving ticks, then hold.
             tick(control, x: (lastX + x) / 2)
             lastX = x
-            var prints: [String] = []
-            for _ in 0..<holdTicks {
+            var tail: [String] = []
+            for i in 0..<holdTicks {
                 tick(control, x: x)
-                prints.append(fingerprint(control))
+                if i >= holdTicks - settleTicks {
+                    tail.append(fingerprint(control))
+                }
             }
-            let tail = prints.suffix(8)
             if Set(tail).count > 1 {
                 unsettled.append("x=\(Int(x)): \(Array(tail))")
             }
@@ -576,15 +590,50 @@ final class PSMTabGroupDragInvariantTests: XCTestCase {
         ]
     }
 
-    // Every pair of building blocks.
-    func testEveryPairOfItems() {
-        var layouts: [BarLayout] = []
-        for first in Self.variants("A") {
-            for second in Self.variants("B") {
-                layouts.append(BarLayout([first, second]))
-            }
-        }
-        checkAll(layouts)
+    // Every pair of building blocks, one test per first block so that no one
+    // test takes long: together they check the 64 layouts the single test
+    // they replace checked, in the same order.
+    private func checkEveryPair(startingWith index: Int, file: StaticString = #filePath, line: UInt = #line) {
+        let first = Self.variants("A")[index]
+        checkAll(Self.variants("B").map { BarLayout([first, $0]) }, file: file, line: line)
+    }
+
+    // The tests below cover the building blocks by index. A new building
+    // block needs a test of its own.
+    func testEveryPairTestCoversEveryBuildingBlock() {
+        XCTAssertEqual(Self.variants("A").count, 8)
+    }
+
+    func testEveryPairStartingWithATab() {
+        checkEveryPair(startingWith: 0)
+    }
+
+    func testEveryPairStartingWithAnExpandedGroup() {
+        checkEveryPair(startingWith: 1)
+    }
+
+    func testEveryPairStartingWithACollapsedGroup() {
+        checkEveryPair(startingWith: 2)
+    }
+
+    func testEveryPairStartingWithAGroupEndingInAnExpandedSubgroup() {
+        checkEveryPair(startingWith: 3)
+    }
+
+    func testEveryPairStartingWithAGroupEndingInACollapsedSubgroup() {
+        checkEveryPair(startingWith: 4)
+    }
+
+    func testEveryPairStartingWithAGroupStartingWithAnExpandedSubgroup() {
+        checkEveryPair(startingWith: 5)
+    }
+
+    func testEveryPairStartingWithAGroupStartingWithACollapsedSubgroup() {
+        checkEveryPair(startingWith: 6)
+    }
+
+    func testEveryPairStartingWithACollapsedGroupWithASubgroup() {
+        checkEveryPair(startingWith: 7)
     }
 
     // The bars from field reports.

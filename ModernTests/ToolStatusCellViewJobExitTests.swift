@@ -53,19 +53,32 @@ final class ToolStatusCellViewJobExitTests: XCTestCase, iTermObject {
         }
     }
 
+    // Runs the main run loop until `condition` holds, checking it after
+    // every pass, and returns whether it held within `timeout` seconds.
+    // XCTNSPredicateExpectation checks its predicate only about once a
+    // second, which made each wait cost up to a second after the update
+    // had already happened.
+    private func spinMainRunLoop(timeout: TimeInterval, until condition: () -> Bool) -> Bool {
+        let deadline = Date(timeIntervalSinceNow: timeout)
+        while !condition() {
+            if Date() >= deadline {
+                return false
+            }
+            RunLoop.current.run(mode: .default, before: Date(timeIntervalSinceNow: 0.01))
+        }
+        return true
+    }
+
     // The predicate is the update itself, not a delay; the timeout only
     // bounds a failure.
     private func waitUntil(_ cell: ToolStatusCellView,
                            shows value: String,
                            file: StaticString = #filePath,
                            line: UInt = #line) {
-        let expectation = XCTNSPredicateExpectation(
-            predicate: NSPredicate { _, _ in cell.nameLabel.stringValue == value },
-            object: nil)
-        let result = XCTWaiter().wait(for: [expectation], timeout: 10)
-        XCTAssertEqual(result, .completed,
-                       "Row shows “\(cell.nameLabel.stringValue)”, expected “\(value)”",
-                       file: file, line: line)
+        let held = spinMainRunLoop(timeout: 10) { cell.nameLabel.stringValue == value }
+        XCTAssertTrue(held,
+                      "Row shows “\(cell.nameLabel.stringValue)”, expected “\(value)”",
+                      file: file, line: line)
     }
 
     // Waits for the label's evaluator to observe the session's “name”
@@ -74,15 +87,12 @@ final class ToolStatusCellViewJobExitTests: XCTestCase, iTermObject {
     private func waitUntilObservingName(_ cell: ToolStatusCellView,
                                         file: StaticString = #filePath,
                                         line: UInt = #line) {
-        let expectation = XCTNSPredicateExpectation(
-            predicate: NSPredicate { _, _ in
-                (cell.nameLabel.swiftyString?.refs ?? []).contains { $0.path == iTermVariableKeySessionName }
-            },
-            object: nil)
-        let result = XCTWaiter().wait(for: [expectation], timeout: 10)
-        XCTAssertEqual(result, .completed,
-                       "Label observes only \((cell.nameLabel.swiftyString?.refs ?? []).map(\.path))",
-                       file: file, line: line)
+        let held = spinMainRunLoop(timeout: 10) {
+            (cell.nameLabel.swiftyString?.refs ?? []).contains { $0.path == iTermVariableKeySessionName }
+        }
+        XCTAssertTrue(held,
+                      "Label observes only \((cell.nameLabel.swiftyString?.refs ?? []).map(\.path))",
+                      file: file, line: line)
     }
 
     // The status changes while “sleep” runs, which configures the row.

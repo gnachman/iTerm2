@@ -25,6 +25,16 @@
 @interface SmartSelectionTranslationLayoutTests : XCTestCase
 @end
 
+// Reading the 1.2 MB xib, searching it by XPath and parsing a 1.3 MB strings
+// table cost tens of milliseconds each, and the tests do each hundreds of
+// times, so the results are kept for the whole run: the files do not change
+// while the tests run. Only what was found is kept, so a missing element or
+// table still fails every test that looks for it.
+static NSXMLDocument *gSmartSelectionXib;
+static NSError *gSmartSelectionXibError;
+static NSMutableDictionary<NSString *, NSValue *> *gSmartSelectionFrames;
+static NSMutableDictionary<NSString *, NSDictionary<NSString *, NSString *> *> *gSmartSelectionTables;
+
 @implementation SmartSelectionTranslationLayoutTests {
     NSXMLDocument *_xib;
 }
@@ -34,12 +44,19 @@
 }
 
 - (void)setUp {
-    NSString *source = [NSString stringWithUTF8String:__FILE__];
-    NSString *xibPath = [[[source stringByDeletingLastPathComponent] stringByDeletingLastPathComponent]
-                         stringByAppendingPathComponent:@"sources/Settings/Base.lproj/PreferencePanel.xib"];
-    NSError *error = nil;
-    _xib = [[NSXMLDocument alloc] initWithContentsOfURL:[NSURL fileURLWithPath:xibPath] options:0 error:&error];
-    XCTAssertNotNil(_xib, @"%@", error);
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSString *source = [NSString stringWithUTF8String:__FILE__];
+        NSString *xibPath = [[[source stringByDeletingLastPathComponent] stringByDeletingLastPathComponent]
+                             stringByAppendingPathComponent:@"sources/Settings/Base.lproj/PreferencePanel.xib"];
+        NSError *error = nil;
+        gSmartSelectionXib = [[NSXMLDocument alloc] initWithContentsOfURL:[NSURL fileURLWithPath:xibPath] options:0 error:&error];
+        gSmartSelectionXibError = error;
+        gSmartSelectionFrames = [NSMutableDictionary dictionary];
+        gSmartSelectionTables = [NSMutableDictionary dictionary];
+    });
+    _xib = gSmartSelectionXib;
+    XCTAssertNotNil(_xib, @"%@", gSmartSelectionXibError);
 }
 
 - (NSString *)stringForKey:(NSString *)key table:(NSString *)table language:(NSString *)language {
@@ -47,7 +64,11 @@
                                                      ofType:@"strings"
                                                 inDirectory:nil
                                             forLocalization:language];
-    NSDictionary<NSString *, NSString *> *strings = path ? [NSDictionary dictionaryWithContentsOfFile:path] : nil;
+    NSDictionary<NSString *, NSString *> *strings = path ? gSmartSelectionTables[path] : nil;
+    if (path && !strings) {
+        strings = [NSDictionary dictionaryWithContentsOfFile:path];
+        gSmartSelectionTables[path] = strings;
+    }
     XCTAssertNotNil(strings[key], @"No %@ in %@ for %@", key, table, language);
     return strings[key] ?: @"";
 }
@@ -69,14 +90,20 @@
 }
 
 - (NSRect)frameOf:(NSString *)identifier {
+    NSValue *cached = gSmartSelectionFrames[identifier];
+    if (cached) {
+        return cached.rectValue;
+    }
     for (NSXMLElement *child in [self elementWithID:identifier].children) {
         if ([child isKindOfClass:NSXMLElement.class] &&
             [child.name isEqualToString:@"rect"] &&
             [[child attributeForName:@"key"].stringValue isEqualToString:@"frame"]) {
-            return NSMakeRect([child attributeForName:@"x"].stringValue.doubleValue,
-                              [child attributeForName:@"y"].stringValue.doubleValue,
-                              [child attributeForName:@"width"].stringValue.doubleValue,
-                              [child attributeForName:@"height"].stringValue.doubleValue);
+            const NSRect frame = NSMakeRect([child attributeForName:@"x"].stringValue.doubleValue,
+                                            [child attributeForName:@"y"].stringValue.doubleValue,
+                                            [child attributeForName:@"width"].stringValue.doubleValue,
+                                            [child attributeForName:@"height"].stringValue.doubleValue);
+            gSmartSelectionFrames[identifier] = [NSValue valueWithRect:frame];
+            return frame;
         }
     }
     XCTFail(@"No frame for %@", identifier);

@@ -58,14 +58,34 @@
     };
 }
 
-// The translated text of every AIKeyHint.* string, with each provider name
-// substituted into the ones that take one.
-- (NSArray<NSString *> *)hintStringsForLocalization:(NSString *)localization {
+// Each language's whole Localizable.strings, parsed once per process and kept
+// for the run, since two tests read all of them. A table that is missing or
+// fails to parse is not kept, so every test that asks for it still fails.
++ (NSDictionary<NSString *, NSString *> *)tableForLocalization:(NSString *)localization {
+    static NSMutableDictionary<NSString *, NSDictionary<NSString *, NSString *> *> *cache;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        cache = [NSMutableDictionary dictionary];
+    });
+    NSDictionary<NSString *, NSString *> *cached = cache[localization];
+    if (cached) {
+        return cached;
+    }
     NSString *path = [[NSBundle mainBundle] pathForResource:@"Localizable"
                                                      ofType:@"strings"
                                                 inDirectory:nil
                                             forLocalization:localization];
     NSDictionary<NSString *, NSString *> *table = path ? [NSDictionary dictionaryWithContentsOfFile:path] : nil;
+    if (table) {
+        cache[localization] = table;
+    }
+    return table;
+}
+
+// The translated text of every AIKeyHint.* string, with each provider name
+// substituted into the ones that take one.
+- (NSArray<NSString *> *)hintStringsForLocalization:(NSString *)localization {
+    NSDictionary<NSString *, NSString *> *table = [ManualAIModelEditorKeyHintLayoutTests tableForLocalization:localization];
     XCTAssertNotNil(table, @"No Localizable.strings for %@", localization);
     NSMutableArray<NSString *> *result = [NSMutableArray array];
     for (NSString *key in table) {
@@ -167,9 +187,14 @@
 
 - (void)testEveryTranslatedHintFitsTheEditor {
     for (NSString *language in [ManualAIModelEditorKeyHintLayoutTests translations]) {
-        NSArray<NSString *> *strings = [self hintStringsForLocalization:language];
-        id<ManualAIModelEditorKeyHintForTesting> editor = [self editorWithHintStrings:strings];
-        [self assertEditor:editor fitsHints:strings language:language];
+        // Each editor is freed before the next is made, so the runtime's
+        // weak reference and notification tables don't grow with every
+        // editor and slow the next one down.
+        @autoreleasepool {
+            NSArray<NSString *> *strings = [self hintStringsForLocalization:language];
+            id<ManualAIModelEditorKeyHintForTesting> editor = [self editorWithHintStrings:strings];
+            [self assertEditor:editor fitsHints:strings language:language];
+        }
     }
 }
 

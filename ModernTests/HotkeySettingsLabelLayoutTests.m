@@ -16,27 +16,50 @@
 @interface HotkeySettingsLabelLayoutTests : XCTestCase
 @end
 
+// Reading the 1.2 MB xib and searching it by XPath cost tens of milliseconds
+// each, and the translation test searched it once per label per language, so
+// the parsed xib and each found frame are kept for the whole run: the file
+// does not change while the tests run. Only what was found is kept, so a
+// missing element still fails every test that looks for it.
+static NSXMLDocument *gHotkeySettingsXib;
+static NSError *gHotkeySettingsXibError;
+static NSMutableDictionary<NSString *, NSValue *> *gHotkeySettingsFrames;
+
 @implementation HotkeySettingsLabelLayoutTests {
     NSXMLDocument *_xib;
 }
 
 - (void)setUp {
-    NSString *source = [NSString stringWithUTF8String:__FILE__];
-    NSString *xibPath = [[[source stringByDeletingLastPathComponent] stringByDeletingLastPathComponent]
-                         stringByAppendingPathComponent:@"sources/Settings/Base.lproj/PreferencePanel.xib"];
-    NSError *error = nil;
-    _xib = [[NSXMLDocument alloc] initWithContentsOfURL:[NSURL fileURLWithPath:xibPath] options:0 error:&error];
-    XCTAssertNotNil(_xib, @"%@", error);
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSString *source = [NSString stringWithUTF8String:__FILE__];
+        NSString *xibPath = [[[source stringByDeletingLastPathComponent] stringByDeletingLastPathComponent]
+                             stringByAppendingPathComponent:@"sources/Settings/Base.lproj/PreferencePanel.xib"];
+        NSError *error = nil;
+        gHotkeySettingsXib = [[NSXMLDocument alloc] initWithContentsOfURL:[NSURL fileURLWithPath:xibPath] options:0 error:&error];
+        gHotkeySettingsXibError = error;
+        gHotkeySettingsFrames = [NSMutableDictionary dictionary];
+    });
+    _xib = gHotkeySettingsXib;
+    XCTAssertNotNil(_xib, @"%@", gHotkeySettingsXibError);
 }
 
 - (NSRect)frameOf:(NSString *)identifier {
+    NSValue *cached = gHotkeySettingsFrames[identifier];
+    if (cached) {
+        return cached.rectValue;
+    }
     NSString *xpath = [NSString stringWithFormat:@"//*[@id='%@']/rect[@key='frame']", identifier];
     NSXMLElement *rect = [[_xib nodesForXPath:xpath error:nil] firstObject];
     XCTAssertNotNil(rect, @"No frame for %@", identifier);
-    return NSMakeRect([rect attributeForName:@"x"].stringValue.doubleValue,
-                      [rect attributeForName:@"y"].stringValue.doubleValue,
-                      [rect attributeForName:@"width"].stringValue.doubleValue,
-                      [rect attributeForName:@"height"].stringValue.doubleValue);
+    const NSRect frame = NSMakeRect([rect attributeForName:@"x"].stringValue.doubleValue,
+                                    [rect attributeForName:@"y"].stringValue.doubleValue,
+                                    [rect attributeForName:@"width"].stringValue.doubleValue,
+                                    [rect attributeForName:@"height"].stringValue.doubleValue);
+    if (rect) {
+        gHotkeySettingsFrames[identifier] = [NSValue valueWithRect:frame];
+    }
+    return frame;
 }
 
 // Label id -> the id of the control on its row.

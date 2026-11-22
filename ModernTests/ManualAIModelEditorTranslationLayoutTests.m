@@ -49,12 +49,26 @@
     };
 }
 
+// Each language's whole Localizable.strings, parsed once per process and kept
+// for the run, since two tests read all of them. A table that is missing or
+// fails to parse is not kept, so every test that asks for it still fails.
 - (NSDictionary<NSString *, NSString *> *)stringsForLanguage:(NSString *)language {
-    NSString *path = [[NSBundle mainBundle] pathForResource:@"Localizable"
-                                                     ofType:@"strings"
-                                                inDirectory:nil
-                                            forLocalization:language];
-    NSDictionary *strings = path ? [NSDictionary dictionaryWithContentsOfFile:path] : nil;
+    static NSMutableDictionary<NSString *, NSDictionary *> *cache;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        cache = [NSMutableDictionary dictionary];
+    });
+    NSDictionary *strings = cache[language];
+    if (!strings) {
+        NSString *path = [[NSBundle mainBundle] pathForResource:@"Localizable"
+                                                         ofType:@"strings"
+                                                    inDirectory:nil
+                                                forLocalization:language];
+        strings = path ? [NSDictionary dictionaryWithContentsOfFile:path] : nil;
+        if (strings) {
+            cache[language] = strings;
+        }
+    }
     XCTAssertNotNil(strings, @"%@", language);
     return strings;
 }
@@ -102,7 +116,10 @@
 }
 
 - (void)testTranslatedTitlesFit {
-    for (NSString *language in @[ @"ca", @"cs", @"da", @"de", @"el", @"en-AU", @"en-CA", @"en-GB", @"en-IN", @"es", @"es-419", @"en-PH", @"es-US", @"fi", @"fr", @"fr-CA", @"hi", @"hr", @"hu", @"id", @"it", @"ja", @"ms", @"nb", @"nl", @"pl", @"pt-BR", @"pt-PT", @"ro", @"ru", @"sk", @"sl", @"sv", @"th", @"tr", @"uk", @"vi", @"yue-Hans", @"zh-HK", @"zh-Hans", @"zh-Hant" ]) {
+    for (NSString *language in @[ @"ca", @"cs", @"da", @"de", @"el", @"en-AU", @"en-CA", @"en-GB", @"en-IN", @"es", @"es-419", @"en-PH", @"es-US", @"fi", @"fr", @"fr-CA", @"hi", @"hr", @"hu", @"id", @"it", @"ja", @"ms", @"nb", @"nl", @"pl", @"pt-BR", @"pt-PT", @"ro", @"ru", @"sk", @"sl", @"sv", @"th", @"tr", @"uk", @"vi", @"yue-Hans", @"zh-HK", @"zh-Hans", @"zh-Hant" ]) @autoreleasepool {
+        // The pool frees each editor before the next is made, so the
+        // runtime's weak reference and notification tables don't grow with
+        // every editor and slow the next one down.
         NSDictionary<NSString *, NSString *> *strings = [self stringsForLanguage:language];
         id<ManualAIModelEditorTranslationLayoutForTesting> editor = [self newEditor];
         NSView *content = editor.window.contentView;
@@ -153,7 +170,10 @@
 // Fetching…), so it has to fit the widest of them. The Model field beside it
 // gives up the room, and the button stays flush with the fields below.
 - (void)testFetchModelsButtonFitsEveryTitle {
-    for (NSString *language in @[ @"ca", @"cs", @"da", @"de", @"el", @"en-AU", @"en-CA", @"en-GB", @"en-IN", @"es", @"es-419", @"en-PH", @"es-US", @"fi", @"fr", @"fr-CA", @"hi", @"hr", @"hu", @"id", @"it", @"ja", @"ms", @"nb", @"nl", @"pl", @"pt-BR", @"pt-PT", @"ro", @"ru", @"sk", @"sl", @"sv", @"th", @"tr", @"uk", @"vi", @"yue-Hans", @"zh-HK", @"zh-Hans", @"zh-Hant" ]) {
+    for (NSString *language in @[ @"ca", @"cs", @"da", @"de", @"el", @"en-AU", @"en-CA", @"en-GB", @"en-IN", @"es", @"es-419", @"en-PH", @"es-US", @"fi", @"fr", @"fr-CA", @"hi", @"hr", @"hu", @"id", @"it", @"ja", @"ms", @"nb", @"nl", @"pl", @"pt-BR", @"pt-PT", @"ro", @"ru", @"sk", @"sl", @"sv", @"th", @"tr", @"uk", @"vi", @"yue-Hans", @"zh-HK", @"zh-Hans", @"zh-Hant" ]) @autoreleasepool {
+        // The pool frees each editor before the next is made, so the
+        // runtime's weak reference and notification tables don't grow with
+        // every editor and slow the next one down.
         NSDictionary<NSString *, NSString *> *strings = [self stringsForLanguage:language];
         NSMutableArray<NSString *> *titles = [NSMutableArray array];
         for (NSString *key in @[ @"AIModelEditor.FetchModels", @"AIModelEditor.RefreshModels", @"AIModelEditor.FetchingProgress" ]) {

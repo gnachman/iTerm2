@@ -427,6 +427,23 @@ final class FramerFlowTwoHopSimulationTests: XCTestCase {
                       innerWindows: innerWindows)
     }
 
+    /// Runs `count` independent simulations at once and returns their results in order. Each
+    /// simulation has its own controllers, paths and state, and FramerFlowController keeps no
+    /// state shared between instances, so every result is the one the simulation gives when
+    /// run alone; only the wall time changes. `body` must not assert: it runs off the main
+    /// thread, so the caller checks the results afterward.
+    private func simulateEach<T>(_ count: Int, _ body: (Int) -> T) -> [T] {
+        var results = [T?](repeating: nil, count: count)
+        let lock = NSLock()
+        DispatchQueue.concurrentPerform(iterations: count) { i in
+            let result = body(i)
+            lock.lock()
+            results[i] = result
+            lock.unlock()
+        }
+        return results.map { $0! }
+    }
+
     private func summary(_ r: Result) -> String {
         let w = r.innerWindows.sorted()
         return "inner \(Int(r.innerRate)) B/s, wait \(r.worstInnerWait) s, host1 pty \(r.worstHost1Buffer) B, "
@@ -473,20 +490,25 @@ final class FramerFlowTwoHopSimulationTests: XCTestCase {
     // pty for the outer credit, where Ctrl-C at host2 can't discard it. Measured end to end,
     // that wait hid behind the outer hop's own, and Ctrl-C waited 0.82 s; now 0.61 s.
     func testASlowOuterHopBoundsCtrlCAtTheInnerHost() {
-        let r = simulate(pathA: fast, pathB: slow)
-        let before = simulate(pathA: fast, pathB: slow, perHop: false, capsInner: false)
+        // One run's worst wait swings with small changes to the path, in both designs, so they
+        // are compared on the mean over nearby paths. All fourteen simulations run at once.
+        let paths = [0.048, 0.05, 0.052].flatMap { oneWay in
+            [19.0, 21.0].map { Path(rate: $0 * Self.KB, oneWay: oneWay) }
+        }
+        // The first two runs, then the nearby paths per hop, then the nearby paths end to end.
+        let runs: [(path: Path, perHop: Bool)] = [(slow, true), (slow, false)]
+            + paths.map { ($0, true) } + paths.map { ($0, false) }
+        let results = simulateEach(runs.count) { i in
+            self.simulate(pathA: self.fast, pathB: runs[i].path, perHop: runs[i].perHop, capsInner: runs[i].perHop)
+        }
+        let r = results[0]
+        let before = results[1]
         XCTAssertGreaterThan(r.innerRate, 0.7 * slow.rate, summary(r))
         XCTAssertLessThan(r.worstInnerWait, 0.8, summary(r))
         XCTAssertLessThan(r.worstHost1Buffer, before.worstHost1Buffer)
-        // One run's worst wait swings with small changes to the path, in both designs, so they
-        // are compared on the mean over nearby paths.
         let nearby = { (perHop: Bool) -> Double in
-            let paths = [0.048, 0.05, 0.052].flatMap { oneWay in
-                [19.0, 21.0].map { Path(rate: $0 * Self.KB, oneWay: oneWay) }
-            }
-            return paths.map {
-                self.simulate(pathA: self.fast, pathB: $0, perHop: perHop, capsInner: perHop).worstInnerWait
-            }.reduce(0, +) / Double(paths.count)
+            let offset = perHop ? 2 : 2 + paths.count
+            return results[offset..<(offset + paths.count)].map(\.worstInnerWait).reduce(0, +) / Double(paths.count)
         }
         let (perHopMean, endToEndMean) = (nearby(true), nearby(false))
         XCTAssertLessThan(perHopMean, 0.85 * endToEndMean, "\(perHopMean) s against \(endToEndMean) s")
@@ -510,23 +532,29 @@ final class FramerFlowTwoHopSimulationTests: XCTestCase {
     // now 0.85 s.
     func testFloodsOnBothHostsShareTheOuterHop() {
         let b = Path(rate: 40 * Self.KB, oneWay: 0.05)
-        let r = simulate(pathA: fast, pathB: b, host1PaneFloodsFrom: 0)
-        let before = simulate(pathA: fast, pathB: b, host1PaneFloodsFrom: 0, perHop: false, capsInner: false)
+        // One run's worst wait swings by a fifth with a 2% change to the path, in both designs,
+        // so they are compared on the mean over nearby paths. All fourteen simulations run at
+        // once.
+        let paths = [0.048, 0.05, 0.052].flatMap { oneWay in
+            [39.0, 41.0].map { Path(rate: $0 * Self.KB, oneWay: oneWay) }
+        }
+        // The first two runs, then the nearby paths per hop, then the nearby paths end to end.
+        let runs: [(path: Path, perHop: Bool)] = [(b, true), (b, false)]
+            + paths.map { ($0, true) } + paths.map { ($0, false) }
+        let results = simulateEach(runs.count) { i in
+            self.simulate(pathA: self.fast, pathB: runs[i].path, host1PaneFloodsFrom: 0, perHop: runs[i].perHop,
+                          capsInner: runs[i].perHop)
+        }
+        let r = results[0]
+        let before = results[1]
         XCTAssertGreaterThan(r.innerRate + r.paneRate, 0.7 * b.rate, summary(r))
         XCTAssertGreaterThan(r.innerRate, 0.25 * b.rate, summary(r))
         XCTAssertGreaterThan(r.paneRate, 0.25 * b.rate, summary(r))
         XCTAssertLessThan(r.worstPaneWait, 0.6, summary(r))
         XCTAssertLessThan(r.worstInnerWait, 1.0, summary(r))
-        // One run's worst wait swings by a fifth with a 2% change to the path, in both designs,
-        // so they are compared on the mean over nearby paths.
         let nearby = { (perHop: Bool) -> Double in
-            let paths = [0.048, 0.05, 0.052].flatMap { oneWay in
-                [39.0, 41.0].map { Path(rate: $0 * Self.KB, oneWay: oneWay) }
-            }
-            return paths.map {
-                self.simulate(pathA: self.fast, pathB: $0, host1PaneFloodsFrom: 0, perHop: perHop,
-                              capsInner: perHop).worstInnerWait
-            }.reduce(0, +) / Double(paths.count)
+            let offset = perHop ? 2 : 2 + paths.count
+            return results[offset..<(offset + paths.count)].map(\.worstInnerWait).reduce(0, +) / Double(paths.count)
         }
         let (perHopMean, endToEndMean) = (nearby(true), nearby(false))
         XCTAssertLessThan(perHopMean, 0.95 * endToEndMean, "\(perHopMean) s against \(endToEndMean) s")
@@ -552,15 +580,15 @@ final class FramerFlowTwoHopSimulationTests: XCTestCase {
 
     private func checkRecovery(jitter: TimeInterval, file: StaticString = #filePath, line: UInt = #line) {
         let fastRate = 1024 * Self.KB
-        var report = [String]()
-        var worst = Double.infinity
-        for tenth in stride(from: 300, through: 400, by: 7) {
-            let lift = Double(tenth) / 10
+        // Each moment's simulation is independent; they all run at once.
+        let lifts = stride(from: 300, through: 400, by: 7).map { Double($0) / 10 }
+        let outcomes = simulateEach(lifts.count) { i -> (ratio: Double, line: String) in
+            let lift = lifts[i]
             let b = Path(rate: fastRate, oneWay: 0.013, jitter: jitter) { t in (20..<lift).contains(t) ? 62_500 : fastRate }
             var bySecond = [Double](repeating: 0, count: 101)
             var last = 0.0
             var windowAtLift = 0.0
-            _ = simulate(pathA: Path(rate: fastRate, oneWay: 0.05), pathB: b, seconds: 100, warmup: 0) { outer, _, t, consumed in
+            _ = self.simulate(pathA: Path(rate: fastRate, oneWay: 0.05), pathB: b, seconds: 100, warmup: 0) { outer, _, t, consumed in
                 bySecond[Int(t)] += consumed - last
                 last = consumed
                 if windowAtLift == 0 && t >= lift {
@@ -569,9 +597,11 @@ final class FramerFlowTwoHopSimulationTests: XCTestCase {
             }
             let before = bySecond[10..<20].reduce(0, +) / 10
             let after = bySecond[90..<100].reduce(0, +) / 10
-            worst = min(worst, after / before)
-            report.append("lift \(lift): W \(Int(windowAtLift)), after/before \(String(format: "%.2f", after / before))")
+            return (after / before,
+                    "lift \(lift): W \(Int(windowAtLift)), after/before \(String(format: "%.2f", after / before))")
         }
+        let report = outcomes.map(\.line)
+        let worst = outcomes.map(\.ratio).reduce(Double.infinity, min)
         print("jitter \(jitter):\n" + report.joined(separator: "\n"))
         XCTAssertGreaterThan(worst, 0.5, "jitter \(jitter): " + report.joined(separator: "; "), file: file, line: line)
     }
@@ -618,20 +648,27 @@ final class FramerFlowTwoHopSimulationTests: XCTestCase {
     // the mean over nearby paths, since one run's worst wait swings with small changes. (The
     // correction from the delivery rate did as well here; this guards the size baseline.)
     func testAJitteryOuterHopStillBoundsCtrlC() {
-        for jitter in [0.005, 0.02] {
-            for (rate, pane, bound) in [(20.0, false, 0.8), (40.0, true, 1.0)] {
-                var waits = [Double]()
-                var use = [Double]()
-                for oneWay in [0.048, 0.05, 0.052] {
-                    let r = simulate(pathA: fast, pathB: Path(rate: rate * Self.KB, oneWay: oneWay, jitter: jitter),
-                                     host1PaneFloodsFrom: pane ? 0 : nil)
-                    waits.append(r.worstInnerWait)
-                    use.append((r.innerRate + r.paneRate) / (rate * Self.KB))
-                }
-                let description = "jitter \(jitter), \(Int(rate)) KB/s\(pane ? " shared" : ""): waits \(waits), use \(use)"
-                XCTAssertLessThan(waits.reduce(0, +) / 3, bound, description)
-                XCTAssertGreaterThan(use.reduce(0, +) / 3, 0.7, description)
+        // Every case's three simulations, all twelve run at once.
+        let cases = [0.005, 0.02].flatMap { jitter in
+            [(20.0, false, 0.8), (40.0, true, 1.0)].map { (jitter: jitter, rate: $0.0, pane: $0.1, bound: $0.2) }
+        }
+        let oneWays = [0.048, 0.05, 0.052]
+        let results = simulateEach(cases.count * oneWays.count) { i in
+            let c = cases[i / oneWays.count]
+            return self.simulate(pathA: self.fast,
+                                 pathB: Path(rate: c.rate * Self.KB, oneWay: oneWays[i % oneWays.count], jitter: c.jitter),
+                                 host1PaneFloodsFrom: c.pane ? 0 : nil)
+        }
+        for (n, (jitter, rate, pane, bound)) in cases.enumerated() {
+            var waits = [Double]()
+            var use = [Double]()
+            for r in results[(n * oneWays.count)..<((n + 1) * oneWays.count)] {
+                waits.append(r.worstInnerWait)
+                use.append((r.innerRate + r.paneRate) / (rate * Self.KB))
             }
+            let description = "jitter \(jitter), \(Int(rate)) KB/s\(pane ? " shared" : ""): waits \(waits), use \(use)"
+            XCTAssertLessThan(waits.reduce(0, +) / 3, bound, description)
+            XCTAssertGreaterThan(use.reduce(0, +) / 3, 0.7, description)
         }
     }
 

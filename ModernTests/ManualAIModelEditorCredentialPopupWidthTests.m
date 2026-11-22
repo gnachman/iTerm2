@@ -96,14 +96,20 @@
                                                 forLocalization:language];
         NSDictionary<NSString *, NSString *> *strings = [NSDictionary dictionaryWithContentsOfFile:path];
         for (NSString *key in keys) {
-            XCTAssertNotNil(strings[key], @"%@ %@", language, key);
-            id<ManualAIModelEditorCredentialPopupForTesting> editor = [self newLocalEditor];
-            NSPopUpButton *popup = [self popupOf:editor];
-            const CGFloat rowEnd = NSMaxX([self keyFieldOf:editor].frame);
-            popup.selectedItem.title = strings[key] ?: @"";
-            [popup synchronizeTitleAndSelectedItem];
-            [editor sizeCredentialPopupToFit];
-            [self assertPopupFitsIn:editor rowEnd:rowEnd label:language];
+            // Each editor is freed before the next is made. Without the pool
+            // all 123 editors and their controls stayed alive until the test
+            // ended, and building each new one slowed as the runtime's weak
+            // reference and notification tables grew: most of the test's time.
+            @autoreleasepool {
+                XCTAssertNotNil(strings[key], @"%@ %@", language, key);
+                id<ManualAIModelEditorCredentialPopupForTesting> editor = [self newLocalEditor];
+                NSPopUpButton *popup = [self popupOf:editor];
+                const CGFloat rowEnd = NSMaxX([self keyFieldOf:editor].frame);
+                popup.selectedItem.title = strings[key] ?: @"";
+                [popup synchronizeTitleAndSelectedItem];
+                [editor sizeCredentialPopupToFit];
+                [self assertPopupFitsIn:editor rowEnd:rowEnd label:language];
+            }
         }
     }
 }

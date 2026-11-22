@@ -40,16 +40,29 @@ final class SwiftyStringTextFieldRenameTests: XCTestCase, iTermObject {
         return scope
     }
 
+    // Runs the main run loop until `condition` holds, checking it after
+    // every pass, and returns whether it held within `timeout` seconds.
+    // XCTNSPredicateExpectation checks its predicate only about once a
+    // second, which made each wait cost up to a second after the update
+    // had already happened.
+    private func spinMainRunLoop(timeout: TimeInterval, until condition: () -> Bool) -> Bool {
+        let deadline = Date(timeIntervalSinceNow: timeout)
+        while !condition() {
+            if Date() >= deadline {
+                return false
+            }
+            RunLoop.current.run(mode: .default, before: Date(timeIntervalSinceNow: 0.01))
+        }
+        return true
+    }
+
     // Waits for the field to display `value`. The predicate is the update
     // itself, not a delay; the timeout only bounds a failure.
     private func waitUntil(_ field: NSTextField, shows value: String, file: StaticString = #filePath, line: UInt = #line) {
-        let expectation = XCTNSPredicateExpectation(
-            predicate: NSPredicate { _, _ in field.stringValue == value },
-            object: nil)
-        let result = XCTWaiter().wait(for: [expectation], timeout: 10)
-        XCTAssertEqual(result, .completed,
-                       "Field shows “\(field.stringValue)”, expected “\(value)”",
-                       file: file, line: line)
+        let held = spinMainRunLoop(timeout: 10) { field.stringValue == value }
+        XCTAssertTrue(held,
+                      "Field shows “\(field.stringValue)”, expected “\(value)”",
+                      file: file, line: line)
     }
 
     // Builds the evaluator inside its own autorelease pool, as a table
@@ -67,15 +80,12 @@ final class SwiftyStringTextFieldRenameTests: XCTestCase, iTermObject {
     // Without the fix it never holds, so the test fails deterministically
     // rather than racing the rename against the evaluation.
     private func waitUntilObservingName(_ field: iTermSwiftyStringTextField, file: StaticString = #filePath, line: UInt = #line) {
-        let expectation = XCTNSPredicateExpectation(
-            predicate: NSPredicate { _, _ in
-                (field.swiftyString?.refs ?? []).contains { $0.path == iTermVariableKeySessionName }
-            },
-            object: nil)
-        let result = XCTWaiter().wait(for: [expectation], timeout: 10)
-        XCTAssertEqual(result, .completed,
-                       "Evaluator observes only \((field.swiftyString?.refs ?? []).map(\.path))",
-                       file: file, line: line)
+        let held = spinMainRunLoop(timeout: 10) {
+            (field.swiftyString?.refs ?? []).contains { $0.path == iTermVariableKeySessionName }
+        }
+        XCTAssertTrue(held,
+                      "Evaluator observes only \((field.swiftyString?.refs ?? []).map(\.path))",
+                      file: file, line: line)
     }
 
     func test_renameUpdatesTheField() {
@@ -155,19 +165,13 @@ final class SwiftyStringTextFieldRenameTests: XCTestCase, iTermObject {
                                           scope: scope,
                                           sideEffectsAllowed: false,
                                           observer: { value, _ in value })
-        let observing = XCTNSPredicateExpectation(
-            predicate: NSPredicate { _, _ in
-                evaluator.refs.contains { $0.path == iTermVariableKeySessionName }
-            },
-            object: nil)
-        XCTAssertEqual(XCTWaiter().wait(for: [observing], timeout: 10), .completed,
-                       "Evaluator observes only \(evaluator.refs.map(\.path))")
+        XCTAssertTrue(spinMainRunLoop(timeout: 10) {
+                          evaluator.refs.contains { $0.path == iTermVariableKeySessionName }
+                      },
+                      "Evaluator observes only \(evaluator.refs.map(\.path))")
 
         scope.setValue("after", forVariableNamed: iTermVariableKeySessionName)
-        let updated = XCTNSPredicateExpectation(
-            predicate: NSPredicate { _, _ in evaluator.evaluationResult as? String == "after" },
-            object: nil)
-        XCTAssertEqual(XCTWaiter().wait(for: [updated], timeout: 10), .completed)
+        XCTAssertTrue(spinMainRunLoop(timeout: 10) { evaluator.evaluationResult as? String == "after" })
         evaluator.invalidate()
     }
 }

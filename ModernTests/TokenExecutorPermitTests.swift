@@ -68,6 +68,16 @@ final class TokenExecutorPermitTests: XCTestCase {
         func tokenExecutorWillExecuteTokens() {}
     }
 
+    // A flag set from any thread. A check that something did not happen records it here when
+    // it happens, so the check holds however late it happens, not only at the moment the test
+    // looks.
+    private final class Flag {
+        private let mutex = Mutex()
+        private var _value = false
+        var value: Bool { mutex.sync { _value } }
+        func set() { mutex.sync { _value = true } }
+    }
+
     private struct Session {
         let executor: TokenExecutor
         let delegate: FakeDelegate
@@ -114,11 +124,22 @@ final class TokenExecutorPermitTests: XCTestCase {
                                    highPriority: highPriority)
     }
 
-    private func waitUntil(_ description: String, _ condition: @escaping () -> Bool) {
-        let predicate = NSPredicate { _, _ in condition() }
-        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: nil)
-        expectation.expectationDescription = description
-        wait(for: [expectation], timeout: 30)
+    // Runs the main run loop until `condition` holds, checking it after every pass. Gives up after
+    // 30 seconds, so a regression fails the test instead of hanging it. (XCTNSPredicateExpectation
+    // checks its predicate only about once a second, which made each wait cost up to a second
+    // after the condition already held.)
+    private func waitUntil(_ description: String,
+                           file: StaticString = #filePath,
+                           line: UInt = #line,
+                           _ condition: @escaping () -> Bool) {
+        let deadline = Date(timeIntervalSinceNow: 30)
+        while !condition() {
+            if Date() >= deadline {
+                XCTFail("Gave up waiting: \(description)", file: file, line: line)
+                return
+            }
+            RunLoop.current.run(mode: .default, before: Date(timeIntervalSinceNow: 0.01))
+        }
     }
 
     // Spins (for use inside a token, where waiting on the main queue would deadlock) until
@@ -187,8 +208,8 @@ final class TokenExecutorPermitTests: XCTestCase {
     func testSessionFreedWhileHoldingAnIdlePermitGivesItUp() {
         let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
         weak var weakExecutor: TokenExecutor?
-        // The waits capture only what they read: an expectation can outlive its wait, and holding
-        // the session would keep its executor alive.
+        // The waits capture only what they read: holding the session would keep its executor
+        // alive.
         autoreleasepool {
             let a = makeUnretainedSession(permits: permits)
             weakExecutor = a.executor
@@ -234,14 +255,23 @@ final class TokenExecutorPermitTests: XCTestCase {
                 release.wait()
             }
         }
+        let released = Flag()
+        let bRanBeforeRelease = Flag()
+        b.delegate.onToken = { _ in
+            if !released.value {
+                bRanBeforeRelease.set()
+            }
+        }
         addTokens(10, to: a)
         waitUntil("a holds the permit") { permits.inUseForTesting == 1 }
         addTokens(10, to: b)
         waitUntil("b waits") { permits.waitingCountForTesting == 1 }
         XCTAssertEqual(b.delegate.tokensSeen, 0)
 
+        released.set()
         release.signal()
         waitUntil("b ran") { b.delegate.tokensSeen == 10 }
+        XCTAssertFalse(bRanBeforeRelease.value, "b ran while a held the only permit")
         XCTAssertEqual(a.delegate.tokensSeen, 10)
         waitUntil("nobody runs") { permits.runningCountForTesting == 0 }
     }
@@ -353,6 +383,12 @@ final class TokenExecutorPermitTests: XCTestCase {
     func testWaiterInCopyModePassesThePermitOn() {
         let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
         let (_, b, release) = makeHolderAndWaiter(permits: permits)
+        let ranInCopyMode = Flag()
+        b.delegate.onToken = { [unowned delegate = b.delegate] _ in
+            if delegate.queueTokens {
+                ranInCopyMode.set()
+            }
+        }
         let c = makeSession(permits: permits)
         addTokens(10, to: c)
         waitUntil("c waits") { permits.waitingCountForTesting == 2 }
@@ -367,6 +403,7 @@ final class TokenExecutorPermitTests: XCTestCase {
         b.delegate.queueTokens = false
         b.executor.schedule()
         waitUntil("b ran") { b.delegate.tokensSeen == 10 }
+        XCTAssertFalse(ranInCopyMode.value, "b executed a token while in copy mode")
     }
 
     // A waiting session whose tokens are discarded (as when it restarts) doesn't keep the permit
@@ -379,6 +416,8 @@ final class TokenExecutorPermitTests: XCTestCase {
         }
         release.signal()
         waitUntil("no permit is stranded") { permits.runningCountForTesting == 0 && permits.waitingCountForTesting == 0 }
+        // Anything b's queue was already asked to do has finished before this looks.
+        b.queue.sync {}
         XCTAssertEqual(b.delegate.tokensSeen, 0)
     }
 
@@ -398,11 +437,15 @@ final class TokenExecutorPermitTests: XCTestCase {
         let a = makeSession(permits: permits)
         let b = makeSession(permits: permits)
         var unpauser: Unpauser?
+        let unpaused = Flag()
+        let aRanWhilePaused = Flag()
         a.delegate.onToken = { [executor = a.executor] count in
             if count == 1 {
                 // Wait for b to get in line, then pause as a paused side effect would.
                 while permits.waitingCountForTesting != 1 {}
                 unpauser = executor.pause()
+            } else if !unpaused.value {
+                aRanWhilePaused.set()
             }
         }
         addTokens(10, to: a)
@@ -411,8 +454,10 @@ final class TokenExecutorPermitTests: XCTestCase {
 
         waitUntil("b ran while a was paused") { b.delegate.tokensSeen == 10 }
         XCTAssertEqual(a.delegate.tokensSeen, 1)
+        unpaused.set()
         unpauser?.unpause()
         waitUntil("a finished") { a.delegate.tokensSeen == 10 }
+        XCTAssertFalse(aRanWhilePaused.value, "a executed a token while paused")
     }
 
     // A pause other than a join that begins while a join holds the session (and its permit) makes
@@ -422,10 +467,14 @@ final class TokenExecutorPermitTests: XCTestCase {
         let a = makeSession(permits: permits)
         let b = makeSession(permits: permits)
         let started = DispatchSemaphore(value: 0)
+        let unpaused = Flag()
+        let aRanWhilePaused = Flag()
         a.delegate.onToken = { [executor = a.executor] count in
             if count == 1 {
                 started.signal()
                 Self.spinUntilPaused(executor)
+            } else if !unpaused.value {
+                aRanWhilePaused.set()
             }
         }
         addTokens(10, to: a)
@@ -439,8 +488,10 @@ final class TokenExecutorPermitTests: XCTestCase {
         }
         waitUntil("b ran while a was paused") { b.delegate.tokensSeen == 10 }
         XCTAssertEqual(a.delegate.tokensSeen, 1)
+        unpaused.set()
         unpauser?.unpause()
         waitUntil("a finished") { a.delegate.tokensSeen == 10 }
+        XCTAssertFalse(aRanWhilePaused.value, "a executed a token while paused")
     }
 
     // A session keeps its permit through a join, and its time slice keeps running afterward: it

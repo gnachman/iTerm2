@@ -279,12 +279,35 @@ final class PSMTabGroupDragTests: XCTestCase {
     // group's members have zero frames; slots sized from them had no height,
     // so the mouse missed the slot and targeting fell back to the slot past the
     // chip, closing the slot and sliding the chip back.
-    func testStillMouseBeforeParentChipSettlesWhenDraggingCollapsedSubgroup() {
+    //
+    // The mouse positions from 130 to 200 in half points are split among four
+    // tests, so that no one test takes long; each position builds its own bar
+    // and starts its own drag, as it did when one test covered them all.
+    func testStillMouseBeforeParentChipSettlesWhenDraggingCollapsedSubgroupFrom130() {
+        checkStillMouseBeforeParentChipSettles(from: 130, through: 147.5)
+    }
+
+    func testStillMouseBeforeParentChipSettlesWhenDraggingCollapsedSubgroupFrom148() {
+        checkStillMouseBeforeParentChipSettles(from: 148, through: 165.5)
+    }
+
+    func testStillMouseBeforeParentChipSettlesWhenDraggingCollapsedSubgroupFrom166() {
+        checkStillMouseBeforeParentChipSettles(from: 166, through: 183.5)
+    }
+
+    func testStillMouseBeforeParentChipSettlesWhenDraggingCollapsedSubgroupFrom184() {
+        checkStillMouseBeforeParentChipSettles(from: 184, through: 200)
+    }
+
+    private func checkStillMouseBeforeParentChipSettles(from start: CGFloat,
+                                                        through end: CGFloat,
+                                                        file: StaticString = #filePath,
+                                                        line: UInt = #line) {
         let assistant = PSMTabDragAssistant.shared()!
         let savedScrollable = useFieldBar()
         defer { iTermPreferences.setBool(savedScrollable, forKey: kPreferenceKeyScrollableSideTabBar) }
         var failures: [String] = []
-        for x in stride(from: CGFloat(130), through: CGFloat(200), by: 0.5) {
+        for x in stride(from: start, through: end, by: 0.5) {
             assistant.finishDrag()
             items = []
             let (chip, members) = makeBarWithCollapsedSubgroupFirst()
@@ -309,7 +332,8 @@ final class PSMTabGroupDragTests: XCTestCase {
                 failures.append("x=\(x) targets=\(tail)")
             }
         }
-        XCTAssertTrue(failures.isEmpty, "the drop slot flapped under a still mouse:\n\(failures.joined(separator: "\n"))")
+        XCTAssertTrue(failures.isEmpty, "the drop slot flapped under a still mouse:\n\(failures.joined(separator: "\n"))",
+                      file: file, line: line)
     }
 
     // Match the bar in the field: scrollable, 1007pt wide, minimal style, with the

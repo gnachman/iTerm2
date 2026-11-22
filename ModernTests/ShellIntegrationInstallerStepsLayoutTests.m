@@ -40,9 +40,35 @@
     NSArray *_topLevelObjects;
 }
 
+// Every shipped translation.
++ (NSArray<NSString *> *)languages {
+    return @[ @"ca", @"cs", @"da", @"de", @"el", @"en-AU", @"en-CA", @"en-GB", @"en-IN", @"es", @"es-419", @"en-PH", @"es-US", @"fi", @"fr", @"fr-CA", @"hi", @"hr", @"hu", @"id", @"it", @"ja", @"ms", @"nb", @"nl", @"pl", @"pt-BR", @"pt-PT", @"ro", @"ru", @"sk", @"sl", @"sv", @"th", @"tr", @"uk", @"vi", @"yue-Hans", @"zh-HK", @"zh-Hans", @"zh-Hant" ];
+}
+
+// Reads the nib and parses every language's table before the first test, so
+// that no one test pays for what all of them share.
++ (void)setUp {
+    [super setUp];
+    [self nib];
+    for (NSString *language in [self languages]) {
+        [self stringsForLanguage:language];
+    }
+}
+
+// The nib is read from disk once per process. Each view controller is still
+// a fresh instantiation of it.
++ (NSNib *)nib {
+    static NSNib *nib;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        nib = [[NSNib alloc] initWithNibNamed:@"iTermShellIntegrationWindowController" bundle:[NSBundle mainBundle]];
+    });
+    return nib;
+}
+
 - (NSViewController<ShellIntegrationStepsLayoutForTesting> *)loadViewController {
     ShellIntegrationNibOwnerForTesting *owner = [[ShellIntegrationNibOwnerForTesting alloc] init];
-    NSNib *nib = [[NSNib alloc] initWithNibNamed:@"iTermShellIntegrationWindowController" bundle:[NSBundle mainBundle]];
+    NSNib *nib = [ShellIntegrationInstallerStepsLayoutTests nib];
     NSArray *objects = nil;
     XCTAssertTrue([nib instantiateWithOwner:owner topLevelObjects:&objects]);
     _topLevelObjects = objects;
@@ -56,12 +82,33 @@
     return nil;
 }
 
-- (NSString *)stringForKey:(NSString *)key language:(NSString *)language {
+// Each language's whole Localizable.strings is parsed once per process and
+// kept for the run; parsing the 1.3 MB file for every key was most of the
+// time these tests took. A table that is missing or fails to parse is not
+// kept, so every test that asks for it still fails.
++ (NSDictionary<NSString *, NSString *> *)stringsForLanguage:(NSString *)language {
+    static NSMutableDictionary<NSString *, NSDictionary<NSString *, NSString *> *> *cache;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        cache = [NSMutableDictionary dictionary];
+    });
+    NSDictionary<NSString *, NSString *> *cached = cache[language];
+    if (cached) {
+        return cached;
+    }
     NSString *path = [[NSBundle mainBundle] pathForResource:@"Localizable"
                                                      ofType:@"strings"
                                                 inDirectory:nil
                                             forLocalization:language];
     NSDictionary<NSString *, NSString *> *strings = path ? [NSDictionary dictionaryWithContentsOfFile:path] : nil;
+    if (strings) {
+        cache[language] = strings;
+    }
+    return strings;
+}
+
+- (NSString *)stringForKey:(NSString *)key language:(NSString *)language {
+    NSDictionary<NSString *, NSString *> *strings = [ShellIntegrationInstallerStepsLayoutTests stringsForLanguage:language];
     XCTAssertNotNil(strings[key], @"No %@ for %@", key, language);
     return strings[key] ?: @"";
 }
@@ -139,8 +186,8 @@
 }
 
 - (void)testStepsFitInEveryLanguage {
-    for (NSString *language in @[ @"ca", @"cs", @"da", @"de", @"el", @"en-AU", @"en-CA", @"en-GB", @"en-IN", @"es", @"es-419", @"en-PH", @"es-US", @"fi", @"fr", @"fr-CA", @"hi", @"hr", @"hu", @"id", @"it", @"ja", @"ms", @"nb", @"nl", @"pl", @"pt-BR", @"pt-PT", @"ro", @"ru", @"sk", @"sl", @"sv", @"th", @"tr", @"uk", @"vi", @"yue-Hans", @"zh-HK", @"zh-Hans", @"zh-Hant" ]) {
-        for (NSArray<NSString *> *lines in [self scenariosForLanguage:language]) {
+    for (NSString *language in [ShellIntegrationInstallerStepsLayoutTests languages]) {
+        for (NSArray<NSString *> *lines in [self scenariosForLanguage:language]) @autoreleasepool {
             NSViewController<ShellIntegrationStepsLayoutForTesting> *vc = [self loadViewController];
             XCTAssertTrue([vc respondsToSelector:@selector(sizeStepListToFit)], @"The steps don't grow to fit");
             NSTextField *field = [self textFieldOf:vc];
