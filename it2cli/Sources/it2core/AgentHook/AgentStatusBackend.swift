@@ -367,14 +367,25 @@ final class It2AgentStatusBackend: AgentStatusBackend {
 final class SharedAPIClientFactory {
     private let base: () throws -> APIClient
     private var shared: APIClient?
+    // Why connecting failed, so the rest of the commands in this event fail at once rather than
+    // each repeating the attempt (and its permission check, which can take seconds under load).
+    private var connectError: Error?
 
     init(base: @escaping () throws -> APIClient) {
         self.base = base
     }
 
     func make() throws -> APIClient {
+        if let connectError {
+            throw connectError
+        }
         if shared == nil {
-            shared = try base()
+            do {
+                shared = try base()
+            } catch {
+                connectError = error
+                throw error
+            }
         }
         let client = APIClient(channel: NonDisconnectingChannel(shared!.channel))
         // Each sub-command gets a FRESH client over the shared channel, so anything that is not
@@ -390,6 +401,7 @@ final class SharedAPIClientFactory {
     func disconnect() {
         shared?.disconnect()
         shared = nil
+        connectError = nil
     }
 }
 

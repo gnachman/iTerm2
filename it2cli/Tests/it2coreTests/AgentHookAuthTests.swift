@@ -30,60 +30,86 @@ final class AgentHookAuthTests: XCTestCase {
 
     func testPermittedSendsWithoutHelper() {
         let r = Recorder([.permitted])
-        let result = AgentHookAuth.credentials(r.steps)
-        XCTAssertEqual(result.cookie, "cookie")
-        XCTAssertEqual(result.key, "key")
+        XCTAssertEqual(AgentHookAuth.credentials(r.steps), .connect(cookie: "cookie", key: "key"))
         XCTAssertEqual(r.helperRuns, 0)
         XCTAssertEqual(r.cookieRequests, 1)
     }
 
-    func testDeniedNotRunningAndUnavailableGiveUpQuietly() {
+    // No cookie can be had, but iTerm2 accepts a cookieless connection when all apps are
+    // allowed, so still connect. .unavailable covers statuses this code doesn't recognize (an odd
+    // TCC state, an MDM profile), which won't pass on their own; skipping on them would silently
+    // break hooks for good for someone who allows all apps.
+    func testDeniedNotRunningAndUnrecognizedConnectWithoutCookie() {
         for permission in [AgentHookAuth.Permission.denied, .notRunning, .unavailable] {
             let r = Recorder([permission])
-            let result = AgentHookAuth.credentials(r.steps)
-            XCTAssertNil(result.cookie, "\(permission)")
+            XCTAssertEqual(AgentHookAuth.credentials(r.steps), .connectWithoutCookie, "\(permission)")
             XCTAssertEqual(r.helperRuns, 0, "\(permission)")
             XCTAssertEqual(r.cookieRequests, 0, "\(permission)")
         }
     }
 
+    // Issue 13230: under load the check timed out, and every hook connected without a cookie
+    // only to be rejected. A timed-out check means the answer isn't known, so don't connect.
+    func testTimedOutSkipsConnecting() {
+        let r = Recorder([.timedOut])
+        XCTAssertEqual(AgentHookAuth.credentials(r.steps), .skip)
+        XCTAssertEqual(r.helperRuns, 0)
+        XCTAssertEqual(r.cookieRequests, 0)
+    }
+
     // The serial case: the first hook waits for the user, then gets its cookie.
     func testNeedsConsentWithNoPromptPendingWaitsForHelperThenSends() {
         let r = Recorder([.needsConsent, .permitted])
-        let result = AgentHookAuth.credentials(r.steps)
-        XCTAssertEqual(result.cookie, "cookie")
+        XCTAssertEqual(AgentHookAuth.credentials(r.steps), .connect(cookie: "cookie", key: "key"))
         XCTAssertEqual(r.helperRuns, 1)
         XCTAssertEqual(r.cookieRequests, 1)
     }
 
-    // A prompt is already up: don't start another helper and don't send an event that would
-    // queue behind it in iTerm2.
-    func testNeedsConsentWhilePromptPendingGivesUpAtOnce() {
+    // A prompt is already up: don't start another helper, don't send an event that would
+    // queue behind it in iTerm2, and don't make a connection iTerm2 would likely reject.
+    func testPromptPendingSkipsAtOnce() {
         let r = Recorder([.needsConsent])
         r.lockHeld = true
-        let result = AgentHookAuth.credentials(r.steps)
-        XCTAssertNil(result.cookie)
+        XCTAssertEqual(AgentHookAuth.credentials(r.steps), .skip)
         XCTAssertEqual(r.helperRuns, 0)
         XCTAssertEqual(r.cookieRequests, 0)
         // Not even checked: tccd holds the check while a prompt is up.
         XCTAssertEqual(r.checks, [.needsConsent])
     }
 
-    func testUserDeclinesAfterHelperGivesUp() {
-        let r = Recorder([.needsConsent, .denied])
-        let result = AgentHookAuth.credentials(r.steps)
-        XCTAssertNil(result.cookie)
-        XCTAssertEqual(r.helperRuns, 1)
-        XCTAssertEqual(r.cookieRequests, 0)
+    func testUserDeclinesOrCheckFailsAfterHelperConnectsWithoutCookie() {
+        for permission in [AgentHookAuth.Permission.denied, .unavailable] {
+            let r = Recorder([.needsConsent, permission])
+            XCTAssertEqual(AgentHookAuth.credentials(r.steps), .connectWithoutCookie, "\(permission)")
+            XCTAssertEqual(r.helperRuns, 1, "\(permission)")
+            XCTAssertEqual(r.cookieRequests, 0, "\(permission)")
+        }
     }
 
-    // The helper lost a race or couldn't prompt: still undecided, so don't send.
-    func testStillNeedsConsentAfterHelperGivesUp() {
-        let r = Recorder([.needsConsent, .needsConsent])
-        let result = AgentHookAuth.credentials(r.steps)
-        XCTAssertNil(result.cookie)
-        XCTAssertEqual(r.helperRuns, 1)
-        XCTAssertEqual(r.cookieRequests, 0)
+    // The helper lost a race or couldn't prompt: still undecided, so don't connect.
+    func testStillUndecidedAfterHelperSkips() {
+        for permission in [AgentHookAuth.Permission.needsConsent, .timedOut] {
+            let r = Recorder([.needsConsent, permission])
+            XCTAssertEqual(AgentHookAuth.credentials(r.steps), .skip, "\(permission)")
+            XCTAssertEqual(r.helperRuns, 1, "\(permission)")
+            XCTAssertEqual(r.cookieRequests, 0, "\(permission)")
+        }
+    }
+
+    // When the hook's first command can't connect, the rest of the event's commands must fail
+    // at once rather than each repeating the attempt and its seconds-long permission check.
+    func testSharedClientFactoryRemembersAFailedConnect() {
+        var attempts = 0
+        let factory = SharedAPIClientFactory(base: {
+            attempts += 1
+            throw IT2Error.connectionError("no cookie yet")
+        })
+        XCTAssertThrowsError(try factory.make())
+        XCTAssertThrowsError(try factory.make())
+        XCTAssertEqual(attempts, 1)
+        factory.disconnect()
+        XCTAssertThrowsError(try factory.make())
+        XCTAssertEqual(attempts, 2, "disconnect starts over")
     }
 
     func testOnlyHandleAgentHookUsesTheNewPolicy() {

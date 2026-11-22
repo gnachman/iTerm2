@@ -20,8 +20,27 @@ enum AgentHookAuth {
         case needsConsent
         case denied
         case notRunning
-        /// tccd did not answer in time, or something else went wrong.
+        /// tccd did not answer in time. Usually because a consent prompt is up or the machine is
+        /// too busy, so an answer is likely to come soon.
+        case timedOut
+        /// Something else went wrong, such as a status this code doesn't recognize. Not expected
+        /// to pass on its own.
         case unavailable
+    }
+
+    /// What a hook should do about authenticating.
+    enum Decision: Equatable {
+        /// Connect with these credentials. Both are nil if iTerm2 didn't answer the cookie
+        /// request, in which case the connection goes ahead without one, as it always has.
+        case connect(cookie: String?, key: String?)
+        /// No cookie can be had for now (automation is denied, the user declined, iTerm2 isn't
+        /// running, or the check failed in some unexpected way). Connect anyway: if “Allow all apps
+        /// to connect” is on, iTerm2 accepts it.
+        case connectWithoutCookie
+        /// The answer isn't known yet: the permission check timed out, or a consent prompt is up.
+        /// Don't connect. Unless all apps are allowed iTerm2 would reject it, and under load
+        /// every hook doing that floods iTerm2 with doomed connections (issue 13230).
+        case skip
     }
 
     /// The steps `credentials(_:)` is made of, injectable so the decision can be tested without
@@ -36,35 +55,56 @@ enum AgentHookAuth {
         var requestCookie: () -> (cookie: String?, key: String?)
     }
 
-    static func credentials(_ steps: Steps) -> (cookie: String?, key: String?) {
+    static func credentials(_ steps: Steps) -> Decision {
         // Before the check, because while a consent prompt is up tccd holds the check until the
         // prompt is answered, which would cost every hook the full check timeout.
         if steps.consentRequestInProgress() {
-            return (nil, nil)
+            return .skip
         }
         switch steps.check() {
         case .permitted:
-            return steps.requestCookie()
+            return requestCookie(steps)
         case .denied, .notRunning, .unavailable:
-            // .unavailable includes a check that timed out because someone else's prompt is up.
-            return (nil, nil)
+            return .connectWithoutCookie
+        case .timedOut:
+            // Someone else's prompt is up, or the machine is too busy for tccd to answer in time.
+            return .skip
         case .needsConsent:
             steps.runConsentHelper()
-            guard steps.check() == .permitted else {
-                return (nil, nil)
+            switch steps.check() {
+            case .permitted:
+                return requestCookie(steps)
+            case .denied, .notRunning, .unavailable:
+                return .connectWithoutCookie
+            case .needsConsent, .timedOut:
+                // The helper lost a race or couldn't prompt: still undecided.
+                return .skip
             }
-            return steps.requestCookie()
         }
     }
 
-    static func getCredentials() -> (cookie: String?, key: String?) {
+    private static func requestCookie(_ steps: Steps) -> Decision {
+        let (cookie, key) = steps.requestCookie()
+        return .connect(cookie: cookie, key: key)
+    }
+
+    /// Throws instead of returning when the hook should not connect at all.
+    static func getCredentials() throws -> (cookie: String?, key: String?) {
         guard let target = Target.current() else {
             return (nil, nil)
         }
-        return credentials(Steps(check: { checkPermission(target, askUser: false, timeout: checkTimeout) },
-                                 consentRequestInProgress: { ConsentLock.isHeld() },
-                                 runConsentHelper: { runConsentHelper(target) },
-                                 requestCookie: { requestCookie(target) }))
+        let decision = credentials(Steps(check: { checkPermission(target, askUser: false, timeout: checkTimeout) },
+                                         consentRequestInProgress: { ConsentLock.isHeld() },
+                                         runConsentHelper: { runConsentHelper(target) },
+                                         requestCookie: { requestCookie(target) }))
+        switch decision {
+        case .connect(let cookie, let key):
+            return (cookie, key)
+        case .connectWithoutCookie:
+            return (nil, nil)
+        case .skip:
+            throw IT2Error.connectionError("Didn’t connect to iTerm2 because no API cookie is available yet: macOS’s automation permission check timed out or is waiting for an answer.")
+        }
     }
 
     /// The body of `it2 request-consent`. Holds the lock for as long as the prompt is up; the
@@ -193,7 +233,7 @@ enum AgentHookAuth {
         }.start()
         if let timeout {
             if done.wait(timeout: .now() + timeout) == .timedOut {
-                return .unavailable
+                return .timedOut
             }
         } else {
             done.wait()

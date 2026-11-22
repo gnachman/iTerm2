@@ -9,7 +9,7 @@
 #import "iTermHTTPConnection.h"
 #import "DebugLogging.h"
 #import "iTermSocketAddress.h"
-#include <sys/select.h>
+#include <poll.h>
 #include <sys/time.h>
 
 // As long as iTermStream exists, fd and stream will be valid.
@@ -301,10 +301,11 @@
     return YES;
 }
 
+// Uses poll() rather than select() because select() can't handle file descriptors >= FD_SETSIZE
+// (1024). Past that, FD_SET raises EXC_GUARD and every read and write on the connection fails.
 - (BOOL)waitForIO:(BOOL)read {
-    fd_set set;
-    struct timeval timeout;
-    struct timeval *timeoutPointer = NULL;
+    // Absolute time to give up, or INFINITY to wait forever.
+    NSTimeInterval giveUpTime = INFINITY;
     iTermStream *stream;
     @synchronized(ITNonnilLock(_lock)) {
         if (!_stream) {
@@ -312,39 +313,41 @@
         }
         stream = _stream;
 
-        FD_ZERO(&set);
-        FD_SET(stream.fd, &set);
-
         if (!isinf(_deadline)) {
-            CGFloat dt = _deadline - [NSDate timeIntervalSinceReferenceDate];
-            if (!read) {
-                // The deadline for writes is extended so we can send an error after timing out.
-                dt += 5;
-            }
-            if (dt < 0) {
+            // The deadline for writes is extended so we can send an error after timing out.
+            giveUpTime = _deadline + (read ? 0 : 5);
+            if (giveUpTime < [NSDate timeIntervalSinceReferenceDate]) {
                 return NO;
             }
-            timeout.tv_sec = floor(dt);
-            timeout.tv_usec = fmod(dt, 1.0) * 1000000;
-            timeoutPointer = &timeout;
         }
     }
+    struct pollfd pfd = {
+        .fd = stream.fd,
+        .events = read ? POLLIN : POLLOUT,
+        .revents = 0
+    };
     int rc;
     do {
-        if (read) {
-            rc = select(stream.fd + 1, &set, NULL, NULL, timeoutPointer);
-        } else {
-            rc = select(stream.fd + 1, NULL, &set, NULL, timeoutPointer);
+        int timeoutMillis = -1;
+        if (!isinf(giveUpTime)) {
+            const NSTimeInterval dt = giveUpTime - [NSDate timeIntervalSinceReferenceDate];
+            timeoutMillis = (int)MAX(0, ceil(dt * 1000));
         }
+        rc = poll(&pfd, 1, timeoutMillis);
     } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
     if (rc == 0) {
-        RLog(@"select timed out");
+        RLog(@"poll timed out");
         return NO;
     } else if (rc < 0) {
-        RLog(@"Select failed with %s", strerror(errno));
+        RLog(@"poll failed with %s", strerror(errno));
         return NO;
     }
-
+    if (pfd.revents & POLLNVAL) {
+        RLog(@"poll reports invalid file descriptor");
+        return NO;
+    }
+    // POLLHUP and POLLERR fall through so the subsequent read() or write() reports EOF or the
+    // error and closes the stream, just as it did when select() reported the descriptor ready.
     return YES;
 }
 

@@ -79,3 +79,9 @@ Bug Fixes:
   the Minimal theme, light or dark to match the
   current session’s background color. Toasts
   used to always be dark.
+- If iTerm2 ran out of file descriptors, the
+  Python API stopped accepting connections until
+  you restarted it. Also, AI agent hooks no
+  longer open connections that iTerm2 will reject
+  when a busy Mac is slow to check their
+  permission. Issue 13230.

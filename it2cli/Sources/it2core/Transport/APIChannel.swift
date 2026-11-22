@@ -32,12 +32,17 @@ final class SocketChannel: APIChannel {
         switch CookieAuth.policy {
         case .appleScript:
             socket = try SocketConnection.connect()
-            (cookie, key) = CookieAuth.getCredentials()
+            do {
+                (cookie, key) = try CookieAuth.getCredentials()
+            } catch {
+                socket.disconnect()
+                throw error
+            }
         case .agentHook:
             // Credentials first: getting them can wait for the user to answer a consent prompt,
             // and iTerm2 drops a connection that sends nothing for 30 seconds.
             let path = SocketConnection.resolvePath()
-            (cookie, key) = CookieAuth.getCredentials()
+            (cookie, key) = try CookieAuth.getCredentials()
             socket = try SocketConnection.connect(toPath: path)
         }
         let ws = WebSocketClient(socket: socket)
