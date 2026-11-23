@@ -242,7 +242,11 @@ except where an item says it waits.
     that depends on confinement, adding nothing where the thread is merely
     known? Until you answer, ports add it wherever the thread is known and
     the commit message names the dependence, or says none was found.
-14. **Further units after pilot 2** (added 2026-11-21). Both pilot units
+14. **Further units after pilot 2** (added 2026-11-21; ANSWERED
+    2026-11-22: “You can start it at midnight.” and “Have tonight's
+    midnight run just do one unit. We can move to the regular 1/7 rule for
+    the next night.” Parallel lanes were not answered: one unit at a time
+    until he says). Both pilot units
     are committed; no further unit starts until you say so
     ([lifecycle.md §3](lifecycle.md)). Please review pilot 2
     (`git log --grep='Swift-Port: iTermColorSuggester'`) and say whether
@@ -281,9 +285,9 @@ except where an item says it waits.
     false regression on at least one of those three rates about 70% of the
     time, if the levels are random; that and what else best against best
     does not protect against are in [performance.md §3](performance.md),
-    "Read with care". Still open from
-    item 3: where the baseline file is kept (it is in `tmp/`, which git
-    ignores).
+    "Read with care". Where the baseline file is kept was ANSWERED
+    2026-11-22 (“Put the baseline with other port-related files”): it is
+    `tools/swift_migration/perf_baselines/baseline-2026-11-22.json`.
 
 ### Q22. Questions raised on 2026-11-20 and answered the same day
 

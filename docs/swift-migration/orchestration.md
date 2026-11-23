@@ -20,7 +20,9 @@ Do these every time a session begins, before anything else.
    not parse, write the report (section 8) and stop.
    `python3 tools/swift_migration/usage_check.py --run` does this reading
    and computation; its exit status is 0 when work may start, 1 at or above
-   the cap, and 2 when usage is unknown.
+   the cap, and 2 when usage is unknown. On a one-unit night
+   ([workflow.md §4](workflow.md)) the prompt says so, and exit status 1 is
+   not a reason to stop; exit status 2 still is.
 3. Look at the working tree: `git status`. It should be clean apart from
    files the owner leaves untracked. If there are uncommitted migration
    changes, an earlier run stopped badly: read `claims.md`, save the changes
@@ -135,9 +137,10 @@ Work out which stage the migration is in, in this order:
    request under "Needs a decision" if it is not already there. Meanwhile,
    improve Phase 0 tooling, work on test speed, and prepare dossiers for
    pilot candidates. Do not start pilot ports.
-3. **After the two pilot units**, no further unit starts until the owner
-   says so ([lifecycle.md §3](lifecycle.md)); meanwhile work on Phase 0.
-4. **Once the owner allows further units.** Resume anything in `claims.md` that is in progress
+3. **After the two pilot units** the owner allowed further units on
+   2026-11-22 ([lifecycle.md §3](lifecycle.md)): one unit in the night of
+   2026-11-23, then the ordinary usage rule.
+4. **Further units.** Resume anything in `claims.md` that is in progress
    and not parked. Otherwise take the next eligible unit from the inventory
    script's ordering. A unit is eligible when:
    - it is in the current tier, or it is a giant-class extraction;
@@ -464,9 +467,14 @@ Then, in any order that respects dependencies:
       vm1.
 - [x] `traps.md`, `bugs.md`, `claims.md`, and `hot-paths.md` created.
 - [x] Agent definitions for the author and the reviewer, pinned to Opus.
-- [ ] The nightly start mechanism and the usage check, set up and dry-run
+- [x] The nightly start mechanism and the usage check, set up and dry-run
       (proving it over several nights follows Phase 0: decisions.md,
-      2026-11-20) ([workflow.md §4](workflow.md)).
+      2026-11-20) ([workflow.md §4](workflow.md)). On 2026-11-22
+      `nightly_clone.sh setup` made the clone and its mirror, and
+      `nightly_start.sh --dry-run` passed every check and read the usage
+      (it would not have started: 26% used against a ceiling of 14.3%).
+      The owner then said the nights may start (decisions.md); the
+      trust dialog in the clone is his step.
 - [x] The end of Phase 0 approved by the owner: on 2026-11-21 he approved
       starting the pilot with the unticked items above continuing
       alongside it (decisions.md).

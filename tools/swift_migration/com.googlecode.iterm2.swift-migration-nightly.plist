@@ -23,7 +23,10 @@
   Code a UTF-8 locale (launchd sets none); tmux sets TERM in its pane, and
   `new-session -d` needs no terminal. The log goes to ~/Library/Logs, which
   always exists; NIGHTLY_LAUNCHD_LOG repeats its path so that the script
-  can print it.
+  can print it. __ONE_UNIT_DATE__ is NIGHTLY_ONE_UNIT_DATE: replace it with
+  nothing for an ordinary schedule, or with a local date YYYY-MM-DD to make
+  that one night a one-unit night (see step 7 in the script's header); it
+  has no effect on any other night. Left unreplaced it is refused.
 -->
 <plist version="1.0">
 <dict>
@@ -55,6 +58,8 @@
 		<string>en_US.UTF-8</string>
 		<key>NIGHTLY_LAUNCHD_LOG</key>
 		<string>__HOME__/Library/Logs/iterm2-swift-migration-nightly.log</string>
+		<key>NIGHTLY_ONE_UNIT_DATE</key>
+		<string>__ONE_UNIT_DATE__</string>
 	</dict>
 	<key>StandardOutPath</key>
 	<string>__HOME__/Library/Logs/iterm2-swift-migration-nightly.log</string>

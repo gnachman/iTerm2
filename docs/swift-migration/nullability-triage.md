@@ -240,9 +240,9 @@ the message); `-isEqualToString:`, `iTermAutomaticProfileSwitcher.m`'s
 `-wantsCommandHistoryUpdatesFromSession:`,
 `-updateAutoCommandHistoryForPrefix:inSession:popIfNeeded:`,
 `-nextTabGroupColorForParentGroupID:movingTabs:` and
-`-addTabGroupNestingItemsToMenu:forGroupID:` (not `PSMTabBarControl.m`'s
-`-setTabGroupIdentifiers:parentIdentifiers:forTabViewItems:`, which is in
-`ThirdParty/PSMTabBarControl` and waits for the owner); `-unionSet:`,
+`-addTabGroupNestingItemsToMenu:forGroupID:` (`PSMTabBarControl.m`'s
+`-setTabGroupIdentifiers:parentIdentifiers:forTabViewItems:` was guarded
+later, with the owner's leave); `-unionSet:`,
 both sites in `iTermExpressionEvaluator.m`; `-addObjectsFromArray:`,
 `IntervalTree.m`'s `-objectsWithSmallestLimitAfter:fromNode:` and
 `-objectsWithLargestLimitBelow:fromNode:`; `-indexOfObject:`,

@@ -150,6 +150,17 @@ by seven. If the reset time changes, the table follows it.
 - The owner's own use during the day counts toward the same number. If usage
   is already at or above the night's cap at midnight, no work is done that
   night.
+- The exception is a one-unit night, which the owner orders for a given
+  date (first for the night beginning 2026-11-23, ordered 2026-11-22). The
+  plist sets `NIGHTLY_ONE_UNIT_DATE=YYYY-MM-DD`. On that local date only,
+  `nightly_start.sh` starts even when usage is at or over the cap, and the
+  prompt tells the orchestrator to do exactly one unit (resume the unparked
+  claimed unit, else take the next eligible one), start no second, stop
+  cleanly and write the report; usage at or over the cap is not a reason to
+  stop that night, but unknown usage still is, before the start and during
+  the night. On any other date the setting does nothing, so it expires by
+  itself; an empty value means unset and a malformed one refuses the night
+  (exit 64). The script's header has the details.
 - Usage is checked before each subagent is started and before each gate run.
   A subagent that is already running is allowed to finish, so the overshoot
   is bounded by one subagent's work.
@@ -170,10 +181,10 @@ Every stop is resumable by a new orchestrator with no memory of the night:
 `claims.md`, the commit trailers, the saved patches, and `owner-queue.md`
 are enough.
 
-**Mechanism.** The pieces are to be built and verified in Phase 0. The
-scripts named below are committed but not yet verified: nothing is
-installed, the nightly start waits on the owner (owner queue Q19), and none
-of it has run unattended.
+**Mechanism.** The pieces were built in Phase 0 and dry-run on
+2026-11-22, when the owner allowed the nights to start (decisions.md); the
+first unattended night is the one-unit night of 2026-11-23. Until several
+nights have run, treat the mechanism as unproven.
 
 - *Reading usage.* Running `claude /usage` from a shell prints the figures as
   text, without an interactive session. The owner confirmed this on

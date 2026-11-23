@@ -82,10 +82,9 @@ iTermColorSuggester to Swift" with one header annotation added
 labeled `baseline` by the runner: Mac16,6, Apple M4 Max, macOS 27.0 (26A428), Xcode 27.0 Build version 27A266a; load average
 before [1.77, 3.78, 4.96], after [2.2, 2.42, 3.11], settled at once. The owner had quit his other programs,
 his own iTerm2 among them, and no agent or build ran beside it. The result
-file is `tmp/perf-baseline/results/baseline-2026-11-22.json` in the main
-checkout, which git ignores: where it is kept for good is the owner's
-decision (owner-queue.md Q23 item 3), and until then this table is the
-committed record. Best is the fastest sample: the minimum where lower is
+file is `tools/swift_migration/perf_baselines/baseline-2026-11-22.json`,
+committed there on the owner's word (“Put the baseline with other
+port-related files”, 2026-11-22). Best is the fastest sample: the minimum where lower is
 better, the maximum for the iteration rates. The bold figure in each row is
 the one `perf_compare.py` compares (below, **Comparison**): Best for time
 and rate metrics (decided), Median for memory and counts (proposed); rows
@@ -313,8 +312,8 @@ direction is better, every sample and a summary (median, minimum, maximum,
 MAD, robust relative spread, the best sample and the statistic compared;
 results written before 2026-11-22 lack the last two, and `perf_compare.py`
 computes them from the samples instead of reading them). Results go to `tmp/perf-baseline/results/` by
-default. Where the baseline file is kept once taken is for the owner to
-decide.
+default, which git ignores. A baseline, once taken, is copied to
+`tools/swift_migration/perf_baselines/` and committed.
 
 **Quiet machine.** A run is labeled a baseline only if, before the first
 scenario and after the last: the load average is at most a quarter of the

@@ -15,8 +15,8 @@ You are the orchestrator. This skill is the order of work; the rules are in
 1. Do the cold start in `orchestration.md` §1 (read `README.md`,
    `workflow.md` and `lifecycle.md` in full; usage; `git status`; lanes;
    `owner-queue.md`; `claims.md`).
-2. After the two pilot units no unit starts until the owner says so
-   (`lifecycle.md` §3; `owner-queue.md`, `decisions.md`). If he has not,
+2. Check that units may start (`lifecycle.md` §3; `owner-queue.md`,
+   `decisions.md`) and how many this session may do. If they may not,
    stop here and say why.
 
 ## 1. Pick and assign the path

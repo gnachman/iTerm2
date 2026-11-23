@@ -80,7 +80,9 @@ are regenerated, not stored. Figures from 21 runs on 2026-11-20 are in
    unit (gate step 2) include any slow test that covers it. A port of framer
    flow control runs the framer simulations regardless of tier.
 4. **A budget for tests.** A test that takes more than one second needs a
-   reason or goes to the slow tier. Tests written for the migration are held
+   reason or goes to the slow tier. Time spent in the class's `+setUp`
+   does not count toward a test's second (the owner, 2026-11-22:
+   decisions.md). Tests written for the migration are held
    to a stricter standard: no real-time waits, no sleeps, no dependence on
    timing, in line with the project rule that tests must not be flaky.
 5. **The fast tier runs without the address sanitizer.** The full suite keeps

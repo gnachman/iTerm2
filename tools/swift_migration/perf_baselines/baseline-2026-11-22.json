@@ -1,0 +1,955 @@
+{
+ "arch": "arm64",
+ "commit": "7f767faaeeb506bf79b59fe1bb52637dfe7402b1",
+ "commit_dirty": false,
+ "configuration": "Deployment",
+ "is_baseline": true,
+ "label": "baseline",
+ "machine": {
+  "chip": "Apple M4 Max",
+  "efficiency_cores": 4,
+  "logical_cpus": 16,
+  "memory_bytes": 68719476736,
+  "model": "Mac16,6",
+  "os_build": "26A428",
+  "os_version": "27.0",
+  "performance_cores": 12,
+  "xcode": "Xcode 27.0 Build version 27A266a"
+ },
+ "machine_state": {
+  "after": {
+   "build_processes": {},
+   "cpu_speed_limit": null,
+   "elapsed_s": 0.1,
+   "energy_mode": "High Power",
+   "load_average": [
+    2.2,
+    2.42,
+    3.11
+   ],
+   "logical_cpus": 16,
+   "low_power_mode": false,
+   "memory_free_percent": 89,
+   "power_source": "AC Power",
+   "quiet": true,
+   "reasons": [],
+   "rule": "after the run: the 1-minute load average within after_settle_seconds (the 5-minute average is not used, since the run itself raises it); every other condition in every sample",
+   "samples": [
+    {
+     "elapsed_s": 0.1,
+     "load_average": [
+      2.2,
+      2.42,
+      3.11
+     ],
+     "reasons": []
+    }
+   ],
+   "settled_after_s": 0.1,
+   "swap_used_mb": 777.56,
+   "thermal_warning": false
+  },
+  "before": {
+   "build_processes": {},
+   "cpu_speed_limit": null,
+   "energy_mode": "High Power",
+   "load_average": [
+    1.77,
+    3.78,
+    4.96
+   ],
+   "logical_cpus": 16,
+   "low_power_mode": false,
+   "memory_free_percent": 89,
+   "power_source": "AC Power",
+   "quiet": true,
+   "reasons": [],
+   "swap_used_mb": 777.56,
+   "thermal_warning": false
+  }
+ },
+ "scenarios": {
+  "app.stress_buffer_1tab": {
+   "load_average_after": [
+    2.29,
+    2.95,
+    4.12
+   ],
+   "metrics": {
+    "iterations_per_sec": {
+     "better": "higher",
+     "samples": [
+      432,
+      471,
+      460,
+      456,
+      426
+     ],
+     "summary": {
+      "mad": 15.0,
+      "max": 471.0,
+      "mean": 449.0,
+      "median": 456.0,
+      "min": 426.0,
+      "n": 5,
+      "robust_rel_spread_percent": 4.876973684210525
+     },
+     "unit": "iterations/s"
+    },
+    "rss_peak": {
+     "better": "lower",
+     "samples": [
+      286720,
+      288672,
+      290144,
+      285184,
+      286960
+     ],
+     "summary": {
+      "mad": 1712.0,
+      "max": 290144.0,
+      "mean": 287536.0,
+      "median": 286960.0,
+      "min": 285184.0,
+      "n": 5,
+      "robust_rel_spread_percent": 0.8845174240312238
+     },
+     "unit": "kB"
+    },
+    "rss_steady": {
+     "better": "lower",
+     "samples": [
+      262392.0,
+      264240.0,
+      265920.0,
+      260296.0,
+      262848.0
+     ],
+     "summary": {
+      "mad": 1392.0,
+      "max": 265920.0,
+      "mean": 263139.2,
+      "median": 262848.0,
+      "min": 260296.0,
+      "n": 5,
+      "robust_rel_spread_percent": 0.7851607012417823
+     },
+     "unit": "kB"
+    }
+   },
+   "reason": "",
+   "source": "tools/perf/run_stress_test.sh --mode=buffer --tabs=1",
+   "status": "ok"
+  },
+  "app.stress_clearcodes_1tab": {
+   "load_average_after": [
+    4.48,
+    3.5,
+    4.08
+   ],
+   "metrics": {
+    "iterations_per_sec": {
+     "better": "higher",
+     "samples": [
+      870,
+      752,
+      1177,
+      764,
+      851
+     ],
+     "summary": {
+      "mad": 87.0,
+      "max": 1177.0,
+      "mean": 882.8,
+      "median": 851.0,
+      "min": 752.0,
+      "n": 5,
+      "robust_rel_spread_percent": 15.15701527614571
+     },
+     "unit": "iterations/s"
+    },
+    "rss_peak": {
+     "better": "lower",
+     "samples": [
+      267312,
+      265856,
+      266688,
+      268976,
+      264544
+     ],
+     "summary": {
+      "mad": 832.0,
+      "max": 268976.0,
+      "mean": 266675.2,
+      "median": 266688.0,
+      "min": 264544.0,
+      "n": 5,
+      "robust_rel_spread_percent": 0.46253419726421885
+     },
+     "unit": "kB"
+    },
+    "rss_steady": {
+     "better": "lower",
+     "samples": [
+      243360.0,
+      241112.0,
+      242544,
+      243744.0,
+      240704
+     ],
+     "summary": {
+      "mad": 1200.0,
+      "max": 243744.0,
+      "mean": 242292.8,
+      "median": 242544.0,
+      "min": 240704.0,
+      "n": 5,
+      "robust_rel_spread_percent": 0.7335246388284188
+     },
+     "unit": "kB"
+    }
+   },
+   "reason": "",
+   "source": "tools/perf/run_stress_test.sh --mode=clearcodes --tabs=1",
+   "status": "ok"
+  },
+  "app.stress_flood_1tab": {
+   "load_average_after": [
+    1.85,
+    2.74,
+    3.64
+   ],
+   "metrics": {
+    "rss_peak": {
+     "better": "lower",
+     "samples": [
+      309024,
+      300048,
+      317488,
+      312416,
+      307040
+     ],
+     "summary": {
+      "mad": 3392.0,
+      "max": 317488.0,
+      "mean": 309203.2,
+      "median": 309024.0,
+      "min": 300048.0,
+      "n": 5,
+      "robust_rel_spread_percent": 1.6273749611680646
+     },
+     "unit": "kB"
+    },
+    "rss_steady": {
+     "better": "lower",
+     "samples": [
+      285136.0,
+      276032,
+      293408,
+      288512.0,
+      280816.0
+     ],
+     "summary": {
+      "mad": 4320.0,
+      "max": 293408.0,
+      "mean": 284780.8,
+      "median": 285136.0,
+      "min": 276032.0,
+      "n": 5,
+      "robust_rel_spread_percent": 2.24623758487178
+     },
+     "unit": "kB"
+    }
+   },
+   "reason": "",
+   "source": "tools/perf/run_stress_test.sh --mode=flood --tabs=1",
+   "status": "ok"
+  },
+  "app.stress_htop_unthrottled_1tab": {
+   "load_average_after": [
+    2.2,
+    2.42,
+    3.11
+   ],
+   "metrics": {
+    "iterations_per_sec": {
+     "better": "higher",
+     "samples": [
+      349,
+      359,
+      335,
+      351,
+      324
+     ],
+     "summary": {
+      "mad": 10.0,
+      "max": 359.0,
+      "mean": 343.6,
+      "median": 349.0,
+      "min": 324.0,
+      "n": 5,
+      "robust_rel_spread_percent": 4.2481375358166185
+     },
+     "unit": "iterations/s"
+    },
+    "rss_peak": {
+     "better": "lower",
+     "samples": [
+      308080,
+      288640,
+      294416,
+      290736,
+      311280
+     ],
+     "summary": {
+      "mad": 5776.0,
+      "max": 311280.0,
+      "mean": 298630.4,
+      "median": 294416.0,
+      "min": 288640.0,
+      "n": 5,
+      "robust_rel_spread_percent": 2.90863866094234
+     },
+     "unit": "kB"
+    },
+    "rss_steady": {
+     "better": "lower",
+     "samples": [
+      283840.0,
+      264520.0,
+      270496.0,
+      266864.0,
+      287344.0
+     ],
+     "summary": {
+      "mad": 5976.0,
+      "max": 287344.0,
+      "mean": 274612.8,
+      "median": 270496.0,
+      "min": 264520.0,
+      "n": 5,
+      "robust_rel_spread_percent": 3.275470838755471
+     },
+     "unit": "kB"
+    }
+   },
+   "reason": "",
+   "source": "tools/perf/run_stress_test.sh --mode=htop --tabs=1",
+   "status": "ok"
+  },
+  "app.stress_normal_10tabs": {
+   "load_average_after": [
+    2.51,
+    2.64,
+    3.36
+   ],
+   "metrics": {
+    "iterations_per_sec": {
+     "better": "higher",
+     "samples": [
+      2056,
+      953,
+      2340,
+      959,
+      953
+     ],
+     "summary": {
+      "mad": 6.0,
+      "max": 2340.0,
+      "mean": 1452.2,
+      "median": 959.0,
+      "min": 953.0,
+      "n": 5,
+      "robust_rel_spread_percent": 0.9275912408759124
+     },
+     "unit": "iterations/s"
+    },
+    "rss_peak": {
+     "better": "lower",
+     "samples": [
+      507040,
+      476336,
+      488256,
+      464096,
+      449648
+     ],
+     "summary": {
+      "mad": 12240.0,
+      "max": 507040.0,
+      "mean": 477075.2,
+      "median": 476336.0,
+      "min": 449648.0,
+      "n": 5,
+      "robust_rel_spread_percent": 3.809710792381848
+     },
+     "unit": "kB"
+    },
+    "rss_steady": {
+     "better": "lower",
+     "samples": [
+      453296,
+      442528,
+      438784,
+      417504,
+      410112
+     ],
+     "summary": {
+      "mad": 14512.0,
+      "max": 453296.0,
+      "mean": 432444.8,
+      "median": 438784.0,
+      "min": 410112.0,
+      "n": 5,
+      "robust_rel_spread_percent": 4.903435676779463
+     },
+     "unit": "kB"
+    }
+   },
+   "reason": "",
+   "source": "tools/perf/run_stress_test.sh --mode=normal --tabs=10",
+   "status": "ok"
+  },
+  "app.stress_normal_1tab": {
+   "load_average_after": [
+    3.63,
+    3.62,
+    4.62
+   ],
+   "metrics": {
+    "iterations_per_sec": {
+     "better": "higher",
+     "samples": [
+      1890,
+      1119,
+      1323,
+      1059,
+      1084
+     ],
+     "summary": {
+      "mad": 60.0,
+      "max": 1890.0,
+      "mean": 1295.0,
+      "median": 1119.0,
+      "min": 1059.0,
+      "n": 5,
+      "robust_rel_spread_percent": 7.94959785522788
+     },
+     "unit": "iterations/s"
+    },
+    "rss_peak": {
+     "better": "lower",
+     "samples": [
+      293104,
+      344480,
+      343440,
+      336960,
+      335392
+     ],
+     "summary": {
+      "mad": 6480.0,
+      "max": 344480.0,
+      "mean": 330675.2,
+      "median": 336960.0,
+      "min": 293104.0,
+      "n": 5,
+      "robust_rel_spread_percent": 2.851153846153846
+     },
+     "unit": "kB"
+    },
+    "rss_steady": {
+     "better": "lower",
+     "samples": [
+      275528.0,
+      327200.0,
+      326592,
+      311920.0,
+      310776.0
+     ],
+     "summary": {
+      "mad": 14672.0,
+      "max": 327200.0,
+      "mean": 310403.2,
+      "median": 311920.0,
+      "min": 275528.0,
+      "n": 5,
+      "robust_rel_spread_percent": 6.973809694793536
+     },
+     "unit": "kB"
+    }
+   },
+   "reason": "",
+   "source": "tools/perf/run_stress_test.sh --mode=normal --tabs=1",
+   "status": "ok"
+  },
+  "draw.attributed_strings_mono": {
+   "load_average_after": [
+    1.97,
+    3.76,
+    4.93
+   ],
+   "metrics": {
+    "time_per_frame": {
+     "better": "lower",
+     "samples": [
+      3.051958332071081,
+      2.994587499415502,
+      2.9987624991917983,
+      2.9948208335554227,
+      3.029995833639987,
+      3.163399998447858,
+      3.14247083151713,
+      3.0897541670128703,
+      3.0144416668917984,
+      2.930729166837409
+     ],
+     "summary": {
+      "mad": 0.028685416327789426,
+      "max": 3.163399998447858,
+      "mean": 3.0410920828580856,
+      "median": 3.0222187502658926,
+      "min": 2.930729166837409,
+      "n": 10,
+      "robust_rel_spread_percent": 1.4072111174559727
+     },
+     "unit": "ms"
+    }
+   },
+   "reason": "",
+   "source": "MigrationBaselineTests/testDrawAttributedStringsMono",
+   "status": "ok"
+  },
+  "draw.attributed_strings_truecolor": {
+   "load_average_after": [
+    3.17,
+    3.98,
+    5.0
+   ],
+   "metrics": {
+    "time_per_frame": {
+     "better": "lower",
+     "samples": [
+      42.71310416806955,
+      42.32707916817162,
+      40.8860708354041,
+      40.62744583352469,
+      40.34497500106227,
+      40.61425833206158,
+      41.61150833533611,
+      40.60141250083689,
+      39.58325416606385,
+      39.63148749899119
+     ],
+     "summary": {
+      "mad": 0.6326208327664062,
+      "max": 42.71310416806955,
+      "mean": 40.894059583952185,
+      "median": 40.620852082793135,
+      "min": 39.58325416606385,
+      "n": 10,
+      "robust_rel_spread_percent": 2.30897088211691
+     },
+     "unit": "ms"
+    }
+   },
+   "reason": "",
+   "source": "MigrationBaselineTests/testDrawAttributedStringsTrueColor",
+   "status": "ok"
+  },
+  "draw.attributed_strings_truecolor_ligatures": {
+   "load_average_after": [
+    2.98,
+    3.91,
+    4.97
+   ],
+   "metrics": {
+    "time_per_frame": {
+     "better": "lower",
+     "samples": [
+      67.15696250030305,
+      65.1931833330309,
+      64.12773749907501,
+      63.58461249910761,
+      63.396295832353644,
+      62.739066666108556,
+      61.98810416681226,
+      62.3470416670898,
+      62.82938333461061,
+      63.58684999868274
+     ],
+     "summary": {
+      "mad": 0.7062291653710417,
+      "max": 67.15696250030305,
+      "mean": 63.69492374971742,
+      "median": 63.490454165730625,
+      "min": 61.98810416681226,
+      "n": 10,
+      "robust_rel_spread_percent": 1.6491539938365432
+     },
+     "unit": "ms"
+    }
+   },
+   "reason": "",
+   "source": "MigrationBaselineTests/testDrawAttributedStringsTrueColorLigatures",
+   "status": "ok"
+  },
+  "memory.scrollback_fill_20k": {
+   "load_average_after": [
+    2.99,
+    3.9,
+    4.96
+   ],
+   "metrics": {
+    "clock_monotonic_time": {
+     "better": "lower",
+     "samples": [
+      0.16595389600000002,
+      0.170197232,
+      0.17095196000000001,
+      0.16520462100000002,
+      0.162029007,
+      0.159189511,
+      0.16110064400000002,
+      0.15855233000000002,
+      0.158502146,
+      0.15895314600000002
+     ],
+     "summary": {
+      "mad": 0.003037587499999994,
+      "max": 0.17095196000000001,
+      "mean": 0.1630634493,
+      "median": 0.1615648255,
+      "min": 0.158502146,
+      "n": 10,
+      "robust_rel_spread_percent": 2.787442881557156
+     },
+     "unit": "s"
+    },
+    "footprint_growth": {
+     "better": "lower",
+     "informational": true,
+     "samples": [
+      16,
+      48,
+      -48,
+      32,
+      16,
+      48,
+      0,
+      16,
+      32,
+      0
+     ],
+     "summary": {
+      "mad": 16.0,
+      "max": 48.0,
+      "mean": 16.0,
+      "median": 16.0,
+      "min": -48.0,
+      "n": 10,
+      "robust_rel_spread_percent": 148.26
+     },
+     "unit": "kB"
+    },
+    "live_malloc_blocks": {
+     "better": "lower",
+     "informational": true,
+     "samples": [
+      1758,
+      3036,
+      1833,
+      2283,
+      2155,
+      1842,
+      1902,
+      2593,
+      1517,
+      2703
+     ],
+     "summary": {
+      "mad": 262.5,
+      "max": 3036.0,
+      "mean": 2162.2,
+      "median": 2028.5,
+      "min": 1517.0,
+      "n": 10,
+      "robust_rel_spread_percent": 19.18572837071728
+     },
+     "unit": "count"
+    },
+    "live_malloc_bytes": {
+     "better": "lower",
+     "informational": true,
+     "samples": [
+      4733.640625,
+      4743.1875,
+      4716.59375,
+      4738.125,
+      4727.703125,
+      4727.296875,
+      4723.09375,
+      4746.875,
+      4717.90625,
+      4755.59375
+     ],
+     "summary": {
+      "mad": 10.046875,
+      "max": 4755.59375,
+      "mean": 4733.0015625,
+      "median": 4730.671875,
+      "min": 4716.59375,
+      "n": 10,
+      "robust_rel_spread_percent": 0.31487064139277254
+     },
+     "unit": "kB"
+    },
+    "memory_peak_physical": {
+     "better": "lower",
+     "samples": [
+      48743.504,
+      48776.272,
+      48792.656,
+      48743.504,
+      48792.656,
+      48841.808,
+      48841.808,
+      48841.808,
+      48890.96,
+      48890.96
+     ],
+     "summary": {
+      "mad": 32.76800000000367,
+      "max": 48890.96,
+      "mean": 48815.5936,
+      "median": 48817.232,
+      "min": 48743.504,
+      "n": 10,
+      "robust_rel_spread_percent": 0.09951780305775106
+     },
+     "unit": "kB"
+    },
+    "memory_physical": {
+     "better": "lower",
+     "informational": true,
+     "samples": [
+      16.384,
+      32.768,
+      -49.152,
+      0.0,
+      16.384,
+      49.152,
+      0.0,
+      0.0,
+      32.768,
+      0.0
+     ],
+     "summary": {
+      "mad": 8.192,
+      "max": 49.152,
+      "mean": 9.830400000000001,
+      "median": 8.192,
+      "min": -49.152,
+      "n": 10,
+      "robust_rel_spread_percent": 148.26
+     },
+     "unit": "kB"
+    },
+    "process_peak_footprint": {
+     "better": "lower",
+     "samples": [
+      69217.078125
+     ],
+     "summary": {
+      "mad": 0.0,
+      "max": 69217.078125,
+      "mean": 69217.078125,
+      "median": 69217.078125,
+      "min": 69217.078125,
+      "n": 1,
+      "robust_rel_spread_percent": 0.0
+     },
+     "unit": "kB"
+    }
+   },
+   "reason": "",
+   "source": "MigrationBaselineTests/testMemoryScrollbackFill",
+   "status": "ok"
+  },
+  "parse.mixed_1mb": {
+   "load_average_after": [
+    1.77,
+    3.78,
+    4.96
+   ],
+   "metrics": {
+    "time": {
+     "better": "lower",
+     "samples": [
+      0.024937,
+      0.022632875,
+      0.022977833,
+      0.022668292,
+      0.022866958,
+      0.024121,
+      0.024396375,
+      0.025208292,
+      0.024057917,
+      0.024199084
+     ],
+     "summary": {
+      "mad": 0.0009795835000000006,
+      "max": 0.025208292,
+      "mean": 0.0238065626,
+      "median": 0.0240894585,
+      "min": 0.022632875,
+      "n": 10,
+      "robust_rel_spread_percent": 6.028904705765806
+     },
+     "unit": "s"
+    }
+   },
+   "reason": "",
+   "source": "MigrationBaselineTests/testParseThroughput",
+   "status": "ok"
+  },
+  "screen.char_at_a_time": {
+   "load_average_after": [
+    1.97,
+    3.76,
+    4.93
+   ],
+   "metrics": {
+    "time": {
+     "better": "lower",
+     "samples": [
+      0.03475275,
+      0.02992075,
+      0.03043375,
+      0.030625041,
+      0.030503833,
+      0.0310945,
+      0.031047,
+      0.030605833,
+      0.03113075,
+      0.030426
+     ],
+     "summary": {
+      "mad": 0.0003105,
+      "max": 0.03475275,
+      "mean": 0.0310540207,
+      "median": 0.030615437,
+      "min": 0.02992075,
+      "n": 10,
+      "robust_rel_spread_percent": 1.5036443869803326
+     },
+     "unit": "s"
+    }
+   },
+   "reason": "",
+   "source": "PerformanceTests/testGang_charAtATimePerformance",
+   "status": "ok"
+  },
+  "screen.gang_fast_path": {
+   "load_average_after": [
+    1.79,
+    3.75,
+    4.94
+   ],
+   "metrics": {
+    "time": {
+     "better": "lower",
+     "samples": [
+      0.004996291,
+      0.0044975,
+      0.004497333,
+      0.004592458,
+      0.004808666,
+      0.0046835,
+      0.004494708,
+      0.004614583,
+      0.004809,
+      0.004758541
+     ],
+     "summary": {
+      "mad": 0.00015162500000000028,
+      "max": 0.004996291,
+      "mean": 0.004675258,
+      "median": 0.0046490415,
+      "min": 0.004494708,
+      "n": 10,
+      "robust_rel_spread_percent": 4.835388649466786
+     },
+     "unit": "s"
+    }
+   },
+   "reason": "",
+   "source": "PerformanceTests/testGang_fastPathPerformance",
+   "status": "ok"
+  },
+  "screen.parse_execute_mixed_1mb": {
+   "load_average_after": [
+    1.79,
+    3.75,
+    4.94
+   ],
+   "metrics": {
+    "time": {
+     "better": "lower",
+     "samples": [
+      0.056643833,
+      0.057614958,
+      0.053764458,
+      0.053493042,
+      0.054927667,
+      0.054720666,
+      0.0557065,
+      0.055179875,
+      0.05550125,
+      0.056925709
+     ],
+     "summary": {
+      "mad": 0.0009615834999999982,
+      "max": 0.057614958,
+      "mean": 0.0554477958,
+      "median": 0.0553405625,
+      "min": 0.053493042,
+      "n": 10,
+      "robust_rel_spread_percent": 2.5761279479224615
+     },
+     "unit": "s"
+    }
+   },
+   "reason": "",
+   "source": "MigrationBaselineTests/testParseAndExecuteThroughput",
+   "status": "ok"
+  }
+ },
+ "schema": "iterm2-migration-perf/1",
+ "settings": {
+  "app_duration_s": 20,
+  "app_runs": 5,
+  "created": "20261122T181427Z",
+  "iterations": 10,
+  "logs": "tmp/perf-baseline/run-20261122T181427Z",
+  "stress_suite": "com.iterm2.stress-test",
+  "test_host_suite": "lane-1",
+  "uncommitted_paths": []
+ },
+ "thresholds": {
+  "after_poll_seconds": 15,
+  "after_settle_seconds": 180,
+  "build_process_names": [
+   "xcodebuild",
+   "swift-frontend",
+   "swift-driver",
+   "clang",
+   "clang++",
+   "ld",
+   "swift-build",
+   "ibtool",
+   "actool"
+  ],
+  "max_load_per_cpu": 0.25,
+  "min_memory_free_percent": 30,
+  "require_ac_power": true
+ }
+}

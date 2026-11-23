@@ -871,8 +871,8 @@ or a crash from program output.
       nil parent of the group skips `-isEqualToString:`;
       `-parentIDOfTabGroup:` is now called before `uniqueIdentifier` is
       read (both pure).
-  12. (Not made: see Remaining. The site is in
-      `ThirdParty/PSMTabBarControl`, which is not to be edited.)
+  12. (Made later, with the owner's leave: see below. The site is in
+      `ThirdParty/PSMTabBarControl`.)
   13. `VT100ScreenState.m`, `-blockMarkWithID:`: a nil block ID (a line in
       no foldable block) returns nil at once; `-objectForKeyedSubscript:nil`
       is nil for every dictionary class tried.
@@ -907,23 +907,26 @@ or a crash from program output.
   `IntervalTreeSmallestLocationBugTests`,
   `AttributedStringBuilderSpacingMarkTests`,
   `InterpolateBuiltInFunctionTests`, `TriggerInterpolatedParameterTests`
-  and the four session classes above. **Remaining**, two sites that still
-  stop a test class, both needing an edit under
-  `ThirdParty/PSMTabBarControl`, which is not to be edited until the owner
-  says so (each was written and reviewed, then left out):
+  and the four session classes above. **Fixed 2026-11-22 with the
+  owner's leave** (unit `psm-nullability-guards`; decisions.md), two
+  sites that stopped a test class, both needing an edit under
+  `ThirdParty/PSMTabBarControl`, which otherwise stays unedited until the
+  owner says so:
   - `ThirdParty/PSMTabBarControl/source/PSMTabBarControl.m:5070`,
     `-setTabGroupIdentifiers:parentIdentifiers:forTabViewItems:`: nil
     passed to `-isEqualToString:` when a parent identifier is `NSNull`.
-    Stops `TabGroupSubgroupDragOutTests` (3 of 6 tests). The guard is a
+    Stopped `TabGroupSubgroupDragOutTests` (3 of 6 tests). The guard is a
     nil test before the comparison; the group identifier test beside it
     has the same shape.
   - `sources/TerminalView/PseudoTerminal.m`,
     `-minimalTabStyleBackgroundColor`: returns nil while the window has no
     current session, through the nonnull return of
     `-[PSMMinimalTabStyleDelegate minimalTabStyleBackgroundColor]` in
-    `PSMMinimalTabStyle.h`. Stops `MinimalWindowSubtitleLayoutTests` (both
-    tests). The fix is `nullable` on that return; its only caller,
-    `-[PSMMinimalTabStyle tabBarColor]`, already uses black for nil.
+    `PSMMinimalTabStyle.h`. Stopped `MinimalWindowSubtitleLayoutTests` (both
+    tests). The fix is `nullable` on that return; 
+    `-[PSMMinimalTabStyle tabBarColor]` already uses black for nil, and
+    the callers in `PseudoTerminal.m` send `isDark` to the result, which
+    is NO for nil as before.
 
   Also remaining, seen while reading and not reached by these tests:
   - `-[iTermTheme terminalWindowDecorationTextColorForBackgroundColor:effectiveAppearance:tabStyle:mainAndActive:]`

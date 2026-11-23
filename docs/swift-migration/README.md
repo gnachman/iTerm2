@@ -9,8 +9,8 @@ task.
 
 A unit takes the light path of [lifecycle.md §3](lifecycle.md) (a short
 dossier, a `test` and a `port` commit, one review) when that section allows,
-or the full path of [lifecycle.md §1](lifecycle.md). After the two pilot
-units no unit starts until the owner says so (lifecycle.md §3).
+or the full path of [lifecycle.md §1](lifecycle.md). The owner allowed
+further units after the two pilot units on 2026-11-22 (lifecycle.md §3).
 
 If a rule turns out to be wrong, the rule is changed here first, with the
 owner's agreement, and the reason is recorded in `decisions.md`. Factual

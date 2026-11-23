@@ -223,9 +223,11 @@ handled as in [large-code.md §2](large-code.md).
 ## 3. The light path for leaf units
 
 Tried on the second pilot unit, `iTermColorSuggester` ("(pilot 2)" below).
-**Both pilot units are done. No further unit starts, on either path, until
-the owner says so** (owner queue Q23 item 14). When he does, a unit that
-passes every qualifying check below takes the light path.
+Both pilot units are done. **Further units may start** (the owner,
+2026-11-22: decisions.md): the night that begins at midnight on 2026-11-23
+does exactly one unit, and later nights work under the ordinary usage rule
+([workflow.md §4](workflow.md)). A unit that passes every qualifying check
+below takes the light path.
 
 **Which units qualify.** Every condition must hold, each established by a
 tool, or by reading only where the tool says it cannot decide. The checks are

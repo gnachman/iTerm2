@@ -1347,6 +1347,134 @@ class NightlyStartTest(NightlyBase):
         proc = self.run_script(['--bogus'])
         self.assertEqual(proc.returncode, 64, proc.stdout)
 
+    # A one-unit night (NIGHTLY_ONE_UNIT_DATE): on that local date only, the
+    # weekly ceiling does not stop the start and the prompt asks for exactly
+    # one unit. Sunday 2026-11-15 at 01:00 has a ceiling of 1/7 (14.3%) and
+    # 54% is used, so without the option the night refuses with exit 1.
+
+    ONE_UNIT_MARK = 'this night does exactly one unit'
+    SUNDAY = '2026-11-15T01:00'
+
+    def prompt_of(self, proc):
+        with open(os.path.join(self.night_dir_of(proc), 'prompt.txt')) as fh:
+            return fh.read()
+
+    def test_one_unit_night_starts_over_the_ceiling(self):
+        proc = self.run_script(now=self.SUNDAY,
+                               NIGHTLY_ONE_UNIT_DATE='2026-11-15')
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        self.assertTrue(self.session_started())
+        self.assertIn('one-unit night applies', proc.stdout)
+        self.assertIn('at or over tonight', proc.stdout)
+        self.assertNotIn('not starting', proc.stdout)
+        prompt = self.session_args()[-1]
+        self.assertIn(self.ONE_UNIT_MARK, prompt)
+        self.assertIn('start no second unit', prompt)
+        self.assertIn('exit status 2', prompt)
+        self.assertIn('lifecycle.md section 3', prompt)
+        # The rest of the prompt is still there.
+        self.assertIn('docs/swift-migration/orchestration.md from the top', prompt)
+        self.assertIn('Stopping cleanly', prompt)
+
+    def test_one_unit_night_under_the_ceiling_still_asks_for_one_unit(self):
+        proc = self.run_script(NIGHTLY_ONE_UNIT_DATE='2026-11-19')
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        self.assertIn('one-unit night applies', proc.stdout)
+        self.assertIn(self.ONE_UNIT_MARK, self.session_args()[-1])
+
+    def test_one_unit_night_dry_run_over_the_ceiling(self):
+        proc = self.run_script(['--dry-run'], now=self.SUNDAY,
+                               NIGHTLY_ONE_UNIT_DATE='2026-11-15')
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        self.assertFalse(self.session_started())
+        self.assertIn('one-unit night applies', proc.stdout)
+        self.assertIn('a real run would start anyway', proc.stdout)
+        self.assertNotIn('would not start: at or over the ceiling', proc.stdout)
+        self.assertIn(self.ONE_UNIT_MARK, self.prompt_of(proc))
+
+    def test_one_unit_night_unknown_usage_still_stops(self):
+        self.set_usage('something else entirely\n')
+        proc = self.run_script(now=self.SUNDAY,
+                               NIGHTLY_ONE_UNIT_DATE='2026-11-15')
+        self.assertEqual(proc.returncode, 2, proc.stdout)
+        self.assertFalse(self.session_started())
+        self.assertFalse(os.path.exists(self.lock_dir()))
+
+    def test_one_unit_night_crashing_usage_check_still_stops(self):
+        # A zone that names a directory: ZoneInfo raises IsADirectoryError,
+        # which usage_check.py does not catch, so Python exits 1. That is
+        # not the ceiling verdict and must not start the night.
+        self.set_usage('Current week (all models): 54% used \u00b7 resets '
+                       'Nov 21 at 12pm (America)\n')
+        proc = self.run_script(now='2026-11-15T01:00',
+                               NIGHTLY_ONE_UNIT_DATE='2026-11-15')
+        self.assertIn('IsADirectoryError', proc.stdout)
+        self.assertIn('taken as unknown', proc.stdout)
+        self.assertEqual(proc.returncode, 2, proc.stdout)
+        self.assertFalse(self.session_started())
+
+    def test_one_unit_night_failed_usage_command_still_stops(self):
+        proc = self.run_script(now=self.SUNDAY, STUB_USAGE_EXIT='1',
+                               NIGHTLY_ONE_UNIT_DATE='2026-11-15')
+        self.assertEqual(proc.returncode, 2, proc.stdout)
+        self.assertFalse(self.session_started())
+
+    def test_one_unit_night_dry_run_unknown_usage(self):
+        self.set_usage('something else entirely\n')
+        proc = self.run_script(['--dry-run'], now=self.SUNDAY,
+                               NIGHTLY_ONE_UNIT_DATE='2026-11-15')
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        self.assertIn('would not start: usage could not be determined',
+                      proc.stdout)
+
+    def test_one_unit_date_on_another_night_has_no_effect(self):
+        proc = self.run_script(now=self.SUNDAY,
+                               NIGHTLY_ONE_UNIT_DATE='2026-11-14')
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn('does not apply tonight', proc.stdout)
+        self.assertNotIn('one-unit night applies', proc.stdout)
+        self.assertFalse(self.session_started())
+
+    def test_one_unit_date_on_another_night_leaves_the_prompt_alone(self):
+        proc = self.run_script(NIGHTLY_ONE_UNIT_DATE='2026-11-23')
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        self.assertIn('does not apply tonight', proc.stdout)
+        self.assertNotIn(self.ONE_UNIT_MARK, self.session_args()[-1])
+
+    def test_no_one_unit_date_leaves_the_prompt_alone(self):
+        proc = self.run_script()
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        self.assertNotIn('NIGHTLY_ONE_UNIT_DATE', proc.stdout)
+        self.assertNotIn(self.ONE_UNIT_MARK, self.session_args()[-1])
+
+    def test_empty_one_unit_date_is_unset(self):
+        # The plist template's placeholder installed empty.
+        proc = self.run_script(now=self.SUNDAY, NIGHTLY_ONE_UNIT_DATE='')
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertNotIn('NIGHTLY_ONE_UNIT_DATE', proc.stdout)
+        self.assertFalse(self.session_started())
+
+    def test_malformed_one_unit_date_is_refused(self):
+        for value in ('tonight', '2026-11-5', '2026-02-30', '2026-13-01',
+                      ' 2026-11-15', '2026-11-15 ', '__ONE_UNIT_DATE__',
+                      '2026/11/15', '2026-11-15T00:00'):
+            with self.subTest(value=value):
+                proc = self.run_script(now=self.SUNDAY,
+                                       NIGHTLY_ONE_UNIT_DATE=value)
+                self.assertEqual(proc.returncode, 64, proc.stdout)
+                self.assertIn('NIGHTLY_ONE_UNIT_DATE', proc.stdout)
+                self.assertFalse(self.session_started())
+                self.assertFalse(os.path.exists(self.stub_file('usage_calls')))
+                self.assertFalse(os.path.exists(self.lock_dir()))
+
+    def test_nightly_prompt_still_replaces_the_one_unit_prompt(self):
+        proc = self.run_script(now=self.SUNDAY,
+                               NIGHTLY_ONE_UNIT_DATE='2026-11-15',
+                               NIGHTLY_PROMPT='a test prompt')
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        self.assertEqual(self.session_args()[-1], 'a test prompt')
+        self.assertIn('one-unit night applies', proc.stdout)
+
 
 class LanesTest(NightlyBase):
     """The nightly orchestrator's build lanes live in <clone>.lanes/,
