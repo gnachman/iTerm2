@@ -2016,18 +2016,6 @@ extension iTermBrowserManager: iTermBrowserAutofillHandlerDelegate {
         }
     }
 
-#if DEBUG
-    func debugAutofillFields() {
-        guard let webView = webView else { return }
-        let js = "if (window.debugAutofillFields) { window.debugAutofillFields(); }"
-        webView.safelyEvaluateJavaScript(js) { result, error in
-            if let error = error {
-                NSLog("Debug autofill fields error: \(error)")
-            }
-        }
-    }
-#endif
-
     private func updateFavicon() {
         Task {
             do {

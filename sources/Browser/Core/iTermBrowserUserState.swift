@@ -56,9 +56,6 @@ class iTermBrowserUserState {
          profileObserver: iTermProfilePreferenceObserver,
          profileMutator: iTermProfilePreferenceMutator) {
         logger.loggerPrefix = "[Browser] "
-        #if DEBUG
-        logger.verbosityLevel = .debug
-        #endif
         self.user = user
         self.configuration = configuration
         self.profileObserver = profileObserver

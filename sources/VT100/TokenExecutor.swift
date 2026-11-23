@@ -49,9 +49,6 @@ class Unpauser: NSObject {
     private weak var delegate: UnpauserDelegate?
     private let mutex = Mutex()
     // @objc var stack: String
-    #if DEBUG
-    private var hasBeenUnpaused = false
-    #endif
 
     init(_ delegate: UnpauserDelegate) {
         self.delegate = delegate
@@ -63,9 +60,6 @@ class Unpauser: NSObject {
     @objc
     func unpause() {
         mutex.sync {
-            #if DEBUG
-            hasBeenUnpaused = true
-            #endif
             // print("Unpause \(self)")
             guard let temp = delegate else {
                 return
@@ -77,9 +71,6 @@ class Unpauser: NSObject {
     }
 
     deinit {
-        #if DEBUG
-        it_assert(hasBeenUnpaused)
-        #endif
         let stillPaused = mutex.sync { delegate != nil }
         guard stillPaused else {
             return
@@ -605,16 +596,6 @@ private class TokenExecutorImpl {
     }
 
     func pause() -> Unpauser {
-        // Dormant on purpose (DEBUG is set in no configuration of this target). Enabled, it
-        // fires from app code: a paused side effect running on the main queue outside a join
-        // calls pause() through -[VT100ScreenMutableState setColor:forKey:] -> -mutateColorMap: ->
-        // -addPausedNoDelegateSideEffect:name: (see terminalSetColorTableEntryAtIndex:color:).
-        // pause() itself is safe on any queue. The open question is that such a side effect
-        // changes mutation-queue state while high-priority tasks can still run there.
-        // Make it ITERM_DEBUG once that path is resolved.
-#if DEBUG
-        assertQueue()
-#endif
         if pauseCount.addOther() && gDebugLogging.boolValue {
             DLog("Pause")
         }

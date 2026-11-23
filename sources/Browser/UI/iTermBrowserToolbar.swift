@@ -46,9 +46,6 @@ protocol iTermBrowserToolbarDelegate: AnyObject {
     func browserToolbarResetPermission(for key: BrowserPermissionType, origin: String) async
     func browserToolbarUnmute(url: String)
     func browserToolbarIsCurrentPageMuted() -> Bool
-#if DEBUG
-    func browserToolbarDidTapDebugAutofill()
-#endif
 }
 
 @MainActor
@@ -367,16 +364,6 @@ class iTermBrowserToolbar: NSView {
 
             menu.addItem(NSMenuItem.separator())
 
-#if DEBUG
-            // Debug Autofill menu item (debug builds only)
-            // Localization unneeded
-            let debugAutofillItem = NSMenuItem(title: "Debug Autofill Fields", action: #selector(debugAutofillMenuItemSelected), keyEquivalent: "")
-            debugAutofillItem.target = self
-            debugAutofillItem.image = NSImage(systemSymbolName: SFSymbol.magnifyingglassCircle.rawValue, accessibilityDescription: nil)
-            menu.addItem(debugAutofillItem)
-            menu.addItem(NSMenuItem.separator())
-#endif
-
             // Site permissions
             let tuple = await delegate?.browserToolbarPermissionsForCurrentSite()
             if let tuple, !tuple.0.isEmpty {
@@ -466,12 +453,6 @@ class iTermBrowserToolbar: NSView {
     @objc private func settingsMenuItemSelected() {
         delegate?.browserToolbarDidTapSettings()
     }
-    
-    #if DEBUG
-    @objc private func debugAutofillMenuItemSelected() {
-        delegate?.browserToolbarDidTapDebugAutofill()
-    }
-    #endif
     
     @objc private func historyMenuItemSelected() {
         delegate?.browserToolbarDidTapHistory()

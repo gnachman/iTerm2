@@ -598,9 +598,6 @@ class SearchOperation: Pausable {
                 stop = position
             } else {
                 RLog("This shouldn't happen")
-#if DEUG
-                fatalError()
-#endif
             }
         }
     }
