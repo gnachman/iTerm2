@@ -768,3 +768,388 @@ final class WindowLifetimeWitnessTests: XCTestCase {
         Support.assertDeallocatedOnMainThread(since: mark)
     }
 }
+
+
+// The shell integration installer a text view shows. PTYTextView keeps it in an ivar that the ARC
+// category file (-installShellIntegration:) stores with strong semantics and the manual
+// retain/release file (PTYTextView.m) must release. When the view leaves its window (as on a tab
+// switch) the installer's panel is closed and the ivar cleared, but the installer is kept, so
+// what it is still doing in the session goes on; it is released when the text view is. These
+// check both halves. An extra release would message a zombie (the test plan sets NSZombieEnabled
+// and the address sanitizer).
+enum ShellIntegrationInstallerLifetimeSupport {
+    static let nibName = "iTermShellIntegrationWindowController"
+    static let ivarKey = "shellIntegrationInstallerWindow"
+
+    static func makeTextView() -> PTYTextView {
+        return PTYTextView(frame: NSRect(x: 0, y: 0, width: 100, height: 100))
+    }
+
+    // A window that is never ordered onto the screen.
+    static func makeWindow() -> NSWindow {
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 200, height: 200),
+                              styleMask: [.titled],
+                              backing: .buffered,
+                              defer: true)
+        window.isReleasedWhenClosed = false
+        return window
+    }
+
+    // The text view's _shellIntegrationInstallerWindow ivar, read without changing it.
+    static func installer(of textView: PTYTextView) -> iTermShellIntegrationWindowController? {
+        return autoreleasepool {
+            textView.value(forKey: ivarKey) as? iTermShellIntegrationWindowController
+        }
+    }
+
+    static func moveOut(_ textView: PTYTextView) {
+        autoreleasepool {
+            textView.removeFromSuperview()
+        }
+    }
+
+    static func move(_ textView: PTYTextView, to window: NSWindow) {
+        autoreleasepool {
+            textView.removeFromSuperview()
+            window.contentView?.addSubview(textView)
+        }
+    }
+}
+
+// Through the real ARC store, -installShellIntegration:, which orders the panel front, so these
+// are gated.
+final class ShellIntegrationInstallerLifetimeWitnessTests: XCTestCase {
+    private typealias Support = LifetimeWitnessSupport
+    private typealias Installer = ShellIntegrationInstallerLifetimeSupport
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        try OnscreenTestGate.skipUnlessEnabled()
+    }
+
+    // Runs the installer and watches it and its panel as "<name>" and "<name>.panel", holding
+    // neither. The panel is read after -installShellIntegration: has loaded the nib.
+    private func install(in textView: PTYTextView,
+                         _ witness: LifetimeWitness,
+                         _ name: String,
+                         file: StaticString = #filePath,
+                         line: UInt = #line) {
+        autoreleasepool {
+            textView.installShellIntegration(nil)
+            let controller = Installer.installer(of: textView)
+            witness.watch(controller, name, file: file, line: line)
+            witness.watch(controller?.window, "\(name).panel", file: file, line: line)
+        }
+    }
+
+    // Closes the installer's panel, as its Cancel button does, without touching the ivar.
+    private func closeInstaller(of textView: PTYTextView) {
+        autoreleasepool {
+            Installer.installer(of: textView)?.close()
+        }
+    }
+
+    func testLeavingTheWindowKeepsTheInstallerUntilDealloc() {
+        let window = Installer.makeWindow()
+        let witness = LifetimeWitness()
+        autoreleasepool {
+            let textView = Installer.makeTextView()
+            witness.watch(textView, "textView")
+            window.contentView?.addSubview(textView)
+            install(in: textView, witness, "installer")
+
+            Installer.moveOut(textView)
+
+            XCTAssertNil(Installer.installer(of: textView))
+            XCTAssertTrue(witness.isAlive("installer"),
+                          "The installer was freed when its view left the window")
+        }
+
+        Support.assertAllFreed(witness, "The installer outlived the text view")
+    }
+
+    func testDeallocFreesTheInstaller() {
+        let witness = LifetimeWitness()
+        autoreleasepool {
+            let textView = Installer.makeTextView()
+            witness.watch(textView, "textView")
+            install(in: textView, witness, "installer")
+            closeInstaller(of: textView)
+        }
+
+        Support.assertAllFreed(witness, "The installer outlived the text view")
+    }
+
+    // The text view is deallocated while the installer's panel is still open. AppKit keeps a
+    // window that is on screen alive, so the panel is freed only if -dealloc closes it.
+    func testDeallocWithThePanelOpenFreesTheInstaller() {
+        let witness = LifetimeWitness()
+        autoreleasepool {
+            let textView = Installer.makeTextView()
+            witness.watch(textView, "textView")
+            install(in: textView, witness, "installer")
+        }
+
+        Support.assertAllFreed(witness, "The installer outlived the text view")
+    }
+
+    // Installing again replaces the installer (the ARC side releases the old one), and moving
+    // between windows retires it each time. Every installer dies, and none is released twice.
+    func testReinstallingAndMovingBetweenWindowsFreesEveryInstaller() {
+        let firstWindow = Installer.makeWindow()
+        let secondWindow = Installer.makeWindow()
+        let witness = LifetimeWitness()
+        autoreleasepool {
+            let textView = Installer.makeTextView()
+            witness.watch(textView, "textView")
+            firstWindow.contentView?.addSubview(textView)
+
+            // Install, close the panel, and install again: the second replaces the first.
+            install(in: textView, witness, "first")
+            closeInstaller(of: textView)
+            install(in: textView, witness, "second")
+            XCTAssertTrue(Support.spin(until: { !witness.isAlive("first") }),
+                          "The replaced installer outlived its replacement")
+
+            // Move to another window, which closes and retires the installer, then install there.
+            Installer.move(textView, to: secondWindow)
+            XCTAssertNil(Installer.installer(of: textView))
+            XCTAssertTrue(witness.isAlive("second"), "The installer was freed on leaving the window")
+            install(in: textView, witness, "third")
+
+            // Move back, which retires it too, and install once more.
+            Installer.move(textView, to: firstWindow)
+            XCTAssertNil(Installer.installer(of: textView))
+            XCTAssertTrue(witness.isAlive("third"), "The installer was freed on moving back")
+            install(in: textView, witness, "fourth")
+
+            // Leave the window with the panel closed, then install outside any window and let
+            // the view go with that installer still held.
+            closeInstaller(of: textView)
+            Installer.moveOut(textView)
+            XCTAssertNil(Installer.installer(of: textView))
+            install(in: textView, witness, "fifth")
+            closeInstaller(of: textView)
+        }
+
+        Support.assertAllFreed(witness, "An installer outlived the text view")
+    }
+}
+
+// The same releases without putting anything on screen: the installer is built from its nib
+// (whose panel is not visible at launch) and stored in the ivar with key-value coding, which for
+// this class retains the new value and releases the old one, as the ARC store does. These run in
+// the regular suite.
+final class ShellIntegrationInstallerOffscreenLifetimeWitnessTests: XCTestCase {
+    private typealias Support = LifetimeWitnessSupport
+    private typealias Installer = ShellIntegrationInstallerLifetimeSupport
+
+    private var visibleWindowsAtStart = 0
+
+    private static var visibleWindowCount: Int {
+        return NSApp.windows.filter(\.isVisible).count
+    }
+
+    override func setUp() {
+        super.setUp()
+        visibleWindowsAtStart = Self.visibleWindowCount
+    }
+
+    override func tearDown() {
+        XCTAssertEqual(Self.visibleWindowCount, visibleWindowsAtStart, "A window was put on screen")
+        super.tearDown()
+    }
+
+    // Builds an installer off screen, stores it in the text view's ivar, and watches it and its
+    // panel as "<name>" and "<name>.panel", holding neither.
+    @discardableResult
+    private func store(in textView: PTYTextView,
+                       _ witness: LifetimeWitness,
+                       _ name: String,
+                       delegate: iTermShellIntegrationWindowControllerDelegate? = nil,
+                       configure: (iTermShellIntegrationWindowController) -> Void = { _ in },
+                       file: StaticString = #filePath,
+                       line: UInt = #line) -> WeakInstaller {
+        let weakInstaller = WeakInstaller()
+        autoreleasepool {
+            let controller = iTermShellIntegrationWindowController(windowNibName: Installer.nibName)
+            controller.delegate = delegate
+            let panel = controller.window
+            XCTAssertEqual(panel?.isVisible, false, file: file, line: line)
+            configure(controller)
+            textView.setValue(controller, forKey: Installer.ivarKey)
+            witness.watch(controller, name, file: file, line: line)
+            witness.watch(panel, "\(name).panel", file: file, line: line)
+            weakInstaller.value = controller
+        }
+        XCTAssertTrue(witness.isAlive(name), "The ivar did not keep the installer", file: file, line: line)
+        return weakInstaller
+    }
+
+    func testLeavingTheWindowKeepsTheInstallerUntilDealloc() {
+        let window = Installer.makeWindow()
+        let witness = LifetimeWitness()
+        autoreleasepool {
+            let textView = Installer.makeTextView()
+            witness.watch(textView, "textView")
+            window.contentView?.addSubview(textView)
+            store(in: textView, witness, "installer")
+
+            Installer.moveOut(textView)
+
+            XCTAssertNil(Installer.installer(of: textView))
+            XCTAssertTrue(witness.isAlive("installer"),
+                          "The installer was freed when its view left the window")
+        }
+
+        Support.assertAllFreed(witness, "The installer outlived the text view")
+    }
+
+    func testDeallocFreesTheInstaller() {
+        let witness = LifetimeWitness()
+        autoreleasepool {
+            let textView = Installer.makeTextView()
+            witness.watch(textView, "textView")
+            store(in: textView, witness, "installer")
+        }
+
+        Support.assertAllFreed(witness, "The installer outlived the text view")
+    }
+
+    // Replacing the installer, retiring it on leaving a window more than once, and holding one at
+    // dealloc: each is released exactly once.
+    func testReplacingAndRetiringReleasesEachInstallerOnce() {
+        let firstWindow = Installer.makeWindow()
+        let secondWindow = Installer.makeWindow()
+        let witness = LifetimeWitness()
+        autoreleasepool {
+            let textView = Installer.makeTextView()
+            witness.watch(textView, "textView")
+            firstWindow.contentView?.addSubview(textView)
+
+            store(in: textView, witness, "first")
+            store(in: textView, witness, "second")
+            XCTAssertTrue(Support.spin(until: { !witness.isAlive("first") }),
+                          "The replaced installer outlived its replacement")
+
+            Installer.move(textView, to: secondWindow)
+            XCTAssertNil(Installer.installer(of: textView))
+            store(in: textView, witness, "third")
+            Installer.move(textView, to: firstWindow)
+            XCTAssertNil(Installer.installer(of: textView))
+            // Leaving with nothing held retires nothing.
+            Installer.moveOut(textView)
+            store(in: textView, witness, "fourth")
+            XCTAssertTrue(witness.isAlive("second"), "A retired installer was freed early")
+            XCTAssertTrue(witness.isAlive("third"), "A retired installer was freed early")
+        }
+
+        Support.assertAllFreed(witness, "An installer outlived the text view")
+    }
+
+    // An installer whose view left its window (as on a tab switch) finishes the step it was in:
+    // the answer to a command it typed before still reaches it, through the session's expect.
+    func testPendingWorkContinuesAfterLeavingTheWindow() {
+        let window = Installer.makeWindow()
+        let terminal = InstallerLifetimeFakeTerminal(testCase: self)
+        let witness = LifetimeWitness()
+        autoreleasepool {
+            let textView = Installer.makeTextView()
+            witness.watch(textView, "textView")
+            window.contentView?.addSubview(textView)
+            // The Internet-free install, then discovery, which asks for the shell and, for zsh,
+            // where its dotfiles go.
+            let installer = store(in: textView, witness, "installer", delegate: terminal) { controller in
+                controller.shellIntegrationInstallerSendShellCommands(-1)
+                controller.shellIntegrationInstallerSendShellCommands(0)
+            }
+            // Each step in a pool of its own, so nothing autoreleased keeps the installer alive.
+            autoreleasepool {
+                terminal.sync()
+            }
+            XCTAssertTrue(terminal.sentTexts.last?.contains("echo My shell is") ?? false, "\(terminal.sentTexts)")
+            autoreleasepool {
+                terminal.output("My shell is zsh -zsh or /bin/zsh, end")
+                terminal.sync()
+            }
+            XCTAssertEqual(terminal.sentTexts.last, "echo My dotfiles go in ${ZDOTDIR:-$HOME}, end\n")
+
+            Installer.moveOut(textView)
+            autoreleasepool {
+                terminal.output("My dotfiles go in /tmp/it2-dots, end")
+                terminal.sync()
+            }
+
+            XCTAssertTrue(witness.isAlive("installer"),
+                          "The installer was freed when its view left the window")
+            XCTAssertEqual(installer.value?.dotdir, "/tmp/it2-dots",
+                           "The installer did not finish discovery after its view left the window")
+        }
+
+        Support.assertAllFreed(witness, "The installer outlived the text view")
+    }
+}
+
+private final class WeakInstaller {
+    weak var value: iTermShellIntegrationWindowController?
+}
+
+// The session side of the installer, as far as discovery needs it: what the installer types, and
+// the session's expect, copied from dry to wet as PTYSession does on a sync.
+private final class InstallerLifetimeFakeTerminal: NSObject, iTermShellIntegrationWindowControllerDelegate {
+    private let dryExpect = iTermExpect(dry: true)
+    private var wetExpect: iTermExpect?
+    private(set) var sentTexts = [String]()
+    private let testCase: XCTestCase
+
+    init(testCase: XCTestCase) {
+        self.testCase = testCase
+    }
+
+    func shellIntegrationWindowControllerSendText(_ text: String) {
+        sentTexts.append(text)
+    }
+
+    func shellIntegrationWindowControllerStopSendingText() {
+    }
+
+    func shellIntegrationExpect() -> iTermExpect {
+        return dryExpect
+    }
+
+    // Adding an expectation to the wet copy dispatches its willExpect (which types the command)
+    // to the main queue, so drain the main queue afterwards.
+    func sync() {
+        if dryExpect.dirty {
+            dryExpect.resetDirty()
+            wetExpect = (dryExpect.copy() as! iTermExpect)
+        }
+        let drained = XCTestExpectation(description: "Main queue drained")
+        DispatchQueue.main.async {
+            drained.fulfill()
+        }
+        testCase.wait(for: [drained], timeout: 10)
+    }
+
+    // The shell prints a line, checked against the current wet copy.
+    func output(_ line: String) {
+        guard let wetExpect else {
+            return
+        }
+        for expectation in wetExpect.expectations {
+            guard let regex = try? NSRegularExpression(pattern: expectation.regex),
+                  let match = regex.firstMatch(in: line, range: NSRange(line.startIndex..., in: line)) else {
+                continue
+            }
+            let captures = (0..<match.numberOfRanges).map { i -> String in
+                guard let range = Range(match.range(at: i), in: line) else {
+                    return ""
+                }
+                return String(line[range])
+            }
+            expectation.didMatch(withCaptureGroups: captures) { closure in
+                closure()
+            }
+        }
+    }
+}
