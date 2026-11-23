@@ -98,7 +98,21 @@ Bug Fixes:
   cursor has been moved to the last column, and
   the one that copies a rectangle puts the copy
   at the requested row and column instead of
-  swapping them.
+  swapping them, measured from the margins when
+  origin mode is on.
+- The control sequence that reports a checksum
+  of part of the screen (off by default) now
+  always sends four hex digits; some checksums
+  came out as eight. It also no longer counts
+  the right half of a wide character or the
+  cells a tab skipped over, so screens with
+  those give different checksums than before.
+- An inline image more than 255 rows tall is
+  limited to 255 rows, and is now narrowed to
+  match. Before, it took up extra columns.
+- An inline image too wide for the space right
+  of the cursor is now shrunk to fit that
+  space. Before, it could be cut off.
 - Toasts, Global Search, Instant Replay,
   autocomplete popups, and the About window now
   follow the theme: light under the Light

@@ -212,9 +212,47 @@ final class ImageProtocolSizeTests: XCTestCase {
                        4)
     }
 
-    func testInlineImageWithHugeHeightLeavesCursorAtRightEdge() {
-        // Capping the height at 255 rows multiplies the width by height / 255, which overflowed
-        // int; adding the result to the cursor's column overflowed again.
+    /// The size in cells recorded for the inline image drawn at the cursor's row and the given
+    /// column.
+    private func inlineImageSizeInCells(screenWidth: Int32 = 20,
+                                        startColumn: Int = 1,
+                                        arguments: String) -> NSSize? {
+        let screen = makeScreen(width: screenWidth, height: 15, backingScaleFactor: 1)
+        feed(screen, "\u{1b}[1;\(startColumn)H")
+        feed(screen, "\u{1b}]1337;File=inline=1;\(arguments):\(redPNGBase64)\u{07}")
+        var size: NSSize?
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let grid = mutableState.currentGrid
+            let c = grid.character(at: VT100GridCoord(x: Int32(startColumn - 1), y: grid.cursor.y))
+            if c.image != 0 {
+                size = ImageRegistry.instance.info(for: Int(c.code))?.size
+            }
+        })
+        return size
+    }
+
+    func testInlineImageCappedAt255RowsIsNarrowedInProportion() {
+        // Capping the height multiplied the width by height / 255, widening the image instead of
+        // shrinking it in proportion as capping the width does.
+        XCTAssertEqual(inlineImageSizeInCells(arguments: "width=10;height=510;preserveAspectRatio=0"),
+                       NSSize(width: 5, height: 255))
+        XCTAssertEqual(inlineImageSizeInCells(arguments: "width=10;height=255;preserveAspectRatio=0"),
+                       NSSize(width: 10, height: 255))
+    }
+
+    func testInlineImageTooWideForTheRestOfTheLineIsScaledToFit() {
+        // With the cursor in column 11 of 20, ten columns remain. The height was scaled to fit
+        // them but the width was set to the whole screen's, so the image was clipped.
+        XCTAssertEqual(inlineImageSizeInCells(startColumn: 11, arguments: "width=20;height=4;preserveAspectRatio=0"),
+                       NSSize(width: 10, height: 2))
+        XCTAssertEqual(inlineImageSizeInCells(startColumn: 1, arguments: "width=20;height=4;preserveAspectRatio=0"),
+                       NSSize(width: 20, height: 4))
+    }
+
+    func testInlineImageWithHugeHeightIsNarrowedWithoutOverflow() {
+        // Capping the height at 255 rows used to multiply the width by height / 255, which
+        // overflowed int; adding the result to the cursor's column overflowed again. The width
+        // now shrinks in proportion instead: 290 * 255 / 2147483647 truncates to 0, so 1 column.
         let huge = inlineImage(backingScaleFactor: 1,
                                screenWidth: 300,
                                startColumn: 11,
@@ -223,10 +261,11 @@ final class ImageProtocolSizeTests: XCTestCase {
                                 screenWidth: 300,
                                 startColumn: 11,
                                 arguments: "width=290;height=256;preserveAspectRatio=0")
-        XCTAssertEqual(large.cursorX, 300)
-        XCTAssertEqual(large.imageColumns, Array(10..<300))
-        XCTAssertEqual(huge.cursorX, large.cursorX)
-        XCTAssertEqual(huge.imageColumns, large.imageColumns)
+        // 290 * 255 / 256 is 288.9, which truncates to 288.
+        XCTAssertEqual(large.cursorX, 298)
+        XCTAssertEqual(large.imageColumns, Array(10..<298))
+        XCTAssertEqual(huge.cursorX, 11)
+        XCTAssertEqual(huge.imageColumns, [10])
         XCTAssertEqual(inlineImageCursorX(backingScaleFactor: 1,
                                           screenWidth: 300,
                                           startColumn: 11,

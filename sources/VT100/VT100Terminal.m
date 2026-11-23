@@ -1160,6 +1160,10 @@ static const int kMaxScreenRows = 4096;
     [self updateDefaultChar];
 }
 
+static int VT100TerminalSaturatingAdd(int a, int b) {
+    return (int)MAX((long long)INT_MIN, MIN((long long)INT_MAX, (long long)a + (long long)b));
+}
+
 // TODO: Respect DECSACE
 - (void)executeDECCARA:(VT100Token *)token {
     if (token.csi->count < 5) {
@@ -1215,9 +1219,16 @@ static const int kMaxScreenRows = 4096;
     }
     // CSI Pts ; Pls ; Pbs ; Prs ; Pps ; Ptd ; Pld ; Ppd $ v: the destination's top row (p[5])
     // comes before its left column (p[6]).
-    const VT100GridCoord dest = VT100GridCoordMake(token.csi->p[6] - 1, token.csi->p[5] - 1);
+    VT100GridCoord dest = VT100GridCoordMake(token.csi->p[6] - 1, token.csi->p[5] - 1);
     if (dest.x < 0 || dest.y < 0) {
         return;
+    }
+    if (self.originMode) {
+        // Like the source rectangle (see rectangleInToken:), the destination counts from the
+        // margins' top-left corner in origin mode.
+        const VT100GridRect scrollRegion = [_delegate terminalScrollRegion];
+        dest.x = VT100TerminalSaturatingAdd(dest.x, scrollRegion.origin.x);
+        dest.y = VT100TerminalSaturatingAdd(dest.y, scrollRegion.origin.y);
     }
     [_delegate terminalCopyFrom:rect to:dest];
 }
@@ -1506,10 +1517,6 @@ static const int kMaxScreenRows = 4096;
 
 - (void)sendDarkModeDSR {
     [_delegate terminalSendReport:[self darkModeDSR]];
-}
-
-static int VT100TerminalSaturatingAdd(int a, int b) {
-    return (int)MAX((long long)INT_MIN, MIN((long long)INT_MAX, (long long)a + (long long)b));
 }
 
 - (VT100GridRect)rectangleInToken:(VT100Token *)token

@@ -1225,7 +1225,7 @@ static int VT100OutputSafeAddInt(int l, int r) {
 - (NSData *)reportChecksum:(int)checksum withIdentifier:(int)identifier {
     // DCS Pid ! ~ D..D ST
     NSString *string =
-        [NSString stringWithFormat:@"%cP%d!~%04x%c\\", ESC, identifier, (short)checksum, ESC];
+        [NSString stringWithFormat:@"%cP%d!~%04x%c\\", ESC, identifier, (unsigned int)(unsigned short)checksum, ESC];
     return [string dataUsingEncoding:NSUTF8StringEncoding];
 }
 

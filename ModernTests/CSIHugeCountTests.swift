@@ -444,6 +444,30 @@ final class CSIHugeCountTests: XCTestCase {
         XCTAssertEqual(row(copied, 9), "jklmnopqrstuvwxyzabc")
     }
 
+    func testCopyRectangleDestinationIsRelativeToTheOriginInOriginMode() {
+        // In origin mode the destination, like the source, counts from the margins' top-left
+        // corner (0-based row 10, column 10 here). Copy the margins' top-left 1x2 block
+        // (uv on 0-based row 10) to their row 2, column 3: 0-based row 11, column 12.
+        let copied = outcome(originModeMargins, csi("1;1;1;2;1;2;3;1$v"))
+        XCTAssertEqual(row(copied, 11), "lmnopqrstuvwuvzabcde")
+        XCTAssertEqual(row(copied, 1), "bcdefghijklmnopqrstu")
+        // Outside origin mode the destination is absolute.
+        let absolute = outcome(filledScreen, csi("1;1;1;2;1;2;3;1$v"))
+        XCTAssertEqual(row(absolute, 1), "bcabfghijklmnopqrstu")
+    }
+
+    func testChecksumReportPrintsFourHexDigits() {
+        // The report formatted (short)checksum with %04x, so 0xCFD0 came out sign-extended as
+        // ffffcfd0.
+        let output = VT100Output()
+        XCTAssertEqual(String(data: output.reportChecksum(0xCFD0, withIdentifier: 1), encoding: .utf8),
+                       "\u{1b}P1!~cfd0\u{1b}\\")
+        XCTAssertEqual(String(data: output.reportChecksum(0x8000, withIdentifier: 2), encoding: .utf8),
+                       "\u{1b}P2!~8000\u{1b}\\")
+        XCTAssertEqual(String(data: output.reportChecksum(0x1234, withIdentifier: 7), encoding: .utf8),
+                       "\u{1b}P7!~1234\u{1b}\\")
+    }
+
     func testFillRectangleRejectsCharacterCodesAboveTheByteRange() {
         // 65601 is 65 (A) plus 65536. It used to be truncated to 16 bits before the range checks.
         let unchanged = outcome(filledScreen, "")
@@ -558,8 +582,8 @@ final class CSIHugeCountTests: XCTestCase {
 
     func testForwardTabWithWraparound() {
         // With tabs wrapping around, every tab can move the cursor, so the count is capped at
-        // 65535 as REP's is. The cap itself is not exercised here: 65535 wrapping tabs take more
-        // than five seconds in a test build, which trips the execution-permits watchdog.
+        // 65535 as REP's is. The cap itself is not exercised here. (65535 wrapping tabs took under
+        // a second in the test build, address sanitizer on, when measured on 2026-11-22.)
         let key = "TabsWrapAround"
         let previous = iTermUserDefaults.userDefaults().object(forKey: key)
         iTermUserDefaults.userDefaults().set(true, forKey: key)

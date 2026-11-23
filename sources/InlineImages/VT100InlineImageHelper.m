@@ -445,7 +445,9 @@
     // If the requested size is too large, scale it down to fit.
     if (*widthPtr > maxWidth) {
         const CGFloat scale = maxWidth / (double)*widthPtr;
-        *widthPtr = grid.sizeRespectingRegionConditionally.width;
+        // Shrink to the columns left on the line, as the scale assumes. Using the whole screen's
+        // width clipped the image whenever the cursor was past the first column.
+        *widthPtr = MAX(1, iTermSaturatingInt32FromDouble(maxWidth));
         *heightPtr = iTermSaturatingInt32FromDouble(*heightPtr * scale);
         *heightPtr = MAX(1, *heightPtr);
         *requestedWidthInPointsPtr = *widthPtr * cellSize.width;
@@ -456,7 +458,9 @@
     // within the image.
     CGFloat maxHeight = 255;
     if (*heightPtr > maxHeight) {
-        const CGFloat scale = (double)*heightPtr / maxHeight;
+        // Shrink the width in proportion, as capping the width does to the height. This used to
+        // multiply by height / 255, widening the image instead.
+        const CGFloat scale = maxHeight / (double)*heightPtr;
         *heightPtr = maxHeight;
         *widthPtr = iTermSaturatingInt32FromDouble(*widthPtr * scale);
         *widthPtr = MAX(1, *widthPtr);
