@@ -1066,6 +1066,7 @@
 		60B1143D21817F21D3451F6C /* iTermKeychainTestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = D843F8FE6068C7202DF163D5 /* iTermKeychainTestSupport.swift */; };
 		60F365A0DE3525B7C737C44C /* PSMTabRichLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22C79ADE0EB11AC43A02FF3F /* PSMTabRichLine.swift */; };
 		611264B856DACEEA188EA842 /* CompanionNoise in Frameworks */ = {isa = PBXBuildFile; productRef = CE47D7EFD87C4A5BF1DF9B29 /* CompanionNoise */; };
+		615ED2799FC6812297162B2A /* TabBarOrderController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78CB1992494F7ED28096F2F4 /* TabBarOrderController.swift */; };
 		633A5A8457E72348D302B42A /* TmuxWorkgroupPeerCreator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 795985DF96920C5D3F9FD1D6 /* TmuxWorkgroupPeerCreator.swift */; };
 		616ABD699141533212F458CF /* ToolStatusCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10914CB04BC4D2847EC8EB23 /* ToolStatusCellView.swift */; };
 		62025D1006F3996DFF3EC007 /* CommandExitNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B76CF833D5362C6A62ADF39 /* CommandExitNotification.swift */; };
@@ -4776,6 +4777,7 @@
 		C026494BD761D81234738D90 /* iTermModalAlertRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = EADF3E7DB1C0DAB2A13D7D99 /* iTermModalAlertRegistry.swift */; };
 		C170B61E5D91A047173C40BB /* CompanionPixelBufferHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2B75EA7ECA05D0BBE98C9EF /* CompanionPixelBufferHash.swift */; };
 		C17A8484C4DAB6EEFC5D14D9 /* AILiveBlobReplayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFDF88A516D67FABD556F296 /* AILiveBlobReplayTests.swift */; };
+		C2208D973E2B454B2F60751E /* TabBarOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82CC776C626F2EA8E741D816 /* TabBarOrder.swift */; };
 		C28B472089FF9B154E9804AE /* ChatBlob.swift in Sources */ = {isa = PBXBuildFile; fileRef = 231D27420AD78D3C46E931AE /* ChatBlob.swift */; };
 		C2C60D63975344F109B2E428 /* iTermRightGutterPanelRegistry.h in Sources */ = {isa = PBXBuildFile; fileRef = 6518C4017AD4275634FA34AA /* iTermRightGutterPanelRegistry.h */; };
 		C2C8361E8E1FB6B6FFEFD83B /* ClaudeCodeWorkgroupTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB72B02155E98A2D900F57AD /* ClaudeCodeWorkgroupTemplate.swift */; };
@@ -6213,6 +6215,7 @@
 		78369949C86466303F34E966 /* ClaudeInteractivity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClaudeInteractivity.swift; sourceTree = "<group>"; };
 		78BC7E35842CFC775D14EB91 /* CompanionPluginHTTPError.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionPluginHTTPError.swift; sourceTree = "<group>"; };
 		78C411C47C727715D6E54062 /* DiffWaitingPromptView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DiffWaitingPromptView.swift; sourceTree = "<group>"; };
+		78CB1992494F7ED28096F2F4 /* TabBarOrderController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TabBarOrderController.swift; sourceTree = "<group>"; };
 		795985DF96920C5D3F9FD1D6 /* TmuxWorkgroupPeerCreator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TmuxWorkgroupPeerCreator.swift; sourceTree = "<group>"; };
 		79855710ACDF8110E89ED8F6 /* libit2core.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libit2core.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		79B2FA2A3C0CD6168ED88878 /* iTermLayoutTransaction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermLayoutTransaction.swift; sourceTree = "<group>"; };
@@ -6243,6 +6246,7 @@
 		81E145AE29B68F8F2A69891A /* iTermLocatedString+ScreenCharArray.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "iTermLocatedString+ScreenCharArray.swift"; sourceTree = "<group>"; };
 		82088CEAF2327CEF9A9F84C7 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/iTermTriggersPanel.xcstrings; sourceTree = "<group>"; };
 		82455946E0412339FF902BFF /* OrchestratorToolDefinitions.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OrchestratorToolDefinitions.swift; sourceTree = "<group>"; };
+		82CC776C626F2EA8E741D816 /* TabBarOrder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TabBarOrder.swift; sourceTree = "<group>"; };
 		832B7B71C0EE3B7635C7E77A /* challenge-frame-detection.js */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.javascript; path = "challenge-frame-detection.js"; sourceTree = "<group>"; };
 		8363B81B060F3C03B5F2A3BA /* iTermRowContentIdentity.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermRowContentIdentity.h; sourceTree = "<group>"; };
 		83BACEE4D273E0A3FD916D1D /* TmuxWorkgroupHiddenPaneOffer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TmuxWorkgroupHiddenPaneOffer.swift; sourceTree = "<group>"; };
@@ -15568,6 +15572,8 @@
 				5E50E3D76EA1600E5CAFEF61 /* TabGroupContent.swift */,
 				172F56626F903C193019B6D3 /* TabBarSearch.swift */,
 				96B0C48F9D784A7C0A1D85AA /* TabBarSearchController.swift */,
+				82CC776C626F2EA8E741D816 /* TabBarOrder.swift */,
+				78CB1992494F7ED28096F2F4 /* TabBarOrderController.swift */,
 			);
 			path = TabGroups;
 			sourceTree = "<group>";
@@ -20942,6 +20948,8 @@
 				7A7C91DDE4CC30E02D2F0ACD /* TabBarSearch.swift in Sources */,
 				5C91330B68B70257A8667EE8 /* TabBarSearchController.swift in Sources */,
 				047F9FF7F36F4A0B6D673493 /* PSMTabSearchHighlight.swift in Sources */,
+				C2208D973E2B454B2F60751E /* TabBarOrder.swift in Sources */,
+				615ED2799FC6812297162B2A /* TabBarOrderController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

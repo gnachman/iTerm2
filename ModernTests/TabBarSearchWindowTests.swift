@@ -11,6 +11,8 @@ import XCTest
 
 final class TabBarSearchWindowTests: XCTestCase {
     private var savedTabPosition: Int32 = 0
+    // Set by tests that change the tab style, which tearDown restores.
+    private var savedTabStyle: Int32?
     private var fixture: TerminalWindowTestFixture!
 
     override func setUp() {
@@ -29,6 +31,12 @@ final class TabBarSearchWindowTests: XCTestCase {
         fixture.close()
         fixture = nil
         iTermPreferences.setInt(savedTabPosition, forKey: kPreferenceKeyTabPosition)
+        // After the window closes: changing the style refreshes open windows,
+        // which in the Minimal style can take a long time.
+        if let savedTabStyle {
+            iTermPreferences.setInt(savedTabStyle, forKey: kPreferenceKeyTabStyle)
+            self.savedTabStyle = nil
+        }
         super.tearDown()
     }
 
@@ -73,7 +81,8 @@ final class TabBarSearchWindowTests: XCTestCase {
 
     private func searchField() throws -> NSSearchField {
         fixture.window.contentView?.layoutSubtreeIfNeeded()
-        return try XCTUnwrap(try tabBar.topAccessoryView as? NSSearchField)
+        let accessory = try XCTUnwrap(try tabBar.topAccessoryView)
+        return try XCTUnwrap(accessory.subviews.compactMap { $0 as? NSSearchField }.first)
     }
 
     private func type(_ text: String) throws {
@@ -106,6 +115,7 @@ final class TabBarSearchWindowTests: XCTestCase {
 
     // A window takes its tab style when it opens.
     private func reopenInMinimalStyle() throws {
+        savedTabStyle = iTermPreferences.int(forKey: kPreferenceKeyTabStyle)
         iTermPreferences.setInt(5 /* TAB_STYLE_MINIMAL */, forKey: kPreferenceKeyTabStyle)
         fixture.close()
         fixture = TerminalWindowTestFixture()
@@ -116,15 +126,11 @@ final class TabBarSearchWindowTests: XCTestCase {
     // In the Minimal style the bar takes the terminal's background color, so
     // the field follows it from light to dark and back.
     func testTheFieldFollowsTheBackgroundInTheMinimalStyle() throws {
-        let savedTabStyle = iTermPreferences.int(forKey: kPreferenceKeyTabStyle)
-        defer {
-            iTermPreferences.setInt(savedTabStyle, forKey: kPreferenceKeyTabStyle)
-        }
         try reopenInMinimalStyle()
         let session = try XCTUnwrap(fixture.terminal.currentSession())
         let field = try searchField()
         func appearanceName() -> NSAppearance.Name? {
-            return field.appearance?.bestMatch(from: [.aqua, .darkAqua])
+            return field.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua])
         }
 
         _ = session.screenSetColor(NSColor(srgbRed: 0, green: 0, blue: 0, alpha: 1),
@@ -139,10 +145,6 @@ final class TabBarSearchWindowTests: XCTestCase {
     // Light or dark is judged as the bar judges it for its own buttons, so
     // the field never disagrees with the bar it sits on.
     func testTheFieldMatchesTheBarsButtonsInTheMinimalStyle() throws {
-        let savedTabStyle = iTermPreferences.int(forKey: kPreferenceKeyTabStyle)
-        defer {
-            iTermPreferences.setInt(savedTabStyle, forKey: kPreferenceKeyTabStyle)
-        }
         try reopenInMinimalStyle()
         let session = try XCTUnwrap(fixture.terminal.currentSession())
         let field = try searchField()
@@ -150,8 +152,8 @@ final class TabBarSearchWindowTests: XCTestCase {
         _ = session.screenSetColor(NSColor(srgbRed: 1, green: 0, blue: 1, alpha: 1),
                                    profileKey: KEY_BACKGROUND_COLOR)
         let barAppearance = try XCTUnwrap(try tabBar.style.accessoryAppearance)
-        XCTAssertNotNil(field.appearance)
-        XCTAssertEqual(field.appearance?.name, barAppearance.name)
+        XCTAssertEqual(field.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]),
+                       barAppearance.bestMatch(from: [.aqua, .darkAqua]))
     }
 
     func testTypingHidesTabsThatDontMatch() throws {

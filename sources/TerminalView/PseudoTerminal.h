@@ -432,6 +432,9 @@ deferringExpansion:(BOOL)deferExpansion;
 - (BOOL)tabBarSearchFieldHasFocus;
 // Whether the tab bar's search has a query, so it hides tabs that don't match.
 - (BOOL)isSearchingTabBar;
+// Whether the tab bar shows tabs sorted by status or directory, without
+// their groups.
+- (BOOL)tabBarIsSorted;
 
 // Updates the window when screen parameters (number of screens, resolutions,
 // etc.) change.

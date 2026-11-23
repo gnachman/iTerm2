@@ -238,6 +238,8 @@ static const NSTimeInterval PSMTabBarSpringLoadingDelay = 0.6;
     BOOL _keepSelectedTabInView;
     // Guards against reallyUpdate: -> scrollSelectedTabIntoView -> update: -> reallyUpdate: recursion.
     BOOL _adjustingScrollForSelection;
+    // YES while tab cells are in displayOrder rather than tab view order.
+    BOOL _cellsAreInDisplayOrder;
 
 
     // animation for hide/show
@@ -468,6 +470,7 @@ static const NSTimeInterval PSMTabBarSpringLoadingDelay = 0.6;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [_topAccessoryView release];
     [_searchHighlightQuery release];
+    [_displayOrder release];
     [_pointerIsInsideForTesting release];
     if (_pointerTrackingArea) {
         [self removeTrackingArea:_pointerTrackingArea];
@@ -5110,6 +5113,9 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     PSMTabBarCell *chip = [self chipForPoint:point];
     if (chip) {
         id<PSMTabGroup> group = [self.tabGroupDataSource tabGroupWithIdentifier:chip.tabGroupIdentifier];
+        if ([group respondsToSelector:@selector(toolTip)] && group.toolTip.length > 0) {
+            return group.toolTip;
+        }
         return group.name.length > 0 ? group.name : @"";
     }
 
@@ -5836,9 +5842,20 @@ static NSRect PSMRunUnionRect(NSRect a, NSRect b) {
 // after any change to the tab set, order, or membership. Idempotent.
 - (void)normalizeTabGroupChipCells {
     NSMutableArray<PSMTabBarCell *> *tabCells = [NSMutableArray array];
-    for (PSMTabBarCell *cell in _cells) {
-        if (![cell isTabGroupChip]) {
-            [tabCells addObject:cell];
+    if (_displayOrder) {
+        // Start from tab view order (see -removeAllTabGroupChipCells), so
+        // unlisted cells land in a predictable place.
+        NSArray<PSMTabBarCell *> *inTabOrder = _cellsAreInDisplayOrder ? [self tabCells:_cells sortedBy:_tabView.tabViewItems] : _cells;
+        [tabCells addObjectsFromArray:[self tabCells:inTabOrder sortedBy:_displayOrder]];
+        _cellsAreInDisplayOrder = YES;
+    } else if (_cellsAreInDisplayOrder) {
+        [tabCells addObjectsFromArray:[self tabCells:_cells sortedBy:_tabView.tabViewItems]];
+        _cellsAreInDisplayOrder = NO;
+    } else {
+        for (PSMTabBarCell *cell in _cells) {
+            if (![cell isTabGroupChip]) {
+                [tabCells addObject:cell];
+            }
         }
     }
     NSArray<PSMTabBarCell *> *normalized =
@@ -5896,7 +5913,9 @@ static NSRect PSMRunUnionRect(NSRect a, NSRect b) {
 }
 
 // Remove every chip cell from _cells (leaving only tab cells), used before
-// tab<->cell index reconciliation runs.
+// tab<->cell index reconciliation runs. That needs cell index == tab index,
+// so tab cells go back to tab view order too.
+// -normalizeTabGroupChipCells puts them back in display order.
 - (void)removeAllTabGroupChipCells {
     NSIndexSet *chipIndexes = [_cells indexesOfObjectsPassingTest:^BOOL(PSMTabBarCell *cell, NSUInteger idx, BOOL *stop) {
         return [cell isTabGroupChip];
@@ -5904,6 +5923,51 @@ static NSRect PSMRunUnionRect(NSRect a, NSRect b) {
     if (chipIndexes.count > 0) {
         [_cells removeObjectsAtIndexes:chipIndexes];
     }
+    if (_cellsAreInDisplayOrder) {
+        [_cells setArray:[self tabCells:_cells sortedBy:_tabView.tabViewItems]];
+        _cellsAreInDisplayOrder = NO;
+    }
+}
+
+// Tab cells (not chips) in the order of `items`, followed by any whose items
+// aren't listed, in their current order.
+- (NSArray<PSMTabBarCell *> *)tabCells:(NSArray<PSMTabBarCell *> *)cells
+                              sortedBy:(NSArray<NSTabViewItem *> *)items {
+    NSMapTable<NSTabViewItem *, NSNumber *> *positions =
+        [NSMapTable mapTableWithKeyOptions:(NSMapTableObjectPointerPersonality | NSMapTableStrongMemory)
+                              valueOptions:NSMapTableStrongMemory];
+    [items enumerateObjectsUsingBlock:^(NSTabViewItem *item, NSUInteger idx, BOOL *stop) {
+        [positions setObject:@(idx) forKey:item];
+    }];
+    NSMutableArray<PSMTabBarCell *> *tabCells = [NSMutableArray array];
+    for (PSMTabBarCell *cell in cells) {
+        if (![cell isTabGroupChip]) {
+            [tabCells addObject:cell];
+        }
+    }
+    // Unlisted cells sort after listed ones, keeping their current order.
+    NSMapTable<PSMTabBarCell *, NSNumber *> *keys =
+        [NSMapTable mapTableWithKeyOptions:(NSMapTableObjectPointerPersonality | NSMapTableStrongMemory)
+                              valueOptions:NSMapTableStrongMemory];
+    [tabCells enumerateObjectsUsingBlock:^(PSMTabBarCell *cell, NSUInteger idx, BOOL *stop) {
+        NSNumber *position = cell.representedObject ? [positions objectForKey:cell.representedObject] : nil;
+        [keys setObject:@(position ? position.unsignedIntegerValue : items.count + idx) forKey:cell];
+    }];
+    return [tabCells sortedArrayUsingComparator:^NSComparisonResult(PSMTabBarCell *lhs, PSMTabBarCell *rhs) {
+        return [[keys objectForKey:lhs] compare:[keys objectForKey:rhs]];
+    }];
+}
+
+- (void)setDisplayOrder:(NSArray<NSTabViewItem *> *)displayOrder {
+    if (displayOrder == _displayOrder || [displayOrder isEqualToArray:_displayOrder]) {
+        return;
+    }
+    DLog(@"Display order changes to %@", displayOrder);
+    [_displayOrder release];
+    _displayOrder = [displayOrder copy];
+    [self removeAllTabGroupChipCells];
+    [self normalizeTabGroupChipCells];
+    [self update:NO];
 }
 
 - (void)setIsPinned:(BOOL)pinned forTabViewItem:(NSTabViewItem *)tabViewItem {

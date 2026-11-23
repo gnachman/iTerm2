@@ -711,6 +711,12 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // NO if shell integration is not in use.
 @property(nonatomic, readonly) BOOL isAtShellPrompt;
 
+// Whether the session is waiting for a command at a shell prompt: the
+// foreground job is a shell, or, while ssh is in the foreground and the
+// remote host has shell integration, from the end of the prompt until
+// Return. ssh to a host without shell integration counts as a command.
+@property(nonatomic, readonly) BOOL isWaitingForACommand;
+
 // Has it been at least a second since isProcessing became false?
 @property(nonatomic, readonly) BOOL isIdle;
 // When output last arrived, ignoring output caused by resizing. Seconds since the reference date.

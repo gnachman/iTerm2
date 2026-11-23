@@ -366,9 +366,11 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
     // MARK: - Pinned Tabs
 
     @objc func togglePinTab(_ sender: Any?) {
-        if isSearchingTabBar() {
+        if isSearchingTabBar() || tabBarIsSorted() {
             // It would pin hidden group members, and a tab that matched by
-            // its rich content could vanish. The menu item is disabled.
+            // its rich content could vanish. A sorted bar doesn't show
+            // groups, so their tabs would jump to the top for no visible
+            // reason. The menu item is disabled.
             return
         }
         var tab: PTYTab?

@@ -21,6 +21,9 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol PSMTabGroup <NSObject>
 @property (nonatomic, readonly) NSString *name;
 @property (nonatomic, readonly) NSColor *color;
+@optional
+// The chip's tooltip, when it isn't the name.
+@property (nonatomic, readonly, nullable) NSString *toolTip;
 @end
 
 // Supplies group definitions to the tab bar by identifier. The window

@@ -348,6 +348,12 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // they draw for tabs (see PSMTabSearchHighlight).
 @property(nonatomic, copy, nullable) NSString *searchHighlightQuery;
 
+// The order to show tabs in, when it isn't the tab view's, or nil. It
+// changes only where cells are drawn: the tab view's order is unchanged.
+// Items not listed are shown after the rest, in tab view order. Drags should
+// be refused while it is set, since a drop position means a tab view index.
+@property(nonatomic, copy, nullable) NSArray<NSTabViewItem *> *displayOrder;
+
 // Whether the pointer is over the bar, in a window that's frontmost there.
 @property(nonatomic, readonly) BOOL pointerIsInside;
 // For tests: overrides pointerIsInside when not nil.

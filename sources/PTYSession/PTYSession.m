@@ -7314,6 +7314,28 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     return _screen.commandRange.start.x >= 0;
 }
 
+- (BOOL)isWaitingForACommand {
+    // A shell in the foreground is at its prompt. While it runs a command,
+    // the command is in the foreground.
+    NSString *job = self.variablesScope.jobName;
+    if (job.length > 0 && [iTermLSOF processNameIsAShell:job]) {
+        return YES;
+    }
+    // Over ssh the local job is ssh, so only shell integration on the
+    // remote host can tell. Only while ssh is in the foreground, since what
+    // it left behind (the host, the prompt) goes stale when it exits. Read
+    // the host directly: the getter searches marks when there's none.
+    static NSSet<NSString *> *remoteJobs;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        remoteJobs = [[NSSet alloc] initWithArray:@[ @"ssh", @"mosh-client", @"et", @"autossh" ]];
+    });
+    if ([remoteJobs containsObject:job] && _currentHost.isRemoteHost) {
+        return self.isAtShellPrompt;
+    }
+    return NO;
+}
+
 // You're processing if data was read off the socket in the last "idleTimeSeconds".
 - (BOOL)isProcessing {
     // For browser tabs, check if navigation is in progress

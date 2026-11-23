@@ -192,6 +192,7 @@ NSString *const TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE = @"Saved Window Type";  
 NSString *const TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX = @"Selected Tab Index";
 NSString *const TERMINAL_ARRANGEMENT_SCREEN_INDEX = @"Screen";
 NSString *const TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING = @"Hide After Opening";
+NSString *const TERMINAL_ARRANGEMENT_TAB_BAR_ORDER = @"Tab Bar Order";
 NSString *const TERMINAL_ARRANGEMENT_DESIRED_COLUMNS = @"Desired Columns";
 NSString *const TERMINAL_ARRANGEMENT_DESIRED_ROWS = @"Desired Rows";
 NSString *const TERMINAL_ARRANGEMENT_DESIRED_SCREEN_HEIGHT_PERCENTAGE = @"Desired Screen Height Percentage";
@@ -338,6 +339,14 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     NSMutableDictionary<NSNumber *, NSArray<NSString *> *> *_tabBarSearchTextSnapshot;
     // A text change waited for the pointer to leave the bar.
     BOOL _tabBarSearchTextsChangedUnderPointer;
+    // The order a vertical tab bar shows tabs in (see TabBarOrder).
+    iTermTabBarOrderController *_tabBarOrder;
+    // The headings the sorted bar shows, by identifier, as last applied.
+    NSDictionary<NSString *, iTermTabBarOrderSection *> *_tabBarOrderSections;
+    // Whether the bar was last given a sorted order.
+    BOOL _tabBarWasSorted;
+    // An update for the order becoming unavailable is queued.
+    BOOL _tabBarOrderUnavailableUpdatePending;
     BOOL _tabBarSearchFieldKeepsFocusForRemoval;
     // The tabs a swipe in progress goes among, fixed when it begins.
     NSArray<PTYTab *> *_swipeTabs;
@@ -1202,6 +1211,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_broadcastInputHelper release];
     [_labelOfTabRenamedDuringSearch release];
     [_tabBarSearchTextSnapshot release];
+    [_tabBarOrder release];
+    [_tabBarOrderSections release];
     [_windowPositioner release];
     [_locationLockController release];
     [autocompleteView shutdown];
@@ -1503,6 +1514,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!begin) {
         // The pointer may have left the bar during the drag.
         [self applyTabBarSearchTextChangesHeldBackByPointer];
+        [_tabBarOrder applyChangesHeldBackByPointer];
     }
     if (!begin && _endTabBarSearchAfterDrag) {
         _endTabBarSearchAfterDrag = NO;
@@ -2003,11 +2015,119 @@ ITERM_WEAKLY_REFERENCEABLE
             [weakSelf endTabBarSearch];
         };
     }
-    if (control.topAccessoryView != _tabBarSearch.searchField) {
+    if (control.topAccessoryView != _tabBarSearch.accessoryView) {
+        _tabBarSearch.order = [self tabBarOrderController].mode;
+        __weak __typeof(self) weakSelf = self;
+        _tabBarSearch.orderDidChange = ^(iTermTabBarOrderMode mode) {
+            [weakSelf setTabBarOrderMode:mode];
+        };
         control.topAccessoryBandHeight = iTermTabBarSearchController.bandHeight;
-        control.topAccessoryView = _tabBarSearch.searchField;
+        control.topAccessoryView = _tabBarSearch.accessoryView;
         [self updateTabBarSearchFieldAppearance];
     }
+}
+
+#pragma mark - Tab bar order
+
+- (iTermTabBarOrderController *)tabBarOrderController {
+    if (!_tabBarOrder) {
+        _tabBarOrder = [[iTermTabBarOrderController alloc] init];
+        __weak __typeof(self) weakSelf = self;
+        _tabBarOrder.needsUpdate = ^{
+            [weakSelf tabBarOrderNeedsUpdate];
+        };
+        _tabBarOrder.liveTabs = ^NSArray<iTermTabBarOrderLiveTab *> *{
+            return [weakSelf tabBarOrderLiveTabsForTabs:[weakSelf tabsInTabBar]] ?: @[];
+        };
+        _tabBarOrder.pointerIsInside = ^BOOL{
+            return weakSelf.contentView.tabBarControl.pointerIsInside;
+        };
+        _tabBarOrder.isActive = ^BOOL{
+            return [weakSelf tabBarIsSorted] && !weakSelf.window.isMiniaturized;
+        };
+    }
+    return _tabBarOrder;
+}
+
+// The tabs the bar has cells for, in order.
+- (NSArray<PTYTab *> *)tabsInTabBar {
+    return [[self tabs] filteredArrayUsingBlock:^BOOL(PTYTab *aTab) {
+        return aTab.tabViewItem != nil;
+    }];
+}
+
+// Whether the bar shows tabs in an order other than the window's. Like a
+// search, only where it can be seen: a horizontal or hidden bar has no
+// control to change it back.
+- (BOOL)tabBarIsSorted {
+    return (_tabBarOrder.mode != iTermTabBarOrderModeManual &&
+            [self tabBarIsVertical] &&
+            _contentView.tabBarShouldBeVisible);
+}
+
+- (void)setTabBarOrderMode:(iTermTabBarOrderMode)mode {
+    iTermTabBarOrderController *controller = [self tabBarOrderController];
+    if (controller.mode == mode) {
+        return;
+    }
+    RLog(@"Tab bar order changes from %@ to %@", @(controller.mode), @(mode));
+    controller.mode = mode;
+    _tabBarSearch.order = mode;
+    [self updateTabGroupsForSearch];
+    [self invalidateRestorableState];
+}
+
+- (void)restoreTabBarOrderFromArrangement:(NSDictionary *)arrangement {
+    NSNumber *value = [NSNumber castFrom:arrangement[TERMINAL_ARRANGEMENT_TAB_BAR_ORDER]];
+    switch (value.integerValue) {
+        case iTermTabBarOrderModeStatus:
+        case iTermTabBarOrderModeWorkingDirectory:
+            [self setTabBarOrderMode:(iTermTabBarOrderMode)value.integerValue];
+            break;
+        default:
+            break;
+    }
+}
+
+- (NSArray<iTermTabBarOrderLiveTab *> *)tabBarOrderLiveTabsForTabs:(NSArray<PTYTab *> *)tabs {
+    iTermStatusPrioritySettings *settings = [iTermStatusPrioritySettings shared];
+    // Only the directory order needs directories, and finding them isn't free.
+    const BOOL byDirectory = (_tabBarOrder.mode == iTermTabBarOrderModeWorkingDirectory);
+    return [tabs mapWithBlock:^id(PTYTab *aTab) {
+        iTermSessionTabStatus *status = aTab.aggregatedTabStatus;
+        const NSInteger priority = status.hasActiveStatus ? [settings priorityFor:status.statusText] : NSIntegerMax;
+        PTYSession *session = aTab.activeSession;
+        // Moves keep tabs in their groups, which the bar doesn't show but
+        // the window keeps together.
+        NSString *groupKey = aTab.tabGroupID ? [NSString stringWithFormat:@"%@/%@", aTab.nestedTabGroupParentID ?: @"", aTab.tabGroupID] : nil;
+        return [[[iTermTabBarOrderLiveTab alloc] initWithKey:aTab.uniqueId
+                                                      pinned:aTab.isPinned
+                                              statusPriority:priority
+                                                     snoozed:aTab.isSnoozed
+                                                   directory:byDirectory ? session.variablesScope.path : nil
+                                                    atPrompt:byDirectory && session.isWaitingForACommand
+                                                       group:groupKey] autorelease];
+    }];
+}
+
+// The order for these tabs. Go by what the bar shows: the snapshot while the
+// pointer holds changes back. With `store`, as when applying to the bar,
+// this becomes what the bar shows.
+- (iTermTabBarOrderResult *)tabBarOrderResultForTabs:(NSArray<PTYTab *> *)tabs store:(BOOL)store {
+    iTermTabBarOrderController *controller = [self tabBarOrderController];
+    const BOOL useSnapshot = controller.isHoldingBack || _contentView.tabBarControl.pointerIsInside;
+    return [controller resultForTabs:[self tabBarOrderLiveTabsForTabs:tabs]
+                         useSnapshot:useSnapshot
+                               store:store];
+}
+
+- (void)tabBarOrderNeedsUpdate {
+    if (![self tabBarIsSorted]) {
+        return;
+    }
+    DLog(@"Re-sort the tab bar");
+    [self updateTabGroups];
+    [_contentView.tabBarControl updateWithoutAnimation];
 }
 
 // The field sits on the tab bar. The Minimal style draws the bar in the
@@ -2017,14 +2137,14 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)updateTabBarSearchFieldAppearance {
     NSAppearance *appearance = _contentView.tabBarControl.style.accessoryAppearance;
     DLog(@"Tab bar search field appearance: %@", appearance.name);
-    _tabBarSearch.searchField.appearance = appearance;
+    _tabBarSearch.accessoryView.appearance = appearance;
 }
 
 // The search changed: show the result at once. Animating each keystroke would
 // restart the collapse animation, so hidden tabs would keep popping back.
 - (void)updateTabGroupsForSearch {
-    if (![self isSearchingTabBar] && ![self tabGroupAutoExpandIsSuppressed]) {
-        // The search may have just ended. The selected tab may be in a
+    if (![self isSearchingTabBar] && ![self tabBarIsSorted] && ![self tabGroupAutoExpandIsSuppressed]) {
+        // The search, or a sorted order, may have just ended. The selected tab may be in a
         // collapsed group (selecting during a search doesn't expand it),
         // which must now open, since the selected tab is never in a collapsed
         // group. Does nothing if it isn't in one.
@@ -2056,6 +2176,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)tabBarSearchBecameUnavailable {
     const BOOL hadFocus = [self tabBarSearchFieldHasFocus];
     const BOOL searching = _tabBarSearch.query.length > 0;
+    [self tabBarOrderAvailabilityMayHaveChanged];
     if (!hadFocus && !searching) {
         return;
     }
@@ -2071,6 +2192,29 @@ ITERM_WEAKLY_REFERENCEABLE
             [weakSelf.currentSession takeFocus];
         }
     });
+}
+
+// Whether the bar can show its order depends on its position and
+// visibility, which change without telling anyone, as when it flashes in full
+// screen. Layout calls this. If what the bar shows no longer agrees, update
+// it (see -updateTabGroups). Later, since this runs during layout.
+- (void)tabBarOrderAvailabilityMayHaveChanged {
+    const BOOL sorted = [self tabBarIsSorted];
+    if (_tabBarOrderUnavailableUpdatePending || sorted == _tabBarWasSorted) {
+        return;
+    }
+    DLog(@"Tab bar order availability changed; sorted now %@", @(sorted));
+    _tabBarOrderUnavailableUpdatePending = YES;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf tabBarOrderAvailabilityDidChangeLater];
+    });
+}
+
+- (void)tabBarOrderAvailabilityDidChangeLater {
+    _tabBarOrderUnavailableUpdatePending = NO;
+    [self updateTabGroups];
+    [_contentView.tabBarControl updateWithoutAnimation];
 }
 
 // Select `item` without taking focus from the search field if it has it:
@@ -2142,6 +2286,16 @@ ITERM_WEAKLY_REFERENCEABLE
     NSArray<NSString *> *texts = includingTexts ? [self tabBarSearchTextsForTab:tab
                                                                      useSnapshot:useSnapshot
                                                                            store:store] : @[];
+    if ([self tabBarIsSorted]) {
+        // A sorted bar doesn't show groups, so none hides or keeps a tab.
+        // Group names still match.
+        return [[[iTermTabBarSearchTab alloc] initWithTexts:texts
+                                                 groupNames:groupNames
+                                                    groupID:nil
+                                              parentGroupID:nil
+                                                     hidden:NO
+                                            parentCollapsed:NO] autorelease];
+    }
     return [[[iTermTabBarSearchTab alloc] initWithTexts:texts
                                              groupNames:groupNames
                                                 groupID:tab.tabGroupID
@@ -2326,6 +2480,7 @@ ITERM_WEAKLY_REFERENCEABLE
 // PSMTabBarControlDelegate
 - (void)tabViewPointerDidLeaveTabBar:(NSTabView *)tabView {
     [self applyTabBarSearchTextChangesHeldBackByPointer];
+    [_tabBarOrder applyChangesHeldBackByPointer];
 }
 
 // Return: go to the first match and back to the terminal.
@@ -2363,7 +2518,7 @@ ITERM_WEAKLY_REFERENCEABLE
 // PSMTabBarControlDelegate. Groups are shown differently during a search, so
 // where a dragged one would land is unclear.
 - (BOOL)tabView:(NSTabView *)aTabView shouldDragTabGroup:(NSString *)groupID {
-    return !_layoutLocked && ![self isSearchingTabBar];
+    return !_layoutLocked && ![self isSearchingTabBar] && ![self tabBarIsSorted];
 }
 
 - (void)tabAddSwiftyStringsToGraph:(iTermSwiftyStringGraph *)graph {
@@ -3591,7 +3746,7 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
 // bar hidden, skipping tabs would have no visible reason.
 // A search requires a visible bar (-tabBarSearchQuery).
 - (BOOL)tabNavigationFollowsSearch {
-    return [self isSearchingTabBar];
+    return [self isSearchingTabBar] || [self tabBarIsSorted];
 }
 
 // iTermTabViewReplacementProviding. During a search, removing the selected
@@ -3620,9 +3775,23 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     NSArray<NSNumber *> *visible = [result.hidden mapWithBlock:^id(NSNumber *hidden) {
         return @(!hidden.boolValue);
     }];
-    const NSInteger other = [iTermTabBarSearch replacementIndexWithVisible:visible
-                                                              closingIndex:index
-                                                                preferLeft:towardTheLeft];
+    NSInteger other;
+    if ([self tabBarIsSorted]) {
+        // Nearest in the order the bar shows.
+        NSArray<NSNumber *> *order = [self tabBarOrderResultForTabs:tabs store:NO].order;
+        NSArray<NSNumber *> *visibleInOrder = [order mapWithBlock:^id(NSNumber *i) {
+            return visible[i.integerValue];
+        }];
+        const NSInteger position = [order indexOfObject:@(index)];
+        const NSInteger otherPosition = [iTermTabBarSearch replacementIndexWithVisible:visibleInOrder
+                                                                          closingIndex:position
+                                                                            preferLeft:towardTheLeft];
+        other = otherPosition == NSNotFound ? NSNotFound : order[otherPosition].integerValue;
+    } else {
+        other = [iTermTabBarSearch replacementIndexWithVisible:visible
+                                                  closingIndex:index
+                                                    preferLeft:towardTheLeft];
+    }
     DLog(@"Removing selected tab %@ during a search; selecting %@", tabViewItem, @(other));
     // tabs comes from the tab view's items, so the indexes agree.
     return other == NSNotFound ? nil : [tabView tabViewItemAtIndex:other];
@@ -3639,9 +3808,13 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     NSArray<NSNumber *> *visible = [result.hidden mapWithBlock:^id(NSNumber *hidden) {
         return @(!hidden.boolValue);
     }];
-    const NSInteger other = [iTermTabBarSearch adjacentVisibleIndexWithVisible:visible
-                                                                 selectedIndex:index
-                                                                        offset:offset];
+    const NSInteger other = [self tabBarIsSorted] ? [iTermTabBarOrder adjacentVisibleIndexWithOrder:[self tabBarOrderResultForTabs:tabs store:NO].order
+                                                                                             visible:visible
+                                                                                       selectedIndex:index
+                                                                                              offset:offset]
+                                                  : [iTermTabBarSearch adjacentVisibleIndexWithVisible:visible
+                                                                                         selectedIndex:index
+                                                                                                offset:offset];
     DLog(@"Select visible tab by %@ from %@: %@", @(offset), @(index), @(other));
     if (other == NSNotFound) {
         return;
@@ -3685,6 +3858,11 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
 // the current tab is ungrouped this behaves exactly like nextTab:/previousTab:.
 // Wraps around, mirroring the wraparound of nextTab:/previousTab:.
 - (void)selectTabGroupByOffset:(NSInteger)offset {
+    if ([self tabBarIsSorted]) {
+        // A sorted bar shows no groups.
+        [self selectVisibleTabByOffset:offset];
+        return;
+    }
     NSArray<PTYTab *> *tabs = self.tabs;
     if ([self tabNavigationFollowsSearch]) {
         // Among the tabs shown, like Next and Previous Tab, starting from
@@ -4518,6 +4696,7 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     if ([[arrangement objectForKey:TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING] boolValue]) {
         [term hideAfterOpening];
     }
+    [term restoreTabBarOrderFromArrangement:arrangement];
     if (isHotkeyWindow) {
         BOOL ok = [[iTermHotKeyController sharedInstance] addRevivedHotkeyWindowController:term
                                                                         forProfileWithGUID:guid];
@@ -5369,7 +5548,7 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
                         encoder:(id<iTermEncoderAdapter>)result {
     NSRect rect = [[self window] frame];
 
-    return [PseudoTerminal populateArrangementWith:tabsOrSession
+    const BOOL commit = [PseudoTerminal populateArrangementWith:tabsOrSession
                                  includingContents:includeContents
                                            encoder:result
                                       terminalGuid:self.terminalGuid
@@ -5397,6 +5576,10 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
                                                tab:nil
                                        profileGuid:[[[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] profile] objectForKey:KEY_GUID]
                                        isMaximized:[self isMaximized]];
+    if (commit && _tabBarOrder.mode != iTermTabBarOrderModeManual) {
+        result[TERMINAL_ARRANGEMENT_TAB_BAR_ORDER] = @(_tabBarOrder.mode);
+    }
+    return commit;
 }
 
 + (BOOL)populateArrangementWith:(iTermOr<NSArray<PTYTab *> *, PTYSession *> *)tabsOrSession
@@ -6296,6 +6479,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     RLog(@"PseudoTerminal windowDidResignKey");
     // Another window may now be under the pointer, with no exit from the bar.
     [self applyTabBarSearchTextChangesHeldBackByPointer];
+    [_tabBarOrder applyChangesHeldBackByPointer];
     if (self.swipeIdentifier) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
                                                             object:self.swipeIdentifier];
@@ -6497,6 +6681,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return insets;
     }
     [self attachTabBarSearchField];
+    [self tabBarOrderAvailabilityMayHaveChanged];
     insets.top += iTermTabBarSearchController.bandHeight;
     return insets;
 }
@@ -8326,7 +8511,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     // the end; see -tabGroupAutoExpandIsSuppressed), or a search shows the tab
     // anyway (its end expands the group of the tab selected then; see
     // -updateTabGroupsForSearch).
-    if (tab.tabGroupHidden && ![self tabGroupAutoExpandIsSuppressed] && ![self isSearchingTabBar]) {
+    if (tab.tabGroupHidden && ![self tabGroupAutoExpandIsSuppressed] && ![self isSearchingTabBar] && ![self tabBarIsSorted]) {
         [self expandTabGroupsHidingTab:tab];
     }
     for (PTYSession *aSession in [tab sessions]) {
@@ -8614,6 +8799,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (_layoutLocked) {
         return NO;
     }
+    if ([self tabBarIsSorted]) {
+        // The bar's order isn't the window's, so where a tab was dragged to
+        // would mean nothing.
+        return NO;
+    }
     // During a search a tab can be dragged out, to another window or a new
     // one, but not dropped back in this bar (-tabView:shouldDropTabViewItem:...),
     // where it snaps back.
@@ -8664,6 +8854,12 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     // between the shown tabs it was dropped between, and the search ends
     // (-didDonateTab:toWindowController:joiningGroupWithID:).
     id destination = aTabBarControl.delegate;
+    if ([destination isKindOfClass:[PseudoTerminal class]] &&
+        [(PseudoTerminal *)destination tabBarIsSorted]) {
+        // Where it lands among tabs shown out of the window's order is
+        // unclear.
+        return NO;
+    }
     if ([destination isKindOfClass:[PseudoTerminal class]] &&
         [(PseudoTerminal *)destination isSearchingTabBar] &&
         ([[aTabBarControl tabView] indexOfTabViewItem:tabViewItem] != NSNotFound ||
@@ -9822,8 +10018,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (NSDragOperation)tabView:(NSTabView *)destinationTabView
     draggingEnteredTabBarForSender:(id<NSDraggingInfo>)draggingInfo {
     // A dropped pane becomes a tab where it's dropped, which is unclear with
-    // tabs hidden, as for a dropped tab.
-    if ([self isSearchingTabBar]) {
+    // tabs hidden or shown out of order, as for a dropped tab.
+    if ([self isSearchingTabBar] || [self tabBarIsSorted]) {
         return NSDragOperationNone;
     }
     return NSDragOperationMove;
@@ -9880,7 +10076,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (BOOL)tabView:(NSTabView *)tabView shouldAcceptDragFromSender:(id<NSDraggingInfo>)sender
 {
-    return ![self isSearchingTabBar];
+    return ![self isSearchingTabBar] && ![self tabBarIsSorted];
 }
 
 - (NSString *)tabView:(NSTabView *)aTabView toolTipForTabViewItem:(NSTabViewItem *)aTabViewItem {
@@ -10097,6 +10293,18 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (identifier.length == 0) {
         return nil;
     }
+    if ([iTermTabBarOrder isSectionIdentifier:identifier]) {
+        iTermTabBarOrderSection *section = _tabBarOrderSections[identifier];
+        if (!section) {
+            return nil;
+        }
+        iTermTabGroup *group = [[[iTermTabGroup alloc] initWithUniqueIdentifier:identifier
+                                                                           name:section.name
+                                                                          color:[NSColor systemGrayColor]
+                                                               parentIdentifier:nil] autorelease];
+        group.toolTip = section.toolTip;
+        return group;
+    }
     // A parent group may have no direct members; its definition then rides its
     // sub-groups' tabs (as their parent), so any tab inside it can answer.
     for (PTYTab *aTab in [self tabs]) {
@@ -10224,6 +10432,61 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [parentIdentifiers addObjectsFromArray:result.parentGroupIDs];
     [collapsedFlags addObjectsFromArray:result.hidden];
     [parentCollapsedFlags addObjectsFromArray:result.parentCollapsed];
+    const BOOL wasSorted = _tabBarWasSorted;
+    _tabBarWasSorted = [self tabBarIsSorted];
+    if (wasSorted && !_tabBarWasSorted && !result.isSearching && ![self tabGroupAutoExpandIsSuppressed]) {
+        // The bar shows groups again. A sorted bar doesn't expand the
+        // selected tab's group, but the selected tab is never in a collapsed
+        // group. Then start over, since what was gathered above may be out
+        // of date. The flag is already clear, so this happens once.
+        DLog(@"The tab bar shows groups again; expand the selected tab's");
+        [self expandTabGroupsHidingTab:self.currentTab];
+        [self updateTabGroups];
+        return;
+    }
+    if (_tabBarWasSorted) {
+        // Sections are drawn as groups, which the bar shows in the order
+        // given. Nothing is collapsed, so only the search hides tabs.
+        NSArray<PTYTab *> *itemTabs = [items mapWithBlock:^id(NSTabViewItem *item) {
+            return item.identifier;
+        }];
+        iTermTabBarOrderResult *order = [self tabBarOrderResultForTabs:itemTabs store:YES];
+        // A section with no match goes away, as a group does. One with a
+        // match keeps its hidden tabs too, so they don't split its run.
+        [identifiers setArray:order.sectionIdentifiers];
+        NSMutableSet<NSString *> *shownSections = [NSMutableSet set];
+        for (NSUInteger i = 0; i < items.count; i++) {
+            NSString *section = [NSString castFrom:identifiers[i]];
+            if (section && ![result.hidden[i] boolValue]) {
+                [shownSections addObject:section];
+            }
+        }
+        for (NSUInteger i = 0; i < items.count; i++) {
+            NSString *section = [NSString castFrom:identifiers[i]];
+            if (section && ![shownSections containsObject:section]) {
+                identifiers[i] = [NSNull null];
+            }
+        }
+        for (NSUInteger i = 0; i < items.count; i++) {
+            parentIdentifiers[i] = [NSNull null];
+            parentCollapsedFlags[i] = @NO;
+        }
+        NSMutableDictionary<NSString *, iTermTabBarOrderSection *> *sections = [NSMutableDictionary dictionary];
+        for (iTermTabBarOrderSection *section in order.sections) {
+            sections[section.identifier] = section;
+        }
+        [_tabBarOrderSections release];
+        _tabBarOrderSections = [sections copy];
+        control.displayOrder = [order.order mapWithBlock:^id(NSNumber *i) {
+            return items[i.integerValue];
+        }];
+    } else {
+        [_tabBarOrderSections release];
+        _tabBarOrderSections = nil;
+        control.displayOrder = nil;
+        // So polling sees a change when the order shows again.
+        [_tabBarOrder forgetApplied];
+    }
     [control setTabGroupIdentifiers:identifiers parentIdentifiers:parentIdentifiers forTabViewItems:items];
     [control setTabGroupCollapsedFlags:collapsedFlags parentCollapsedFlags:parentCollapsedFlags forTabViewItems:items];
     // What the search shows is what Ctrl-Tab's switcher may list.
@@ -10886,7 +11149,7 @@ deferringExpansion:(BOOL)deferExpansion {
     NSString *groupID = (parentID && current.tabGroupParentCollapsed) ? parentID : current.tabGroupID;
     // During a search the selected tab can stay in a collapsed group; the
     // search's end expands it.
-    if (groupID.length > 0 && [current isTabGroupCollapsed:groupID] && ![self isSearchingTabBar]) {
+    if (groupID.length > 0 && [current isTabGroupCollapsed:groupID] && ![self isSearchingTabBar] && ![self tabBarIsSorted]) {
         // Keep the group collapsed by moving the selection out of it, as collapsing it by hand
         // would. If there's nowhere to move it, the group stays expanded.
         for (PTYTab *member in [self tabsInGroup:groupID]) {
@@ -11466,6 +11729,12 @@ deferringExpansion:(BOOL)deferExpansion {
     if (members.count == 0) {
         return;
     }
+    if ([self tabBarIsSorted]) {
+        // A sorted bar shows no groups, so collapsing wouldn't show, but
+        // would move the selection out of the group.
+        DLog(@"Ignore collapse of %@ in a sorted tab bar", groupID);
+        return;
+    }
     if ([self isSearchingTabBar] &&
         [members allWithBlock:^BOOL(PTYTab *member) { return [member isTabGroupCollapsed:groupID]; }]) {
         // Already collapsed. During a search the selected tab can be in it,
@@ -11551,6 +11820,17 @@ deferringExpansion:(BOOL)deferExpansion {
 }
 
 - (void)toggleTabGroupCollapsed:(NSString *)groupID {
+    // A sorted bar's headings aren't groups. Clicking one does nothing.
+    if ([iTermTabBarOrder isSectionIdentifier:groupID]) {
+        DLog(@"Ignore a click on heading %@", groupID);
+        return;
+    }
+    // A sorted bar shows no groups, so a change wouldn't show.
+    if ([self tabBarIsSorted]) {
+        DLog(@"Ignore collapse toggle of %@ in a sorted tab bar", groupID);
+        NSBeep();
+        return;
+    }
     // A search shows groups expanded whatever their state, so a change
     // wouldn't show, and would change what clearing the search restores.
     // Beep so the click doesn't look broken.
@@ -11605,7 +11885,7 @@ deferringExpansion:(BOOL)deferExpansion {
 // active tab inside a collapsed group. Called from the tear-off/move/restore
 // sites where AppKit's per-item auto-select can't be relied on.
 - (void)expandTabGroupIfSelectedTabIsCollapsed {
-    if ([self isSearchingTabBar]) {
+    if ([self isSearchingTabBar] || [self tabBarIsSorted]) {
         // Selecting during a search doesn't expand groups; the search's end
         // expands the selected tab's (-updateTabGroupsForSearch).
         return;
@@ -11672,7 +11952,8 @@ deferringExpansion:(BOOL)deferExpansion {
         }
         // The selected tab's group expands, except during a search, whose end
         // expands it (-updateTabGroupsForSearch).
-        const BOOL holdsSelection = [members containsObject:current] && ![self isSearchingTabBar];
+        // Likewise in a sorted bar, which doesn't show groups.
+        const BOOL holdsSelection = [members containsObject:current] && ![self isSearchingTabBar] && ![self tabBarIsSorted];
         const BOOL collapsed = allCollapsed && !holdsSelection;
         for (PTYTab *member in members) {
             [member setCollapsed:collapsed ofTabGroup:gid];
@@ -11688,6 +11969,10 @@ deferringExpansion:(BOOL)deferExpansion {
 
 - (void)collapseTabGroupFromMenu:(id)sender {
     if ([self isSearchingTabBar]) {
+        return;
+    }
+    if ([self tabBarIsSorted]) {
+        NSBeep();
         return;
     }
     [self collapseTabGroup:[sender representedObject] animated:YES];
@@ -14854,6 +15139,10 @@ typedef struct {
     if (sel < 0 || sel >= (NSInteger)tabs.count) {
         return;
     }
+    if ([self tabBarIsSorted]) {
+        [self moveTab:tabs[sel] inSortedTabBarByOffset:offset];
+        return;
+    }
     if ([self tabNavigationFollowsSearch]) {
         [self moveTab:tabs[sel] amongVisibleTabsByOffset:offset];
         return;
@@ -14913,6 +15202,36 @@ typedef struct {
 // with the nearest shown tab in the same group, wrapping around at the ends. It
 // never joins or leaves a group (see +[iTermTabBarSearch
 // moveOrderWithGroupKeys:...]).
+// In a sorted bar, a tab trades places with the nearest shown tab in its
+// section (or with the same status), wrapping around at the ends, so the bar
+// shows it move one step (see +[iTermTabBarOrder moveOrderWithResult:...]).
+- (void)moveTab:(PTYTab *)tab inSortedTabBarByOffset:(NSInteger)offset {
+    NSArray<PTYTab *> *tabs = self.tabs;
+    const NSInteger index = [tabs indexOfObject:tab];
+    if (index == NSNotFound) {
+        return;
+    }
+    iTermTabBarSearchResult *search = [self tabBarSearchResultForTabs:tabs];
+    NSArray<NSNumber *> *visible = [search.hidden mapWithBlock:^id(NSNumber *hidden) {
+        return @(!hidden.boolValue);
+    }];
+    NSArray<NSNumber *> *order = [iTermTabBarOrder moveOrderWithResult:[self tabBarOrderResultForTabs:tabs store:NO]
+                                                                visible:visible
+                                                          selectedIndex:index
+                                                                 offset:offset];
+    DLog(@"Move %@ by %@ in a sorted tab bar: new order %@", tab, @(offset), order);
+    if (!order) {
+        NSBeep();
+        return;
+    }
+    NSArray<PTYTab *> *target = [order mapWithBlock:^id(NSNumber *i) {
+        return tabs[i.integerValue];
+    }];
+    [self applyTabOrder:target];
+    [self setNeedsUpdateTabObjectCounts:YES];
+    [self tabsDidReorder];
+}
+
 - (void)moveTab:(PTYTab *)tab amongVisibleTabsByOffset:(NSInteger)offset {
     NSArray<PTYTab *> *tabs = self.tabs;
     const NSInteger index = [tabs indexOfObject:tab];
@@ -16773,6 +17092,13 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         [self isSearchingTabBar]) {
         return NO;
     }
+    if ([self tabBarIsSorted] &&
+        (item.action == @selector(closeTabsToTheRight:) || item.action == @selector(togglePinTab:))) {
+        // The tabs after it in the window aren't the ones below it in a
+        // sorted bar. Pinning acts on the tab's whole group, which a sorted
+        // bar doesn't show.
+        return NO;
+    }
     if (_layoutLocked) {
         const SEL action = [item action];
         if (action == @selector(closeCurrentTab:) ||
@@ -17573,8 +17899,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (void)closeTabsToTheRight:(id)sender {
-    if ([self isSearchingTabBar]) {
-        // It would close tabs the search hides. The menu item is disabled.
+    if ([self isSearchingTabBar] || [self tabBarIsSorted]) {
+        // It would close tabs the search hides, or in a sorted bar, tabs
+        // that aren't below it. The menu item is disabled.
         return;
     }
     NSTabViewItem *aTabViewItem = [sender representedObject];
@@ -18660,6 +18987,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 
 - (void)tabDidChangeTabStatus:(PTYTab *)tab {
     [_contentView.tabBarControl setNeedsDisplay:YES];
+    // Snoozing comes here too. Only the Status order depends on status.
+    if ([self tabBarIsSorted] && _tabBarOrder.mode == iTermTabBarOrderModeStatus) {
+        [_tabBarOrder inputsDidChange];
+    }
 }
 
 - (void)tab:(PTYTab *)tab didSetMetalEnabled:(BOOL)useMetal {
@@ -19396,6 +19727,10 @@ backgroundColor:(NSColor *)backgroundColor {
         completion(nil, [self apiTabGroupErrorWithReason:@"Tab groups can't be collapsed or expanded while the tab bar is being searched"]);
         return;
     }
+    if ([self tabBarIsSorted]) {
+        completion(nil, [self apiTabGroupErrorWithReason:@"Tab groups can't be collapsed or expanded while the tab bar is sorted by status or directory"]);
+        return;
+    }
     if (collapsed.boolValue) {
         // Collapse can be refused (e.g. the group is the whole window, so there
         // is nowhere to move the active tab). Report the resulting state.
@@ -19463,13 +19798,17 @@ backgroundColor:(NSColor *)backgroundColor {
         return tabs;
     }
     iTermTabBarSearchResult *result = [self tabBarSearchResultForTabs:tabs];
+    // In a sorted bar, in the order it shows.
+    NSArray<NSNumber *> *order = [self tabBarIsSorted] ? [self tabBarOrderResultForTabs:tabs store:NO].order : nil;
     NSMutableArray<PTYTab *> *shown = [NSMutableArray array];
-    [tabs enumerateObjectsUsingBlock:^(PTYTab *aTab, NSUInteger idx, BOOL *stop) {
+    for (NSInteger i = 0; i < (NSInteger)tabs.count; i++) {
+        const NSInteger idx = order ? order[i].integerValue : i;
+        PTYTab *aTab = tabs[idx];
         // The selected tab may not match, but the swipe starts from it.
         if (![result.hidden[idx] boolValue] || aTab == self.currentTab) {
             [shown addObject:aTab];
         }
-    }];
+    }
     return shown;
 }
 

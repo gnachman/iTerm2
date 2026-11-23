@@ -22,6 +22,8 @@ final class iTermTabGroup: NSObject, PSMTabGroup {
     // The group this one is nested in, or nil for a top-level group. Nesting is
     // one level deep.
     @objc let parentIdentifier: String?
+    // The chip's tooltip, when it isn't the name.
+    @objc var toolTip: String?
 
     @objc init(uniqueIdentifier: String, name: String, color: NSColor, parentIdentifier: String?) {
         self.uniqueIdentifier = uniqueIdentifier
