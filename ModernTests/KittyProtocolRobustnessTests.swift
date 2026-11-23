@@ -187,8 +187,9 @@ final class KittyProtocolRobustnessTests: XCTestCase {
         try Data(count: smallBudget * 2).write(to: URL(fileURLWithPath: path))
         defer { try? FileManager.default.removeItem(atPath: path) }
         run(controller, "a=T,f=100,t=f,i=5;" + base64(path))
-        XCTAssertEqual(delegate.reports.count, 1)
-        XCTAssertTrue(delegate.reports[0].contains("ENOSPC"), delegate.reports.description)
+        // The reply is the one every t=f read failure gets, so that it does not reveal that a
+        // large file exists at the path (it said ENOSPC until 2026-11-22).
+        XCTAssertEqual(delegate.reports, [fileReadFailure(id: 5)])
     }
 
     func testSharedMemoryLargerThanTheCacheBudgetIsRejected() {
@@ -231,5 +232,143 @@ final class KittyProtocolRobustnessTests: XCTestCase {
         run(controller, "a=T,f=100,t=t,i=6,q=2;" + base64(path))
         XCTAssertTrue(controller.hasPlacement(imageID: 6, placementID: 0))
         XCTAssertFalse(FileManager.default.fileExists(atPath: path))
+    }
+
+    // MARK: - File transmission (t=f): the denylist and its replies
+
+    /// The one reply the kitty specification asks for when a file cannot be read, whatever the
+    /// reason, so that the reply reveals nothing about the file system. The p=0 is there because
+    /// these tests transmit and display (a=T).
+    private func fileReadFailure(id: Int) -> String {
+        return "\u{1B}_Gi=\(id),p=0;EBADF:Failed to read image file\u{1B}\\"
+    }
+
+    /// A new directory under the test's temporary directory, spelled as resolution spells it.
+    private func makeScratchDirectory() throws -> String {
+        let path = temporaryPath("kitty-denylist")
+        try FileManager.default.createDirectory(atPath: path, withIntermediateDirectories: false)
+        addTeardownBlock {
+            _ = chmod(path + "/unreadable.png", 0o600)
+            try? FileManager.default.removeItem(atPath: path)
+        }
+        return KittyImageController.resolvedFileTransmissionURL(path).path
+    }
+
+    func testDenylistBlocksEveryEntryUnderEverySpelling() {
+        // Paths as data, in the forms resolution can produce and the forms the entries were
+        // first written in. The /private forms of /etc, /var/db and /var/root never matched,
+        // because resolution removes /private.
+        let denied = [
+            "/etc", "/etc/", "/etc/hosts", "/etc/ssh/ssh_host_rsa_key",
+            "/private/etc", "/private/etc/hosts",
+            "/var/db", "/var/db/sudo/ts/me", "/private/var/db/sudo/ts/me",
+            "/var/root", "/var/root/.bash_history", "/private/var/root/.bash_history",
+            "/dev", "/dev/null", "/System", "/System/Library/x.png",
+            "/Library/Keychains", "/Library/Keychains/System.keychain",
+            "/Users/me/.ssh", "/Users/me/.ssh/id_ed25519", "/Users/me/.ssh/",
+            // Case, as a case-insensitive volume would accept it.
+            "/ETC/hosts", "/Private/Etc/hosts", "/VAR/DB/x", "/var/Root/x", "/DEV/null",
+            "/system/Library/x.png", "/library/keychains/x", "/Users/me/.SSH/id_ed25519",
+            // Repeated and "." components.
+            "//etc//hosts", "/./etc/./hosts", "/private//var/db/x",
+        ]
+        for path in denied {
+            XCTAssertTrue(KittyImageController.fileTransmissionPathIsDenied(path), path)
+        }
+    }
+
+    func testDenylistDoesNotBlockPathsThatOnlyShareAPrefix() {
+        let allowed = [
+            "/etcetera/x.png", "/private/etcetera/x.png", "/developer/x.png",
+            "/Systemic/x.png", "/var/dbx/x.png", "/private/var/rootkit/x.png",
+            "/var/folders/ab/T/x.png", "/private/var/folders/ab/T/x.png",
+            "/tmp/x.png", "/private/tmp/x.png", "/Library/KeychainsBackup/x.png",
+            "/Users/me/.sshx/x.png", "/Users/me/a.ssh/x.png", "/Users/me/Pictures/x.png",
+            "/private/Users/etc/x.png", "/Users/me/etc/x.png", "/Users/me/var/db/x.png",
+        ]
+        for path in allowed {
+            XCTAssertFalse(KittyImageController.fileTransmissionPathIsDenied(path), path)
+        }
+    }
+
+    func testFileTransmissionPathResolution() throws {
+        // How t=f paths are resolved before the denylist sees them. Only names are resolved
+        // here; no sensitive file is opened.
+        XCTAssertEqual(KittyImageController.resolvedFileTransmissionURL("/private/etc").path, "/etc")
+        XCTAssertEqual(KittyImageController.resolvedFileTransmissionURL("/tmp/../etc").path, "/etc")
+        XCTAssertEqual(KittyImageController.resolvedFileTransmissionURL("/private/tmp").path, "/tmp")
+        XCTAssertEqual(KittyImageController.resolvedFileTransmissionURL("/private/var/db").path, "/var/db")
+
+        let dir = try makeScratchDirectory()
+        try FileManager.default.createDirectory(atPath: dir + "/.ssh", withIntermediateDirectories: false)
+        try FileManager.default.createDirectory(atPath: dir + "/sub", withIntermediateDirectories: false)
+        try Data(base64Encoded: redPNGBase64)!.write(to: URL(fileURLWithPath: dir + "/.ssh/img.png"))
+        try FileManager.default.createSymbolicLink(atPath: dir + "/link", withDestinationPath: ".ssh")
+        let canonical = dir + "/.ssh/img.png"
+        for spelling in [dir + "/.SSH/img.png",
+                         dir + "/sub/../.ssh/img.png",
+                         dir + "/link/img.png",
+                         dir + "/.ssh/img.png/",
+                         dir + "//.ssh/./img.png",
+                         "/private" + dir + "/.ssh/img.png"] {
+            XCTAssertEqual(KittyImageController.resolvedFileTransmissionURL(spelling).path, canonical, spelling)
+        }
+    }
+
+    func testFileTransmissionRefusesADeniedFileUnderEverySpelling() throws {
+        let dir = try makeScratchDirectory()
+        let png = Data(base64Encoded: redPNGBase64)!
+        try FileManager.default.createDirectory(atPath: dir + "/.ssh", withIntermediateDirectories: false)
+        try FileManager.default.createDirectory(atPath: dir + "/.sshx", withIntermediateDirectories: false)
+        try FileManager.default.createDirectory(atPath: dir + "/sub", withIntermediateDirectories: false)
+        try png.write(to: URL(fileURLWithPath: dir + "/.ssh/img.png"))
+        try png.write(to: URL(fileURLWithPath: dir + "/.sshx/img.png"))
+        try FileManager.default.createSymbolicLink(atPath: dir + "/link", withDestinationPath: ".ssh")
+        try FileManager.default.createSymbolicLink(atPath: dir + "/alias.png", withDestinationPath: ".ssh/img.png")
+
+        let spellings = [dir + "/.ssh/img.png",
+                         dir + "/.SSH/img.png",
+                         dir + "/sub/../.ssh/img.png",
+                         dir + "/link/img.png",
+                         dir + "/alias.png",
+                         dir + "/.ssh/img.png/",
+                         "/private" + dir + "/.ssh/img.png"]
+        for (index, spelling) in spellings.enumerated() {
+            let (controller, delegate) = makeController()
+            let id = index + 1
+            run(controller, "a=T,f=100,t=f,i=\(id);" + base64(spelling))
+            XCTAssertEqual(delegate.reports, [fileReadFailure(id: id)], spelling)
+            XCTAssertFalse(controller.hasPlacement(imageID: UInt32(id), placementID: 0), spelling)
+        }
+
+        // The same image outside the denied directory loads.
+        let (controller, delegate) = makeController()
+        run(controller, "a=T,f=100,t=f,i=40;" + base64(dir + "/.sshx/img.png"))
+        XCTAssertEqual(delegate.reports, ["\u{1B}_Gi=40;OK\u{1B}\\"])
+        XCTAssertTrue(controller.hasPlacement(imageID: 40, placementID: 0))
+    }
+
+    func testFileTransmissionFailuresShareOneReply() throws {
+        // Missing, not a regular file, denied, unreadable, too large and not an image: a
+        // program, perhaps on a remote host, must not be able to tell these apart.
+        let dir = try makeScratchDirectory()
+        try FileManager.default.createDirectory(atPath: dir + "/.ssh", withIntermediateDirectories: false)
+        try Data(base64Encoded: redPNGBase64)!.write(to: URL(fileURLWithPath: dir + "/.ssh/img.png"))
+        try Data("not an image".utf8).write(to: URL(fileURLWithPath: dir + "/text.png"))
+        try Data(count: smallBudget * 2).write(to: URL(fileURLWithPath: dir + "/large.png"))
+        try Data(base64Encoded: redPNGBase64)!.write(to: URL(fileURLWithPath: dir + "/unreadable.png"))
+        XCTAssertEqual(chmod(dir + "/unreadable.png", 0), 0)
+        XCTAssertEqual(mkfifo(dir + "/fifo.png", 0o600), 0)
+        try FileManager.default.createDirectory(atPath: dir + "/directory.png", withIntermediateDirectories: false)
+        try FileManager.default.createSymbolicLink(atPath: dir + "/loop.png", withDestinationPath: "loop.png")
+
+        for name in ["missing.png", "directory.png", "fifo.png", ".ssh/img.png", "unreadable.png",
+                     "large.png", "text.png", "loop.png"] {
+            for verbosity in ["", ",q=1"] {
+                let (controller, delegate) = makeController(budget: smallBudget)
+                run(controller, "a=T,f=100,t=f,i=5\(verbosity);" + base64(dir + "/" + name))
+                XCTAssertEqual(delegate.reports, [fileReadFailure(id: 5)], name + verbosity)
+            }
+        }
     }
 }

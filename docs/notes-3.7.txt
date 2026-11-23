@@ -131,3 +131,11 @@ Bug Fixes:
 - Double-clicking a line in the Captured Output
   tool did nothing when the Capture Output
   trigger’s command used session variables.
+- A program using the kitty image protocol could
+  have iTerm2 read files in /etc and /var/db,
+  which iTerm2 meant to refuse, and iTerm2’s
+  replies told the program, even one on a
+  remote host, why a file could not be shown,
+  such as that it did not exist. Those files
+  are now refused, and every file that can’t be
+  shown gets the same reply.

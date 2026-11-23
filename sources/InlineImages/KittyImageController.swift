@@ -906,9 +906,17 @@ class KittyImageController: NSObject {
                              payload: String,
                              query: Bool) -> String? {
         DLog("executeTransmitFile: id=\(command.identifier) (0x\(String(command.identifier, radix: 16))) payloadLength=\(payload.count)")
-        let fileURL = URL(fileURLWithPath: payload.base64Decoded ?? "").resolvingSymlinksInPath().standardizedFileURL.absoluteURL
+        let fileURL = Self.resolvedFileTransmissionURL(payload.base64Decoded ?? "")
         DLog("executeTransmitFile: fileURL=\(fileURL.path)")
         return handle(command: command, fileURL: fileURL, query: query)
+    }
+
+    // Resolves the path named by a t=f command: symlinks are followed and "." and ".." removed.
+    // For a path that exists this also gives each component the case it has on disk and
+    // removes a leading /private (so /private/etc/hosts and /tmp/../etc/hosts both become
+    // /etc/hosts).
+    static func resolvedFileTransmissionURL(_ path: String) -> URL {
+        return URL(fileURLWithPath: path).resolvingSymlinksInPath().standardizedFileURL.absoluteURL
     }
 
     func executeTransmitTemporaryFile(_ command: KittyImageCommand.ImageTransmission,
@@ -957,34 +965,47 @@ class KittyImageController: NSObject {
     }
 
     private func filenameIsSafe(fileURL: URL) -> Bool {
-        let path = fileURL.path
-
-        // Sensitive directories - block the directory itself and anything inside it.
-        // The path has already been canonicalized via resolvingSymlinksInPath().standardizedFileURL
-        // so we don't need to worry about /usr/../dev or //dev tricks.
-        let sensitiveDirs = [
-            "/dev",
-            "/System",
-            "/private/var/db",
-            "/private/etc",
-            "/private/var/root",
-            "/Library/Keychains"
-        ]
-
-        for dir in sensitiveDirs {
-            // Block /dev, /dev/, and /dev/anything but not /developer
-            if path == dir || path.hasPrefix(dir + "/") {
-                return false
-            }
-        }
-
-        // .ssh can appear anywhere in user home directories (e.g., /Users/foo/.ssh/)
-        if path.contains("/.ssh/") || path.hasSuffix("/.ssh") {
-            return false
-        }
-
-        return true
+        return !Self.fileTransmissionPathIsDenied(fileURL.path)
     }
+
+    // Directories that t=f refuses to read from, with everything inside them. Written as
+    // resolvedFileTransmissionURL spells them, without /private.
+    private static let deniedFileTransmissionDirectories: [[String]] = [
+        ["dev"],
+        ["system"],
+        ["var", "db"],
+        ["etc"],
+        ["var", "root"],
+        ["library", "keychains"],
+    ]
+
+    // Whether a t=f path, already resolved by resolvedFileTransmissionURL, lies in a part of the
+    // filesystem that file transmission refuses to read. Static so tests can pass paths as data.
+    //
+    // Resolution removes "." and "..", follows symlinks, gives an existing path the case it has on
+    // disk and removes a leading /private. This check also accepts the other spellings a path
+    // can have on macOS so that it does not depend on that: it compares whole components (so
+    // /etcetera is not /etc), ignores empty and "." components, ignores case (the startup volume
+    // is case-insensitive), and treats /private/etc, /private/var and /private/tmp as /etc, /var
+    // and /tmp, which are symlinks to them.
+    static func fileTransmissionPathIsDenied(_ path: String) -> Bool {
+        var components = path.lowercased().split(separator: "/").map(String.init).filter { $0 != "." }
+        if components.count > 1 && components[0] == "private" && ["etc", "var", "tmp"].contains(components[1]) {
+            components.removeFirst()
+        }
+        for dir in deniedFileTransmissionDirectories where components.starts(with: dir) {
+            return true
+        }
+        // .ssh can appear anywhere in user home directories (e.g., /Users/foo/.ssh/)
+        return components.contains(".ssh")
+    }
+
+    // The kitty specification: “all failures to read an image file, be it because the file does
+    // not exist, is not readable, is not a regular file, lies in a sensitive location or is
+    // smaller than the client claimed, must be reported with a single, identical, error
+    // response.” Otherwise a program, perhaps on a remote host, could learn which paths exist.
+    // The real reason goes to the log only.
+    private static let fileReadFailedError = "EBADF:Failed to read image file"
 
     private func handle(command: KittyImageCommand.ImageTransmission,
                         fileURL: URL,
@@ -994,23 +1015,27 @@ class KittyImageController: NSObject {
             let values = try fileURL.resourceValues(forKeys: [.isRegularFileKey])
             guard values.isRegularFile == true else {
                 DLog("handle(fileURL): ERROR - not a regular file")
-                return "EBADF:Not a file"
+                return Self.fileReadFailedError
             }
             guard filenameIsSafe(fileURL: fileURL) else {
                 RLog("handle(fileURL): ERROR - unsafe filename")
-                return "EBADF:Invalid path"
+                return Self.fileReadFailedError
             }
             if let size = try fileURL.resourceValues(forKeys: [.fileSizeKey]).fileSize,
                size > maximumDataSize {
                 RLog("handle(fileURL): ERROR - file is \(size) bytes, more than \(maximumDataSize)")
-                return Self.dataTooLargeError
+                return Self.fileReadFailedError
             }
             let content = try Data(contentsOf: fileURL)
             DLog("handle(fileURL): read \(content.count) bytes from file")
-            return handle(command: command, data: content, query: query)
+            if let error = handle(command: command, data: content, query: query) {
+                RLog("handle(fileURL): ERROR - \(error)")
+                return Self.fileReadFailedError
+            }
+            return nil
         } catch {
             RLog("handle(fileURL): ERROR - \(error.localizedDescription)")
-            return "EBADF:\(error.localizedDescription)"
+            return Self.fileReadFailedError
         }
     }
 
