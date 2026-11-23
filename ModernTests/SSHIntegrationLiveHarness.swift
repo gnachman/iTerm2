@@ -39,6 +39,7 @@ private final class NotThisMacFiles: ClaudeCodeRemoteFiles {
     init(_ inner: ClaudeCodeRemoteFiles) { self.inner = inner }
     func read(_ path: String) async -> ClaudeCodeRemoteRead { await inner.read(path) }
     func write(_ path: String, _ data: Data) async -> Bool { await inner.write(path, data) }
+    func append(_ path: String, _ data: Data) async -> Bool { await inner.append(path, data) }
     func isExecutable(_ path: String) async -> Bool { await inner.isExecutable(path) }
     func machineToken() async -> String? { "1:" }
 }

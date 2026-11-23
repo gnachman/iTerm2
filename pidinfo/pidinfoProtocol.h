@@ -57,9 +57,13 @@ NS_ASSUME_NONNULL_BEGIN
 // PRECONDITION: `script` must be a single command. The FIFO capture appends a
 // `> fifo` redirect, which in a compound script (`a && b`, `a; b`) would bind
 // only the last command and silently drop earlier output.
+//
+// `environment` is added to the service's own environment for the shell, so
+// startup files see variables iTerm2 gives its sessions (such as IT2_SUITE).
 - (void)runShellScript:(NSString *)script
                  shell:(NSString *)shell
                   mode:(iTermShellRunMode)mode
+           environment:(NSDictionary<NSString *, NSString *> * _Nullable)environment
              withReply:(void (^)(NSData * _Nullable output,
                                  NSData * _Nullable error,
                                  int status))reply;

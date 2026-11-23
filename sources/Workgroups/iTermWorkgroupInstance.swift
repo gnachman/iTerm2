@@ -38,6 +38,10 @@ final class iTermWorkgroupInstance: NSObject {
     // workgroup appear can tell what created it instead of guessing.
     @objc var provenance: String?
 
+    // How the controller entered this instance, so restarting it can say the
+    // same. nil for one restored from an arrangement or adopted from tmux.
+    var entryMechanism: iTermWorkgroupEntryMechanism?
+
     // Config snapshot at entry time.
     let workgroup: iTermWorkgroup
 
@@ -115,6 +119,13 @@ final class iTermWorkgroupInstance: NSObject {
     // reference in the notification handler.
     private var trackedSessionIdentities: Set<ObjectIdentifier> = []
 
+    // Members whose configured URL names user variables, keyed by session.
+    // See WorkgroupBrowserURLBinding.
+    private var browserURLBindings: [ObjectIdentifier: WorkgroupBrowserURLBinding] = [:]
+    // The config uniqueIdentifier of each bound member, keyed like
+    // browserURLBindings, which is what WorkgroupBrowserMemory files pages under.
+    private var browserURLBindingMemberIDs: [ObjectIdentifier: String] = [:]
+
     // Nested peer ports for non-peer hosts that themselves host a peer
     // group (e.g. a split whose config declares peer children). Each
     // port needs to be invalidated at teardown, and toolbarItems(for:)
@@ -163,6 +174,145 @@ final class iTermWorkgroupInstance: NSObject {
             add(entry.session)
         }
         return result
+    }
+
+    // The name its config gives a live member, or nil if it has none.
+    private func configuredName(of session: PTYSession) -> String? {
+        guard let configID = configID(forSession: session),
+              let name = config(forConfigID: configID)?.displayName,
+              !name.isEmpty else {
+            return nil
+        }
+        return name
+    }
+
+    // Live members whose configured name matches `name`, ignoring case.
+    // Names should be unique, but workgroups saved before that was enforced
+    // may repeat one, so this returns every match.
+    func liveMembers(named name: String) -> [PTYSession] {
+        return liveMemberSessions.filter { session in
+            configuredName(of: session)?.caseInsensitiveCompare(name) == .orderedSame
+        }
+    }
+
+    // Config IDs of members named `name` that will have a session but don't
+    // yet: a peer whose spawn is in flight (its promise is pending), or, in
+    // tmux, a split or tab whose pane doesn't exist yet (a tmux peer isn't
+    // created until first shown, and its promise stays pending until then).
+    // Not one whose spawn failed, and not a local split or tab without a
+    // session: those join as they're created, so one that hasn't never will.
+    // Nor a peer of a nested group whose host never came up, which has no port.
+    func startingMemberIDs(named name: String) -> [String] {
+        return workgroup.sessions.compactMap { config in
+            let id = config.uniqueIdentifier
+            guard config.displayName.caseInsensitiveCompare(name) == .orderedSame,
+                  id != workgroup.root?.uniqueIdentifier,
+                  liveSession(forConfigID: id) == nil else {
+                return nil
+            }
+            if let port = allPeerPorts.first(where: { $0.ownsIdentifier(id) }) {
+                guard let promise = port.promise(forIdentifier: id),
+                      !promise.hasValue,
+                      promise.maybeError == nil else {
+                    return nil
+                }
+                return id
+            }
+            return tmuxBinding != nil && config.kind != .peer ? id : nil
+        }
+    }
+
+    struct MemberVariableResult {
+        // Members that got the value now.
+        var set = 0
+        // Members that refused it.
+        var failed = 0
+        // Members that will get it when they start.
+        var pending = 0
+    }
+
+    // Sets a variable on the members named `name`, for
+    // iterm2.set_workgroup_member_variable. Each one that hasn't started yet
+    // gets the value when it joins (see applyPendingVariables): an agent
+    // may name a member before it exists, and a tmux peer may not exist until
+    // the user first shows it. Waiting would hold up the agent, and dropping
+    // the value would leave the member blank when it appears.
+    func setVariable(_ variable: String,
+                     value: Any?,
+                     onMembersNamed name: String) -> MemberVariableResult {
+        var result = MemberVariableResult()
+        let live = liveMembers(named: name)
+        for session in live {
+            if session.genericScope.setValue(value, forVariableNamed: variable) {
+                result.set += 1
+            } else {
+                result.failed += 1
+            }
+        }
+        // Also when some matched: another member with the name may still be
+        // starting (startingMemberIDs leaves out the live ones).
+        for id in startingMemberIDs(named: name) {
+            if pendingVariables[id] == nil {
+                forgetPendingVariablesIfSpawnFails(memberID: id)
+            }
+            var pending = pendingVariables[id] ?? []
+            pending.removeAll { $0.name == variable }
+            pending.append((name: variable, value: value))
+            pendingVariables[id] = pending
+            result.pending += 1
+        }
+        if result.pending > 0 {
+            DLog("iTermWorkgroupInstance: \(variable) waits for \(result.pending) member(s) named \(name) to start")
+        }
+        return result
+    }
+
+    // Variables set by name on members that hadn't started, by config ID, in
+    // the order they were set. Forgotten if the member's spawn fails, and at
+    // teardown, which also covers a tmux member never shown.
+    private var pendingVariables = [String: [(name: String, value: Any?)]]()
+
+    private func forgetPendingVariablesIfSpawnFails(memberID id: String) {
+        guard let promise = allPeerPorts.first(where: { $0.ownsIdentifier(id) })?.promise(forIdentifier: id) else {
+            return
+        }
+        promise.catchError { [weak self] _ in
+            guard let self, self.pendingVariables.removeValue(forKey: id) != nil else {
+                return
+            }
+            RLog("iTermWorkgroupInstance: member \(id) failed to start; dropping the variables set for it")
+        }
+    }
+
+    // Gives a member that just joined the variables set for it before it
+    // existed, all at once if its URL follows them. Returns whether there
+    // were any.
+    private func applyPendingVariables(to session: PTYSession,
+                                       memberID: String,
+                                       binding: WorkgroupBrowserURLBinding?) -> Bool {
+        guard let pending = pendingVariables.removeValue(forKey: memberID), !pending.isEmpty else {
+            return false
+        }
+        RLog("iTermWorkgroupInstance: member \(memberID) started; setting the \(pending.count) variable(s) set for it earlier")
+        func apply() {
+            for (name, value) in pending {
+                session.genericScope.setValue(value, forVariableNamed: name)
+            }
+        }
+        if let binding {
+            binding.changingTogether(apply)
+        } else {
+            apply()
+        }
+        return true
+    }
+
+    // Distinct configured names of live members, for error messages.
+    var liveMemberNames: [String] {
+        var seen = Set<String>()
+        return liveMemberSessions.compactMap { configuredName(of: $0) }.filter {
+            seen.insert($0).inserted
+        }
     }
 
     // Warning text to append to a close confirmation when closing
@@ -248,11 +398,20 @@ final class iTermWorkgroupInstance: NSObject {
         self.instanceUniqueIdentifier = instanceUniqueIdentifier
         self.workgroup = workgroup
         self.mainSession = mainSession
+        // The agent usually reports its conversation when it starts, before
+        // a trigger enters the workgroup, so take it from the memory's map
+        // now: this copy is the one that outlives the map at termination.
+        WorkgroupBrowserMemory.shared.jobChanged(forSessionGUID: mainSession.guid,
+                                                 to: Self.jobPID(of: mainSession))
+        let report = WorkgroupBrowserMemory.shared.report(forSessionGUID: mainSession.guid)
+        self.leaderConversationID = report?.conversation
+        self.leaderReportJobPID = report?.jobPID
         self.peerPort = peerPort
         self.gitPoller = gitPoller
         self.spawner = spawner
         super.init()
         gitPoller?.delegate = self
+        observeLeaderJob(mainSession)
         // When any of our tracked sessions terminates (leader, peer,
         // or non-peer child), exit the workgroup so the leader's
         // workgroupInstance is cleared and re-entering produces a
@@ -297,6 +456,8 @@ final class iTermWorkgroupInstance: NSObject {
             return false
         }()
         guard isMine else { return }
+        // Bindings are keyed by object identity, which a new session could reuse.
+        removeBrowserURLBinding(for: session)
         // isTmuxClient is already false here: terminate() clears it before saying so.
         if let tmuxBinding, tmuxBinding.isConnected, session !== mainSession,
            session.tmuxPaneIfClient != nil,
@@ -439,6 +600,7 @@ final class iTermWorkgroupInstance: NSObject {
             NonPeerEntry(session: session, items: items)
         trackedSessionIdentities.insert(ObjectIdentifier(session))
         session.workgroupInstance = self
+        installBrowserURLBinding(for: session, config: config)
         // Pin the default end action so this member can't auto-close on
         // program exit (fresh spawns are already flagged by the spawner;
         // this also covers the restore/adopt path). See
@@ -468,9 +630,11 @@ final class iTermWorkgroupInstance: NSObject {
         }
         RLog("iTermWorkgroupInstance.replaceNonPeer: \(configID) is now \(session.guid), replacing \(entry.session.guid)")
         trackedSessionIdentities.remove(ObjectIdentifier(entry.session))
+        removeBrowserURLBinding(for: entry.session)
         nonPeerEntriesByConfigID[configID] = NonPeerEntry(session: session, items: entry.items)
         trackedSessionIdentities.insert(ObjectIdentifier(session))
         session.workgroupInstance = self
+        installBrowserURLBinding(for: session, config: config)
         session.forceDefaultEndAction = true
         applyConfiguredName(config: config, to: session)
         session.delegate?.sessionDidChangeDesiredToolbarItems(session)
@@ -731,6 +895,10 @@ final class iTermWorkgroupInstance: NSObject {
             return
         }
         didTeardown = true
+        pendingVariables.removeAll()
+        // The scope holds references weakly; invalidate() would report a change.
+        leaderJobReference?.onChangeBlock = nil
+        leaderJobReference = nil
         RLog("iTermWorkgroupInstance.teardown: workgroup=\(workgroupUniqueIdentifier) instance=\(instanceUniqueIdentifier) mainSession=\((mainSession?.guid).d) peerPort members=[\(peerPort.membersDebugDescription)] nestedPorts=\(nestedPeerPorts.count) nonPeerConfigIDs=\(nonPeerOrderedConfigIDs)")
         // Do this before invalidate() terminates the non-leader peers:
         // if the shared pane is currently showing a doomed non-leader
@@ -785,6 +953,11 @@ final class iTermWorkgroupInstance: NSObject {
         nonPeerOrderedConfigIDs.removeAll()
         nonPeerEntriesByConfigID.removeAll()
         trackedSessionIdentities.removeAll()
+        for binding in browserURLBindings.values {
+            binding.invalidate()
+        }
+        browserURLBindings.removeAll()
+        browserURLBindingMemberIDs.removeAll()
         if let tmuxBinding, !tmuxInstanceEndedElsewhere {
             // isTmuxClient is already false for a terminating session (terminate() clears it
             // before saying so), so it is recognized by the pane it showed.
@@ -1380,8 +1553,188 @@ final class iTermWorkgroupInstance: NSObject {
             promise.then { [weak self] session in
                 guard let self, !self.didTeardown else { return }
                 session.workgroupInstance = self
+                if let configID = self.configID(forSession: session),
+                   let config = self.config(forConfigID: configID) {
+                    self.installBrowserURLBinding(for: session, config: config)
+                }
             }
         }
+    }
+
+    // Let a member whose configured URL names user variables follow them,
+    // and give it any variables set for it before it started. Called from
+    // every point where a member is registered, fresh or restored, so
+    // replacing a binding is the normal case.
+    func installBrowserURLBinding(for session: PTYSession,
+                                  config: iTermWorkgroupSessionConfig) {
+        removeBrowserURLBinding(for: session)
+        let memberID = config.uniqueIdentifier
+        // A member switched to a terminal profile keeps its URL, but nothing
+        // can navigate it, and what it "showed" mustn't be remembered.
+        let binding = session.isBrowserSession() ? WorkgroupBrowserURLBinding(urlString: config.urlString, session: session) : nil
+        if let binding {
+            binding.didNavigate = { [weak self] values in
+                guard let conversation = self?.agentConversationID else {
+                    return
+                }
+                WorkgroupBrowserMemory.shared.record(values, conversation: conversation, member: memberID)
+            }
+            browserURLBindings[ObjectIdentifier(session)] = binding
+            browserURLBindingMemberIDs[ObjectIdentifier(session)] = memberID
+        }
+        // After the binding exists, so a URL set before the member started
+        // navigates (and is remembered). It is newer than anything remembered.
+        let hadPendingVariables = applyPendingVariables(to: session, memberID: memberID, binding: binding)
+        // A member created after its conversation resumed, such as a peer
+        // realized when first shown. One that already has a page (restored
+        // with an arrangement) keeps it.
+        if let binding, !hadPendingVariables, !binding.hasPage {
+            restoreBrowserPage(binding, memberID: memberID)
+        }
+    }
+
+    func removeBrowserURLBinding(for session: PTYSession) {
+        browserURLBindings.removeValue(forKey: ObjectIdentifier(session))?.invalidate()
+        browserURLBindingMemberIDs.removeValue(forKey: ObjectIdentifier(session))
+    }
+
+    // MARK: - Agent conversations
+
+    // The conversation the leader's agent last said it runs. Only the leader
+    // counts: it is the agent that drives the browser, and other members may
+    // run agents of their own (the Claude Code workgroup's Code Review peer
+    // runs claude, with a new conversation each time), so filing pages under
+    // theirs would lose them.
+    //
+    // The memory's map has it if the agent reported before the workgroup was
+    // entered. The instance keeps its own copy because the map forgets a
+    // session as soon as it starts to terminate, which can be before the
+    // workgroup's restorable state is saved at quit or window close.
+    //
+    // Only while an agent runs in the leader. One that died without its
+    // SessionEnd hook (killed, crashed, or the hook timed out) leaves its
+    // conversation behind, and so does an arrangement restored with fresh
+    // shells; pages shown then would be filed under it and replace what it
+    // really showed. When it can't be told (see agentRunningCheck), the
+    // conversation stands.
+    var agentConversationID: String? {
+        guard let leader = mainSession, let conversation = recordedConversationID else {
+            return nil
+        }
+        leaderJobChanged()
+        let report = WorkgroupBrowserMemory.shared.report(forSessionGUID: leader.guid)
+        let reportJobPID = leaderConversationID != nil ? leaderReportJobPID : report?.jobPID
+        if Self.agentRunningCheck?(leader) == false {
+            // iTerm2 polls for the foreground job, so for a moment after an
+            // agent reports, the job is still the shell it started from. Until
+            // the poll has caught up (the job pid changed since the report),
+            // the report is better evidence than the job. Only once: when the
+            // job moves on, the report's job pid is forgotten (see
+            // leaderJobChanged), so an agent that dies without SessionEnd and
+            // returns to the same shell doesn't count as just starting.
+            if let reportJobPID, Self.jobPID(of: leader) == reportJobPID {
+                return conversation
+            }
+            DLog("iTermWorkgroupInstance: no agent runs in leader \(leader.guid), so ignoring conversation \(conversation)")
+            return nil
+        }
+        return conversation
+    }
+
+    // The conversation the leader's agent last reported, whether or not an
+    // agent still runs there. What is saved with the workgroup's restorable
+    // state: when a window closes, the leader's job may already have changed
+    // (the agent exiting, or running a tool), and the restored instance
+    // applies the check itself.
+    var recordedConversationID: String? {
+        guard let leader = mainSession else {
+            return nil
+        }
+        return leaderConversationID ?? WorkgroupBrowserMemory.shared.conversation(forSessionGUID: leader.guid)
+    }
+
+    // The job pid iTerm2 last polled for `session`, if any.
+    static func jobPID(of session: PTYSession) -> Int32? {
+        guard let pid = session.genericScope.value(forVariableName: iTermVariableKeySessionJobPid) as? NSNumber,
+              pid.int32Value > 0 else {
+            return nil
+        }
+        return pid.int32Value
+    }
+
+    // The leader's job pid when its agent reported leaderConversationID,
+    // until the job changes.
+    var leaderReportJobPID: Int32?
+
+    private var leaderJobReference: iTermVariableReference<AnyObject>?
+
+    // Watches the leader's job so the grace in agentConversationID ends as
+    // soon as the job poll catches up, even if nothing asks for the
+    // conversation meanwhile.
+    private func observeLeaderJob(_ leader: PTYSession) {
+        let ref = iTermVariableReference<AnyObject>(path: iTermVariableKeySessionJobPid,
+                                                    vendor: leader.genericScope)
+        ref.onChangeBlock = { [weak self] in
+            self?.leaderJobChanged()
+        }
+        leaderJobReference = ref
+    }
+
+    // If the leader's job is no longer the one the report was made from,
+    // forget the report's job pid. A report made after this sets it again.
+    private func leaderJobChanged() {
+        guard let leader = mainSession else {
+            return
+        }
+        let current = Self.jobPID(of: leader)
+        if let reported = leaderReportJobPID, reported != current {
+            DLog("iTermWorkgroupInstance: leader \(leader.guid) job went from \(reported) to \(current.map(String.init) ?? "unknown"); the report no longer vouches for its conversation")
+            leaderReportJobPID = nil
+        }
+        WorkgroupBrowserMemory.shared.jobChanged(forSessionGUID: leader.guid, to: current)
+    }
+
+    // Whether an agent runs in a session, or nil if that can't be told.
+    // Installed at launch by the Claude Code integration, which knows what an
+    // agent looks like.
+    static var agentRunningCheck: ((PTYSession) -> Bool?)?
+
+    // Copied from the memory's map at creation (or from restoration data),
+    // updated when the leader's agent reports a conversation while this
+    // instance runs, and nil when it reports that it ended.
+    var leaderConversationID: String?
+
+    // The leader's agent started or resumed a conversation. Show what each
+    // browser member last showed for it, if anything. A new conversation has
+    // nothing remembered, so its browsers keep their pages, and those pages
+    // are filed under it: setting a variable to the value it already has
+    // doesn't navigate, so if the agent shows the same page (after /clear,
+    // say) nothing else would record it, and resuming would bring back nothing.
+    func agentConversationDidStart() {
+        guard let conversation = agentConversationID else {
+            return
+        }
+        for (key, binding) in browserURLBindings {
+            guard let memberID = browserURLBindingMemberIDs[key] else {
+                continue
+            }
+            if !restoreBrowserPage(binding, memberID: memberID), let values = binding.values {
+                WorkgroupBrowserMemory.shared.record(values, conversation: conversation, member: memberID)
+            }
+        }
+    }
+
+    // Returns whether anything was remembered to restore.
+    @discardableResult
+    private func restoreBrowserPage(_ binding: WorkgroupBrowserURLBinding, memberID: String) -> Bool {
+        guard let conversation = agentConversationID,
+              let values = WorkgroupBrowserMemory.shared.values(conversation: conversation,
+                                                                member: memberID) else {
+            return false
+        }
+        RLog("iTermWorkgroupInstance: restoring the page member \(memberID) showed for conversation \(conversation)")
+        binding.restore(values)
+        return true
     }
 
     // Walk the config and spawn every split/tab descendant of the node

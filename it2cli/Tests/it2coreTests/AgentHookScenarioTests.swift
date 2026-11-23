@@ -73,6 +73,8 @@ final class FakeAgentStatusBackend: AgentStatusBackend {
                     stderr: "Error: Failed to set status: Undeclared identifier iterm2.set_session_status(agent,session_id,status)\n")
             }
             return setStatus(Array(argv.dropFirst()))
+        case ("session", "set-agent-conversation"):
+            return AgentHookCommandResult(status: 0, stdout: "", stderr: "")
         case ("session", "get-background-tasks"):
             return AgentHookCommandResult(status: 0, stdout: "\(backgroundTasks)", stderr: "")
         case ("session", "get-status"):
@@ -214,6 +216,12 @@ final class AgentHookScenarioTests: XCTestCase {
     private static func detail(_ text: String) -> [String] {
         return text.isEmpty ? ["--detail", ""] : ["--detail=" + text]
     }
+
+    private static func setAgentConversation(_ id: String, ended: Bool = false) -> [String] {
+        return ["session", "set-agent-conversation"] + ADDRESS + QUIET + (ended ? ["--ended"] : []) + ["--", id]
+    }
+    private static let claudeConversation = setAgentConversation("7b9d396c-0ffb-4ab9-b36e-074717cc2ca5")
+    private static let codexConversation = setAgentConversation("01a09fa1-d3a9-7543-a9d1-aa7efe7e441d")
 
     private static func getBackgroundTasks() -> [String] {
         return ["session", "get-background-tasks"] + ADDRESS + QUIET
@@ -485,9 +493,11 @@ final class AgentHookScenarioTests: XCTestCase {
     func testCodexSessionBoundaries() throws {
         try run("codex: session boundaries", [
             .hook("codex/SessionStart", [Self.setStatus(Self.cIDLE, Self.detail(""), ["--background-tasks=0"],
-                                                        Self.TURN_CLOSED, boundary: true)]),
+                                                        Self.TURN_CLOSED, boundary: true),
+                                         Self.codexConversation]),
             .hook("codex/SessionEnd", [Self.setStatus(Self.cIDLE, Self.detail(""), ["--background-tasks=0"],
-                                                      Self.TURN_CLOSED, boundary: true)]),
+                                                      Self.TURN_CLOSED, boundary: true),
+                                       Self.setAgentConversation("01a09fa1-d3a9-7543-a9d1-aa7efe7e441d", ended: true)]),
         ])
     }
 
@@ -511,7 +521,8 @@ final class AgentHookScenarioTests: XCTestCase {
     func testCodexUtilitySubagentRunsWhileTheSessionIsIdle() throws {
         try run("codex: utility sub-agent runs while the session is idle", [
             .hook("codex/SessionStart", [Self.setStatus(Self.cIDLE, Self.detail(""), ["--background-tasks=0"],
-                                                        Self.TURN_CLOSED, boundary: true)]),
+                                                        Self.TURN_CLOSED, boundary: true),
+                                         Self.codexConversation]),
             .hook("codex/Stop-hello", [Self.getBackgroundTasks(),
                                        Self.setStatus(Self.cDONE, Self.detail("HELLO"), Self.TURN_CLOSED)]),
             // Codex runs utility sub-agents at the prompt; the status must stay done and keep the
@@ -524,7 +535,8 @@ final class AgentHookScenarioTests: XCTestCase {
     func testCodexSubagentStopsAfterTheDisplayWasCleared() throws {
         try run("codex: sub-agent stops after the display was cleared", [
             .hook("codex/SessionStart", [Self.setStatus(Self.cIDLE, Self.detail(""), ["--background-tasks=0"],
-                                                        Self.TURN_CLOSED, boundary: true)]),
+                                                        Self.TURN_CLOSED, boundary: true),
+                                         Self.codexConversation]),
             .forgetStatus,
             // Nothing is displayed, so there is no stale "working" to correct; writing idle would
             // only show the utility agent's message.
@@ -965,8 +977,21 @@ final class AgentHookScenarioTests: XCTestCase {
         try run("claude: permission and session boundary", [
             .hook("claude/PermissionRequest-Bash", [Self.setStatus(Self.WAITING, Self.detail("Allow Bash: rm -rf build?"), Self.EXPIRES)]),
             .hook("claude/SessionStart", [Self.setStatus(Self.IDLE, Self.detail(""), ["--background-tasks=0"], Self.TURN_CLOSED,
-                                                          boundary: true)]),
+                                                          boundary: true),
+                                         Self.claudeConversation]),
         ])
+    }
+
+    func testResumedConversationIsNamed() throws {
+        let json: [String: Any] = ["session_id": "abc", "source": "resume"]
+        XCTAssertEqual(AgentHookHandler.conversationStarted(eventName: "SessionStart", json: json), "abc")
+        XCTAssertNil(AgentHookHandler.conversationStarted(eventName: "SessionStart",
+                                                          json: ["session_id": "abc", "source": "compact"]))
+        XCTAssertNil(AgentHookHandler.conversationStarted(eventName: "SessionEnd", json: json))
+        XCTAssertEqual(AgentHookHandler.conversationEnded(eventName: "SessionEnd", json: json), "abc")
+        XCTAssertNil(AgentHookHandler.conversationEnded(eventName: "SessionStart", json: json))
+        XCTAssertNil(AgentHookHandler.conversationEnded(eventName: "SessionEnd", json: [:]))
+        XCTAssertNil(AgentHookHandler.conversationStarted(eventName: "SessionStart", json: ["source": "resume"]))
     }
 
     // MARK: - Addressing and reachability

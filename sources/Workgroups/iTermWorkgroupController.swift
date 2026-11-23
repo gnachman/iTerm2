@@ -140,6 +140,7 @@ final class iTermWorkgroupController: NSObject {
                 return false
             }
             instance.provenance = mechanism.provenanceDescription(sessionGUID: session.guid)
+            instance.entryMechanism = mechanism
             instances[instance.instanceUniqueIdentifier] = instance
             session.delegate?.sessionDidChangeDesiredToolbarItems(session)
             checkConsistency()
@@ -383,6 +384,76 @@ final class iTermWorkgroupController: NSObject {
         // via didTeardown, so the already-exited case stays a no-op.
         instance.teardown(becauseSessionTerminated: terminatingSession)
         checkConsistency()
+    }
+
+    /// Running instances of the workgroup with this identifier.
+    func runningInstances(ofWorkgroup identifier: String) -> [iTermWorkgroupInstance] {
+        return instances.values.filter { $0.workgroupUniqueIdentifier == identifier && !$0.didTeardown }
+    }
+
+    /// Exits and re-enters running workgroup instances, so they pick up
+    /// changes to their workgroup's configuration. Their non-leader members
+    /// start over. Instances in tmux Integration are left alone, since
+    /// exiting one changes the tmux server, and so is one that couldn't be
+    /// entered again (its workgroup became unusable, or its leader is being
+    /// restored), which would lose its members for nothing. Returns how
+    /// many were exited. `completion` runs once the re-entries have been
+    /// attempted, with how many instances weren't restarted: skipped, or
+    /// exited but refused re-entry, which leaves the leader in no workgroup.
+    @discardableResult
+    func restart(instances: [iTermWorkgroupInstance],
+                 completion: ((_ failures: Int) -> Void)? = nil) -> Int {
+        var failures = 0
+        var reentries = [(identifier: String, leader: PTYSession, mechanism: iTermWorkgroupEntryMechanism)]()
+        for instance in instances where !instance.didTeardown {
+            guard instance.tmuxBinding == nil, let leader = instance.mainSession else {
+                RLog("iTermWorkgroupController: not restarting instance \(instance.instanceUniqueIdentifier) of \(instance.workgroupUniqueIdentifier); it is in tmux Integration or has no leader")
+                failures += 1
+                continue
+            }
+            let identifier = instance.workgroupUniqueIdentifier
+            // canEnter would answer "already entered", so ask what enter
+            // will ask once this has exited.
+            guard leader.delegate?.sessionIsFloating(leader) != true,
+                  !WorkgroupRestorationCoordinator.shared.isRestoringAnchor(leader),
+                  let workgroup = resolveWorkgroup(uniqueIdentifier: identifier),
+                  workgroup.root != nil else {
+                RLog("iTermWorkgroupController: not restarting instance \(instance.instanceUniqueIdentifier) of \(identifier); it couldn't be entered again")
+                failures += 1
+                continue
+            }
+            // Re-enter the way it was entered, so the provenance agents see
+            // doesn't change to the menu just because it restarted.
+            let mechanism = instance.entryMechanism ?? .menu
+            RLog("iTermWorkgroupController: restarting instance \(instance.instanceUniqueIdentifier) of \(identifier) on \(leader.guid)")
+            exit(instance: instance)
+            leader.delegate?.sessionDidChangeDesiredToolbarItems(leader)
+            reentries.append((identifier, leader, mechanism))
+        }
+        // Teardown closes the old members on the next pass of the run loop
+        // (see iTermWorkgroupInstance.deferredClose); enter after that so the
+        // new members don't share a tab with dying ones.
+        DispatchQueue.main.async { [weak self] in
+            for reentry in reentries {
+                // Its leader closed meanwhile, so the workgroup is gone, not
+                // restarted.
+                guard !reentry.leader.exited else {
+                    RLog("iTermWorkgroupController: not re-entering \(reentry.identifier); its leader \(reentry.leader.guid) exited")
+                    failures += 1
+                    continue
+                }
+                guard let self,
+                      self.enter(workgroupUniqueIdentifier: reentry.identifier,
+                                 on: reentry.leader,
+                                 mechanism: reentry.mechanism) else {
+                    RLog("iTermWorkgroupController: re-entering \(reentry.identifier) on \(reentry.leader.guid) failed; it is no longer in a workgroup")
+                    failures += 1
+                    continue
+                }
+            }
+            completion?(failures)
+        }
+        return reentries.count
     }
 
     // Asserts the registry invariants that the reentrancy bugs of the

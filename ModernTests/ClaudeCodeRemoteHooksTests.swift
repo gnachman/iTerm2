@@ -39,6 +39,15 @@ private final class FakeRemoteFiles: ClaudeCodeRemoteFiles {
         return true
     }
 
+    func append(_ path: String, _ data: Data) async -> Bool {
+        writes.append(path)
+        guard !failWrites else {
+            return false
+        }
+        files[path, default: Data()].append(data)
+        return true
+    }
+
     func isExecutable(_ path: String) async -> Bool {
         return executables.contains(path)
     }
@@ -75,6 +84,52 @@ final class ClaudeCodeRemoteHooksTests: XCTestCase {
         return groups.flatMap { ($0["hooks"] as? [[String: Any]]) ?? [] }
             .compactMap { $0["command"] as? String }
             .filter { ClaudeCodeHookSettings.isRemoteHookCommand($0, home: home) }
+    }
+
+    // MARK: - Other settings edits
+
+    private let allowRule = "Bash(~/.iterm2/bin/it2 session set-var --peer-name Browser user.browserURL:*)"
+
+    private func addAllowRule(_ files: FakeRemoteFiles) async -> Hooks.InstallResult {
+        let rule = allowRule
+        return await Hooks.editSettings(files: files, settingsPath: settingsPath, home: home, purpose: "test") {
+            ClaudeCodeBrowserNavigation.adding(allowRule: rule, to: $0)
+        }
+    }
+
+    // The browser setup's allow rule is merged into what's there, like the hook.
+    func testEditSettingsAddsTheAllowRuleAndKeepsTheRest() async throws {
+        let files = try makeFiles(settings: ["permissions": ["allow": ["Bash(ls:*)"]], "model": "opus"])
+        let result = await addAllowRule(files)
+        XCTAssertEqual(result, .installed)
+        let written = try settings(files)
+        XCTAssertEqual(written["model"] as? String, "opus")
+        XCTAssertEqual((written["permissions"] as? [String: Any])?["allow"] as? [String], ["Bash(ls:*)", allowRule])
+    }
+
+    // The rule names the wrapper, so without it the rule would let Claude run nothing.
+    func testEditSettingsRefusesWithoutTheWrapper() async throws {
+        let files = try makeFiles()
+        files.executables = []
+        let result = await addAllowRule(files)
+        XCTAssertEqual(result, .it2Missing)
+        XCTAssertTrue(files.writes.isEmpty)
+    }
+
+    func testEditSettingsLeavesAnUnparseableFileAlone() async throws {
+        let files = try makeFiles()
+        files.files[settingsPath] = Data("{ not json".utf8)
+        let result = await addAllowRule(files)
+        XCTAssertEqual(result, .malformed)
+        XCTAssertTrue(files.writes.isEmpty)
+    }
+
+    func testEditSettingsRefusesThisMac() async throws {
+        let files = try makeFiles()
+        files.token = nil
+        let result = await addAllowRule(files)
+        XCTAssertEqual(result, .identityUnknown)
+        XCTAssertTrue(files.writes.isEmpty)
     }
 
     // MARK: - Which entries are ours
@@ -465,6 +520,37 @@ final class ClaudeCodeRemoteHooksTests: XCTestCase {
         } else {
             XCTFail("an unreadable file must not read as missing")
         }
+    }
+
+    // CLAUDE.md is appended to without being read: what was there stays, a new file and its
+    // folders are made, and a symlinked file stays a symlink.
+    nonisolated func testPythonAppendKeepsWhatWasThere() throws {
+        let dir = try scratchDirectory()
+        defer { try? FileManager.default.removeItem(atPath: dir) }
+        let fresh = dir + "/new/claude/CLAUDE.md"
+        XCTAssertEqual(try runPython(ClaudeCodeRemotePython.append(path: fresh, data: Data("one".utf8))), "ok")
+        XCTAssertEqual(FileManager.default.contents(atPath: fresh), Data("one".utf8))
+
+        let target = dir + "/dotfiles-CLAUDE.md"
+        FileManager.default.createFile(atPath: target, contents: Data("mine\n".utf8))
+        let link = dir + "/CLAUDE.md"
+        try FileManager.default.createSymbolicLink(atPath: link, withDestinationPath: target)
+        XCTAssertEqual(try runPython(ClaudeCodeRemotePython.append(path: link, data: Data("\n\nadded\n".utf8))), "ok")
+        XCTAssertEqual(try FileManager.default.destinationOfSymbolicLink(atPath: link), target)
+        XCTAssertEqual(FileManager.default.contents(atPath: target), Data("mine\n\n\nadded\n".utf8))
+    }
+
+    // A retry after a missed deadline mustn't add a second copy of what the
+    // first request may already have appended.
+    nonisolated func testPythonAppendDoesNotRepeatWhatTheFileEndsWith() throws {
+        let dir = try scratchDirectory()
+        defer { try? FileManager.default.removeItem(atPath: dir) }
+        let path = dir + "/CLAUDE.md"
+        FileManager.default.createFile(atPath: path, contents: Data("mine\n".utf8))
+        let block = Data("\n\nadded\n".utf8)
+        XCTAssertEqual(try runPython(ClaudeCodeRemotePython.append(path: path, data: block)), "ok")
+        XCTAssertEqual(try runPython(ClaudeCodeRemotePython.append(path: path, data: block)), "ok")
+        XCTAssertEqual(FileManager.default.contents(atPath: path), Data("mine\n\n\nadded\n".utf8))
     }
 
     nonisolated func testPythonExecutableCheck() throws {

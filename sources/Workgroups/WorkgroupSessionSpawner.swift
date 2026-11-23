@@ -151,10 +151,11 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
         // KEY_INITIAL_URL to seed the deferred-URL load on the new
         // browser session (see iTermSessionLauncher.m:466). Terminal
         // profiles ignore the key.
-        if !config.urlString.isEmpty,
+        let initialURLString = config.initialURLString
+        if !initialURLString.isEmpty,
            let customCommand = profile[KEY_CUSTOM_COMMAND as String] as? String,
            customCommand == kProfilePreferenceCommandTypeBrowserValue {
-            profile[KEY_INITIAL_URL as String] = config.urlString
+            profile[KEY_INITIAL_URL as String] = initialURLString
         }
         // A parent on a host reached through SSH Integration: the child runs there (see
         // WorkgroupRemoteHost), and its connection sets up it2 so an agent in it can report.
@@ -303,7 +304,7 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
                                windowController: PseudoTerminal,
                                parent: PTYSession) {
         let mode = config.mode
-        let urlString = config.urlString
+        let urlString = config.initialURLString
         // The spawn set session.workgroupRemoteHost, which decides whether it runs on the
         // leader's host (see workgroupPeerLaunchCommand).
         parent.asyncWorkgroupPeerStartingDirectory(

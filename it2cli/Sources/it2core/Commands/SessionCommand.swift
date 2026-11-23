@@ -25,6 +25,7 @@ struct Session: ParsableCommand {
             SetStatus.self,
             GetStatus.self,
             GetBackgroundTasks.self,
+            SetAgentConversation.self,
             GetVar.self,
             SetVar.self,
             AddClipping.self,
@@ -1012,7 +1013,17 @@ extension Session {
         static let configuration = CommandConfiguration(
             commandName: "set-var",
             abstract: "Set session variable value.",
-            discussion: "See also: it2 session get-var"
+            discussion: """
+                With --peer-name, the variable is set on every member of the calling \
+                session\u{2019}s workgroup that has that name (ignoring case), so an \
+                agent can reach a peer without knowing its session ID. A member that \
+                hasn\u{2019}t started yet gets the value when it does. For example, \
+                a browser peer whose URL is \\(user.reviewURL) navigates when an \
+                agent in its workgroup runs: \
+                it2 session set-var --peer-name Browser user.reviewURL https://example.com/
+
+                See also: it2 session get-var
+                """
         )
 
         @Argument(help: "Variable name.")
@@ -1021,27 +1032,104 @@ extension Session {
         @Argument(help: "Value to set: JSON, or else a plain string.")
         var value: String
 
-        @Option(name: .shortAndLong, help: "Target session ID (default: active, or the pane named by --tmux).")
+        @Option(name: .shortAndLong, help: "Target session ID (default: active, or the pane named by --tmux). With --peer-name, the session whose workgroup to search.")
         var session: String?
+
+        // An array so that giving it twice can be refused rather than the last one winning.
+        @Option(name: .customLong("peer-name"), help: "Set the variable on the members of the caller\u{2019}s workgroup with this name.")
+        var peerNames: [String] = []
 
         @OptionGroup var tmuxOptions: TmuxPaneOptions
 
         func run(_ ctx: IT2Context) throws {
+            // A permission rule that allows this command for one peer is a prefix match, so
+            // anything appended to it is allowed too, and a second --peer-name would otherwise
+            // replace the first and reach another member.
+            guard peerNames.count <= 1 else {
+                throw IT2Error.invalidArgument("--peer-name can be given only once.")
+            }
+            let peerName = peerNames.first
             let client = try ctx.makeClient()
             defer { client.disconnect() }
 
+            let explicit = !(session ?? "").isEmpty || tmuxOptions.usesTmuxAddressing
+            // With no target, the caller's own session is the one searched. A caller that seems
+            // to be in a session it can't identify would otherwise fall back to the focused
+            // session, which may be another workgroup whose browser has the user's sign-ins.
+            if peerName != nil, !explicit, client.callerSessionID() == nil, client.callerSeemsToBeInASession {
+                throw IT2Error.invalidArgument(
+                    "it2 couldn\u{2019}t tell which session it is running in, so it can\u{2019}t find the workgroup member named by --peer-name.")
+            }
+
             guard let sessionId = try client.resolveTarget(session,
                                                            tmuxOptions: tmuxOptions,
-                                                           allowAll: true,
+                                                           allowAll: peerName == nil,
                                                            ctx: ctx) else {
                 return
             }
+            guard let peerName else {
+                try Self.set(variable: variable, value: value, sessionID: sessionId, client: client)
+                ctx.out("Set \(variable) = \(value)")
+                return
+            }
+            // Likewise --session or --tmux would pick another workgroup to search, and its
+            // browser has the user's sign-ins. So a caller running in a session may only name that
+            // session, and one that seems to be in a session it can't identify may name none; only
+            // one plainly outside iTerm2 may name any.
+            if explicit {
+                // "active" is resolved by iTerm2 when the function runs, to whichever session has
+                // focus then, so checking it here would race a focus change. Leaving out
+                // --session already means the caller's own session.
+                if sessionId == "active" {
+                    throw IT2Error.invalidArgument(
+                        "With --peer-name, leave out --session to use the session it2 is running in. \u{201C}active\u{201D} is whichever session has focus, which may be in another workgroup.")
+                }
+                let caller = client.callerSessionID()
+                if !Self.sessionID(sessionId, isCaller: caller, callerSeemsToBeInASession: client.callerSeemsToBeInASession) {
+                    throw IT2Error.invalidArgument(
+                        "With --peer-name, --session and --tmux can only name the session it2 is running in, since the peer is looked up in that session\u{2019}s workgroup.")
+                }
+            }
+            // iTerm2 sets it on each member with the name, and on one that hasn't started (a
+            // peer still spawning, or in tmux one not created until shown), when it starts.
+            let invocation = "iterm2.set_workgroup_member_variable(session_id: \(jsonString(sessionId)), " +
+                "name: \(jsonString(peerName)), variable: \(jsonString(variable)), " +
+                "json_value: \(jsonString(Self.jsonValue(value))))"
+            let result = try client.invoke(invocation, failure: "Couldn\u{2019}t set \(variable) on workgroup member \(peerName)")
+            let counts = Self.memberVariableCounts(result)
+            if counts.set > 0 {
+                ctx.out("Set \(variable) = \(value) on \(counts.set) workgroup member\(counts.set == 1 ? "" : "s") named \(peerName)")
+            }
+            if counts.pending > 0 {
+                ctx.out("The workgroup member named \(peerName) hasn\u{2019}t started yet. It gets \(variable) = \(value) when it does.")
+            }
+            if counts.failed > 0 {
+                throw IT2Error.apiError("Couldn\u{2019}t set \(variable) on \(counts.failed) workgroup member\(counts.failed == 1 ? "" : "s") named \(peerName)")
+            }
+        }
+
+        /// The counts in set_workgroup_member_variable's result.
+        static func memberVariableCounts(_ result: String) -> (set: Int, failed: Int, pending: Int) {
+            guard let data = result.data(using: .utf8),
+                  let dict = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
+                return (0, 0, 0)
+            }
+            func count(_ key: String) -> Int {
+                return (dict[key] as? NSNumber)?.intValue ?? 0
+            }
+            return (count("set"), count("failed"), count("pending"))
+        }
+
+        private static func set(variable: String,
+                                value: String,
+                                sessionID: String,
+                                client: APIClient) throws {
             let varReq = ITMVariableRequest()
-            varReq.sessionId = sessionId
+            varReq.sessionId = sessionID
 
             let setEntry = ITMVariableRequest_Set()
             setEntry.name = variable
-            setEntry.value = Self.jsonValue(value)
+            setEntry.value = jsonValue(value)
             varReq.setArray.add(setEntry)
 
             let request = ITMClientOriginatedMessage()
@@ -1056,7 +1144,16 @@ extension Session {
             guard varResp.status == ITMVariableResponse_Status.ok else {
                 throw IT2Error.apiError("Set variable failed with status \(varResp.status.rawValue)")
             }
-            ctx.out("Set \(variable) = \(value)")
+        }
+
+        /// Whether a --session or --tmux target may be searched for a peer: it is the caller's
+        /// own session (GUIDs compared without regard to case), or the caller plainly runs outside
+        /// iTerm2 and so may name any.
+        static func sessionID(_ sessionID: String, isCaller caller: String?, callerSeemsToBeInASession: Bool) -> Bool {
+            guard let caller else {
+                return !callerSeemsToBeInASession
+            }
+            return caller.caseInsensitiveCompare(sessionID) == .orderedSame
         }
 
         /// The API takes the value as JSON and ignores one that doesn't parse, so a
@@ -1353,6 +1450,50 @@ extension Session {
                                            sessionID: sessionId,
                                            failure: "Get background tasks failed")
             ctx.out(result.isEmpty ? "0" : result)
+        }
+    }
+}
+
+// MARK: - session set-agent-conversation
+
+extension Session {
+    struct SetAgentConversation: ParsableCommand, IT2Runnable, TmuxAddressableCommand {
+        static let configuration = CommandConfiguration(
+            commandName: "set-agent-conversation",
+            abstract: "Say which agent conversation a session is running.",
+            discussion: """
+                Agent hooks run this when a conversation starts or resumes, and with \
+                --ended when it ends. iTerm2 remembers what a workgroup\u{2019}s browser \
+                showed for each conversation and shows it again when the same \
+                conversation resumes.
+                """,
+            // Only agent hooks run this, through handle-agent-hook.
+            shouldDisplay: false
+        )
+
+        @Argument(help: "The agent\u{2019}s conversation ID, such as Claude Code\u{2019}s session_id.")
+        var conversationID: String
+
+        @Flag(name: .long, help: "The conversation ended. Forgotten only if it is still the session\u{2019}s.")
+        var ended = false
+
+        @Option(name: .shortAndLong, help: "Target session ID (default: active, or the pane named by --tmux).")
+        var session: String?
+
+        @OptionGroup var tmuxOptions: TmuxPaneOptions
+
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
+            defer { client.disconnect() }
+
+            guard let sessionId = try client.resolveTarget(session,
+                                                           tmuxOptions: tmuxOptions,
+                                                           ctx: ctx) else {
+                return
+            }
+            let invocation = "iterm2.set_agent_conversation(session_id: \(jsonString(sessionId)), " +
+                "conversation_id: \(jsonString(conversationID))\(ended ? ", ended: true" : ""))"
+            _ = try client.invoke(invocation, failure: "Set agent conversation failed")
         }
     }
 }

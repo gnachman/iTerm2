@@ -102,9 +102,11 @@ final class ClaudeCodeRemoteConnectionFacts {
         return joined(directory, "settings.json")
     }
 
-    private static func joined(_ directory: String, _ name: String) -> String {
+    /// `name` in `directory`, a remote path, with one slash between them even when
+    /// `directory` is /.
+    static func joined(_ directory: String, _ name: String) -> String {
         var trimmed = directory
-        while trimmed.count > 1 && trimmed.hasSuffix("/") {
+        while trimmed.hasSuffix("/") {
             trimmed.removeLast()
         }
         return trimmed + "/" + name

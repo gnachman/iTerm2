@@ -345,6 +345,20 @@ final class WorkgroupRestorationCoordinator: NSObject {
         if let model = descriptor[K.codeReviewModel] as? String {
             instance?.applyCodeReviewModel(model)
         }
+        if let conversation = descriptor[K.agentConversation] as? String,
+           !conversation.isEmpty,
+           let instance,
+           instance.leaderConversationID == nil {
+            // Restored even if the shells started fresh: the instance ignores
+            // it unless an agent runs in the leader (see agentConversationID).
+            instance.leaderConversationID = conversation
+            // Also in the map, which outlives this instance: restarting the
+            // workgroup, or exiting and entering it again, makes a new
+            // instance on the same leader, and the agent won't report again.
+            if let leader = instance.mainSession {
+                WorkgroupBrowserMemory.shared.setConversation(conversation, forSessionGUID: leader.guid)
+            }
+        }
 
         // The anchor is the one peer that window restoration already
         // brought back as a live session, so it can't be "spawned fresh"

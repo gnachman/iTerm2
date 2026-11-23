@@ -37,6 +37,9 @@ protocol ClaudeCodeRemoteFiles: AnyObject {
     func read(_ path: String) async -> ClaudeCodeRemoteRead
     /// Atomic, creating missing directories. False on any failure.
     func write(_ path: String, _ data: Data) async -> Bool
+    /// Adds `data` to the end of the file, creating it and missing directories if needed, unless
+    /// the file already ends with it. False on any failure.
+    func append(_ path: String, _ data: Data) async -> Bool
     func isExecutable(_ path: String) async -> Bool
     /// The machine-identity token of the host (see iTermMachineIdentity), or nil if unknown.
     func machineToken() async -> String?
@@ -90,6 +93,38 @@ enum ClaudeCodeRemotePython {
         """
     }
 
+    /// Opens with O_APPEND, so nothing in the file is replaced. Follows a symlink, as write does.
+    /// A new file is 0644, like one an editor would make.
+    ///
+    /// Does nothing if the file already ends with `data`: a request that missed its deadline may
+    /// have appended anyway, and the retry mustn't add a second copy. Only the file's last
+    /// len(data) bytes are compared, on the host; none of the file comes back.
+    static func append(path: String, data: Data) -> String {
+        return """
+        import base64, os
+        p = os.path.realpath(base64.b64decode("\(base64(path))").decode("utf-8"))
+        data = base64.b64decode("\(data.base64EncodedString())")
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        try:
+            size = os.path.getsize(p)
+            if size >= len(data):
+                with open(p, "rb") as f:
+                    f.seek(size - len(data))
+                    if f.read() == data:
+                        return "ok"
+        except FileNotFoundError:
+            pass
+        fd = os.open(p, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o644)
+        try:
+            view = memoryview(data)
+            while view:
+                view = view[os.write(fd, view):]
+        finally:
+            os.close(fd)
+        return "ok"
+        """
+    }
+
     static func isExecutable(path: String) -> String {
         return """
         import base64, os
@@ -135,6 +170,10 @@ final class ConductorClaudeCodeRemoteFiles: ClaudeCodeRemoteFiles {
 
     func write(_ path: String, _ data: Data) async -> Bool {
         return await run(ClaudeCodeRemotePython.write(path: path, data: data)) == "ok"
+    }
+
+    func append(_ path: String, _ data: Data) async -> Bool {
+        return await run(ClaudeCodeRemotePython.append(path: path, data: data)) == "ok"
     }
 
     func isExecutable(_ path: String) async -> Bool {
@@ -196,6 +235,8 @@ enum ClaudeCodeRemoteHooks {
         case it2Missing
         case unreadable
         case malformed
+        /// Valid JSON, but the edit couldn't be made without losing something in it.
+        case editRefused
         case writeFailed
     }
 
@@ -247,45 +288,64 @@ enum ClaudeCodeRemoteHooks {
                         descriptor: AgentHookDescriptor = .claudeCode) async -> InstallResult {
         // The local install owns this Mac's settings, and adopting its entries would replace the
         // local hook command with the remote wrapper.
+        return await editSettings(files: files, settingsPath: settingsPath, home: home, purpose: "hook install") { settings in
+            var settings = settings
+            settings["hooks"] = ClaudeCodeHookSettings.merged(
+                (settings["hooks"] as? [String: Any]) ?? [:],
+                command: ClaudeCodeHookSettings.remoteHookCommand(descriptor: descriptor),
+                descriptor: descriptor,
+                isOurs: { ClaudeCodeHookSettings.isRemoteHookCommand($0, home: home) })
+            return settings
+        }
+    }
+
+    /// Changes the host's Claude Code settings with `edit`, for something that runs the it2
+    /// wrapper. Refuses this Mac (its settings belong to the local install), a host that might be
+    /// this Mac, and a host without the wrapper. A file that can't be read or parsed is left as
+    /// it is: it is the user's, and overwriting it would lose whatever was in it. A blank one is
+    /// empty, as on this Mac. `edit` returns nil when it can't make its change
+    /// without losing something already there. `purpose` is for the log.
+    static func editSettings(files: ClaudeCodeRemoteFiles,
+                             settingsPath: String,
+                             home: String,
+                             purpose: String,
+                             edit: ([String: Any]) -> [String: Any]?) async -> InstallResult {
         switch await hostIdentity(files: files) {
         case .thisMac:
-            RLog("Remote hook install refused: the host is this Mac")
+            RLog("Remote \(purpose) refused: the host is this Mac")
             return .thisMac
         case .unknown, .noAnswer:
-            // It might be this Mac, whose settings the remote install must not touch.
-            RLog("Remote hook install refused: could not tell whether the host is this Mac")
+            // It might be this Mac, whose settings must not be touched here.
+            RLog("Remote \(purpose) refused: could not tell whether the host is this Mac")
             return .identityUnknown
         case .elsewhere:
             break
         }
         guard await files.isExecutable(wrapperPath(home: home)) else {
-            RLog("Remote hook install refused: the it2 wrapper is missing on the host")
+            RLog("Remote \(purpose) refused: the it2 wrapper is missing on the host")
             return .it2Missing
         }
-        var settings: [String: Any]
+        let settings: [String: Any]
         switch await files.read(settingsPath) {
         case .missing:
             settings = [:]
         case .failed(let reason):
-            RLog("Remote hook install: could not read settings (\(reason))")
+            RLog("Remote \(purpose): could not read settings (\(reason))")
             return .unreadable
         case .contents(let data):
-            // An unparseable file is not treated as empty: it is the user's, and overwriting it
-            // would lose whatever was in it. A blank one is empty, as on this Mac.
             guard let parsed = ClaudeCodeHookSettings.settingsObjectIfValid(from: data) else {
-                RLog("Remote hook install: settings are not a JSON object")
+                RLog("Remote \(purpose): settings are not a JSON object")
                 return .malformed
             }
             settings = parsed
         }
-        settings["hooks"] = ClaudeCodeHookSettings.merged(
-            (settings["hooks"] as? [String: Any]) ?? [:],
-            command: ClaudeCodeHookSettings.remoteHookCommand(descriptor: descriptor),
-            descriptor: descriptor,
-            isOurs: { ClaudeCodeHookSettings.isRemoteHookCommand($0, home: home) })
-        guard let data = try? ClaudeCodeHookSettings.serialized(settings),
+        guard let edited = edit(settings) else {
+            RLog("Remote \(purpose): the settings can't take the change without losing something")
+            return .editRefused
+        }
+        guard let data = try? ClaudeCodeHookSettings.serialized(edited),
               await files.write(settingsPath, data) else {
-            RLog("Remote hook install: could not write settings")
+            RLog("Remote \(purpose): could not write settings")
             return .writeFailed
         }
         return .installed

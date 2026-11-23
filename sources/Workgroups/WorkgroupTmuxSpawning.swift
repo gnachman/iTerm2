@@ -277,7 +277,12 @@ extension iTermWorkgroupInstance {
         }
         // A nested group's host is both: its group's leader and a split or tab.
         let port = allPeerPorts.first { $0.ownsIdentifier(configID) }
-        port?.replacePeer(identifier: configID, with: new)
+        if let port {
+            port.replacePeer(identifier: configID, with: new)
+            // replaceNonPeer does this for splits and tabs, and returns early for a peer.
+            removeBrowserURLBinding(for: old)
+            installBrowserURLBinding(for: new, config: config)
+        }
         replaceNonPeer(configID: configID, with: new)
         new.workgroupInstance = self
         new.delegate?.sessionDidChangeDesiredToolbarItems(new)

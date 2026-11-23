@@ -31,6 +31,7 @@ static NSString *const iTermUserDefaultsKeyClaudeCodeHooksInstalled = @"NoSyncCl
 static NSString *const iTermUserDefaultsKeyClaudeCodeTriggersInstalled = @"ClaudeCodeTriggersInstalled";
 static NSString *const iTermUserDefaultsKeyClaudeCodeConfigDirPath = @"NoSyncClaudeCodeConfigDirPath";
 static NSString *const iTermUserDefaultsKeyClaudeCodeIntegrationCompleted = @"NoSyncClaudeCodeIntegrationCompleted";
+static NSString *const iTermUserDefaultsKeyClaudeCodeBrowserNavigationOffered = @"NoSyncClaudeCodeBrowserNavigationOffered";
 static NSString *const iTermUserDefaultsKeyShowSessionStatusInTabSubtitle = @"ShowSessionStatusInTabSubtitle";
 NSString *const iTermShowSessionStatusInTabSubtitleDidChange = @"iTermShowSessionStatusInTabSubtitleDidChange";
 NSString *const iTermUserDefaultsDidMigrateKeysNotification = @"iTermUserDefaultsDidMigrateKeysNotification";
@@ -313,6 +314,15 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
     } else {
         [self.userDefaults removeObjectForKey:iTermUserDefaultsKeyClaudeCodeConfigDirPath];
     }
+}
+
++ (BOOL)claudeCodeBrowserNavigationOffered {
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeyClaudeCodeBrowserNavigationOffered];
+}
+
++ (void)setClaudeCodeBrowserNavigationOffered:(BOOL)offered {
+    [self.userDefaults setBool:offered
+                        forKey:iTermUserDefaultsKeyClaudeCodeBrowserNavigationOffered];
 }
 
 + (BOOL)claudeCodeIntegrationCompleted {

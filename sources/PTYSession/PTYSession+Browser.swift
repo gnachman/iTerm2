@@ -218,18 +218,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
             DLog("Already have a browser profile")
             return nil
         }
-        let guid = ProfileModel.freshGuid()!
-        let dict: [AnyHashable: Any] = [
-            KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeBrowserValue,
-            KEY_NAME: iTermBrowserSessionTitle.defaultProfileName,
-            KEY_GUID: guid
-        ]
-        ProfileModel.sharedInstance().addBookmark(dict)
-        ProfileModel.sharedInstance().flush()
-        NotificationCenter.default.post(name: NSNotification.Name(kReloadAllProfiles),
-                                        object: nil,
-                                        userInfo:nil)
-        return guid
+        return WorkgroupBrowserNavigation.createBrowserProfile()
     }
     
     func browserViewControllerOnboardingSwitchToProfile(_ controller: iTermBrowserViewController,

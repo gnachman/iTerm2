@@ -90,6 +90,8 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 // signal so we can detect when something else (e.g. Claude Code
 // rewriting ~/.claude/settings.json) silently strips our hook.
 @property (class, nonatomic) BOOL claudeCodeIntegrationCompleted;
+// Whether existing Claude Code integration users were offered browser navigation setup.
+@property (class, nonatomic) BOOL claudeCodeBrowserNavigationOffered;
 
 // Whether session status (from cc-status, OSC 21337, OSC 7501, the
 // SetTabStatus trigger, or iterm2.set_status) appears on the tab at all: the

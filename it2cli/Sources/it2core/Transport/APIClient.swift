@@ -98,7 +98,36 @@ final class APIClient {
         return guid.isEmpty ? nil : guid
     }
 
-    /// Resolve an optional session ID to a concrete UUID.    /// Resolve an optional session ID to a concrete UUID.
+    /// The session the caller is running in, when its environment (or the connection it arrived
+    /// on) says. Unlike resolveSessionId(nil), never the focused session.
+    func callerSessionID() -> String? {
+        if let address = APIClient.paneAddressFromEnvironment(callerEnvironment),
+           let guid = (try? sessionIdForTmuxPane(address, origin: originIdentifier)) ?? nil,
+           !guid.isEmpty {
+            return guid
+        }
+        if let fromEnvironment = APIClient.sessionIdFromEnvironment(callerEnvironment) {
+            return fromEnvironment
+        }
+        if let originSessionID, !originSessionID.isEmpty {
+            return APIClient.normalizeSessionId(originSessionID)
+        }
+        return nil
+    }
+
+    /// Whether the caller evidently runs in an iTerm2 session or a tmux pane, even if
+    /// callerSessionID() can't say which: its environment names one, or the connection came
+    /// from one.
+    var callerSeemsToBeInASession: Bool {
+        for key in ["TERM_SESSION_ID", "ITERM_SESSION_ID", "TMUX", "TMUX_PANE"] {
+            if let value = callerEnvironment[key], !value.isEmpty {
+                return true
+            }
+        }
+        return !(originSessionID ?? "").isEmpty || !(originIdentifier ?? "").isEmpty
+    }
+
+    /// Resolve an optional session ID to a concrete UUID.
     /// If nil, queries iTerm2 for the currently focused session.
     func resolveSessionId(_ sessionId: String?) throws -> String {
         if let id = sessionId {

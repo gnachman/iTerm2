@@ -61,4 +61,16 @@ final class SessionSetVarTests: XCTestCase {
         let result = try sentValue(forArguments: ["user.x", ""])
         XCTAssertEqual(result.value, "\"\"")
     }
+
+    // With --peer-name, a caller may name its own session however its GUID is
+    // cased; one plainly outside iTerm2 may name any.
+    func testPeerTargetMustBeTheCallersSession() {
+        typealias SetVar = Session.SetVar
+        let guid = "6F2A1C3E-1111-2222-3333-444455556666"
+        XCTAssertTrue(SetVar.sessionID(guid.lowercased(), isCaller: guid, callerSeemsToBeInASession: true))
+        XCTAssertTrue(SetVar.sessionID(guid, isCaller: guid.lowercased(), callerSeemsToBeInASession: true))
+        XCTAssertFalse(SetVar.sessionID("6F2A1C3E-9999-2222-3333-444455556666", isCaller: guid, callerSeemsToBeInASession: true))
+        XCTAssertFalse(SetVar.sessionID(guid, isCaller: nil, callerSeemsToBeInASession: true))
+        XCTAssertTrue(SetVar.sessionID(guid, isCaller: nil, callerSeemsToBeInASession: false))
+    }
 }

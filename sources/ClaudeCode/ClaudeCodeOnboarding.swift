@@ -46,6 +46,8 @@ class ClaudeCodeOnboarding: NSObject {
         /// The hook on the host the session reaches through SSH Integration. Shown only for such a
         /// session.
         case installRemoteHook = 6
+        // Optional: lets Claude show the page it's working on in a browser peer.
+        case showPagesInBrowser = 7
 
         var title: String {
             switch self {
@@ -55,6 +57,7 @@ class ClaudeCodeOnboarding: NSObject {
             case .installWorkgroup: return String(localized: "ClaudeCodeOnboarding.InstallWorkgroupTitle", defaultValue: "Install Workgroup", comment: "Title of the install-workgroup onboarding step")
             case .installTriggers: return String(localized: "ClaudeCodeOnboarding.AutoEnterWorkgroupTitle", defaultValue: "Auto-Enter Workgroup", comment: "Title of the auto-enter-workgroup onboarding step")
             case .installRemoteHook: return String(localized: "ClaudeCodeOnboarding.InstallRemoteHookTitle", defaultValue: "Install on Remote Host", comment: "Title of the onboarding step that installs the Claude Code hook on the host the session is connected to through SSH Integration")
+            case .showPagesInBrowser: return String(localized: "ClaudeCodeOnboarding.ShowPagesInBrowserTitle", defaultValue: "Show Pages in Browser", comment: "Title of the optional onboarding step that lets Claude show web pages in a browser in the workgroup")
             }
         }
 
@@ -66,7 +69,13 @@ class ClaudeCodeOnboarding: NSObject {
             case .installWorkgroup: return String(localized: "ClaudeCodeOnboarding.Install", defaultValue: "Install", comment: "Button that installs the integration step")
             case .installTriggers: return String(localized: "ClaudeCodeOnboarding.Install", defaultValue: "Install", comment: "Button that installs the integration step")
             case .installRemoteHook: return String(localized: "ClaudeCodeOnboarding.Install", defaultValue: "Install", comment: "Button that installs the integration step")
+            case .showPagesInBrowser: return String(localized: "ClaudeCodeOnboarding.SetUp", defaultValue: "Set Up…", comment: "Button that opens setup for an optional onboarding step")
             }
+        }
+
+        /// Steps the user can skip with Next before doing them.
+        var isOptional: Bool {
+            return self == .showToolbelt || self == .showPagesInBrowser
         }
 
         /// The remote step's text names its host, so it comes from remoteHookDescription instead.
@@ -82,6 +91,8 @@ class ClaudeCodeOnboarding: NSObject {
                 return String(localized: "ClaudeCodeOnboarding.InstallWorkgroupDescription", defaultValue: "Install the Claude Code workgroup, which groups your main Claude session with two peer sessions: a diff viewer and a code-review session. You can switch between them with one click.\n\nYou can customize this layout later in Settings > Arrangements > Workgroups.", comment: "Description of the install-workgroup onboarding step")
             case .installRemoteHook:
                 return ""
+            case .showPagesInBrowser:
+                return String(localized: "ClaudeCodeOnboarding.ShowPagesInBrowserDescription", defaultValue: "Optional: when Claude starts on an issue or a pull request, it can open the page in a browser in the workgroup, so you can read along without copying links.\n\nSet Up adds the browser, lets Claude open pages in it without asking, and gives you instructions to add to your skills or CLAUDE.md. You can also do this later from Settings > Arrangements > Workgroups.", comment: "Description of the optional onboarding step that lets Claude show web pages in a browser in the workgroup. CLAUDE.md is a file name and must not be translated.")
             case .installTriggers:
                 return String(localized: "ClaudeCodeOnboarding.InstallTriggersDescription", defaultValue: "Pick the terminal profiles where you run claude. iTerm2 will add triggers so the Claude Code workgroup is entered automatically when claude starts and exited when it stops.\n\nWithout this, you can still enter the workgroup manually via Shell > Workgroups > Claude Code.", comment: "Description of the install-triggers onboarding step")
             }
@@ -90,7 +101,15 @@ class ClaudeCodeOnboarding: NSObject {
 
     private var panel: iTermFocusablePanel!
     private let activeSteps: [Step]
-    private var currentStep: Step
+    private var currentStep: Step {
+        didSet {
+            if currentStep == .showPagesInBrowser {
+                // Someone who has seen the step was offered the feature, so
+                // the announcement for earlier installs shouldn't offer it again.
+                iTermUserDefaults.claudeCodeBrowserNavigationOffered = true
+            }
+        }
+    }
     private var completedSteps = Set<Step>()
 
     private init(activeSteps: [Step]) {
@@ -265,7 +284,7 @@ class ClaudeCodeOnboarding: NSObject {
     // the link would carry the link's own mode (0755) to the new file, so
     // that case writes a new file beside it and renames it over the link,
     // giving it the mode any new file gets.
-    private static func writeSettings(_ data: Data, to settingsURL: URL) throws {
+    static func writeSettings(_ data: Data, to settingsURL: URL) throws {
         let writeURL = settingsURL.resolvingSymlinksInPath()
         if writeURL.path != settingsURL.path {
             DLog("Onboarding: \(settingsURL.path) resolves to \(writeURL.path); writing there")
@@ -559,6 +578,17 @@ class ClaudeCodeOnboarding: NSObject {
         reconcileTriggersCache()
     }
 
+    // At launch: existing users get a one-time offer to let Claude show pages
+    // in a browser peer (see ClaudeCodeBrowserNavigation), and workgroups
+    // learn whether an agent still runs in a leader, which they can't tell
+    // on their own.
+    @objc static func setUpBrowserNavigation() {
+        iTermWorkgroupInstance.agentRunningCheck = { session in
+            agentIsRunning(in: session)
+        }
+        ClaudeCodeBrowserNavigation.observeWorkgroupEntryForOffer()
+    }
+
     // Recompute the trigger cache from the profile model. Cheap to
     // call on demand (one walk vs. one walk per validateMenuItem
     // call). Used at app launch, before opening the installer
@@ -660,7 +690,7 @@ class ClaudeCodeOnboarding: NSObject {
         }
     }
 
-    private static func loadSettings(at url: URL) -> [String: Any]? {
+    static func loadSettings(at url: URL) -> [String: Any]? {
         guard let data = try? Data(contentsOf: url) else {
             return nil
         }
@@ -1023,9 +1053,7 @@ class ClaudeCodeOnboarding: NSObject {
         if remoteConductor != nil {
             steps.append(.installRemoteHook)
         }
-        steps.append(contentsOf: [.showToolbelt,
-                                  .installWorkgroup,
-                                  .installTriggers])
+        steps.append(contentsOf: [.showToolbelt, .installWorkgroup, .showPagesInBrowser, .installTriggers])
 
         let onboarding = ClaudeCodeOnboarding(activeSteps: steps)
         if let remoteConductor {
@@ -1495,12 +1523,12 @@ class ClaudeCodeOnboarding: NSObject {
             nextButton.isEnabled = true
         } else {
             nextButton.title = String(localized: "ClaudeCodeOnboarding.Next", defaultValue: "Next", comment: "Button to advance to the next onboarding step")
-            // Show Toolbelt is optional: Next is always enabled so the
+            // Optional steps (see Step.isOptional): Next is always enabled so the
             // user can skip it. The default-button logic below keeps
             // Show as the default until the toolbelt has actually been
             // shown, then promotes Next to the default.
             nextButton.isEnabled =
-                completedSteps.contains(currentStep) || currentStep == .showToolbelt
+                completedSteps.contains(currentStep) || currentStep.isOptional
         }
 
         if completedSteps.contains(currentStep) {
@@ -1557,7 +1585,7 @@ class ClaudeCodeOnboarding: NSObject {
             } else if !configDirCandidates.isEmpty {
                 // The shells that could have exported CLAUDE_CONFIG_DIR for this
                 // session disagree. Ask which directory to install into.
-                guard let configDirectory = askWhichConfigDirectory() else {
+                guard let configDirectory = askWhichConfigDirectory(for: step) else {
                     return
                 }
                 resolvedConfigDirectory = configDirectory
@@ -1574,6 +1602,37 @@ class ClaudeCodeOnboarding: NSObject {
             finishDoIt(doInstallWorkgroup(), step: step)
         case .installTriggers:
             finishDoIt(doInstallTriggers(), step: step)
+        case .showPagesInBrowser:
+            // Needs the workgroup, which its own step installs; cover a user
+            // who reached this step without it (e.g. via Back).
+            Self.installWorkgroupIfNeeded()
+            completedSteps.insert(.installWorkgroup)
+            if let conductor = remoteConductor {
+                // Claude runs on the remote host, so its settings there are the
+                // ones to change, found as the remote hook step finds them.
+                doItButton.isEnabled = false
+                MainActor.assumeIsolated {
+                    ClaudeCodeBrowserNavigation.showSetup(near: panel, session: nil, conductor: conductor) { [weak self] complete in
+                        self?.doItButton.isEnabled = true
+                        self?.finishDoIt(complete, step: step)
+                    }
+                }
+                return
+            }
+            // The rule and instructions go where this session's Claude reads
+            // them, the same directory the hook step installs into, chosen
+            // the same way: ask if the shells disagree, wait if still looking.
+            if let configDirectory = resolvedConfigDirectory {
+                showBrowserSetup(configDirectory: configDirectory, step: step)
+            } else if !configDirCandidates.isEmpty {
+                guard let configDirectory = askWhichConfigDirectory(for: step) else {
+                    return
+                }
+                resolvedConfigDirectory = configDirectory
+                showBrowserSetup(configDirectory: configDirectory, step: step)
+            } else {
+                beginWaitingForConfigResolution(step: step)
+            }
         case .installRemoteHook:
             if let directory = remoteResolvedDirectory {
                 MainActor.assumeIsolated {
@@ -1584,6 +1643,29 @@ class ClaudeCodeOnboarding: NSObject {
             }
         }
     }
+
+    private func showBrowserSetup(configDirectory: URL, step: Step) {
+        ClaudeCodeBrowserNavigation.presentSetup?(panel, .local(configDirectory)) { [weak self] complete in
+            self?.finishDoIt(complete, step: step)
+        }
+    }
+
+    // A step waiting on the local CLAUDE_CONFIG_DIR lookup, now that it has a directory.
+    private func resumeAfterConfigResolution(configDirectory: URL, step: Step) {
+        switch step {
+        case .installHook:
+            performHookInstall(configDirectory: configDirectory, step: step)
+        case .showPagesInBrowser:
+            showBrowserSetup(configDirectory: configDirectory, step: step)
+        default:
+            it_fatalError("Step \(step) doesn't wait on the local CLAUDE_CONFIG_DIR lookup")
+        }
+    }
+
+    // Steps that wait on the local CLAUDE_CONFIG_DIR lookup. installRemoteHook
+    // waits on the remote host's instead, and showPagesInBrowser does only in
+    // a session on this Mac.
+    private static let stepsNeedingLocalConfigDirectory: Set<Step> = [.installHook, .showPagesInBrowser]
 
     private func finishDoIt(_ success: Bool, step: Step) {
         if success {
@@ -1633,30 +1715,30 @@ class ClaudeCodeOnboarding: NSObject {
         case 1:
             resolvedConfigDirectory = candidates[0].directory
             // If Install is waiting on this, resume it now.
-            if let step = pendingInstallStep, step == .installHook {
+            if let step = pendingInstallStep, Self.stepsNeedingLocalConfigDirectory.contains(step) {
                 pendingInstallStep = nil
                 endWaitingForConfigResolution()
-                performHookInstall(configDirectory: candidates[0].directory, step: step)
+                resumeAfterConfigResolution(configDirectory: candidates[0].directory, step: step)
             } else {
                 premarkHookStepIfHealthy(in: candidates[0].directory)
             }
         default:
             configDirCandidates = candidates
             // If Install is waiting on this, ask now and resume.
-            if let step = pendingInstallStep, step == .installHook {
+            if let step = pendingInstallStep, Self.stepsNeedingLocalConfigDirectory.contains(step) {
                 pendingInstallStep = nil
                 endWaitingForConfigResolution()
-                guard let configDirectory = askWhichConfigDirectory() else {
+                guard let configDirectory = askWhichConfigDirectory(for: step) else {
                     return
                 }
                 resolvedConfigDirectory = configDirectory
-                performHookInstall(configDirectory: configDirectory, step: step)
+                resumeAfterConfigResolution(configDirectory: configDirectory, step: step)
             }
         }
     }
 
     private func configResolutionFailed() {
-        guard pendingInstallStep == .installHook else {
+        guard let waiting = pendingInstallStep, Self.stepsNeedingLocalConfigDirectory.contains(waiting) else {
             // The early background kick-off failed and nobody is waiting. Leave
             // resolvedConfigDirectory nil so the next Install click re-resolves
             // (showing the spinner) rather than silently proceeding.
@@ -1901,7 +1983,14 @@ class ClaudeCodeOnboarding: NSObject {
 
     private func remoteInstallFailureMessage(_ result: ClaudeCodeRemoteHooks.InstallResult,
                                              configDirectory: String) -> String? {
-        let host = remoteHost
+        return Self.remoteInstallFailureMessage(result, host: remoteHost, configDirectory: configDirectory)
+    }
+
+    /// What to tell the user when changing Claude Code's settings on `host` failed, or nil if it
+    /// didn't. The browser setup shares the messages about reading and writing the file.
+    static func remoteInstallFailureMessage(_ result: ClaudeCodeRemoteHooks.InstallResult,
+                                            host: String,
+                                            configDirectory: String) -> String? {
         let path = (configDirectory as NSString).appendingPathComponent("settings.json")
         switch result {
         case .installed:
@@ -1916,6 +2005,9 @@ class ClaudeCodeOnboarding: NSObject {
             return String(localized: "ClaudeCodeOnboarding.RemoteSettingsUnreadable", defaultValue: "iTerm2 couldn\u{2019}t read \(path) on \(host).", comment: "Shown when Claude Code settings on a remote host could not be read; the values are a file path and the host")
         case .malformed:
             return String(localized: "ClaudeCodeOnboarding.RemoteSettingsMalformed", defaultValue: "\(path) on \(host) isn\u{2019}t valid JSON. iTerm2 left it unchanged. Fix or remove it and try again.", comment: "Shown when Claude Code settings on a remote host could not be parsed; the values are a file path and the host")
+        case .editRefused:
+            // The hook install never refuses; the browser setup says why it did.
+            return String(localized: "ClaudeCodeOnboarding.RemoteSettingsEditRefused", defaultValue: "iTerm2 couldn\u{2019}t change \(path) on \(host) without losing something in it, so it left the file unchanged.", comment: "Shown when Claude Code settings on a remote host have contents iTerm2 could not add to safely; the values are a file path and the host")
         case .writeFailed:
             return String(localized: "ClaudeCodeOnboarding.RemoteSettingsWriteFailed", defaultValue: "iTerm2 couldn\u{2019}t write \(path) on \(host).", comment: "Shown when Claude Code settings on a remote host could not be written; the values are a file path and the host")
         }
@@ -1971,6 +2063,20 @@ class ClaudeCodeOnboarding: NSObject {
             return nil
         }
         return ensureDotDirSymlink(named: "cc-status")
+    }
+
+    /// Where the dot-dir it2 symlink is, without creating or changing it.
+    static var it2SymlinkPath: String? {
+        return FileManager.default.homeDirectoryDotDir().map {
+            ($0 as NSString).appendingPathComponent("it2")
+        }
+    }
+
+    /// Points the dot-dir it2 symlink at this build's it2, as installing the
+    /// hooks does, before writing a command that runs it.
+    @discardableResult
+    static func refreshIt2Symlink() -> String? {
+        return ensureDotDirSymlink(named: "it2")
     }
 
     /// The hook command a fresh install writes: the dot-dir it2 symlink, quoted, running the
@@ -2131,7 +2237,7 @@ class ClaudeCodeOnboarding: NSObject {
     // synchronously everywhere else. nil until a first install has run, in which
     // case we assume the default; that matches Claude Code's own default and is
     // where a from-scratch install would go.
-    private static var claudeConfigDirectory: URL {
+    static var claudeConfigDirectory: URL {
         if let path = iTermUserDefaults.claudeCodeConfigDirPath, !path.isEmpty {
             return URL(fileURLWithPath: path)
         }
@@ -2174,7 +2280,7 @@ class ClaudeCodeOnboarding: NSObject {
     //
     // Local sessions only; a host reached through SSH Integration uses
     // resolveRemoteConfigDirectory below.
-    private static func resolveConfigDirectory(from source: ClaudeCodeConfigDirResolver.Source,
+    static func resolveConfigDirectory(from source: ClaudeCodeConfigDirResolver.Source,
                                                completion: @escaping (URL?) -> Void) {
         let dependencies = ClaudeCodeConfigDirResolver.Dependencies(
             runInteractiveShell: { shellPath, login, done in
@@ -2290,40 +2396,117 @@ class ClaudeCodeOnboarding: NSObject {
                 }
             }
         }
+        localConfigDirectory(for: session) { directory in
+            checkDisk(directory.appendingPathComponent("settings.json"))
+        }
+    }
+
+    /// The directory the agent in `session` reads on this Mac, found cheaply: when the session's
+    /// job is the agent, its own CLAUDE_CONFIG_DIR, read from the kernel; otherwise the directory
+    /// recorded at the last install. Never runs a shell. Only for a session on this Mac: for one
+    /// on a host reached through SSH Integration, see remoteConfigDirectory. Answers on the main
+    /// thread.
+    static func localConfigDirectory(for session: PTYSession?,
+                                     completion: @escaping (URL) -> Void) {
         guard let job = agentJob(for: session) else {
-            checkDisk(claudeSettingsURL())
+            completion(claudeConfigDirectory)
             return
         }
         resolveConfigDirectory(from: .runningJob(job)) { directory in
-            guard let directory else {
-                // The kernel hides a platform binary's environment from other processes, and an
-                // agent that simply has no CLAUDE_CONFIG_DIR also answers empty. Either way this
-                // is "cannot tell from the process", so fall back rather than guess.
-                checkDisk(claudeSettingsURL())
-                return
-            }
-            checkDisk(directory.appendingPathComponent("settings.json"))
+            // nil: the kernel hides a platform binary's environment from other processes, and an
+            // agent that simply has no CLAUDE_CONFIG_DIR also answers empty. Either way this is
+            // "cannot tell from the process", so fall back rather than guess.
+            completion(directory ?? claudeConfigDirectory)
         }
     }
 
     /// The session's foreground job when it is the agent whose environment the hook install is
     /// for, or nil. Only the agent qualifies: a shell's exec-time environment predates its rc
     /// files, so it would answer for a state the user never saw.
-    private static func agentJob(for session: PTYSession?) -> ClaudeCodeConfigDirResolver.RunningJob? {
+    static func agentJob(for session: PTYSession?) -> ClaudeCodeConfigDirResolver.RunningJob? {
         guard let session,
               let pid = session.genericScope.value(forVariableName: iTermVariableKeySessionJobPid) as? NSNumber,
-              pid.int32Value > 0,
-              let name = session.genericScope.value(forVariableName: iTermVariableKeySessionJob) as? String,
-              ClaudeCodeConfigDirResolver.agentJobNames.contains(name) else {
+              pid.int32Value > 0 else {
             return nil
         }
-        return ClaudeCodeConfigDirResolver.RunningJob(pid: pid.int32Value, name: name)
+        if let name = session.genericScope.value(forVariableName: iTermVariableKeySessionJob) as? String,
+           ClaudeCodeConfigDirResolver.agentJobNames.contains(name) {
+            return ClaudeCodeConfigDirResolver.RunningJob(pid: pid.int32Value, name: name)
+        }
+        // While claude runs a tool, a hook, or its status line, the foreground
+        // job is that child, so look up the tree for the claude that started it.
+        // The process cache is main-thread only; elsewhere, settle for the job name.
+        let info: iTermProcessInfo? = Thread.isMainThread ? MainActor.assumeIsolated {
+            session.processInfoProvider?.processInfo(for: pid.int32Value)
+        } : nil
+        // A workgroup runs claude through `sh -c`, so the job may be that
+        // wrapper with claude as its child. Only then: under an interactive
+        // shell, a nested or backgrounded claude may use another config directory.
+        func isNamed(_ info: iTermProcessInfo, _ name: String) -> Bool {
+            return ((info.argv0 ?? info.name ?? "") as NSString).lastPathComponent.lowercased() == name
+        }
+        let below = info.flatMap { wrapper in
+            isNamed(wrapper, "sh") ? wrapper.children.first { isNamed($0, "claude") } : nil
+        }
+        if let claude = ClaudeProcessLocator.outermostClaude(startingAt: info) ?? below {
+            DLog("agentJob: foreground job \(pid) descends from claude \(claude.processID)")
+            return ClaudeCodeConfigDirResolver.RunningJob(pid: claude.processID, name: "claude")
+        }
+        return nil
+    }
+
+    /// Whether an agent (claude or codex) runs in `session`: the foreground
+    /// job, an ancestor of it (the agent is running a tool), or the child of
+    /// a workgroup's `sh -c` wrapper. nil when that can't be told: no job
+    /// yet, or no process information, as for a tmux pane.
+    static func agentIsRunning(in session: PTYSession) -> Bool? {
+        guard let pid = session.genericScope.value(forVariableName: iTermVariableKeySessionJobPid) as? NSNumber,
+              pid.int32Value > 0 else {
+            return nil
+        }
+        func isAgent(_ title: String?) -> Bool {
+            guard let title else {
+                return false
+            }
+            return ClaudeCodeConfigDirResolver.agentJobNames.contains((title as NSString).lastPathComponent.lowercased())
+        }
+        if isAgent(session.genericScope.value(forVariableName: iTermVariableKeySessionJob) as? String) {
+            return true
+        }
+        guard Thread.isMainThread else {
+            return nil
+        }
+        let info: iTermProcessInfo? = MainActor.assumeIsolated {
+            session.processInfoProvider?.processInfo(for: pid.int32Value)
+        }
+        guard let info else {
+            return nil
+        }
+        // Up to the shell or server that started the job, as outermostClaude does.
+        var current: iTermProcessInfo? = info
+        var depth = 0
+        while let process = current, depth < 64 {
+            let title = process.argv0 ?? process.name
+            if let title, title.hasPrefix("-") || title.hasPrefix("iTermServer") {
+                break
+            }
+            if isAgent(title) {
+                return true
+            }
+            current = process.parent
+            depth += 1
+        }
+        if ((info.argv0 ?? info.name ?? "") as NSString).lastPathComponent == "sh",
+           info.children.contains(where: { isAgent($0.argv0 ?? $0.name) }) {
+            return true
+        }
+        return false
     }
 
     // The shells (or the already-running program) that could have exported
     // CLAUDE_CONFIG_DIR for this session. No session, or a profile that runs the
     // login shell, means just the login shell, as always.
-    private static func configDirSources(for session: PTYSession?) -> [ClaudeCodeConfigDirResolver.Source] {
+    static func configDirSources(for session: PTYSession?) -> [ClaudeCodeConfigDirResolver.Source] {
         let loginShell = iTermOpenDirectory.userShell() ?? "/bin/bash"
         guard let session, let profile = session.profile else {
             return ClaudeCodeConfigDirResolver.sources(loginShell: loginShell, profile: [:], runningJob: nil)
@@ -2344,12 +2527,18 @@ class ClaudeCodeOnboarding: NSObject {
     // directories; the body says which shell (or program) reported each. A
     // remote source, when one exists, must name its host in its sentence. nil
     // on Cancel.
-    private func askWhichConfigDirectory() -> URL? {
+    // `step` is the one asking, which decides how the question is put. The
+    // answer serves every step that needs the directory.
+    private func askWhichConfigDirectory(for step: Step) -> URL? {
         guard configDirCandidates.count > 1 else {
             return configDirCandidates.first?.directory
         }
         let warning = iTermWarning()
-        warning.heading = String(localized: "ClaudeCodeOnboarding.WhichConfigDirTitle", defaultValue: "Which Settings Location Should the Claude Code Hook Be Installed In?", comment: "Title of the question asked when the shells that could start claude in this session report different CLAUDE_CONFIG_DIR values")
+        if step == .installHook {
+            warning.heading = String(localized: "ClaudeCodeOnboarding.WhichConfigDirTitle", defaultValue: "Which Settings Location Should the Claude Code Hook Be Installed In?", comment: "Title of the question asked when the shells that could start claude in this session report different CLAUDE_CONFIG_DIR values")
+        } else {
+            warning.heading = String(localized: "ClaudeCodeOnboarding.WhichConfigDirGeneralTitle", defaultValue: "Which Settings Location Does Claude Code Use?", comment: "Title of the question asked, while setting up something other than the hook, when the shells that could start claude in this session report different CLAUDE_CONFIG_DIR values")
+        }
         var lines: [String] = []
         for candidate in configDirCandidates {
             let directory = (candidate.directory.path as NSString).abbreviatingWithTildeInPath

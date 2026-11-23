@@ -65,6 +65,11 @@ TOP-LEVEL keys
   NoSyncOllamaDiscoveredModels ........... discovered Ollama models, keyed by
                                            endpoint URL (removed, not redacted:
                                            the private part is in the KEY)
+  NoSyncWorkgroupBrowserMemory ........... URLs workgroup browsers showed, by
+                                           agent conversation (removed)
+  NoSyncClaudeCodeBrowserInstructionsAppended
+                                           CLAUDE.md paths and the it2 path in
+                                           text appended to them (removed)
   NoSyncRecordedVariables ................ recorded variable names (deep)
   NoSyncSearchHistory[2] ................. find-bar search terms
   NoSyncSuppressedAlertsCatalog .......... suppressed alert/announcement
@@ -294,6 +299,8 @@ CONTENT_KEYS = {
     # hash of the entry's custom headers), and scrub() can only rewrite values,
     # never keys, so the hosts in the keys would survive a redaction.
     "NoSyncOllamaDiscoveredModels": REMOVE,
+    "NoSyncWorkgroupBrowserMemory": REMOVE,
+    "NoSyncClaudeCodeBrowserInstructionsAppended": REMOVE,
     # Custom settings folder bookkeeping, each a dict keyed BY the folder
     # path (iTermRemotePreferences.m); removed for the same reason.
     "NoSyncRemoteDataFileSyncBaselineSignatures": REMOVE,

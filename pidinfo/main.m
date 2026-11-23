@@ -20,7 +20,14 @@
     
     // Configure the connection.
     // First, set the interface that the exported object implements.
-    newConnection.exportedInterface = [NSXPCInterface interfaceWithProtocol:@protocol(pidinfoProtocol)];
+    NSXPCInterface *interface = [NSXPCInterface interfaceWithProtocol:@protocol(pidinfoProtocol)];
+    // Allowed classes for an argument are checked where it's decoded, here.
+    // The environment for runShellScript: is string to string.
+    [interface setClasses:[NSSet setWithArray:@[[NSDictionary class], [NSString class]]]
+              forSelector:@selector(runShellScript:shell:mode:environment:withReply:)
+            argumentIndex:3
+                  ofReply:NO];
+    newConnection.exportedInterface = interface;
     
     // Next, set the object that the connection exports. All messages sent on the connection to this service will be sent to the exported object to handle. The connection retains the exported object.
     pidinfo *exportedObject = [pidinfo new];

@@ -1419,13 +1419,16 @@ extension PTYSession {
 }
 
 extension PTYSession {
+    /// Whether the session is a browser that started loading `url`.
     @objc(openURL:)
-    func open(url: URL) {
-        guard view?.isBrowser == true else {
+    @discardableResult
+    func open(url: URL) -> Bool {
+        guard view?.isBrowser == true, let browser = view?.browserViewController else {
             RLog("Can't open \(url), not a browser")
-            return
+            return false
         }
-        view?.browserViewController?.loadURL(url.absoluteString)
+        browser.loadURL(url.absoluteString)
+        return true
     }
 
     @objc
@@ -2549,10 +2552,11 @@ extension PTYSession {
                     // Browser profile + configured URL: seed
                     // KEY_INITIAL_URL so the browser session's
                     // deferred-URL load picks it up.
-                    if !config.urlString.isEmpty,
+                    let initialURLString = config.initialURLString
+                    if !initialURLString.isEmpty,
                        let customCommand = profile[KEY_CUSTOM_COMMAND as String] as? String,
                        customCommand == kProfilePreferenceCommandTypeBrowserValue {
-                        profile[KEY_INITIAL_URL as String] = config.urlString
+                        profile[KEY_INITIAL_URL as String] = initialURLString
                     }
 
                     let newSession = factory.newSession(withProfile: profile,
@@ -2592,7 +2596,9 @@ extension PTYSession {
                     // into the launcher directly, bypassing the
                     // bookmarkCommandSwiftyString: wrapping path.
                     newSession.workgroupSessionMode = config.mode
-                    let urlString = config.urlString.isEmpty ? nil : config.urlString
+                    // As splits and tabs get it (see WorkgroupSessionSpawner):
+                    // a URL template starts blank rather than as its literal text.
+                    let urlString = initialURLString.isEmpty ? nil : initialURLString
 
                     // .codeReview mode defers the entire spawn: bury and
                     // fulfill the promise immediately so the workgroup

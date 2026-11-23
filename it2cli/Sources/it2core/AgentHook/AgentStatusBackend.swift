@@ -71,14 +71,57 @@ enum AgentHookHandler {
                                      agent: agent,
                                      backend: backend,
                                      report: report)
-        guard let update = try runner.decide(json: event.json), !update.isEmpty else {
-            // Nothing to say. This happens on a Codex SubagentStop that leaves work running: the
-            // decrement already stored the new count and the display is deliberately unchanged,
-            // so there is no reason to spend another round trip on a set-status carrying only an
-            // address.
-            return
+        // The conversation report below is independent of the status, so it goes even if the
+        // status update fails; that failure is rethrown afterward.
+        var statusError: Error?
+        do {
+            if let update = try runner.decide(json: event.json), !update.isEmpty {
+                try runner.send(update)
+            }
+            // Otherwise there is nothing to say. This happens on a Codex SubagentStop that leaves
+            // work running: the decrement already stored the new count and the display is
+            // deliberately unchanged, so there is no reason to spend another round trip on a
+            // set-status carrying only an address.
+        } catch {
+            statusError = error
         }
-        try runner.send(update)
+
+        // Best effort (see noteConversation): its failure must neither fail a hook whose status
+        // update worked nor hide the status update's own failure.
+        if let conversation = conversationStarted(eventName: event.name, json: event.json) {
+            try? runner.noteConversation(conversation)
+        } else if let conversation = conversationEnded(eventName: event.name, json: event.json) {
+            // The session no longer runs it, so a workgroup entered there later shouldn't bring
+            // back its page. Named rather than cleared: on /clear this end and the new
+            // conversation's start are separate hook processes, and the end may arrive last.
+            try? runner.noteConversation(conversation, ended: true)
+        }
+        if let statusError {
+            throw statusError
+        }
+    }
+
+    /// The agent's conversation ID when this event ends one.
+    static func conversationEnded(eventName: String, json: [String: Any]) -> String? {
+        guard eventName == "SessionEnd",
+              let id = json["session_id"] as? String,
+              !id.isEmpty else {
+            return nil
+        }
+        return id
+    }
+
+    /// The agent's conversation ID when this event starts or resumes one. Resuming keeps the ID,
+    /// which is how iTerm2 knows to bring back what a workgroup showed for it. A compaction is
+    /// not a start: it happens mid-conversation and keeps the ID anyway.
+    static func conversationStarted(eventName: String, json: [String: Any]) -> String? {
+        guard eventName == "SessionStart",
+              json["source"] as? String != "compact",
+              let id = json["session_id"] as? String,
+              !id.isEmpty else {
+            return nil
+        }
+        return id
     }
 }
 
@@ -204,6 +247,14 @@ final class AgentHookRunner {
             try send(ended)
         }
         return after
+    }
+
+    /// Tell iTerm2 which conversation the session now runs, or with `ended` that it ended. Quiet
+    /// and best effort: an iTerm2 from before set-agent-conversation existed refuses it, and that
+    /// costs nothing but the restored browser page, so it is never reported.
+    func noteConversation(_ conversationID: String, ended: Bool = false) throws {
+        _ = try backend.run(["session", "set-agent-conversation"] + address.args +
+                            ["--quiet-if-unresolved"] + (ended ? ["--ended"] : []) + ["--", conversationID])
     }
 
     /// Ask iTerm2 for the stored count. 0 when unavailable for any reason (no stored value, session

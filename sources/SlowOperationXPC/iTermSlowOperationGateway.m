@@ -13,6 +13,7 @@
 #import "iTermGitState.h"
 #import "ITAddressBookMgr.h"
 #import "iTermOpenDirectory+MainApp.h"
+#import "iTermUserDefaults.h"
 #import "NSStringITerm.h"
 #import "ProfileModel.h"
 #import "pidinfo.h"
@@ -138,13 +139,13 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
                                                  argumentIndex:0
                                                        ofReply:YES];
 
-    // For runShellScript:shell:mode:withReply: (reply block: NSData *output, NSData *error, int status)
+    // For runShellScript:shell:mode:environment:withReply: (reply block: NSData *output, NSData *error, int status)
     [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithArray:@[[NSData class], [NSNumber class]]]
-                                                   forSelector:@selector(runShellScript:shell:mode:withReply:)
+                                                   forSelector:@selector(runShellScript:shell:mode:environment:withReply:)
                                                  argumentIndex:0
                                                        ofReply:YES];
     [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithArray:@[[NSData class], [NSNumber class]]]
-                                                   forSelector:@selector(runShellScript:shell:mode:withReply:)
+                                                   forSelector:@selector(runShellScript:shell:mode:environment:withReply:)
                                                  argumentIndex:1
                                                        ofReply:YES];
 
@@ -312,6 +313,20 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
          completion:completion];
 }
 
+// Variables iTerm2 gives its sessions that startup files may test, for a mode
+// that sources them. A test instance run with -suite sets IT2_SUITE, and rc
+// files can key settings on it (a separate CLAUDE_CONFIG_DIR, for example).
+- (NSDictionary<NSString *, NSString *> *)environmentForShellRunMode:(iTermShellRunMode)mode {
+    if (mode == iTermShellRunModeBare) {
+        return @{};
+    }
+    NSString *suiteDirectoryName = [iTermUserDefaults customSuiteDirectoryName];
+    if (!suiteDirectoryName) {
+        return @{};
+    }
+    return @{ @"IT2_SUITE": suiteDirectoryName };
+}
+
 // Runs `script` in `shell` through the service and delivers the command's stdout
 // (trailing newlines trimmed), or nil on failure, exactly once on the main
 // thread. The error handler covers the case NSXPCConnection silently drops the
@@ -339,6 +354,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
     [proxy runShellScript:script
                     shell:shell
                      mode:mode
+              environment:[self environmentForShellRunMode:mode]
                 withReply:^(NSData * _Nullable data,
                             NSData * _Nullable error,
                             int status) {

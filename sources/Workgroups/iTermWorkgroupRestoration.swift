@@ -55,6 +55,10 @@ final class iTermWorkgroupRestoration: NSObject {
         // whose programs run on its leader's host. Without it a restored peer's reload would
         // run its command on this Mac.
         static let remoteHosts = "remoteHosts"
+        // The conversation the leader's agent last reported. An agent that keeps
+        // running across a relaunch never reports it again, and without it the
+        // pages it shows afterward couldn't be remembered (see WorkgroupBrowserMemory).
+        static let agentConversation = "agentConversation"
     }
 
     /// Gives restored members back the remote host they ran on, and gives `spawner` (the
@@ -153,6 +157,9 @@ final class iTermWorkgroupRestoration: NSObject {
         ]
         if !remoteHosts.isEmpty {
             result[Key.remoteHosts] = remoteHosts
+        }
+        if let conversation = instance.recordedConversationID {
+            result[Key.agentConversation] = conversation
         }
 
         // Only the instance's primary (top-level) peer group records the

@@ -248,6 +248,233 @@ final class WorkgroupRestorationTests: WorkgroupEntryTestBase {
                        "A not-started deferred peer must be flagged pending")
     }
 
+    // A leader's agent that keeps running across a relaunch never reports
+    // its conversation again, so the workgroup saves it.
+    func test_encodeState_recordsTheLeadersAgentConversation() {
+        let wg = WGFix.wgRootWithPeers(n: 1)
+        let peers = makePeerSessions(wg)
+        let inst = iTermWorkgroupController.instance.adopt(
+            workgroup: wg, leader: leader, instanceUniqueIdentifier: "wg-test",
+            activeIdentifier: wg.root!.uniqueIdentifier,
+            gitBase: CCGitBaseSelectorItem.defaultBase,
+            peerSessionsByConfigID: peers, nonPeerSessionsByConfigID: [:])
+        defer {
+            iTermWorkgroupController.instance.exit(on: leader)
+            WorkgroupBrowserMemory.shared.forgetSession(guid: leader.guid)
+        }
+        XCTAssertNotNil(inst)
+        let key = iTermWorkgroupRestoration.Key.agentConversation
+
+        var state = iTermWorkgroupRestoration.encodeState(forSession: leader, includeContents: false)!
+        XCTAssertNil(state[key])
+
+        WorkgroupBrowserMemory.shared.setConversation("conversation-1", forSessionGUID: leader.guid)
+        state = iTermWorkgroupRestoration.encodeState(forSession: leader, includeContents: false)!
+        XCTAssertEqual(state[key] as? String, "conversation-1")
+
+        // Saved even when no agent seems to run (at window close the agent
+        // may have exited, or be running a tool); the restored instance
+        // checks for itself.
+        let saved = iTermWorkgroupInstance.agentRunningCheck
+        defer { iTermWorkgroupInstance.agentRunningCheck = saved }
+        iTermWorkgroupInstance.agentRunningCheck = { _ in false }
+        state = iTermWorkgroupRestoration.encodeState(forSession: leader, includeContents: false)!
+        XCTAssertEqual(state[key] as? String, "conversation-1")
+    }
+
+    // The agent reports its conversation before a trigger enters the
+    // workgroup, and the map forgets the leader when it starts to terminate,
+    // perhaps before the restorable state is saved. The instance's own copy
+    // has to come from the map when it's created.
+    func test_instanceKeepsTheConversationReportedBeforeEntry() {
+        WorkgroupBrowserMemory.shared.setConversation("conversation-2", forSessionGUID: leader.guid)
+        let wg = WGFix.wgRootWithPeers(n: 1)
+        let peers = makePeerSessions(wg)
+        let inst = iTermWorkgroupController.instance.adopt(
+            workgroup: wg, leader: leader, instanceUniqueIdentifier: "wg-test",
+            activeIdentifier: wg.root!.uniqueIdentifier,
+            gitBase: CCGitBaseSelectorItem.defaultBase,
+            peerSessionsByConfigID: peers, nonPeerSessionsByConfigID: [:])
+        defer { iTermWorkgroupController.instance.exit(on: leader) }
+        XCTAssertNotNil(inst)
+        WorkgroupBrowserMemory.shared.forgetSession(guid: leader.guid)
+
+        let state = iTermWorkgroupRestoration.encodeState(forSession: leader, includeContents: false)!
+        XCTAssertEqual(state[iTermWorkgroupRestoration.Key.agentConversation] as? String, "conversation-2")
+    }
+
+    // A conversation left behind by an agent that died without SessionEnd,
+    // or restored with fresh shells, must not collect pages; one whose agent
+    // can't be checked (nil) stands.
+    func test_conversationIsIgnoredWhenNoAgentRuns() throws {
+        let saved = iTermWorkgroupInstance.agentRunningCheck
+        defer { iTermWorkgroupInstance.agentRunningCheck = saved }
+        WorkgroupBrowserMemory.shared.setConversation("conversation-3", forSessionGUID: leader.guid)
+        let wg = WGFix.wgRootWithPeers(n: 1)
+        let inst = iTermWorkgroupController.instance.adopt(
+            workgroup: wg, leader: leader, instanceUniqueIdentifier: "wg-test",
+            activeIdentifier: wg.root!.uniqueIdentifier,
+            gitBase: CCGitBaseSelectorItem.defaultBase,
+            peerSessionsByConfigID: makePeerSessions(wg), nonPeerSessionsByConfigID: [:])
+        defer {
+            iTermWorkgroupController.instance.exit(on: leader)
+            WorkgroupBrowserMemory.shared.forgetSession(guid: leader.guid)
+        }
+        let instance = try XCTUnwrap(inst)
+
+        iTermWorkgroupInstance.agentRunningCheck = { _ in nil }
+        XCTAssertEqual(instance.agentConversationID, "conversation-3")
+        iTermWorkgroupInstance.agentRunningCheck = { _ in true }
+        XCTAssertEqual(instance.agentConversationID, "conversation-3")
+        iTermWorkgroupInstance.agentRunningCheck = { _ in false }
+        XCTAssertNil(instance.agentConversationID)
+    }
+
+    // The agent reports its conversation before iTerm2's job poll notices it
+    // started, so the job is still the shell. Until the job pid changes, the
+    // report is trusted over the job.
+    func test_conversationStandsUntilTheJobPollCatchesUp() throws {
+        let saved = iTermWorkgroupInstance.agentRunningCheck
+        defer { iTermWorkgroupInstance.agentRunningCheck = saved }
+        iTermWorkgroupInstance.agentRunningCheck = { _ in false }
+        leader.genericScope.setValue(NSNumber(value: 1234), forVariableNamed: iTermVariableKeySessionJobPid)
+        WorkgroupBrowserMemory.shared.setConversation("conversation-4", forSessionGUID: leader.guid, jobPID: 1234)
+        let wg = WGFix.wgRootWithPeers(n: 1)
+        let instance = try XCTUnwrap(iTermWorkgroupController.instance.adopt(
+            workgroup: wg, leader: leader, instanceUniqueIdentifier: "wg-test",
+            activeIdentifier: wg.root!.uniqueIdentifier,
+            gitBase: CCGitBaseSelectorItem.defaultBase,
+            peerSessionsByConfigID: makePeerSessions(wg), nonPeerSessionsByConfigID: [:]))
+        defer {
+            iTermWorkgroupController.instance.exit(on: leader)
+            WorkgroupBrowserMemory.shared.forgetSession(guid: leader.guid)
+        }
+        XCTAssertEqual(instance.agentConversationID, "conversation-4")
+        // The poll caught up and found no agent.
+        leader.genericScope.setValue(NSNumber(value: 5678), forVariableNamed: iTermVariableKeySessionJobPid)
+        XCTAssertNil(instance.agentConversationID)
+    }
+
+    // The grace is one-shot. The agent reports while the job is still the
+    // shell, the poll finds the agent, then the agent dies without SessionEnd
+    // and the job is that shell again: the conversation is left behind.
+    // Nothing asks for it while the agent runs, so the instance has to notice
+    // the job change on its own.
+    func test_conversationIsIgnoredWhenTheJobReturnsToTheShell() throws {
+        let saved = iTermWorkgroupInstance.agentRunningCheck
+        defer { iTermWorkgroupInstance.agentRunningCheck = saved }
+        iTermWorkgroupInstance.agentRunningCheck = { _ in false }
+        leader.genericScope.setValue(NSNumber(value: 100), forVariableNamed: iTermVariableKeySessionJobPid)
+        let wg = WGFix.wgRootWithPeers(n: 1)
+        let instance = try XCTUnwrap(iTermWorkgroupController.instance.adopt(
+            workgroup: wg, leader: leader, instanceUniqueIdentifier: "wg-test",
+            activeIdentifier: wg.root!.uniqueIdentifier,
+            gitBase: CCGitBaseSelectorItem.defaultBase,
+            peerSessionsByConfigID: makePeerSessions(wg), nonPeerSessionsByConfigID: [:]))
+        defer {
+            iTermWorkgroupController.instance.exit(on: leader)
+            WorkgroupBrowserMemory.shared.forgetSession(guid: leader.guid)
+        }
+        // As set_agent_conversation records a report from the leader.
+        WorkgroupBrowserMemory.shared.setConversation("conversation-5", forSessionGUID: leader.guid, jobPID: 100)
+        instance.leaderConversationID = "conversation-5"
+        instance.leaderReportJobPID = 100
+        XCTAssertEqual(instance.agentConversationID, "conversation-5")
+
+        leader.genericScope.setValue(NSNumber(value: 200), forVariableNamed: iTermVariableKeySessionJobPid)
+        leader.genericScope.setValue(NSNumber(value: 100), forVariableNamed: iTermVariableKeySessionJobPid)
+        XCTAssertNil(instance.agentConversationID)
+        XCTAssertNil(WorkgroupBrowserMemory.shared.report(forSessionGUID: leader.guid)?.jobPID)
+    }
+
+    // MARK: - set_workgroup_member_variable
+
+    func test_setVariable_setsItOnALiveMemberAndRefusesUnknownNames() throws {
+        let wg = WGFix.wgRootWithPeers(n: 1)
+        let peers = makePeerSessions(wg)
+        let inst = try XCTUnwrap(iTermWorkgroupController.instance.adopt(
+            workgroup: wg, leader: leader, instanceUniqueIdentifier: "wg-test",
+            activeIdentifier: wg.root!.uniqueIdentifier,
+            gitBase: CCGitBaseSelectorItem.defaultBase,
+            peerSessionsByConfigID: peers, nonPeerSessionsByConfigID: [:]))
+        defer { iTermWorkgroupController.instance.exit(on: leader) }
+        let peer = try XCTUnwrap(peers.values.first)
+
+        let result = inst.setVariable("user.browserURL", value: "https://example.com/", onMembersNamed: "peer0")
+        XCTAssertEqual(result.set, 1)
+        XCTAssertEqual(result.pending, 0)
+        XCTAssertEqual(peer.genericScope.stringValue(forVariableName: "user.browserURL"), "https://example.com/")
+
+        let none = inst.setVariable("user.browserURL", value: "x", onMembersNamed: "Nobody")
+        XCTAssertEqual(none.set + none.failed + none.pending, 0)
+    }
+
+    // A member that hasn't started (here a peer still spawning; in tmux, also
+    // one not created until shown) gets the value when it joins, rather than
+    // holding up the caller or losing the value.
+    func test_setVariable_givesAStartingPeerTheValueWhenItJoins() throws {
+        let wg = WGFix.wgRootWithPeers(n: 2)
+        let ids = wg.sessions.filter { $0.parentID == wg.root!.uniqueIdentifier }.map(\.uniqueIdentifier).sorted()
+        let pendingID = try XCTUnwrap(ids.first)
+        let failedID = try XCTUnwrap(ids.last)
+        spawner.pendingPeerConfigIDs = [pendingID, failedID]
+        let inst = try XCTUnwrap(iTermWorkgroupController.instance.adopt(
+            workgroup: wg, leader: leader, instanceUniqueIdentifier: "wg-test",
+            activeIdentifier: wg.root!.uniqueIdentifier,
+            gitBase: CCGitBaseSelectorItem.defaultBase,
+            peerSessionsByConfigID: [:], nonPeerSessionsByConfigID: [:],
+            spawner: spawner))
+        defer { iTermWorkgroupController.instance.exit(on: leader) }
+        let pendingName = try XCTUnwrap(wg.session(withUniqueIdentifier: pendingID)?.displayName)
+        let failedName = try XCTUnwrap(wg.session(withUniqueIdentifier: failedID)?.displayName)
+
+        // A spawn that failed isn't waited for.
+        spawner.rejectPendingPeer(configID: failedID)
+        let failed = inst.setVariable("user.browserURL", value: "https://example.com/", onMembersNamed: failedName)
+        XCTAssertEqual(failed.set + failed.failed + failed.pending, 0)
+
+        let result = inst.setVariable("user.browserURL", value: "https://example.com/", onMembersNamed: pendingName)
+        XCTAssertEqual(result.set, 0)
+        XCTAssertEqual(result.pending, 1)
+
+        let session = try XCTUnwrap(PTYSession(synthetic: false))
+        spawner.fulfillPendingPeer(configID: pendingID, with: session)
+        let expectation = expectation(description: "joined")
+        DispatchQueue.main.async { expectation.fulfill() }
+        wait(for: [expectation], timeout: 5)
+        XCTAssertEqual(session.genericScope.stringValue(forVariableName: "user.browserURL"), "https://example.com/")
+    }
+
+    // Two members share a name; one is live and the other still starting. The
+    // live one gets the value now and the other when it joins.
+    func test_setVariable_alsoQueuesForAStartingMemberWhenAnotherIsLive() throws {
+        let root = WGFix.makeRoot()
+        let livePeer = WGFix.makePeer(parentID: root.uniqueIdentifier, displayName: "Browser")
+        let startingPeer = WGFix.makePeer(parentID: root.uniqueIdentifier, displayName: "Browser")
+        let wg = WGFix.wrap(name: "sameNames", sessions: [root, livePeer, startingPeer])
+        spawner.pendingPeerConfigIDs = [startingPeer.uniqueIdentifier]
+        let live = try XCTUnwrap(PTYSession(synthetic: false))
+        let inst = try XCTUnwrap(iTermWorkgroupController.instance.adopt(
+            workgroup: wg, leader: leader, instanceUniqueIdentifier: "wg-test",
+            activeIdentifier: root.uniqueIdentifier,
+            gitBase: CCGitBaseSelectorItem.defaultBase,
+            peerSessionsByConfigID: [livePeer.uniqueIdentifier: live], nonPeerSessionsByConfigID: [:],
+            spawner: spawner))
+        defer { iTermWorkgroupController.instance.exit(on: leader) }
+
+        let result = inst.setVariable("user.browserURL", value: "https://example.com/", onMembersNamed: "browser")
+        XCTAssertEqual(result.set, 1)
+        XCTAssertEqual(result.pending, 1)
+        XCTAssertEqual(live.genericScope.stringValue(forVariableName: "user.browserURL"), "https://example.com/")
+
+        let joined = try XCTUnwrap(PTYSession(synthetic: false))
+        spawner.fulfillPendingPeer(configID: startingPeer.uniqueIdentifier, with: joined)
+        let expectation = expectation(description: "joined")
+        DispatchQueue.main.async { expectation.fulfill() }
+        wait(for: [expectation], timeout: 5)
+        XCTAssertEqual(joined.genericScope.stringValue(forVariableName: "user.browserURL"), "https://example.com/")
+    }
+
     // MARK: - trigger suppression bookkeeping
 
     func test_isRestoring_trueForEveryInvolvedGUIDWhilePending() {

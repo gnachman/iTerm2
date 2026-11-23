@@ -9,6 +9,21 @@ New Features:
   Preview links on hover > Configure…, or add
   a domain when iTerm2 offers to after you rest
   on one of its links.
+- A workgroup’s browser session can follow a
+  variable: put \(user.browserURL) in its URL in
+  Settings > Arrangements > Workgroups, and the
+  browser goes wherever the variable points. A
+  program in another session of the workgroup
+  sets it with
+  “it2 session set-var --peer-name Browser
+  user.browserURL URL”. The Claude Code
+  Integration’s setup has a new optional step
+  that adds a browser to the Claude Code
+  workgroup, so Claude can show the issue or
+  pull request it is working on, including when
+  Claude runs on a host reached through SSH
+  Integration. Resuming the conversation brings
+  the page back.
 
 Improvements:
 - Tab groups look quieter in the Minimal theme.

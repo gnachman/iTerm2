@@ -40,6 +40,9 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
     private var commandRow: NSView!
     private var perFileCommandRow: NSView!
     private var urlRow: NSView!
+    // Under the URL: opens help for letting other sessions drive this browser.
+    private var browserNavigationRow: NSView!
+    private var browserNavigationButton: NSButton!
     private var peerRow: NSView!
     private var peerShortcutRow: NSView!
     private var splitSection: NSView!
@@ -127,6 +130,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
             labelText: String(localized: "WorkgroupSessionDetail.FileCommandLabel", defaultValue: "File command:", comment: "Label for the per-file command row"),
             control: makePerFileCommandField())
         urlRow = makeLabeledRow(labelText: String(localized: "WorkgroupSessionDetail.URLLabel", defaultValue: "URL:", comment: "Label for the URL row"), control: makeURLField())
+        browserNavigationRow = makeBrowserNavigationRow()
         peerRow = makeLabeledRow(labelText: String(localized: "WorkgroupSessionDetail.NameLabel", defaultValue: "Name:", comment: "Label for the session display-name row"),
                                  control: makePeerNameField())
         peerShortcutRow = makeLabeledRow(labelText: String(localized: "WorkgroupSessionDetail.ShortcutLabel", defaultValue: "Shortcut:", comment: "Label for the peer-jump shortcut row"),
@@ -135,7 +139,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         toolbarSection = makeToolbarSection()
 
         for section in [profileRow, modeRow, commandRow, perFileCommandRow,
-                        urlRow, peerRow, peerShortcutRow,
+                        urlRow, browserNavigationRow, peerRow, peerShortcutRow,
                         splitSection, toolbarSection] as [NSView] {
             root.addSubview(section)
         }
@@ -207,8 +211,48 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
     private func makeURLField() -> NSView {
         let field = NSTextField(frame: .zero)
         field.delegate = self
+        field.placeholderString = String(localized: "WorkgroupSessionDetail.URLPlaceholder",
+                                         defaultValue: "https://example.com/ or \\(user.reviewURL)",
+                                         comment: "Placeholder for a workgroup browser session’s URL field. \\(user.reviewURL) is literal syntax naming an example user variable and must not be translated.")
+        field.toolTip = String(localized: "WorkgroupSessionDetail.URLToolTip",
+                               defaultValue: "The page a browser session opens. It may include user variables, like \\(user.reviewURL). The browser navigates whenever their values change, for example after “it2 session set-var --peer-name Browser user.reviewURL https://example.com/” runs in another member of this workgroup, where Browser is this session’s name. Only http and https URLs are loaded this way.",
+                               comment: "Tooltip for a workgroup browser session’s URL field. \\(user.reviewURL) and the it2 command are literal syntax and must not be translated.")
         urlField = field
         return field
+    }
+
+    private func makeBrowserNavigationRow() -> NSView {
+        let row = NSView(frame: .zero)
+        let button = NSButton(title: String(localized: "WorkgroupSessionDetail.BrowserNavigation",
+                                            defaultValue: "Let Other Sessions Show Pages Here…",
+                                            comment: "Button under a workgroup browser session’s URL that explains how agents and scripts in the workgroup can open pages in it"),
+                              target: self,
+                              action: #selector(browserNavigationPressed(_:)))
+        button.sizeToFit()
+        row.addSubview(button)
+        browserNavigationButton = button
+        return row
+    }
+
+    @objc private func browserNavigationPressed(_ sender: Any?) {
+        guard let session, let workgroup else {
+            return
+        }
+        WorkgroupBrowserNavigationSheetController.showWorkgroupHelp(
+            config: session,
+            workgroup: workgroup,
+            parent: view.window) { [weak self] in
+                guard let self, var updated = self.session else {
+                    return nil
+                }
+                updated.urlString = WorkgroupBrowserNavigation.defaultURLTemplate
+                self.commitUpdate(updated,
+                                  actionName: String(localized: "WorkgroupSessionDetail.ChangeURL",
+                                                     defaultValue: "Change URL",
+                                                     comment: "Undo action name for changing a session's URL"))
+                self.refresh()
+                return updated
+            }
     }
 
     private func makePeerNameField() -> NSView {
@@ -506,6 +550,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         layoutSection(commandRow, height: rowHeight)
         layoutSection(perFileCommandRow, height: rowHeight)
         layoutSection(urlRow, height: rowHeight)
+        layoutSection(browserNavigationRow, height: rowHeight)
         layoutSection(peerRow, height: rowHeight)
         layoutSection(peerShortcutRow, height: kShortcutPreferredHeight)
         layoutSection(splitSection, height: 2 * rowHeight + rowSpacing)
@@ -524,10 +569,21 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         layoutLabeledRow(commandRow)
         layoutLabeledRow(perFileCommandRow)
         layoutLabeledRow(urlRow)
+        layoutBrowserNavigationRow()
         layoutLabeledRow(peerRow)
         layoutLabeledRow(peerShortcutRow)
         layoutSplitSection()
         layoutToolbarSubsections()
+    }
+
+    // Unlabeled: the button lines up with the URL field above it.
+    private func layoutBrowserNavigationRow() {
+        guard !browserNavigationRow.isHidden else { return }
+        let size = browserNavigationButton.fittingSize
+        browserNavigationButton.frame = NSRect(x: urlRow.subviews[1].frame.minX,
+                                               y: (browserNavigationRow.bounds.height - size.height) / 2,
+                                               width: size.width,
+                                               height: size.height)
     }
 
     // Labeled row: label on left, control on right.
@@ -720,8 +776,8 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         self.workgroup = workgroup
         if session == nil || workgroup == nil {
             emptyLabel.isHidden = false
-            [profileRow, modeRow, commandRow, perFileCommandRow, urlRow, peerRow,
-             peerShortcutRow,
+            [profileRow, modeRow, commandRow, perFileCommandRow, urlRow,
+             browserNavigationRow, peerRow, peerShortcutRow,
              splitSection, toolbarSection].forEach { $0.isHidden = true }
             view.needsLayout = true
             return
@@ -748,7 +804,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         // only its toolbar items are user-editable.
         let isRoot: Bool
         if case .root = s.kind { isRoot = true } else { isRoot = false }
-        let isBrowser = resolvedProfileIsBrowser(for: s)
+        let isBrowser = s.resolvedProfileIsBrowser
         profileRow.isHidden = isRoot
         // Browser sessions have no command, so the deferred-launch
         // / prompt-overlay path that .codeReview drives doesn't apply
@@ -757,6 +813,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         commandRow.isHidden = isRoot || isBrowser
         perFileCommandRow.isHidden = !shouldShowPerFileCommandRow(for: s)
         urlRow.isHidden = isRoot || !isBrowser
+        browserNavigationRow.isHidden = urlRow.isHidden
         // Every session is a potential peer-group leader (root and any
         // non-peer host can carry a peer group), so every kind gets an
         // editable display name. Required for .peer; for the others
@@ -849,21 +906,6 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
             profilePopup.addItem(withTitle: name)
             profilePopup.lastItem?.representedObject = guid
         }
-    }
-
-    private func resolvedProfileIsBrowser(for session: iTermWorkgroupSessionConfig) -> Bool {
-        guard let model = ProfileModel.sharedInstance() else { return false }
-        let profile: [AnyHashable: Any]?
-        if let guid = session.profileGUID,
-           let p = model.bookmark(withGuid: guid) {
-            profile = p
-        } else {
-            profile = model.defaultBookmark()
-        }
-        guard let dict = profile,
-              let customCommand = dict[KEY_CUSTOM_COMMAND as String] as? String
-            else { return false }
-        return customCommand == kProfilePreferenceCommandTypeBrowserValue
     }
 
     // MARK: - Control actions
@@ -1203,7 +1245,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
     // don't drift apart.
     private func shouldShowPerFileCommandRow(for s: iTermWorkgroupSessionConfig) -> Bool {
         if case .root = s.kind { return false }
-        if resolvedProfileIsBrowser(for: s) { return false }
+        if s.resolvedProfileIsBrowser { return false }
         return s.toolbarItems.contains(where: {
             if case .changedFileSelector = $0 { return true }
             return false

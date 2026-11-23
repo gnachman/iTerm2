@@ -72,6 +72,7 @@
 - (void)runShellScript:(NSString *)script
                  shell:(NSString *)shell
                   mode:(iTermShellRunMode)mode
+           environment:(NSDictionary<NSString *, NSString *> *)environment
              withReply:(void (^)(NSData * _Nullable, NSData * _Nullable, int))reply {
     // 20s watchdog: above reallyRunShellScript's own 15s deadline, so in the
     // normal wedge case that method terminates the shell and replies first, and
@@ -84,7 +85,7 @@
             syslog(LOG_WARNING, "pidinfo wedged while running script");
             return;
         }
-        [self reallyRunShellScript:script shell:shell mode:mode completion:^(NSData *output,
+        [self reallyRunShellScript:script shell:shell mode:mode environment:environment completion:^(NSData *output,
                                                                              NSData *error,
                                                                              int status) {
             if (!completion()) {
@@ -185,7 +186,7 @@ static DrainResult DrainFDNonBlocking(int fd, NSMutableData * _Nullable sink) {
 // -1 for the >1 MB-output kill, and -2 for everything else we abort ourselves
 // (setup failure of temp dir / FIFO / launch, the 15s deadline kill, or a select
 // error), versus the shell's own >= 0 exit status on success.
-- (void)reallyRunShellScript:(NSString *)script shell:(NSString *)shell mode:(iTermShellRunMode)mode completion:(void (^)(NSData * _Nullable, NSData * _Nullable, int))completion {
+- (void)reallyRunShellScript:(NSString *)script shell:(NSString *)shell mode:(iTermShellRunMode)mode environment:(NSDictionary<NSString *, NSString *> *)environment completion:(void (^)(NSData * _Nullable, NSData * _Nullable, int))completion {
     // Unguessable, private (0700) working directory holding both the script file
     // and the output FIFO. mkdtemp gives us the unguessable name and tight perms.
     NSString *dirTemplate =
@@ -272,6 +273,12 @@ static DrainResult DrainFDNonBlocking(int fd, NSMutableData * _Nullable sink) {
             task.arguments = [iTermShellArguments argumentsForShell:shell
                                                                mode:mode
                                                          scriptPath:scriptPath];
+            if (environment.count > 0) {
+                NSMutableDictionary<NSString *, NSString *> *merged =
+                    [[[NSProcessInfo processInfo] environment] mutableCopy];
+                [merged addEntriesFromDictionary:environment];
+                task.environment = merged;
+            }
             // Null stdin: an interactive shell must not block trying to read input.
             task.standardInput = [NSFileHandle fileHandleWithNullDevice];
             NSPipe *outputPipe = [[NSPipe alloc] init];  // rc/banner noise: drained and discarded

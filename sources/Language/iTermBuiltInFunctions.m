@@ -208,6 +208,8 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
     [iTermGetStringBuiltInFunction registerBuiltInFunction];
     [iTermGetPolyModalAlertBuiltInFunction registerBuiltInFunction];
     [iTermFocusBuiltInFunction registerBuiltInFunction];
+    [iTermWorkgroupMemberBuiltInFunction registerBuiltInFunction];
+    [iTermAgentConversationBuiltInFunction registerBuiltInFunction];
     [iTermSetStatusBarComponentUnreadCountBuiltInFunction registerBuiltInFunction];
     [iTermOpenPanelBuiltInFunction registerBuiltInFunction];
     [iTermPasteBuiltInFunction registerBuiltInFunction];

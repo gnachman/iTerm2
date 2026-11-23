@@ -1886,6 +1886,8 @@ void TurnOnDebugLoggingAutomatically(void) {
     [iTermClaudeCodeOnboarding reconcileTriggersCache];
     // A tmux profile created later gets the triggers if they are installed elsewhere.
     [iTermClaudeCodeOnboarding observeTmuxProfileCreation];
+    [iTermClaudeCodeOnboarding setUpBrowserNavigation];
+    [WorkgroupBrowserNavigationSheetController installClaudeCodePresenter];
 
     // Sticky claudeCodeIntegrationCompleted flag was added after
     // 3.7.0beta1/beta2 shipped; users who installed the
