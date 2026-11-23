@@ -5056,8 +5056,11 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
             continue;
         }
         NSString *gid = [value isKindOfClass:[NSString class]] ? value : nil;
+        // gid and parent are nil for a value that is not a string (NSNull
+        // stands for no group or no parent). -isEqualToString: is declared nonnull and
+        // returns NO for nil, so a nil that passed the pointer test differs.
         if (cell.tabGroupIdentifier != gid &&
-            ![cell.tabGroupIdentifier isEqualToString:gid]) {
+            (!gid || ![cell.tabGroupIdentifier isEqualToString:gid])) {
             RLog(@"tabGroup: cell %p group %@ -> %@",
                  cell, cell.tabGroupIdentifier, gid);
             cell.tabGroupIdentifier = gid;
@@ -5067,7 +5070,7 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
         if (parentValue) {
             NSString *parent = [parentValue isKindOfClass:[NSString class]] ? parentValue : nil;
             if (cell.tabGroupParentIdentifier != parent &&
-                ![cell.tabGroupParentIdentifier isEqualToString:parent]) {
+                (!parent || ![cell.tabGroupParentIdentifier isEqualToString:parent])) {
                 RLog(@"tabGroup: cell %p parent group %@ -> %@",
                      cell, cell.tabGroupParentIdentifier, parent);
                 cell.tabGroupParentIdentifier = parent;

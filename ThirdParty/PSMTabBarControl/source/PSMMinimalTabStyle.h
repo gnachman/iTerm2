@@ -14,7 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @protocol PSMMinimalTabStyleDelegate<NSObject>
-- (NSColor *)minimalTabStyleBackgroundColor;
+// Nil when there is no color to use (PseudoTerminal has no current session
+// while a window is set up); -tabBarColor then uses black.
+- (nullable NSColor *)minimalTabStyleBackgroundColor;
 @end
 
 @interface PSMMinimalTabStyle : PSMYosemiteTabStyle
