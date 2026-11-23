@@ -36,6 +36,29 @@ Rule that follows from both: **a port commit never deletes a method because it
 appears to have no callers.** Apparent dead code is ported, and removing it is
 a separate later commit with an empty census.
 
+**Deleting apparent dead code** (the owner, 2026-11-22; decisions.md). Each
+method is judged by itself; a sample's error rate decides nothing.
+
+- When in doubt, keep it.
+- An empty census is necessary and not sufficient. For a class that
+  descends from `NSView` or any other framework class, implementing a
+  method can be all it takes to change what the framework does: AppKit
+  asks `respondsToSelector:` and behaves differently for a class that
+  answers yes. So the selector must also be one the frameworks do not know
+  about. The census already keeps a method out of "no caller found" when a
+  framework header declares the selector or a framework class implements it
+  ([phase0.md §2](phase0.md)). It does not yet see a selector that a
+  framework only refers to (an informal protocol or a private delegate
+  method that no class implements and no header declares): until a check
+  of the selector references in the frameworks' binaries exists, no method
+  of a class with a framework ancestor is deleted.
+- Read the history of the method (`git log -S` on its selector, and the
+  commits that added it and removed its last caller). Why it was added and
+  how it became orphaned is evidence: a caller removed on purpose supports
+  deletion; a method added to satisfy the system, a nib, a script or a
+  plugin does not.
+- The deletion's commit message records the evidence for each method.
+
 ## 2. The reflective-site registry
 
 Any place that turns a string into a selector or class, turns a selector into

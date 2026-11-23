@@ -73,12 +73,57 @@ Things only the owner can do, noted on 2026-11-20 at his request.
    way), and `ThirdParty/PSMTabBarControl/source/PSMTahoeTabStyle.swift:2331`
    has one `#if DEBUG` (a commented-out print) left alone because the
    tab bar is frozen.
+   **Answered (2026-11-22):** “Dormant #if DEBUG: Delete them since they
+   were never used”. Two had already gone before the answer: the pairing
+   URL hook (removed at your request, commit “Remove the Companion pairing
+   URL automation hook”) and the `discardTokensFromPTY()` assertion (made
+   live under `ITERM_DEBUG`, commit “Make the discardTokensFromPTY queue
+   assertion live; fix tests that skipped the join”). The other ten and
+   the `#if DEUG` block are deleted (unit `dormant-debug-blocks`): the
+   five browser debug autofill sites, including the “Debug Autofill
+   Fields” menu item, which was inside one of them, so Q23 item 5 is moot;
+   the `pause()` queue assertion; the three `Unpauser` sites; the browser
+   logger verbosity; and the `fatalError()` under `#if DEUG`. The object
+   code of the six files is unchanged apart from line number constants.
+   The open question the `pause()` assertion stood for is kept in bugs.md.
+   Still `#if DEBUG` in Swift: the PSMTahoeTabStyle print (frozen), one
+   test in `ModernTests/TerminalWindowAutoLayoutFloorTests.swift`
+   (ModernTests sets `DEBUG` in Development, so it compiles and runs),
+   the `#if ITERM_DEBUG || DEBUG` around `TokenExecutor.assertQueue()`
+   (live through `ITERM_DEBUG`), and fifteen sites in the Companion iOS
+   app, whose Debug configuration sets `DEBUG`, so they are live there.
 8. **Seven category methods collide with Apple's own methods of the same
    name** (found 2026-11-20 by comparing the app's categories with the
    methods the frameworks implement at run time on macOS 27.0). A
    category method with the same selector replaces or is replaced by the
    other for every instance in the process; which one wins depends on
    load order. Rename each with an `it_` prefix?
+   **ANSWERED 2026-11-22**, in the owner's words: “Colliding category
+   methods: rename to it_”. Done for the seven (unit
+   `category-collisions`, kind `fix`): each is now `it_<name>`, with every
+   caller changed, and
+   `NSStringITermCategoryTests.testCollidingSelectorsAreNotImplementedOutsideTheSystem`
+   fails if code outside the system's images implements one of the old
+   selectors again. Before the rename the app's method won for the app's
+   callers, so they see no change: every framework that implements these
+   selectors and that the app links at launch (CoreHandwriting,
+   libmecabra, AnnotationKit, CoreFoundation, PencilKit, PDFKit) is in
+   the shared cache, and a category in an image outside it is attached
+   after them and wins. A scratch program that links what the app links
+   showed that, and showed that a framework loaded later with `dlopen`
+   wins over the app's method from then on. Apple's frameworks now get
+   their own methods back; libmecabra's `firstCharacter` returns an
+   object where the app's returned a `UTF32Char`. A scan of every
+   framework on macOS 27.0 found more implementers that the app does not
+   load at launch: `-[NSArray objectPassingTest:]` in OpusFoundation and
+   `-[NSImage CGImage]` in MediaPlayer, SiriUI, UXKit, GameCenterUICore
+   and IMSharedUI. For the inputs tried, with all of them loaded together
+   the winning one behaves like the app's; one of MediaPlayer's two differs
+   (it returns the largest representation at 1x) and could have won had
+   MediaPlayer been loaded alone, which the app never does. After the
+   rename the app's callers get the app's method whatever is loaded. `it_lastComposedCharacter`
+   has no caller: it could be deleted. Still open, below, are the milder
+   five.
    - `-[NSString lastComposedCharacter]` (`NSStringITerm.m:1900`) against
      a category in the private CoreHandwriting framework, which AVKit,
      Quartz and QuickLookUI load. The two DIFFER: for a half-width
@@ -98,6 +143,43 @@ Things only the owner can do, noted on 2026-11-20 at his request.
    insertSubview:atIndex:]`, `-[NSView snapshot]` (the last against
    `NSRemoteView`, `SCNView` and `SKView`). Swift `@objc` extensions on
    framework classes were not scanned yet.
+   **ANSWERED 2026-11-22: “I don't want to rename those”, then “Actually, rename the NSView ones”.** The three `NSView` methods are renamed to `it_`; the two `NSObject` methods keep their names (the earlier answer covered the seven). Done in unit `category-collisions-nsview`, with
+   `SessionView`'s override of `-insertSubview:atIndex:`. Views no longer
+   answer the three old selectors, so the frameworks were searched for
+   anything that sends them to a view or tests a view for them: all 85
+   system libraries the app links were loaded (982 images) and their code
+   scanned. None does. The one sender of `insertSubview:atIndex:` is a
+   SwiftUICore helper reached only on SwiftUI's UIKit path; AppKit's send
+   of `animateWithDuration:animations:completion:` goes to its own
+   `_NSUIAnimator`; every `snapshot` send goes to a data source, a layout
+   or a model object (one site is attributed by its surroundings, not by
+   name). Not covered: images loaded later on demand (input methods,
+   Services, accessibility bundles). The scan
+   of every framework found that three of these also collide on `NSView`
+   itself, in frameworks the app does not load at launch: `+animateWithDuration:animations:completion:`
+   in GameCenterUICore, `-insertSubview:atIndex:` in UXKit and
+   GameCenterUICore, `-snapshot` in OpusFoundation. If one of those is
+   ever loaded, its method replaces the app's for the app's callers too.
+   What a rename would touch, from the code database (499 of its units
+   were stale, so the counts may be off by a few), with no caller in
+   `ThirdParty/` (the tab bar included), in xibs, or in strings:
+   - `+[NSObject object:isEqualToObject:]`: 91 Objective-C sends in 44
+     files plus 2 Swift calls (`SortedArray.swift`,
+     `iTermProfilePreferenceObserver.swift`). Mechanical.
+   - `-[NSObject performBlock:afterDelay:]`: no caller at all (only the
+     example in the header comment). Could be deleted instead.
+   - `+[NSView animateWithDuration:animations:completion:]`: 11
+     Objective-C sends in 8 files (one in `NSView+iTerm.m` itself) and 1
+     Swift call (`CommandInfoViewController.swift`).
+   - `-[NSView insertSubview:atIndex:]`: 19 Objective-C sends in 9 files
+     and 2 Swift calls (`PortholeContainerView.swift`); `SessionView`
+     overrides it and calls `super`, so its override is renamed with it.
+   - `-[NSView snapshot]`: 6 sends bind to it (`NSColor+iTerm.m`,
+     `iTermStatusBarSetupDestinationCollectionViewController.m`,
+     `iTermStatusBarSetupViewController.m`, `PseudoTerminal.m`, and two
+     on a `SessionView` in `PTYSession.m`). `-[PTYSession snapshot]` and
+     `-[iTermTemporaryDoubleBufferedGridController snapshot]` are other
+     classes' methods of the same name and stay.
 9. **`TaskIOMonitorCharacterizationTests.testStress` failed once** in a
    parallel full-suite run at a load average over 100, and passed when
    its class was rerun alone. Not disabled yet; if it fails again it
@@ -204,39 +286,81 @@ except where an item says it waits.
    quiet candidate and a rerun before a regression counts. Please confirm
    or change these. Where the baseline file lives was answered the same
    day (item 18).
-4. **The fast test tier** ([test-tiers.md](test-tiers.md)). The 10 second
+4. **The fast test tier** ([test-tiers.md](test-tiers.md)). ANSWERED
+   2026-11-22 for the ceiling: “Sure, median is fine”. The malloc settings
+   were not answered and stay as they are. As asked: The 10 second
    ceiling is reported, not enforced, because 46 fast tests exceeded it in
    single runs on a loaded machine while their medians are under a second:
    judge by median, or fix those tests first? Should the fast tier also drop
    `MallocScribble`, `MallocGuardEdges` and `NSZombieEnabled`? The slow tier
    is derived from address sanitizer medians and is larger than needed;
    `TokenExecutorPermitTests` loses 20 of its 23 tests to it.
-5. **The browser debug autofill tool.** Its JavaScript function
+5. **The browser debug autofill tool.** ANSWERED 2026-11-22: “Leave it”.
+   As asked: Its JavaScript function
    `window.debugAutofillFields` was deleted when `autofill-detector.js` was
    split, so the menu item would do nothing. Recommended: leave it dormant.
    Restoring it means bringing back about 100 lines of JavaScript and can
-   only be checked by hand.
-6. **DECRQCRA checksums.** The test for iTerm2's private codes in the
-   checksum could never be true, so the right half of a wide character and
-   tab fillers were summed. A fix that skips them changes the checksums of
-   screens with wide characters or tabs (DECRQCRA is off by default). It is
-   in review with the other terminal fixes; say if checksums must not change.
-7. **Tab forward with `tabsWrapAround` on** is capped at 65535 like REP, which
-   is still a stall of several seconds. Proposed: a lower cap in that mode,
-   such as the screen's cell count.
-8. **Terminal fixes that change what users see**, written and parked
-   (`tmp/parked/integer-findings-fixes-4b.patch`, bugs.md): inline images
-   too tall or too wide are shrunk in proportion instead of widened or
-   clipped; DECCRA's destination honors origin mode. Approve, and the patch
-   is repaired (its CHT change has a loop on double-width lines) and landed.
-   Already landed, for your information: kitty `d=q` deletes take 1-based
-   coordinates, as the protocol says.
+   only be checked by hand. **Superseded (2026-11-22):** the tool, menu
+   item included, was deleted under item 7 of “For the owner, when back at
+   the computer” (“Delete them since they were never used”).
+6. **DECRQCRA checksums.** ANSWERED 2026-11-22: “Fix it”. The fix had
+   already landed on 2026-11-21 in unit `integer-findings-fixes-3b`, with
+   `CSIHugeCountTests.testChecksumSkipsPrivateCodes` (shown failing again
+   on 2026-11-22 against the old code: 20017 instead of 20013 for a wide
+   character, 111 instead of 97 for a tab and an X). Unit `terminal-fixes`
+   also fixed the report's format (eight hex digits for a checksum of
+   0x8000 or more) and added a release note. Compared with xterm: its
+   manual says the default checksum matches DEC's terminals (negated,
+   including video attributes, omitting blanks, cell values masked), which
+   iTerm2's plain sum of characters does not do either before or after
+   this fix; how xterm treats the right half of a wide character and cells
+   a tab skipped was not established from its documentation. Its control
+   sequence reference gives the reply's digits as 0-9 and A-F, and iTerm2
+   sends lowercase; not changed. What was asked, as it was: the test for
+   iTerm2's private codes in the checksum could never be true, so the
+   right half of a wide character and tab fillers were summed. A fix that
+   skips them changes the checksums of screens with wide characters or
+   tabs (DECRQCRA is off by default). It is in review with the other
+   terminal fixes; say if checksums must not change.
+7. **Tab forward with `tabsWrapAround` on.** ANSWERED 2026-11-22: “I don't
+   believe it can stall for seconds”. Measured the same day in the
+   ModernTests build (Development, address sanitizer on, on a busy
+   machine): `CSI 65535 I` with `tabsWrapAround` on takes 0.46 s at 80x25,
+   0.49 s at 200x60 and 0.66 s at 10x3, pushing 6,529, 2,562 and 32,765
+   lines off the top (into scrollback up to its limit). So the stall of
+   several seconds was not true, even under the sanitizer; CHT is left as
+   it is (bugs.md, “CHT and CBT”). What was asked, as
+   it was: tab forward with `tabsWrapAround` on is capped at 65535 like
+   REP, which is still a stall of several seconds. Proposed: a lower cap in
+   that mode, such as the screen's cell count.
+8. **Terminal fixes that change what users see.** ANSWERED 2026-11-22:
+   “Fix”. Fixed in unit `terminal-fixes`, ported by hand from the parked
+   patch with a test for each: an inline image more than 255 rows tall is
+   narrowed in proportion instead of widened, an inline image too wide for
+   the rest of the line is shrunk to the columns left instead of keeping
+   the screen's width and being clipped, and DECCRA's destination honors
+   origin mode. The patch's CHT change was not landed (item 7). What was
+   asked, as it was: terminal fixes that change what users see, written
+   and parked (`tmp/parked/integer-findings-fixes-4b.patch`, bugs.md):
+   inline images too tall or too wide are shrunk in proportion instead of
+   widened or clipped; DECCRA's destination honors origin mode. Approve,
+   and the patch is repaired (its CHT change has a loop on double-width
+   lines) and landed. Already landed, for your information: kitty `d=q`
+   deletes take 1-based coordinates, as the protocol says.
 9. **Kitty `t=f`** lets program output, including from a remote host, make
    iTerm2 read any regular file you can read into an image decoder, by the
    protocol's design; three of its denylist entries never match and its
    error replies reveal which paths exist (bugs.md). Recommended: fix the
-   denylist. Restricting it further is your decision.
-10. **The fake screen delegate in `PerformanceTests`** gets its protocol
+   denylist. Restricting it further is your decision. ANSWERED 2026-11-22:
+   “Fix”. Done in unit `kitty-file-denylist`: the denylist matches
+   `/etc`, `/var/db` and `/var/root` however the path is spelled, and
+   every `t=f` failure gets the one reply the kitty specification asks
+   for. Restricting `t=f` further (an allowlist, a prompt, turning it off)
+   was not decided and was not done.
+10. **The fake screen delegate in `PerformanceTests`** (ANSWERED
+   2026-11-22: “I don't care, you decide”; decided by the orchestrator:
+   it stays as it is, with run-time conformance, so no app class becomes
+   public for a test) gets its protocol
    conformance at run time, because a release build has no testability and
    three delegate methods take internal Swift classes. The alternative is to
    make those three classes public.
@@ -251,7 +375,10 @@ except where an item says it waits.
     such tests until this is triaged as a wrong annotation or a bug. May
     it be fixed as an exception to "log, do not fix", since it blocks
     ports?
-13. **Thread assertions in a port** (added 2026-11-21).
+13. **Thread assertions in a port** (added 2026-11-21; ANSWERED
+    2026-11-22: “Add assertions generously because the code could change
+    later.” The rule is not narrowed: a port adds the assertion wherever
+    the thread is known).
     [concurrency.md §9](concurrency.md) adds a beta assertion at the entry
     of every ported method whose thread is known; README.md §4 allows it
     as the one addition to a translation. You called it appropriate where
@@ -280,7 +407,10 @@ except where an item says it waits.
     figure that out better than me usually”); recorded in the dossier and
     checked by the reviewer ([lifecycle.md §3](lifecycle.md)).
 
-16. **The census's error bar** (added 2026-11-21). 743 in-scope methods
+16. **The census's error bar** (added 2026-11-21; ANSWERED 2026-11-22:
+    “you can't delete anything until you're sure it's really dead code”.
+    A sample's error bar is not enough: a method is deleted only when it,
+    itself, has been shown to have no caller). 743 in-scope methods
     have no caller found. Two hand-checked samples (20 and 40 rows) found
     one missed mechanism, since fixed (protocols of prebuilt frameworks),
     and none after. That bounds the miss rate at about 7.5%, about 56

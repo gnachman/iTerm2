@@ -456,51 +456,53 @@ or a crash from program output.
   tests.
 - **Found:** 2026-11-20, unit `phase0-integer-discovery-2`.
 
-## CHT and CBT loop once per count, so a huge count freezes the app
+## CHT and CBT: the huge-count freeze is fixed; a test limit remains
 
-- **Where:** `sources/VT100/VT100Terminal.m`, `case VT100CSI_CHT:` (line
-  2131, `for (int i = 0; i < token.csi->p[0]; i++)` calling
-  `terminalAppendTabAtCursor:`), and
-  `-[VT100ScreenMutableState backTab:]` (`VT100ScreenMutableState.m:3105`),
-  reached from `case ANSICSI_CBT:` (`VT100Terminal.m:2753`).
-- **What:** `CSI n I` and `CSI n Z` run their loop n times, and n can be
-  2147483639. Once the cursor reaches the last tab stop (or column 0 for
-  CBT) every further pass does nothing, but the loop keeps going. REP is
-  capped at 65535 (`VT100Terminal.m:2625`); these are not.
-  - The loop runs inside one token, on the session's mutation queue, not on
-    the main thread.
-  - The main thread's next join with that session
-    (`-[TokenExecutor whilePaused:onExecutorQueue:]`, TokenExecutor.swift:707,
-    used for redraws and input) waits on a semaphore with no timeout until
-    the queue reaches the join, which happens only between tokens. So the
-    whole app's UI freezes until the loop ends, not just the session. With
-    Maximize Throughput on (the shared queue), every session stops as well.
-    This is by reading the join code; the freeze was not observed in the
-    app.
-  - Measured in the Development test build with the address sanitizer
-    (`tools/run_tests.expect`, a temporary test, 100,000 and 400,000
-    counts): CHT about 150 ns per count with the cursor already at the last
-    tab stop, CBT about 14 ns per count with the cursor at column 0. So
-    `CSI 2147483639 I` holds the queue for about 320 seconds and
-    `CSI 2147483639 Z` for about 30 seconds in that build. A Deployment
-    build is faster; it was not measured.
-  - With the advanced setting `tabsWrapAround` on, each CHT pass at the
-    right margin wraps to the next line and may scroll, so it is far slower
-    per count and adds lines to the scrollback. Not measured.
-  - In Development builds (and in ModernTests) the execution permits health
-    check calls `crashInDebugBuilds` once a holder is silent for 5 seconds,
-    so they crash instead of freezing (seen in the test host).
-    `crashInDebugBuilds` is under `#if ITERM_DEBUG`
-    (`ExecutionPermits.swift:267-271`), which Swift gets only in
-    iTerm2SharedARC's Development configuration; Beta, Nightly and
-    Deployment builds log and freeze.
-- **Reproduce:** `printf '\e[2147483639I'` in a session. In the test host:
-  the CHT and CBT huge counts that
-  `ModernTests/StressStreamReplayTests.swift` leaves out
-  (`countIsSafeForTabLoops`).
-- **Meanwhile:** preserved. A `fix` commit, test first, caps the count (for
-  example at the screen width, since no tab move can go farther). Until
-  then `StressStreamReplayTests` sends CHT and CBT only counts up to 65536.
+- **Where:** `sources/VT100/VT100Terminal.m`, `case VT100CSI_CHT:` (the loop
+  calling `terminalAppendTabAtCursor:`), and
+  `-[VT100ScreenMutableState backTab:]`, reached from `case ANSICSI_CBT:`.
+- **What:** as found, `CSI n I` and `CSI n Z` ran their loop n times, and n
+  can be 2147483639; once the cursor reached the last tab stop (or column 0
+  for CBT) every further pass did nothing. The loop runs inside one token on
+  the session's mutation queue, and the main thread's next join with that
+  session waits for it, so the whole app's UI froze until it ended (by
+  reading; measured in the Development test build with the address
+  sanitizer at about 320 seconds for `CSI 2147483639 I` and 30 seconds for
+  `CSI 2147483639 Z`).
+  - Now bounded (unit `integer-findings-fixes-2`): CBT stops at column 0,
+    and CHT is capped at the screen width, or at 65535 (as REP is) when the
+    advanced setting `tabsWrapAround` is on, because then every tab moves
+    the cursor.
+  - `tabsWrapAround` with the 65535 cap, measured 2026-11-22 with a
+    temporary test (not committed) in the ModernTests build:
+    Development configuration, address sanitizer on, with the test plan's
+    MallocScribble, MallocGuardEdges, MallocStackLogging and NSZombieEnabled,
+    on a machine with a load average of about 20 to 30. `CSI 65535 I` on an
+    empty screen, one token: 80x25 0.46 s, 200x60 0.49 s, 10x3 (two stops a
+    line, the most wrapping measured) 0.66 s. Sent as sixteen tokens of 4096
+    or fewer, the totals were 0.50 s, 0.50 s and 0.70 s, no token over
+    0.06 s. Each run pushed lines off the top as the tabs wrapped: 6,529
+    lines at 80x25, 2,562 at 200x60, 32,765 at 10x3; with a scrollback limit
+    of 1,000 lines, 1,000 stayed in scrollback and the rest were dropped. A
+    Deployment build was not measured; without the sanitizer it is
+    expected to be faster, not slower. So the earlier statement here and in owner-queue.md Q23 item 7,
+    "a stall of several seconds", is false, also under the sanitizer, and so
+    is the old comment in `CSIHugeCountTests.testForwardTabWithWraparound`
+    that 65535 wrapping tabs take more than five seconds in a test build
+    (corrected in unit `terminal-fixes`).
+- **Reproduce:** `printf '\e[2147483639I'` in a session; it now runs at
+  most a screen width of tabs (65535 with `tabsWrapAround`).
+- **Meanwhile:** the owner does not believe the wrap-around stall exists
+  (owner-queue.md Q23 item 7) and the measurement agrees; CHT is left as
+  it is. The parked patch `tmp/parked/integer-findings-fixes-4b.patch`
+  (owner's checkout, not committed) had a CHT change that skipped whole
+  lines of wrapping tabs; it was not landed, because its review found it
+  can loop about 2^31 times on a double-width line (a tab there neither
+  moves nor wraps). The patch's other fixes landed in unit
+  `terminal-fixes`. Still open: `ModernTests/StressStreamReplayTests.swift` sends CHT
+  and CBT only counts up to 65536 (`countIsSafeForTabLoops`), a limit the
+  bounded loops no longer need; widening it is a test change nobody has
+  made.
 - **Found:** 2026-11-20, unit `phase0-integer-discovery-2`.
 
 ## Execution permits health check wraps an unsigned difference and crashes Development builds
@@ -655,32 +657,6 @@ or a crash from program output.
   tolerate nil.
 - **Found:** 2026-11-20, review of unit `nullability-n7-expression-language`.
 
-## Terminal protocol fixes written but not landed (parked patch)
-
-- **Where:** `tmp/parked/integer-findings-fixes-4b.patch` in the owner's
-  checkout (not committed), against `sources/VT100/VT100Output.m`,
-  `VT100Terminal.m`, `VT100TerminalDelegate.h`,
-  `sources/VT100Screen/VT100ScreenMutableState.{h,m}`,
-  `VT100ScreenMutableState+TerminalDelegate.m`,
-  `sources/InlineImages/VT100InlineImageHelper.m` and two test files.
-- **What:** four bugs the patch fixes, each with a test:
-  - The DECRQCRA report (`VT100Output.m`, `(short)checksum` with `%04x`)
-    prints eight hex digits for a checksum of 0x8000 or more.
-  - DECCRA's destination ignores origin mode while its source rectangle
-    honors it.
-  - An inline image capped at 255 rows has its width multiplied by
-    height / 255 instead of shrunk (`width=10;height=510` gives 20 by 255),
-    and an image too wide for the rest of the line keeps the whole screen's
-    width and is clipped.
-  - CHT (`CSI n I`) with the `tabsWrapAround` advanced setting on runs up to
-    65535 wrapping tabs, a stall of several seconds.
-- **Meanwhile:** not landed. The review found that the patch's CHT change can
-  loop about 2^31 times on a double-width line (a tab there neither moves
-  nor wraps), and that its release note overstates the image fix. The image
-  sizing and DECCRA changes are visible to users and wait for the owner
-  (owner-queue.md Q23). Fix the loop before landing any of it.
-- **Found:** 2026-11-21, unit `integer-findings-fixes-4` and its review.
-
 ## Kitty graphics: smaller problems left after the hardening
 
 - **Where:** `sources/InlineImages/KittyImageController.swift`.
@@ -693,19 +669,34 @@ or a crash from program output.
     `open`, and the session's thread with it, until a writer appears. Only
     a local program can arrange this. `O_NONBLOCK` would fix it.
   - `t=f` reads any regular file the user can read except a denylist, by the
-    protocol's design. Three denylist entries (`/private/etc`,
-    `/private/var/db`, `/private/var/root`) can never match, because the
-    path is resolved first and resolution strips `/private`. The error
-    replies distinguish a missing file, a non-file, a denylisted path, a
-    file that is not an image and a file over the cap, so program output,
-    including from a remote host, can probe which paths exist.
+    protocol's design. The owner did not decide to restrict it further
+    (owner-queue.md Q23 item 9). Its two defects, three denylist entries
+    that never matched and error replies that told which paths exist, were
+    fixed on 2026-11-22 (unit `kitty-file-denylist`): the denylist matches
+    after resolution, and every `t=f` failure gets the specification's one
+    reply, `EBADF:Failed to read image file`.
+  - Still distinguishable after that fix, by timing only: a missing,
+    denied or oversized path fails before any read, while a readable file
+    that is not an image is read in full (up to the cap) before it fails.
+  - `t=f` checks the resolved path and then reads by that path, so a local
+    program that swaps a symlink between the check and the read can make
+    it read a denied file. A hard link to a denied file, made by a local
+    program, is not caught either. Both need a local program that can
+    already read the file.
+  - `t=t` and `t=s` replies still differ by cause (`t=t`: outside the
+    temporary directory, no `tty-graphics-protocol` in the name, cannot
+    open, not a regular file, over the cap; `t=s`: the system's error
+    text), so they reveal whether a temporary file or shared memory object
+    of a given name exists. Their names are confined to temporary files
+    and shared memory.
   - The `S=` and `O=` keys are parsed and ignored.
   - An APC string is cut at 1 MiB by the parser and the rest of the payload
     is then printed as text.
-- **Meanwhile:** left as they are. The denylist and the reply for abandoned
-  transmissions are small fixes; restricting `t=f` is the owner's decision.
+- **Meanwhile:** left as they are. The reply for abandoned transmissions is
+  a small fix.
 - **Found:** 2026-11-21, units `integer-findings-fixes-3` and `-4` and their
-  reviews.
+  reviews; the remaining `t=f`, `t=t` and `t=s` items on 2026-11-22, unit
+  `kitty-file-denylist`.
 
 ## DCH right after printing in the last column deletes nothing
 
@@ -1048,3 +1039,44 @@ or a crash from program output.
   The fix is to drop `null_resettable` from `KNOWN_ATTRIBUTES`, with a
   fixture property that shows the line first.
 - **Found:** 2026-11-21, unit `phase0-class-state-table`.
+
+## A paused side effect may change mutation-queue state from the main queue (unconfirmed)
+
+- **Where:** `sources/VT100/TokenExecutor.swift`, `TokenExecutorImpl.pause()`,
+  reached from `-[VT100ScreenMutableState setColor:forKey:]` through
+  `-mutateColorMap:` and `-addPausedNoDelegateSideEffect:name:` (see
+  `terminalSetColorTableEntryAtIndex:color:`).
+- **What:** a paused side effect running on the main queue outside a join
+  calls `pause()`. `pause()` itself is safe on any queue. The open question
+  is that such a side effect changes mutation-queue state while
+  high-priority tasks can still run there. A queue assertion in `pause()`
+  under `#if DEBUG` was the witness; Swift's `DEBUG` is set in no
+  configuration of iTerm2SharedARC, so it never compiled. When it was tried
+  under `ITERM_DEBUG` (2026-11-20), it and the `discardTokensFromPTY()`
+  assertion fired in four tests between them, and it fired from that app
+  path. The owner had the dormant blocks deleted on 2026-11-22 (owner
+  queue, item 7 of “For the owner, when back at the computer”), so the
+  witness is gone; this entry keeps the question.
+- **Reproduce:** put `iTermGCD.assertSafe(forMutationQueue: queue)` back at
+  the top of `TokenExecutorImpl.pause()` and run the `TokenExecutor` and
+  screen test classes in a Development build.
+- **Meanwhile:** left as it is. Nobody has shown a race; whether it is a
+  real threading violation or a wrong assertion is undecided.
+- **Found:** 2026-11-20, unit `swift-build-conditions`; witness deleted
+  2026-11-22, unit `dormant-debug-blocks`.
+
+## DECCRA differs from xterm in three ways
+
+- **Where:** `sources/VT100/VT100Terminal.m` (`executeDECCRA:`) and
+  `-copyFrom:to:` in `sources/VT100Screen/VT100ScreenMutableState.m`.
+- **What:** read from xterm's source (`charproc.c`, `screen.c`) during
+  the review of unit `terminal-fixes`; not run against xterm.
+  - In origin mode xterm clips the copy to the margins. iTerm2 clips only
+    to the screen.
+  - xterm clamps a destination beyond the region to the last row or
+    column. iTerm2 drops the copy.
+  - xterm takes an omitted destination row or column as 1, as the VT510
+    manual says. iTerm2 does nothing when either is omitted.
+- **Meanwhile:** left as they are. The destination's offset by the margins
+  in origin mode, fixed in `terminal-fixes`, matches xterm.
+- **Found:** 2026-11-22, review of unit `terminal-fixes`.

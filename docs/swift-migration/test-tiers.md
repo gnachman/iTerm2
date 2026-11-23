@@ -303,7 +303,7 @@ run of `fast_tests.sh` is in section 1.
   `StatusPriorityPopoverLayoutTests/testNotifyHeaderFits`, 78 s against a
   median of 0.2 s; bugs.md has an entry for that class under load).
 
-**Open question for the owner: the ceiling.** test-speed.md section 2 says a
+**The ceiling: answered.** The owner, 2026-11-22: “Sure, median is fine”. The ceiling is judged on a test's median over several runs, not run by run (decisions.md); enforcing that in `fast_tests.sh` is not built yet. As asked:  test-speed.md section 2 says a
 test over the 10-second ceiling fails the gate. `fast_tests.sh` reports such
 tests but does not fail the run on them, because 46 fast-tier tests took 10
 seconds or more in a single loaded address sanitizer run while their medians
