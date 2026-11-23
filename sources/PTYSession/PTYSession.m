@@ -20049,21 +20049,12 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
 // Convert a title into a string that is safe to transmit in a report.
 // The goal is to make it hard for an attacker to issue a report that could be part of a command.
 - (NSString *)reportSafeTitle:(NSString *)unsafeTitle {
-    // Strip every control character (CR, LF, ESC, and also ^O and other C0/C1
-    // controls that the shell would act on if a report reached its input), plus
-    // the shell metacharacters | and ;. The composed title can include bytes from
-    // a user variable (SetUserVar accepts base64, so any byte), so limiting this
-    // to a handful of characters is not enough.
-    NSMutableCharacterSet *unsafeSet = [[NSString it_reportUnsafeControlCharacterSet] mutableCopy];
-    [unsafeSet addCharactersInString:@"|;"];
-    NSString *result = unsafeTitle;
-    NSRange range;
-    range = [result rangeOfCharacterFromSet:unsafeSet];
-    while (range.location != NSNotFound) {
-        result = [result stringByReplacingCharactersInRange:range withString:@" "];
-        range = [result rangeOfCharacterFromSet:unsafeSet];
-    }
-    return result;
+    // Strip every character the shell would act on if a report reached its input:
+    // control characters (CR, LF, ESC, ^O and other C0/C1 controls) and shell
+    // metacharacters. The composed title can include bytes from a user variable
+    // (SetUserVar accepts base64, so any byte), so this uses the same shared
+    // sanitizer as the other report paths instead of a local list.
+    return [unsafeTitle stringByReplacingReportUnsafeCharactersWithSpace];
 }
 
 - (BOOL)allowTitleReporting {

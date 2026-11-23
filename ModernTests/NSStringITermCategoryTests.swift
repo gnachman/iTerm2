@@ -660,4 +660,47 @@ final class NSStringITermCategoryTests: XCTestCase {
         XCTAssertFalse(set.contains(UnicodeScalar(0x200D)!))
         XCTAssertFalse(set.contains(UnicodeScalar(0xE0001)!))
     }
+
+    // MARK: - stringByReplacingReportUnsafeCharactersWithSpace
+
+    private func reportSafe(_ string: String) -> String {
+        return (string as NSString).replacingReportUnsafeCharactersWithSpace()
+    }
+
+    // A report is written to the PTY input stream. Control characters alone are
+    // not enough to keep it inert: a metacharacter splits the line into extra
+    // commands once the user submits it.
+    func testReportUnsafe_ReplacesControlCharactersAndShellMetacharacters() {
+        XCTAssertEqual(reportSafe("a\nb;c|d&e$f`g"), "a b c d e f g")
+        XCTAssertEqual(reportSafe("a(b)c{d}e[f]g<h>i"), "a b c d e f g h i")
+        XCTAssertEqual(reportSafe("*?~!#"), "     ")
+        XCTAssertEqual(reportSafe("\\\"'"), "   ")
+    }
+
+    // Regression test for the Kitty file-transmit error response: the offending
+    // file name used to be echoed verbatim, so a name containing a newline ran a
+    // command and a name containing a semicolon ran one as soon as the user
+    // pressed return.
+    func testReportUnsafe_KittyFileTransmitErrorShape() {
+        let input = "EBADF:The file “x;touch pwn;z” couldn’t be opened because there is no such file."
+        let output = reportSafe(input)
+        XCTAssertEqual(output, "EBADF:The file “x touch pwn z” couldn’t be opened because there is no such file.")
+        XCTAssertFalse(output.contains(";"))
+        XCTAssertFalse(output.contains("\n"))
+    }
+
+    // Ordinary text, including paths, must survive so error messages stay useful.
+    func testReportUnsafe_PlainTextUnchanged() {
+        XCTAssertEqual(reportSafe("plain text"), "plain text")
+        XCTAssertEqual(reportSafe("/tmp/x and 100% of it"), "/tmp/x and 100% of it")
+    }
+
+    func testReportUnsafeShellMetacharacterSet() {
+        let set = NSString.it_reportUnsafeShellMetacharacterSet()
+        for scalar in [";", "|", "&", "$", "`", "\\", "\"", "'", "(", ")", "{", "}", "[", "]", "<", ">", "*", "?", "~", "!", "#"] {
+            XCTAssertTrue(set.contains(UnicodeScalar(scalar)!), "expected \(scalar) to be report-unsafe")
+        }
+        XCTAssertFalse(set.contains(UnicodeScalar("/")!))
+        XCTAssertFalse(set.contains(UnicodeScalar(" ")!))
+    }
 }

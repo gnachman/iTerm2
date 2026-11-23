@@ -991,14 +991,18 @@ class KittyImageController: NSObject {
                         query: Bool) -> String? {
         DLog("handle(fileURL) BEGIN - id=\(command.identifier) (0x\(String(command.identifier, radix: 16))) fileURL=\(fileURL.path)")
         do {
+            // Check the path before touching the file system. filenameIsSafe()
+            // used to run after resourceValues(), so it never ran at all for
+            // paths that do not exist, which are exactly the paths an attacker
+            // sends.
+            guard filenameIsSafe(fileURL: fileURL) else {
+                RLog("handle(fileURL): ERROR - unsafe filename")
+                return "EBADF:Invalid path"
+            }
             let values = try fileURL.resourceValues(forKeys: [.isRegularFileKey])
             guard values.isRegularFile == true else {
                 DLog("handle(fileURL): ERROR - not a regular file")
                 return "EBADF:Not a file"
-            }
-            guard filenameIsSafe(fileURL: fileURL) else {
-                RLog("handle(fileURL): ERROR - unsafe filename")
-                return "EBADF:Invalid path"
             }
             if let size = try fileURL.resourceValues(forKeys: [.fileSizeKey]).fileSize,
                size > maximumDataSize {
@@ -1009,8 +1013,13 @@ class KittyImageController: NSObject {
             DLog("handle(fileURL): read \(content.count) bytes from file")
             return handle(command: command, data: content, query: query)
         } catch {
+            // Do not echo the offending path. This string is embedded in a
+            // response written to the PTY's input stream, and
+            // NSError.localizedDescription preserves the path verbatim
+            // (including a newline in a crafted file name), which is how a
+            // file could become a command. Details stay in the log.
             RLog("handle(fileURL): ERROR - \(error.localizedDescription)")
-            return "EBADF:\(error.localizedDescription)"
+            return "EBADF:Can't open file"
         }
     }
 
@@ -1097,17 +1106,18 @@ class KittyImageController: NSObject {
 
         return data
     }
-    // Removes control characters from a free-text status/error message before it
-    // is embedded in a Kitty graphics protocol response. The response is written
-    // to the PTY's input stream, so any attacker-influenced message (notably
-    // error strings derived from NSError.localizedDescription, which can contain
-    // a literal newline when the offending file path does) must not carry a
-    // control character: a raw newline would be delivered to the shell as if
-    // typed, allowing command injection. Uses the shared terminal-report
-    // sanitizer so the Kitty image, Kitty drag-and-drop, and title-report paths
-    // cannot drift apart.
+    // Removes anything from a free-text status/error message that could make the
+    // response act like terminal input. The response is written to the PTY's
+    // input stream, so attacker-influenced text must not carry a control
+    // character (a newline would end the line and run it) and must not carry a
+    // shell metacharacter either: a report that lands on the shell's command
+    // line with a ";" in it is split into separate commands as soon as the user
+    // presses return, which is a command injection even though the response is
+    // no longer self-executing. Uses the shared terminal-report sanitizer so the
+    // Kitty image, Kitty drag-and-drop, and title-report paths cannot drift
+    // apart.
     private static func sanitizedResponseMessage(_ string: String) -> String {
-        return (string as NSString).replacingControlCharactersWithSpace()
+        return (string as NSString).replacingReportUnsafeCharactersWithSpace()
     }
 
     func respondToTransmit(_ imageTransmission: KittyImageCommand.ImageTransmission,

@@ -1793,6 +1793,46 @@ static BOOL iTermIsReportUnsafeControlCharacter(unichar c) {
     return [[NSString alloc] initWithCharactersNoCopy:buffer length:length freeWhenDone:YES];
 }
 
++ (NSCharacterSet *)it_reportUnsafeShellMetacharacterSet {
+    // A report is written to the PTY input stream, i.e. to whatever is reading
+    // the terminal, which is usually a shell. Replacing control characters keeps
+    // a report from ending the line, but it does not keep a report from being
+    // *split* into several commands: a report that lands on the command line
+    // with a ";" in it runs the attacker's text as its own command as soon as
+    // the user presses return. None of these characters is meaningful in a
+    // status or error string, so they become spaces.
+    static NSCharacterSet *set;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        const unichar characters[] = {
+            ';', '|', '&', '$', '`', '\\', '"', '\'',
+            '(', ')', '{', '}', '[', ']', '<', '>',
+            '*', '?', '~', '!', '#'
+        };
+        NSString *string = [NSString stringWithCharacters:characters
+                                                   length:sizeof(characters) / sizeof(unichar)];
+        set = [NSCharacterSet characterSetWithCharactersInString:string];
+    });
+    return set;
+}
+
+- (NSString *)stringByReplacingReportUnsafeCharactersWithSpace {
+    NSString *result = [self stringByReplacingControlCharactersWithSpace];
+    NSCharacterSet *metacharacters = [NSString it_reportUnsafeShellMetacharacterSet];
+    NSRange range = [result rangeOfCharacterFromSet:metacharacters];
+    if (range.location == NSNotFound) {
+        return result;
+    }
+    // Every character in the set is in the BMP and is not part of a surrogate
+    // pair, so replacing one UTF-16 unit with one unit keeps every index stable.
+    NSMutableString *mutable = [result mutableCopy];
+    while (range.location != NSNotFound) {
+        [mutable replaceCharactersInRange:range withString:@" "];
+        range = [mutable rangeOfCharacterFromSet:metacharacters];
+    }
+    return mutable;
+}
+
 - (NSSet *)doubleDollarVariables {
     NSMutableSet *set = [NSMutableSet set];
     NSRange rangeToSearch = NSMakeRange(0, self.length);
