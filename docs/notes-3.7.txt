@@ -62,6 +62,8 @@ Improvements:
   scrollback with Shell Integration. Saving
   window state for restoration now skips what
   hasn’t changed and writes less to disk.
+- The Color Presets menu responds faster when
+  you scroll away from a preview or dismiss it.
 
 Bug Fixes:
 - When a program turned on light/dark mode
@@ -117,3 +119,7 @@ Bug Fixes:
 - Double-clicking a line in the Captured Output
   tool did nothing when the Capture Output
   trigger’s command used session variables.
+- Previewing a color preset by hovering over it
+  in Settings > Profiles > Colors could leave a
+  color behind, such as a tab color, after you
+  moved away without choosing it. Fixed.

@@ -27,7 +27,8 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
 
 + (void)commitModel:(ProfileModel *)model;
 
-// Sets a bunch of values at once (just one notification posted).
+// Sets a bunch of values at once (just one notification posted). Keys with an NSNull value are
+// removed.
 + (void)setObjectsFromDictionary:(NSDictionary *)dictionary
                        inProfile:(Profile *)profile
                            model:(ProfileModel *)model;
