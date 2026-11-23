@@ -322,7 +322,10 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
 
 // Search for images in the mutable area of the old instance of VT100ScreenState and check in the
 // updated version if any cell of that image is still present. If not, it can be released.
-- (void)releaseOverwrittenImagesIn:(VT100ScreenMutableState *)updated {
+// previousOverflow is this instance's cumulativeScrollbackOverflow from before the merge began,
+// since copyFastStuffFrom: has already replaced it with the updated value.
+- (void)releaseOverwrittenImagesIn:(VT100ScreenMutableState *)updated
+                  previousOverflow:(long long)previousOverflow {
     DLog(@"Start");
     if (self.width != updated.width || self.height != updated.height) {
         // It's way too complicated to check if an image was overwritten when the grid resizes.
@@ -355,7 +358,15 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
     // A mark sits on the line below its image, but it stays put when a scroll region or inserted
     // lines move the image's cells, so look for each image's code anywhere on screen rather than
     // just above its mark. Include enough history to cover an image partly scrolled off the top.
-    NSIndexSet *codesInUse = [updated imageCodesOnScreenAndInHistoryLines:tallestImage];
+    //
+    // Many lines can arrive between two syncs. An image that was on screen at the last sync may
+    // now be entirely in history, further up than its own height. It was scrolled away, not drawn
+    // over, so it must be kept. Extend the search by the number of lines that entered history
+    // since the last sync, which is as far as any of its cells could have gone.
+    const long long previousTop = previousOverflow + self.numberOfScrollbackLines;
+    const long long updatedTop = updated.cumulativeScrollbackOverflow + updated.numberOfScrollbackLines;
+    const long long linesScrolledSinceLastSync = MAX(0, updatedTop - previousTop);
+    NSIndexSet *codesInUse = [updated imageCodesOnScreenAndInHistoryLines:tallestImage + linesScrolledSinceLastSync];
     const int height = self.height;
     NSMutableArray<iTermMark *> *marksToRemove = [NSMutableArray array];
     for (iTermImageMark *imageMark in candidates) {
@@ -386,7 +397,7 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
 }
 
 // Codes of the inline images with a cell on screen or in the last `historyLines` lines of history.
-- (NSIndexSet *)imageCodesOnScreenAndInHistoryLines:(int)historyLines {
+- (NSIndexSet *)imageCodesOnScreenAndInHistoryLines:(long long)historyLines {
     const long long screenTop = self.numberOfScrollbackLines;
     const long long firstLine = MAX(0, screenTop - historyLines);
     const long long lastLine = screenTop + self.height - 1;
@@ -420,8 +431,9 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
 
 
 - (void)mergeFrom:(VT100ScreenMutableState *)source {
+    const long long previousOverflow = _cumulativeScrollbackOverflow;
     [self copyFastStuffFrom:source];
-    [self releaseOverwrittenImagesIn:source];
+    [self releaseOverwrittenImagesIn:source previousOverflow:previousOverflow];
     if ([iTermPreferences bidiEnabled]) {
         [source populateRTLStateIfNeeded];
     }

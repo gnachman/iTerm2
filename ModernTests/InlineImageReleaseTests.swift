@@ -192,4 +192,22 @@ final class InlineImageReleaseTests: XCTestCase {
         XCTAssertEqual(imageCode(screen, x: 0, y: 1), code, "the bottom row should still be on screen")
         XCTAssertTrue(isRegistered(code), "an image partly in history must not be released")
     }
+
+    /// A burst of output between two syncs can scroll an image all the way into history, further
+    /// up than its own height. It was scrolled away, not drawn over, so it must be kept: the user
+    /// can still scroll back to it. Before the fix it was released and drew as a brown rectangle.
+    func testImageScrolledFullyIntoHistoryInOneSyncIsKept() {
+        let screen = makeScreen()
+        addOlderMarks(screen, count: 5)
+        inject(screen, "\u{1b}[H" + imageSequence(widthInCells: 10, heightInCells: 4))
+        let code = imageCode(screen, x: 0, y: 0)!
+
+        // Scroll the whole screen up 100 lines in a single sync. The image ends up about 100
+        // lines above the top of the screen, far past the 4 lines of history its height covers.
+        inject(screen, "\u{1b}[30;1H" + String(repeating: "\r\n", count: 100) + "hello")
+        for y in Int32(0)..<30 {
+            XCTAssertNil(imageCode(screen, x: 0, y: y), "the image should have left the screen")
+        }
+        XCTAssertTrue(isRegistered(code), "an image scrolled into history must not be released")
+    }
 }
