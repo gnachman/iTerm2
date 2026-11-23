@@ -948,30 +948,30 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     return YES;
 }
 
-- (NSDictionary *)currentColors {
-    NSMutableDictionary<NSString *, id> *dict = [NSMutableDictionary dictionary];
+// The colors a preset would replace, by amended key. A color that is unset and has no default,
+// like the tab color, is NSNull.
+- (NSDictionary<NSString *, id> *)currentColors {
+    Profile *profile = [self.delegate profilePreferencesCurrentProfile];
     const BOOL separate = [self boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE];
-    for (NSString *key in [ProfileModel colorKeysWithModes:NO]) {
-        dict[key] = [self objectForKey:key];
-    }
-    if (separate) {
-        for (NSString *key in [ProfileModel colorKeysWithModes:YES]) {
-            id value = [self objectForKey:key];
-            if (value) {
-                dict[key] = value;
-            }
-        }
+    const BOOL dark = _mode.selectedTag == 1;
+    NSMutableDictionary<NSString *, id> *dict = [NSMutableDictionary dictionary];
+    for (NSString *baseKey in [ProfileModel colorKeysWithModes:NO]) {
+        NSString *key = iTermAmendedColorKey2(baseKey, separate, dark);
+        dict[key] = [iTermProfilePreferences objectForKey:key inProfile:profile] ?: [NSNull null];
     }
     return dict;
 }
 
 - (void)restoreColors {
-    [_savedColors enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-        id value = [obj nilIfNull];
-        if (![NSObject object:value isEqualToObject:[self objectForKey:key]]) {
-            [self setObject:value forKey:key];
-        }
+    Profile *profile = [self.delegate profilePreferencesCurrentProfile];
+    // _savedColors has amended keys, so don't use -objectForKey:, which would amend them again.
+    NSDictionary<NSString *, id> *changes = [_savedColors filteredWithBlock:^BOOL(NSString *key, id original) {
+        return ![NSObject object:[original nilIfNull]
+                 isEqualToObject:[iTermProfilePreferences objectForKey:key inProfile:profile]];
     }];
+    if (changes.count) {
+        [self setObjectsFromDictionary:changes];
+    }
 }
 
 // If the current color settings exactly match a preset, place a check mark next to it and uncheck
