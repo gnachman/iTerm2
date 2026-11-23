@@ -1632,8 +1632,7 @@
 		A629F59323AF49AD00C2F16B /* iTermExpect.m in Sources */ = {isa = PBXBuildFile; fileRef = A629F59123AF49AD00C2F16B /* iTermExpect.m */; };
 		A629F59723AFF49E00C2F16B /* iTermShellIntegrationRootView.h in Headers */ = {isa = PBXBuildFile; fileRef = A629F59523AFF49D00C2F16B /* iTermShellIntegrationRootView.h */; };
 		A629F59823AFF49E00C2F16B /* iTermShellIntegrationRootView.m in Sources */ = {isa = PBXBuildFile; fileRef = A629F59623AFF49E00C2F16B /* iTermShellIntegrationRootView.m */; };
-		A629F59B23AFF4D400C2F16B /* iTermShellIntegrationPanel.h in Headers */ = {isa = PBXBuildFile; fileRef = A629F59923AFF4D400C2F16B /* iTermShellIntegrationPanel.h */; };
-		A629F59C23AFF4D400C2F16B /* iTermShellIntegrationPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = A629F59A23AFF4D400C2F16B /* iTermShellIntegrationPanel.m */; };
+		63C4EEA34F71A99EDBF1AB10 /* iTermShellIntegrationPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2B0350E7D0D8FB6E12AB7C1 /* iTermShellIntegrationPanel.swift */; };
 		A629F59E23AFF4F200C2F16B /* iTermShellIntegrationInstaller.h in Sources */ = {isa = PBXBuildFile; fileRef = A629F59D23AFF4F200C2F16B /* iTermShellIntegrationInstaller.h */; };
 		A629F5A123AFF53F00C2F16B /* iTermShellIntegrationFirstPageViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A629F59F23AFF53F00C2F16B /* iTermShellIntegrationFirstPageViewController.h */; };
 		A629F5A223AFF53F00C2F16B /* iTermShellIntegrationFirstPageViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A629F5A023AFF53F00C2F16B /* iTermShellIntegrationFirstPageViewController.m */; };
@@ -6650,8 +6649,7 @@
 		A629F59123AF49AD00C2F16B /* iTermExpect.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermExpect.m; sourceTree = "<group>"; };
 		A629F59523AFF49D00C2F16B /* iTermShellIntegrationRootView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermShellIntegrationRootView.h; sourceTree = "<group>"; };
 		A629F59623AFF49E00C2F16B /* iTermShellIntegrationRootView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermShellIntegrationRootView.m; sourceTree = "<group>"; };
-		A629F59923AFF4D400C2F16B /* iTermShellIntegrationPanel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermShellIntegrationPanel.h; sourceTree = "<group>"; };
-		A629F59A23AFF4D400C2F16B /* iTermShellIntegrationPanel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermShellIntegrationPanel.m; sourceTree = "<group>"; };
+		A2B0350E7D0D8FB6E12AB7C1 /* iTermShellIntegrationPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermShellIntegrationPanel.swift; sourceTree = "<group>"; };
 		A629F59D23AFF4F200C2F16B /* iTermShellIntegrationInstaller.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermShellIntegrationInstaller.h; sourceTree = "<group>"; };
 		A629F59F23AFF53F00C2F16B /* iTermShellIntegrationFirstPageViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermShellIntegrationFirstPageViewController.h; sourceTree = "<group>"; };
 		A629F5A023AFF53F00C2F16B /* iTermShellIntegrationFirstPageViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermShellIntegrationFirstPageViewController.m; sourceTree = "<group>"; };
@@ -12098,8 +12096,7 @@
 				A629F59F23AFF53F00C2F16B /* iTermShellIntegrationFirstPageViewController.h */,
 				A629F5A023AFF53F00C2F16B /* iTermShellIntegrationFirstPageViewController.m */,
 				A629F59D23AFF4F200C2F16B /* iTermShellIntegrationInstaller.h */,
-				A629F59923AFF4D400C2F16B /* iTermShellIntegrationPanel.h */,
-				A629F59A23AFF4D400C2F16B /* iTermShellIntegrationPanel.m */,
+				A2B0350E7D0D8FB6E12AB7C1 /* iTermShellIntegrationPanel.swift */,
 				A629F5AC23AFF65600C2F16B /* iTermShellIntegrationPasteShellCommandsViewController.h */,
 				A629F5AD23AFF65600C2F16B /* iTermShellIntegrationPasteShellCommandsViewController.m */,
 				A629F59523AFF49D00C2F16B /* iTermShellIntegrationRootView.h */,
@@ -16525,7 +16522,6 @@
 				A6DCDD202560B410004EA8A1 /* NSAttributedString+PSM.h in Headers */,
 				A629F58A23AF38CA00C2F16B /* iTermClickableTextField.h in Headers */,
 				A6C20CB825F6CA8C0086B09C /* iTermSlider.h in Headers */,
-				A629F59B23AFF4D400C2F16B /* iTermShellIntegrationPanel.h in Headers */,
 				A6D463E6240447AF005D073D /* iTermBackgroundColorView.h in Headers */,
 				A66719281DCE36C3000CE608 /* iTermEventTap.h in Headers */,
 				5370678221C9D2780088D0F3 /* SIGArchiveChunk.h in Headers */,
@@ -19956,7 +19952,7 @@
 				A6069F022DF027CF00EE6CC7 /* SSHFilePanelFileList.swift in Sources */,
 				53D0FD4E237DC30F00DAFA8A /* NSIndexSet+iTerm.m in Sources */,
 				A6FE7AAA2E0F12BA00BEBCE4 /* iTermBrowserNamedMarkManager.swift in Sources */,
-				A629F59C23AFF4D400C2F16B /* iTermShellIntegrationPanel.m in Sources */,
+				63C4EEA34F71A99EDBF1AB10 /* iTermShellIntegrationPanel.swift in Sources */,
 				A6A5995B25930F8F0041172E /* TextViewWrapper.m in Sources */,
 				A6CBB82A2E0A21FF00B2CCCB /* iTermBrowserPageSaver.swift in Sources */,
 				A60E046526E037BE00DD162B /* ContentSubscriber.swift in Sources */,
