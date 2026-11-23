@@ -161,7 +161,7 @@ enum BindingTestTables {
             "checkIfExecutableRegularFile:searchPaths:withReply:",
             "statFile:withReply:",
             "resolvePathOfDirectory:withReply:",
-            "runShellScript:shell:mode:withReply:",
+            "runShellScript:shell:mode:environment:withReply:",
             "findCompletionsWithPrefix:inDirectories:pwd:maxCount:executable:withReply:",
             "requestGitStateForPath:gitBase:timeout:includeDiffStats:completion:",
             "fetchRecentBranchesAt:count:completion:",
