@@ -267,6 +267,22 @@ final class ExecutionPermitsTests: XCTestCase {
         XCTAssertTrue(unexpected.isEmpty)
     }
 
+    // checkpointIsNeeded records hearing from the holder without the lock, so it can land after
+    // the health check read the clock. That's a holder just heard from, not one silent for 2^64 ns.
+    func testHeardFromAfterTheHealthCheckReadTheClockIsNotSilence() {
+        let clock = FakeClock()
+        let permits = makePermits(capacity: 1, clock: clock)
+        let a = FakeSession("a", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        clock.advance(by: 1)
+        XCTAssertFalse(permits.checkpointIsNeeded(a.client))
+        // The health check's reading of the clock, taken just before that.
+        clock.now -= 1_000_000
+        permits.checkHealth()
+        XCTAssertEqual(a.wakes, 0)
+        XCTAssertTrue(unexpected.isEmpty, unexpected.joined(separator: "\n"))
+    }
+
     // With many sessions in line, deciding who is next looks at the front of the line, not at
     // every waiter: these run with the lock held, several hundred times a second.
     func testCheckpointAndHandoffLookOnlyAtTheFrontOfTheLine() {

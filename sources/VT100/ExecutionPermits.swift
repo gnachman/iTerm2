@@ -713,17 +713,21 @@ final class ExecutionPermits: NSObject {
             }
             for holder in holders where !holder.isParked && !holder.isPaused() {
                 let last = UInt64(iTermAtomicInt64Get(holder.lastHeardFrom))
-                if now &- last > Self.silentHolderThreshold {
+                // checkpointIsNeeded records hearing from a holder without the lock, so it can
+                // land after `now` was read. That holder was just heard from; without this the
+                // difference wraps to about 2^64 ns.
+                let silence = last > now ? 0 : now - last
+                if silence > Self.silentHolderThreshold {
                     if ranLate {
-                        messages.append("Execution permits: woke a holder not heard from for \(Double(now &- last) / 1e9)s, after a health check that ran late (the process was probably stopped). \(stateDescriptionLocked)")
+                        messages.append("Execution permits: woke a holder not heard from for \(Double(silence) / 1e9)s, after a health check that ran late (the process was probably stopped). \(stateDescriptionLocked)")
                     } else {
-                        let message = "Execution permits: woke a holder not heard from for \(Double(now &- last) / 1e9)s. A wakeup may have been lost. \(stateDescriptionLocked)"
+                        let message = "Execution permits: woke a holder not heard from for \(Double(silence) / 1e9)s. A wakeup may have been lost. \(stateDescriptionLocked)"
                         messages.append(message)
                         unexpected.append(message)
                     }
                     woken.append(holder)
                 }
-                if ranLate || now &- last > Self.silentHolderThreshold {
+                if silence > 0 && (ranLate || silence > Self.silentHolderThreshold) {
                     // Start over, so the next check judges only time after this one.
                     iTermAtomicInt64Set(holder.lastHeardFrom, Int64(now))
                 }
