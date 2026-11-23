@@ -19,11 +19,24 @@
 //  pty, on path B, and in the session. So the worst wait is the longest any inner frame took
 //  from host2 to being consumed.
 //
+//  These simulations take a lot of CPU time (minutes in a sanitized build), so the class is
+//  skipped by default. Run it after changing FramerFlowController or the framer's flow control:
+//
+//    TEST_RUNNER_ITERM2_FRAMER_SIMULATION_TESTS=1 tools/run_tests.expect ModernTests/FramerFlowTwoHopSimulationTests
+//
+//  (xcodebuild forwards TEST_RUNNER_-prefixed variables with the prefix removed.)
+//
 
 import XCTest
 @testable import iTerm2SharedARC
 
 final class FramerFlowTwoHopSimulationTests: XCTestCase {
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        try XCTSkipUnless(ProcessInfo.processInfo.environment["ITERM2_FRAMER_SIMULATION_TESTS"] == "1",
+                          "Heavy simulations. Set ITERM2_FRAMER_SIMULATION_TESTS=1 to run.")
+    }
+
     typealias Controller = FramerFlowController
     private static let KB = 1024.0
 
@@ -427,21 +440,12 @@ final class FramerFlowTwoHopSimulationTests: XCTestCase {
                       innerWindows: innerWindows)
     }
 
-    /// Runs `count` independent simulations at once and returns their results in order. Each
-    /// simulation has its own controllers, paths and state, and FramerFlowController keeps no
-    /// state shared between instances, so every result is the one the simulation gives when
-    /// run alone; only the wall time changes. `body` must not assert: it runs off the main
-    /// thread, so the caller checks the results afterward.
+    /// Runs `count` independent simulations, one after another on the calling thread, and
+    /// returns their results in order. They are not run at once: that took every core at the
+    /// highest priority and made the machine unusable while the suite ran. `body` must not
+    /// assert; the caller checks the results afterward.
     private func simulateEach<T>(_ count: Int, _ body: (Int) -> T) -> [T] {
-        var results = [T?](repeating: nil, count: count)
-        let lock = NSLock()
-        DispatchQueue.concurrentPerform(iterations: count) { i in
-            let result = body(i)
-            lock.lock()
-            results[i] = result
-            lock.unlock()
-        }
-        return results.map { $0! }
+        return (0..<count).map(body)
     }
 
     private func summary(_ r: Result) -> String {
