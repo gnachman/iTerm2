@@ -1,0 +1,10 @@
+Inline image asked to be 10 columns wide and 510 rows tall, with
+preserveAspectRatio=0. iTerm2 limits an image to 255 rows.
+The image has four vertical bands: red, green, blue, yellow.
+This scrolls 255 rows; compare the image with the ruler under it.
+
+Fixed: 5 columns wide (halved along with the height).
+Bug:   20 columns wide (doubled).
+
+]1337;File=inline=1;size=442;width=10;height=510;preserveAspectRatio=0:iVBORw0KGgoAAAANSUhEUgAAAZAAAAA8CAIAAADHdHu6AAABgUlEQVR42u3UMQ0AIAwAsMnZzY0SdKKEm5sbCVjYS9KkGho7k6KcnaI2DkV3JUWhIWEJS1jCEpawEJawhCUsYQkLYQlLWMISlrAQlrCEJSxhCQthCUtYwhKWsBCWsIQlLGEJC2EJS1jCEpawEJawhCUsYQkLYQlLWMISlrAQlrCEJSxhCUtYCEtYwhKWsISFsIQlLGEJS1gIS1jCEpawhIWwhCUsYQlLWAhLWMISlrCEhbCEJSxhCUtYCEtYwhKWsISFsIQlLGEJS1gIS1jCEpawhCUsEwlLWMISlrCEhbCEJSxhCUtYCEtYwhKWsISFsIQlLGEJS1gIS1jCEpawhIWwhCUsYQlLWAhLWMISlrCEhbCEJSxhCUtYCEtYwhKWsISFhoQlLGEJS1jCQljCEpawhCUshCUsYQlLWMJCWMISlrCEJSyEJSxhCUtYwkJYwhKWsIQlLIQlLGEJS1jCQljCEpawhCUshCUsYQlLWMJCWMISlrCEJSxhmUhYwhLWHx4QdN2uVUMDMAAAAABJRU5ErkJggg==
+12345678901234567890  <- ruler: fixed is 5 columns wide, the bug is 20
