@@ -1173,7 +1173,7 @@ typedef struct {
         _titleBackgroundView.color = [_delegate rootTerminalViewTabBarBackgroundColorIgnoringTabColor:NO];
         _titleBackgroundView.frame = self.frameForTitleBackgroundView;
         if (_titleBackgroundView.superview != self) {
-            [self insertSubview:_titleBackgroundView atIndex:1];
+            [self it_insertSubview:_titleBackgroundView atIndex:1];
         }
 
         // The Compact tab style's selected backgroundColor is clearColor on
@@ -2483,7 +2483,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
             if (index == NSNotFound) {
                 [self addSubview:_statusBarContainer];
             } else {
-                [self insertSubview:_statusBarContainer atIndex:index];
+                [self it_insertSubview:_statusBarContainer atIndex:index];
             }
         }
         if (_statusBarViewController.view.superview == _statusBarContainer) {
@@ -2523,7 +2523,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
             if (index == NSNotFound) {
                 [self addSubview:_statusBarContainer];
             } else {
-                [self insertSubview:_statusBarContainer atIndex:index];
+                [self it_insertSubview:_statusBarContainer atIndex:index];
             }
         }
         if (_statusBarViewController.view.superview == _statusBarContainer) {
@@ -2654,13 +2654,13 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 
 - (void)concealStoplightHotbox {
     iTermCompactProxyIconView *proxyIcon = [self proxyIconBesideStoplightButtons];
-    [NSView animateWithDuration:0.25
-                     animations:^{
+    [NSView it_animateWithDuration:0.25
+                        animations:^{
                          self->_stoplightHotbox.animator.alphaValue = 0;
                          self->_standardWindowButtonsView.animator.alphaValue = 0;
                          proxyIcon.animator.alphaValue = 0;
                      }
-                     completion:^(BOOL finished) {
+                        completion:^(BOOL finished) {
                          if (!finished) {
                              return;
                          }
@@ -2879,13 +2879,13 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     [self resetStoplightHotboxSlide];
     [_stoplightHotbox setNeedsDisplay:YES];
     iTermCompactProxyIconView *proxyIcon = [self proxyIconBesideStoplightButtons];
-    [NSView animateWithDuration:0.25
-                     animations:^{
+    [NSView it_animateWithDuration:0.25
+                        animations:^{
                          self->_stoplightHotbox.animator.alphaValue = 1;
                          self->_standardWindowButtonsView.animator.alphaValue = 1;
                          proxyIcon.animator.alphaValue = 1;
                      }
-                     completion:nil];
+                        completion:nil];
     return YES;
 }
 

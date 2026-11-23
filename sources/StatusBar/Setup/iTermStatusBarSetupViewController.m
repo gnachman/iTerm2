@@ -449,7 +449,7 @@ canDragItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
     NSVisualEffectView *vev = [[NSVisualEffectView alloc] initWithFrame:item.view.bounds];
     [vev addSubview:item.view];
     [self.view addSubview:vev];
-    NSImage *image = item.view.snapshot;
+    NSImage *image = item.view.it_snapshot;
     [vev removeFromSuperview];
     return image;
 }

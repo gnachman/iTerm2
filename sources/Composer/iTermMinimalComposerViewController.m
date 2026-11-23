@@ -185,8 +185,8 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
         [_bottomDragHandle removeFromSuperview];
     } else if (_bottomDragHandle.superview == nil) {
         // Insert them prior to _closeButton.
-        [self.view insertSubview:_topDragHandle atIndex:self.view.subviews.count - 1];
-        [self.view insertSubview:_bottomDragHandle atIndex:self.view.subviews.count - 1];
+        [self.view it_insertSubview:_topDragHandle atIndex:self.view.subviews.count - 1];
+        [self.view it_insertSubview:_bottomDragHandle atIndex:self.view.subviews.count - 1];
     }
     _vev.hidden = isAutoComposer;
 }

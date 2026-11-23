@@ -23,11 +23,13 @@ NSString *CGAffineTransformDescription(CGAffineTransform tm);
 + (BOOL)iterm_takingSnapshot;
 + (NSView *)viewAtScreenCoordinate:(NSPoint)point;
 
+// The it_ prefix is needed: an Apple framework implements the unprefixed selector on this class.
 // Returns an image representation of the view's current appearance.
-- (NSImage *)snapshot;
+- (NSImage *)it_snapshot;
 // Rect is in the coordinate frame of self, so self.bounds would be the whole thing.
 - (NSImage *)snapshotOfRect:(NSRect)rect;
-- (void)insertSubview:(NSView *)subview atIndex:(NSInteger)index;
+// The it_ prefix is needed: an Apple framework implements the unprefixed selector on this class.
+- (void)it_insertSubview:(NSView *)subview atIndex:(NSInteger)index;
 - (void)swapSubview:(NSView *)subview1 withSubview:(NSView *)subview2;
 
 // Schedules a cancelable animation. It is only cancelable during |delay|.
@@ -43,11 +45,12 @@ NSString *CGAffineTransformDescription(CGAffineTransform tm);
                                   animations:(void (^)(void))animations
                                   completion:(void (^)(BOOL finished))completion;
 
+// The it_ prefix is needed: an Apple framework implements the unprefixed selector on this class.
 // A non-cancelable version of animateWithDuration:delay:animations:completion:.
 // Remember to retain self until completion runs if you use it.
-+ (void)animateWithDuration:(NSTimeInterval)duration
-                 animations:(void (NS_NOESCAPE ^)(void))animations
-                 completion:(void (^)(BOOL finished))completion;
++ (void)it_animateWithDuration:(NSTimeInterval)duration
+                    animations:(void (NS_NOESCAPE ^)(void))animations
+                    completion:(void (^)(BOOL finished))completion;
 
 - (void)enumerateHierarchy:(void (NS_NOESCAPE ^)(NSView *))block;
 - (CGFloat)retinaRound:(CGFloat)value;

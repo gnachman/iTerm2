@@ -4971,7 +4971,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                     return session;
                 }];
                 if (index != NSNotFound) {
-                    [sessionSuperview insertSubview:session.view atIndex:index];
+                    [sessionSuperview it_insertSubview:session.view atIndex:index];
                 }
                 return result;
             }
@@ -8470,7 +8470,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     PTYTab *tab = tabViewItem.identifier;
     [tab bounceMetal];
 
-    NSImage *tabViewImage = [tabRootView snapshot];
+    NSImage *tabViewImage = [tabRootView it_snapshot];
 
     [viewImage lockFocus];
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {

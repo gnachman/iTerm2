@@ -31,7 +31,7 @@
     }
 
     _container = [[NSView alloc] initWithFrame:self.bounds];
-    [self insertSubview:_container atIndex:0];
+    [self it_insertSubview:_container atIndex:0];
 
     if (@available(macOS 26, *)) {
         NSGlassEffectView *glassView = [[NSGlassEffectView alloc] initWithFrame:self.bounds];

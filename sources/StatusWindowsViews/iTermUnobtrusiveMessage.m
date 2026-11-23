@@ -59,8 +59,8 @@
     self.alphaValue = 1;
     NSRect destination = frame;
     destination.origin.x -= frame.size.width + margin;
-    [NSView animateWithDuration:0.2
-                     animations:^{
+    [NSView it_animateWithDuration:0.2
+                        animations:^{
         self.animator.frame = destination;
     } completion:^(BOOL finished) {
         [NSView animateWithDuration:0.2

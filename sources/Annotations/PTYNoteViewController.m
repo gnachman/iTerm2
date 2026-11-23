@@ -219,11 +219,11 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
     }
     hidden_ = hidden;
     [noteView_ setHidden:NO];
-    [NSView animateWithDuration:0.25
-                     animations:^{
+    [NSView it_animateWithDuration:0.25
+                        animations:^{
                          [noteView_.animator setAlphaValue:(hidden ? 0 : 1)];
                      }
-                     completion:^(BOOL finished) {
+                        completion:^(BOOL finished) {
                          [self finalizeToggleOfHide:hidden];
                      }];
     if (!hidden) {

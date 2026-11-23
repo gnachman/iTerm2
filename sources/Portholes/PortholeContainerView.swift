@@ -126,7 +126,7 @@ class PortholeContainerView: NSView {
         if let scrollView = scrollView,
            let documentView = scrollView.documentView {
             documentView.removeFromSuperview()
-            insertSubview(documentView, at: 0)
+            it_insertSubview(documentView, at: 0)
             scrollView.removeFromSuperview()
             self.scrollView = nil
         } else if scrollView == nil {
@@ -141,7 +141,7 @@ class PortholeContainerView: NSView {
             scrollView.hasHorizontalScroller = true
             scrollView.documentView = child
             scrollView.drawsBackground = false
-            insertSubview(scrollView, at: 0)
+            it_insertSubview(scrollView, at: 0)
         }
         wideCallback?()
     }

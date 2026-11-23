@@ -85,8 +85,8 @@
     _templateView.frame = frame;
     [self.window.contentView addSubview:_templateView];
 
-    [NSView animateWithDuration:0.25
-                     animations:^{
+    [NSView it_animateWithDuration:0.25
+                        animations:^{
                          NSRect frame = self->_environmentView.frame;
                          frame.origin.x -= frame.size.width;
                          self->_environmentView.animator.frame = frame;

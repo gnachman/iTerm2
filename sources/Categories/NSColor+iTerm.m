@@ -1074,7 +1074,7 @@ BOOL iTermSRGBColorFromHexString(NSString *hexString, iTermSRGBColor *colorOut) 
 
     NSView *view = [[[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1) color:self] autorelease];
     view.appearance = appearance;
-    NSImage *image = [view snapshot];
+    NSImage *image = [view it_snapshot];
 
     NSBitmapImageRep *imageRep = [[[NSBitmapImageRep alloc] initWithData:[image TIFFRepresentation]] autorelease];
     result = [imageRep colorAtX:0 y:0];

@@ -7811,7 +7811,7 @@ typedef struct {
     const NSUInteger index = [splitView.subviews indexOfObject:existing.view];
     buried.view.frame = existing.view.frame;
     [existing.view removeFromSuperview];
-    [splitView insertSubview:buried.view atIndex:index];
+    [splitView it_insertSubview:buried.view atIndex:index];
     buried.delegate = self;
     // When maximized, idMap_ and viewToSessionMap still resolve the swapped-out
     // peer's view to the (now buried) existing session. -[self sessions]
@@ -7921,8 +7921,8 @@ typedef struct {
         NSRect temp = session1.view.frame;
         session1.view.frame = session2.view.frame;
         session2.view.frame = temp;
-        [session1Superview insertSubview:session2.view atIndex:session1Index];
-        [session2Superview insertSubview:session1.view atIndex:session2Index];
+        [session1Superview it_insertSubview:session2.view atIndex:session1Index];
+        [session2Superview it_insertSubview:session1.view atIndex:session2Index];
     }
     session1Superview.delegate = session1SuperviewDelegate;
     session2Superview.delegate = session2SuperviewDelegate;

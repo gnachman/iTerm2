@@ -478,7 +478,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (void)finishInstallingBrowserWithInitialURL:(NSString *)initialURL
                               restorableState:(NSDictionary *)restorableState {
-    [self insertSubview:_browserViewController.view atIndex:_contentViewIndex + 1];
+    [self it_insertSubview:_browserViewController.view atIndex:_contentViewIndex + 1];
 
     // Hide terminal views when in browser mode
     [self setTerminalViewsHidden:YES];
@@ -936,7 +936,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     _legacyView = [[iTermLegacyView alloc] init];
     _legacyView.delegate = self;
     // Image view and background color view go under it.
-    [self insertSubview:_legacyView atIndex:_contentViewIndex];
+    [self it_insertSubview:_legacyView atIndex:_contentViewIndex];
     _metalClipView.legacyView = _legacyView;
 }
 
@@ -962,11 +962,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     // Keeping it also means tearing down the Metal view never drops EDR.
     _hdrEngager = [[iTermHDREngager alloc] initWithFrame:NSMakeRect(0, 0, 1, 1)];
     _hdrEngager.enabled = _hdrCursorEnabled;
-    [self insertSubview:_hdrEngager atIndex:_contentViewIndex];
+    [self it_insertSubview:_hdrEngager atIndex:_contentViewIndex];
 }
 
-- (void)insertSubview:(NSView *)subview atIndex:(NSInteger)index {
-    [super insertSubview:subview atIndex:index];
+- (void)it_insertSubview:(NSView *)subview atIndex:(NSInteger)index {
+    [super it_insertSubview:subview atIndex:index];
     [self sanityCheckSubviewOrder];
 }
 
@@ -1043,7 +1043,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     _metalClipView.metalView = _metalView;
 
     // Image view and background color view go under it.
-    [self insertSubview:_metalView atIndex:_contentViewIndex];
+    [self it_insertSubview:_metalView atIndex:_contentViewIndex];
 
     // Configure and hide the metal view. It will be shown by PTYSession after it has rendered its
     // first frame. Until then it's just a solid gray rectangle.
@@ -2759,13 +2759,13 @@ typedef NS_OPTIONS(NSUInteger, iTermCornerFlags) {
         frame.size.width -= 1;
     }
     if (animated) {
-        [NSView animateWithDuration:5.0 / 60.0
-                         animations:^{
+        [NSView it_animateWithDuration:5.0 / 60.0
+                            animations:^{
             [[NSAnimationContext currentContext] setTimingFunction:[CAMediaTimingFunction functionWithName:@"easeOut"]];
             _searchResultsMinimap.animator.frame = frame;
             _marksMinimap.animator.frame = frame;
         }
-                         completion:nil];
+                            completion:nil];
     } else {
         _searchResultsMinimap.frame = frame;
         _marksMinimap.frame = frame;
@@ -2911,11 +2911,11 @@ typedef NS_OPTIONS(NSUInteger, iTermCornerFlags) {
     if (announcement == _currentAnnouncement) {
         NSRect rect = announcement.view.frame;
         rect.origin.y += rect.size.height;
-        [NSView animateWithDuration:0.25
-                         animations:^{
+        [NSView it_animateWithDuration:0.25
+                            animations:^{
                              [announcement.view.animator setFrame:rect];
                          }
-                         completion:^(BOOL finished) {
+                            completion:^(BOOL finished) {
                              [announcement.view removeFromSuperview];
                          }];
 
@@ -2968,13 +2968,13 @@ typedef NS_OPTIONS(NSUInteger, iTermCornerFlags) {
             [self updateMinimapFrameAnimated:YES];
             break;
         case PTYScrollerStateOverlayHidden: {
-            [NSView animateWithDuration:5.0 / 60
-                             animations:^{
+            [NSView it_animateWithDuration:5.0 / 60
+                                animations:^{
                 [[NSAnimationContext currentContext] setTimingFunction:[CAMediaTimingFunction functionWithName:@"easeOut"]];
                 _searchResultsMinimap.animator.alphaValue = 0;
                 _marksMinimap.animator.alphaValue = 0;
             }
-                             completion:nil];
+                                completion:nil];
             break;
         }
         case PTYScrollerStateOverlayVisibleWide:

@@ -78,7 +78,7 @@ NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect contai
     return nil;
 }
 
-- (NSImage *)snapshot {
+- (NSImage *)it_snapshot {
     return [self snapshotOfRect:self.bounds];
 }
 
@@ -94,7 +94,7 @@ NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect contai
     return image;
 }
 
-- (void)insertSubview:(NSView *)subview atIndex:(NSInteger)index {
+- (void)it_insertSubview:(NSView *)subview atIndex:(NSInteger)index {
     NSArray *subviews = [self subviews];
     if (subviews.count == 0) {
         [self addSubview:subview];
@@ -140,9 +140,9 @@ NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect contai
                    dispatch_get_main_queue(), ^{
                        if (!delayedPerform.canceled) {
                            DLog(@"Run dp %@", delayedPerform);
-                           [self animateWithDuration:duration
-                                          animations:animations
-                                          completion:^(BOOL finished) {
+                           [self it_animateWithDuration:duration
+                                             animations:animations
+                                             completion:^(BOOL finished) {
                                               delayedPerform.completed = YES;
                                               completion(finished);
                                           }];
@@ -153,9 +153,9 @@ NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect contai
     return delayedPerform;
 }
 
-+ (void)animateWithDuration:(NSTimeInterval)duration
-                 animations:(void (NS_NOESCAPE ^)(void))animations
-                 completion:(void (^)(BOOL finished))completion {
++ (void)it_animateWithDuration:(NSTimeInterval)duration
+                    animations:(void (NS_NOESCAPE ^)(void))animations
+                    completion:(void (^)(BOOL finished))completion {
    NSAnimationContext *context = [NSAnimationContext currentContext];
    NSTimeInterval savedDuration = [context duration];
    if (duration > 0) {

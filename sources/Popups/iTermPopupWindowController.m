@@ -93,7 +93,7 @@
     vev.wantsLayer = YES;
     vev.layer.cornerRadius = 4;
     vev.material = NSVisualEffectMaterialSheet;
-    [self.window.contentView insertSubview:vev atIndex:0];
+    [self.window.contentView it_insertSubview:vev atIndex:0];
     vev.frame = self.window.contentView.bounds;
     vev.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
 
@@ -119,7 +119,7 @@
     _footerBackground.layer.maskedCorners = (kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner);
     _footerBackground.frame = NSMakeRect(0, 0, self.window.contentView.frame.size.width, footerHeight + self.footerMargin * 1.5);
     _footerBackground.autoresizingMask = NSViewWidthSizable;
-    [self.window.contentView insertSubview:_footerBackground atIndex:1];
+    [self.window.contentView it_insertSubview:_footerBackground atIndex:1];
 
     NSRect frame = [[tableView_ enclosingScrollView] frame];
     frame.size.height = MAX(0, frame.size.height - footerHeight);

@@ -559,7 +559,7 @@ static NSString *const kDynamicToolURL = @"URL";
     if (index < 0 || index > _splitter.subviews.count) {
         [_splitter addSubview:wrapper];
     } else {
-        [_splitter insertSubview:wrapper atIndex:index];
+        [_splitter it_insertSubview:wrapper atIndex:index];
     }
     [wrapper.container addSubview:theTool];
 

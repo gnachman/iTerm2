@@ -421,7 +421,7 @@ class CommandInfoViewController: NSViewController {
         copiedView.alphaValue = 0.8
         copiedView.isHidden = false
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
-            NSView.animate(withDuration: 0.25) {
+            NSView.it_animate(withDuration: 0.25) {
                 self.copiedView.animator().alphaValue = 0.0
             } completion: { _ in
                 self.copiedView.alphaValue = 1.0

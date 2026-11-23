@@ -307,6 +307,13 @@ final class NSStringITermCategoryTests: XCTestCase {
             (NSArray.self, "objectPassingTest:"),
             (NSMutableArray.self, "removeObjectsPassingTest:"),
             (NSImage.self, "CGImage"),
+            // GameCenterUICore, UXKit and OpusFoundation, which the app does
+            // not load at launch.
+            (object_getClass(NSView.self)!, "animateWithDuration:animations:completion:"),
+            (NSView.self, "insertSubview:atIndex:"),
+            (NSView.self, "snapshot"),
+            // SessionView overrode -insertSubview:atIndex: to call super.
+            (SessionView.self, "insertSubview:atIndex:"),
         ]
         for (cls, name) in cases {
             for image in Self.imagesImplementing(sel_registerName(name), on: cls) {
@@ -327,6 +334,10 @@ final class NSStringITermCategoryTests: XCTestCase {
             (NSArray.self, "it_objectPassingTest:"),
             (NSMutableArray.self, "it_removeObjectsPassingTest:"),
             (NSImage.self, "it_CGImage"),
+            (object_getClass(NSView.self)!, "it_animateWithDuration:animations:completion:"),
+            (NSView.self, "it_insertSubview:atIndex:"),
+            (NSView.self, "it_snapshot"),
+            (SessionView.self, "it_insertSubview:atIndex:"),
         ]
         for (cls, name) in cases {
             let images = Self.imagesImplementing(sel_registerName(name), on: cls)

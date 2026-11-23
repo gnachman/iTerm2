@@ -9824,7 +9824,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 - (NSImage *)snapshot {
     DLog(@"Session %@ calling refresh", self);
     [_textview refresh];
-    return [_view snapshot];
+    return [_view it_snapshot];
 }
 
 - (NSImage *)terminalContentSnapshot {
@@ -9851,7 +9851,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
             return metalImage;
         }
     }
-    return [_view snapshot];
+    return [_view it_snapshot];
 }
 
 - (NSImage *)screenshotBackgroundSliceForRect:(NSRect)sliceRect ofTotalSize:(NSSize)totalSize {

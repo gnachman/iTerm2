@@ -475,11 +475,11 @@
     _dismissCanceled = NO;
     if (animated) {
         DLog(@"Begin animated dismissal");
-        [NSView animateWithDuration:0.125
-                         animations:^{
+        [NSView it_animateWithDuration:0.125
+                            animations:^{
             vc.view.animator.alphaValue = 0;
         }
-                         completion:^(BOOL finished) {
+                            completion:^(BOOL finished) {
             DLog(@"Animated dismissal did finish");
             [weakSelf finishDismissingMinimalView:vc];
         }];

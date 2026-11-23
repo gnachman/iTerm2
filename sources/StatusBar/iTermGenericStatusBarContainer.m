@@ -102,7 +102,7 @@
         _backing.material = NSVisualEffectMaterialTitlebar;
         _backing.state = NSVisualEffectStateActive;
         [self updateBackingVisible];
-        [self insertSubview:_backing atIndex:0];
+        [self it_insertSubview:_backing atIndex:0];
         __weak __typeof(self) weakSelf = self;
         [iTermPreferenceDidChangeNotification subscribe:self block:^(iTermPreferenceDidChangeNotification * _Nonnull notification) {
             if ([notification.key isEqualToString:kPreferenceKeyTabStyle]) {

@@ -211,12 +211,12 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
     _flashDelayedPerform = nil;
 
     [self retain];
-    [NSView animateWithDuration:[iTermAdvancedSettingsModel tabFlashAnimationDuration]
-                     animations:^{
+    [NSView it_animateWithDuration:[iTermAdvancedSettingsModel tabFlashAnimationDuration]
+                        animations:^{
                          self.flashState = kFlashFadingOut;
                          [self setAlphaValue:0 animated:YES];
                      }
-                     completion:^(BOOL finished) {
+                        completion:^(BOOL finished) {
                          if (finished && self.flashState == kFlashFadingOut) {
                              self.flashState = kFlashOff;
                              [_itermTabBarDelegate iTermTabBarDidFinishFlash];

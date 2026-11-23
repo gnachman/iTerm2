@@ -308,7 +308,7 @@ draggingImageForItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
                                  item.view.frame.size.height / 2);
     *dragImageOffset = NSMakePoint(center.x - locationInItem.x,
                                    center.y - locationInItem.y);
-    return item.view.snapshot;
+    return item.view.it_snapshot;
 }
 
 - (NSDragOperation)collectionView:(NSCollectionView *)collectionView
