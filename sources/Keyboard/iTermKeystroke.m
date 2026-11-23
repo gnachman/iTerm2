@@ -176,7 +176,7 @@ static const unsigned int iTermKeystrokeSerializationVersion = 1;
                                      hasKeyCode:YES
                                   modifierFlags:event.it_modifierFlags
                                       character:unmodunicode
-                              modifiedCharacter:event.characters.firstCharacter];
+                              modifiedCharacter:event.characters.it_firstCharacter];
 }
 
 + (instancetype)withCharacter:(unichar)character

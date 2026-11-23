@@ -4587,7 +4587,7 @@ localityVerified:(BOOL)localityVerified
     NSArray<VT100ScreenMark *> *candidates = [[self.intervalTree objectsInInterval:interval] filteredArrayUsingBlock:^BOOL(id<IntervalTreeImmutableObject> ito) {
         return [ito isKindOfClass:[VT100ScreenMark class]];
     }];
-    return [candidates objectPassingTest:^BOOL(VT100ScreenMark *mark, NSUInteger index, BOOL *stop) {
+    return [candidates it_objectPassingTest:^BOOL(VT100ScreenMark *mark, NSUInteger index, BOOL *stop) {
         Interval *i = mark.entry.interval;
         return mark.isPrompt && [self coordRangeForInterval:i].start.y == line;
     }];
@@ -5165,7 +5165,7 @@ static NSString *iTermOSC7MachineIDFromComponents(NSURLComponents *components) {
         return;
     }
     NSArray<ScreenCharArray *> *promptText = [[self contentInRange:promptRange] filteredArrayUsingBlock:^BOOL(ScreenCharArray *sca) {
-        return [[sca.stringValue stringByTrimmingTrailingWhitespace] length] > 0;
+        return [[sca.stringValue it_stringByTrimmingTrailingWhitespace] length] > 0;
     }];
     self.currentPromptRange = promptRange;
     [self commandDidStartAtScreenCoord:commandStartLocation];

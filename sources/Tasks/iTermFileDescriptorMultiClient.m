@@ -1124,7 +1124,7 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
 
 - (iTermFileDescriptorMultiClientChild *)childWithPID:(pid_t)pid
                                                 state:(iTermFileDescriptorMultiClientState *)state {
-    return [state.children objectPassingTest:^BOOL(iTermFileDescriptorMultiClientChild *element, NSUInteger index, BOOL *stop) {
+    return [state.children it_objectPassingTest:^BOOL(iTermFileDescriptorMultiClientChild *element, NSUInteger index, BOOL *stop) {
         return element.pid == pid;
     }];
 }

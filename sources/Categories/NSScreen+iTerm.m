@@ -305,7 +305,7 @@ static CGFloat iTermAreaOfIntersection(NSRect r1, NSRect r2) {
 }
 
 + (NSScreen *)it_screenWithUniqueKey:(NSString *)key {
-    return [[NSScreen screens] objectPassingTest:^BOOL(NSScreen *candidate, NSUInteger index, BOOL *stop) {
+    return [[NSScreen screens] it_objectPassingTest:^BOOL(NSScreen *candidate, NSUInteger index, BOOL *stop) {
         return [[candidate it_uniqueKey] isEqualToString:key];
     }];
 }

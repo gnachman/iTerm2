@@ -199,7 +199,7 @@ typedef NS_ENUM(NSUInteger, iTermLaunchExperienceChoice) {
             return [line it_stringBySplittingOnFirstSubstring:@":"];
         }];
         NSString *(^getHeader)(NSString *) = ^NSString *(NSString *desiredName) {
-            return [[kvps objectPassingTest:^BOOL(iTermTuple<NSString *,NSString *> *tuple, NSUInteger index, BOOL *stop) {
+            return [[kvps it_objectPassingTest:^BOOL(iTermTuple<NSString *,NSString *> *tuple, NSUInteger index, BOOL *stop) {
                 NSString *key = tuple.firstObject;
                 return [[[key stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] lowercaseString] isEqualToString:desiredName];
             }].secondObject stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];

@@ -600,7 +600,7 @@ static NSString *const kDynamicToolURL = @"URL";
 
         if ([self classIsDynamic:c]) {
             NSDictionary *registry = [[iTermUserDefaults userDefaults] objectForKey:kDynamicToolsKey];
-            NSString *identifier = [registry.allKeys objectPassingTest:^BOOL(NSString *key, NSUInteger index, BOOL *stop) {
+            NSString *identifier = [registry.allKeys it_objectPassingTest:^BOOL(NSString *key, NSUInteger index, BOOL *stop) {
                 NSDictionary *dict = registry[key];
                 return [dict[kDynamicToolName] isEqualToString:toolName];
             }];

@@ -73,7 +73,7 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
 }
 
 - (void)relinquishOwnershipOfBuffer:(id<MTLBuffer>)buffer {
-    [_entries removeObjectsPassingTest:^BOOL(iTermMetalBufferPoolContextEntry *entry) {
+    [_entries it_removeObjectsPassingTest:^BOOL(iTermMetalBufferPoolContextEntry *entry) {
         return entry.buffer == buffer;
     }];
 }

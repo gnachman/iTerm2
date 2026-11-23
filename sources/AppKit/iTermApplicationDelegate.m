@@ -978,7 +978,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         RLog(@"Not quitting automatically. Terminals are %@", terminals);
         return NO;
     }
-    PTYSession *buriedGateway = [[[iTermBuriedSessions sharedInstance] buriedSessions] objectPassingTest:^BOOL(PTYSession *session, NSUInteger index, BOOL *stop) {
+    PTYSession *buriedGateway = [[[iTermBuriedSessions sharedInstance] buriedSessions] it_objectPassingTest:^BOOL(PTYSession *session, NSUInteger index, BOOL *stop) {
         return session.isTmuxGateway && session.tmuxController.exitExpected;
     }];
     if (buriedGateway && [iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession]) {
@@ -2188,7 +2188,7 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (void)revealWithURL:(NSURL *)url {
     NSURLComponents *components = [[[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO] autorelease];
-    NSURLQueryItem *item = [components.queryItems objectPassingTest:^BOOL(NSURLQueryItem *item, NSUInteger index, BOOL *stop) {
+    NSURLQueryItem *item = [components.queryItems it_objectPassingTest:^BOOL(NSURLQueryItem *item, NSUInteger index, BOOL *stop) {
         return [item.name isEqualToString:@"sessionid"];
     }];
     if (item) {
@@ -2216,13 +2216,13 @@ static iTermKeyEventReplayer *gReplayer;
         [iTermAdvancedSettingsModel setShowSecureKeyboardEntryIndicator:NO];
     }
     if ([components.path isEqualToString:@"copy-block"]) {
-        NSString *guid = [components.queryItems objectPassingTest:^BOOL(NSURLQueryItem *element, NSUInteger index, BOOL *stop) {
+        NSString *guid = [components.queryItems it_objectPassingTest:^BOOL(NSURLQueryItem *element, NSUInteger index, BOOL *stop) {
             return [element.name isEqualToString:@"guid"];
         }].value;
         if (!guid) {
             guid = [[[iTermController sharedInstance] currentTerminal] currentSession].guid;
         }
-        NSString *blockID = [components.queryItems objectPassingTest:^BOOL(NSURLQueryItem *element, NSUInteger index, BOOL *stop) {
+        NSString *blockID = [components.queryItems it_objectPassingTest:^BOOL(NSURLQueryItem *element, NSUInteger index, BOOL *stop) {
             return [element.name isEqualToString:@"block"];
         }].value;
         if (guid && blockID) {
@@ -2365,7 +2365,7 @@ static iTermKeyEventReplayer *gReplayer;
     if (!parentGuid) {
         return;
     }
-    PTYSession *parent = [[[iTermBuriedSessions sharedInstance] buriedSessions] objectPassingTest:^BOOL(PTYSession *element, NSUInteger index, BOOL *stop) {
+    PTYSession *parent = [[[iTermBuriedSessions sharedInstance] buriedSessions] it_objectPassingTest:^BOOL(PTYSession *element, NSUInteger index, BOOL *stop) {
         return [element.guid isEqualToString:parentGuid];
     }];
     if (!parent) {
@@ -2492,13 +2492,13 @@ static iTermKeyEventReplayer *gReplayer;
 - (void)runCommandFromURL:(NSURLComponents *)components internal:(BOOL)internal {
     NSString *hostname = [components.host sanitizedHostname];
     NSString *username = [components.user sanitizedUsername];
-    NSString *command = [[[components.queryItems objectPassingTest:^BOOL(NSURLQueryItem *element, NSUInteger index, BOOL *stop) {
+    NSString *command = [[[components.queryItems it_objectPassingTest:^BOOL(NSURLQueryItem *element, NSUInteger index, BOOL *stop) {
         return [element.name isEqualToString:@"c"];
     }].value stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] removingInvisibles];
-    NSString *directory = [components.queryItems objectPassingTest:^BOOL(NSURLQueryItem *element, NSUInteger index, BOOL *stop) {
+    NSString *directory = [components.queryItems it_objectPassingTest:^BOOL(NSURLQueryItem *element, NSUInteger index, BOOL *stop) {
         return [element.name isEqualToString:@"d"];
     }].value;
-    const BOOL silent = ([components.queryItems objectPassingTest:^BOOL(NSURLQueryItem *element, NSUInteger index, BOOL *stop) {
+    const BOOL silent = ([components.queryItems it_objectPassingTest:^BOOL(NSURLQueryItem *element, NSUInteger index, BOOL *stop) {
         return [element.name isEqualToString:@"silent"];
     }] != nil);
     iTermCommandURLHandler *handler = [[[iTermCommandURLHandler alloc] initWithCommand:command

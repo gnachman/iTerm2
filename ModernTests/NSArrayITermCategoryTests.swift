@@ -122,4 +122,62 @@ final class NSArrayITermCategoryTests: XCTestCase {
         let input: NSArray = ["one", "two", "three", "four"]
         XCTAssertEqual(input.componentsJoinedWithOxfordComma(), "one, two, three, and four")
     }
+
+    // MARK: - it_objectPassingTest:
+
+    func testObjectPassingTest_ReturnsFirstMatch() {
+        let input: NSArray = [1, 2, 3, 2]
+        var visited = [UInt]()
+        let found: Any? = input.it_object { element, index, _ in
+            visited.append(index)
+            return (element as? NSNumber) == 2
+        }
+        XCTAssertEqual(found as? NSNumber, 2)
+        XCTAssertEqual(visited, [0, 1])
+    }
+
+    func testObjectPassingTest_NoMatchGivesNil() {
+        let input: NSArray = [1, 3]
+        let found: Any? = input.it_object { _, _, _ in false }
+        XCTAssertNil(found)
+        let empty: NSArray = []
+        XCTAssertNil(empty.it_object { _, _, _ in true } as Any?)
+    }
+
+    func testObjectPassingTest_StopEndsTheSearch() {
+        let input: NSArray = [1, 2, 3]
+        var visited = [UInt]()
+        let found: Any? = input.it_object { _, index, stop in
+            visited.append(index)
+            if index == 1 {
+                stop?.pointee = true
+            }
+            return false
+        }
+        XCTAssertNil(found)
+        XCTAssertEqual(visited, [0, 1])
+    }
+
+    // MARK: - it_removeObjectsPassingTest:
+
+    func testRemoveObjectsPassingTest() {
+        let array = NSMutableArray(array: [1, 2, 3, 2, 4])
+        var visited = [Int]()
+        array.it_removeObjects { element in
+            let value = (element as! NSNumber).intValue
+            visited.append(value)
+            return value % 2 == 0
+        }
+        XCTAssertEqual(array, [1, 3])
+        XCTAssertEqual(visited, [1, 2, 3, 2, 4])
+    }
+
+    func testRemoveObjectsPassingTest_EmptyAndNoMatch() {
+        let empty = NSMutableArray()
+        empty.it_removeObjects { _ in true }
+        XCTAssertEqual(empty.count, 0)
+        let array = NSMutableArray(array: [1, 3])
+        array.it_removeObjects { _ in false }
+        XCTAssertEqual(array, [1, 3])
+    }
 }

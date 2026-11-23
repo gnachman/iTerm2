@@ -3190,7 +3190,7 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     if ([responder isKindOfClass:[iTermBrowserViewController class]]) {
         iTermBrowserViewController *vc = (iTermBrowserViewController *)responder;
         NSString *guid = [vc sessionGuid];
-        PTYSession *session = [self.allSessions objectPassingTest:^BOOL(PTYSession *candidate, NSUInteger index, BOOL *stop) {
+        PTYSession *session = [self.allSessions it_objectPassingTest:^BOOL(PTYSession *candidate, NSUInteger index, BOOL *stop) {
             return [candidate.guid isEqualToString:guid];
         }];
         if (session != self.currentSession) {
@@ -17870,7 +17870,7 @@ backgroundColor:(NSColor *)backgroundColor {
 - (NSArray<NSString *> *)broadcastInputHelper:(iTermBroadcastInputHelper *)helper
                      sessionsInTabWithSession:(NSString *)guid
                                 includeExited:(BOOL)includeExited {
-    PTYTab *tab = [[self tabs] objectPassingTest:^BOOL(PTYTab *tab, NSUInteger index, BOOL *stop) {
+    PTYTab *tab = [[self tabs] it_objectPassingTest:^BOOL(PTYTab *tab, NSUInteger index, BOOL *stop) {
         return [tab.sessions anyWithBlock:^BOOL(PTYSession *session) {
             return [session.guid isEqual:guid];
         }];

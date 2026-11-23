@@ -196,8 +196,8 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSEventModifierFlagCommand |
     return [[iTermKeystroke alloc] initWithVirtualKeyCode:self.keyCode
                                                hasKeyCode:self.hasKeyCode
                                             modifierFlags:self.modifiers
-                                                character:[self.charactersIgnoringModifiers firstCharacter]
-                                        modifiedCharacter:[self.characters firstCharacter]];
+                                                character:[self.charactersIgnoringModifiers it_firstCharacter]
+                                        modifiedCharacter:[self.characters it_firstCharacter]];
 }
 
 - (NSString *)stringValue {

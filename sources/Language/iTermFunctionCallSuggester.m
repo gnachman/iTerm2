@@ -663,7 +663,7 @@
     if (![lastArg isEqual:@","]) {
         NSDictionary *argDict = lastArg;
         if (argDict[@"colon"]) {
-            NSString *nextArgumentName = [[self argumentNamesForFunction:function] objectPassingTest:^BOOL(NSString *element, NSUInteger index, BOOL *stop) {
+            NSString *nextArgumentName = [[self argumentNamesForFunction:function] it_objectPassingTest:^BOOL(NSString *element, NSUInteger index, BOOL *stop) {
                 return ![usedParameterNames containsObject:[element stringByAppendingString:@":"]];
             }];
             NSArray *suggestions = [self suggestedExpressions:argDict[@"expression"]

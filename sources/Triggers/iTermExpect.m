@@ -234,7 +234,7 @@
         return;
     }
     const BOOL dry = _dry;
-    [_expectations removeObjectsPassingTest:^BOOL(iTermExpectation *expectation) {
+    [_expectations it_removeObjectsPassingTest:^BOOL(iTermExpectation *expectation) {
         const BOOL didExpire = expectation.userWillExpectCalled && expectation.deadline != nil && expectation.deadline.timeIntervalSinceNow < 0;
         if (didExpire) {
             DLog(@"Remove expired expectation %@ dry=%d", expectation, dry);

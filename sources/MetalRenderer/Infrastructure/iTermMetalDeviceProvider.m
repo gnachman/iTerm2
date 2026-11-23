@@ -46,7 +46,7 @@ NSString *const iTermMetalDeviceProviderPreferredDeviceDidChangeNotification = @
 }
 
 - (nullable id<MTLDevice>)integratedGPU {
-    return [_deviceList objectPassingTest:^BOOL(id<MTLDevice> element, NSUInteger index, BOOL *stop) {
+    return [_deviceList it_objectPassingTest:^BOOL(id<MTLDevice> element, NSUInteger index, BOOL *stop) {
         if (element.removable) {
             return NO;
         }
@@ -55,7 +55,7 @@ NSString *const iTermMetalDeviceProviderPreferredDeviceDidChangeNotification = @
 }
 
 - (nullable id<MTLDevice>)discreteGPU {
-    return [_deviceList objectPassingTest:^BOOL(id<MTLDevice> element, NSUInteger index, BOOL *stop) {
+    return [_deviceList it_objectPassingTest:^BOOL(id<MTLDevice> element, NSUInteger index, BOOL *stop) {
         if (element.removable) {
             return NO;
         }

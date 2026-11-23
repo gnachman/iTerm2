@@ -34,7 +34,8 @@
 // Returns those elements of the array for which block(element) returns YES.
 // block is called on every element in order.
 - (NSArray *)filteredArrayUsingBlock:(BOOL (NS_NOESCAPE ^)(ObjectType anObject))block;
-- (ObjectType)objectPassingTest:(BOOL (^)(ObjectType element, NSUInteger index, BOOL *stop))block;
+// The it_ prefix is needed: an Apple framework implements the unprefixed selector on this class.
+- (ObjectType)it_objectPassingTest:(BOOL (^)(ObjectType element, NSUInteger index, BOOL *stop))block;
 
 // Returns the first object that is a kind of `theClass` for which block returns YES.
 - (id)objectOfClass:(Class)theClass passingTest:(BOOL (^)(id element, NSUInteger index, BOOL *stop))block;
@@ -139,7 +140,8 @@ void iTermFreeeNullTerminatedCStringArray(char **array);
 
 @interface NSMutableArray<ObjectType> (iTerm)
 - (void)reverse;
-- (void)removeObjectsPassingTest:(BOOL (^)(ObjectType anObject))block;
+// The it_ prefix is needed: an Apple framework implements the unprefixed selector on this class.
+- (void)it_removeObjectsPassingTest:(BOOL (^)(ObjectType anObject))block;
 - (void)it_insertObjectInSortedArray:(ObjectType)object
                              inRange:(NSRange)range
                           comparator:(NSComparisonResult (^NS_NOESCAPE)(ObjectType lhs, ObjectType rhs))comparator;

@@ -1529,7 +1529,7 @@ static NSString *const iTermAPIFloatingPanesFirstAwarePythonVersion = @"2.26";
 }
 
 + (ITMRPCRegistrationRequest *)registrationRequestForStatusBarComponentWithUniqueIdentifier:(NSString *)uniqueIdentifier {
-    return [[[self sharedInstance] statusBarComponentProviderRegistrationRequests] objectPassingTest:^BOOL(ITMRPCRegistrationRequest *request, NSUInteger index, BOOL *stop) {
+    return [[[self sharedInstance] statusBarComponentProviderRegistrationRequests] it_objectPassingTest:^BOOL(ITMRPCRegistrationRequest *request, NSUInteger index, BOOL *stop) {
         return [request.statusBarComponentAttributes.uniqueIdentifier isEqualToString:uniqueIdentifier];
     }];
 }
@@ -1728,7 +1728,7 @@ static NSString *const iTermAPIFloatingPanesFirstAwarePythonVersion = @"2.26";
 }
 
 - (PseudoTerminal *)windowControllerWithID:(NSString *)windowID {
-    return [[[iTermController sharedInstance] terminals] objectPassingTest:^BOOL(PseudoTerminal *windowController, NSUInteger index, BOOL *stop) {
+    return [[[iTermController sharedInstance] terminals] it_objectPassingTest:^BOOL(PseudoTerminal *windowController, NSUInteger index, BOOL *stop) {
         return [windowController.terminalGuid isEqualToString:windowID];
     }];
 }
@@ -2178,7 +2178,7 @@ static NSString *const iTermAPIFloatingPanesFirstAwarePythonVersion = @"2.26";
         ITMNotificationRequest *requestToRemove = [request copy];
         requestToRemove.subscribe = YES;
         const NSInteger countBefore = subscriptions.count;
-        [subscriptions removeObjectsPassingTest:^BOOL(iTermAllObjectsSubscription *sub) {
+        [subscriptions it_removeObjectsPassingTest:^BOOL(iTermAllObjectsSubscription *sub) {
             return [NSObject object:sub.request isEqualToObject:requestToRemove];
         }];
         const NSInteger countAfter = subscriptions.count;
@@ -2274,10 +2274,10 @@ static NSString *const iTermAPIFloatingPanesFirstAwarePythonVersion = @"2.26";
                                         BOOL * _Nonnull stop) {
         [dict removeObjectForKey:connectionKey];
     }];
-    [_allSessionsSubscriptions removeObjectsPassingTest:^BOOL(iTermAllObjectsSubscription *sub) {
+    [_allSessionsSubscriptions it_removeObjectsPassingTest:^BOOL(iTermAllObjectsSubscription *sub) {
         return [sub.connectionKey isEqual:connectionKey];
     }];
-    [_allWindowsSubscriptions removeObjectsPassingTest:^BOOL(iTermAllObjectsSubscription *sub) {
+    [_allWindowsSubscriptions it_removeObjectsPassingTest:^BOOL(iTermAllObjectsSubscription *sub) {
         return [sub.connectionKey isEqual:connectionKey];
     }];
     if (rpcsRemoved) {
@@ -3175,7 +3175,7 @@ static NSString *const iTermAPIFloatingPanesFirstAwarePythonVersion = @"2.26";
             return;
         }
     } else if (request.identifierOneOfCase == ITMActivateRequest_Identifier_OneOfCase_WindowId) {
-        windowController = [[[iTermController sharedInstance] terminals] objectPassingTest:^BOOL(PseudoTerminal *element, NSUInteger index, BOOL *stop) {
+        windowController = [[[iTermController sharedInstance] terminals] it_objectPassingTest:^BOOL(PseudoTerminal *element, NSUInteger index, BOOL *stop) {
             return [element.terminalGuid isEqual:request.windowId];
         }];
         if (!windowController) {

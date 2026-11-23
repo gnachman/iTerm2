@@ -1016,7 +1016,7 @@ int decode_utf8_char(const unsigned char *datap,
     return s;
 }
 
-- (NSString*)stringByTrimmingLeadingWhitespace {
+- (NSString*)it_stringByTrimmingLeadingWhitespace {
     int i = 0;
 
     while ((i < self.length) &&
@@ -1046,7 +1046,7 @@ int decode_utf8_char(const unsigned char *datap,
                                  encoding:encoding];
 }
 
-- (NSString *)stringByTrimmingTrailingWhitespace {
+- (NSString *)it_stringByTrimmingTrailingWhitespace {
     return [self stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet whitespaceCharacterSet]];
 }
 
@@ -1933,7 +1933,7 @@ static BOOL iTermIsReportUnsafeControlCharacter(unichar c) {
     return first;
 }
 
-- (NSString *)lastComposedCharacter {
+- (NSString *)it_lastComposedCharacter {
     __block NSString *substring = nil;
     [self enumerateComposedCharacters:^(NSRange range, unichar simple, NSString *complexString, BOOL *stop) {
         substring = [self substringWithRange:range];
@@ -2038,7 +2038,7 @@ static BOOL iTermIsReportUnsafeControlCharacter(unichar c) {
     return [[self dataUsingEncoding:NSUTF8StringEncoding] it_sha256];
 }
 
-- (UTF32Char)firstCharacter {
+- (UTF32Char)it_firstCharacter {
     if (self.length == 0) {
         return 0;
     } else {
@@ -2300,7 +2300,7 @@ static BOOL iTermIsReportUnsafeControlCharacter(unichar c) {
         addRange(0xFE00, 0xFE0F);    // Variation Selectors
         addRange(0x1F900, 0x1F9FF);  // Supplemental Symbols and Pictographs
     });
-    return [emojiSet longCharacterIsMember:[self firstCharacter]];
+    return [emojiSet longCharacterIsMember:[self it_firstCharacter]];
 }
 
 - (NSString *)jsonEncodedString {

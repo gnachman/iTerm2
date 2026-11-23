@@ -38,9 +38,9 @@
         // https://developer.apple.com/forums/thread/113326
         {
             NSError *error = nil;
-            id<MTLTexture> texture = [loader newTextureWithCGImage:image.CGImage options:options error:&error];
+            id<MTLTexture> texture = [loader newTextureWithCGImage:image.it_CGImage options:options error:&error];
             if (texture) {
-                DLog(@"Against all odds, MTKTextureLoader succeeded producing %@ from %@", texture, image.CGImage);
+                DLog(@"Against all odds, MTKTextureLoader succeeded producing %@ from %@", texture, image.it_CGImage);
                 return texture;
             }
             DLog(@"%@", error);

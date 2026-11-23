@@ -388,7 +388,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     }
 
     NSArray<NSButton *> *views = @[_defaultButton, _secondaryButton, _closeButton];
-    NSButton *rightmostVisibleButton = [views objectPassingTest:^BOOL(NSButton *view, NSUInteger index, BOOL *stop) {
+    NSButton *rightmostVisibleButton = [views it_objectPassingTest:^BOOL(NSButton *view, NSUInteger index, BOOL *stop) {
         return !view.isHidden;
     }];
     const CGFloat desiredMaxX = NSMaxX(rightmostVisibleButton.frame);

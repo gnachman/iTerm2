@@ -455,9 +455,9 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
 
 - (iTermProfileHotKey *)profileHotKeyForGUID:(NSString *)guid {
     NSArray<iTermProfileHotKey *> *profileHotKeys = [_hotKeys objectsOfClasses:@[ [iTermProfileHotKey class] ]];
-    iTermProfileHotKey *profileHotKey = [profileHotKeys objectPassingTest:^BOOL(iTermProfileHotKey *element,
-                                                                                NSUInteger index,
-                                                                                BOOL *stop) {
+    iTermProfileHotKey *profileHotKey = [profileHotKeys it_objectPassingTest:^BOOL(iTermProfileHotKey *element,
+                                                                                   NSUInteger index,
+                                                                                   BOOL *stop) {
         return [element.profile[KEY_GUID] isEqualToString:guid];
     }];
     return profileHotKey;

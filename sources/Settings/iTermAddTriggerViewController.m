@@ -1467,7 +1467,7 @@ typedef NS_ENUM(NSInteger, iTermAddTriggerField) {
 }
 
 - (__kindof Trigger *)prototypeOfClass:(Class)theClass {
-    return [_prototypes objectPassingTest:^BOOL(Trigger *element, NSUInteger index, BOOL *stop) {
+    return [_prototypes it_objectPassingTest:^BOOL(Trigger *element, NSUInteger index, BOOL *stop) {
         return [element isKindOfClass:theClass];
     }];
 }

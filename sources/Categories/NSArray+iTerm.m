@@ -142,7 +142,7 @@
     return [self objectsAtIndexes:indexes];
 }
 
-- (id)objectPassingTest:(BOOL (^)(id element, NSUInteger index, BOOL *stop))block {
+- (id)it_objectPassingTest:(BOOL (^)(id element, NSUInteger index, BOOL *stop))block {
     NSUInteger index = [self indexOfObjectPassingTest:block];
     if (index == NSNotFound) {
         return nil;
@@ -621,7 +621,7 @@
 
 - (instancetype)it_arrayByRemovingObjectsPassingTest:(BOOL (^)(id anObject))block {
     NSMutableArray *mutableArray = [self mutableCopy];
-    [mutableArray removeObjectsPassingTest:block];
+    [mutableArray it_removeObjectsPassingTest:block];
     return mutableArray;
 }
 
@@ -758,7 +758,7 @@ void iTermFreeeNullTerminatedCStringArray(char **array) {
     }
 }
 
-- (void)removeObjectsPassingTest:(BOOL (^)(id anObject))block {
+- (void)it_removeObjectsPassingTest:(BOOL (^)(id anObject))block {
     NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
     [self enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if (block(obj)) {

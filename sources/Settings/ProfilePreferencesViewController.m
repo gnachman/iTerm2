@@ -547,7 +547,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 
 - (id<iTermSearchableViewController>)viewControllerWithOwnerIdentifier:(NSString *)ownerIdentifier {
-    return [[self tabViewControllers] objectPassingTest:^BOOL(id<iTermSearchableViewController> vc, NSUInteger index, BOOL *stop) {
+    return [[self tabViewControllers] it_objectPassingTest:^BOOL(id<iTermSearchableViewController> vc, NSUInteger index, BOOL *stop) {
         return [vc.documentOwnerIdentifier isEqualToString:ownerIdentifier];
     }];
 }

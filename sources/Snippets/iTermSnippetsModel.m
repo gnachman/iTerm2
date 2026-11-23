@@ -586,7 +586,7 @@ static NSString *const kSnippetsDiscardedFallbackBackupKey = @"NoSyncSnippetsDis
 }
 
 - (nullable iTermSnippet *)snippetWithActionKey:(id)actionKey {
-    return [_snippets objectPassingTest:^BOOL(iTermSnippet *snippet, NSUInteger index, BOOL *stop) {
+    return [_snippets it_objectPassingTest:^BOOL(iTermSnippet *snippet, NSUInteger index, BOOL *stop) {
         return [snippet matchesActionKey:actionKey];
     }];
 }

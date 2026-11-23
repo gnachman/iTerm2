@@ -1356,14 +1356,14 @@ ofCapturedOutput:(id<CapturedOutputReading>)capturedOutput
 
 - (id<VT100ScreenMarkReading>)screenMarkAtOrBeforeAbsLine:(long long)absLine {
     Interval *interval = [_state intervalForGridAbsCoordRange:VT100GridAbsCoordRangeMake(0, absLine, 0, absLine)];
-    return (id<VT100ScreenMarkReading>)[[_state.markCache findAtOrBeforeLocation:interval.location] objectPassingTest:^BOOL(id<iTermMark> element, NSUInteger index, BOOL *stop) {
+    return (id<VT100ScreenMarkReading>)[[_state.markCache findAtOrBeforeLocation:interval.location] it_objectPassingTest:^BOOL(id<iTermMark> element, NSUInteger index, BOOL *stop) {
         return [element isKindOfClass:[VT100ScreenMark class]];
     }];
 }
 
 - (id<VT100ScreenMarkReading>)screenMarkBeforeAbsLine:(long long)absLine {
     Interval *interval = [_state intervalForGridAbsCoordRange:VT100GridAbsCoordRangeMake(0, absLine, 0, absLine)];
-    return (id<VT100ScreenMarkReading>)[[_state.markCache findBeforeLocation:interval.location] objectPassingTest:^BOOL(id<iTermMark> element, NSUInteger index, BOOL *stop) {
+    return (id<VT100ScreenMarkReading>)[[_state.markCache findBeforeLocation:interval.location] it_objectPassingTest:^BOOL(id<iTermMark> element, NSUInteger index, BOOL *stop) {
         return [element isKindOfClass:[VT100ScreenMark class]];
     }];
 }

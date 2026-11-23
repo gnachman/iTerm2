@@ -89,7 +89,7 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
     if ([uniqueIdentifier isEqualToString:iTermSessionNameControllerSystemTitleUniqueIdentifier]) {
         return @"iterm2.private.session_title(session: session.id)";
     }
-    return [[iTermAPIHelper sessionTitleFunctions] objectPassingTest:^BOOL(iTermSessionTitleProvider *provider, NSUInteger index, BOOL *stop) {
+    return [[iTermAPIHelper sessionTitleFunctions] it_objectPassingTest:^BOOL(iTermSessionTitleProvider *provider, NSUInteger index, BOOL *stop) {
         return [provider.uniqueIdentifier isEqualToString:uniqueIdentifier];
     }].invocation;
 }

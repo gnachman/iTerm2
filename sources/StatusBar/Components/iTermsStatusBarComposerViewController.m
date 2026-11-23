@@ -45,7 +45,7 @@ static NSString *const iTermComposerComboBoxDidBecomeFirstResponder = @"iTermCom
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
     if (menuItem.action == @selector(performNaturalLanguageQuery:)) {
-        return [iTermAdvancedSettingsModel generativeAIAllowed] && [self.stringValue stringByTrimmingTrailingWhitespace].length > 0;
+        return [iTermAdvancedSettingsModel generativeAIAllowed] && [self.stringValue it_stringByTrimmingTrailingWhitespace].length > 0;
     }
     return [super validateMenuItem:menuItem];
 }
@@ -275,7 +275,7 @@ doCommandBySelector:(SEL)commandSelector {
 }
 
 - (void)reallyUpdateKeyboardClipView:(NSTextField *)textField {
-    NSView *keyboardClipView = [self.controlView.subviews objectPassingTest:^BOOL(__kindof NSView *element, NSUInteger index, BOOL *stop) {
+    NSView *keyboardClipView = [self.controlView.subviews it_objectPassingTest:^BOOL(__kindof NSView *element, NSUInteger index, BOOL *stop) {
         return [NSStringFromClass([element class]) isEqualToString:@"_NSKeyboardFocusClipView"];
     }];
     if (!keyboardClipView) {

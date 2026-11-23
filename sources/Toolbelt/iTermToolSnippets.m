@@ -248,7 +248,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
         return;
     }
     NSString *folderName = components[0];
-    iTermSnippetFolderItem *child = [tree objectPassingTest:^BOOL(id obj, NSUInteger index, BOOL *stop) {
+    iTermSnippetFolderItem *child = [tree it_objectPassingTest:^BOOL(id obj, NSUInteger index, BOOL *stop) {
         return [[iTermSnippetFolderItem castFrom:obj].title isEqual:folderName];
     }];
     NSMutableArray *container;
@@ -994,7 +994,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 
 - (NSString *)titleFromString:(NSString *)string {
     NSArray<NSString *> *parts = [string componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
-    return [parts objectPassingTest:^BOOL(NSString *element, NSUInteger index, BOOL *stop) {
+    return [parts it_objectPassingTest:^BOOL(NSString *element, NSUInteger index, BOOL *stop) {
         return [[element stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] length] > 0;
     }] ?: NSLocalizedStringWithDefaultValue(@"ToolSnippets.Untitled", nil, [NSBundle mainBundle], @"Untitled", @"Placeholder title for a snippet with no title");
 }

@@ -659,7 +659,7 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
         @"^https://gitlab\\.com/-/project/[a-f0-9]*/uploads/[a-f0-9]*/com\\.googlecode\\.iterm2\\.plist$",
         numbers
     ];
-    NSString *regex = [regexen objectPassingTest:^BOOL(NSString *regex, NSUInteger index, BOOL *stop) {
+    NSString *regex = [regexen it_objectPassingTest:^BOOL(NSString *regex, NSUInteger index, BOOL *stop) {
         return [pasteboardString isMatchedByRegex:regex];
     }];
     if (!regex) {

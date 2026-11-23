@@ -38,7 +38,7 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
         const unichar controlCode = [event.characters characterAtIndex:0];
         return controlCode + '@';
     }
-    return [charactersIgnoringModifiers firstCharacter];
+    return [charactersIgnoringModifiers it_firstCharacter];
 }
 
 - (NSString *)stringForEvent:(NSEvent *)event {
@@ -114,7 +114,7 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
                                                         NSEventModifierFlagShift |
                                                         NSEventModifierFlagCommand);
     const NSEventModifierFlags modifiers = [event it_modifierFlags] & allEventModifierFlags;
-    return [self stringForCodePoint:event.charactersIgnoringModifiers.firstCharacter modifiers:modifiers];
+    return [self stringForCodePoint:event.charactersIgnoringModifiers.it_firstCharacter modifiers:modifiers];
 }
 
 - (iTermOptionKeyBehavior)optionKeyBehaviorForEvent:(NSEvent *)event {

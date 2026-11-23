@@ -83,7 +83,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)removeFrameWithName:(NSString *)name {
-    [_frames removeObjectsPassingTest:^BOOL(iTermTuple<NSString *,iTermVariables *> *obj) {
+    [_frames it_removeObjectsPassingTest:^BOOL(iTermTuple<NSString *,iTermVariables *> *obj) {
         return [obj.firstObject isEqual:name];
     }];
 }
@@ -153,12 +153,12 @@ NS_ASSUME_NONNULL_BEGIN
             }
         }
         // Writes always go into the most recently added frame.
-        return [_frames objectPassingTest:^BOOL(iTermTuple<NSString *,iTermVariables *> *element, NSUInteger index, BOOL *stop) {
+        return [_frames it_objectPassingTest:^BOOL(iTermTuple<NSString *,iTermVariables *> *element, NSUInteger index, BOOL *stop) {
             return element.firstObject == nil;
         }].secondObject;
     }
     __block NSString *strippedOut = nil;
-    iTermVariables *owner = [_frames objectPassingTest:^BOOL(iTermTuple<NSString *,iTermVariables *> *element, NSUInteger index, BOOL *stop) {
+    iTermVariables *owner = [_frames it_objectPassingTest:^BOOL(iTermTuple<NSString *,iTermVariables *> *element, NSUInteger index, BOOL *stop) {
         if (element.firstObject == nil && [element.secondObject valueForVariableName:parts[0]]) {
             strippedOut = key;
             return YES;

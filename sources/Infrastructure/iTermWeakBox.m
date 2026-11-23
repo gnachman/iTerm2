@@ -37,7 +37,7 @@
 }
 
 - (void)pruneEmptyWeakBoxes {
-    [self removeObjectsPassingTest:^BOOL(iTermWeakBox *box) {
+    [self it_removeObjectsPassingTest:^BOOL(iTermWeakBox *box) {
         return box.object == nil;
     }];
 }

@@ -7147,7 +7147,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 
 - (iTermTerminalMarkButton *)cachedTerminalButtonForMark:(id<VT100ScreenMarkReading>)mark
                                                  ofClass:(Class)desiredClass {
-    return [iTermTerminalMarkButton castFrom:[_buttons objectPassingTest:^BOOL(iTermTerminalButton *genericButton, NSUInteger index, BOOL *stop) {
+    return [iTermTerminalMarkButton castFrom:[_buttons it_objectPassingTest:^BOOL(iTermTerminalButton *genericButton, NSUInteger index, BOOL *stop) {
         iTermTerminalMarkButton *button = [iTermTerminalMarkButton castFrom:genericButton];
         if (!button) {
             return NO;

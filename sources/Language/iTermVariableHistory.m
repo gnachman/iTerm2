@@ -404,7 +404,7 @@
 
 + (BOOL)pathIsNonterminal:(NSString *)path inContext:(inout iTermVariablesSuggestionContext *)contextPtr {
     NSSet<iTermRecordedVariable *> *vars = [self recordedVariablesInContext:*contextPtr];
-    iTermRecordedVariable *record = [[vars allObjects] objectPassingTest:^BOOL(iTermRecordedVariable *record, NSUInteger index, BOOL *stop) {
+    iTermRecordedVariable *record = [[vars allObjects] it_objectPassingTest:^BOOL(iTermRecordedVariable *record, NSUInteger index, BOOL *stop) {
         return [record.name isEqualToString:path];
     }];
     if (record.isTerminal) {

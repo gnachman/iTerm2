@@ -812,7 +812,7 @@ static id iTermDynamicProfileByRemovingNulls(id object) {
         return nil;
     }
     NSArray<Profile *> *allProfiles = [self profilesInFile:filename fileType:nil];
-    return [allProfiles objectPassingTest:^BOOL(NSDictionary *element, NSUInteger index, BOOL *stop) {
+    return [allProfiles it_objectPassingTest:^BOOL(NSDictionary *element, NSUInteger index, BOOL *stop) {
         return [element[KEY_GUID] isEqual:profile[KEY_GUID]];
     }];
 }

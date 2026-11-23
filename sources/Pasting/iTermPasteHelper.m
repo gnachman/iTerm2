@@ -294,7 +294,7 @@ static BOOL iTermPasteHelperIsEmojiExtender(UTF32Char c) {
 
 - (void)abortPasteEventsPassingTest:(BOOL (^NS_NOESCAPE)(PasteEvent *event))test {
     // Remove the queued ones first, so that stopping the current one doesn't start one of them.
-    [_eventQueue removeObjectsPassingTest:^BOOL(id event) {
+    [_eventQueue it_removeObjectsPassingTest:^BOOL(id event) {
         return [event isKindOfClass:[PasteEvent class]] && test(event);
     }];
     PasteEvent *current = _pasteContext.pasteEvent;

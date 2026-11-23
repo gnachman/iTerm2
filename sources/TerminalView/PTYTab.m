@@ -7075,7 +7075,7 @@ typedef struct {
     if (wp < 0) {
         return nil;
     }
-    return [sessions objectPassingTest:^BOOL(PTYSession *candidate, NSUInteger index, BOOL *stop) {
+    return [sessions it_objectPassingTest:^BOOL(PTYSession *candidate, NSUInteger index, BOOL *stop) {
         return [PTYTab tmuxLayoutPaneForSession:candidate] == wp;
     }];
 }
@@ -7186,7 +7186,7 @@ typedef struct {
     NSArray<iTermTmuxFloatAnchor *> *anchors = [self tmuxFloatAnchorsForParseTree:placementTree];
     for (NSDictionary *leaf in placementTree[kLayoutDictFloatingPanesKey]) {
         const int wp = [leaf[kLayoutDictWindowPaneKey] intValue];
-        PTYSession *session = [[self floatingSessions] objectPassingTest:^BOOL(PTYSession *candidate, NSUInteger index, BOOL *stop) {
+        PTYSession *session = [[self floatingSessions] it_objectPassingTest:^BOOL(PTYSession *candidate, NSUInteger index, BOOL *stop) {
             return [PTYTab tmuxLayoutPaneForSession:candidate] == wp;
         }];
         iTermFloatingPaneView *pane = [self floatingPaneForSession:session];
@@ -7220,7 +7220,7 @@ typedef struct {
         return nil;
     }
     const int wp = [leaves.firstObject[kLayoutDictWindowPaneKey] intValue];
-    return [[self tiledSessions] objectPassingTest:^BOOL(PTYSession *candidate, NSUInteger index, BOOL *stop) {
+    return [[self tiledSessions] it_objectPassingTest:^BOOL(PTYSession *candidate, NSUInteger index, BOOL *stop) {
         return candidate.tmuxPane == wp;
     }];
 }
@@ -7300,9 +7300,9 @@ typedef struct {
         BOOL (^isPane)(PTYSession *, NSUInteger, BOOL *) = ^BOOL(PTYSession *candidate, NSUInteger index, BOOL *stop) {
             return [PTYTab tmuxLayoutPaneForSession:candidate] == wp;
         };
-        PTYSession *session = [[self floatingSessions] objectPassingTest:isPane];
+        PTYSession *session = [[self floatingSessions] it_objectPassingTest:isPane];
         if (!session) {
-            session = [adopted objectPassingTest:isPane];
+            session = [adopted it_objectPassingTest:isPane];
             if (session) {
                 // placeTmuxFloatingPanes below sets its frame.
                 [self installFloatingSessionAwaitingPlacement:session];
@@ -7349,7 +7349,7 @@ typedef struct {
     }]) {
         return nil;
     }
-    return [self.sessions objectPassingTest:^BOOL(PTYSession *aSession, NSUInteger index, BOOL *stop) {
+    return [self.sessions it_objectPassingTest:^BOOL(PTYSession *aSession, NSUInteger index, BOOL *stop) {
         return !aSession.sessionIsSeniorToTmuxSplitPane;
     }];
 }
@@ -9744,7 +9744,7 @@ typedef struct {
 }
 
 - (PTYSession *)sessionWithGUID:(NSString *)guid {
-    return [self.sessions objectPassingTest:^BOOL(PTYSession *session, NSUInteger index, BOOL *stop) {
+    return [self.sessions it_objectPassingTest:^BOOL(PTYSession *session, NSUInteger index, BOOL *stop) {
         return [session.guid isEqualToString:guid];
     }];
 }

@@ -559,19 +559,19 @@ NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification = @"iTerm
 }
 
 - (nullable iTermScriptHistoryEntry *)entryWithIdentifier:(nullable NSString *)identifier {
-    return [_entries objectPassingTest:^BOOL(iTermScriptHistoryEntry *element, NSUInteger index, BOOL *stop) {
+    return [_entries it_objectPassingTest:^BOOL(iTermScriptHistoryEntry *element, NSUInteger index, BOOL *stop) {
         return [element.identifier isEqualToString:identifier];
     }];
 }
 
 - (iTermScriptHistoryEntry *)runningEntryWithPath:(NSString *)path {
-    return [self.runningEntries objectPassingTest:^BOOL(iTermScriptHistoryEntry *entry, NSUInteger index, BOOL *stop) {
+    return [self.runningEntries it_objectPassingTest:^BOOL(iTermScriptHistoryEntry *entry, NSUInteger index, BOOL *stop) {
         return [NSObject object:entry.path isEqualToObject:path];
     }];
 }
 
 - (iTermScriptHistoryEntry *)runningEntryWithFullPath:(NSString *)fullPath {
-    return [self.runningEntries objectPassingTest:^BOOL(iTermScriptHistoryEntry *entry, NSUInteger index, BOOL *stop) {
+    return [self.runningEntries it_objectPassingTest:^BOOL(iTermScriptHistoryEntry *entry, NSUInteger index, BOOL *stop) {
         return [NSObject object:entry.fullPath isEqualToObject:fullPath];
     }];
 }

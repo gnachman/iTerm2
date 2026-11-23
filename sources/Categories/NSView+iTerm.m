@@ -315,7 +315,7 @@ NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect contai
 }
 
 - (iTermNonDefaultIndicator *)it_nonDefaultIndicator {
-    return [[self subviews] objectPassingTest:^BOOL(__kindof NSView *view, NSUInteger index, BOOL *stop) {
+    return [[self subviews] it_objectPassingTest:^BOOL(__kindof NSView *view, NSUInteger index, BOOL *stop) {
         return [view isKindOfClass:[iTermNonDefaultIndicator class]];
     }];
 }

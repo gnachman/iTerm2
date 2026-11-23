@@ -2544,7 +2544,7 @@ NSArray<iTermBoxedBackgroundColorRun *> *iTermCombineBackgroundRunsForUnprocesse
         // Special box-drawing cells don't use the font so they look prettier.
         [attributedString.string enumerateComposedCharacters:^(NSRange range, unichar simple, NSString *complexString, BOOL *stop) {
             NSPoint p = NSMakePoint(point.x + positions[range.location], point.y);
-            [self drawBoxDrawingCharacter:simple ?: [complexString firstCharacter]
+            [self drawBoxDrawingCharacter:simple ?: [complexString it_firstCharacter]
                            withAttributes:[attributedString attributesAtIndex:range.location
                                                                effectiveRange:nil]
                                        at:p
@@ -3438,14 +3438,14 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
         // Look up by placement ID when specified. Placement ids are unique per image, not globally,
         // so the image id must match too; otherwise a placement of a different image that happens to
         // reuse this placement id could be returned.
-        draw = [draws objectPassingTest:^BOOL(iTermKittyImageDraw *element, NSUInteger index, BOOL *stop) {
+        draw = [draws it_objectPassingTest:^BOOL(iTermKittyImageDraw *element, NSUInteger index, BOOL *stop) {
             return element.virtual && element.placementID == placementID && element.imageID == imageID;
         }];
         DLog(@"Looked up by placementID, found: %@", draw);
     }
     if (!draw) {
         // Look up placement by image ID. Must include a size.
-        draw = [draws objectPassingTest:^BOOL(iTermKittyImageDraw *element, NSUInteger index, BOOL *stop) {
+        draw = [draws it_objectPassingTest:^BOOL(iTermKittyImageDraw *element, NSUInteger index, BOOL *stop) {
             return element.virtual && element.imageID == imageID && element.placementSize.width > 0 && element.placementSize.height > 0;
         }];
         DLog(@"Looked up by imageID, found: %@", draw);

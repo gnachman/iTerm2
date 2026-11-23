@@ -142,8 +142,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Returns a string containing only the digits.
 - (NSString *)stringWithOnlyDigits;
 
-- (NSString *)stringByTrimmingLeadingWhitespace;
-- (NSString *)stringByTrimmingTrailingWhitespace;
+// The it_ prefix is needed: an Apple framework implements the unprefixed selector on this class.
+- (NSString *)it_stringByTrimmingLeadingWhitespace;
+- (NSString *)it_stringByTrimmingTrailingWhitespace;
 
 - (NSString *)stringByTrimmingTrailingCharactersFromCharacterSet:(NSCharacterSet *)charset;
 
@@ -276,7 +277,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // The range of the first cell-sized unit as segmented by -enumerateComposedCharacters:, which can
 // be shorter than -rangeOfComposedCharacterSequenceAtIndex:0. {0, 0} for an empty string.
 - (NSRange)rangeOfFirstComposedCharacter;
-- (NSString *)lastComposedCharacter;
+// The it_ prefix is needed: an Apple framework implements the unprefixed selector on this class.
+- (NSString *)it_lastComposedCharacter;
 - (NSInteger)numberOfComposedCharacters;
 - (NSString * _Nullable)byTruncatingComposedCharactersInCenter:(NSInteger)count;
 
@@ -299,7 +301,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // A fast, non-crypto-quality hash.
 - (NSUInteger)hashWithDJB2;
 
-- (UTF32Char)firstCharacter;
+// The it_ prefix is needed: an Apple framework implements the unprefixed selector on this class.
+- (UTF32Char)it_firstCharacter;
 // Is this a phrase enclosed in quotation marks?
 - (BOOL)isInQuotationMarks;
 

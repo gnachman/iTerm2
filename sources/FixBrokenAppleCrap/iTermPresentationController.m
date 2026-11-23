@@ -415,7 +415,7 @@ NSString *PODescription(NSApplicationPresentationOptions presentationOptions) {
 // active fixes it.
 - (NSScreen *)screenWithDockFromScreens:(NSArray<NSScreen *> *)screens {
     DLog(@"Checking if any screen has dock in %@", screens);
-    return [screens objectPassingTest:^BOOL(NSScreen *screen, NSUInteger index, BOOL *stop) {
+    return [screens it_objectPassingTest:^BOOL(NSScreen *screen, NSUInteger index, BOOL *stop) {
         // We need to check both the screen we were given as well as the current "real" screen,
         // because they can have different visibleFrames. My theory is that NSScreen is immutable
         // and copies of it proliferate with different attributes.

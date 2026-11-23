@@ -194,7 +194,7 @@ NSString *const iTermEncoderGraphRecordGenerationKeySuffix = @"_Generation";
                                                                       andObject:identifier];
         return _index[tuple];
     }
-    return [_graphRecords objectPassingTest:^BOOL(iTermEncoderGraphRecord *element, NSUInteger index, BOOL *stop) {
+    return [_graphRecords it_objectPassingTest:^BOOL(iTermEncoderGraphRecord *element, NSUInteger index, BOOL *stop) {
         return ([element.key isEqualToString:key] &&
                 [identifier isEqualToString:element.identifier]);
     }];

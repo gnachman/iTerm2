@@ -56,7 +56,7 @@ static void iTermLegacyAtomicMutableArrayOfWeakObjectsLockUnlock(void) {
     @synchronized(ITNonnilLock([iTermLegacyAtomicMutableArrayOfWeakObjects lock])) {
         iTermLegacyAtomicMutableArrayOfWeakObjectsLock();
         @try {
-            [_array removeObjectsPassingTest:^(iTermWeakBox *box) {
+            [_array it_removeObjectsPassingTest:^(iTermWeakBox *box) {
                 return block(box.object);
             }];
         } @catch (NSException *exception) {

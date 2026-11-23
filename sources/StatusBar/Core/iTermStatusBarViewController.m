@@ -85,7 +85,7 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
     if (!self.mustShowSearchComponent) {
         return nil;
     }
-    return [_containerViews objectPassingTest:^BOOL(iTermStatusBarContainerView *containerView, NSUInteger index, BOOL *stop) {
+    return [_containerViews it_objectPassingTest:^BOOL(iTermStatusBarContainerView *containerView, NSUInteger index, BOOL *stop) {
         return containerView.component.statusBarComponentSearchViewController != nil;
     }];
 }
@@ -240,7 +240,7 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
 }
 
 - (nullable iTermStatusBarContainerView *)containerViewForComponent:(id<iTermStatusBarComponent>)component {
-    return [_containerViews objectPassingTest:^BOOL(iTermStatusBarContainerView *containerView, NSUInteger index, BOOL *stop) {
+    return [_containerViews it_objectPassingTest:^BOOL(iTermStatusBarContainerView *containerView, NSUInteger index, BOOL *stop) {
         return [containerView.component isEqualToComponent:component];
     }];
 }
@@ -308,13 +308,13 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
 }
 
 - (nullable __kindof id<iTermStatusBarComponent>)componentWithIdentifier:(NSString *)identifier {
-    return [_containerViews objectPassingTest:^BOOL(iTermStatusBarContainerView *element, NSUInteger index, BOOL *stop) {
+    return [_containerViews it_objectPassingTest:^BOOL(iTermStatusBarContainerView *element, NSUInteger index, BOOL *stop) {
         return [element.component.statusBarComponentIdentifier isEqual:identifier];
     }].component;
 }
 
 - (nullable __kindof id<iTermStatusBarComponent>)visibleComponentWithIdentifier:(NSString *)identifier {
-    return [_visibleContainerViews objectPassingTest:^BOOL(iTermStatusBarContainerView *element, NSUInteger index, BOOL *stop) {
+    return [_visibleContainerViews it_objectPassingTest:^BOOL(iTermStatusBarContainerView *element, NSUInteger index, BOOL *stop) {
         return [element.component.statusBarComponentIdentifier isEqual:identifier];
     }].component;
 }

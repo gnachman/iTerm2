@@ -39,7 +39,7 @@
     if ([iTermRestorableStateController stateRestorationEnabled]) {
         DLog(@"stateRestorationEnabled=YES");
         for (NSWindow *window in [self.delegate restorableStateWindows]) {
-            iTermRestorableStateRecord *record = [_records objectPassingTest:^BOOL(iTermRestorableStateRecord *element, NSUInteger index, BOOL *stop) {
+            iTermRestorableStateRecord *record = [_records it_objectPassingTest:^BOOL(iTermRestorableStateRecord *element, NSUInteger index, BOOL *stop) {
                 return element.windowNumber == window.windowNumber;
             }];
             const BOOL needsRestoration = [self.delegate restorableStateWindowNeedsRestoration:window];

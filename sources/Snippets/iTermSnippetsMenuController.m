@@ -129,7 +129,7 @@
                  snippet:(iTermSnippet *)snippet
                   toTree:(NSMutableArray *)tree {
     if (components.count == 1) {
-        NSDictionary *entry = [tree objectPassingTest:^BOOL(NSDictionary *element, NSUInteger index, BOOL *stop) {
+        NSDictionary *entry = [tree it_objectPassingTest:^BOOL(NSDictionary *element, NSUInteger index, BOOL *stop) {
             return [element[@"tag"] isEqual:components[0]];
         }];
         if (entry) {
@@ -140,7 +140,7 @@
         }
     } else {
         NSString *folderName = components[0];
-        NSDictionary *child = [tree objectPassingTest:^BOOL(NSDictionary *element, NSUInteger index, BOOL *stop) {
+        NSDictionary *child = [tree it_objectPassingTest:^BOOL(NSDictionary *element, NSUInteger index, BOOL *stop) {
             return [element[@"tag"] isEqual:folderName];
         }];
         NSMutableArray *container;

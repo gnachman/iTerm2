@@ -162,7 +162,7 @@ class ComplexCharRegistry: NSObject {
     @objc(baseCharacterForComplexCode:)
     func baseCharacter(complexCode code: unichar) -> UTF32Char {
         mutex.sync {
-            impl.string(for: Int(code))?.firstCharacter() ?? 0
+            impl.string(for: Int(code))?.it_firstCharacter() ?? 0
         }
     }
 

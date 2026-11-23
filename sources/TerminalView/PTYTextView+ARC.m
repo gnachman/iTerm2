@@ -2953,7 +2953,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
 }
 
 - (void)removeContentNavigationShortcutView:(id<iTermContentNavigationShortcutView>)view {
-    [self.contentNavigationShortcuts removeObjectsPassingTest:^BOOL(iTermContentNavigationShortcut *anObject) {
+    [self.contentNavigationShortcuts it_removeObjectsPassingTest:^BOOL(iTermContentNavigationShortcut *anObject) {
         return anObject.view == view;
     }];
     [[NSView castFrom:view] removeFromSuperview];

@@ -532,7 +532,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (NSString *)windowGUIDInAffinities:(NSSet<NSString *> *)affinities {
-    return [affinities.allObjects objectPassingTest:^BOOL(NSString *string, NSUInteger index, BOOL *stop) {
+    return [affinities.allObjects it_objectPassingTest:^BOOL(NSString *string, NSUInteger index, BOOL *stop) {
         return [string hasPrefix:@"pty-"];
     }];
 }
@@ -3481,7 +3481,7 @@ growingSplitWindowsToClientSize:openWindowsMode != kOpenTmuxWindowsAsNativeTabsI
         wids = [NSMutableArray array];
         _buriedWindows[terminalGUID] = wids;
     }
-    if (![wids objectPassingTest:^BOOL(iTermTuple<NSNumber *,NSNumber *> *element, NSUInteger index, BOOL *stop) {
+    if (![wids it_objectPassingTest:^BOOL(iTermTuple<NSNumber *,NSNumber *> *element, NSUInteger index, BOOL *stop) {
         return [element.firstObject isEqual:@(wid)];
     }]) {
         [wids addObject:[iTermTuple tupleWithObject:@(wid) andObject:@(tabIndex)]];

@@ -107,9 +107,9 @@ static const int iTermMultiServerMaxForeignServersToSkip = 128;
     // it lose TCC permissions such as Local Network access (issue 12106). Reuse a connection we
     // own, and launch a new server rather than fall back on an adopted one.
     iTermMultiServerConnection *ownConnection =
-    [state.registry.allValues objectPassingTest:^BOOL(iTermMultiServerConnection *element,
-                                                      NSUInteger index,
-                                                      BOOL *stop) {
+    [state.registry.allValues it_objectPassingTest:^BOOL(iTermMultiServerConnection *element,
+                                                         NSUInteger index,
+                                                         BOOL *stop) {
         return element.launchedByThisProcess;
     }];
     if (ownConnection) {
@@ -391,9 +391,9 @@ static const int iTermMultiServerMaxForeignServersToSkip = 128;
                  callback:(iTermCallback<id, iTermFileDescriptorMultiClientChild *> *)callback {
     [_thread dispatchAsync:^(iTermMultiServerPerConnectionState * _Nullable state) {
         iTermFileDescriptorMultiClientChild *child =
-        [state.unattachedChildren objectPassingTest:^BOOL(iTermFileDescriptorMultiClientChild *element,
-                                                          NSUInteger index,
-                                                          BOOL *stop) {
+        [state.unattachedChildren it_objectPassingTest:^BOOL(iTermFileDescriptorMultiClientChild *element,
+                                                             NSUInteger index,
+                                                             BOOL *stop) {
             return element.pid == pid;
         }];
         if (!child) {

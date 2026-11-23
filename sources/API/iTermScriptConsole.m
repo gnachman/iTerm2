@@ -527,7 +527,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     // The Clear Terminated button acts on the whole list, so its state depends
     // only on whether any entry it would remove exists, not on the current
     // selection.
-    iTermScriptHistoryEntry *terminated = [[[iTermScriptHistory sharedInstance] entries] objectPassingTest:^BOOL(iTermScriptHistoryEntry *entry, NSUInteger index, BOOL *stop) {
+    iTermScriptHistoryEntry *terminated = [[[iTermScriptHistory sharedInstance] entries] it_objectPassingTest:^BOOL(iTermScriptHistoryEntry *entry, NSUInteger index, BOOL *stop) {
         return entry.isFinished;
     }];
     _clearTerminatedButton.enabled = (terminated != nil);

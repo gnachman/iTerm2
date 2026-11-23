@@ -585,7 +585,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                 }
                 continue;
             }
-            const UTF32Char base = [charAsString firstCharacter];
+            const UTF32Char base = [charAsString it_firstCharacter];
             if (lastCharacterImpartsEmojiPresentation && [emojiWithDefaultTextPresentation longCharacterIsMember:base] && ![charAsString containsString:@"\ufe0f"]) {
                 // Prevent previous character's emoji presentation from making this one have an emoji presentation as well.
                 // Leave lastCharacterImpartsEmojiPresentation set to YES intentionally.

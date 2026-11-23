@@ -12,7 +12,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface NSImage (iTerm)
 + (NSSize)pointSizeOfGeneratedImageWithPixelSize:(NSSize)pixelSize;
-- (CGImageRef)CGImage;
+// The it_ prefix is needed: an Apple framework implements the unprefixed selector on this class.
+- (CGImageRef)it_CGImage;
 + (NSImage *)imageOfSize:(NSSize)size color:(NSColor *)color;
 + (NSColorSpace * _Nullable)colorSpaceForProgramaticallyGeneratedImages;
 

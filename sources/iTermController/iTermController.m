@@ -2050,7 +2050,7 @@ static const NSUInteger iTermUndoCloseStateMaximumCount = 20;
     if (!target) {
         return NO;
     }
-    PTYSession *session = [[self allSessions] objectPassingTest:^BOOL(PTYSession *session, NSUInteger index, BOOL *stop) {
+    PTYSession *session = [[self allSessions] it_objectPassingTest:^BOOL(PTYSession *session, NSUInteger index, BOOL *stop) {
         if (!session.isBrowserSession) {
             return  NO;
         }

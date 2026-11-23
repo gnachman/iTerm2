@@ -735,7 +735,7 @@ static NSBitmapImageRep * iTermCreateBitmapRep(NSSize size,
     return image;
 }
 
-- (CGImageRef)CGImage {
+- (CGImageRef)it_CGImage {
     return [self CGImageForProposedRect:nil context:nil hints:nil];
 }
 
@@ -753,7 +753,7 @@ static NSBitmapImageRep * iTermCreateBitmapRep(NSSize size,
                                    0,
                                    size.width,
                                    size.height);
-    CGContextDrawImage(context, rect, self.CGImage);
+    CGContextDrawImage(context, rect, self.it_CGImage);
     CGImageRef cgImage = CGBitmapContextCreateImage(context);
 
     NSImage *result = [[NSImage alloc] initWithCGImage:cgImage

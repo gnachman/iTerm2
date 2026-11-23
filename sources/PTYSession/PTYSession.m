@@ -2907,7 +2907,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return [[[iTermAsciicastMetadata alloc] initWithWidth:_screen.width
                                                    height:_screen.height
                                                   command:_program ?: @""
-                                                    title:[[self name] stringByTrimmingTrailingWhitespace] ?: @""
+                                                    title:[[self name] it_stringByTrimmingTrailingWhitespace] ?: @""
                                               environment:environment
                                                        fg:[iTermProfilePreferences colorForKey:KEY_FOREGROUND_COLOR
                                                                                           dark:dark
@@ -5088,7 +5088,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                     userInfo:@{ NSLocalizedDescriptionKey: @"Session is not a tmux client" }];
         return nil;
     }
-    iTermTmuxOptionMonitor *mon = [_userTmuxOptionMonitors objectPassingTest:^BOOL(iTermTmuxOptionMonitor *candidate, NSUInteger index, BOOL *stop) {
+    iTermTmuxOptionMonitor *mon = [_userTmuxOptionMonitors it_objectPassingTest:^BOOL(iTermTmuxOptionMonitor *candidate, NSUInteger index, BOOL *stop) {
         return [candidate.format isEqualToString:tmuxFormat];
     }];
     if (!mon) {
@@ -25637,7 +25637,7 @@ resolveSymlinksInDirectory:(NSString *)directory
 }
 
 - (void (^)(NSEvent *))shortcutNavigationActionForKeyEquivalent:(NSString *)characters {
-    return [[_textview contentNavigationShortcuts] objectPassingTest:^BOOL(iTermContentNavigationShortcut *shortcut, NSUInteger index, BOOL *stop) {
+    return [[_textview contentNavigationShortcuts] it_objectPassingTest:^BOOL(iTermContentNavigationShortcut *shortcut, NSUInteger index, BOOL *stop) {
         if (shortcut.view.terminating) {
             return NO;
         }
@@ -26372,7 +26372,7 @@ static NSError *PTYSessionBrowserEvalJSError(NSInteger code, NSString *message) 
 }
 
 - (void)naggingControllerPrettyPrintJSON {
-    iTermSelectionReplacement *replacement = [self.textview.replacementPayloadsForSelection objectPassingTest:^BOOL(iTermSelectionReplacement *candidate, NSUInteger index, BOOL *stop) {
+    iTermSelectionReplacement *replacement = [self.textview.replacementPayloadsForSelection it_objectPassingTest:^BOOL(iTermSelectionReplacement *candidate, NSUInteger index, BOOL *stop) {
         return candidate.kind == iTermSelectionReplacementKindJson;
     }];
     if (replacement) {

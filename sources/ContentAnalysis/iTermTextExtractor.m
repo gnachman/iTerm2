@@ -1220,13 +1220,13 @@ const NSInteger kLongMaximumWordLength = 100000;
                                  respectHardNewlines:YES
                                             maxChars:maximumPrefixLength
                                    continuationChars:nil
-                                 convertNullsToSpace:NO].string stringByTrimmingLeadingWhitespace];
+                                 convertNullsToSpace:NO].string it_stringByTrimmingLeadingWhitespace];
     NSString *suffix = [[self wrappedLocatedStringAt:relativeRange.end
                                              forward:YES
                                  respectHardNewlines:YES
                                             maxChars:maximumSuffixLength + 1
                                    continuationChars:nil
-                                 convertNullsToSpace:NO].string stringByTrimmingTrailingWhitespace];
+                                 convertNullsToSpace:NO].string it_stringByTrimmingTrailingWhitespace];
     if (suffix.length > maximumSuffixLength) {
         suffix = [[[suffix stringByDroppingLastCharacters:1] stringByTrimmingOrphanedSurrogates] stringByAppendingString:@"…"];
     }

@@ -112,7 +112,7 @@
 
 - (iTermProcessMonitor *)childForProcessInfo:(iTermProcessInfo *)info {
     const pid_t pid = info.processID;
-    return [_children objectPassingTest:^BOOL(iTermProcessMonitor *element, NSUInteger index, BOOL *stop) {
+    return [_children it_objectPassingTest:^BOOL(iTermProcessMonitor *element, NSUInteger index, BOOL *stop) {
         return element.processInfo.processID == pid;
     }];
 }

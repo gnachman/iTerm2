@@ -249,7 +249,7 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
         [menu addItem:item];
     }
 
-    [[menu.supermenu.itemArray objectPassingTest:^BOOL(NSMenuItem *element, NSUInteger index, BOOL *stop) {
+    [[menu.supermenu.itemArray it_objectPassingTest:^BOOL(NSMenuItem *element, NSUInteger index, BOOL *stop) {
         return element.submenu == menu;
     }] setEnabled:menu.itemArray.count > 0];
 }

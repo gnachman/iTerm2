@@ -781,7 +781,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     DLog(@"showFilter");
     iTermStatusBarViewController *statusBarViewController = self.delegate.sessionViewStatusBarViewController;
     if (statusBarViewController) {
-        iTermStatusBarFilterComponent *filterComponent = (iTermStatusBarFilterComponent *)[statusBarViewController.visibleComponents objectPassingTest:^BOOL(id<iTermStatusBarComponent> candidate, NSUInteger index, BOOL *stop) {
+        iTermStatusBarFilterComponent *filterComponent = (iTermStatusBarFilterComponent *)[statusBarViewController.visibleComponents it_objectPassingTest:^BOOL(id<iTermStatusBarComponent> candidate, NSUInteger index, BOOL *stop) {
             return [candidate isKindOfClass:[iTermStatusBarFilterComponent class]];
         }];
         if (!filterComponent) {

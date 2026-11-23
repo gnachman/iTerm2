@@ -1165,7 +1165,7 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
 - (id<VT100ScreenMarkReading>)penultimateCommandMark {
     int skip = 1;
     for (NSArray *objects in [self.intervalTree reverseEnumerator]) {
-        id<VT100ScreenMarkReading> mark = [objects objectPassingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
+        id<VT100ScreenMarkReading> mark = [objects it_objectPassingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
             if (![element conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
                 return NO;
             }
@@ -1193,7 +1193,7 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
         return nil;
     }
     for (NSArray *objects in [self.intervalTree reverseEnumeratorAt:pos]) {
-        id<VT100ScreenMarkReading> mark = [objects objectPassingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
+        id<VT100ScreenMarkReading> mark = [objects it_objectPassingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
             if (![element conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
                 return NO;
             }
@@ -1220,7 +1220,7 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
     const long long pos = MAX(0, predecessor.entry.interval.limit);
 
     for (NSArray *objects in [self.intervalTree forwardLocationEnumeratorAt:pos]) {
-        id<VT100ScreenMarkReading> mark = [objects objectPassingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
+        id<VT100ScreenMarkReading> mark = [objects it_objectPassingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
             if (![element conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
                 return NO;
             }
@@ -1273,7 +1273,7 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
     const long long pos = MAX(0, predecessor.entry.interval.limit);
 
     for (NSArray *objects in [self.intervalTree forwardLocationEnumeratorAt:pos]) {
-        id<VT100ScreenMarkReading> mark = [objects objectPassingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
+        id<VT100ScreenMarkReading> mark = [objects it_objectPassingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
             return [element conformsToProtocol:@protocol(VT100ScreenMarkReading)];
         }];
         if (mark) {
@@ -1290,7 +1290,7 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
     const long long pos = MAX(1, successor.entry.interval.location) - 1;
 
     for (NSArray *objects in [self.intervalTree reverseEnumeratorAt:pos]) {
-        id<VT100ScreenMarkReading> mark = [objects objectPassingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
+        id<VT100ScreenMarkReading> mark = [objects it_objectPassingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
             return [element conformsToProtocol:@protocol(VT100ScreenMarkReading)];
         }];
         if (mark) {
@@ -1384,7 +1384,7 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
         command = [command substringToIndex:newline.location];
     }
 
-    return [command stringByTrimmingLeadingWhitespace];
+    return [command it_stringByTrimmingLeadingWhitespace];
 }
 
 - (id<IntervalTreeImmutableObject>)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass {

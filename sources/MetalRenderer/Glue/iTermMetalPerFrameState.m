@@ -1794,7 +1794,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                               line[logicalIndex].code > 127 &&
                                               [boxCharacterSet characterIsMember:line[logicalIndex].code]) ||
                                              (line[logicalIndex].complexChar &&
-                                              [boxCharacterSet longCharacterIsMember:[complexString firstCharacter]])));
+                                              [boxCharacterSet longCharacterIsMember:[complexString it_firstCharacter]])));
         const BOOL isBlockCharacter = (characterIsDrawable &&
                                        !line[logicalIndex].complexChar &&
                                        line[logicalIndex].code > 127 &&
