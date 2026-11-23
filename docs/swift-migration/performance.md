@@ -35,10 +35,20 @@ Measurement:
 
 - A port of any unit the dossier marks as warm (called per line, per update,
   per keystroke) runs the perf harness (section 3) before and after. A
-  regression beyond noise blocks the commit. Time and rate metrics are
-  estimated by their best sample (owner, 2026-11-22); the thresholds, and
-  the median for memory and counts, are proposals (section 3,
-  **Comparison**).
+  confirmed regression blocks the commit. The rule was decided by the
+  owner on 2026-11-22. Time and rate metrics are estimated by their best
+  sample (“Given the variance you should take the fastest time, since
+  that's our best estimate.”). On the threshold he chose “per-scenario
+  variation plus a back-to-back confirmation”: a metric worse than the
+  reference by more than the larger of 5% and that scenario's own
+  variation is a suspected regression, and it counts only if runs of both
+  versions made back to back on the same machine show it again (section
+  3, **Comparison** and **Confirming a suspected regression**). A
+  suspected regression blocks until that confirmation run clears it. How a
+  scenario's variation is measured is our choice, not the owner's.
+  Still proposals: keeping the median for memory and counts, the
+  five-sample floor, and that spread never makes a best-of row
+  inconclusive.
 - Memory is checked with the scripted workload (section 3): resident size and
   allocation count. Swift value types boxed into `Any` or into existentials, and
   bridged collections kept alive alongside their originals, are the usual
@@ -87,7 +97,10 @@ committed there on the owner's word (“Put the baseline with other
 port-related files”, 2026-11-22). Best is the fastest sample: the minimum where lower is
 better, the maximum for the iteration rates. The bold figure in each row is
 the one `perf_compare.py` compares (below, **Comparison**): Best for time
-and rate metrics (decided), Median for memory and counts (proposed); rows
+and rate metrics (decided), Median for memory and counts (proposed). For
+a best-of row, how far the worst sample but one lies from Best is the
+scenario's variation, which sets its threshold (below, **Comparison**);
+rows
 with neither in bold are informational. `process_peak_footprint` has one
 sample per run, so its comparison is always inconclusive and its median is
 not in bold.
@@ -133,29 +146,29 @@ Read with care:
   iterations per second: two levels, and the spread figure (0.9%), which is
   built on the median's neighbours, does not show it.
   `app.stress_normal_1tab` gave 1890, 1119, 1323, 1059 and 1084, and
-  `app.stress_clearcodes_1tab` 870, 752, 1177, 764 and 851. Since the
-  owner's decision of 2026-11-22 rates are estimated by their best sample,
-  and under the proposed threshold (below, **Comparison**) a candidate
-  whose best is more than 5% below the baseline's (2340, 1890 and 1177
-  here) is a regression however its median moved. What that protects
-  against: a few slow runs among otherwise normal ones, from a busy moment
-  or the slow level, faking a change, since one fast run on each side is
-  enough. What it does not protect against:
-  - A clean candidate that never comes within 5% of the baseline's best.
-    In each of these three rates only one of the five baseline samples is
-    within 5% of the best (2056 is 12% below 2340). Assuming the level of
-    each run is random and independent, with the chance of a fast run
-    estimated from those five runs as 1 in 5, a five-run candidate misses
-    with probability 0.8 to the fifth power, about 0.33, for each of the
-    three rates, and a clean candidate shows a false regression on at
-    least one of them about 70% of the time (1 - 0.672 cubed; the buffer
-    and htop rates, with three of five samples within 5%, add about 1%
-    each). A five-sample estimate of that chance is itself rough. A rate
-    regression whose candidate best sits near the baseline's slow level
-    (about 950, 1100 and 800) should be rerun before it is believed.
+  `app.stress_clearcodes_1tab` 870, 752, 1177, 764 and 851. Rates are
+  estimated by their best sample (2340, 1890 and 1177 here), and each
+  scenario's threshold is the larger of 5% and how far its worst sample
+  but one lies below its best (below, **Comparison**): 59.27%, 42.65%
+  and 35.09% for these three. So a candidate whose runs all land on the
+  slow level reads no change. Under the flat 5% that the code applied before the
+  owner's decision, a clean five-run candidate showed a false regression
+  on at least one of these three rates about 70% of the time, if the level
+  of each run is random (each misses the fast level with probability 0.8
+  to the fifth power, about 0.33). What the per-scenario threshold does
+  not protect against:
+  - A real regression smaller than the scenario's variation. On these
+    three rates the best must fall by 35% to 59% before a single
+    comparison flags anything; the harness can only catch a large
+    regression there. The confirmation is more sensitive (below,
+    **Confirming a suspected regression**), but it runs only after a
+    single comparison has suspected something.
   - A fast outlier. One fast candidate run reads as an improvement and
-    hides a real regression in the rest, and a fast outlier in the
-    baseline makes every later candidate look slower. "These three rates"
+    hides a real regression in the rest. A fast outlier in the reference
+    no longer makes every later candidate look slower; it widens that
+    scenario's threshold instead, which hides more. Setting aside the
+    reference's worst sample does not help here: on these rates the fast
+    sample is the best, not the worst. "These three rates"
     may be too narrow: in `busy-after-2026-11-22.json` (not a baseline,
     so weaker evidence) `app.stress_buffer_1tab` has a sample of 1027
     against a baseline best of 471, `app.stress_htop_unthrottled_1tab`
@@ -172,41 +185,65 @@ Read with care:
   are a few kilobytes with a spread over 100%: noise around zero, not a
   measure. `memory_peak_physical` and `live_malloc_bytes` are the steady
   ones.
-- Best against best does not protect against a run made on a busy
-  machine, and that is not limited to the app rates: a busy machine slows
-  the fastest run too, not only the typical one. Three other result files
-  of 2026-11-22 in `tmp/perf-baseline/results/` hold app and test code
-  identical to the baseline's (only tool commits differ). Compared with
-  `perf_compare.py --allow-non-baseline`, each shows false regressions
-  over the proposed fixed 5% on in-process time metrics with 10 samples a
-  side:
-  - `forced-2026-11-22.json`, load average about 8 (before [4.87, 7.77,
-    8.39]) with the owner's programs running: `screen.gang_fast_path`
-    7.77%, `draw.attributed_strings_truecolor` 5.74%,
-    `draw.attributed_strings_truecolor_ligatures` 6.75%.
-  - `collided-2026-11-22.json`, two runs at once in one lane (four
-    scenarios failed): `screen.gang_fast_path` 8.23%, `parse.mixed_1mb`
-    7.95%, `screen.parse_execute_mixed_1mb` 10.7%.
-  - `busy-after-2026-11-22.json`, run alone and labeled busy only by the
-    old after-run rule (before [2.81, 3.84, 5.04]), so the nearest thing
-    to a clean repeat: `screen.gang_fast_path` 7.81%,
-    `screen.parse_execute_mixed_1mb` 5.86%. Every other in-process time
-    metric in it is within 4%. Its app rates show both false regressions
-    (`app.stress_normal_10tabs` 57%, `app.stress_clearcodes_1tab` 33%)
-    and false improvements (buffer, htop, normal_1tab).
+- The first of the ten in-process samples is the slowest in 4 of the 8
+  in-process best-of metrics of the baseline: `screen.gang_fast_path`,
+  `screen.char_at_a_time` (16.149% above the best, the next slowest
+  4.04%) and both truecolor draw scenarios. Taken whole, the reference's
+  range would let that one sample set the threshold (16.149% for
+  `screen.char_at_a_time`), so the reference's single worst sample is set
+  aside before the range is taken (below, **Comparison**). The in-process
+  thresholds are then 5% to 10.18% against this baseline. A slowdown
+  smaller than a scenario's threshold is not flagged by a single
+  comparison.
+- A busy machine slows the fastest run too, not only the typical one, and
+  a measure taken from one run's samples does not see that; that is what
+  the confirmation (below) is for. Three other result files of 2026-11-22
+  in `tmp/perf-baseline/results/` hold app and test code identical to the
+  baseline's (only tool commits differ). Compared with
+  `perf_compare.py --allow-non-baseline`, these are the false suspected
+  regressions on time and rate metrics (memory and counts are not in the
+  table) under the flat 5%, under the whole range of the reference (the
+  first measure tried), and under the range with the worst sample set
+  aside (the measure the code uses):
 
-  Under the old rule `screen.gang_fast_path`'s threshold was max(5%, 3 x
-  4.8%) = 14.4% and none of its three readings would have been flagged.
-  That widening applied to the best would flag nothing in the clean repeat
-  (busy-after), but would still flag the forced run's
-  `draw.attributed_strings_truecolor_ligatures` (6.75% against 5%) and the
-  collided run's `screen.parse_execute_mixed_1mb` (10.7% against 7.7%). What
-  follows for the owner's choice of threshold: on this evidence a fixed 5%
-  on the best sample flags a clean repeat on `screen.gang_fast_path`. The
-  alternatives are a wider threshold for best-of metrics, the old widening
-  by spread applied to the best, or requiring a quiet candidate and a
-  rerun before a regression counts. The code implements the fixed 5% as a
-  proposal until he chooses (owner-queue.md Q23 item 3).
+  | File | Conditions | Flat 5% | Whole range | Range without the worst sample |
+  |---|---|---|---|---|
+  | `forced-2026-11-22.json` | load average about 8 (before [4.87, 7.77, 8.39]), the owner's programs running | 3: `screen.gang_fast_path` 7.77%, `draw.attributed_strings_truecolor` 5.74%, `draw.attributed_strings_truecolor_ligatures` 6.75% | 0 | 2: `screen.gang_fast_path` 7.77% against 6.99%, `draw.attributed_strings_truecolor_ligatures` 6.75% against 5.17% |
+  | `collided-2026-11-22.json` | two runs at once in one lane (four scenarios failed) | 3: `screen.gang_fast_path` 8.23%, `parse.mixed_1mb` 7.95%, `screen.parse_execute_mixed_1mb` 10.7% | 1: `screen.parse_execute_mixed_1mb` 10.7% against 7.71% | 2: `screen.gang_fast_path` 8.23% against 6.99%, `screen.parse_execute_mixed_1mb` 10.7% against 6.42% |
+  | `busy-after-2026-11-22.json` | run alone, labeled busy only by the old after-run rule (before [2.81, 3.84, 5.04]): the nearest thing to a clean repeat | 4: `screen.gang_fast_path` 7.81%, `screen.parse_execute_mixed_1mb` 5.86%, `app.stress_normal_10tabs` 57.0%, `app.stress_clearcodes_1tab` 33.3% | 0 | 1: `screen.gang_fast_path` 7.81% against 6.99% |
+
+  In all, 10, 1 and 5. Setting the worst sample aside brings back four
+  false suspicions that the whole range hid, all on in-process scenarios
+  run on a busier machine; it was chosen anyway, because with the whole
+  range a single slow sample in the committed baseline would have set the
+  threshold of every later comparison (16.149% for
+  `screen.char_at_a_time`), and a false suspicion costs a confirmation
+  run while a missed regression costs nothing that anyone sees. The
+  measure was not tuned further. Of the false improvements in
+  `busy-after` (flat 5%: buffer, htop and normal_1tab), both range
+  measures keep two (`app.stress_buffer_1tab` 118%,
+  `app.stress_htop_unthrottled_1tab` 58%). The memory rows of `busy-after` are judged on the median by an
+  unchanged rule and still read four suspected regressions in resident
+  size (`app.stress_buffer_1tab` and `app.stress_flood_1tab` steady,
+  `app.stress_clearcodes_1tab` peak and steady). Two candidates of the
+  same day hold the one-line change measured below, which costs at most
+  about 1%, on a machine that was not quiet: `candidate-draw-2026-11-22.json`
+  reads 3, 0 and 2 (the same three measures), `candidate2-2026-11-22.json`
+  2, 0 and 2: under the final measure, and in `candidate2` under the flat
+  5% too, `draw.attributed_strings_truecolor_ligatures` and
+  `screen.gang_fast_path`; under the flat 5% `candidate-draw` also flags
+  `screen.parse_execute_mixed_1mb` (5.54%). A busy enough candidate passes any of
+  these thresholds; a single comparison can therefore only suspect a
+  regression, and only the confirmation decides. Other measures were
+  tried on the same files (results in this order: forced, collided,
+  busy-after): three times the robust relative spread,
+  the old widening applied to the best, flags 1, 1, 1 and misses the
+  two-level rates, whose spread around the median is 0.9%; the distance
+  from the best to the median flags 3, 3, 3; the distance from the best
+  to the quartile on the slow side (Python's `statistics.quantiles` with
+  `method='inclusive'`), taken from each of the two files and the larger
+  used, 2, 3, 2. All three of these take the larger of the two files'
+  figures; the measure chosen takes the reference's only.
 
 **A change measured both ways (2026-11-22).** The nil test added to
 `-[iTermMutableAttributedStringBuilder setAttributes:]` is on the path the
@@ -235,7 +272,14 @@ best, about 3%), and truecolor showed no order. Two and three runs a side
 do not settle whether either difference is real. A lesson for comparisons:
 a candidate measured on a machine less quiet than the baseline's reads
 worse, and only runs of both versions under the same conditions tell a
-change from the machine.
+change from the machine. Given to `perf_compare.py --confirm` (base the
+two runs without the line, candidate the three with it, and the other
+way round), all three scenarios read no change: ligatures 0.95% worse,
+mono 3.09% better and truecolor 0.54% worse, each against the 5% floor
+(the bests of the runs on each side are within 1.6% of each other); the
+other way round, mono 3.19% worse, the others under 1%. No pair of these
+five files flags anything in either direction under the flat 5% or
+either range measure.
 
 **Configuration.** Measured in `Deployment`, the release configuration
 (whole-module, `-O`, no address sanitizer), unsigned, `arm64`, into
@@ -347,24 +391,79 @@ otherwise take the baseline in a clean checkout.
 scenario and metric. Which statistic a metric is judged on follows from its
 unit, in one place, `statistic_for` in `perf_lib.py`.
 
-Decided by the owner on 2026-11-22: time and rate metrics (units `s`,
-`ms`, `us`, `ns`, `iterations/s`) are estimated by the best sample, the
-minimum when lower is better and the maximum when higher is better, and
-compared best against best. In his words: "Given the variance you should
-take the fastest time, since that's our best estimate."
+Decided by the owner on 2026-11-22:
 
-Proposed, not confirmed by the owner (owner-queue.md Q23 item 3), and
-implemented as such:
+- Time and rate metrics (units `s`, `ms`, `us`, `ns`, `iterations/s`) are
+  estimated by the best sample, the minimum when lower is better and the
+  maximum when higher is better, and compared best against best. In his
+  words: “Given the variance you should take the fastest time, since
+  that's our best estimate.”
+- The regression rule. Asked whether to keep a flat 5% for every scenario
+  or to use “5% or that scenario's own run-to-run variation, whichever is
+  larger” and count a flagged regression “only if it shows up again when
+  both versions are run back to back on the same machine”, he answered:
+  “per-scenario variation plus a back-to-back confirmation”. So the
+  threshold of every compared metric is the larger of 5% and the
+  scenario's variation, and one comparison of a candidate against a
+  reference can only give `suspected regression`; a regression counts only
+  when `perf_compare.py --confirm` confirms it (below, **Confirming a
+  suspected regression**).
 
-- A best-of metric whose best is worse by more than 5% is a regression,
-  better by more than 5% an improvement.
-- Spread never makes a best-of row inconclusive and does not widen its
-  threshold; it is reported, with both medians.
+Our choices, not the owner's, within that rule:
+
+- The variation of a best-of metric is how far the reference's worst
+  sample lies from its best, in percent of the best, after the single
+  worst sample of the reference is set aside (when it has five samples or
+  more, which a compared row always has). A best-of row is then a
+  suspected regression when its candidate best is more than 5% worse than
+  the reference's best and, where the reference spreads more than 5%,
+  worse than the reference's worst sample but one. Why this measure: a
+  range from the best covers the two-level app rates (a spread around the
+  median sees one level only) and removes half of the false regressions
+  on identical code ("Read with care", above); only the reference's
+  samples count, so a candidate made noisy by its change cannot widen its
+  own threshold; and setting aside one sample keeps a single hiccup in
+  the committed baseline, often XCTest's slow first iteration, from
+  setting the threshold of every later comparison. Its costs are also in
+  "Read with care": the app rates need a drop of 35% to 59% before
+  anything is flagged, two slow samples in the reference still widen the
+  threshold, and a slowdown smaller than the variation is not flagged by
+  a single comparison.
 - Memory and count metrics (`kB`, `count`, and any unit not listed) keep
-  the median: a regression is a median worse by more than max(5%, 3 x
-  noise), noise being the larger robust relative spread (1.4826 x MAD /
-  median) of the two runs, and more than 10% noise is inconclusive.
-- Fewer than five samples on either side is inconclusive, for both kinds.
+  the median, still a proposal (owner-queue.md Q23 item 3). Their
+  variation is three times the noise, noise being the larger robust
+  relative spread (1.4826 x MAD / median) of the two sides, reference and
+  candidate both (unlike the best-of measure, so here a noisy candidate
+  does widen its own threshold; this is the earlier proposal, kept as it
+  was), so their threshold, max(5%, 3 x noise), is the rule they had
+  before, now read as
+  the decided “5% or the scenario's variation”. More than 10% noise is
+  inconclusive for them, also a proposal.
+- Proposed, not confirmed by the owner (owner-queue.md Q23 item 3): spread
+  never makes a best-of row inconclusive.
+- Proposed, not confirmed by the owner (the same item): fewer than five
+  samples on either side is inconclusive, for both kinds.
+
+Thresholds of the best-of metrics against the baseline of 2026-11-22, as
+`perf_compare.py` computes them:
+
+| Scenario | Metric | Threshold | Whole range (not used) |
+|---|---|---|---|
+| `screen.char_at_a_time` | `time` | 5% (floor; 4.04%) | 16.149% |
+| `draw.attributed_strings_truecolor_ligatures` | `time_per_frame` | 5.170% | 8.338% |
+| `screen.parse_execute_mixed_1mb` | `time` | 6.417% | 7.706% |
+| `app.stress_htop_unthrottled_1tab` | `iterations_per_sec` | 6.685% | 9.749% |
+| `draw.attributed_strings_truecolor` | `time_per_frame` | 6.932% | 7.907% |
+| `screen.gang_fast_path` | `time` | 6.992% | 11.159% |
+| `draw.attributed_strings_mono` | `time_per_frame` | 7.225% | 7.939% |
+| `memory.scrollback_fill_20k` | `clock_monotonic_time` | 7.379% | 7.855% |
+| `app.stress_buffer_1tab` | `iterations_per_sec` | 8.280% | 9.554% |
+| `parse.mixed_1mb` | `time` | 10.180% | 11.379% |
+| `app.stress_clearcodes_1tab` | `iterations_per_sec` | 35.089% | 36.109% |
+| `app.stress_normal_1tab` | `iterations_per_sec` | 42.646% | 43.968% |
+| `app.stress_normal_10tabs` | `iterations_per_sec` | 59.274% | 59.274% |
+
+Each row of the report shows the noise, the variation and the threshold.
 
 The best is always computed from the samples, so older result files compare
 the same way. Every scenario named in
@@ -386,8 +485,144 @@ make sure it ran in both. Informational metrics are shown and never
 compared. It refuses (exit 2) to compare across configurations or machines,
 or against a result not labeled a baseline, unless told to
 (`--allow-different-machine`, `--allow-non-baseline`); different Xcode or
-macOS versions give a warning. For the before and after of a port, run both
-on the same machine in one sitting and pass `--allow-non-baseline`.
+macOS versions give a warning. For the before and after of a port,
+compare the port's run with the committed baseline, and confirm anything
+suspected as below.
+
+Exit status of a single comparison: 0 when nothing is suspected and
+nothing failed; 1 for any `suspected regression`, `failed in candidate` or
+`missing in candidate` row; 2 when the files are not comparable or cannot
+be read. A suspected regression keeps exit status 1, so nothing that reads
+the status can take it for a pass; the output names the suspected rows
+and says how to confirm them. It stops blocking only when a valid
+confirmation run (below) gives `no change`, `not confirmed` or
+`improvement` for every one of them. An `inconclusive` confirmation does
+not clear it: the suspicion stands until a confirmation gives one of
+those verdicts or `confirmed regression`.
+
+**Confirming a suspected regression.** Measure both versions in turn, back
+to back, on the same machine:
+
+1. Hold one lane for the whole procedure and change nothing in its build
+   settings. Put the base version's tree and the candidate's tree in it
+   alternately (a commit and its parent, or the change applied and
+   removed), at least twice each, and interleaved, for example base,
+   candidate, candidate, base, base, candidate. For the app scenarios use
+   at least three each (below).
+2. After each switch, measure with the same options every time, limited
+   to the suspected scenarios, each run to its own file:
+
+       python3 -B tools/swift_migration/perf_baseline.py run \
+           --scenarios 'screen.gang_fast_path' \
+           --output tmp/perf-baseline/results/confirm-base-1.json
+
+   The runner builds `Deployment` first; `--skip-build` must not be used,
+   since the tree changed. Name the files so that each side is clear.
+3. Compare all of them at once:
+
+       cd tmp/perf-baseline/results &&
+       python3 -B ../../../tools/swift_migration/perf_compare.py --confirm \
+           --base confirm-base-1.json confirm-base-2.json ... \
+           --candidate confirm-candidate-1.json confirm-candidate-2.json ...
+
+Per metric, `--confirm` pools each side's samples and compares the pooled
+statistic (best or median, as above) against the larger of 5% and the
+variation between the base runs, not within them (our choice, like the
+single comparison's measure): for a best-of metric, how far the worst
+base run's best lies from the best base run's best; for a median metric,
+the same spread of the base runs' medians or three times the noisiest
+single base run's robust relative spread, whichever is larger (the second
+term keeps the single comparison's noise rule; pooling the runs into one
+MAD would count the difference between runs twice; candidate runs are
+left out so that a candidate made noisy by its change cannot widen its
+own threshold, though the noisiest run of either side still decides the
+10% inconclusive limit). It also takes each run's own statistic. The
+verdict:
+
+- `confirmed regression`: the pooled candidate is worse by more than the
+  threshold, and every candidate run's statistic is worse than every base
+  run's (the best candidate run is worse than the worst base run).
+- `not confirmed`: worse by more than the threshold pooled, but some
+  candidate run is as good as some base run. It is named in a warning and
+  does not block.
+- `improvement`: better by more than the threshold pooled and in every
+  run; better pooled but not in every run reads `no change`, with a note.
+- `no change`, `inconclusive` (fewer than five samples in any run, or a
+  median metric over 10% noise), and the scenario verdicts of a single
+  comparison, where a failure or a missing metric in any candidate run
+  gives `failed in candidate` or `missing in candidate`, and a skip in any
+  run gives `skipped in candidate`.
+
+For a best-of metric the run-by-run condition always holds once the pooled
+condition does: a pooled candidate best worse than the best base run's
+best by more than the spread of the base runs' bests is worse than every
+base run's best. It binds for median metrics. A cost for median metrics:
+the pooled median is compared against a spread measured from the best
+base run's median, so base runs that differ widen the threshold more than
+the pooled median moves. With base run medians of 100 and 120 (lower is
+better) the variation is 20%, and candidate run medians of 125 and 126
+read no change, about 14% worse than the pooled base median of 110,
+though every candidate run is worse than every base run.
+
+What the confirmation can see. A run's best barely moves with a slow
+sample or two, so the bests of interleaved runs of one version lie close
+together: on the draw runs above, within 1.6%, so the threshold there was
+the 5% floor, below the single comparison's 5.2% to 7.2% for those
+scenarios. A run that was busy throughout moves its best and widens the
+threshold by as much: with the baseline's `screen.gang_fast_path` run and
+the much busier one of `candidate-draw-2026-11-22.json` as the two base
+runs, whose bests are 8.57% apart, a candidate 40% slower in every run is
+confirmed, and one 8% slower would not be. What it cannot see:
+
+- A slowdown below the spread of the base runs' bests, at least 5%.
+- Chance, when the runs of one version differ by more than 5%. For a
+  best-of metric the run-by-run condition adds nothing, so on identical
+  code a confirmation fires whenever every candidate run's best happens
+  to be worse than every base run's by more than the spread of the base
+  runs' bests. On the two-level app rates, if run bests sat exactly on
+  two levels and one sample in five reached the fast one, independently,
+  a run would reach it with probability about 0.67, and the chance is
+  that of both base runs fast and both candidate runs slow: 0.67 squared
+  times 0.33 squared, about 5% per rate with two runs a side, about 1%
+  with three. That is a lower bound. Run bests also vary within a level,
+  and once they vary by more than 5% every ordering of the 2k runs (k a
+  side) becomes about equally likely, so the chance approaches 1 in
+  C(2k, k), the chance that the k candidate runs are exactly the k worst:
+  1 in 6 with two runs a side, 1 in 20 with three (a reviewer's
+  simulations with 1% and 3% jitter on each sample gave 6.4% and 1.5%,
+  and 10% and 3.2%). So the chance per rate is at least about 5% (1% with
+  three runs a side) and up to 1 in 6 (1 in 20). The same bound holds in
+  process when interleaved runs drift by more than 5%. The other way, a
+  base run at the slow level widens the threshold to that rate's 35% to
+  59%. Hence at least three runs a side for the app scenarios.
+- Anything the single comparison did not suspect first: the confirmation
+  is run only on suspected scenarios.
+
+`--confirm` needs no baseline label. It refuses (exit 2) fewer than two
+files a side, a file named on both sides or twice on one side (compared by
+real path), and files that differ in
+schema, configuration, architecture, machine, or the runner's
+`iterations`, `app_runs` and `app_duration_s`, and it takes no `--allow-`
+option. It warns when the runs were made in different lanes or
+checkouts, when every run of one side started before every run of the
+other (not interleaved, so a drift of the machine over time would read as
+a change), when both sides record the same commit and uncommitted paths
+(probably the same tree twice), when a side records more than one
+tree, and, naming them, when runs were measured on a busy machine.
+
+A confirmation with any of these warnings (runs not interleaved, more
+than one tree on a side, different lanes or checkouts, a busy machine,
+the same tree on both sides) is not valid evidence, whatever its
+verdicts: fix the cause and rerun it. Files that were not made by this
+procedure prove nothing either: given `--base` the baseline and the
+busy-after run and `--candidate` the two candidate files of 2026-11-22,
+none of them back to back, a reviewer got two confirmed regressions on
+code that changed by at most about 1%.
+
+Exit status: 0 when nothing is confirmed and nothing failed; 1 for any
+`confirmed regression`, `failed in candidate` or `missing in candidate`
+row; 2 when not comparable or unreadable. Exit status 0 with warnings is
+not a pass, for the reason above.
 
 **Taking the baseline.** On the owner's machine, quiet: no agents or builds
 running, and on AC power. Other iTerm2 instances may stay open:

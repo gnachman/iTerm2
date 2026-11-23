@@ -164,11 +164,29 @@ except where an item says it waits.
    windowed paths. Otherwise run the harness by hand against a sanitized
    build with every other iTerm2 quit
    ([integer-findings.md](integer-findings.md), Limits).
-3. **The performance regression rule.** [performance.md §1](performance.md)
-   says "beyond noise" without defining it. DECIDED 2026-11-22: time and
+3. **The performance regression rule.** ANSWERED 2026-11-22. Time and
    rate metrics are estimated by the best sample (“Given the variance you
    should take the fastest time, since that's our best estimate.”;
-   decisions.md). Proposed, not confirmed, and implemented in
+   decisions.md). Asked next whether to keep the flat 5% for every
+   scenario or to use 5% or the scenario's own run-to-run variation,
+   whichever is larger, counting a flagged regression only if it shows
+   up again when both versions are run back to back on the same machine,
+   the owner answered: “per-scenario variation plus a back-to-back
+   confirmation” (decisions.md). Implemented in `perf_compare.py`
+   ([performance.md §3](performance.md), **Comparison** and **Confirming
+   a suspected regression**): one comparison gives at most a suspected
+   regression, and `--confirm` decides. How a scenario's variation is
+   measured is our choice (for a best-of metric, how far the reference's
+   worst sample but one lies from its best). The benefit: false
+   suspicions on identical code fell from 10 to 5 on time and rate
+   metrics. The cost: against the committed baseline the thresholds are
+   5% to 10.2% in process and 6.7% to 59.3% for the app rates, three of
+   which need a drop of 35% to 59% before anything is flagged (item 19).
+   Still proposals: the median for memory and counts, with its noise
+   rule; the five-sample floor; and that spread never makes a best-of row
+   inconclusive (item 19). What was asked, as it was:
+   [performance.md §1](performance.md) said "beyond noise" without
+   defining it. Proposed, not confirmed, and implemented in
    `perf_compare.py` ([performance.md §3](performance.md), **Comparison**):
    a best-of metric whose best is worse by more than 5% is a regression;
    spread never makes a best-of row inconclusive; memory and count metrics
@@ -184,8 +202,8 @@ except where an item says it waits.
    alternatives are a wider threshold for best-of metrics, the old
    widening by spread (14.4% for gang) applied to the best, or requiring a
    quiet candidate and a rerun before a regression counts. Please confirm
-   or change these. Still open: where the baseline file lives, if it is
-   committed.
+   or change these. Where the baseline file lives was answered the same
+   day (item 18).
 4. **The fast test tier** ([test-tiers.md](test-tiers.md)). The 10 second
    ceiling is reported, not enforced, because 46 fast tests exceeded it in
    single runs on a loaded machine while their medians are under a second:
@@ -276,7 +294,13 @@ except where an item says it waits.
     `.claude/skills/swift-migration-unit/SKILL.md` exists only in this
     checkout. Allowing it takes `!/.claude/skills/`.
 18. **The baseline is taken; three app rates in it are not steady** (added
-    2026-11-22). The numbers are in [performance.md §3](performance.md).
+    2026-11-22; ANSWERED 2026-11-22 with item 3: the threshold is the
+    larger of 5% and the scenario's variation, which for these three rates
+    is 59.3%, 42.6% and 35.1% against this baseline, so a clean candidate
+    at the slow level reads no change, and a flagged regression counts only
+    when a back-to-back run confirms it. The cost is that on these rates
+    a real regression smaller than 35% to 59% is not flagged at all
+    (item 19); what follows is as it was asked). The numbers are in [performance.md §3](performance.md).
     `app.stress_normal_10tabs` ran at two levels (about 950 and about 2,200
     iterations per second) within five runs, and `app.stress_normal_1tab`
     and `app.stress_clearcodes_1tab` ranged by half again. The cause is not
@@ -288,6 +312,65 @@ except where an item says it waits.
     "Read with care". Where the baseline file is kept was ANSWERED
     2026-11-22 (“Put the baseline with other port-related files”): it is
     `tools/swift_migration/perf_baselines/baseline-2026-11-22.json`.
+19. **What the per-scenario threshold costs** (added 2026-11-22, after
+    item 3 was answered). The rule is yours; the measure of a scenario's
+    variation is ours, and it decides what a comparison can catch. For a
+    best-of metric it is how far the reference's worst sample but one
+    lies from its best (the single worst is set aside so that one hiccup,
+    often XCTest's slow first iteration, does not set the threshold).
+    Against the committed baseline that gives these thresholds; a
+    slowdown smaller than its scenario's is never flagged:
+
+    | Scenario | Threshold |
+    |---|---|
+    | `screen.char_at_a_time` | 5% |
+    | `draw.attributed_strings_truecolor_ligatures` | 5.17% |
+    | `screen.parse_execute_mixed_1mb` | 6.42% |
+    | `app.stress_htop_unthrottled_1tab` | 6.69% |
+    | `draw.attributed_strings_truecolor` | 6.93% |
+    | `screen.gang_fast_path` | 6.99% |
+    | `draw.attributed_strings_mono` | 7.23% |
+    | `memory.scrollback_fill_20k` `clock_monotonic_time` | 7.38% |
+    | `app.stress_buffer_1tab` | 8.28% |
+    | `parse.mixed_1mb` | 10.18% |
+    | `app.stress_clearcodes_1tab` | 35.09% |
+    | `app.stress_normal_1tab` | 42.65% |
+    | `app.stress_normal_10tabs` | 59.27% |
+
+    The three unsteady app rates need a 35% to 59% drop before anything is
+    flagged. On files of identical code the flat 5% raised 10 false
+    suspicions on time and rate metrics, this measure 5, and the whole
+    range without setting a sample aside 1 (it was rejected because one
+    slow first sample gave `screen.char_at_a_time` 16.1%). Memory rows
+    still read four false suspicions in one busy file, under the
+    unchanged median rule. What the back-to-back confirmation can see: its
+    threshold is the spread between the base runs' bests (5% at least),
+    so with interleaved runs on one machine it catches slowdowns above
+    5% that a single comparison cannot tell from a busy machine (the
+    in-process single-comparison thresholds are 5% to 10.2%), and a base
+    run that was busy throughout widens it by as much as that run was
+    slowed. Nothing at or below 5% is ever caught. What it cannot see: a
+    slowdown below that spread; anything the single comparison did not
+    suspect first; for median metrics, a regression smaller than the
+    spread of the base runs' medians even when every run is worse; and
+    chance. On a best-of metric whose runs differ by more than 5%,
+    identical code is confirmed as a regression whenever the candidate
+    runs happen to be the worst: on the two-level app rates at least
+    about 5% of the time per rate with two runs a side (1% with three, as
+    the procedure asks), if run bests sat exactly on two levels, and up
+    to 1 in 6 (1 in 20 with three) when run bests also vary by more than
+    5% within a level; the same bound holds in process when interleaved
+    runs drift by more than 5%. A confirmation whose warnings fire (not
+    interleaved, more than one tree on a side, different lanes, a busy
+    machine) is not valid evidence and is rerun, and an `inconclusive`
+    one does not clear a suspicion. Open proposals for you: keeping the median
+    for memory and counts, with its 10% noise limit; the five-sample floor
+    (fewer than five samples on either side is inconclusive); and that
+    spread never makes a best-of row inconclusive. A further proposal,
+    not done: discard the first in-process sample in the harness, which
+    would let the thresholds rest on steadier samples
+    ([performance.md §3](performance.md), "Read with care" and
+    **Comparison**).
 
 ### Q22. Questions raised on 2026-11-20 and answered the same day
 

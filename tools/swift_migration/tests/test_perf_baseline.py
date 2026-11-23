@@ -391,7 +391,7 @@ class CompareTests(unittest.TestCase):
 
     def test_verdicts(self):
         report, rows = self.rows()
-        self.assertEqual(rows[('parse.mixed_1mb', 'time')]['verdict'], 'regression')
+        self.assertEqual(rows[('parse.mixed_1mb', 'time')]['verdict'], 'suspected regression')
         self.assertAlmostEqual(rows[('parse.mixed_1mb', 'time')]['change_percent'], 20.0, places=6)
         self.assertEqual(rows[('app.stress_normal_1tab', 'iterations_per_sec')]['verdict'], 'no change')
         self.assertEqual(rows[('app.stress_normal_1tab', 'rss_peak')]['verdict'], 'improvement')
@@ -406,7 +406,7 @@ class CompareTests(unittest.TestCase):
         m['samples'] = [x * 0.8 for x in m['samples']]
         _, rows = self.rows(cand=cand)
         row = rows[('app.stress_normal_1tab', 'iterations_per_sec')]
-        self.assertEqual(row['verdict'], 'regression')
+        self.assertEqual(row['verdict'], 'suspected regression')
         self.assertAlmostEqual(row['change_percent'], 20.0, places=6)
 
     def test_change_within_threshold_is_no_change(self):
@@ -771,13 +771,13 @@ class ThresholdBoundaryTests(unittest.TestCase):
 
     # No noise: the 5% floor decides.
     def test_floor_lower_is_better(self):
-        self.assertEqual(self.verdict([1.0] * 10, [1.051] * 10, 'lower')[0], 'regression')
+        self.assertEqual(self.verdict([1.0] * 10, [1.051] * 10, 'lower')[0], 'suspected regression')
         self.assertEqual(self.verdict([1.0] * 10, [1.049] * 10, 'lower')[0], 'no change')
         self.assertEqual(self.verdict([1.0] * 10, [0.949] * 10, 'lower')[0], 'improvement')
         self.assertEqual(self.verdict([1.0] * 10, [0.951] * 10, 'lower')[0], 'no change')
 
     def test_floor_higher_is_better(self):
-        self.assertEqual(self.verdict([100.0] * 10, [94.9] * 10, 'higher')[0], 'regression')
+        self.assertEqual(self.verdict([100.0] * 10, [94.9] * 10, 'higher')[0], 'suspected regression')
         self.assertEqual(self.verdict([100.0] * 10, [95.1] * 10, 'higher')[0], 'no change')
         self.assertEqual(self.verdict([100.0] * 10, [105.1] * 10, 'higher')[0], 'improvement')
         self.assertEqual(self.verdict([100.0] * 10, [104.9] * 10, 'higher')[0], 'no change')
@@ -794,19 +794,19 @@ class ThresholdBoundaryTests(unittest.TestCase):
         self.assertAlmostEqual(row['threshold_percent'], 8.8956, places=4)
 
     def test_noise_term_lower_is_better(self):
-        self.assertEqual(self.verdict(self.NOISY, self.scaled(1.090), 'lower')[0], 'regression')
+        self.assertEqual(self.verdict(self.NOISY, self.scaled(1.090), 'lower')[0], 'suspected regression')
         self.assertEqual(self.verdict(self.NOISY, self.scaled(1.088), 'lower')[0], 'no change')
         self.assertEqual(self.verdict(self.NOISY, self.scaled(0.910), 'lower')[0], 'improvement')
         self.assertEqual(self.verdict(self.NOISY, self.scaled(0.912), 'lower')[0], 'no change')
 
     def test_noise_term_higher_is_better(self):
-        self.assertEqual(self.verdict(self.NOISY, self.scaled(0.910), 'higher')[0], 'regression')
+        self.assertEqual(self.verdict(self.NOISY, self.scaled(0.910), 'higher')[0], 'suspected regression')
         self.assertEqual(self.verdict(self.NOISY, self.scaled(0.912), 'higher')[0], 'no change')
         self.assertEqual(self.verdict(self.NOISY, self.scaled(1.090), 'higher')[0], 'improvement')
         self.assertEqual(self.verdict(self.NOISY, self.scaled(1.088), 'higher')[0], 'no change')
 
     def test_sample_and_noise_limits(self):
-        self.assertEqual(self.verdict([1.0] * 5, [2.0] * 5, 'lower')[0], 'regression')
+        self.assertEqual(self.verdict([1.0] * 5, [2.0] * 5, 'lower')[0], 'suspected regression')
         self.assertEqual(self.verdict([1.0] * 4, [2.0] * 5, 'lower')[0], 'inconclusive')
         # Noise just under and just over 10%: MAD 6.7 -> 9.93%; MAD 6.8 -> 10.08%.
         under = [93.3] * 3 + [100.0] * 4 + [106.7] * 3
@@ -862,14 +862,25 @@ class BestSampleTests(unittest.TestCase):
         self.assertEqual(row['baseline_median'], 959)
         self.assertEqual(row['candidate_median'], 705)
         self.assertIn('noise_percent', row)
-        self.assertEqual(row['threshold_percent'], 5.0)
+        # Since 2026-11-22 the threshold is the larger of 5% and the
+        # reference's variation: here 953 is 59.27% below 2340.
+        self.assertAlmostEqual(row['threshold_percent'], 100.0 * (2340 - 953) / 2340, places=6)
         self.assertEqual(report['exit_code'], 0)
 
-    def test_ten_tab_rate_best_6_percent_worse_is_a_regression(self):
+    def test_ten_tab_rate_best_6_percent_worse_is_within_its_variation(self):
+        # Under the flat 5% this was a regression. The owner's rule of
+        # 2026-11-22 takes the larger of 5% and the scenario's variation,
+        # and these five runs spread 59.27% below their best.
         cand = [2199.6, 2199, 2100, 2150, 2190]  # best 6% below 2340; median far above 959
         report, row = self.row('iterations/s', 'higher', self.TEN_TABS, cand)
-        self.assertEqual(row['verdict'], 'regression')
+        self.assertEqual(row['verdict'], 'no change')
         self.assertAlmostEqual(row['change_percent'], 6.0, places=6)
+        self.assertEqual(report['exit_code'], 0)
+
+    def test_ten_tab_rate_best_below_its_slow_level_is_a_suspected_regression(self):
+        cand = [800, 790, 780, 795, 785]  # best 65.8% below 2340, under the slow level of 953
+        report, row = self.row('iterations/s', 'higher', self.TEN_TABS, cand)
+        self.assertEqual(row['verdict'], 'suspected regression')
         self.assertEqual(report['exit_code'], 1)
 
     def test_high_spread_does_not_make_a_best_of_metric_inconclusive(self):
@@ -885,29 +896,38 @@ class BestSampleTests(unittest.TestCase):
         self.assertEqual(row['verdict'], 'inconclusive')
 
     BASE_TIME = [1.0, 1.3, 1.1, 1.5, 1.2]
+    # A steady reference: its worst sample is 3% from its best, so the 5%
+    # floor is the threshold. BASE_TIME spreads 50%, and under the rule of
+    # 2026-11-22 a 6% change on it is within its variation.
+    STEADY_TIME = [1.0, 1.01, 1.02, 1.01, 1.03]
 
     def test_lower_is_better_time_best_within_5_percent_is_no_change(self):
-        cand = [1.04, 1.6, 1.7, 1.8, 1.9]  # fastest 4% slower; median 1.7 against 1.2
-        _, row = self.row('s', 'lower', self.BASE_TIME, cand, scenario='parse.mixed_1mb', metric='time')
+        cand = [1.04, 1.6, 1.7, 1.8, 1.9]  # fastest 4% slower; median 1.7 against 1.01
+        _, row = self.row('s', 'lower', self.STEADY_TIME, cand, scenario='parse.mixed_1mb', metric='time')
         self.assertEqual(row['statistic'], 'best')
+        self.assertEqual(row['threshold_percent'], 5.0)
         self.assertEqual(row['baseline_best'], 1.0)
         self.assertEqual(row['candidate_best'], 1.04)
         self.assertEqual(row['verdict'], 'no change')
 
     def test_lower_is_better_time_best_6_percent_slower_is_a_regression(self):
-        cand = [1.06, 1.07, 1.06, 1.08, 1.06]  # median 1.06, better than 1.2
-        _, row = self.row('s', 'lower', self.BASE_TIME, cand, scenario='parse.mixed_1mb', metric='time')
-        self.assertEqual(row['verdict'], 'regression')
+        cand = [1.06, 1.07, 1.06, 1.08, 1.06]
+        _, row = self.row('s', 'lower', self.STEADY_TIME, cand, scenario='parse.mixed_1mb', metric='time')
+        self.assertEqual(row['verdict'], 'suspected regression')
         self.assertAlmostEqual(row['change_percent'], 6.0, places=6)
+        # The same candidate against the 50% spread of BASE_TIME is within
+        # that reference's variation.
+        _, row = self.row('s', 'lower', self.BASE_TIME, cand, scenario='parse.mixed_1mb', metric='time')
+        self.assertEqual(row['verdict'], 'no change')
 
     def test_lower_is_better_time_best_6_percent_faster_is_an_improvement(self):
         cand = [0.94, 1.9, 1.9, 1.9, 1.9]
-        _, row = self.row('ms', 'lower', self.BASE_TIME, cand, scenario='draw.x', metric='time_per_frame')
+        _, row = self.row('ms', 'lower', self.STEADY_TIME, cand, scenario='draw.x', metric='time_per_frame')
         self.assertEqual(row['verdict'], 'improvement')
 
     def test_best_of_floor_boundaries(self):
         for better, base, worse, better_value in (('lower', 1.0, 1.051, 0.949), ('higher', 100.0, 94.9, 105.1)):
-            self.assertEqual(self.row('s', better, [base] * 5, [worse] * 5)[1]['verdict'], 'regression')
+            self.assertEqual(self.row('s', better, [base] * 5, [worse] * 5)[1]['verdict'], 'suspected regression')
             self.assertEqual(self.row('s', better, [base] * 5, [better_value] * 5)[1]['verdict'], 'improvement')
         self.assertEqual(self.row('s', 'lower', [1.0] * 5, [1.049] * 5)[1]['verdict'], 'no change')
         self.assertEqual(self.row('s', 'higher', [100.0] * 5, [95.1] * 5)[1]['verdict'], 'no change')
@@ -917,7 +937,7 @@ class BestSampleTests(unittest.TestCase):
         _, row = self.row('kB', 'lower', [100.0] * 5, [90.0, 120.0, 120.0, 120.0, 120.0],
                           scenario='app.stress_normal_10tabs', metric='rss_peak')
         self.assertEqual(row['statistic'], 'median')
-        self.assertEqual(row['verdict'], 'regression')
+        self.assertEqual(row['verdict'], 'suspected regression')
         self.assertAlmostEqual(row['change_percent'], 20.0, places=6)
         self.assertEqual(row['baseline_best'], 100.0)
         self.assertEqual(row['candidate_best'], 90.0)
@@ -930,12 +950,12 @@ class BestSampleTests(unittest.TestCase):
     def test_old_format_file_without_best_is_computed_from_samples(self):
         # Every result file has samples; older ones have no 'best' in the
         # summary, and the test fixtures have no summary at all.
-        base = _one_metric('parse.mixed_1mb', 'time', 's', 'lower', self.BASE_TIME,
-                           summary={'n': 5, 'median': 1.2, 'min': 1.0, 'max': 1.5})
+        base = _one_metric('parse.mixed_1mb', 'time', 's', 'lower', self.STEADY_TIME,
+                           summary={'n': 5, 'median': 1.01, 'min': 1.0, 'max': 1.03})
         cand = _one_metric('parse.mixed_1mb', 'time', 's', 'lower', [1.06] * 5)
         row = perf_compare.compare(base, cand)['rows'][0]
         self.assertEqual(row['baseline_best'], 1.0)
-        self.assertEqual(row['verdict'], 'regression')
+        self.assertEqual(row['verdict'], 'suspected regression')
         report = perf_compare.compare(load_result('result_baseline.json'), load_result('result_candidate.json'))
         rows = {(r['scenario'], r['metric']): r for r in report['rows']}
         self.assertEqual(rows[('parse.mixed_1mb', 'time')]['baseline_best'], 0.049)
@@ -963,6 +983,436 @@ class BestSampleTests(unittest.TestCase):
         report, _ = self.row('s', 'lower', [1.0] * 5, [1.0] * 5)
         self.assertIn('best', report['rule'])
         self.assertIn('2026-11-22', report['rule'])
+
+
+# Samples of the 2026-11-22 baseline and of busy-after-2026-11-22.json, a run
+# alone on app and test code identical to the baseline's.
+BASELINE_GANG = [0.00499629, 0.0045, 0.0045, 0.00459, 0.00481, 0.00468, 0.00449471, 0.00461, 0.00481, 0.00476]
+BUSY_AFTER_GANG = [0.00548, 0.00495, 0.00491, 0.00491, 0.00488, 0.00485, 0.00493, 0.00499, 0.00487, 0.00491]
+BASELINE_TEN_TABS = [2056, 953, 2340, 959, 953]
+BUSY_AFTER_TEN_TABS = [924, 932, 1006, 912, 899]
+STEADY = [1.00, 1.01, 1.00, 1.02, 1.00, 1.01, 1.00, 1.01, 1.02, 1.00]
+
+
+class PerScenarioThresholdTests(unittest.TestCase):
+    """The owner, 2026-11-22, on the regression rule: "per-scenario variation
+    plus a back-to-back confirmation". The threshold is the larger of 5% and
+    the scenario's variation, which for a best-of metric is how far the
+    reference's worst sample lies from its best once the single worst sample
+    is set aside (our measure)."""
+
+    def row(self, unit, better, base_samples, cand_samples, scenario='s.x', metric='m'):
+        base = _one_metric(scenario, metric, unit, better, base_samples)
+        cand = _one_metric(scenario, metric, unit, better, cand_samples)
+        report = perf_compare.compare(base, cand)
+        self.assertEqual(len(report['rows']), 1, report['rows'])
+        return report, report['rows'][0]
+
+    def test_steady_scenario_8_percent_slower_is_a_suspected_regression(self):
+        report, row = self.row('s', 'lower', STEADY, [x * 1.08 for x in STEADY])
+        self.assertAlmostEqual(row['variation_percent'], 2.0, places=6)
+        self.assertEqual(row['threshold_percent'], 5.0)
+        self.assertEqual(row['verdict'], 'suspected regression')
+        self.assertEqual(report['exit_code'], 1)
+
+    def test_steady_rate_8_percent_lower_is_a_suspected_regression(self):
+        base = [100.0, 99.0, 100.0, 98.0, 99.5]  # 98 set aside: 99 is 1% below 100
+        report, row = self.row('iterations/s', 'higher', base, [x * 0.92 for x in base])
+        self.assertAlmostEqual(row['variation_percent'], 1.0, places=6)
+        self.assertEqual(row['verdict'], 'suspected regression')
+
+    def test_two_level_rate_at_its_slow_level_is_not_a_regression(self):
+        for cand in ([959, 953, 953, 959, 953], BUSY_AFTER_TEN_TABS):
+            report, row = self.row('iterations/s', 'higher', BASELINE_TEN_TABS, cand,
+                                   scenario='app.stress_normal_10tabs', metric='iterations_per_sec')
+            self.assertAlmostEqual(row['variation_percent'], 100.0 * (2340 - 953) / 2340, places=6)
+            self.assertEqual(row['threshold_percent'], row['variation_percent'])
+            self.assertEqual(row['verdict'], 'no change', cand)
+            self.assertEqual(report['exit_code'], 0)
+
+    def test_identical_code_on_a_busier_machine_is_only_suspected(self):
+        # 7.90% worse best against best. The baseline's slowest sample
+        # (0.00499629, the first) is set aside, so its variation is 7.01%,
+        # and a busier machine still reads as a suspected regression: that
+        # is what the confirmation is for.
+        _, row = self.row('s', 'lower', BASELINE_GANG, BUSY_AFTER_GANG, scenario='screen.gang_fast_path',
+                          metric='time')
+        self.assertAlmostEqual(row['change_percent'], 100.0 * (0.00485 - 0.00449471) / 0.00449471, places=6)
+        self.assertAlmostEqual(row['threshold_percent'], 100.0 * (0.00481 - 0.00449471) / 0.00449471,
+                               places=6)
+        self.assertEqual(row['verdict'], 'suspected regression')
+
+    def test_one_outlying_sample_does_not_set_the_threshold(self):
+        base = STEADY + [1.5]
+        report, row = self.row('s', 'lower', base, [x * 1.08 for x in STEADY])
+        self.assertAlmostEqual(row['variation_percent'], 2.0, places=6)
+        self.assertEqual(row['verdict'], 'suspected regression')
+
+    def test_only_the_single_worst_sample_is_set_aside(self):
+        _, row = self.row('s', 'lower', [1.0] * 8 + [1.2, 1.2], [1.1] * 10)
+        self.assertAlmostEqual(row['variation_percent'], 20.0, places=6)
+        self.assertEqual(row['verdict'], 'no change')
+        _, row = self.row('iterations/s', 'higher', [100.0] * 8 + [80.0, 70.0], [85.0] * 10)
+        self.assertAlmostEqual(row['variation_percent'], 20.0, places=6)
+        self.assertEqual(row['verdict'], 'no change')
+
+    def test_the_variation_is_the_reference_s_so_a_noisy_candidate_does_not_widen_it(self):
+        noisy_and_slow = [1.08, 2.5, 1.09, 3.0, 1.1, 1.08, 1.2, 1.5, 1.08, 1.09]
+        _, row = self.row('s', 'lower', STEADY, noisy_and_slow)
+        self.assertEqual(row['threshold_percent'], 5.0)
+        self.assertEqual(row['verdict'], 'suspected regression')
+
+    def test_improvement_uses_the_same_threshold(self):
+        # The variation of BASELINE_GANG is 7.01%.
+        _, row = self.row('s', 'lower', BASELINE_GANG, [0.00449471 * 0.94] * 10)
+        self.assertEqual(row['verdict'], 'no change')
+        _, row = self.row('s', 'lower', BASELINE_GANG, [0.00449471 * 0.92] * 10)
+        self.assertEqual(row['verdict'], 'improvement')
+
+    def test_threshold_boundary_at_the_variation(self):
+        base = [1.0, 1.1, 1.1, 1.02, 1.03]  # the worst but one 10% from best
+        self.assertEqual(self.row('s', 'lower', base, [1.101] * 5)[1]['verdict'], 'suspected regression')
+        self.assertEqual(self.row('s', 'lower', base, [1.099] * 5)[1]['verdict'], 'no change')
+        base = [100.0, 90.0, 90.0, 97.0, 98.0]
+        self.assertEqual(self.row('iterations/s', 'higher', base, [89.9] * 5)[1]['verdict'], 'suspected regression')
+        self.assertEqual(self.row('iterations/s', 'higher', base, [90.1] * 5)[1]['verdict'], 'no change')
+
+    def test_median_metric_variation_is_three_times_the_larger_spread(self):
+        noisy = [98.0, 98.0, 98.0, 100.0, 100.0, 100.0, 100.0, 102.0, 102.0, 102.0]
+        _, row = self.row('kB', 'lower', noisy, noisy)
+        self.assertAlmostEqual(row['variation_percent'], 3 * 2.9652, places=3)
+        self.assertEqual(row['threshold_percent'], row['variation_percent'])
+
+    def test_suspected_regression_tells_the_reader_to_confirm(self):
+        report, _ = self.row('s', 'lower', STEADY, [x * 1.08 for x in STEADY])
+        text = perf_compare.render(report)
+        self.assertIn('suspected regression', text)
+        self.assertIn('--confirm', text)
+        self.assertIn('back to back', text)
+        self.assertTrue(report.get('advice'))
+        report, _ = self.row('s', 'lower', STEADY, STEADY)
+        self.assertNotIn('advice', report)
+        self.assertNotIn('Confirm it back to back', perf_compare.render(report))
+
+    def test_rule_quotes_the_owner_and_calls_the_measure_ours(self):
+        report, _ = self.row('s', 'lower', STEADY, STEADY)
+        rule = report['rule']
+        self.assertIn('per-scenario variation plus a back-to-back confirmation', rule)
+        self.assertIn('suspected', rule)
+        self.assertIn('our choice', rule)
+        # Still unconfirmed by the owner, so labeled as proposals.
+        for proposal in ('fewer than 5 samples', 'never makes a best-of row inconclusive'):
+            self.assertIn(proposal, rule)
+        self.assertGreaterEqual(rule.count('PROPOSAL'), 1)
+        tail = rule[rule.index('PROPOSAL') - 400:]
+        self.assertIn('five-sample floor', tail)
+
+    def test_command_line_suspected_regression_exits_1(self):
+        base = _one_metric('s.x', 'm', 's', 'lower', STEADY)
+        cand = _one_metric('s.x', 'm', 's', 'lower', [x * 1.08 for x in STEADY])
+        with tempfile.TemporaryDirectory() as d:
+            paths = []
+            for n, r in (('b', base), ('c', cand)):
+                paths.append(os.path.join(d, n + '.json'))
+                with open(paths[-1], 'w') as f:
+                    json.dump(r, f)
+            out = subprocess.run([sys.executable, '-B', os.path.join(TOOL_DIR, 'perf_compare.py')] + paths,
+                                 capture_output=True, text=True)
+        self.assertEqual(out.returncode, 1, out.stdout + out.stderr)
+        self.assertIn('suspected regression', out.stdout)
+
+
+def _run_result(samples_by_key, created, unit='s', better='lower', commit='a' * 40, uncommitted=(),
+                lane='lane-1', iterations=10):
+    """A candidate-labeled result, as `perf_baseline.py run --output` writes
+    one, with one metric per (scenario, metric) key."""
+    result = load_result('result_candidate.json')
+    result['commit'] = commit
+    result['settings'] = {'iterations': iterations, 'app_runs': 5, 'app_duration_s': 20, 'created': created,
+                          'test_host_suite': lane, 'uncommitted_paths': list(uncommitted)}
+    result['scenarios'] = {}
+    for (scenario, metric), samples in samples_by_key.items():
+        entry = result['scenarios'].setdefault(scenario, {'status': 'ok', 'reason': '', 'source': 'fixture',
+                                                          'metrics': {}})
+        entry['metrics'][metric] = {'unit': unit, 'better': better, 'samples': list(samples)}
+    return result
+
+
+class ConfirmTests(unittest.TestCase):
+    """Part two of the owner's rule: a suspected regression counts only if it
+    shows again when both versions are run back to back on one machine."""
+
+    KEY = ('s.x', 'm')
+
+    def runs(self, side, sample_lists, start, **kwargs):
+        # Interleaved by default: base runs at even minutes, candidate odd.
+        out = []
+        for i, samples in enumerate(sample_lists):
+            minute = start + 2 * i
+            out.append(_run_result({self.KEY: samples}, '20261122T21%02d00Z' % minute,
+                                   uncommitted=(['x.m'] if side == 'cand' else []), **kwargs))
+        return out
+
+    def confirm(self, base_lists, cand_lists, **kwargs):
+        bases = self.runs('base', base_lists, 0, **kwargs)
+        cands = self.runs('cand', cand_lists, 1, **kwargs)
+        report = perf_compare.compare_confirm(bases, cands)
+        return report, {(r['scenario'], r['metric']): r for r in report['rows']}
+
+    def test_consistent_slowdown_is_confirmed(self):
+        report, rows = self.confirm([STEADY, STEADY], [[x * 1.08 for x in STEADY]] * 3)
+        row = rows[self.KEY]
+        self.assertEqual(row['verdict'], 'confirmed regression')
+        self.assertAlmostEqual(row['change_percent'], 8.0, places=6)
+        self.assertEqual(row['threshold_percent'], 5.0)
+        self.assertEqual(report['exit_code'], 1)
+
+    def test_within_threshold_is_no_change(self):
+        report, rows = self.confirm([STEADY, STEADY], [[x * 1.03 for x in STEADY]] * 2)
+        self.assertEqual(rows[self.KEY]['verdict'], 'no change')
+        self.assertEqual(report['exit_code'], 0)
+
+    def test_variation_is_between_the_base_runs_not_within_them(self):
+        # Within the runs the base samples spread 50% (1.0 to 1.5), but the
+        # runs' bests are 4% apart: the threshold is the 5% floor.
+        base1 = [1.0, 1.5, 1.01, 1.03, 1.0]
+        base2 = [1.04, 1.12, 1.05, 1.5, 1.05]
+        cand = [[1.11, 1.2, 1.15, 1.13, 1.12], [1.115, 1.13, 1.14, 1.2, 1.16]]
+        _, rows = self.confirm([base1, base2], cand)
+        row = rows[self.KEY]
+        self.assertEqual(row['baseline_best'], 1.0)
+        self.assertEqual(row['candidate_best'], 1.11)
+        self.assertAlmostEqual(row['variation_percent'], 4.0, places=6)
+        self.assertEqual(row['threshold_percent'], 5.0)
+        self.assertEqual(row['verdict'], 'confirmed regression')
+        self.assertEqual(row['baseline_runs'], [1.0, 1.04])
+        self.assertEqual(row['candidate_runs'], [1.11, 1.115])
+
+    def test_base_runs_whose_bests_differ_widen_the_threshold(self):
+        base1 = [1.0, 1.02, 1.01, 1.03, 1.0]
+        base2 = [1.12, 1.13, 1.15, 1.16, 1.14]  # this run's best 12% from the other's
+        cand = [[1.11, 1.2, 1.15, 1.13, 1.12], [1.115, 1.13, 1.14, 1.2, 1.16]]
+        _, rows = self.confirm([base1, base2], cand)
+        row = rows[self.KEY]
+        self.assertAlmostEqual(row['threshold_percent'], 12.0, places=6)
+        self.assertEqual(row['verdict'], 'no change')
+
+    def test_reviewer_one_busy_base_run_does_not_blind_the_confirmation(self):
+        # Round 1 B1: real screen.gang_fast_path samples. The second base
+        # run is candidate-draw-2026-11-22.json's, whose samples range 82.8%
+        # within the run. Every candidate run is 40% slower.
+        base1 = BASELINE_GANG
+        base2 = [0.00537, 0.00501, 0.00892, 0.00496, 0.00488, 0.00738, 0.00791, 0.00488, 0.00821, 0.00494]
+        slow = [x * 1.4 for x in base1]
+        report, rows = self.confirm([base1, base2], [slow, slow])
+        row = rows[self.KEY]
+        self.assertAlmostEqual(row['change_percent'], 40.0, places=6)
+        self.assertAlmostEqual(row['variation_percent'], 100.0 * (0.00488 - 0.00449471) / 0.00449471, places=6)
+        self.assertEqual(row['verdict'], 'confirmed regression')
+        self.assertEqual(report['exit_code'], 1)
+
+    def test_median_metric_mixed_run_by_run_is_not_confirmed(self):
+        # Pooled medians 10% apart, but one candidate run's median (105) is
+        # better than one base run's (106): the direction does not hold run
+        # by run.
+        base = [[100.0] * 5, [100.0] * 5, [106.0] * 5]
+        cand = [[110.0] * 5, [110.0] * 5, [105.0] * 5]
+        report, rows = self.confirm(base, cand, unit='kB')
+        row = rows[self.KEY]
+        self.assertEqual(row['statistic'], 'median')
+        self.assertGreater(row['change_percent'], row['threshold_percent'])
+        self.assertEqual(row['verdict'], 'not confirmed')
+        self.assertEqual(report['exit_code'], 0)
+        self.assertTrue(any('not confirmed' in w and 's.x' in w for w in report['warnings']), report['warnings'])
+
+    def test_median_metric_consistent_run_by_run_is_confirmed(self):
+        report, rows = self.confirm([[100.0] * 5, [101.0] * 5], [[110.0] * 5, [109.0] * 5], unit='kB')
+        self.assertEqual(rows[self.KEY]['verdict'], 'confirmed regression')
+        self.assertEqual(report['exit_code'], 1)
+
+    def test_improvement_must_also_hold_run_by_run(self):
+        report, rows = self.confirm([[100.0] * 5, [101.0] * 5], [[90.0] * 5, [91.0] * 5], unit='kB')
+        self.assertEqual(rows[self.KEY]['verdict'], 'improvement')
+        report, rows = self.confirm([[100.0] * 5, [100.0] * 5, [94.0] * 5], [[90.0] * 5, [90.0] * 5, [95.0] * 5],
+                                    unit='kB')
+        row = rows[self.KEY]
+        self.assertGreater(-row['change_percent'], row['threshold_percent'])
+        self.assertEqual(row['verdict'], 'no change')
+        self.assertIn('run by run', row['note'])
+
+    def test_two_level_rate_reaching_its_fast_level_in_some_run_is_no_change(self):
+        report, rows = self.confirm([BASELINE_TEN_TABS, [2100, 950, 960, 955, 2200]],
+                                    [BUSY_AFTER_TEN_TABS, [2300, 953, 950, 960, 955]], unit='iterations/s',
+                                    better='higher')
+        self.assertEqual(rows[self.KEY]['verdict'], 'no change')
+
+    def test_two_level_rate_base_run_on_its_slow_level_widens_the_threshold(self):
+        # One base run never reached the fast level: its best is 59% below
+        # the other's, so candidates on the slow level are within it.
+        report, rows = self.confirm([BASELINE_TEN_TABS, [959, 953, 953, 959, 953]],
+                                    [BUSY_AFTER_TEN_TABS, [959, 953, 953, 959, 953]], unit='iterations/s',
+                                    better='higher')
+        row = rows[self.KEY]
+        self.assertAlmostEqual(row['threshold_percent'], 100.0 * (2340 - 959) / 2340, places=6)
+        self.assertEqual(row['verdict'], 'no change')
+
+    def test_median_metric_variation_is_between_runs_or_three_times_the_noise(self):
+        # Run medians 100 and 106: 6% apart. Each run has no noise.
+        _, rows = self.confirm([[100.0] * 5, [106.0] * 5], [[100.0] * 5, [100.0] * 5], unit='kB')
+        self.assertAlmostEqual(rows[self.KEY]['variation_percent'], 6.0, places=6)
+        # A noisy run: 3 x its robust spread (2.9652%) exceeds the runs' spread.
+        noisy = [98.0, 98.0, 98.0, 100.0, 100.0, 100.0, 100.0, 102.0, 102.0, 102.0]
+        _, rows = self.confirm([noisy, [100.0] * 10], [[100.0] * 10, [100.0] * 10], unit='kB')
+        self.assertAlmostEqual(rows[self.KEY]['variation_percent'], 3 * 2.9652, places=3)
+
+    def test_refuses_fewer_than_two_files_a_side(self):
+        for nb, nc in ((1, 2), (2, 1), (0, 2), (1, 1)):
+            report = perf_compare.compare_confirm(self.runs('base', [STEADY] * nb, 0),
+                                                  self.runs('cand', [STEADY] * nc, 1))
+            self.assertEqual(report['exit_code'], 2, (nb, nc))
+            self.assertTrue(any('at least two' in p for p in report['problems']), report['problems'])
+
+    def test_refuses_different_machine_configuration_or_settings(self):
+        for mutate in (lambda r: r['machine'].update(chip='Apple M1'),
+                       lambda r: r.update(configuration='Development'),
+                       lambda r: r.update(arch='x86_64'),
+                       lambda r: r['settings'].update(iterations=5),
+                       lambda r: r.update(schema='other')):
+            bases = self.runs('base', [STEADY] * 2, 0)
+            cands = self.runs('cand', [STEADY] * 2, 1)
+            mutate(cands[1])
+            report = perf_compare.compare_confirm(bases, cands)
+            self.assertEqual(report['exit_code'], 2, report['problems'])
+
+    def test_reviewer_a_noisy_candidate_run_does_not_widen_a_median_threshold(self):
+        # Round 2 N2: base run medians 300000 and 303000 kB; candidate run
+        # medians 368000 and 362500 kB, the second run noisy (8.86% robust
+        # spread). The threshold comes from the base runs only.
+        noisy = [340837.0, 340837.0, 362500.0, 384163.0, 384163.0]
+        self.assertAlmostEqual(perf_lib.summarize(noisy)['robust_rel_spread_percent'], 8.86, places=2)
+        report, rows = self.confirm([[300000.0] * 5, [303000.0] * 5], [[368000.0] * 5, noisy], unit='kB')
+        row = rows[self.KEY]
+        self.assertEqual(row['threshold_percent'], 5.0)
+        self.assertEqual(row['verdict'], 'confirmed regression')
+        self.assertEqual(report['exit_code'], 1)
+
+    def test_warns_when_a_side_records_more_than_one_tree(self):
+        bases = self.runs('base', [STEADY] * 2, 0)
+        cands = self.runs('cand', [STEADY] * 2, 1)
+        bases[1]['commit'] = 'b' * 40
+        report = perf_compare.compare_confirm(bases, cands)
+        self.assertTrue(any('base runs record more than one tree' in w for w in report['warnings']),
+                        report['warnings'])
+        report, _ = self.confirm([STEADY] * 2, [STEADY] * 2)
+        self.assertFalse(any('more than one tree' in w for w in report['warnings']), report['warnings'])
+
+    def test_refuses_the_same_file_twice_on_one_side(self):
+        bases = self.runs('base', [STEADY] * 2, 0)
+        cands = self.runs('cand', [STEADY] * 2, 1)
+        report = perf_compare.compare_confirm(bases, cands, base_names=['/r/b1.json', '/r/b1.json'],
+                                              candidate_names=['/r/c1.json', '/r/c2.json'])
+        self.assertEqual(report['exit_code'], 2)
+        self.assertTrue(any('more than once' in p for p in report['problems']), report['problems'])
+
+    def test_warns_about_runs_on_a_busy_machine(self):
+        bases = self.runs('base', [STEADY] * 2, 0)
+        cands = self.runs('cand', [STEADY] * 2, 1)
+        cands[1]['machine_state']['before']['quiet'] = False
+        report = perf_compare.compare_confirm(bases, cands)
+        self.assertTrue(any('busy' in w and 'candidate run 2' in w for w in report['warnings']), report['warnings'])
+        report, _ = self.confirm([STEADY] * 2, [STEADY] * 2)
+        self.assertFalse(any('busy' in w for w in report['warnings']), report['warnings'])
+
+    def test_does_not_require_the_baseline_label(self):
+        report, _ = self.confirm([STEADY] * 2, [STEADY] * 2)
+        self.assertEqual(report['problems'], [])
+        self.assertEqual(report['exit_code'], 0)
+
+    def test_warns_when_runs_are_not_interleaved_or_lanes_differ(self):
+        bases = self.runs('base', [STEADY] * 2, 0)
+        cands = self.runs('cand', [STEADY] * 2, 10)  # every candidate after every base
+        report = perf_compare.compare_confirm(bases, cands)
+        self.assertTrue(any('interleaved' in w for w in report['warnings']), report['warnings'])
+        report, _ = self.confirm([STEADY] * 2, [STEADY] * 2)
+        self.assertFalse(any('interleaved' in w for w in report['warnings']), report['warnings'])
+        bases = self.runs('base', [STEADY] * 2, 0)
+        cands = self.runs('cand', [STEADY] * 2, 1, lane='lane-2')
+        report = perf_compare.compare_confirm(bases, cands)
+        self.assertTrue(any('lane' in w for w in report['warnings']), report['warnings'])
+
+    def test_warns_when_both_sides_look_like_the_same_tree(self):
+        bases = self.runs('base', [STEADY] * 2, 0)
+        cands = self.runs('base', [STEADY] * 2, 1)
+        report = perf_compare.compare_confirm(bases, cands)
+        self.assertTrue(any('same tree' in w for w in report['warnings']), report['warnings'])
+
+    def test_a_failure_in_any_candidate_run_blocks(self):
+        bases = self.runs('base', [STEADY] * 2, 0)
+        cands = self.runs('cand', [STEADY] * 3, 1)
+        cands[2]['scenarios']['s.x'].update(status='failed', reason='timed out', metrics={})
+        report = perf_compare.compare_confirm(bases, cands)
+        row = report['rows'][0]
+        self.assertEqual(row['verdict'], 'failed in candidate')
+        self.assertIn('timed out', row['note'])
+        self.assertEqual(report['exit_code'], 1)
+
+    def test_a_metric_missing_from_any_candidate_run_blocks(self):
+        bases = self.runs('base', [STEADY] * 2, 0)
+        cands = self.runs('cand', [STEADY] * 2, 1)
+        cands[1]['scenarios']['s.x']['metrics'] = {}
+        report = perf_compare.compare_confirm(bases, cands)
+        self.assertEqual(report['rows'][0]['verdict'], 'missing in candidate')
+        self.assertEqual(report['exit_code'], 1)
+
+    def test_a_skipped_scenario_is_listed_but_does_not_fail(self):
+        bases = self.runs('base', [STEADY] * 2, 0)
+        cands = self.runs('cand', [STEADY] * 2, 1)
+        cands[0]['scenarios']['s.x'].update(status='skipped', reason='an instance is running', metrics={})
+        report = perf_compare.compare_confirm(bases, cands)
+        self.assertEqual(report['rows'][0]['verdict'], 'skipped in candidate')
+        self.assertEqual(report['exit_code'], 0)
+        self.assertTrue(any('s.x' in w for w in report['warnings']))
+
+    def test_too_few_samples_in_any_run_is_inconclusive(self):
+        report, rows = self.confirm([STEADY, STEADY[:4]], [[x * 1.5 for x in STEADY]] * 2)
+        self.assertEqual(rows[self.KEY]['verdict'], 'inconclusive')
+
+    def test_command_line(self):
+        bases = self.runs('base', [STEADY] * 2, 0)
+        cands = self.runs('cand', [[x * 1.08 for x in STEADY]] * 2, 1)
+        script = os.path.join(TOOL_DIR, 'perf_compare.py')
+        with tempfile.TemporaryDirectory() as d:
+            def write(name, r):
+                path = os.path.join(d, name)
+                with open(path, 'w') as f:
+                    json.dump(r, f)
+                return path
+            b = [write('b%d.json' % i, r) for i, r in enumerate(bases)]
+            c = [write('c%d.json' % i, r) for i, r in enumerate(cands)]
+            out = subprocess.run([sys.executable, '-B', script, '--confirm', '--base'] + b + ['--candidate'] + c,
+                                 capture_output=True, text=True)
+            self.assertEqual(out.returncode, 1, out.stdout + out.stderr)
+            self.assertIn('confirmed regression', out.stdout)
+            out = subprocess.run([sys.executable, '-B', script, '--confirm', '--json', '--base'] + b
+                                 + ['--candidate'] + c[:1], capture_output=True, text=True)
+            self.assertEqual(out.returncode, 2, out.stdout + out.stderr)
+            same = subprocess.run([sys.executable, '-B', script, '--confirm', '--base'] + b
+                                  + ['--candidate'] + b, capture_output=True, text=True)
+            self.assertEqual(same.returncode, 2, same.stdout + same.stderr)
+            twice = subprocess.run([sys.executable, '-B', script, '--confirm', '--base', b[0],
+                                    os.path.join(d, '.', 'b0.json'), '--candidate'] + c,
+                                   capture_output=True, text=True)
+            self.assertEqual(twice.returncode, 2, twice.stdout + twice.stderr)
+            self.assertIn('more than once', twice.stdout)
+            for bad in ([b[0], c[0]], ['--confirm', b[0], c[0]], ['--base'] + b + ['--candidate'] + c,
+                        ['--confirm', '--allow-different-machine', '--base'] + b + ['--candidate'] + c):
+                out = subprocess.run([sys.executable, '-B', script] + bad, capture_output=True, text=True)
+                if bad == [b[0], c[0]]:
+                    # Two candidate-labeled files without --confirm: the
+                    # ordinary mode refuses a reference that is not a baseline.
+                    self.assertEqual(out.returncode, 2)
+                else:
+                    self.assertEqual(out.returncode, 2, (bad, out.stdout, out.stderr))
 
 
 class SummaryBestTests(unittest.TestCase):
