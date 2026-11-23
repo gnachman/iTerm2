@@ -130,23 +130,95 @@ final class TokenBudgetTests: XCTestCase {
     }
 
     // A handler that registered just as the last slot was released fires exactly once.
+    //
+    // This is a stress test of the budget's lock under real concurrency, not a deterministic race
+    // test: which order a round takes is left to the scheduler, and in measurements all but at
+    // most one round of 2000 took the same order, so a lost wakeup in another order is caught
+    // only by chance. Both orders are covered deterministically by
+    // testHandlerFiresAsSoonAsASlotFrees and testHandlerFiresWhenAlreadyBelowWatermark.
+    //
+    // Each round races one registration against two releases made on another thread. The
+    // releases run on a thread of the test's own, not on a dispatch queue: a round used to block
+    // a concurrentPerform worker on work sent to the global queue, which deadlocks once the
+    // process has used up its dispatch threads, as a long test host had on 2026-11-22
+    // (docs/swift-migration/bugs.md, "Dispatch threads pile up in a long-running test host").
+    // Each round has its own budget, so running rounds at once raced nothing more.
     func testConcurrentRegisterAndReleaseNeverLosesOrDuplicatesAWakeup() {
         let iterations = 2000
         let calls = Counter()
-        DispatchQueue.concurrentPerform(iterations: iterations) { _ in
+        let releaser = RoundThread()
+        defer { releaser.finish() }
+        for _ in 0..<iterations {
             let budget = TokenBudget(capacity: 2)
             XCTAssertTrue(budget.tryAcquire())
             XCTAssertTrue(budget.tryAcquire())
-            let group = DispatchGroup()
-            DispatchQueue.global().async(group: group) {
+            releaser.start {
                 budget.release()
                 budget.release()
             }
             budget.notifyWhenCapacityAvailable(on: handlerQueue) { calls.value += 1 }
-            group.wait()
+            guard releaser.waitForRound() else {
+                XCTFail("The releasing thread did not finish its round")
+                return
+            }
         }
         drainHandlers()
         XCTAssertEqual(calls.value, iterations)
+    }
+
+    // A thread that runs one block per round: start() hands it the block, waitForRound() waits
+    // for it to finish. finish() ends the thread.
+    private final class RoundThread {
+        private let go = DispatchSemaphore(value: 0)
+        private let done = DispatchSemaphore(value: 0)
+        private let lock = NSLock()
+        private var block: (() -> Void)?
+        private var finished = false
+
+        init() {
+            // The thread holds the object until finish() ends it.
+            let thread = Thread { [self] in
+                while true {
+                    go.wait()
+                    lock.lock()
+                    let work = block
+                    block = nil
+                    let stop = finished
+                    lock.unlock()
+                    if stop {
+                        done.signal()
+                        return
+                    }
+                    work?()
+                    done.signal()
+                }
+            }
+            thread.name = "TokenBudgetTests releaser"
+            // The test's thread is user-interactive and waits on a semaphore this thread signals;
+            // semaphores donate no priority, so at a lower class each round waited for the
+            // scheduler (6.1 and 1.3 seconds a run in the test host instead of 0.03).
+            thread.qualityOfService = .userInteractive
+            thread.start()
+        }
+
+        func start(_ work: @escaping () -> Void) {
+            lock.lock()
+            block = work
+            lock.unlock()
+            go.signal()
+        }
+
+        func waitForRound() -> Bool {
+            return done.wait(timeout: .now() + 30) == .success
+        }
+
+        func finish() {
+            lock.lock()
+            finished = true
+            lock.unlock()
+            go.signal()
+            _ = done.wait(timeout: .now() + 30)
+        }
     }
 
     // The legacy path blocks in acquire() until a slot is released.
