@@ -199,6 +199,11 @@ and another with one of the four, section 4):
 - The ten tests of `FramerFlowTwoHopSimulationTests`, each listed: the two
   slowest by the owner's decision (owner-queue.md Q22), the other eight by
   the one-second rule (medians 1.3 to 17 s).
+  Since 2026-11-23 the class skips itself unless
+  `ITERM2_FRAMER_SIMULATION_TESTS=1` is set, and runs its simulations one
+  at a time (decisions.md): running them on every core at once, as unit
+  `slow-tests-over-5s` had made them do, took the whole machine in a
+  sanitized run.
 - `RuntimeSnapshotTests/testHeaderRecordsArchitectureAndConfiguration`: it
   fails in any build outside `Build/` (bugs.md), and the fast tier is built
   in `tmp/sanitizers/plain`. It failed in both plain runs.

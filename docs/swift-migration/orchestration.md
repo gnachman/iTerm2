@@ -245,6 +245,19 @@ gate runs in the full-suite lane on your current `HEAD` with the unit's
 change applied. The project-file swap is staged before the gate
 ([lifecycle.md §3](lifecycle.md), "The project file").
 
+**One heavy job at a time** (the owner, 2026-11-23: decisions.md). A heavy
+job is a whole-suite run, any suite run under a sanitizer, a full or
+`x86_64` build, or a code database capture. Across you and every agent you
+started, at most one runs at any moment, by day and by night, each started
+with `nice -n 15`; agents' targeted builds and test classes are not heavy,
+but say so in their briefs and never let two agents build while a heavy job
+runs. Do not start the next heavy job until the last has exited. While the
+owner is using the machine, suite runs under a sanitizer wait until he says
+it is free. If he says the machine is slow, stop your processes first and
+find the cause afterwards. On 2026-11-23 a resumed night session ran a
+sanitized whole suite, an `x86_64` build and a database capture together;
+the load average passed 400.
+
 ## 4. Briefing the author
 
 The author is an Opus subagent. It knows nothing except what you give it.
