@@ -176,6 +176,11 @@ extension AgentConversationBuiltInFunction: iTermBuiltInFunctionProtocol {
     private static let sessionIDArg = "session_id"
     private static let conversationIDArg = "conversation_id"
     private static let endedArg = "ended"
+    // For the offer to resume after a restart (AgentConversationResume.swift).
+    private static let quitArg = "quit"
+    private static let agentArg = "agent"
+    private static let directoryArg = "directory"
+    private static let transcriptArg = "transcript"
 
     private static func error(_ message: String) -> NSError {
         return NSError(domain: errorDomain,
@@ -188,8 +193,12 @@ extension AgentConversationBuiltInFunction: iTermBuiltInFunctionProtocol {
             name: "set_agent_conversation",
             arguments: [sessionIDArg: NSString.self,
                         conversationIDArg: NSString.self,
-                        endedArg: NSNumber.self],
-            optionalArguments: Set([endedArg]),
+                        endedArg: NSNumber.self,
+                        quitArg: NSNumber.self,
+                        agentArg: NSString.self,
+                        directoryArg: NSString.self,
+                        transcriptArg: NSString.self],
+            optionalArguments: Set([endedArg, quitArg, agentArg, directoryArg, transcriptArg]),
             defaultValues: [:],
             context: .app,
             sideEffectsPlaceholder: "[set_agent_conversation]") { parameters, completion in
@@ -217,8 +226,20 @@ extension AgentConversationBuiltInFunction: iTermBuiltInFunctionProtocol {
                         instance?.leaderConversationID = nil
                         instance?.leaderReportJobPID = nil
                     }
+                    AgentConversationResumeOffers.shared.conversationDidEnd(
+                        conversationID,
+                        userQuit: (parameters[quitArg] as? NSNumber)?.boolValue == true,
+                        in: session)
                     completion(nil, nil)
                     return
+                }
+                if let agent = parameters[agentArg] as? String {
+                    AgentConversationResumeOffers.shared.conversationDidStart(
+                        conversationID,
+                        agent: agent,
+                        directory: parameters[directoryArg] as? String,
+                        transcript: parameters[transcriptArg] as? String,
+                        in: session)
                 }
                 // The report itself shows an agent runs there, though the job
                 // iTerm2 last polled may still be the shell.

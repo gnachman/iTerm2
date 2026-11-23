@@ -1457,6 +1457,36 @@ extension Session {
 // MARK: - session set-agent-conversation
 
 extension Session {
+    /// The invocation set-agent-conversation makes. Internal so tests can pin it. The agent,
+    /// directory, and transcript describe a conversation that started, so iTerm2 can offer to
+    /// resume it after a restart; `userQuit` with `ended` says there is nothing to resume.
+    static func setAgentConversationInvocation(sessionID: String,
+                                               conversationID: String,
+                                               ended: Bool = false,
+                                               userQuit: Bool = false,
+                                               agent: AgentKind? = nil,
+                                               directory: String? = nil,
+                                               transcript: String? = nil) -> String {
+        var args = ["session_id: \(jsonString(sessionID))",
+                    "conversation_id: \(jsonString(conversationID))"]
+        if ended {
+            args.append("ended: true")
+            if userQuit {
+                args.append("quit: true")
+            }
+        }
+        if let agent {
+            args.append("agent: \(jsonString(agent.rawValue))")
+        }
+        if let directory {
+            args.append("directory: \(jsonString(directory))")
+        }
+        if let transcript {
+            args.append("transcript: \(jsonString(transcript))")
+        }
+        return "iterm2.set_agent_conversation(\(args.joined(separator: ", ")))"
+    }
+
     struct SetAgentConversation: ParsableCommand, IT2Runnable, TmuxAddressableCommand {
         static let configuration = CommandConfiguration(
             commandName: "set-agent-conversation",
@@ -1465,7 +1495,8 @@ extension Session {
                 Agent hooks run this when a conversation starts or resumes, and with \
                 --ended when it ends. iTerm2 remembers what a workgroup\u{2019}s browser \
                 showed for each conversation and shows it again when the same \
-                conversation resumes.
+                conversation resumes. Given the agent, iTerm2 also offers to resume the \
+                conversation if a restart of iTerm2 or the Mac ends it.
                 """,
             // Only agent hooks run this, through handle-agent-hook.
             shouldDisplay: false
@@ -1476,6 +1507,18 @@ extension Session {
 
         @Flag(name: .long, help: "The conversation ended. Forgotten only if it is still the session\u{2019}s.")
         var ended = false
+
+        @Flag(name: .long, help: "With --ended: the user quit the agent on purpose, so there is nothing to offer to resume.")
+        var quit = false
+
+        @Option(name: .long, help: "Which agent runs the conversation: claude or codex. Needed for the offer to resume.")
+        var agent: AgentKind?
+
+        @Option(name: .long, help: "The directory the agent is running in.")
+        var directory: String?
+
+        @Option(name: .long, help: "The file the agent keeps the conversation in. If given, iTerm2 offers to resume only once it exists.")
+        var transcript: String?
 
         @Option(name: .shortAndLong, help: "Target session ID (default: active, or the pane named by --tmux).")
         var session: String?
@@ -1491,9 +1534,23 @@ extension Session {
                                                            ctx: ctx) else {
                 return
             }
-            let invocation = "iterm2.set_agent_conversation(session_id: \(jsonString(sessionId)), " +
-                "conversation_id: \(jsonString(conversationID))\(ended ? ", ended: true" : ""))"
-            _ = try client.invoke(invocation, failure: "Set agent conversation failed")
+            let full = Session.setAgentConversationInvocation(sessionID: sessionId,
+                                                              conversationID: conversationID,
+                                                              ended: ended,
+                                                              userQuit: quit,
+                                                              agent: agent,
+                                                              directory: directory,
+                                                              transcript: transcript)
+            let basic = Session.setAgentConversationInvocation(sessionID: sessionId,
+                                                               conversationID: conversationID,
+                                                               ended: ended)
+            do {
+                _ = try client.invoke(full, failure: "Set agent conversation failed")
+            } catch where full != basic {
+                // An iTerm2 that knows only the conversation ID refuses the rest. What it does
+                // know (the workgroup browser's memory) still works.
+                _ = try client.invoke(basic, failure: "Set agent conversation failed")
+            }
         }
     }
 }

@@ -647,6 +647,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)vs16Supported;
 + (BOOL)vs16SupportedInPrimaryScreen;
 
++ (BOOL)offerToResumeAgentConversations;
++ (void)setOfferToResumeAgentConversations:(BOOL)value;
 + (BOOL)warnAboutSecureKeyboardInputWithOpenCommand;
 + (NSString *)warnAboutSecureKeyboardInputWithOpenCommandUserDefaultsKey;
 + (void)setWarnAboutSecureKeyboardInputWithOpenCommand:(BOOL)value;

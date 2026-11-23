@@ -161,7 +161,8 @@ WINDOW ARRANGEMENTS -> session dicts (SESSION_ARRANGEMENT_*)
             Foreground Job Ancestors, Name Controller State (deep),
             Server Dict (deep),
             AutoLog File Name, Filter, Browser Target,
-            Code Review Last Prompt, Bookmark (profile), Workgroup (recursed),
+            Code Review Last Prompt, Agent Conversation (deep),
+            Bookmark (profile), Workgroup (recursed),
             Key Labels / Key Labels Stack, Tab Status.Status Text,
             deprecated Session Name / Session Window Title / Session Default
             Name
@@ -340,6 +341,8 @@ CONTENT_KEYS = {
     # environment / variables / remote state (deep: every string within)
     "Environment": REDACT_V,
     "Variables": REDACT_V,
+    # Agent conversation ID and directory offered for resuming after a restart.
+    "Agent Conversation": REDACT_V,
     "Substitutions": REDACT_V,
     "NoSyncRecordedVariables": REDACT_V,
     "NoSyncVariablesToReport": REDACT_V,

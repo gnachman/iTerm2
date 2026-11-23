@@ -92,6 +92,7 @@ extern NSString *const PTYSessionArrangementOptionsInhibitRelaunch;
 @class iTermAutomaticProfileSwitchingSession;
 @class iTermChannelClient;
 @class iTermConductor;
+@class iTermAgentConversationRecord;
 @protocol iTermContentSubscriber;
 @class iTermEchoProbe;
 @class iTermExpect;
@@ -816,6 +817,10 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // The conductor for the host this session's shell runs on: its own, or for a tmux pane, the
 // gateway's, since a pane never owns one. nil for a session on this Mac.
 @property(nonatomic, readonly, nullable) iTermConductor *hostConductor;
+// The AI coding agent conversation last reported running here, kept in restorable state so a
+// restart that ends the agent can offer to resume it. Set through
+// iTermAgentConversationResumeOffers, which also withdraws a stale offer.
+@property(nonatomic, strong, nullable) iTermAgentConversationRecord *agentConversation;
 
 // A framer pane (a workgroup peer running as a pane of its leader's framer) started running
 // `command` (its launch command, which a restart reuses) as `pid` on the leader's host. A pane

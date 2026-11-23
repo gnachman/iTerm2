@@ -37,7 +37,10 @@ struct HandleAgentHook: ParsableCommand, IT2Runnable {
                                         originSessionID: ctx.originSessionID,
                                         inProcess: ctx.isRemote,
                                         backend: backend,
-                                        report: ctx.err)
+                                        report: ctx.err,
+                                        // A remote hook runs inside iTerm2, whose parent is not
+                                        // the agent. iTerm2 ignores remote conversations anyway.
+                                        runMode: { ctx.isRemote ? .undetermined : AgentRunMode.ofAgent(agent) })
         }
     }
 }

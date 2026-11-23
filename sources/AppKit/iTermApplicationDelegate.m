@@ -2155,6 +2155,7 @@ static iTermKeyEventReplayer *gReplayer;
     }
     _sessionRestorationReported = YES;
     [iTermChatTimerLaunch sessionsDidFinishRestoring];
+    [[iTermAgentConversationResumeOffers shared] sessionsDidFinishRestoring];
 }
 
 - (void)dynamicToolsDidChange:(NSNotification *)notification {

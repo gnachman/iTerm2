@@ -637,3 +637,52 @@ extension AgentHookRunner {
         return update
     }
 }
+
+/// What a hook event says about which conversation is running in the session. iTerm2 keeps it with
+/// the session's restorable state so that, when a restart kills the agent, it can offer to resume
+/// the conversation in the restored session.
+enum AgentConversationChange: Equatable {
+    /// A conversation started, or the session switched to another one (`/clear`, `/resume`).
+    /// Resuming keeps the ID, which is how iTerm2 knows to bring back what a workgroup showed for
+    /// it. A compaction is not a start: it happens mid-conversation and keeps the ID anyway.
+    /// `transcript` is the file the agent keeps it in, when the hook said. The agent writes it
+    /// only once the conversation has a message, and until then there is nothing to resume.
+    case started(conversationID: String, directory: String?, transcript: String?)
+    /// The conversation ended. The session no longer runs it, so a workgroup entered there later
+    /// shouldn't bring back its browser page. Named rather than cleared: on /clear this end and
+    /// the new conversation's start are separate hook processes, and the end may arrive last.
+    /// `userQuit` says the user quit on purpose, so there is nothing to offer to resume either.
+    case ended(conversationID: String, userQuit: Bool)
+
+    /// The SessionEnd reasons that mean the user quit on purpose. SessionEnd also fires when the
+    /// agent is killed, including while macOS shuts down (issue 13106), and forgetting the
+    /// conversation for resuming then would defeat the purpose: the state iTerm2 saves on the way
+    /// down would no longer name it. Claude Code's “clear” and “resume” are followed by a
+    /// SessionStart that names the new conversation. “exit” is Codex CLI's.
+    static let userExitReasons: Set<String> = ["prompt_input_exit", "logout", "exit"]
+
+    /// nil when the event changes nothing.
+    static func from(eventName: String, json: [String: Any]) -> AgentConversationChange? {
+        switch eventName {
+        case "SessionStart":
+            // Compaction keeps the conversation, so there is nothing new to say.
+            guard json["source"] as? String != "compact",
+                  let conversationID = json["session_id"] as? String,
+                  !conversationID.isEmpty else {
+                return nil
+            }
+            let directory = (json["cwd"] as? String).flatMap { $0.isEmpty ? nil : $0 }
+            let transcript = (json["transcript_path"] as? String).flatMap { $0.isEmpty ? nil : $0 }
+            return .started(conversationID: conversationID, directory: directory, transcript: transcript)
+        case "SessionEnd":
+            guard let conversationID = json["session_id"] as? String, !conversationID.isEmpty else {
+                return nil
+            }
+            let reason = json["reason"] as? String
+            return .ended(conversationID: conversationID,
+                          userQuit: reason.map { userExitReasons.contains($0) } ?? false)
+        default:
+            return nil
+        }
+    }
+}

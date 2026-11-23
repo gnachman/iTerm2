@@ -22,6 +22,9 @@ final class FakeAgentStatusBackend: AgentStatusBackend {
     var status: String? = nil
     var backgroundTasks = 0
     var turnOpen: Bool? = nil
+    /// The conversation iTerm2 was last told is running in the session, or nil once it was told
+    /// none is.
+    var conversationID: String? = nil
     /// Stands in for a sub-agent finishing while a status write is in flight: the count the
     /// handler read a moment ago is now stale.
     var finishOnStatusWrite = false
@@ -73,10 +76,21 @@ final class FakeAgentStatusBackend: AgentStatusBackend {
                     stderr: "Error: Failed to set status: Undeclared identifier iterm2.set_session_status(agent,session_id,status)\n")
             }
             return setStatus(Array(argv.dropFirst()))
-        case ("session", "set-agent-conversation"):
-            return AgentHookCommandResult(status: 0, stdout: "", stderr: "")
         case ("session", "get-background-tasks"):
             return AgentHookCommandResult(status: 0, stdout: "\(backgroundTasks)", stderr: "")
+        case ("session", "set-agent-conversation"):
+            // As iTerm2 keeps the conversation to offer to resume: a start replaces it, and only
+            // the user quitting that same conversation forgets it.
+            guard let separator = argv.firstIndex(of: "--"), separator + 1 < argv.count else {
+                return AgentHookCommandResult(status: 1, stdout: "", stderr: "fake it2: no conversation ID: \(argv)")
+            }
+            let id = argv[separator + 1]
+            if !argv.contains("--ended") {
+                conversationID = id
+            } else if argv.contains("--quit") && conversationID == id {
+                conversationID = nil
+            }
+            return AgentHookCommandResult(status: 0, stdout: "", stderr: "")
         case ("session", "get-status"):
             let answer = statusJSON()
             raceAfterStatusAnswer()
@@ -217,11 +231,30 @@ final class AgentHookScenarioTests: XCTestCase {
         return text.isEmpty ? ["--detail", ""] : ["--detail=" + text]
     }
 
-    private static func setAgentConversation(_ id: String, ended: Bool = false) -> [String] {
-        return ["session", "set-agent-conversation"] + ADDRESS + QUIET + (ended ? ["--ended"] : []) + ["--", id]
+    private static let claudeConversationID = "7b9d396c-0ffb-4ab9-b36e-074717cc2ca5"
+    private static let codexConversationID = "01a09fa1-d3a9-7543-a9d1-aa7efe7e441d"
+    private static let fixtureDirectory = "/Users/user/github/cc-status"
+
+    /// Where the fixtures say the agent keeps conversation `id`.
+    private static func fixtureTranscript(_ agent: AgentKind, _ id: String) -> String {
+        switch agent {
+        case .claude:
+            return "/Users/user/.claude/projects/-Users-user-github-cc-status/\(id).jsonl"
+        case .codex:
+            return "/Users/user/.codex/sessions/2026/09/14/rollout-2026-09-14T13-16-17-\(id).jsonl"
+        }
     }
-    private static let claudeConversation = setAgentConversation("7b9d396c-0ffb-4ab9-b36e-074717cc2ca5")
-    private static let codexConversation = setAgentConversation("01a09fa1-d3a9-7543-a9d1-aa7efe7e441d")
+
+    private static func startConversation(_ agent: AgentKind, _ id: String, directory: String? = fixtureDirectory) -> [String] {
+        return ["session", "set-agent-conversation"] + ADDRESS + QUIET + ["--agent=" + agent.rawValue] +
+            (directory.map { ["--directory=" + $0] } ?? []) + ["--transcript=" + fixtureTranscript(agent, id)] + ["--", id]
+    }
+
+    private static func endConversation(_ id: String, quit: Bool = false) -> [String] {
+        return ["session", "set-agent-conversation"] + ADDRESS + QUIET + ["--ended"] + (quit ? ["--quit"] : []) + ["--", id]
+    }
+    private static let claudeConversation = startConversation(.claude, claudeConversationID)
+    private static let codexConversation = startConversation(.codex, codexConversationID)
 
     private static func getBackgroundTasks() -> [String] {
         return ["session", "get-background-tasks"] + ADDRESS + QUIET
@@ -263,6 +296,7 @@ final class AgentHookScenarioTests: XCTestCase {
         case expectStatus(String?)
         case expectBackgroundTasks(Int)
         case expectTurnOpen(Bool?)
+        case expectConversation(String?)
     }
 
     private func payload(_ fixture: String) throws -> Data {
@@ -288,6 +322,8 @@ final class AgentHookScenarioTests: XCTestCase {
                 XCTAssertEqual(backend.status, expected, "\(name): displayed status", file: file, line: line)
             case .expectTurnOpen(let expected):
                 XCTAssertEqual(backend.turnOpen, expected, "\(name): turn flag", file: file, line: line)
+            case .expectConversation(let expected):
+                XCTAssertEqual(backend.conversationID, expected, "\(name): conversation", file: file, line: line)
             case .expectBackgroundTasks(let expected):
                 XCTAssertEqual(backend.backgroundTasks, expected, "\(name): stored count", file: file, line: line)
             case .hook(let fixture, let expected, let flags):
@@ -497,7 +533,7 @@ final class AgentHookScenarioTests: XCTestCase {
                                          Self.codexConversation]),
             .hook("codex/SessionEnd", [Self.setStatus(Self.cIDLE, Self.detail(""), ["--background-tasks=0"],
                                                       Self.TURN_CLOSED, boundary: true),
-                                       Self.setAgentConversation("01a09fa1-d3a9-7543-a9d1-aa7efe7e441d", ended: true)]),
+                                       Self.endConversation(Self.codexConversationID, quit: true)]),
         ])
     }
 
@@ -982,16 +1018,84 @@ final class AgentHookScenarioTests: XCTestCase {
         ])
     }
 
+    // MARK: - Conversation tracking
+
+    private static let claudeBoundary = setStatus(IDLE, detail(""), ["--background-tasks=0"], TURN_CLOSED, boundary: true)
+
+    func testClaudeConversationIsRememberedAndForgottenWhenTheUserQuits() throws {
+        try run("claude: conversation remembered, forgotten on quit", [
+            .hook("claude/SessionStart", [Self.claudeBoundary, Self.claudeConversation]),
+            .expectConversation(Self.claudeConversationID),
+            .hook("claude/SessionEnd-exit", [Self.claudeBoundary,
+                                             Self.endConversation(Self.claudeConversationID, quit: true)]),
+            .expectConversation(nil),
+        ])
+    }
+
     func testResumedConversationIsNamed() throws {
         let json: [String: Any] = ["session_id": "abc", "source": "resume"]
-        XCTAssertEqual(AgentHookHandler.conversationStarted(eventName: "SessionStart", json: json), "abc")
-        XCTAssertNil(AgentHookHandler.conversationStarted(eventName: "SessionStart",
-                                                          json: ["session_id": "abc", "source": "compact"]))
-        XCTAssertNil(AgentHookHandler.conversationStarted(eventName: "SessionEnd", json: json))
-        XCTAssertEqual(AgentHookHandler.conversationEnded(eventName: "SessionEnd", json: json), "abc")
-        XCTAssertNil(AgentHookHandler.conversationEnded(eventName: "SessionStart", json: json))
-        XCTAssertNil(AgentHookHandler.conversationEnded(eventName: "SessionEnd", json: [:]))
-        XCTAssertNil(AgentHookHandler.conversationStarted(eventName: "SessionStart", json: ["source": "resume"]))
+        XCTAssertEqual(AgentConversationChange.from(eventName: "SessionStart", json: json),
+                       .started(conversationID: "abc", directory: nil, transcript: nil))
+        XCTAssertNil(AgentConversationChange.from(eventName: "SessionStart",
+                                                  json: ["session_id": "abc", "source": "compact"]))
+        XCTAssertEqual(AgentConversationChange.from(eventName: "SessionEnd", json: json),
+                       .ended(conversationID: "abc", userQuit: false))
+        XCTAssertNil(AgentConversationChange.from(eventName: "SessionEnd", json: [:]))
+        XCTAssertNil(AgentConversationChange.from(eventName: "SessionStart", json: ["source": "resume"]))
+    }
+
+    // SessionEnd also fires when Claude Code is killed, including while macOS shuts down. The
+    // conversation ends, but it must stay resumable, or the state saved on the way down would not
+    // name it.
+    func testClaudeConversationSurvivesASessionEndThatIsNotTheUserQuitting() throws {
+        try run("claude: conversation survives an involuntary SessionEnd", [
+            .hook("claude/SessionStart", [Self.claudeBoundary, Self.claudeConversation]),
+            .hook("claude/SessionEnd-other", [Self.claudeBoundary, Self.endConversation(Self.claudeConversationID)]),
+            .expectConversation(Self.claudeConversationID),
+        ])
+    }
+
+    func testClaudeClearSwitchesToTheNewConversation() throws {
+        try run("claude: /clear switches conversations", [
+            .hook("claude/SessionStart", [Self.claudeBoundary, Self.claudeConversation]),
+            .hook("claude/SessionStart-clear", [Self.claudeBoundary,
+                                                Self.startConversation(.claude, "3e0c5a52-6f0a-4f43-9d8c-2b7d1f4c9a10")]),
+            .expectConversation("3e0c5a52-6f0a-4f43-9d8c-2b7d1f4c9a10"),
+        ])
+    }
+
+    func testCompactionKeepsTheConversation() throws {
+        try run("claude: compaction keeps the conversation", [
+            .hook("claude/SessionStart", [Self.claudeBoundary, Self.claudeConversation]),
+            .hook("claude/SessionStart-compact", []),
+            .expectConversation(Self.claudeConversationID),
+        ])
+    }
+
+    func testCodexConversationIsRememberedAndForgottenOnExit() throws {
+        try run("codex: conversation remembered, forgotten on exit", [
+            .hook("codex/SessionStart", [Self.setStatus(Self.cIDLE, Self.detail(""), ["--background-tasks=0"],
+                                                        Self.TURN_CLOSED, boundary: true),
+                                         Self.codexConversation]),
+            .expectConversation(Self.codexConversationID),
+            .hook("codex/SessionEnd", [Self.setStatus(Self.cIDLE, Self.detail(""), ["--background-tasks=0"],
+                                                      Self.TURN_CLOSED, boundary: true),
+                                       Self.endConversation(Self.codexConversationID, quit: true)]),
+            .expectConversation(nil),
+        ])
+    }
+
+    func testConversationChangeIgnoresPayloadsWithoutAnID() {
+        XCTAssertNil(AgentConversationChange.from(eventName: "SessionStart", json: ["source": "startup"]))
+        XCTAssertNil(AgentConversationChange.from(eventName: "SessionStart", json: ["session_id": ""]))
+        XCTAssertNil(AgentConversationChange.from(eventName: "SessionEnd", json: ["reason": "exit"]))
+        XCTAssertEqual(AgentConversationChange.from(eventName: "SessionEnd", json: ["session_id": "x", "reason": "exit"]),
+                       .ended(conversationID: "x", userQuit: true))
+        XCTAssertEqual(AgentConversationChange.from(eventName: "SessionStart", json: ["session_id": "x", "cwd": ""]),
+                       .started(conversationID: "x", directory: nil, transcript: nil))
+        XCTAssertEqual(AgentConversationChange.from(eventName: "SessionStart",
+                                                    json: ["session_id": "x", "transcript_path": "/t/x.jsonl"]),
+                       .started(conversationID: "x", directory: nil, transcript: "/t/x.jsonl"))
     }
 
     // MARK: - Addressing and reachability

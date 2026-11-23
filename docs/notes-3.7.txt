@@ -24,6 +24,13 @@ New Features:
   Claude runs on a host reached through SSH
   Integration. Resuming the conversation brings
   the page back.
+- With the Claude Code integration installed,
+  iTerm2 remembers which Claude Code or Codex
+  conversation was running in each session. If
+  a restart ends it, such as rebooting your Mac,
+  the restored session offers to resume the
+  conversation. Resume All resumes every one at
+  once. Issue 13171.
 
 Improvements:
 - Tab groups look quieter in the Minimal theme.

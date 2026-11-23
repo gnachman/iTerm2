@@ -51,13 +51,16 @@ enum AgentHookHandler {
     ///   - environment: the hook's environment, wherever it ran.
     ///   - report: the hook's stderr, one line at a time. A hook prints nothing on stdout: Codex
     ///     rejects non-JSON stdout from some events, and Claude Code feeds it to the model.
+    ///   - runMode: how the agent that ran the hook was invoked. Asked only at session
+    ///     boundaries, since finding out reads the process table.
     static func handle(payload: Data,
                        agent: AgentKind,
                        environment: [String: String],
                        originSessionID: String? = nil,
                        inProcess: Bool = false,
                        backend: AgentStatusBackend,
-                       report: @escaping (String) -> Void) throws {
+                       report: @escaping (String) -> Void,
+                       runMode: () -> AgentRunMode = { .undetermined }) throws {
         guard let event = readAgentHookEvent(payload) else {
             return
         }
@@ -87,41 +90,18 @@ enum AgentHookHandler {
         }
 
         // Best effort (see noteConversation): its failure must neither fail a hook whose status
-        // update worked nor hide the status update's own failure.
-        if let conversation = conversationStarted(eventName: event.name, json: event.json) {
-            try? runner.noteConversation(conversation)
-        } else if let conversation = conversationEnded(eventName: event.name, json: event.json) {
-            // The session no longer runs it, so a workgroup entered there later shouldn't bring
-            // back its page. Named rather than cleared: on /clear this end and the new
-            // conversation's start are separate hook processes, and the end may arrive last.
-            try? runner.noteConversation(conversation, ended: true)
+        // update worked nor hide the status update's own failure. Only session boundaries get
+        // here, so this costs one more round trip per conversation, not per tool call. A one-off
+        // run (claude -p, codex exec) says nothing either way: it is not worth resuming or
+        // remembering a browser page for, and it is often started from inside an interactive
+        // agent, whose conversation it must not replace or end.
+        if let change = AgentConversationChange.from(eventName: event.name, json: event.json),
+           runMode() != .headless {
+            try? runner.noteConversation(change)
         }
         if let statusError {
             throw statusError
         }
-    }
-
-    /// The agent's conversation ID when this event ends one.
-    static func conversationEnded(eventName: String, json: [String: Any]) -> String? {
-        guard eventName == "SessionEnd",
-              let id = json["session_id"] as? String,
-              !id.isEmpty else {
-            return nil
-        }
-        return id
-    }
-
-    /// The agent's conversation ID when this event starts or resumes one. Resuming keeps the ID,
-    /// which is how iTerm2 knows to bring back what a workgroup showed for it. A compaction is
-    /// not a start: it happens mid-conversation and keeps the ID anyway.
-    static func conversationStarted(eventName: String, json: [String: Any]) -> String? {
-        guard eventName == "SessionStart",
-              json["source"] as? String != "compact",
-              let id = json["session_id"] as? String,
-              !id.isEmpty else {
-            return nil
-        }
-        return id
     }
 }
 
@@ -249,12 +229,27 @@ final class AgentHookRunner {
         return after
     }
 
-    /// Tell iTerm2 which conversation the session now runs, or with `ended` that it ended. Quiet
-    /// and best effort: an iTerm2 from before set-agent-conversation existed refuses it, and that
-    /// costs nothing but the restored browser page, so it is never reported.
-    func noteConversation(_ conversationID: String, ended: Bool = false) throws {
-        _ = try backend.run(["session", "set-agent-conversation"] + address.args +
-                            ["--quiet-if-unresolved"] + (ended ? ["--ended"] : []) + ["--", conversationID])
+    /// Tell iTerm2 which conversation the session now runs, or that it ended. Quiet and best
+    /// effort: an iTerm2 from before set-agent-conversation existed refuses it, and that costs
+    /// nothing but the restored browser page and the offer to resume, so it is never reported.
+    func noteConversation(_ change: AgentConversationChange) throws {
+        var args = ["session", "set-agent-conversation"] + address.args + ["--quiet-if-unresolved"]
+        let conversationID: String
+        switch change {
+        case let .started(id, directory, transcript):
+            conversationID = id
+            args += shortcutOptionArgs("--agent", agent.rawValue)
+            if let directory {
+                args += shortcutOptionArgs("--directory", directory)
+            }
+            if let transcript {
+                args += shortcutOptionArgs("--transcript", transcript)
+            }
+        case let .ended(id, userQuit):
+            conversationID = id
+            args += ["--ended"] + (userQuit ? ["--quit"] : [])
+        }
+        _ = try backend.run(args + ["--", conversationID])
     }
 
     /// Ask iTerm2 for the stored count. 0 when unavailable for any reason (no stored value, session

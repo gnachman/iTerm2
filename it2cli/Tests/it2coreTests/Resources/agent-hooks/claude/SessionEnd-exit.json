@@ -1,0 +1,8 @@
+{
+  "cwd": "/Users/user/github/cc-status",
+  "hook_event_name": "SessionEnd",
+  "permission_mode": "default",
+  "reason": "prompt_input_exit",
+  "session_id": "7b9d396c-0ffb-4ab9-b36e-074717cc2ca5",
+  "transcript_path": "/Users/user/.claude/projects/-Users-user-github-cc-status/7b9d396c-0ffb-4ab9-b36e-074717cc2ca5.jsonl"
+}

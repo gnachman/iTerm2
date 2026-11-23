@@ -724,6 +724,7 @@
 		2683D27699B9CA4F714C7FAA /* WorkgroupPeerStartingDirectory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0959D9F8E842A084736B9B52 /* WorkgroupPeerStartingDirectory.swift */; };
 		26BD366BD1D02047E84E5F8D /* iTermWorkgroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13A6B1D037AF894E662A0EFC /* iTermWorkgroup.swift */; };
 		26EB541CEAA6EC4E871C9D9B /* AgentStatusBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CE64337652D1144ADAE8301 /* AgentStatusBackend.swift */; };
+		1702BC77DE729279B525B6AD /* AgentRunMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDC9A1A704EEC80DFF8B2BC6 /* AgentRunMode.swift */; };
 		29C503BA29752DF6A4DB2A02 /* iTermBlurRowBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19537E68A2ADEB03B3086882 /* iTermBlurRowBuffer.swift */; };
 		2A871005FAEFACD23C893003 /* WorkgroupAutoSendClippingsToolbarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BC80D4DB06ABEDF5FADC6B9 /* WorkgroupAutoSendClippingsToolbarItem.swift */; };
 		2AB0AC886DE3F1F616F92D2F /* CharacterAtomIterator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02CF16386D8605E6BC44ED81 /* CharacterAtomIterator.swift */; };
@@ -813,6 +814,7 @@
 		4E55EE321E457F8C4B48C3C4 /* WindowLocationLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA0CFFDB39BB7970E0D4AF2A /* WindowLocationLock.swift */; };
 		4F14EF289B1DF0B36511C009 /* Yams in Frameworks */ = {isa = PBXBuildFile; productRef = AC1ED2504AA2D268CA4C341F /* Yams */; };
 		5014B8205948503D05992B8E /* CompanionPushSender.swift in Sources */ = {isa = PBXBuildFile; fileRef = C253AF0160FA01071B7DD22F /* CompanionPushSender.swift */; };
+		501D8B6771C07845F792899D /* AgentConversationResume.swift in Sources */ = {isa = PBXBuildFile; fileRef = 482874524A0A29E2213D9CB9 /* AgentConversationResume.swift */; };
 		5076A281A0DAE9713EFDB80D /* NotifyCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F37768B62D771300093874E /* NotifyCommand.swift */; };
 		51A4E0853124F0481929EF76 /* CompanionProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 223B2226AFD38553CBB6D072 /* CompanionProtocol */; };
 		52D5109F7DA67861CB8072E5 /* NSTextView+iTermUndoSafety.m in Sources */ = {isa = PBXBuildFile; fileRef = 892E0BD48FA7347FC4326EB6 /* NSTextView+iTermUndoSafety.m */; };
@@ -5279,6 +5281,7 @@
 		0B909F947250B4FBA741BC52 /* LocalizedUnitFormatter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LocalizedUnitFormatter.swift; sourceTree = "<group>"; };
 		0B9767569FB8B582F87229A3 /* ProfileReloadScope.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileReloadScope.swift; sourceTree = "<group>"; };
 		0CE64337652D1144ADAE8301 /* AgentStatusBackend.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AgentStatusBackend.swift; path = it2cli/Sources/it2core/AgentHook/AgentStatusBackend.swift; sourceTree = "<group>"; };
+		FDC9A1A704EEC80DFF8B2BC6 /* AgentRunMode.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AgentRunMode.swift; path = it2cli/Sources/it2core/AgentHook/AgentRunMode.swift; sourceTree = "<group>"; };
 		0D0DDA8C6A3EBC8252F44780 /* ChatBlobWireEncoder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChatBlobWireEncoder.swift; sourceTree = "<group>"; };
 		0D8A276DFCBA67052E410A14 /* iTermBrowserSessionTitle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermBrowserSessionTitle.swift; sourceTree = "<group>"; };
 		0DB9037425C749B5A0E7E089 /* iTermWorkgroupModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermWorkgroupModel.swift; sourceTree = "<group>"; };
@@ -5818,6 +5821,7 @@
 		467CB6090319516B1F45E9FD /* UserVariableAssignment.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UserVariableAssignment.swift; sourceTree = "<group>"; };
 		47517A7059741FDED2F2DF2D /* Message+Database.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "Message+Database.swift"; sourceTree = "<group>"; };
 		479FDFE9C0F424FEC10526EC /* iTermCursorSlideAnimator.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = iTermCursorSlideAnimator.m; path = sources/Drawing/iTermCursorSlideAnimator.m; sourceTree = SOURCE_ROOT; };
+		482874524A0A29E2213D9CB9 /* AgentConversationResume.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AgentConversationResume.swift; sourceTree = "<group>"; };
 		4836A8DAE973FFD820A3513A /* ChatBlobAssembler.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChatBlobAssembler.swift; sourceTree = "<group>"; };
 		490F2382F49288FB53C839C0 /* ShortcutCommands.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ShortcutCommands.swift; path = it2cli/Sources/it2core/Commands/ShortcutCommands.swift; sourceTree = "<group>"; };
 		492BD49DF191574CBABE660D /* iTermTabTitleFrameFingerprint.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermTabTitleFrameFingerprint.m; sourceTree = "<group>"; };
@@ -9816,6 +9820,7 @@
 				F30D7F2F2EFCBD6F0ADB7393 /* TmuxAddress.swift */,
 				9E768232B31A1698C1002910 /* TmuxOwnership.swift */,
 				0CE64337652D1144ADAE8301 /* AgentStatusBackend.swift */,
+				FDC9A1A704EEC80DFF8B2BC6 /* AgentRunMode.swift */,
 				4E331BC658C4F2F1F394CC54 /* AgentHookEvent.swift */,
 				53EA9AFEC3BECD6B78B76385 /* AgentHookDetail.swift */,
 				618C4DEE2422C91AD54236D8 /* HandleAgentHookCommand.swift */,
@@ -14724,6 +14729,7 @@
 				1C9FCD67A328BE0D26CB3D57 /* PTYSession+ClaudeInteractivity.swift */,
 				1663D08B7D59827B98BB8ACE /* ClaudeCodeStatusOverlay.swift */,
 				404A0464AE419BD84EDC392F /* ClaudeCodeBrowserNavigation.swift */,
+				482874524A0A29E2213D9CB9 /* AgentConversationResume.swift */,
 			);
 			path = ClaudeCode;
 			sourceTree = "<group>";
@@ -19049,6 +19055,7 @@
 				352F6F2331E441629B912B47 /* AgentHookDetail.swift in Sources */,
 				DADD9F9FCAC79239898CA963 /* AgentHookAddress.swift in Sources */,
 				26EB541CEAA6EC4E871C9D9B /* AgentStatusBackend.swift in Sources */,
+				1702BC77DE729279B525B6AD /* AgentRunMode.swift in Sources */,
 				5DF2A2CA4FCF770F809772A9 /* HandleAgentHookCommand.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -20870,6 +20877,7 @@
 				2657B65BEA78C46B1B53CAF3 /* WorkgroupBrowserNavigationSheetController.swift in Sources */,
 				790A8D6544B2E84452F3BEB6 /* WorkgroupBrowserMemory.swift in Sources */,
 				C94E9BAC927637B2A2029653 /* ClaudeCodeBrowserNavigation.swift in Sources */,
+				501D8B6771C07845F792899D /* AgentConversationResume.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

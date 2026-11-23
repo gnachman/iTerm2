@@ -152256,6 +152256,270 @@
         }
       }
     },
+    "AdvancedSetting.offerToResumeAgentConversations" : {
+      "comment" : "Advanced setting: offerToResumeAgentConversations",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ofereix reprendre les converses de Claude Code i Codex que un reinici ha interromput.\nQuan una sessió restaurada ha d’iniciar un intèrpret nou perquè la seva feina ja no hi és, com després de reiniciar l’ordinador, i la integració amb Claude Code havia informat que s’hi executava una conversa, mostra un bàner que ofereix reprendre-la."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nabízet pokračování konverzací Claude Code a Codex, které ukončil restart.\nKdyž obnovená relace musí spustit nový shell, protože její úloha už neexistuje (například po restartu počítače), a integrace Claude Code v ní hlásila běžící konverzaci, zobrazí se banner s nabídkou v ní pokračovat."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tilbyd at genoptage Claude Code- og Codex-samtaler, som en genstart afbrød.\nNår en gendannet session skal starte en ny shell, fordi dens job er væk, f.eks. efter genstart af computeren, og Claude Code-integrationen havde rapporteret en samtale i gang der, vises et banner, der tilbyder at genoptage den."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anbieten, Claude-Code- und Codex-Unterhaltungen fortzusetzen, die ein Neustart beendet hat.\nWenn eine wiederhergestellte Sitzung eine neue Shell starten musste, weil ihr Job nicht mehr existiert, etwa nach einem Neustart des Computers, und die Claude-Code-Integration dort eine laufende Unterhaltung gemeldet hatte, wird ein Banner angezeigt, das anbietet, sie fortzusetzen."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πρόταση συνέχισης συνομιλιών Claude Code και Codex που τερμάτισε μια επανεκκίνηση.\nΌταν μια συνεδρία που επαναφέρθηκε χρειάστηκε να ξεκινήσει νέο κέλυφος επειδή η εργασία της δεν υπάρχει πια, όπως μετά από επανεκκίνηση του υπολογιστή, και η ενσωμάτωση του Claude Code είχε αναφέρει συνομιλία σε εξέλιξη εκεί, εμφανίζεται ένα πλαίσιο που προτείνει τη συνέχισή της."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Offer to resume Claude Code and Codex conversations that a restart ended.\nWhen a restored session had to start a new shell because its job is gone, as after rebooting, and the Claude Code integration had reported a conversation running there, show a banner offering to resume it."
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Offer to resume Claude Code and Codex conversations that a restart ended.\nWhen a restored session had to start a new shell because its job is gone, as after rebooting, and the Claude Code integration had reported a conversation running there, show a banner offering to resume it."
+          }
+        },
+        "en-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Offer to resume Claude Code and Codex conversations that a restart ended.\nWhen a restored session had to start a new shell because its job is gone, as after rebooting, and the Claude Code integration had reported a conversation running there, show a banner offering to resume it."
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Offer to resume Claude Code and Codex conversations that a restart ended.\nWhen a restored session had to start a new shell because its job is gone, as after rebooting, and the Claude Code integration had reported a conversation running there, show a banner offering to resume it."
+          }
+        },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Offer to resume Claude Code and Codex conversations that a restart ended.\nWhen a restored session had to start a new shell because its job is gone, as after rebooting, and the Claude Code integration had reported a conversation running there, show a banner offering to resume it."
+          }
+        },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Offer to resume Claude Code and Codex conversations that a restart ended.\nWhen a restored session had to start a new shell because its job is gone, as after rebooting, and the Claude Code integration had reported a conversation running there, show a banner offering to resume it."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ofrecer reanudar las conversaciones de Claude Code y Codex que un reinicio interrumpió.\nCuando una sesión restaurada tuvo que iniciar un nuevo shell porque su trabajo ya no existe, como después de reiniciar el equipo, y la integración con Claude Code había informado de una conversación en curso allí, muestra un aviso que ofrece reanudarla."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ofrecer reanudar las conversaciones de Claude Code y Codex que un reinicio interrumpió.\nCuando una sesión restaurada tuvo que iniciar un nuevo shell porque su trabajo ya no existe, como después de reiniciar la computadora, y la integración con Claude Code había informado una conversación en curso allí, muestra un aviso que ofrece reanudarla."
+          }
+        },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ofrecer reanudar las conversaciones de Claude Code y Codex que un reinicio interrumpió.\nCuando una sesión restaurada tuvo que iniciar un nuevo shell porque su trabajo ya no existe, como después de reiniciar la computadora, y la integración con Claude Code había informado una conversación en curso allí, muestra un aviso que ofrece reanudarla."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tarjoa uudelleenkäynnistyksen katkaisemien Claude Code- ja Codex-keskustelujen jatkamista.\nKun palautetun istunnon on täytynyt käynnistää uusi komentotulkki, koska sen työ on poissa, kuten tietokoneen uudelleenkäynnistyksen jälkeen, ja Claude Code -integraatio oli ilmoittanut siellä käynnissä olleesta keskustelusta, näytetään banneri, joka tarjoaa keskustelun jatkamista."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proposer de reprendre les conversations Claude Code et Codex interrompues par un redémarrage.\nLorsqu’une session restaurée a dû lancer un nouveau shell parce que sa tâche n’existe plus, par exemple après le redémarrage de l’ordinateur, et que l’intégration Claude Code y avait signalé une conversation en cours, une bannière propose de la reprendre."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proposer de reprendre les conversations Claude Code et Codex interrompues par un redémarrage.\nLorsqu’une session restaurée a dû lancer un nouveau shell parce que sa tâche n’existe plus, par exemple après le redémarrage de l’ordinateur, et que l’intégration Claude Code y avait signalé une conversation en cours, une bannière propose de la reprendre."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रीस्टार्ट से रुकी Claude Code और Codex बातचीत फिर से शुरू करने का प्रस्ताव दें।\nजब किसी बहाल किए गए सेशन को नया शेल शुरू करना पड़ा क्योंकि उसका जॉब अब नहीं है, जैसे कंप्यूटर रीस्टार्ट करने के बाद, और Claude Code इंटीग्रेशन ने वहाँ कोई बातचीत चलने की सूचना दी थी, तो उसे फिर से शुरू करने का प्रस्ताव देने वाला बैनर दिखाएँ।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ponudi nastavak razgovora u Claude Codeu i Codexu koje je prekinulo ponovno pokretanje.\nKada je vraćena sesija morala pokrenuti novu ljusku jer njezin posao više ne postoji, primjerice nakon ponovnog pokretanja računala, a integracija Claude Codea prijavila je da se ondje odvija razgovor, prikazuje se natpis s ponudom za nastavak."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Felajánlja az újraindítás miatt megszakadt Claude Code- és Codex-beszélgetések folytatását.\nHa egy visszaállított munkamenetnek új shellt kellett indítania, mert a feladata már nem létezik (például a számítógép újraindítása után), és a Claude Code-integráció futó beszélgetést jelzett benne, egy szalagon felajánlja a folytatását."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tawarkan untuk melanjutkan percakapan Claude Code dan Codex yang terhenti karena mulai ulang.\nSaat sesi yang dipulihkan harus memulai shell baru karena tugasnya sudah tidak ada, seperti setelah komputer dimulai ulang, dan integrasi Claude Code telah melaporkan percakapan yang berjalan di sana, tampilkan banner yang menawarkan untuk melanjutkannya."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proponi di riprendere le conversazioni di Claude Code e Codex interrotte da un riavvio.\nQuando una sessione ripristinata ha dovuto avviare una nuova shell perché il suo processo non esiste più, ad esempio dopo il riavvio del computer, e l’integrazione con Claude Code aveva segnalato una conversazione in corso, mostra un banner che propone di riprenderla."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再起動で終了した Claude Code と Codex の会話の再開を提案します。\n復元されたセッションで、ジョブがなくなったために新しいシェルを起動する必要があった場合（コンピュータの再起動後など）、そこで会話が実行中だと Claude Code の統合機能が報告していれば、再開を提案するバナーを表示します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "재시작으로 종료된 Claude Code 및 Codex 대화를 재개하도록 제안합니다.\n복원된 세션에서 작업이 사라져 새 셸을 시작해야 했고(예: 컴퓨터를 재시동한 후), Claude Code 통합이 그곳에서 대화가 실행 중이라고 보고했다면 대화 재개를 제안하는 배너를 표시합니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tawarkan untuk menyambung semula perbualan Claude Code dan Codex yang ditamatkan oleh mula semula.\nApabila sesi yang dipulihkan terpaksa memulakan shell baharu kerana tugasnya sudah tiada, seperti selepas komputer dimulakan semula, dan integrasi Claude Code telah melaporkan perbualan yang sedang berjalan di situ, paparkan sepanduk yang menawarkan untuk menyambungnya semula."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tilby å gjenoppta Claude Code- og Codex-samtaler som en omstart avsluttet.\nNår en gjenopprettet økt måtte starte et nytt skall fordi jobben er borte, for eksempel etter omstart av datamaskinen, og Claude Code-integrasjonen hadde rapportert en samtale som kjørte der, vises et banner som tilbyr å gjenoppta den."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aanbieden om Claude Code- en Codex-gesprekken te hervatten die door een herstart zijn beëindigd.\nAls een herstelde sessie een nieuwe shell moest starten omdat de taak verdwenen is, zoals na het herstarten van de computer, en de Claude Code-integratie daar een lopend gesprek had gemeld, wordt een banner getoond die aanbiedt het te hervatten."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proponuj wznowienie rozmów w Claude Code i Codex przerwanych przez ponowne uruchomienie.\nGdy przywrócona sesja musiała uruchomić nową powłokę, bo jej zadanie już nie istnieje (np. po ponownym uruchomieniu komputera), a integracja z Claude Code zgłosiła, że trwała w niej rozmowa, wyświetlany jest baner z propozycją jej wznowienia."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oferecer a retomada de conversas do Claude Code e do Codex encerradas por uma reinicialização.\nQuando uma sessão restaurada precisou iniciar um novo shell porque seu processo não existe mais, como após reiniciar o computador, e a integração com o Claude Code havia informado uma conversa em andamento ali, mostra um banner oferecendo retomá-la."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oferecer a retoma de conversas do Claude Code e do Codex terminadas por um reinício.\nQuando uma sessão restaurada teve de iniciar uma nova shell porque o respetivo processo já não existe, como após reiniciar o computador, e a integração com o Claude Code tinha comunicado uma conversa em curso nessa sessão, mostra uma faixa a oferecer retomá-la."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Propune reluarea conversațiilor Claude Code și Codex întrerupte de o repornire.\nCând o sesiune restaurată a trebuit să pornească un shell nou pentru că procesul ei nu mai există, de exemplu după repornirea computerului, iar integrarea Claude Code raportase acolo o conversație în desfășurare, afișează un banner care propune reluarea ei."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Предлагать возобновить разговоры Claude Code и Codex, прерванные перезапуском.\nЕсли восстановленному сеансу пришлось запустить новую оболочку, потому что его задания больше нет (например, после перезагрузки компьютера), а интеграция с Claude Code сообщала, что в нём шёл разговор, показывается баннер с предложением его возобновить."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ponúkať pokračovanie konverzácií Claude Code a Codex, ktoré ukončil reštart.\nKeď obnovená relácia musí spustiť nový shell, pretože jej úloha už neexistuje (napríklad po reštarte počítača), a integrácia Claude Code v nej hlásila bežiacu konverzáciu, zobrazí sa banner s ponukou v nej pokračovať."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ponudi nadaljevanje pogovorov v Claude Code in Codex, ki jih je prekinil ponovni zagon.\nKo je morala obnovljena seja zagnati novo lupino, ker njenega opravila ni več, na primer po ponovnem zagonu računalnika, integracija Claude Code pa je poročala o pogovoru, ki je tekel v njej, se prikaže pasica s ponudbo za nadaljevanje."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erbjud att återuppta Claude Code- och Codex-konversationer som en omstart avbröt.\nNär en återställd session måste starta ett nytt skal eftersom dess jobb är borta, till exempel efter att datorn startats om, och Claude Code-integreringen hade rapporterat en pågående konversation där, visas en banderoll som erbjuder att återuppta den."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เสนอให้ทำการสนทนา Claude Code และ Codex ที่หยุดไปเพราะการเริ่มใหม่ต่อ\nเมื่อเซสชันที่กู้คืนต้องเริ่มเชลล์ใหม่เพราะงานเดิมไม่อยู่แล้ว เช่น หลังจากรีสตาร์ทคอมพิวเตอร์ และการผสานรวม Claude Code ได้รายงานว่ามีการสนทนาทำงานอยู่ที่นั่น จะแสดงแบนเนอร์เสนอให้ทำการสนทนานั้นต่อ"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yeniden başlatmanın sonlandırdığı Claude Code ve Codex sohbetlerini sürdürmeyi öner.\nGeri yüklenen bir oturum, işi artık olmadığı için yeni bir kabuk başlatmak zorunda kaldığında (örneğin bilgisayar yeniden başlatıldıktan sonra) ve Claude Code entegrasyonu orada çalışan bir sohbet bildirmişse, sohbeti sürdürmeyi öneren bir şerit gösterilir."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пропонувати відновити розмови Claude Code і Codex, перервані перезапуском.\nЯкщо відновленому сеансу довелося запустити нову оболонку, бо його завдання вже немає (наприклад, після перезавантаження компʼютера), а інтеграція з Claude Code повідомляла, що там тривала розмова, показується банер із пропозицією її відновити."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đề nghị tiếp tục các cuộc trò chuyện Claude Code và Codex bị dừng do khởi động lại.\nKhi một phiên được khôi phục phải mở shell mới vì tác vụ cũ không còn, chẳng hạn sau khi khởi động lại máy tính, và tích hợp Claude Code đã báo có cuộc trò chuyện đang chạy ở đó, hiển thị biểu ngữ đề nghị tiếp tục cuộc trò chuyện."
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提议恢复因重新启动而中断嘅 Claude Code 同 Codex 对话。\n如果已还原嘅会话因为原本嘅作业已经冇咗而要启动新 shell（例如重新启动电脑之后），而 Claude Code 集成之前报告过嗰度有对话运行紧，就会显示横幅，提议恢复对话。"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提議繼續因重新啟動而中斷嘅 Claude Code 同 Codex 對話。\n如果已還原嘅工作階段因為原本嘅工作已經冇咗而要啟動新 shell（例如重新啟動電腦之後），而 Claude Code 整合之前報告過嗰度有對話運行緊，就會顯示橫幅，提議繼續對話。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提议恢复因重新启动而中断的 Claude Code 和 Codex 对话。\n如果已恢复的会话因原有作业已不存在而必须启动新的 shell（例如重新启动电脑后），并且 Claude Code 集成曾报告该处有对话正在运行，则显示横幅，提议恢复该对话。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提議繼續因重新啟動而中斷的 Claude Code 與 Codex 對話。\n若已還原的工作階段因原有工作已不存在而必須啟動新的 shell（例如重新啟動電腦後），且 Claude Code 整合曾回報該處有對話正在執行，則顯示橫幅，提議繼續該對話。"
+          }
+        }
+      }
+    },
     "AdvancedSetting.ollamaKeepAlive" : {
       "comment" : "Advanced setting: ollamaKeepAlive",
       "extractionState" : "extracted_with_value",
@@ -215876,6 +216140,1326 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "視窗"
+          }
+        }
+      }
+    },
+    "AgentResume.DontAskAgain" : {
+      "comment" : "Button that stops iTerm2 from offering to resume AI coding agent conversations after a restart",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No ho tornis a preguntar"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Příště se už neptat"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spørg ikke igen"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht erneut fragen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Να μην ερωτηθώ ξανά"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Don’t Ask Again"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don’t Ask Again"
+          }
+        },
+        "en-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don’t Ask Again"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don’t Ask Again"
+          }
+        },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don’t Ask Again"
+          }
+        },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don’t Ask Again"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No volver a preguntar"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No volver a preguntar"
+          }
+        },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No volver a preguntar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Älä kysy uudelleen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne plus demander"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne plus demander"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "दोबारा न पूछें"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nemoj ponovno pitati"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ismételt kérdés mellőzése"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jangan Tanya Lagi"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non chiedere più"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今後確認しない"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다시 묻지 않음"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jangan Tanya Lagi"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikke spør igjen"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vraag niet opnieuw"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie pytaj ponownie"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não perguntar novamente"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não voltar a perguntar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nu mai întrebați"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Больше не спрашивать"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znovu sa ma nepýtať"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne sprašuj več"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fråga inte igen"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ไม่ต้องถามอีก"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir Daha Sorma"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Більше не питати"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không hỏi lại"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不再询问"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不要再詢問"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不再询问"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不要再詢問"
+          }
+        }
+      }
+    },
+    "AgentResume.Offer.Claude" : {
+      "comment" : "Announcement shown in a restored session where a Claude Code conversation was ended by a restart of iTerm2 or the Mac",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code s’estava executant aquí abans que iTerm2 es reiniciés. Voleu reprendre la conversa?"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Před restartem iTerm2 tu běžel Claude Code. Pokračovat v konverzaci?"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code kørte her, før iTerm2 genstartede. Vil du genoptage samtalen?"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier lief Claude Code, bevor iTerm2 neu gestartet wurde. Unterhaltung fortsetzen?"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το Claude Code εκτελούνταν εδώ πριν από την επανεκκίνηση του iTerm2. Συνέχιση της συνομιλίας;"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Claude Code was running here before iTerm2 restarted. Resume the conversation?"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code was running here before iTerm2 restarted. Resume the conversation?"
+          }
+        },
+        "en-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code was running here before iTerm2 restarted. Resume the conversation?"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code was running here before iTerm2 restarted. Resume the conversation?"
+          }
+        },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code was running here before iTerm2 restarted. Resume the conversation?"
+          }
+        },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code was running here before iTerm2 restarted. Resume the conversation?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code se estaba ejecutando aquí antes de que iTerm2 se reiniciara. ¿Reanudar la conversación?"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code se estaba ejecutando aquí antes de que iTerm2 se reiniciara. ¿Reanudar la conversación?"
+          }
+        },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code se estaba ejecutando aquí antes de que iTerm2 se reiniciara. ¿Reanudar la conversación?"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code oli käynnissä tässä ennen iTerm2:n uudelleenkäynnistystä. Jatketaanko keskustelua?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code s’exécutait ici avant le redémarrage d’iTerm2. Reprendre la conversation ?"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code s’exécutait ici avant le redémarrage d’iTerm2. Reprendre la conversation?"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 के फिर से शुरू होने से पहले यहाँ Claude Code चल रहा था। क्या बातचीत फिर से शुरू करें?"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code se ovdje izvodio prije ponovnog pokretanja iTerm2. Nastaviti razgovor?"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Itt a Claude Code futott, mielőtt az iTerm2 újraindult. Folytatja a beszélgetést?"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code sedang berjalan di sini sebelum iTerm2 dimulai ulang. Lanjutkan percakapan?"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code era in esecuzione qui prima del riavvio di iTerm2. Riprendere la conversazione?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 が再起動する前、ここで Claude Code が実行されていました。会話を再開しますか？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2가 다시 시작되기 전에 여기에서 Claude Code가 실행 중이었습니다. 대화를 재개하시겠습니까?"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code sedang berjalan di sini sebelum iTerm2 dimulakan semula. Sambung semula perbualan?"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code kjørte her før iTerm2 startet på nytt. Vil du gjenoppta samtalen?"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code was hier actief voordat iTerm2 opnieuw werd gestart. Gesprek hervatten?"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przed ponownym uruchomieniem iTerm2 działał tu Claude Code. Wznowić rozmowę?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Claude Code estava em execução aqui antes de o iTerm2 reiniciar. Retomar a conversa?"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Claude Code estava em execução aqui antes de o iTerm2 reiniciar. Retomar a conversa?"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code rula aici înainte ca iTerm2 să repornească. Reluați conversația?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "До перезапуска iTerm2 здесь работал Claude Code. Возобновить разговор?"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pred reštartom iTerm2 tu bežal Claude Code. Pokračovať v konverzácii?"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pred ponovnim zagonom iTerm2 se je tukaj izvajal Claude Code. Želite nadaljevati pogovor?"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code körde här innan iTerm2 startades om. Vill du återuppta konversationen?"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code กำลังทำงานอยู่ที่นี่ก่อนที่ iTerm2 จะเริ่มใหม่ ต้องการทำการสนทนาต่อหรือไม่"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 yeniden başlatılmadan önce burada Claude Code çalışıyordu. Sohbet sürdürülsün mü?"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "До перезапуску iTerm2 тут працював Claude Code. Відновити розмову?"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code đang chạy ở đây trước khi iTerm2 khởi động lại. Tiếp tục cuộc trò chuyện?"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 重新启动前，呢度运行紧 Claude Code。要唔要恢复对话？"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 重新啟動前，呢度運行緊 Claude Code。要唔要繼續對話？"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 重新启动前，此处正在运行 Claude Code。要恢复对话吗？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 重新啟動前，此處正在執行 Claude Code。要繼續對話嗎？"
+          }
+        }
+      }
+    },
+    "AgentResume.Offer.Codex" : {
+      "comment" : "Announcement shown in a restored session where a Codex CLI conversation was ended by a restart of iTerm2 or the Mac",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex s’estava executant aquí abans que iTerm2 es reiniciés. Voleu reprendre la conversa?"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Před restartem iTerm2 tu běžel Codex. Pokračovat v konverzaci?"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex kørte her, før iTerm2 genstartede. Vil du genoptage samtalen?"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier lief Codex, bevor iTerm2 neu gestartet wurde. Unterhaltung fortsetzen?"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το Codex εκτελούνταν εδώ πριν από την επανεκκίνηση του iTerm2. Συνέχιση της συνομιλίας;"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Codex was running here before iTerm2 restarted. Resume the conversation?"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex was running here before iTerm2 restarted. Resume the conversation?"
+          }
+        },
+        "en-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex was running here before iTerm2 restarted. Resume the conversation?"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex was running here before iTerm2 restarted. Resume the conversation?"
+          }
+        },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex was running here before iTerm2 restarted. Resume the conversation?"
+          }
+        },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex was running here before iTerm2 restarted. Resume the conversation?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex se estaba ejecutando aquí antes de que iTerm2 se reiniciara. ¿Reanudar la conversación?"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex se estaba ejecutando aquí antes de que iTerm2 se reiniciara. ¿Reanudar la conversación?"
+          }
+        },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex se estaba ejecutando aquí antes de que iTerm2 se reiniciara. ¿Reanudar la conversación?"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex oli käynnissä tässä ennen iTerm2:n uudelleenkäynnistystä. Jatketaanko keskustelua?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex s’exécutait ici avant le redémarrage d’iTerm2. Reprendre la conversation ?"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex s’exécutait ici avant le redémarrage d’iTerm2. Reprendre la conversation?"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 के फिर से शुरू होने से पहले यहाँ Codex चल रहा था। क्या बातचीत फिर से शुरू करें?"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex se ovdje izvodio prije ponovnog pokretanja iTerm2. Nastaviti razgovor?"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Itt a Codex futott, mielőtt az iTerm2 újraindult. Folytatja a beszélgetést?"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex sedang berjalan di sini sebelum iTerm2 dimulai ulang. Lanjutkan percakapan?"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex era in esecuzione qui prima del riavvio di iTerm2. Riprendere la conversazione?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 が再起動する前、ここで Codex が実行されていました。会話を再開しますか？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2가 다시 시작되기 전에 여기에서 Codex가 실행 중이었습니다. 대화를 재개하시겠습니까?"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex sedang berjalan di sini sebelum iTerm2 dimulakan semula. Sambung semula perbualan?"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex kjørte her før iTerm2 startet på nytt. Vil du gjenoppta samtalen?"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex was hier actief voordat iTerm2 opnieuw werd gestart. Gesprek hervatten?"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przed ponownym uruchomieniem iTerm2 działał tu Codex. Wznowić rozmowę?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Codex estava em execução aqui antes de o iTerm2 reiniciar. Retomar a conversa?"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Codex estava em execução aqui antes de o iTerm2 reiniciar. Retomar a conversa?"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex rula aici înainte ca iTerm2 să repornească. Reluați conversația?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "До перезапуска iTerm2 здесь работал Codex. Возобновить разговор?"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pred reštartom iTerm2 tu bežal Codex. Pokračovať v konverzácii?"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pred ponovnim zagonom iTerm2 se je tukaj izvajal Codex. Želite nadaljevati pogovor?"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex körde här innan iTerm2 startades om. Vill du återuppta konversationen?"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex กำลังทำงานอยู่ที่นี่ก่อนที่ iTerm2 จะเริ่มใหม่ ต้องการทำการสนทนาต่อหรือไม่"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 yeniden başlatılmadan önce burada Codex çalışıyordu. Sohbet sürdürülsün mü?"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "До перезапуску iTerm2 тут працював Codex. Відновити розмову?"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codex đang chạy ở đây trước khi iTerm2 khởi động lại. Tiếp tục cuộc trò chuyện?"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 重新启动前，呢度运行紧 Codex。要唔要恢复对话？"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 重新啟動前，呢度運行緊 Codex。要唔要繼續對話？"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 重新启动前，此处正在运行 Codex。要恢复对话吗？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 重新啟動前，此處正在執行 Codex。要繼續對話嗎？"
+          }
+        }
+      }
+    },
+    "AgentResume.Resume" : {
+      "comment" : "Button that resumes an AI coding agent conversation in this session by typing the command that resumes it",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprèn"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokračovat"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genoptag"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fortsetzen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Συνέχιση"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Resume"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume"
+          }
+        },
+        "en-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume"
+          }
+        },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume"
+          }
+        },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar"
+          }
+        },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jatka"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprendre"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprendre"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "फिर से शुरू करें"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastavi"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folytatás"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lanjutkan"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riprendi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再開"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "재개"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sambung Semula"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gjenoppta"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hervat"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wznów"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retomar"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retomar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reluați"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Возобновить"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokračovať"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nadaljuj"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Återuppta"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ทำต่อ"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sürdür"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відновити"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiếp tục"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "恢复"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "繼續"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "恢复"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "繼續"
+          }
+        }
+      }
+    },
+    "AgentResume.ResumeAll" : {
+      "comment" : "Button that resumes the AI coding agent conversations in every restored session that offers to",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprèn-ho tot"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokračovat ve všech"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genoptag alle"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle fortsetzen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Συνέχιση όλων"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Resume All"
+          }
+        },
+        "en-AU" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume All"
+          }
+        },
+        "en-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume All"
+          }
+        },
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume All"
+          }
+        },
+        "en-IN" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume All"
+          }
+        },
+        "en-PH" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume All"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar todas"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar todas"
+          }
+        },
+        "es-US" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar todas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jatka kaikkia"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout reprendre"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout reprendre"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सभी फिर से शुरू करें"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastavi sve"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Összes folytatása"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lanjutkan Semua"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riprendi tutte"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべて再開"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모두 재개"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sambung Semula Semua"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gjenoppta alle"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hervat alle"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wznów wszystkie"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retomar todas"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retomar todas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reluați-le pe toate"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Возобновить все"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokračovať vo všetkých"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nadaljuj vse"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Återuppta alla"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ทำต่อทั้งหมด"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tümünü Sürdür"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відновити всі"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiếp tục tất cả"
+          }
+        },
+        "yue-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部恢复"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部繼續"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部恢复"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部繼續"
           }
         }
       }

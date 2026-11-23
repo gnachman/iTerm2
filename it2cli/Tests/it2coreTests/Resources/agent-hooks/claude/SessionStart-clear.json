@@ -1,0 +1,8 @@
+{
+  "cwd": "/Users/user/github/cc-status",
+  "hook_event_name": "SessionStart",
+  "permission_mode": "default",
+  "session_id": "3e0c5a52-6f0a-4f43-9d8c-2b7d1f4c9a10",
+  "source": "clear",
+  "transcript_path": "/Users/user/.claude/projects/-Users-user-github-cc-status/3e0c5a52-6f0a-4f43-9d8c-2b7d1f4c9a10.jsonl"
+}

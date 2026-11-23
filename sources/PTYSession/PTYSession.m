@@ -360,6 +360,7 @@ static NSString *const SESSION_ARRANGEMENT_AUTO_SEND_CLIPPINGS_WHEN_IDLE = @"Aut
 static NSString *const SESSION_ARRANGEMENT_AUTO_REQUEST_REVIEW_WHEN_IDLE = @"Auto Request Review When Idle";  // BOOL. Main session's toolbar toggle state.
 static NSString *const SESSION_ARRANGEMENT_FRAMER_PANE = @"Framer Pane";  // NSDictionary from -framerPaneArrangement: a workgroup peer running as a pane of its leader's framer, which it reattaches to after a restart.
 static NSString *const SESSION_ARRANGEMENT_WORKGROUP = @"Workgroup";  // NSDictionary, opaque to PTYSession. Owned by iTermWorkgroupRestoration. Present on the visible/anchor member of a peer group; embeds the other (buried) members' arrangements so the workgroup can be rebuilt on relaunch.
+static NSString *const SESSION_ARRANGEMENT_AGENT_CONVERSATION = @"Agent Conversation";  // NSDictionary from iTermAgentConversationRecord. Only saved with contents.
 static NSString *const SESSION_ARRANGEMENT_CODE_REVIEW_LAST_PROMPT = @"Code Review Last Prompt";  // NSString. The prompt text the user last submitted in a code-review session, so a reload after restore defaults to their edited prompt.
 static NSString *const SESSION_ARRANGEMENT_INLINE_CHAT_ID = @"Inline Chat ID";  // NSString. Chat hosted in this session's inline AI chat gutter panel.
 static NSString *const SESSION_ARRANGEMENT_INLINE_CHAT_VISIBLE = @"Inline Chat Visible";  // BOOL. Whether that panel was showing.
@@ -1373,6 +1374,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_userVariables release];
     [_program release];
     [_customShell release];
+    [_agentConversation release];
     [_environment release];
     [_commands release];
     [_bellRate release];
@@ -2449,6 +2451,11 @@ ITERM_WEAKLY_REFERENCEABLE
         aSession.environment = arrangement[SESSION_ARRANGEMENT_ENVIRONMENT];
     }
 
+    NSDictionary *agentConversation = [NSDictionary castFrom:arrangement[SESSION_ARRANGEMENT_AGENT_CONVERSATION]];
+    if (agentConversation) {
+        aSession.agentConversation = [[[iTermAgentConversationRecord alloc] initWithDictionary:agentConversation] autorelease];
+    }
+
     if (arrangement[SESSION_ARRANGEMENT_IS_UTF_8]) {
         aSession.isUTF8 = [arrangement[SESSION_ARRANGEMENT_IS_UTF_8] boolValue];
     }
@@ -2475,6 +2482,10 @@ ITERM_WEAKLY_REFERENCEABLE
                             (arrangement[SESSION_ARRANGEMENT_BROWSER_STATE] != nil || contents) &&
                             [iTermAdvancedSettingsModel restoreWindowContents]);
     BOOL attachedToServer = NO;
+    // Set when restoration starts a new job in place of one that is gone, which is when an agent
+    // conversation that was running here can be offered for resuming.
+    __block BOOL relaunchedWithContents = NO;
+    __block NSString *relaunchDirectory = nil;
     // Opaque workgroup peer-group descriptor, owned by
     // iTermWorkgroupRestoration. Read once: used both by the inhibit-relaunch
     // decision below and by the restoration-coordinator registration later.
@@ -2738,6 +2749,13 @@ ITERM_WEAKLY_REFERENCEABLE
             const BOOL forceOldCWD = (contents != nil ||
                                       [options[PTYSessionArrangementOptionsForceOldCWD] boolValue]) && oldCWD.length;
             DLog(@"Running command...");
+            // Contents mean system window restoration (or something like it, such as undoing a
+            // close): the arrangement describes this session, not a new copy of it. An archive
+            // (such as undoing a close after the live undo window) restores contents too but
+            // never launches a shell (it exits once its contents are in place), so it is not a
+            // relaunch: offering to resume an agent there would type into an exited session.
+            relaunchedWithContents = (contents != nil && !isArchive);
+            relaunchDirectory = forceOldCWD ? oldCWD : nil;
 
             NSDictionary *environmentArg = @{};
             NSString *commandArg = nil;
@@ -2836,6 +2854,14 @@ ITERM_WEAKLY_REFERENCEABLE
                                            tmuxDCSIdentifier:tmuxDCSIdentifier
                                               missingProfile:missingProfile];
         [aSession didFinishInitialization];
+        if (relaunchedWithContents) {
+            NSArray *savedAncestors = [NSArray castFrom:arrangement[SESSION_ARRANGEMENT_FOREGROUND_JOB_ANCESTORS]];
+            [[iTermAgentConversationResumeOffers shared] sessionDidRelaunch:aSession
+                                                            launchDirectory:relaunchDirectory
+                                                     foregroundJobAncestors:[savedAncestors filteredArrayUsingBlock:^BOOL(id element) {
+                return [element isKindOfClass:[NSString class]];
+            }]];
+        }
     };
     if ([aSession.profile[KEY_AUTOLOG] boolValue]) {
         [aSession retain];
@@ -8017,6 +8043,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             }];
         }
         result[SESSION_ARRANGEMENT_VARIABLES] = [self encodableArrangementVariables];
+        // Only with contents: a saved window arrangement or a duplicate is a new session, which
+        // must not offer to resume a conversation another session is still running.
+        if (_agentConversation) {
+            result[SESSION_ARRANGEMENT_AGENT_CONVERSATION] = _agentConversation.dictionaryValue;
+        }
         // Save the foreground-job ancestry so that on restore we can re-derive job-ended edges
         // for jobs that were running at save but have died by the time the session is restored.
         if (_eventTriggerEvaluator.foregroundJobAncestors.count > 0) {
@@ -18354,6 +18385,14 @@ static NSUInteger PTYSessionMinimumTurdLength(PTYSessionTurdType turdType) {
                             cursor:(VT100GridAbsCoord)cursor
                   workingDirectory:(NSString *)workingDirectory
                           encoding:(NSStringEncoding)encoding {
+    // Not inline: this runs as a side effect, and resuming an agent conversation writes input.
+    __weak __typeof(self) weakSelfForResume = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        PTYSession *strongSelf = weakSelfForResume;
+        if (strongSelf) {
+            [[iTermAgentConversationResumeOffers shared] sessionDidShowPrompt:strongSelf];
+        }
+    });
     if (_eventTriggerEvaluator.hasPromptDetectedTrigger) {
         [_eventTriggerEvaluator promptDetected];
     }
