@@ -277,20 +277,81 @@ fileprivate func makeLookupTable(_ string: NSString,
                                  count: Int,
                                  direction: iTermBidiDirection) -> ([Int32], IndexSet, IndexSet, Bool) {
     let paragraphIsRTL = paragraphIsRTL(string, direction: direction)
+    let laidOut = (paragraphIsRTL && direction == .default) ? endingLeadingLabelAtItsColon(string) : string
     // Lay the CTLine out with the same base direction the line is justified
     // with, so justification and the neutrals' resolved positions agree.
     let paragraphStyle = NSMutableParagraphStyle()
     paragraphStyle.baseWritingDirection = paragraphIsRTL ? .rightToLeft : .leftToRight
-    let attributedString = NSAttributedString(string: string as String,
+    let attributedString = NSAttributedString(string: laidOut as String,
                                               attributes: [.paragraphStyle: paragraphStyle])
     // Create a CTLine from the attributed string
     let line = CTLineCreateWithAttributedString(attributedString)
     let intermediate = IntermediateLookupTable(line: line,
-                                               string: string,
+                                               string: laidOut,
                                                deltas: deltas,
                                                count: count)
 
     return (intermediate.lut, intermediate.rtlIndexes, intermediate.mirroredIndexes, paragraphIsRTL)
+}
+
+// A line that opens with a Latin label and a colon, such as “- UI-6: Deploy در
+// دو مرحله.”, is right-to-left only because of rtlParagraphMinimumWords; first-
+// strong leaves it left-to-right. In a right-to-left paragraph that colon sits
+// between two Latin words, so label and next word form one left-to-right run
+// and “Deploy” is drawn nearest the right edge, ahead of “UI-6”. A label that
+// is followed by a right-to-left word (“- UI-5: دکمه‌ها”) leads its line, so in
+// a list the labels do not line up.
+//
+// Returns the string to lay out instead: the space after the label's colon
+// becomes U+200F (right-to-left mark). Colon and mark then resolve right-to-
+// left, which ends the label's run: the label leads, then the colon, then the
+// rest of the line. The mark is one UTF-16 unit like the space it replaces, so
+// the caller's `deltas` still apply. It has no glyph, and a cell without a
+// glyph in a right-to-left run is placed left of its predecessor, which is
+// where the space belongs.
+//
+// The label is the text before the line's first colon: anything that is not
+// strong (a list marker, indentation), then Latin letters, digits, spaces and
+// -_./#() only. Code and shell commands (quotes, braces, @) are left alone.
+fileprivate func endingLeadingLabelAtItsColon(_ string: NSString) -> NSString {
+    guard let ltr = NSCharacterSet.strongLTRCodePoints(),
+          let rtl = NSCharacterSet.strongRTLCodePoints() else {
+        return string
+    }
+    let length = string.length
+    var inLabel = false
+    for i in 0..<length {
+        let c = string.character(at: i)
+        if c == 0x3A {  // colon
+            guard inLabel, i + 1 < length, string.character(at: i + 1) == 0x20 else {
+                return string
+            }
+            let result = NSMutableString(string: string)
+            result.replaceCharacters(in: NSRange(location: i + 1, length: 1), with: "\u{200F}")
+            return result
+        }
+        guard let scalar = Unicode.Scalar(c) else {
+            return string  // half of a surrogate pair
+        }
+        if ltr.contains(scalar) {
+            inLabel = true
+        } else if rtl.contains(scalar) {
+            return string
+        } else if inLabel && !isLabelFiller(c) {
+            return string
+        }
+    }
+    return string
+}
+
+// What a label may hold besides letters: digits, space and - _ . / # ( )
+fileprivate func isLabelFiller(_ c: unichar) -> Bool {
+    switch c {
+    case 0x30...0x39, 0x20, 0x2D, 0x5F, 0x2E, 0x2F, 0x23, 0x28, 0x29:
+        return true
+    default:
+        return false
+    }
 }
 
 // A line lays out right-to-left when its first strong directional character is
@@ -298,17 +359,47 @@ fileprivate func makeLookupTable(_ string: NSString,
 // scalars, not UTF-16 units: surrogate halves never form a scalar, so a UTF-16
 // walk would ignore supplementary-plane strong-RTL scripts (Adlam, Hanifi
 // Rohingya) and misdetect lines written in them.
+//
+// The advanced setting rtlParagraphMinimumWords (default 0, which is exactly
+// first-strong) adds one case: a line whose first strong character is
+// left-to-right still lays out right-to-left once it holds that many
+// right-to-left words. Programs that wrap a right-to-left paragraph into rows
+// themselves send each row as its own line, so a row that happens to begin
+// with a Latin word would otherwise flip on its own. UAX #9 allows this kind
+// of override of P3 (HL1).
+//
+// A word is a maximal group of strong-RTL characters. A space or a strong-LTR
+// character ends it; neutrals and marks (the ZWNJ inside دانش‌آموزان, combining
+// marks) do not, so such a word counts once.
 fileprivate func detectedParagraphIsRTL(_ s: NSString) -> Bool {
     guard let ltr = NSCharacterSet.strongLTRCodePoints(),
           let rtl = NSCharacterSet.strongRTLCodePoints() else {
         return false
     }
+    let minimumWords = Int(iTermAdvancedSettingsModel.rtlParagraphMinimumWords())
+    var opensLTR = false
+    var rtlWordCount = 0
+    var inRTLWord = false
     for scalar in (s as String).unicodeScalars {
         if rtl.contains(scalar) {
-            return true
-        }
-        if ltr.contains(scalar) {
-            return false
+            if !opensLTR {
+                return true
+            }
+            if !inRTLWord {
+                inRTLWord = true
+                rtlWordCount += 1
+                if rtlWordCount >= minimumWords {
+                    return true
+                }
+            }
+        } else if ltr.contains(scalar) {
+            if minimumWords <= 0 {
+                return false
+            }
+            opensLTR = true
+            inRTLWord = false
+        } else if scalar == " " {
+            inRTLWord = false
         }
     }
     return false
