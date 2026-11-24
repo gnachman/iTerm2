@@ -107,15 +107,12 @@ static NSString *const kReusableCookieAnnouncementIdentifier = @"ReusableCookieA
 #pragma mark - Helpers
 
 - (NSString *)issueResultWithCookie:(NSString *)cookie {
-    NSString *name = self.arguments[@"appName"];
-    if (name) {
+    if (self.arguments[@"appName"]) {
+        // The Script Console entry is made when a connection presenting this key is accepted
+        // (see -[iTermScriptConsole connectionAccepted:]), not here. A cookie whose connection
+        // never arrives, as when an agent hook is killed under load, would otherwise leave an
+        // entry that stays running forever and is never pruned (issue 13183).
         NSString *key = [[NSUUID UUID] UUIDString];
-        NSString *identifier = [[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key];
-        iTermScriptHistoryEntry *entry = [[iTermScriptHistoryEntry alloc] initWithName:[@"\u2248" stringByAppendingString:name]
-                                                                              fullPath:nil
-                                                                            identifier:identifier
-                                                                              relaunch:nil];
-        [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
         return [NSString stringWithFormat:@"%@ %@", cookie, key];
     }
     return cookie;
@@ -134,6 +131,9 @@ static NSString *const kReusableCookieAnnouncementIdentifier = @"ReusableCookieA
                                                                           relaunch:nil];
     [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
     [entry addOutput:message completion:^{}];
+    // Only a record of the grant: no connection will ever use this entry's key, so nothing
+    // else would stop it, and a running entry is never pruned.
+    [entry stopRunning];
 }
 
 - (PTYSession *)targetSession {

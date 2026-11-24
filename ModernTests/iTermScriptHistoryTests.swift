@@ -416,3 +416,64 @@ final class iTermScriptConsoleConnectionTests: XCTestCase {
         post(iTermAPIServerConnectionClosed)
     }
 }
+
+// Issue 13183: agent hooks request a cookie on every event, and under load a hook can be killed
+// after getting one but before connecting. The Script Console entry must therefore come from the
+// accepted connection, not from the cookie request, or each such hook leaves an entry that stays
+// running forever.
+final class iTermRequestCookieCommandTests: XCTestCase {
+    private var savedAPIEnabled = false
+
+    override func setUp() {
+        super.setUp()
+        _ = iTermScriptConsole.sharedInstance()
+        savedAPIEnabled = iTermPreferences.bool(forKey: kPreferenceKeyEnableAPIServer)
+        iTermPreferences.setBool(true, forKey: kPreferenceKeyEnableAPIServer)
+    }
+
+    override func tearDown() {
+        iTermPreferences.setBool(savedAPIEnabled, forKey: kPreferenceKeyEnableAPIServer)
+        super.tearDown()
+    }
+
+    private func requestCookie(appName: String) throws -> (cookie: String, key: String) {
+        let description = try XCTUnwrap(NSScriptCommandDescription(
+            suiteName: "iTerm2",
+            commandName: "request cookie",
+            dictionary: ["CommandClass": "iTermRequestCookieCommand",
+                         "AppleEventCode": "rqck",
+                         "AppleEventClassCode": "Itrm"]))
+        let command = iTermRequestCookieCommand(commandDescription: description)
+        command.arguments = ["appName": appName]
+        let result = try XCTUnwrap(command.performDefaultImplementation() as? String)
+        let parts = result.split(separator: " ").map(String.init)
+        XCTAssertEqual(parts.count, 2, result)
+        return (try XCTUnwrap(parts.first), try XCTUnwrap(parts.last))
+    }
+
+    private func entries(named name: String) -> [iTermScriptHistoryEntry] {
+        return iTermScriptHistory.sharedInstance().entries.filter { $0.name == name }
+    }
+
+    func testCookieRequestAddsNoEntryUntilItsConnectionIsAccepted() throws {
+        let appName = "cookie-test-\(UUID().uuidString)"
+        let displayName = "\u{2248}" + appName
+        let (_, key) = try requestCookie(appName: appName)
+
+        XCTAssertTrue(entries(named: displayName).isEmpty)
+
+        // What iTermAPIServer posts when a connection presenting that key is accepted.
+        let identifier = try XCTUnwrap(
+            iTermAPIConnectionIdentifierController.sharedInstance().identifier(forKey: key) as? String)
+        NotificationCenter.default.post(name: NSNotification.Name(iTermAPIServerConnectionAccepted),
+                                        object: identifier,
+                                        userInfo: ["reason": "test", "job": displayName, "pids": [111]])
+        let entry = try XCTUnwrap(iTermScriptHistory.sharedInstance().entry(withIdentifier: identifier))
+        XCTAssertEqual(entry.name, displayName)
+        XCTAssertTrue(entry.isRunning)
+
+        NotificationCenter.default.post(name: NSNotification.Name(iTermAPIServerConnectionClosed),
+                                        object: identifier)
+        XCTAssertTrue(entry.isFinished)
+    }
+}

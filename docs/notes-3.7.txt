@@ -205,3 +205,8 @@ Bug Fixes:
 - In protected mode, erasing a line or the
   screen skipped the last column, and erasing
   up to the cursor left the cursor’s cell.
+- When an AI agent hook was stopped before it
+  finished, its entry in the Script Console
+  stayed “running” forever, so with many busy
+  sessions they piled up without limit.
+  Issue 13183.
