@@ -9,6 +9,10 @@
 import XCTest
 @testable import iTerm2SharedARC
 
+/// What iTermAPIServer attaches to iTermAPIServerDidReceiveMessage: the request it received, which
+/// the entry logs. The server always attaches one.
+private let receivedMessageUserInfo: [String: Any] = ["request": ITMClientOriginatedMessage()]
+
 final class iTermScriptHistoryTests: XCTestCase {
     private func makeEntry(_ name: String) -> iTermScriptHistoryEntry {
         return iTermScriptHistoryEntry(name: name,
@@ -99,7 +103,8 @@ final class iTermScriptHistoryTests: XCTestCase {
 
         for entry in [running, stopped] {
             NotificationCenter.default.post(name: NSNotification.Name(iTermAPIServerDidReceiveMessage),
-                                            object: entry.identifier)
+                                            object: entry.identifier,
+                                            userInfo: receivedMessageUserInfo)
         }
 
         XCTAssertEqual(running.callEntries.count, 1)
@@ -114,7 +119,8 @@ final class iTermScriptHistoryTests: XCTestCase {
         entry.resumeRunning()
 
         NotificationCenter.default.post(name: NSNotification.Name(iTermAPIServerDidReceiveMessage),
-                                        object: entry.identifier)
+                                        object: entry.identifier,
+                                        userInfo: receivedMessageUserInfo)
 
         XCTAssertTrue(entry.isRunning)
         XCTAssertEqual(entry.callEntries.count, 1)
@@ -141,7 +147,8 @@ final class iTermScriptHistoryTests: XCTestCase {
         entry.resumeRunning()
 
         NotificationCenter.default.post(name: NSNotification.Name(iTermAPIServerDidReceiveMessage),
-                                        object: entry.identifier)
+                                        object: entry.identifier,
+                                        userInfo: receivedMessageUserInfo)
 
         XCTAssertEqual(entry.callEntries.count, 1)
     }
@@ -158,7 +165,8 @@ final class iTermScriptHistoryTests: XCTestCase {
 
     private func postReceivedMessage(for entry: iTermScriptHistoryEntry) {
         NotificationCenter.default.post(name: NSNotification.Name(iTermAPIServerDidReceiveMessage),
-                                        object: entry.identifier)
+                                        object: entry.identifier,
+                                        userInfo: receivedMessageUserInfo)
     }
 
     func testEntryStaysRunningUntilItsLastConnectionCloses() {
@@ -376,7 +384,7 @@ final class iTermScriptConsoleConnectionTests: XCTestCase {
 
         XCTAssertTrue(entry.isRunning)
         XCTAssertEqual(entry.onlyPid, 111)
-        post(iTermAPIServerDidReceiveMessage)
+        post(iTermAPIServerDidReceiveMessage, userInfo: receivedMessageUserInfo)
         XCTAssertEqual(entry.callEntries.count, 1)
         post(iTermAPIServerConnectionClosed)
         XCTAssertFalse(entry.isRunning)
@@ -411,7 +419,7 @@ final class iTermScriptConsoleConnectionTests: XCTestCase {
 
         XCTAssertTrue(entry.isRunning)
         XCTAssertEqual(entry.onlyPid, 222)
-        post(iTermAPIServerDidReceiveMessage)
+        post(iTermAPIServerDidReceiveMessage, userInfo: receivedMessageUserInfo)
         XCTAssertEqual(entry.callEntries.count, 1)
         post(iTermAPIServerConnectionClosed)
     }

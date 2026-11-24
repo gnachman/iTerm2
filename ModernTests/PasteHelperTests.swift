@@ -53,6 +53,9 @@ final class PasteHelperTests: XCTestCase, iTermPasteHelperDelegate, iTermWarning
     private var isAtShellPrompt = false
     private var helper: InstrumentedPasteHelper!
     private var warningBlock: WarningBlock?
+    // The paste indicator's drop-down goes in the session's view, which a pasting session always
+    // has. This one is in no window.
+    private let indicatorSuperview = NSView(frame: NSRect(x: 0, y: 0, width: 600, height: 400))
 
     private var multilineWarningIdentifier: String {
         return iTermAdvancedSettingsModel.noSyncDoNotWarnBeforeMultilinePasteUserDefaultsKey()
@@ -649,7 +652,7 @@ final class PasteHelperTests: XCTestCase, iTermPasteHelperDelegate, iTermWarning
     }
 
     func pasteHelperViewForIndicator() -> NSView! {
-        return nil
+        return indicatorSuperview
     }
 
     func pasteHelperStatusBarViewController() -> iTermStatusBarViewController! {

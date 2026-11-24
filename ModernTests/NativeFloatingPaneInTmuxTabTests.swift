@@ -60,6 +60,17 @@ final class NativeFloatingPaneInTmuxTabTests: XCTestCase {
         return session
     }
 
+    /// A stand-in for Find > Filter, showing `live`. In the app both have views, and
+    /// -setLiveSession: hands the live session's status bar and find driver to the stand-in's.
+    private func filteredSession(showing live: PTYSession) -> PTYSession {
+        let filtered = PTYSession(synthetic: true)!
+        for session in [live, filtered] where session.view == nil {
+            session.view = SessionView(frame: NSRect(x: 0, y: 0, width: 300, height: 300))
+        }
+        filtered.live = live
+        return filtered
+    }
+
     private func nativeSession() -> PTYSession {
         let session = PTYSession(synthetic: false)!
         XCTAssertFalse(session.isTmuxClient)
@@ -91,8 +102,7 @@ final class NativeFloatingPaneInTmuxTabTests: XCTestCase {
     func testLayoutChangeKeepsFilteredTmuxPaneZero() {
         let pane0 = tmuxSession(pane: 0)
         let pane1 = tmuxSession(pane: 1)
-        let filtered = PTYSession(synthetic: true)!
-        filtered.live = pane0
+        let filtered = filteredSession(showing: pane0)
         let map = PTYTab.tiledSessionsByTmuxPane(from: [filtered, pane1], floatingPanes: [])!
         XCTAssertEqual(map.count, 2)
         XCTAssertTrue(map[0] === filtered)
@@ -102,8 +112,7 @@ final class NativeFloatingPaneInTmuxTabTests: XCTestCase {
     func testLayoutChangeKeepsFilteredTmuxPaneOtherThanZero() {
         let pane0 = tmuxSession(pane: 0)
         let pane1 = tmuxSession(pane: 1)
-        let filtered = PTYSession(synthetic: true)!
-        filtered.live = pane1
+        let filtered = filteredSession(showing: pane1)
         let map = PTYTab.tiledSessionsByTmuxPane(from: [pane0, filtered], floatingPanes: [])!
         XCTAssertEqual(map.count, 2)
         XCTAssertTrue(map[0] === pane0)
@@ -112,8 +121,7 @@ final class NativeFloatingPaneInTmuxTabTests: XCTestCase {
 
     func testLayoutChangeIgnoresFilteredNativeSession() {
         let pane0 = tmuxSession(pane: 0)
-        let filtered = PTYSession(synthetic: true)!
-        filtered.live = nativeSession()
+        let filtered = filteredSession(showing: nativeSession())
         let map = PTYTab.tiledSessionsByTmuxPane(from: [pane0, filtered], floatingPanes: [])!
         XCTAssertEqual(map.count, 1)
         XCTAssertTrue(map[0] === pane0)

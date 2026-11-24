@@ -304,15 +304,6 @@ final class SemanticHistoryControllerTests: XCTestCase, iTermObject, iTermSemant
 
     // MARK: - Get Full Path
 
-    func testGetFullPathFailsOnNil() {
-        let result = controller.cleanedUpPath(fromPath: nil,
-                                              suffix: nil,
-                                              workingDirectory: "/",
-                                              extractedLineNumber: nil,
-                                              columnNumber: nil)
-        XCTAssertNil(result)
-    }
-
     func testGetFullPathFailsOnEmpty() {
         let result = controller.cleanedUpPath(fromPath: "",
                                               suffix: nil,

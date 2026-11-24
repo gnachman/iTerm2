@@ -18,6 +18,7 @@
 #import "TmuxControllerRegistry.h"
 #import "TmuxGatewayTestFakes.h"
 #import "iTermInitialDirectory.h"
+#import "iTermVariableScope.h"
 
 // Writes are normally enabled once tmux reports the session.
 @interface TmuxGateway (TmuxDetachedSetCurrentWindowTests)
@@ -102,6 +103,11 @@
     XCTAssertTrue([[self written] containsString:@"new-window"], @"%@", [self written]);
 }
 
+// The scope of the tab whose pane is split, as PseudoTerminal passes. Home mode does not use it.
+- (iTermVariableScope *)tabScope {
+    return [[iTermVariableScope alloc] init];
+}
+
 - (iTermInitialDirectory *)homeDirectory {
     iTermInitialDirectory *dir = [[iTermInitialDirectory alloc] init];
     dir.mode = iTermInitialDirectoryModeHome;
@@ -112,7 +118,7 @@
     __block BOOL called = NO;
     [_controller splitWindowPane:3
                       vertically:YES
-                           scope:nil
+                           scope:[self tabScope]
                 initialDirectory:[self homeDirectory]
                       completion:^(int wp) { called = YES; }];
     XCTAssertTrue([[self written] containsString:@"split-window -h -t \"%3\""], @"%@", [self written]);
@@ -128,7 +134,7 @@
     __block int result = 0;
     XCTAssertNoThrow([_controller splitWindowPane:3
                                        vertically:YES
-                                            scope:nil
+                                            scope:[self tabScope]
                                  initialDirectory:[self homeDirectory]
                                        completion:^(int wp) { result = wp; }]);
     XCTAssertEqual(result, -1);

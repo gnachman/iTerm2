@@ -23,6 +23,17 @@ final class TmuxWorkgroupCloseConfirmationTests: WorkgroupEntryTestBase {
         super.tearDown()
     }
 
+    /// A stand-in for Find > Filter or Instant Replay, showing `live`. In the app both have views,
+    /// and -setLiveSession: hands the live session's status bar and find driver to the stand-in's.
+    private func standIn(showing live: PTYSession) -> PTYSession {
+        let standIn = PTYSession(synthetic: true)!
+        for session in [live, standIn] where session.view == nil {
+            session.view = SessionView(frame: NSRect(x: 0, y: 0, width: 300, height: 300))
+        }
+        standIn.live = live
+        return standIn
+    }
+
     private func enterRootWithSplit() throws -> PTYSession {
         let root = WGFix.makeRoot()
         let split = WGFix.makeSplit(parentID: root.uniqueIdentifier)
@@ -44,8 +55,7 @@ final class TmuxWorkgroupCloseConfirmationTests: WorkgroupEntryTestBase {
         let split = try enterRootWithSplit()
         split.setTmuxPane(1)
         tmuxSessions.append(split)
-        let standIn = PTYSession(synthetic: true)!
-        standIn.live = split
+        let standIn = self.standIn(showing: split)
         XCTAssertTrue(PseudoTerminal.closingEndsTmuxWorkgroup([standIn]))
         XCTAssertNotNil(iTermWorkgroupInstance.closeCascadeWarning(forSessions: [standIn]),
                         "the confirmation says the workgroup will end")
@@ -74,8 +84,7 @@ final class TmuxWorkgroupCloseConfirmationTests: WorkgroupEntryTestBase {
             TmuxControllerRegistry.sharedInstance().setController(nil, forClient: controller.clientName)
         }
         split.tmuxController = controller
-        let standIn = PTYSession(synthetic: true)!
-        standIn.live = split
+        let standIn = self.standIn(showing: split)
         XCTAssertTrue(PseudoTerminal.tmuxPaneSessionClosed(byClosing: standIn) === split)
         XCTAssertTrue(PseudoTerminal.tmuxPaneSessionClosed(byClosing: split) === split)
         standIn.live = nil
@@ -86,8 +95,7 @@ final class TmuxWorkgroupCloseConfirmationTests: WorkgroupEntryTestBase {
     // stand-in. QA finding F-846.
     func testTheConfirmationNamesTheSessionAStandInShows() throws {
         let split = try enterRootWithSplit()
-        let standIn = PTYSession(synthetic: true)!
-        standIn.live = split
+        let standIn = self.standIn(showing: split)
         XCTAssertEqual(PseudoTerminal.name(forClosing: standIn),
                        PseudoTerminal.name(forClosing: split))
         standIn.live = nil
