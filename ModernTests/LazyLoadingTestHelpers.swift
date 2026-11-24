@@ -124,9 +124,8 @@ class LegacyDatabaseBuilder {
 
     /// Serialize a dictionary to Data for storage
     static func serializePOD(_ pod: [String: Any]) -> Data? {
-        var error: NSError?
-        let data = NSData.it_data(withSecurelyArchivedObject: pod as NSDictionary, error: &error)
-        return error == nil ? data : nil
+        // nil when archiving fails, as before (the method then also sets its error).
+        return try? NSData.it_data(withSecurelyArchivedObject: pod as NSDictionary)
     }
 
     /// Create FoldMark-like large content dictionary

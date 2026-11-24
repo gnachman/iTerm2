@@ -33,8 +33,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak) id<iTermPasteViewManagerDelegate> delegate;
 @property (nonatomic, assign) int remainingLength;
 
+// statusBarController is nil for a session without a status bar; the
+// indicator then drops down in dropdownSuperview.
 - (void)startWithViewForDropdown:(NSView *)dropdownSuperview
-         statusBarViewController:(iTermStatusBarViewController *)statusBarController;
+         statusBarViewController:(nullable iTermStatusBarViewController *)statusBarController;
 
 // Show/hide the "send keystrokes to the terminal" control in whichever paste
 // indicator is currently visible.

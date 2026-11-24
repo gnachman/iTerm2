@@ -23,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)startWithViewForDropdown:(NSView *)dropdownSuperview
-         statusBarViewController:(iTermStatusBarViewController *)statusBarController {
+         statusBarViewController:(nullable iTermStatusBarViewController *)statusBarController {
     if (statusBarController) {
         [self showInStatusBar:statusBarController];
     } else {

@@ -282,8 +282,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 
 - (void)screenResetTailFind;
 
-// Selection range
-- (iTermSelection * _Nonnull)screenSelection;
+// Selection range. nil for a session without a text view, as after
+// -[PTYSession hardStop].
+- (iTermSelection * _Nullable)screenSelection;
 
 // Returns the size in pixels of a single cell.
 - (NSSize)screenCellSize;

@@ -1006,9 +1006,11 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 
 - (nullable PTYSession *)newSessionForChannelID:(NSString *)channelID command:(NSString *)command;
 
+// tmuxController is nil when PTYTab only resizes views for a new layout; the
+// arrangement then has no font or key mapping overrides.
 + (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
                                          bookmark:(Profile *)bookmark
-                                   tmuxController:(TmuxController *)tmuxController
+                                   tmuxController:(nullable TmuxController *)tmuxController
                                            window:(int)window;
 + (NSDictionary *)arrangementForChannelID:(NSString *)channelID
                                   profile:(Profile *)profile

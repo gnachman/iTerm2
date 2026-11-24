@@ -28,7 +28,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)enumerateKeysAndObjectsUsingBlock:(void (^ NS_NOESCAPE)(KeyType key, ObjectType obj, BOOL *stop))block;
 
 - (NSInteger)generationForKey:(KeyType)key;
-- (void)loadFromRecord:(iTermEncoderGraphRecord *)record
+// A nil record (state saved without this dictionary) loads nothing.
+- (void)loadFromRecord:(nullable iTermEncoderGraphRecord *)record
               keyClass:(Class)keyClass
             valueClass:(Class)valueClass;
 

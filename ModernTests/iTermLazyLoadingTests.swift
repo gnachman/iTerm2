@@ -72,8 +72,7 @@ class iTermLargeContentStorageTests: XCTestCase {
         let emptyContent: [AnyHashable: Any] = [:]
 
         // When we try to serialize it
-        var error: NSError?
-        let data = NSData.it_data(withSecurelyArchivedObject: emptyContent as NSDictionary, error: &error)
+        let data = try? NSData.it_data(withSecurelyArchivedObject: emptyContent as NSDictionary)
 
         // Then it should serialize (possibly to empty or minimal data)
         // This verifies the encoding doesn't crash on empty content

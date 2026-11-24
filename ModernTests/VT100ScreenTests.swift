@@ -3018,7 +3018,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
     
-    func screenSelection() -> iTermSelection {
+    func screenSelection() -> iTermSelection? {
         selection
     }
     

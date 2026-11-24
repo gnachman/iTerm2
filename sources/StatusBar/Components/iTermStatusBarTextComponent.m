@@ -91,7 +91,9 @@ NS_ASSUME_NONNULL_BEGIN
     return [knobValues[iTermStatusBarSharedBackgroundColorKey] colorValue] ?: [super statusBarBackgroundColor];
 }
 
-- (BOOL)shouldUpdateValue:(NSString *)proposed inField:(NSTextField *)textField {
+// textField is nil until the text field is made: initialization updates it
+// before anything asks for -textField.
+- (BOOL)shouldUpdateValue:(NSString *)proposed inField:(nullable NSTextField *)textField {
     const BOOL textFieldHasString = textField.stringValue.length > 0;
     const BOOL iHaveString = proposed.length > 0;
 
@@ -111,7 +113,7 @@ NS_ASSUME_NONNULL_BEGIN
     return NO;
 }
 
-- (BOOL)setValueInField:(NSTextField *)textField compressed:(BOOL)compressed {
+- (BOOL)setValueInField:(nullable NSTextField *)textField compressed:(BOOL)compressed {
     textField.textColor = self.textColor;
 
     NSString *proposed;

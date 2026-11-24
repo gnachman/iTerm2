@@ -52,7 +52,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSData *)it_dataWithArchivedObject:(id<NSCoding>)object;
 - (id _Nullable)it_unarchivedObjectOfClasses:(NSArray<Class> *)allowedClasses;
 
-+ (NSData *)it_dataWithSecurelyArchivedObject:(id<NSCoding>)object error:(NSError * _Nullable __autoreleasing * _Nullable)error;
+// nil when the object cannot be archived securely; *error then says why.
++ (NSData * _Nullable)it_dataWithSecurelyArchivedObject:(id<NSCoding>)object error:(NSError * _Nullable __autoreleasing * _Nullable)error;
 - (id _Nullable)it_unarchivedObjectOfBasicClassesWithError:(NSError * _Nullable __autoreleasing * _Nullable)error;
 
 - (BOOL)isEqualToByte:(unsigned char)byte;

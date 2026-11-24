@@ -107,7 +107,9 @@ final class GraphDatabaseCodingTests: XCTestCase {
     }
 
     private func serialize(_ pod: [String: Any]) throws -> Data {
-        return NSData.it_data(withSecurelyArchivedObject: pod as NSDictionary, error: nil)
+        // The method returns nil when archiving fails, so Swift imports it as throwing. A
+        // failure fails the test instead of becoming empty data.
+        return try NSData.it_data(withSecurelyArchivedObject: pod as NSDictionary)
     }
 
     // Saves wrapper > mynode { World: Hello } into a fresh database and checks the rows.

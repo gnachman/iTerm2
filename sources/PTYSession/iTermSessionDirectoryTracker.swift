@@ -522,10 +522,12 @@ class iTermSessionDirectoryTracker: NSObject {
     // MARK: - Tmux Support
 
     /// Replace the working directory poller with a tmux-aware one.
+    /// Objective-C passes nil for a tmux client that has no controller yet (tests build such
+    /// sessions); there is no gateway then, as when the controller has none.
     @objc
-    func switchToTmuxPoller(tmuxController: TmuxController) {
+    func switchToTmuxPoller(tmuxController: TmuxController?) {
         RLog("\(d(delegate)): switchToTmuxPoller")
-        guard let gateway = tmuxController.gateway else {
+        guard let gateway = tmuxController?.gateway else {
             RLog("\(d(delegate)): Missing gateway")
             return
         }

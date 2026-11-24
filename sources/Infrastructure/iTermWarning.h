@@ -151,8 +151,9 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 // Remove the saved selection for a specific identifier.
 + (void)clearSavedSelectionForIdentifier:(NSString *)identifier;
 
-// Tests can use this to prevent warning popups.
-+ (void)setWarningHandler:(id<iTermWarningHandler>)handler;
+// Tests can use this to prevent warning popups. nil, the initial value,
+// restores real alerts.
++ (void)setWarningHandler:(nullable id<iTermWarningHandler>)handler;
 + (nullable id<iTermWarningHandler>)warningHandler;
 
 // Tells warnings which terminal sessions a window holds, so a warning attached to a window can be

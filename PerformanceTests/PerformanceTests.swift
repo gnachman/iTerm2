@@ -824,7 +824,7 @@ class FakeSession: NSObject {
 
     }
     
-    func screenSelection() -> iTermSelection {
+    func screenSelection() -> iTermSelection? {
         selection
     }
     
