@@ -1792,26 +1792,47 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return set;
 }
 
-static BOOL iTermIsReportUnsafeControlCharacter(unichar c) {
-    return c < 0x20 || (c >= 0x7F && c <= 0x9F);
+// Replaces each character in unsafeSet with exactly one space, so a run of
+// unsafe characters becomes the same number of spaces.
+static NSString *iTermStringByReplacingCharactersInSetWithSpace(NSString *string,
+                                                                NSCharacterSet *unsafeSet) {
+    if ([string rangeOfCharacterFromSet:unsafeSet].location == NSNotFound) {
+        return string;
+    }
+    return [[string componentsSeparatedByCharactersInSet:unsafeSet] componentsJoinedByString:@" "];
 }
 
 - (NSString *)stringByReplacingControlCharactersWithSpace {
-    // Every unsafe character is in the BMP, so it is a single UTF-16 unit and can
-    // never be half of a surrogate pair. That lets this work unit by unit, and
-    // replacing one unit with one unit keeps every index stable.
-    const NSUInteger length = self.length;
-    if ([self rangeOfCharacterFromSet:[NSString it_reportUnsafeControlCharacterSet]].location == NSNotFound) {
-        return self;
-    }
-    unichar *buffer = malloc(sizeof(unichar) * length);
-    [self getCharacters:buffer range:NSMakeRange(0, length)];
-    for (NSUInteger i = 0; i < length; i++) {
-        if (iTermIsReportUnsafeControlCharacter(buffer[i])) {
-            buffer[i] = ' ';
-        }
-    }
-    return [[NSString alloc] initWithCharactersNoCopy:buffer length:length freeWhenDone:YES];
+    return iTermStringByReplacingCharactersInSetWithSpace(self, [NSString it_reportUnsafeControlCharacterSet]);
+}
+
++ (NSCharacterSet *)it_reportUnsafeShellMetacharacterSet {
+    // A report is written to the PTY input stream, i.e. to whatever is reading
+    // the terminal, which is usually a shell. Replacing control characters keeps
+    // a report from ending the line, but not from being split into several
+    // commands: a report that lands on the command line with a ; in it runs the
+    // rest as its own command when the user presses return.
+    static NSCharacterSet *set;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        set = [NSCharacterSet characterSetWithCharactersInString:@";|&$`\\\"'(){}[]<>*?~!#"];
+    });
+    return set;
+}
+
++ (NSCharacterSet *)it_reportUnsafeCharacterSet {
+    static NSCharacterSet *set;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableCharacterSet *mutableSet = [[NSString it_reportUnsafeControlCharacterSet] mutableCopy];
+        [mutableSet formUnionWithCharacterSet:[NSString it_reportUnsafeShellMetacharacterSet]];
+        set = [mutableSet copy];
+    });
+    return set;
+}
+
+- (NSString *)stringByReplacingReportUnsafeCharactersWithSpace {
+    return iTermStringByReplacingCharactersInSetWithSpace(self, [NSString it_reportUnsafeCharacterSet]);
 }
 
 - (NSSet *)doubleDollarVariables {

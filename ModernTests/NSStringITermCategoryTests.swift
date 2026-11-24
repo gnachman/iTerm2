@@ -852,4 +852,53 @@ final class NSStringITermCategoryTests: XCTestCase {
         XCTAssertFalse(set.contains(UnicodeScalar(0x200D)!))
         XCTAssertFalse(set.contains(UnicodeScalar(0xE0001)!))
     }
+
+    // MARK: - stringByReplacingReportUnsafeCharactersWithSpace
+
+    private func reportSafe(_ string: String) -> String {
+        return (string as NSString).replacingReportUnsafeCharactersWithSpace()
+    }
+
+    // A report is written to the PTY input stream. Control characters alone are
+    // not enough to keep it inert: a metacharacter splits the line into extra
+    // commands once the user submits it.
+    func testReportUnsafe_ReplacesControlCharactersAndShellMetacharacters() {
+        XCTAssertEqual(reportSafe("a\nb;c|d&e$f`g"), "a b c d e f g")
+        XCTAssertEqual(reportSafe("a(b)c{d}e[f]g<h>i"), "a b c d e f g h i")
+        XCTAssertEqual(reportSafe("*?~!#"), "     ")
+        XCTAssertEqual(reportSafe("\\\"'"), "   ")
+        XCTAssertEqual(reportSafe("a\u{0f}\u{7f}\u{9b}b"), "a   b")
+    }
+
+    // The string from the reported proof of concept: an error message that
+    // echoed a crafted file name.
+    func testReportUnsafe_ProofOfConceptShape() {
+        let output = reportSafe("EBADF:The file “x;touch pwn;z” couldn’t be opened.")
+        XCTAssertEqual(output, "EBADF:The file “x touch pwn z” couldn’t be opened.")
+    }
+
+    // Ordinary text, paths, curly quotes, emoji, and RTL marks must survive.
+    func testReportUnsafe_PlainTextUnchanged() {
+        XCTAssertEqual(reportSafe("plain text"), "plain text")
+        XCTAssertEqual(reportSafe("/tmp/x and 100% of it"), "/tmp/x and 100% of it")
+        let emoji = "👨\u{200D}👩\u{200D}👧 \u{200F}שלום"
+        XCTAssertEqual(reportSafe(emoji), emoji)
+    }
+
+    // A long string of metacharacters is handled in linear time, and each one
+    // becomes exactly one space.
+    func testReportUnsafe_LongInput() {
+        let input = String(repeating: ";", count: 1_000_000)
+        XCTAssertEqual(reportSafe(input), String(repeating: " ", count: 1_000_000))
+    }
+
+    func testReportUnsafeShellMetacharacterSet() {
+        let set = NSString.it_reportUnsafeShellMetacharacterSet()
+        let expected = ";|&$`\\\"'(){}[]<>*?~!#"
+        for scalar in expected.unicodeScalars {
+            XCTAssertTrue(set.contains(scalar), "expected \(scalar) to be report-unsafe")
+        }
+        XCTAssertFalse(set.contains(UnicodeScalar("/")))
+        XCTAssertFalse(set.contains(UnicodeScalar(" ")))
+    }
 }

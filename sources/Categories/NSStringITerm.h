@@ -261,8 +261,24 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // that is echoed back to the terminal in a report written to the PTY input
 // stream, where a control character (a newline, or a line-accepting key such as
 // ^O) would be interpreted by the shell as typed input and allow command
-// injection. This is the shared sanitizer for terminal-report paths.
+// injection. When a report echoes free text a program chose, use
+// -stringByReplacingReportUnsafeCharactersWithSpace, which also removes shell
+// metacharacters.
 - (NSString *)stringByReplacingControlCharactersWithSpace;
+
+// The characters that let a report become more than one shell command, or
+// trigger shell expansion, once the user submits the line the report was
+// written to: ; | & $ ` \ " ' ( ) { } [ ] < > * ? ~ ! #
++ (NSCharacterSet *)it_reportUnsafeShellMetacharacterSet;
+
+// Replaces control characters (as -stringByReplacingControlCharactersWithSpace
+// does) and shell metacharacters with spaces. Use it on free text a program
+// chose that is echoed in a report written to the PTY input stream, such as a
+// title report. Stripping control
+// characters alone leaves the report on the shell's command line, where a
+// metacharacter such as ; splits it into separate commands when the user
+// presses return.
+- (NSString *)stringByReplacingReportUnsafeCharactersWithSpace;
 
 // Returns the set of $$VARIABLES$$ in the string.
 - (NSSet *)doubleDollarVariables;

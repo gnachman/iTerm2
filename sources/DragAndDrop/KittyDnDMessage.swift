@@ -65,8 +65,9 @@ enum KittyDnDMetadata {
 
     /// Remove every control character. Used for both metadata values and the
     /// (possibly plain-text) payload so a serialized OSC 72 message can never
-    /// carry a control byte that the shell would interpret as typed input. Shares
-    /// the terminal-report sanitizer with the Kitty image and title-report paths.
+    /// carry a control byte that the shell would interpret as typed input. Replies
+    /// echo only numbers and fixed strings, so shell metacharacters need no
+    /// stripping here (unlike title reports, which echo program text).
     static func sanitize(_ value: String) -> String {
         return (value as NSString).replacingControlCharactersWithSpace()
     }

@@ -1130,9 +1130,8 @@ class KittyImageController: NSObject {
     // error strings derived from NSError.localizedDescription, which can contain
     // a literal newline when the offending file path does) must not carry a
     // control character: a raw newline would be delivered to the shell as if
-    // typed, allowing command injection. Uses the shared terminal-report
-    // sanitizer so the Kitty image, Kitty drag-and-drop, and title-report paths
-    // cannot drift apart.
+    // typed, allowing command injection. Error strings are fixed text, so
+    // stripping shell metacharacters as title reports do is unnecessary here.
     private static func sanitizedResponseMessage(_ string: String) -> String {
         return (string as NSString).replacingControlCharactersWithSpace()
     }
