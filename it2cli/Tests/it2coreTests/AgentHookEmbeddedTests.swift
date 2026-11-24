@@ -71,6 +71,32 @@ final class AgentHookEmbeddedTests: XCTestCase {
         XCTAssertEqual(err(), [])
     }
 
+    // “Allow all apps to connect” is read from the hook's own machine, next to the local socket it
+    // connects to. Embedded in iTerm2 for a remote host, that file belongs to a different machine
+    // than the hook's, and the call has its own channel and needs no cookie, so it must not look.
+    func testEmbeddedHookNeverReadsAllAppsAllowed() throws {
+        let channel = FakeChannel()
+        channel.responses = [statusReply(id: 1)]
+        let (io, _, err) = capturing()
+        let payload = Data(#"{"hook_event_name":"UserPromptSubmit","session_id":"s"}"#.utf8)
+
+        let code = AgentHookAuth.$allAppsAllowedCheck.withValue({ _ in
+            XCTFail("an embedded hook read the all-apps-allowed setting")
+            return true
+        }) {
+            IT2Embedded.run(arguments: ["handle-agent-hook"],
+                            io: io,
+                            channel: channel,
+                            originIdentifier: nil,
+                            stdin: payload,
+                            environment: ["TERM_SESSION_ID": "w0t0p0:ABC", "IT2_SOCK": "/tmp/x.sock"])
+        }
+
+        XCTAssertEqual(code, 0)
+        XCTAssertEqual(err(), [])
+        XCTAssertEqual(channel.sent.count, 1)
+    }
+
     func testCodexHookAsksForTheProgressRing() throws {
         let channel = FakeChannel()
         channel.responses = [statusReply(id: 1)]

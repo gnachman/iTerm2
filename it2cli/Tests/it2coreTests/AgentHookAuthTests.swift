@@ -7,6 +7,7 @@ final class AgentHookAuthTests: XCTestCase {
     private final class Recorder {
         var checks: [AgentHookAuth.Permission]
         var lockHeld = false
+        var allAppsAllowed = false
         var helperRuns = 0
         var cookieRequests = 0
         /// What the next check returns after the helper runs, if different.
@@ -18,6 +19,7 @@ final class AgentHookAuthTests: XCTestCase {
 
         var steps: AgentHookAuth.Steps {
             return AgentHookAuth.Steps(
+                allAppsAllowed: { self.allAppsAllowed },
                 check: { self.checks.removeFirst() },
                 consentRequestInProgress: { self.lockHeld },
                 runConsentHelper: { self.helperRuns += 1 },
@@ -110,6 +112,67 @@ final class AgentHookAuthTests: XCTestCase {
         factory.disconnect()
         XCTAssertThrowsError(try factory.make())
         XCTAssertEqual(attempts, 2, "disconnect starts over")
+    }
+
+    // “Allow all apps to connect” means iTerm2 accepts a cookieless connection, so don't spend a
+    // permission check or a cookie request, and don't let a check that would time out under load,
+    // or a pending consent prompt, stop a connection that would succeed.
+    func testAllAppsAllowedConnectsWithoutCookieAndAsksNothing() {
+        let r = Recorder([])
+        r.allAppsAllowed = true
+        r.lockHeld = true
+        XCTAssertEqual(AgentHookAuth.credentials(r.steps), .connectWithoutCookie)
+        XCTAssertEqual(r.checks, [], "no permission check")
+        XCTAssertEqual(r.helperRuns, 0)
+        XCTAssertEqual(r.cookieRequests, 0)
+    }
+
+    // MARK: - AllAppsAllowedFile
+
+    func testAllAppsAllowedFileIsBesideThePrivateFolder() {
+        XCTAssertEqual(AllAppsAllowedFile.path(forSocketPath: "/Users/u/Library/Application Support/iTerm2-dev/private/socket"),
+                       "/Users/u/Library/Application Support/iTerm2-dev/disable-automation-auth")
+    }
+
+    // Must match +[iTermAPIHelper noauthMagic]: hex of the path's UTF-8 bytes, a space, the UUID.
+    func testAllAppsAllowedFileExpectedContents() {
+        XCTAssertEqual(AllAppsAllowedFile.expectedContents(path: "/a b"),
+                       "2f612062 61DF88DC-3423-4823-B725-22570E01C027")
+    }
+
+    private func temporaryNoAuthPath() throws -> String {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("AllAppsAllowedFileTests-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        addTeardownBlock {
+            try? FileManager.default.removeItem(at: dir)
+        }
+        return dir.appendingPathComponent("disable-automation-auth").path
+    }
+
+    func testAllAppsAllowedFileValidOnlyWhenRootOwnedWithExactContents() throws {
+        let path = try temporaryNoAuthPath()
+        let root: (String) -> uid_t? = { _ in 0 }
+
+        XCTAssertFalse(AllAppsAllowedFile.isValid(path: path, ownerID: root), "missing")
+
+        try AllAppsAllowedFile.expectedContents(path: path).write(toFile: path, atomically: true, encoding: .utf8)
+        XCTAssertTrue(AllAppsAllowedFile.isValid(path: path, ownerID: root))
+        XCTAssertFalse(AllAppsAllowedFile.isValid(path: path), "owned by the user, not root")
+        XCTAssertFalse(AllAppsAllowedFile.isValid(path: path, ownerID: { _ in nil }), "owner unreadable")
+
+        try (AllAppsAllowedFile.expectedContents(path: path) + "\n").write(toFile: path, atomically: true, encoding: .utf8)
+        XCTAssertFalse(AllAppsAllowedFile.isValid(path: path, ownerID: root), "contents not exact")
+
+        try AllAppsAllowedFile.expectedContents(path: "/elsewhere").write(toFile: path, atomically: true, encoding: .utf8)
+        XCTAssertFalse(AllAppsAllowedFile.isValid(path: path, ownerID: root), "made for another path")
+    }
+
+    func testAllAppsAllowedFileOwnerIsTheRealOwner() throws {
+        let path = try temporaryNoAuthPath()
+        try "x".write(toFile: path, atomically: true, encoding: .utf8)
+        XCTAssertEqual(AllAppsAllowedFile.ownerID(of: path), getuid())
+        XCTAssertNil(AllAppsAllowedFile.ownerID(of: path + "-missing"))
     }
 
     func testOnlyHandleAgentHookUsesTheNewPolicy() {

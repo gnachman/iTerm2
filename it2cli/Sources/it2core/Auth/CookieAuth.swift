@@ -17,7 +17,10 @@ enum CookieAuth {
     /// Get cookie and key credentials for the WebSocket handshake.
     /// Checks environment variables first, then asks iTerm2 as `policy` says. Throws when the
     /// policy says not to connect at all.
-    static func getCredentials() throws -> (cookie: String?, key: String?) {
+    ///
+    /// - Parameter localSocketPath: the Unix socket the caller connects to. See
+    ///   AgentHookAuth.getCredentials(localSocketPath:) for why this must be a local socket.
+    static func getCredentials(localSocketPath: String) throws -> (cookie: String?, key: String?) {
         // Fast path: cookie from environment
         if let cookie = ProcessInfo.processInfo.environment["ITERM2_COOKIE"] {
             let key = ProcessInfo.processInfo.environment["ITERM2_KEY"]
@@ -29,7 +32,7 @@ enum CookieAuth {
             // Fallback: request single-use cookie via AppleScript
             return runAppleScript(reusable: false)
         case .agentHook:
-            return try AgentHookAuth.getCredentials()
+            return try AgentHookAuth.getCredentials(localSocketPath: localSocketPath)
         }
     }
 

@@ -46,6 +46,9 @@ enum AgentHookAuth {
     /// The steps `credentials(_:)` is made of, injectable so the decision can be tested without
     /// TCC, a lock file, or a running iTerm2.
     struct Steps {
+        /// Whether iTerm2 accepts any local connection without a cookie (“Allow all apps to
+        /// connect”). See AllAppsAllowedFile.
+        var allAppsAllowed: () -> Bool
         /// Ask macOS whether the event would be allowed, without prompting.
         var check: () -> Permission
         /// Whether another process is already asking the user.
@@ -56,6 +59,12 @@ enum AgentHookAuth {
     }
 
     static func credentials(_ steps: Steps) -> Decision {
+        // First of all: iTerm2 will accept a cookieless connection, so the permission check and the
+        // cookie request would only cost time, and under load a check that timed out would make
+        // the hook skip a connection that would have succeeded.
+        if steps.allAppsAllowed() {
+            return .connectWithoutCookie
+        }
         // Before the check, because while a consent prompt is up tccd holds the check until the
         // prompt is answered, which would cost every hook the full check timeout.
         if steps.consentRequestInProgress() {
@@ -88,12 +97,26 @@ enum AgentHookAuth {
         return .connect(cookie: cookie, key: key)
     }
 
+    /// Reads “Allow all apps to connect” for the iTerm2 that owns a socket. A task-local so tests
+    /// can replace it.
+    @TaskLocal static var allAppsAllowedCheck: @Sendable (_ socketPath: String) -> Bool = {
+        AllAppsAllowedFile.isValid(path: AllAppsAllowedFile.path(forSocketPath: $0))
+    }
+
     /// Throws instead of returning when the hook should not connect at all.
-    static func getCredentials() throws -> (cookie: String?, key: String?) {
+    ///
+    /// - Parameter localSocketPath: the Unix socket this process is about to connect to. Only
+    ///   SocketChannel calls this, and only it may: the “Allow all apps to connect” file is read
+    ///   relative to this socket, which is meaningful only because a Unix socket connection can only
+    ///   reach an iTerm2 on this machine, whose file this is. A hook run embedded in iTerm2 for a
+    ///   remote host uses its own channel and must never get here.
+    static func getCredentials(localSocketPath: String) throws -> (cookie: String?, key: String?) {
+        let allAppsAllowedCheck = Self.allAppsAllowedCheck
         guard let target = Target.current() else {
             return (nil, nil)
         }
-        let decision = credentials(Steps(check: { checkPermission(target, askUser: false, timeout: checkTimeout) },
+        let decision = credentials(Steps(allAppsAllowed: { allAppsAllowedCheck(localSocketPath) },
+                                         check: { checkPermission(target, askUser: false, timeout: checkTimeout) },
                                          consentRequestInProgress: { ConsentLock.isHeld() },
                                          runConsentHelper: { runConsentHelper(target) },
                                          requestCookie: { requestCookie(target) }))
@@ -401,5 +424,50 @@ enum ConsentLock {
         // O_NOFOLLOW so a symlink planted at the lock path can't make us create a file elsewhere.
         let fd = open(path, O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW, 0o600)
         return fd >= 0 ? fd : nil
+    }
+}
+
+/// iTerm2’s “Allow all apps to connect” setting, as the hook can read it without asking iTerm2.
+///
+/// The setting is a file, `disable-automation-auth`, in the same Application Support folder as the
+/// API socket. iTerm2 honors it only when it is owned by root and holds exactly the hex encoding
+/// of its own path’s UTF-8 bytes, a space, and a fixed UUID; see +[iTermAPIHelper noAuthStatus:] and
+/// +noauthMagic, which this must match. Anything else, including a file that exists but is wrong,
+/// counts as not allowed, because then iTerm2 requires a cookie too.
+enum AllAppsAllowedFile {
+    /// Must match iTermAPIHelperDisableApplescriptAuthMagic in iTermAPIHelper.m.
+    static let magic = "61DF88DC-3423-4823-B725-22570E01C027"
+
+    /// `<Application Support>/<suite>/private/socket` → `<Application Support>/<suite>/disable-automation-auth`.
+    static func path(forSocketPath socketPath: String) -> String {
+        let appSupport = ((socketPath as NSString).deletingLastPathComponent as NSString).deletingLastPathComponent
+        return (appSupport as NSString).appendingPathComponent("disable-automation-auth")
+    }
+
+    static func expectedContents(path: String) -> String {
+        let hex = path.utf8.map { String(format: "%02x", $0) }.joined()
+        return "\(hex) \(magic)"
+    }
+
+    /// - Parameter ownerID: the file’s owner, or nil if it can’t be read. Injectable because a
+    ///   test can’t create a root-owned file.
+    static func isValid(path: String, ownerID: (String) -> uid_t? = ownerID(of:)) -> Bool {
+        guard ownerID(path) == 0 else {
+            return false
+        }
+        guard let contents = try? String(contentsOfFile: path, encoding: .utf8) else {
+            return false
+        }
+        return contents == expectedContents(path: path)
+    }
+
+    static func ownerID(of path: String) -> uid_t? {
+        var info = stat()
+        // lstat, as iTerm2’s attributesOfItemAtPath: does: a symlink is judged as itself, and a
+        // symlink owned by the user doesn’t pass.
+        guard lstat(path, &info) == 0 else {
+            return nil
+        }
+        return info.st_uid
     }
 }

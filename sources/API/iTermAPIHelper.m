@@ -67,6 +67,8 @@ NSString *const iTermAPIDidRegisterStatusBarComponentNotification = @"iTermAPIDi
 NSString *const iTermAPIHelperDidStopNotification = @"iTermAPIHelperDidStopNotification";
 static NSString *const iTermAPIHelperEnablePythonAPIWarningIdentifier = @"NoSyncEnableAPIServer";
 NSString *const iTermAPIHelperErrorDomain = @"com.iterm2.api";
+// it2's AllAppsAllowedFile (it2cli/Sources/it2core/Auth/AgentHookAuth.swift) reads this file
+// itself and must agree with +noAuthStatus: and +noauthMagic. Change them together.
 static NSString *const iTermAPIHelperDisableApplescriptAuthMagic = @"61DF88DC-3423-4823-B725-22570E01C027";
 NSString *const iTermAPIHelperDidDetectChangeOfPythonAuthMethodNotification = @"iTermAPIHelperDidDetectChangeOfPythonAuthMethodNotification";
 

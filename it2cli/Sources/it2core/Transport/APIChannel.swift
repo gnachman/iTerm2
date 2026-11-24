@@ -31,9 +31,10 @@ final class SocketChannel: APIChannel {
         let key: String?
         switch CookieAuth.policy {
         case .appleScript:
-            socket = try SocketConnection.connect()
+            let path = SocketConnection.resolvePath()
+            socket = try SocketConnection.connect(toPath: path)
             do {
-                (cookie, key) = try CookieAuth.getCredentials()
+                (cookie, key) = try CookieAuth.getCredentials(localSocketPath: path)
             } catch {
                 socket.disconnect()
                 throw error
@@ -42,7 +43,7 @@ final class SocketChannel: APIChannel {
             // Credentials first: getting them can wait for the user to answer a consent prompt,
             // and iTerm2 drops a connection that sends nothing for 30 seconds.
             let path = SocketConnection.resolvePath()
-            (cookie, key) = try CookieAuth.getCredentials()
+            (cookie, key) = try CookieAuth.getCredentials(localSocketPath: path)
             socket = try SocketConnection.connect(toPath: path)
         }
         let ws = WebSocketClient(socket: socket)
