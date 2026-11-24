@@ -76,17 +76,14 @@ security-sensitive operation. It performs the following steps:
   [aria2](https://aria2.github.io/) (for faster downloads), then either selects an
   existing `/Applications/Xcode*.app` or downloads the latest Xcode automatically.
   Prompts before running `sudo xcode-select` and before accepting the Xcode license.
-- **Rust** -- Installs [rustup](https://rustup.rs) via the official `curl | sh`
-  installer if not already present. Prompts before executing the script.
 - **Homebrew packages** -- Installs cmake, pkg-config, automake, perl, and python3 if
   missing. If `brew link python@3` would overwrite existing symlinks, prompts for
   confirmation before proceeding.
 - **SF Symbols** -- Installs the SF Symbols cask (a `.pkg` installer that requires
   sudo). Prompts before attempting the install; continues without it if declined.
-- **Python/Rust packages** -- Installs pyobjc (via pip) and cbindgen (via cargo) if not
-  already present.
-- **Submodules and toolchains** -- Initializes git submodules, adds the x86_64 Rust
-  target, and downloads the Metal toolchain.
+- **Python packages** -- Installs pyobjc (via pip) if not already present.
+- **Submodules and toolchains** -- Initializes git submodules and downloads the Metal
+  toolchain.
 
 To skip all confirmation prompts, use `make dangerous-setup` instead.
 

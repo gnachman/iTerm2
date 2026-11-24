@@ -7,6 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BA11A0AD0000000000000002 /* RailroadCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA11A0AD0000000000000001 /* RailroadCore.swift */; };
+		BA11A0AD0000000000000004 /* RailroadText.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA11A0AD0000000000000003 /* RailroadText.swift */; };
+		BA11A0AD0000000000000006 /* RailroadDSL.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA11A0AD0000000000000005 /* RailroadDSL.swift */; };
+		BA11A0AD0000000000000008 /* RailroadContainers.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA11A0AD0000000000000007 /* RailroadContainers.swift */; };
+		BA11A0AD000000000000000A /* RailroadWrappers.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA11A0AD0000000000000009 /* RailroadWrappers.swift */; };
+		BA11A0AD000000000000000C /* railroad-light.css in Resources */ = {isa = PBXBuildFile; fileRef = BA11A0AD000000000000000B /* railroad-light.css */; };
+		BA11A0AD000000000000000D /* railroad-light.css in Resources */ = {isa = PBXBuildFile; fileRef = BA11A0AD000000000000000B /* railroad-light.css */; };
+		BA11A0AD000000000000000F /* railroad-dark.css in Resources */ = {isa = PBXBuildFile; fileRef = BA11A0AD000000000000000E /* railroad-dark.css */; };
+		BA11A0AD0000000000000010 /* railroad-dark.css in Resources */ = {isa = PBXBuildFile; fileRef = BA11A0AD000000000000000E /* railroad-dark.css */; };
 		CB2B34A7A3BC41210DCB5B0F /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624232519CF70DF00182C08 /* NMSSH.framework */; };
 		CBC96459BD6FC8896785A3D9 /* TmuxWorkgroupPeerCreation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FA61C02D50EE6E66768FE0C /* TmuxWorkgroupPeerCreation.swift */; };
 		3EF33423CA26E1A5D858D1C9 /* TmuxWorkgroupAdoption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CD54BF2A45695A8C76271D5 /* TmuxWorkgroupAdoption.swift */; };
@@ -2957,8 +2966,6 @@
 		A68BE92A2DE38B41002DD513 /* ICURegexToRailroadConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68BE9292DE38B3E002DD513 /* ICURegexToRailroadConverter.swift */; };
 		A68BE9412DE4135F002DD513 /* SVGViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68BE9402DE4135C002DD513 /* SVGViewController.swift */; };
 		A68BE9432DE41371002DD513 /* SVGSizeEstimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68BE9422DE4136F002DD513 /* SVGSizeEstimator.swift */; };
-		A68BE9502DE5142A002DD513 /* librailroad_dsl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = A68BE93E2DE3BA3D002DD513 /* librailroad_dsl.dylib */; };
-		A68BE9512DE51591002DD513 /* librailroad_dsl.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = A68BE93E2DE3BA3D002DD513 /* librailroad_dsl.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A68CB8592E3FC40E002531F5 /* ReaderModeBrowserTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68CB8582E3FC40A002531F5 /* ReaderModeBrowserTrigger.swift */; };
 		A68CB85B2E3FD510002531F5 /* triggers.js in Resources */ = {isa = PBXBuildFile; fileRef = A600A93C2E3EDEDD00D05EAD /* triggers.js */; };
 		A68CB85D2E3FD510002531F5 /* triggers.js in Resources */ = {isa = PBXBuildFile; fileRef = A600A93C2E3EDEDD00D05EAD /* triggers.js */; };
@@ -4766,10 +4773,8 @@
 		BCED56C0C7BC4730A6B05159 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 9E8EE77086E04B6E9BACAF1D /* Localizable.xcstrings */; };
 		BD4D313E427B806663EB3D47 /* AILiveAttachmentFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11BE1CE0F1EF4E86C53D1E0 /* AILiveAttachmentFixtures.swift */; };
 		BEEFCAFEDEADC0DE00000001 /* iTermSwiftPackages.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */; };
-		BEEFCAFEDEADC0DE00000002 /* librailroad_dsl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = A68BE93E2DE3BA3D002DD513 /* librailroad_dsl.dylib */; };
 		BEEFCAFEDEADC0DE00000004 /* iTermSwiftPackages.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */; };
 		C0A1E5CE0000000000000001 /* iTermSwiftPackages.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */; };
-		BEEFCAFEDEADC0DE00000005 /* librailroad_dsl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = A68BE93E2DE3BA3D002DD513 /* librailroad_dsl.dylib */; };
 		BFB10C44BAFFF7241285A0CE /* CodeReviewPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 167F170AF620D7443F74609C /* CodeReviewPromptView.swift */; };
 		C026494BD761D81234738D90 /* iTermModalAlertRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = EADF3E7DB1C0DAB2A13D7D99 /* iTermModalAlertRegistry.swift */; };
 		C170B61E5D91A047173C40BB /* CompanionPixelBufferHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2B75EA7ECA05D0BBE98C9EF /* CompanionPixelBufferHash.swift */; };
@@ -5159,7 +5164,6 @@
 				A666130E225CFF6900840E89 /* BetterFontPicker.framework in CopyFiles */,
 				A69FEECE2E123B8700AFF7A8 /* iTermSwiftPackages.framework in CopyFiles */,
 				A6FB633423DE802900026D52 /* SearchableComboListView.framework in CopyFiles */,
-				A68BE9512DE51591002DD513 /* librailroad_dsl.dylib in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -5263,6 +5267,13 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		BA11A0AD0000000000000001 /* RailroadCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RailroadCore.swift; sourceTree = "<group>"; };
+		BA11A0AD0000000000000003 /* RailroadText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RailroadText.swift; sourceTree = "<group>"; };
+		BA11A0AD0000000000000005 /* RailroadDSL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RailroadDSL.swift; sourceTree = "<group>"; };
+		BA11A0AD0000000000000007 /* RailroadContainers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RailroadContainers.swift; sourceTree = "<group>"; };
+		BA11A0AD0000000000000009 /* RailroadWrappers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RailroadWrappers.swift; sourceTree = "<group>"; };
+		BA11A0AD000000000000000B /* railroad-light.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = railroad-light.css; sourceTree = "<group>"; };
+		BA11A0AD000000000000000E /* railroad-dark.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = railroad-dark.css; sourceTree = "<group>"; };
 		413B31365A66C69AAB923889 /* BashWordSplitter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BashWordSplitter.swift; sourceTree = "<group>"; };
 		F7F500F98D6607037DCEB270 /* iTermFloatingPaneView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermFloatingPaneView.swift; sourceTree = "<group>"; };
 		F87F998134B918DB629CE574 /* iTermProfileReadRecorder.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermProfileReadRecorder.m; sourceTree = "<group>"; };
@@ -7674,7 +7685,6 @@
 		A68BE9252DE27DA3002DD513 /* PlaygroundTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaygroundTextView.swift; sourceTree = "<group>"; };
 		A68BE9272DE387FE002DD513 /* LinkButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkButton.swift; sourceTree = "<group>"; };
 		A68BE9292DE38B3E002DD513 /* ICURegexToRailroadConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ICURegexToRailroadConverter.swift; sourceTree = "<group>"; };
-		A68BE93E2DE3BA3D002DD513 /* librailroad_dsl.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = librailroad_dsl.dylib; path = ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib; sourceTree = "<group>"; };
 		A68BE9402DE4135C002DD513 /* SVGViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SVGViewController.swift; sourceTree = "<group>"; };
 		A68BE9422DE4136F002DD513 /* SVGSizeEstimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SVGSizeEstimator.swift; sourceTree = "<group>"; };
 		A68CB8582E3FC40A002531F5 /* ReaderModeBrowserTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderModeBrowserTrigger.swift; sourceTree = "<group>"; };
@@ -9397,7 +9407,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				BEEFCAFEDEADC0DE00000001 /* iTermSwiftPackages.framework in Frameworks */,
-				BEEFCAFEDEADC0DE00000002 /* librailroad_dsl.dylib in Frameworks */,
 				A667196A1DCE396A000CE608 /* libiTerm2SharedARC.a in Frameworks */,
 				A6661311225CFF7A00840E89 /* BetterFontPicker.framework in Frameworks */,
 				A690F7041B424EF8009F76D8 /* OpenDirectory.framework in Frameworks */,
@@ -9453,7 +9462,6 @@
 				1DF0897113DBAF4C00A52AD8 /* Quartz.framework in Frameworks */,
 				A6C763D21B45C5B200E3C992 /* libiTerm2Shared.a in Frameworks */,
 				A667195F1DCE36F8000CE608 /* libiTerm2SharedARC.a in Frameworks */,
-				A68BE9502DE5142A002DD513 /* librailroad_dsl.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -9547,6 +9555,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		BA11A0AD0000000000000000 /* Railroad */ = {
+			isa = PBXGroup;
+			children = (
+				BA11A0AD0000000000000001 /* RailroadCore.swift */,
+				BA11A0AD0000000000000003 /* RailroadText.swift */,
+				BA11A0AD0000000000000005 /* RailroadDSL.swift */,
+				BA11A0AD0000000000000007 /* RailroadContainers.swift */,
+				BA11A0AD0000000000000009 /* RailroadWrappers.swift */,
+			);
+			path = Railroad;
+			sourceTree = "<group>";
+		};
 		CB8346FD2E66E07964DE2CCD /* FloatingPanes */ = {
 			isa = PBXGroup;
 			children = (
@@ -10261,7 +10281,6 @@
 		1DD39AD5180B8118004E56D5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				A68BE93E2DE3BA3D002DD513 /* librailroad_dsl.dylib */,
 				1D94EAC712D641D3008225A9 /* AddressBook.framework */,
 				A60EAE7C23F9CEB3007536CE /* ApplicationServices.framework */,
 				A6661309225CFF5A00840E89 /* BetterFontPicker.framework */,
@@ -14651,6 +14670,9 @@
 			isa = PBXGroup;
 			children = (
 				A68BE9292DE38B3E002DD513 /* ICURegexToRailroadConverter.swift */,
+				BA11A0AD0000000000000000 /* Railroad */,
+				BA11A0AD000000000000000B /* railroad-light.css */,
+				BA11A0AD000000000000000E /* railroad-dark.css */,
 				A68BE9422DE4136F002DD513 /* SVGSizeEstimator.swift */,
 				A68BE9402DE4135C002DD513 /* SVGViewController.swift */,
 			);
@@ -18126,6 +18148,8 @@
 				DC5583C79FE518A9E1DE97DC /* repl_banner-nl.txt in Resources */,
 				9C5EF877A91BD339866A092E /* repl_banner-tr.txt in Resources */,
 				65B1B9DF105B29AAF3D6D77F /* companion-browser-editing.js in Resources */,
+				BA11A0AD000000000000000C /* railroad-light.css in Resources */,
+				BA11A0AD000000000000000F /* railroad-dark.css in Resources */,
 				640AE7AAB1BDCC09B531A3AC /* it2.py in Resources */,
 				923F4778B3116EBDC9D56980 /* it2_git_state.py in Resources */,
 				A4DA57992DB5D9D843661F94 /* it2-remote in Resources */,
@@ -18857,6 +18881,8 @@
 				1553CAA7DDFE419BFA5297CC /* repl_banner-nl.txt in Resources */,
 				71EBDA870F768D613C38493D /* repl_banner-tr.txt in Resources */,
 				D40FA74614B9343BFA69E64D /* companion-browser-editing.js in Resources */,
+				BA11A0AD000000000000000D /* railroad-light.css in Resources */,
+				BA11A0AD0000000000000010 /* railroad-dark.css in Resources */,
 				1CFBC8DDC0F47C682E8BA689 /* it2.py in Resources */,
 				72386C923E6555FC1BEE219E /* it2_git_state.py in Resources */,
 				9EC3C7C85EB065688CB08F0C /* it2-remote in Resources */,
@@ -20017,6 +20043,11 @@
 				A65618582D659F090059CD35 /* ChatCellView.swift in Sources */,
 				A6FF3F2E2435BA35003CCB03 /* PasteView.m in Sources */,
 				A68BE92A2DE38B41002DD513 /* ICURegexToRailroadConverter.swift in Sources */,
+				BA11A0AD0000000000000002 /* RailroadCore.swift in Sources */,
+				BA11A0AD0000000000000004 /* RailroadText.swift in Sources */,
+				BA11A0AD0000000000000006 /* RailroadDSL.swift in Sources */,
+				BA11A0AD0000000000000008 /* RailroadContainers.swift in Sources */,
+				BA11A0AD000000000000000A /* RailroadWrappers.swift in Sources */,
 				A6A39EBC24B99AC000A64433 /* iTermGraphicsUtilities.m in Sources */,
 				A65B1B5C2D1252E300F5A740 /* iTermShortcutInputView.m in Sources */,
 				A6D420162E4D4A6800E8D3EF /* iTermBrowserView.swift in Sources */,
@@ -22186,7 +22217,6 @@
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
@@ -22298,7 +22328,6 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
-					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
 				);
 				LINK_WITH_STANDARD_LIBRARIES = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
@@ -22376,7 +22405,6 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
-					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -22451,7 +22479,6 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
-					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -23279,7 +23306,6 @@
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
@@ -23404,7 +23430,6 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
-					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -25705,7 +25730,6 @@
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
 				);
 				LINK_WITH_STANDARD_LIBRARIES = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
@@ -25806,7 +25830,6 @@
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
