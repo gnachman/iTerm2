@@ -210,3 +210,10 @@ Bug Fixes:
   stayed “running” forever, so with many busy
   sessions they piled up without limit.
   Issue 13183.
+- Installing Shell Integration again after
+  switching away from the session’s tab while the
+  Internet-Free install was still running now
+  stops the earlier install and lets it return
+  you to your own shell first, as clicking
+  Cancel does, instead of running alongside it
+  and finding you inside its helper shells.

@@ -428,8 +428,6 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     // first, as -viewDidMoveToWindow does, so its panel does not stay on screen without it.
     [(NSWindowController *)_shellIntegrationInstallerWindow close];
     [_shellIntegrationInstallerWindow release];
-    [_retiredShellIntegrationInstallers makeObjectsPerformSelector:@selector(close)];
-    [_retiredShellIntegrationInstallers release];
     [_highlightedRows release];
     [_scrollAccumulator release];
     [_horizontalScrollAccumulator release];
@@ -1227,18 +1225,10 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     // If you change tabs while dragging you never get a mouseUp. Issue 8350.
     [_selection endLiveSelection];
     if (self.window == nil) {
+        // Only the panel goes away. The installer stays, so what it is still doing in the session
+        // (finishing a step, exiting helper shells) goes on, and the next install takes it over
+        // in -installShellIntegration:, which replaces and releases it.
         [(NSWindowController *)_shellIntegrationInstallerWindow close];
-        if (_shellIntegrationInstallerWindow) {
-            // Stored with strong semantics by -installShellIntegration: in PTYTextView+ARC.m.
-            // Keep it until dealloc, since what it is still doing in the session (finishing a
-            // step, exiting helper shells) must go on with its panel closed.
-            if (!_retiredShellIntegrationInstallers) {
-                _retiredShellIntegrationInstallers = [[NSMutableArray alloc] init];
-            }
-            [_retiredShellIntegrationInstallers addObject:_shellIntegrationInstallerWindow];
-            [_shellIntegrationInstallerWindow release];
-            _shellIntegrationInstallerWindow = nil;
-        }
     }
     [super viewDidMoveToWindow];
 }

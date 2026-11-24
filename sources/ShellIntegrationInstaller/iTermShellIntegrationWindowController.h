@@ -29,6 +29,10 @@ NS_ASSUME_NONNULL_BEGIN
 // Exposed for testing: waiting, after a cancel, for launched helper shells to prompt.
 @property (nonatomic, readonly) BOOL waitingForCanceledHelperLaunch;
 
+// What the panel's Cancel buttons do: stops the current step, exits any helper shells it started
+// once that is safe, and closes the panel.
+- (IBAction)cancel:(nullable id)sender;
+
 // Call on a new installer for the same session as previous. Until helper shells that previous
 // left running have exited (or it stops waiting for them), discovery waits for them, so it asks
 // the user's shell rather than a helper.

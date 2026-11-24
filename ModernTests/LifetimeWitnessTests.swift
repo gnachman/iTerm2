@@ -770,13 +770,14 @@ final class WindowLifetimeWitnessTests: XCTestCase {
 }
 
 
-// The shell integration installer a text view shows. PTYTextView keeps it in an ivar that the ARC
-// category file (-installShellIntegration:) stores with strong semantics and the manual
-// retain/release file (PTYTextView.m) must release. When the view leaves its window (as on a tab
-// switch) the installer's panel is closed and the ivar cleared, but the installer is kept, so
-// what it is still doing in the session goes on; it is released when the text view is. These
-// check both halves. An extra release would message a zombie (the test plan sets NSZombieEnabled
-// and the address sanitizer).
+// The shell integration installer a text view shows. PTYTextView keeps at most one, in an ivar
+// that the ARC category file (-installShellIntegration:) stores with strong semantics and the
+// manual retain/release file (PTYTextView.m) releases in -dealloc. When the view leaves its window
+// (as on a tab switch) the installer's panel is closed but the installer stays in the ivar, so
+// what it is still doing in the session goes on, and a later install hands its helper shells
+// over (takeOverHelperShellsFromInstaller:) as it replaces it. These check that, and that every
+// installer dies once replaced or once the text view does. An extra release would message a
+// zombie (the test plan sets NSZombieEnabled and the address sanitizer).
 enum ShellIntegrationInstallerLifetimeSupport {
     static let nibName = "iTermShellIntegrationWindowController"
     static let ivarKey = "shellIntegrationInstallerWindow"
@@ -802,6 +803,16 @@ enum ShellIntegrationInstallerLifetimeSupport {
         }
     }
 
+    // Whether the text view's ivar holds this installer, and its panel is not on screen.
+    static func holdsClosed(_ textView: PTYTextView, _ weakInstaller: WeakInstaller) -> Bool {
+        return autoreleasepool {
+            guard let expected = weakInstaller.value, let held = installer(of: textView) else {
+                return false
+            }
+            return held === expected && held.window?.isVisible == false
+        }
+    }
+
     static func moveOut(_ textView: PTYTextView) {
         autoreleasepool {
             textView.removeFromSuperview()
@@ -813,6 +824,53 @@ enum ShellIntegrationInstallerLifetimeSupport {
             textView.removeFromSuperview()
             window.contentView?.addSubview(textView)
         }
+    }
+
+    // Answers what the installer typed so far as one step at a time would, each in a pool of its
+    // own so nothing autoreleased keeps an installer alive.
+    static func step(_ terminal: InstallerLifetimeFakeTerminal, output: String? = nil) {
+        autoreleasepool {
+            if let output {
+                terminal.output(output)
+            }
+            terminal.sync()
+        }
+    }
+
+    // Drives an installer through Internet-free discovery (zsh) and starts writing the script,
+    // whose helper shells don't prompt, so it is mid-step with the helpers launching.
+    static func startTheScriptStep(_ controller: iTermShellIntegrationWindowController,
+                                   _ terminal: InstallerLifetimeFakeTerminal,
+                                   file: StaticString = #filePath,
+                                   line: UInt = #line) {
+        autoreleasepool {
+            controller.shellIntegrationInstallerSendShellCommands(-1)
+            controller.shellIntegrationInstallerSendShellCommands(0)
+        }
+        step(terminal)
+        step(terminal, output: "My shell is zsh -zsh or /bin/zsh, end")
+        step(terminal, output: "My dotfiles go in /Users/someone, end")
+        autoreleasepool {
+            controller.shellIntegrationInstallerSendShellCommands(1)
+        }
+        step(terminal)
+        XCTAssertEqual(terminal.sentTexts.last, ShellIntegrationOfflineInstallerTests.launchHelper,
+                       file: file, line: line)
+        XCTAssertFalse(controller.waitingForCanceledHelperLaunch, file: file, line: line)
+    }
+
+    // Starts the script step as above and cancels: the installer then waits for the helpers to
+    // prompt so it can exit them.
+    static func cancelWhileTheHelpersLaunch(_ controller: iTermShellIntegrationWindowController,
+                                            _ terminal: InstallerLifetimeFakeTerminal,
+                                            file: StaticString = #filePath,
+                                            line: UInt = #line) {
+        startTheScriptStep(controller, terminal, file: file, line: line)
+        autoreleasepool {
+            _ = controller.perform(Selector(("cancel:")), with: nil)
+        }
+        step(terminal)
+        XCTAssertTrue(controller.waitingForCanceledHelperLaunch, file: file, line: line)
     }
 }
 
@@ -829,17 +887,21 @@ final class ShellIntegrationInstallerLifetimeWitnessTests: XCTestCase {
 
     // Runs the installer and watches it and its panel as "<name>" and "<name>.panel", holding
     // neither. The panel is read after -installShellIntegration: has loaded the nib.
+    @discardableResult
     private func install(in textView: PTYTextView,
                          _ witness: LifetimeWitness,
                          _ name: String,
                          file: StaticString = #filePath,
-                         line: UInt = #line) {
+                         line: UInt = #line) -> WeakInstaller {
+        let weakInstaller = WeakInstaller()
         autoreleasepool {
             textView.installShellIntegration(nil)
             let controller = Installer.installer(of: textView)
             witness.watch(controller, name, file: file, line: line)
             witness.watch(controller?.window, "\(name).panel", file: file, line: line)
+            weakInstaller.value = controller
         }
+        return weakInstaller
     }
 
     // Closes the installer's panel, as its Cancel button does, without touching the ivar.
@@ -849,20 +911,22 @@ final class ShellIntegrationInstallerLifetimeWitnessTests: XCTestCase {
         }
     }
 
-    func testLeavingTheWindowKeepsTheInstallerUntilDealloc() {
+    func testLeavingTheWindowClosesThePanelAndKeepsTheInstaller() {
         let window = Installer.makeWindow()
         let witness = LifetimeWitness()
         autoreleasepool {
             let textView = Installer.makeTextView()
             witness.watch(textView, "textView")
             window.contentView?.addSubview(textView)
-            install(in: textView, witness, "installer")
+            let installer = install(in: textView, witness, "installer")
 
             Installer.moveOut(textView)
-
-            XCTAssertNil(Installer.installer(of: textView))
-            XCTAssertTrue(witness.isAlive("installer"),
-                          "The installer was freed when its view left the window")
+            XCTAssertTrue(Installer.holdsClosed(textView, installer),
+                          "Leaving the window did not keep the installer, with its panel closed")
+            Installer.move(textView, to: window)
+            XCTAssertTrue(Installer.holdsClosed(textView, installer),
+                          "Coming back did not keep the installer, with its panel closed")
+            Installer.moveOut(textView)
         }
 
         Support.assertAllFreed(witness, "The installer outlived the text view")
@@ -893,8 +957,8 @@ final class ShellIntegrationInstallerLifetimeWitnessTests: XCTestCase {
         Support.assertAllFreed(witness, "The installer outlived the text view")
     }
 
-    // Installing again replaces the installer (the ARC side releases the old one), and moving
-    // between windows retires it each time. Every installer dies, and none is released twice.
+    // Installing again replaces the installer (the ARC side releases the old one), whether or
+    // not the view left its window in between. Every installer dies, and none is released twice.
     func testReinstallingAndMovingBetweenWindowsFreesEveryInstaller() {
         let firstWindow = Installer.makeWindow()
         let secondWindow = Installer.makeWindow()
@@ -911,32 +975,138 @@ final class ShellIntegrationInstallerLifetimeWitnessTests: XCTestCase {
             XCTAssertTrue(Support.spin(until: { !witness.isAlive("first") }),
                           "The replaced installer outlived its replacement")
 
-            // Move to another window, which closes and retires the installer, then install there.
+            // Move to another window, which closes the panel and keeps the installer; installing
+            // there replaces it.
             Installer.move(textView, to: secondWindow)
-            XCTAssertNil(Installer.installer(of: textView))
             XCTAssertTrue(witness.isAlive("second"), "The installer was freed on leaving the window")
             install(in: textView, witness, "third")
+            XCTAssertTrue(Support.spin(until: { !witness.isAlive("second") }),
+                          "The replaced installer outlived its replacement")
 
-            // Move back, which retires it too, and install once more.
+            // Move back and install once more.
             Installer.move(textView, to: firstWindow)
-            XCTAssertNil(Installer.installer(of: textView))
             XCTAssertTrue(witness.isAlive("third"), "The installer was freed on moving back")
             install(in: textView, witness, "fourth")
+            XCTAssertTrue(Support.spin(until: { !witness.isAlive("third") }),
+                          "The replaced installer outlived its replacement")
 
-            // Leave the window with the panel closed, then install outside any window and let
-            // the view go with that installer still held.
-            closeInstaller(of: textView)
+            // Leave the window, then install outside any window and let the view go with that
+            // installer held.
             Installer.moveOut(textView)
-            XCTAssertNil(Installer.installer(of: textView))
             install(in: textView, witness, "fifth")
             closeInstaller(of: textView)
         }
 
         Support.assertAllFreed(witness, "An installer outlived the text view")
     }
+
+    // After Cancel, an installer waits to exit the helper shells it started. If the view leaves
+    // its window and comes back (a tab switch) and the user installs again, the new installer
+    // gets the previous one for takeover: its discovery waits for the helpers to exit before
+    // asking the user's shell, then the previous installer is freed.
+    func testInstallAfterLeavingTheWindowWaitsForThePreviousInstallersHelpers() {
+        typealias Commands = ShellIntegrationOfflineInstallerTests
+        let window = Installer.makeWindow()
+        let terminal = InstallerLifetimeFakeTerminal(testCase: self)
+        let witness = LifetimeWitness()
+        autoreleasepool {
+            let textView = Installer.makeTextView()
+            witness.watch(textView, "textView")
+            window.contentView?.addSubview(textView)
+            let previous = install(in: textView, witness, "previous")
+            autoreleasepool {
+                previous.value?.delegate = terminal
+            }
+            Installer.cancelWhileTheHelpersLaunch(previous.value!, terminal)
+
+            Installer.moveOut(textView)
+            Installer.move(textView, to: window)
+            let next = install(in: textView, witness, "next")
+            autoreleasepool {
+                next.value?.delegate = terminal
+                next.value?.shellIntegrationInstallerSendShellCommands(-1)
+                next.value?.shellIntegrationInstallerSendShellCommands(0)
+            }
+            let sentBefore = terminal.sentTexts.count
+            Installer.step(terminal)
+            XCTAssertEqual(terminal.sentTexts.count, sentBefore,
+                           "Discovery did not wait for the previous installer's helpers")
+            XCTAssertTrue(witness.isAlive("previous"), "The previous installer was not taken over")
+
+            // The helper prompts and says it is one deep: the previous installer exits it, and
+            // then discovery asks the user's shell.
+            Installer.step(terminal, output: ">> ")
+            Installer.step(terminal, output: "it2-helper-depth-1-")
+            Installer.step(terminal)
+            XCTAssertEqual(Array(terminal.sentTexts.dropFirst(sentBefore)),
+                           [Commands.helperDepthCommand, Commands.typedExit, Commands.shellCommand])
+            XCTAssertTrue(Support.spin(until: { !witness.isAlive("previous") }),
+                          "The previous installer outlived its takeover")
+            autoreleasepool {
+                next.value?.shellIntegrationInstallerCancelExpectations()
+            }
+            Installer.moveOut(textView)
+        }
+
+        Support.assertAllFreed(witness, "An installer outlived the text view")
+    }
+
+    // The view leaves its window while the installer is mid-step, with its helper shells
+    // launching and no Cancel (a tab switch during the script step). It keeps working hidden.
+    // Installing again on return replaces it the way Cancel then Install does: the previous
+    // installer stops its step and waits to exit its helpers, and the new installer's discovery
+    // waits for that before asking the user's shell.
+    func testInstallAfterLeavingTheWindowMidStepExitsThePreviousInstallersHelpers() {
+        typealias Commands = ShellIntegrationOfflineInstallerTests
+        let window = Installer.makeWindow()
+        let terminal = InstallerLifetimeFakeTerminal(testCase: self)
+        let witness = LifetimeWitness()
+        autoreleasepool {
+            let textView = Installer.makeTextView()
+            witness.watch(textView, "textView")
+            window.contentView?.addSubview(textView)
+            let previous = install(in: textView, witness, "previous")
+            autoreleasepool {
+                previous.value?.delegate = terminal
+            }
+            Installer.startTheScriptStep(previous.value!, terminal)
+
+            Installer.moveOut(textView)
+            Installer.move(textView, to: window)
+            let sentBefore = terminal.sentTexts.count
+            let next = install(in: textView, witness, "next")
+            XCTAssertTrue(witness.isAlive("previous"), "The previous installer was not taken over")
+            XCTAssertEqual(previous.value?.waitingForCanceledHelperLaunch, true,
+                           "The previous installer is not waiting to exit its helpers")
+            autoreleasepool {
+                next.value?.delegate = terminal
+                next.value?.shellIntegrationInstallerSendShellCommands(-1)
+                next.value?.shellIntegrationInstallerSendShellCommands(0)
+            }
+            Installer.step(terminal)
+            XCTAssertEqual(Array(terminal.sentTexts.dropFirst(sentBefore)), [],
+                           "Discovery did not wait for the previous installer's helpers")
+
+            // The helper prompts and says it is one deep: the previous installer exits it, and
+            // then discovery asks the user's shell.
+            Installer.step(terminal, output: ">> ")
+            Installer.step(terminal, output: "it2-helper-depth-1-")
+            Installer.step(terminal)
+            XCTAssertEqual(Array(terminal.sentTexts.dropFirst(sentBefore)),
+                           [Commands.helperDepthCommand, Commands.typedExit, Commands.shellCommand])
+            XCTAssertTrue(Support.spin(until: { !witness.isAlive("previous") }),
+                          "The previous installer outlived its takeover")
+            autoreleasepool {
+                next.value?.shellIntegrationInstallerCancelExpectations()
+            }
+            Installer.moveOut(textView)
+        }
+
+        Support.assertAllFreed(witness, "An installer outlived the text view")
+    }
 }
 
-// The same releases without putting anything on screen: the installer is built from its nib
+// The same lifetimes without putting anything on screen: the installer is built from its nib
 // (whose panel is not visible at launch) and stored in the ivar with key-value coding, which for
 // this class retains the new value and releases the old one, as the ARC store does. These run in
 // the regular suite.
@@ -986,20 +1156,24 @@ final class ShellIntegrationInstallerOffscreenLifetimeWitnessTests: XCTestCase {
         return weakInstaller
     }
 
-    func testLeavingTheWindowKeepsTheInstallerUntilDealloc() {
+    // Leaving the window and coming back keeps the same installer in the ivar, which is what
+    // -installShellIntegration: hands to the next installer for takeover.
+    func testLeavingAndReenteringTheWindowKeepsTheInstaller() {
         let window = Installer.makeWindow()
         let witness = LifetimeWitness()
         autoreleasepool {
             let textView = Installer.makeTextView()
             witness.watch(textView, "textView")
             window.contentView?.addSubview(textView)
-            store(in: textView, witness, "installer")
+            let installer = store(in: textView, witness, "installer")
 
             Installer.moveOut(textView)
-
-            XCTAssertNil(Installer.installer(of: textView))
-            XCTAssertTrue(witness.isAlive("installer"),
-                          "The installer was freed when its view left the window")
+            XCTAssertTrue(Installer.holdsClosed(textView, installer),
+                          "Leaving the window did not keep the installer")
+            Installer.move(textView, to: window)
+            XCTAssertTrue(Installer.holdsClosed(textView, installer),
+                          "Coming back did not keep the installer")
+            Installer.moveOut(textView)
         }
 
         Support.assertAllFreed(witness, "The installer outlived the text view")
@@ -1016,9 +1190,9 @@ final class ShellIntegrationInstallerOffscreenLifetimeWitnessTests: XCTestCase {
         Support.assertAllFreed(witness, "The installer outlived the text view")
     }
 
-    // Replacing the installer, retiring it on leaving a window more than once, and holding one at
-    // dealloc: each is released exactly once.
-    func testReplacingAndRetiringReleasesEachInstallerOnce() {
+    // Replacing the installer, before and after leaving windows, and holding one at dealloc:
+    // each is released exactly once, and a replaced one at once.
+    func testReplacingAfterLeavingTheWindowReleasesThePreviousInstaller() {
         let firstWindow = Installer.makeWindow()
         let secondWindow = Installer.makeWindow()
         let witness = LifetimeWitness()
@@ -1033,15 +1207,16 @@ final class ShellIntegrationInstallerOffscreenLifetimeWitnessTests: XCTestCase {
                           "The replaced installer outlived its replacement")
 
             Installer.move(textView, to: secondWindow)
-            XCTAssertNil(Installer.installer(of: textView))
+            XCTAssertTrue(witness.isAlive("second"), "The installer was freed on leaving the window")
             store(in: textView, witness, "third")
+            XCTAssertTrue(Support.spin(until: { !witness.isAlive("second") }),
+                          "The installer replaced after leaving the window outlived its replacement")
             Installer.move(textView, to: firstWindow)
-            XCTAssertNil(Installer.installer(of: textView))
-            // Leaving with nothing held retires nothing.
             Installer.moveOut(textView)
+            XCTAssertTrue(witness.isAlive("third"), "The installer was freed on leaving the window")
             store(in: textView, witness, "fourth")
-            XCTAssertTrue(witness.isAlive("second"), "A retired installer was freed early")
-            XCTAssertTrue(witness.isAlive("third"), "A retired installer was freed early")
+            XCTAssertTrue(Support.spin(until: { !witness.isAlive("third") }),
+                          "The installer replaced after leaving the window outlived its replacement")
         }
 
         Support.assertAllFreed(witness, "An installer outlived the text view")
@@ -1063,22 +1238,13 @@ final class ShellIntegrationInstallerOffscreenLifetimeWitnessTests: XCTestCase {
                 controller.shellIntegrationInstallerSendShellCommands(-1)
                 controller.shellIntegrationInstallerSendShellCommands(0)
             }
-            // Each step in a pool of its own, so nothing autoreleased keeps the installer alive.
-            autoreleasepool {
-                terminal.sync()
-            }
+            Installer.step(terminal)
             XCTAssertTrue(terminal.sentTexts.last?.contains("echo My shell is") ?? false, "\(terminal.sentTexts)")
-            autoreleasepool {
-                terminal.output("My shell is zsh -zsh or /bin/zsh, end")
-                terminal.sync()
-            }
+            Installer.step(terminal, output: "My shell is zsh -zsh or /bin/zsh, end")
             XCTAssertEqual(terminal.sentTexts.last, "echo My dotfiles go in ${ZDOTDIR:-$HOME}, end\n")
 
             Installer.moveOut(textView)
-            autoreleasepool {
-                terminal.output("My dotfiles go in /tmp/it2-dots, end")
-                terminal.sync()
-            }
+            Installer.step(terminal, output: "My dotfiles go in /tmp/it2-dots, end")
 
             XCTAssertTrue(witness.isAlive("installer"),
                           "The installer was freed when its view left the window")
@@ -1090,13 +1256,13 @@ final class ShellIntegrationInstallerOffscreenLifetimeWitnessTests: XCTestCase {
     }
 }
 
-private final class WeakInstaller {
+final class WeakInstaller {
     weak var value: iTermShellIntegrationWindowController?
 }
 
 // The session side of the installer, as far as discovery needs it: what the installer types, and
 // the session's expect, copied from dry to wet as PTYSession does on a sync.
-private final class InstallerLifetimeFakeTerminal: NSObject, iTermShellIntegrationWindowControllerDelegate {
+final class InstallerLifetimeFakeTerminal: NSObject, iTermShellIntegrationWindowControllerDelegate {
     private let dryExpect = iTermExpect(dry: true)
     private var wetExpect: iTermExpect?
     private(set) var sentTexts = [String]()

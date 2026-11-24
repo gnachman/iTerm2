@@ -51,10 +51,6 @@ NSPopoverDelegate> {
     PTYMouseHandler *_mouseHandler;
     iTermURLActionHelper *_urlActionHelper;
     iTermShellIntegrationWindowController *_shellIntegrationInstallerWindow;
-    // Installers whose panel was closed because this view left its window. They are kept until
-    // dealloc so their pending work (such as exiting helper shells) still runs. Only
-    // PTYTextView.m, which is not ARC, touches this.
-    NSMutableArray<iTermShellIntegrationWindowController *> *_retiredShellIntegrationInstallers;
     iTermTextViewContextMenuHelper *_contextMenuHelper;
     iTermTextPopoverViewController* _indicatorMessagePopoverViewController;
     // Child windows that need to have their frames adjusted as you scroll.

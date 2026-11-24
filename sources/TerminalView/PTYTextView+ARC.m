@@ -1591,6 +1591,11 @@ launchProfileInCurrentTerminal:(Profile *)profile
         return;
     }
     iTermShellIntegrationWindowController *previous = _shellIntegrationInstallerWindow;
+    // A previous installer whose panel was closed without Cancel, because this view left its
+    // window (as on a tab switch), may still be in a step. Replace it as Cancel then Install
+    // would: it stops the step and exits its helper shells, and the new one waits for that. For
+    // an installer that was canceled or finished already, this types nothing.
+    [previous cancel:nil];
     _shellIntegrationInstallerWindow =
     [[iTermShellIntegrationWindowController alloc] initWithWindowNibName:@"iTermShellIntegrationWindowController"];
     [_shellIntegrationInstallerWindow.window makeKeyAndOrderFront:nil];
