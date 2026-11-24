@@ -415,7 +415,8 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 - (nullable NSImage *)attentionImageForTabGroupIdentifier:(NSString *)groupID;
 
 // The rich content lines a collapsed group's chip shows below its name, from
-// the tabGroupDataSource, or nil to show only the name.
+// the tabGroupDataSource, or nil to show only the name, as when the style
+// doesn't show lines on collapsed chips.
 - (nullable NSArray<PSMTabRichLine *> *)richLinesForTabGroupIdentifier:(NSString *)groupID;
 
 // Call when the attention icon of a group may have changed (a member's icon

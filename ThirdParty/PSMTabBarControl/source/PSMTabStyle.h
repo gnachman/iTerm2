@@ -93,6 +93,9 @@ NS_ASSUME_NONNULL_BEGIN
 // below its name, where headerHeight is an expanded group's header height.
 - (CGFloat)tabGroupCollapsedChipHeightForRichLines:(NSArray<PSMTabRichLine *> *)lines
                                       headerHeight:(CGFloat)headerHeight;
+// Whether a collapsed group's chip shows its members' rich content lines and
+// so is sized like a tab. YES if not implemented.
+- (BOOL)showsRichContentOnCollapsedTabGroupChips;
 @required
 - (NSRect)objectCounterRectForTabCell:(PSMTabBarCell *)cell;
 - (float)minimumWidthOfTabCell:(PSMTabBarCell *)cell;

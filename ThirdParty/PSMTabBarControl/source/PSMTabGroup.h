@@ -48,7 +48,8 @@ NS_ASSUME_NONNULL_BEGIN
 // so the chip's width never changes when attention comes and goes.
 - (nullable NSImage *)tabGroupAttentionImageWithIdentifier:(NSString *)identifier;
 
-// Whether collapsed groups' chips show rich content lines. When YES, a
+// Whether collapsed groups' chips show rich content lines. When YES, and the
+// style shows them (see -showsRichContentOnCollapsedTabGroupChips), a
 // collapsed chip on a vertical bar is as tall as a tab.
 - (BOOL)tabGroupsShowRichContent;
 

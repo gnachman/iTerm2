@@ -116,6 +116,18 @@ final class PSMTabGroupRichContentTests: XCTestCase {
         XCTAssertEqual(bar.height(ofTabGroupChipCell: chip, collapsed: false), header)
     }
 
+    // Minimal draws a collapsed group as a short capsule with no lines, so
+    // it stays as short as an expanded group's header.
+    func testMinimalCollapsedChipIsAsShortAsAHeader() {
+        bar.style = PSMMinimalTabStyle()
+        bar.orientation = .verticalOrientation
+        bar.height = 57
+        let chip = makeChip()
+        let header = bar.height(ofTabGroupChipCell: chip, collapsed: false)
+        XCTAssertLessThan(header, verticalCellHeight, "precondition: the header is shorter than a row")
+        XCTAssertEqual(bar.height(ofTabGroupChipCell: chip, collapsed: true), header)
+    }
+
     // A chip's height depends only on the layout, so it comes from lines
     // that describe the layout, without combining the members' content.
     func testCollapsedChipHeightComesFromTheSizingLines() {
@@ -171,6 +183,24 @@ final class PSMTabGroupRichContentTests: XCTestCase {
             XCTAssertEqual(widths[1], 0, "the hidden member")
             XCTAssertEqual(widths[0], widths[2], accuracy: 0.5)
             XCTAssertLessThan(widths[0], 175, "the bar is too narrow for tabs at their optimum width")
+        }
+    }
+
+    // Minimal draws a collapsed group as a capsule without lines, so it
+    // keeps its own width rather than taking a tab's.
+    func testMinimalCollapsedChipKeepsItsWidth() {
+        withScrollableTabBar(false) {
+            bar.style = PSMMinimalTabStyle()
+            bar.style.tabBar = bar
+            bar.frame = NSRect(x: 0, y: 0, width: 600, height: 24)
+            bar.sizeCellsToFit = false
+            bar.stretchCellsToFit = false
+            bar.cellMinWidth = 60
+            bar.cellOptimumWidth = 175
+            addCollapsedGroupAndTabs(3)
+            let widths = (bar.cellWidths(forHorizontalArrangementWithOverflow: false) ?? []).map(\.doubleValue)
+            XCTAssertEqual(widths.count, 5)
+            XCTAssertLessThan(widths[0], widths[2], "narrower than a tab")
         }
     }
 
@@ -330,11 +360,17 @@ final class PSMTabGroupRichContentTests: XCTestCase {
     // On a vertical bar the name keeps its header-sized band, so the chip
     // grows when a tab's height doesn't leave room for the name and lines.
     func testVerticalChipGrowsToFitItsLines() throws {
-        let style = try XCTUnwrap((NSClassFromString("PSMMinimalTabStyle") as? NSObject.Type)?.init() as? PSMTabStyle)
+        // Minimal draws a collapsed group without lines, so use a style
+        // that draws them.
+        let style = PSMYosemiteTabStyle()
         bar.orientation = .verticalOrientation
-        bar.height = 57
+        // A row too short for the name and the lines.
+        bar.height = 24
         bar.style = style
+        dataSource.lines = [PSMTabRichLine(text: "", scale: TabContentLineSize.small.scale),
+                            PSMTabRichLine(text: "WWWWWWWW", scale: TabContentLineSize.small.scale)]
         let height = bar.height(ofTabGroupChipCell: makeChip(), collapsed: true)
+        XCTAssertGreaterThan(height, verticalCellHeight, "grew past a row")
         let rep = try renderSquaredChip(style: style, orientation: .verticalOrientation, height: height)
         XCTAssertTrue(hasNonGroupPixels(rep, in: NSRect(x: 8, y: height - 12, width: 150, height: 10)),
                       "the last line is drawn")

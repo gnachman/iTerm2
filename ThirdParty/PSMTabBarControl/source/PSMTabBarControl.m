@@ -3079,7 +3079,7 @@ typedef struct {
     NSString *name = group ? group.name : @"";
     if (collapsed && memberCount > 0) {
         const CGFloat width = [self collapsedChipCellWidthForGroupName:name memberCount:memberCount nested:nested];
-        if (![self tabGroupsShowRichContent]) {
+        if (![self collapsedTabGroupChipsShowRichContent]) {
             return width;
         }
         // The chip also shows its members' rich content lines, so it's sized
@@ -3104,7 +3104,7 @@ typedef struct {
 // when tabs share one width it gets that width too (at least its own), rather
 // than having a width reserved for it.
 - (BOOL)tabGroupChipSharesTabWidthAtIndex:(NSInteger)index {
-    if (self.sizeCellsToFit || ![_cells[index] isTabGroupChip] || ![self tabGroupsShowRichContent]) {
+    if (self.sizeCellsToFit || ![_cells[index] isTabGroupChip] || ![self collapsedTabGroupChipsShowRichContent]) {
         return NO;
     }
     const PSMTabGroupRun run = [self tabGroupRunAfterChipAtIndex:index];
@@ -3113,7 +3113,7 @@ typedef struct {
 
 - (CGFloat)settledWidthOfCollapsedTabGroupChipWithWidth:(CGFloat)width
                                                   cells:(NSArray<PSMTabBarCell *> *)cells {
-    if (self.sizeCellsToFit || ![self tabGroupsShowRichContent]) {
+    if (self.sizeCellsToFit || ![self collapsedTabGroupChipsShowRichContent]) {
         return width;
     }
     // Tabs share one width, so any laid-out tab has it.
@@ -3257,10 +3257,16 @@ typedef struct {
                                 collapsed:(run.memberCount > 0 && run.allCollapsed)];
 }
 
-- (BOOL)tabGroupsShowRichContent {
+// Whether collapsed groups' chips show their members' rich content lines.
+- (BOOL)collapsedTabGroupChipsShowRichContent {
     id<PSMTabGroupDataSource> dataSource = self.tabGroupDataSource;
-    return ([dataSource respondsToSelector:@selector(tabGroupsShowRichContent)] &&
-            [dataSource tabGroupsShowRichContent]);
+    if (![dataSource respondsToSelector:@selector(tabGroupsShowRichContent)] ||
+        ![dataSource tabGroupsShowRichContent]) {
+        return NO;
+    }
+    // A style can draw a collapsed chip without them, at its usual size.
+    return (![self.style respondsToSelector:@selector(showsRichContentOnCollapsedTabGroupChips)] ||
+            [self.style showsRichContentOnCollapsedTabGroupChips]);
 }
 
 - (CGFloat)heightOfTabGroupChipCell:(PSMTabBarCell *)cell collapsed:(BOOL)collapsed {
@@ -3269,7 +3275,7 @@ typedef struct {
     }
     // A collapsed chip showing its members' rich content lines below its name
     // takes a whole row, like the tabs it stands for.
-    if (collapsed && [self tabGroupsShowRichContent]) {
+    if (collapsed && [self collapsedTabGroupChipsShowRichContent]) {
         // Taller, if the style's name band and the lines need more room than
         // a tab's height (which counts the title and subtitle lines the chip
         // doesn't show) leaves.
@@ -5954,7 +5960,7 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 }
 
 - (nullable NSArray<PSMTabRichLine *> *)richLinesForTabGroupIdentifier:(NSString *)groupID {
-    if (groupID.length == 0 || ![self tabGroupsShowRichContent]) {
+    if (groupID.length == 0 || ![self collapsedTabGroupChipsShowRichContent]) {
         return nil;
     }
     id<PSMTabGroupDataSource> dataSource = self.tabGroupDataSource;

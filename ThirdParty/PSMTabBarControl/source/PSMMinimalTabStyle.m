@@ -336,6 +336,11 @@ static CGFloat PSMMinimalContrastRatio(NSColor *a, NSColor *b) {
     NSRectFill([self minimalStripRectForExtent:extent depth:[self minimalStripDepthForChip:chip] bar:bar]);
 }
 
+// A collapsed group is a short capsule with its name, count, and chevron.
+- (BOOL)showsRichContentOnCollapsedTabGroupChips {
+    return NO;
+}
+
 - (void)drawMinimalCollapsedTabGroupChip:(PSMTabBarCell *)chip
                              memberCount:(NSInteger)count
                                  groupID:(NSString *)gid

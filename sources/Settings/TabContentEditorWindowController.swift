@@ -436,7 +436,7 @@ final class TabContentEditorWindowController: NSWindowController {
                                    defaultValue: "Reset to Default",
                                    comment: "Button that puts a tab content line back the way it is when first added: its size, text, and style")
         resetButton.target = self
-        resetButton.action = #selector(reset(_:))
+        resetButton.action = #selector(resetLineToDefault(_:))
 
         textField.widthAnchor.constraint(greaterThanOrEqualToConstant: 240).isActive = true
         return Self.form([
@@ -936,7 +936,9 @@ final class TabContentEditorWindowController: NSWindowController {
         updateEditor()
     }
 
-    @objc private func reset(_ sender: Any?) {
+    // Not reset(_:), which is a First Responder action (the terminal's Reset)
+    // that this window would take over while it's key.
+    @objc private func resetLineToDefault(_ sender: Any?) {
         guard let index = selectedIndex else {
             return
         }
