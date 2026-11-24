@@ -147,3 +147,7 @@ Bug Fixes:
   nothing when it can’t reach iTerm2. Reconnect
   to the host with SSH Integration to get the
   fix. Issue 13236.
+- A Select Menu Item key binding whose menu
+  item was disabled could fire a different menu
+  item with the same title, such as an Action
+  named after it. It now does nothing.
