@@ -200,6 +200,12 @@ Bug Fixes:
   if you pressed Return. Reported titles now
   have shell punctuation such as &, $, and
   quotes replaced with spaces.
+- If a profile was missing one of its text,
+  background, or selection colors, colors
+  changed during an SSH Integration session
+  were not put back when it ended, and a
+  restored session lost the colors saved with
+  XTPUSHCOLORS.
 - Right-to-left text no longer flashes
   unreordered while a program that uses
   synchronized updates (such as Claude Code)

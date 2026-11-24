@@ -150,15 +150,28 @@ public class SavedColorsSlot: NSObject, Codable {
         case _indexedColors
     }
 
-    // Every color is required, as before, so a slot written with a missing color (see
-    // MissingColor) still fails to decode.
+    // A missing color (see MissingColor) decodes as nil rather than failing the whole slot, so
+    // the other colors still come back. Before, one missing color lost the slot, and with it SSH
+    // Integration's restore when the conductor ended and the whole XTPUSHCOLORS stack of a
+    // restored session.
     public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        _text = try container.decode(CodableColor.self, forKey: ._text)
-        _background = try container.decode(CodableColor.self, forKey: ._background)
-        _selectionText = try container.decode(CodableColor.self, forKey: ._selectionText)
-        _selectionBackground = try container.decode(CodableColor.self, forKey: ._selectionBackground)
+        _text = try Self.decodeColor(forKey: ._text, in: container)
+        _background = try Self.decodeColor(forKey: ._background, in: container)
+        _selectionText = try Self.decodeColor(forKey: ._selectionText, in: container)
+        _selectionBackground = try Self.decodeColor(forKey: ._selectionBackground, in: container)
         _indexedColors = try container.decode([CodableColor].self, forKey: ._indexedColors)
+    }
+
+    // An absent key or an archive that holds no color is a missing color. Anything malformed,
+    // such as the wrong type or an unreadable archive, still throws.
+    private static func decodeColor(forKey key: CodingKeys,
+                                    in container: KeyedDecodingContainer<CodingKeys>) throws -> CodableColor? {
+        do {
+            return try container.decodeIfPresent(CodableColor.self, forKey: key)
+        } catch is CodableColor.ColorNotDecodable {
+            return nil
+        }
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -181,7 +194,8 @@ public class SavedColorsSlot: NSObject, Codable {
     }
 
     // What a missing color has always been written as: CodableColor's fallback form holding the
-    // keyed archive of a nil color, which has nothing in it. It does not decode.
+    // keyed archive of a nil color, which has nothing in it. It decodes as nil. Keeping this form,
+    // rather than leaving the key out, means versions that require every color behave as before.
     private struct MissingColor: Encodable {
         enum CodingKeys: String, CodingKey {
             case fallback

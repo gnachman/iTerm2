@@ -144,9 +144,8 @@ final class iTermColorMapSavedColorsSlotTests: XCTestCase {
     }
 
     // A missing color is written as CodableColor's fallback form holding a keyed archive with
-    // nothing in it, which does not decode, so the whole slot fails to decode: SSH Integration
-    // then restores none of the saved indexed colors when the conductor ends.
-    func testASlotLackingAColorIsWrittenAsAnEmptyArchiveAndDoesNotDecode() throws {
+    // nothing in it. It decodes as a missing color, and the rest of the slot still decodes.
+    func testASlotLackingAColorIsWrittenAsAnEmptyArchiveAndDecodesWithoutIt() throws {
         let emptyArchive = NSKeyedArchiver(requiringSecureCoding: true).encodedData
         let fields = ["_text", "_background", "_selectionText", "_selectionBackground"]
         for ((missing, _), field) in zip(colors, fields) {
@@ -158,17 +157,118 @@ final class iTermColorMapSavedColorsSlotTests: XCTestCase {
             for other in fields where other != field {
                 XCTAssertEqual((plist[other] as? [String: Any])?.keys.sorted(), ["hexString"], "missing \(missing), \(other)")
             }
-            XCTAssertNil(SavedColorsSlot.from(data: data), "missing \(missing)")
+            let decoded = try XCTUnwrap(SavedColorsSlot.from(data: data), "missing \(missing)")
+            for (key, _) in colors {
+                let color = slotColors(decoded)[key] ?? nil
+                if key == missing {
+                    XCTAssertNil(color, "missing \(missing)")
+                } else {
+                    XCTAssertNotNil(color, "missing \(missing), key \(key)")
+                }
+            }
+            XCTAssertEqual(decoded.indexedColors.count, slot.indexedColors.count, "missing \(missing)")
         }
     }
 
-    // XTPUSHCOLORS's stack is saved with the terminal's state. One such slot in it makes the whole
-    // stack fail to decode, so a restored session's stack is empty.
-    func testAStackHoldingASlotLackingAColorDoesNotDecode() throws {
+    // XTPUSHCOLORS's stack is saved with the terminal's state. A slot lacking a color must not
+    // stop the stack from decoding, or a restored session's stack comes back empty.
+    func testAStackHoldingASlotLackingAColorDecodes() throws {
         let stack = SavedColors()
         stack.push(try XCTUnwrap(makeMap().savedColorsSlot()))
         XCTAssertNotNil(SavedColors.from(data: try XCTUnwrap(stack.plist)))
         stack.push(try XCTUnwrap(makeMap(lacking: kColorMapSelection).savedColorsSlot()))
-        XCTAssertNil(SavedColors.from(data: try XCTUnwrap(stack.plist)))
+        let decoded = try XCTUnwrap(SavedColors.from(data: try XCTUnwrap(stack.plist)))
+        XCTAssertEqual(decoded.used, 2)
+    }
+}
+
+// The two places a saved colors slot is read back, driven through the real code: SSH Integration's
+// conductor ending, and a restored session's XTPUSHCOLORS stack. In both, the screen's color map
+// lacks one of the four colors (as when a profile's value for it is not a color dictionary).
+final class SavedColorsSlotMissingColorRestoreTests: XCTestCase {
+    private let red = NSColor(srgbRed: 1, green: 0, blue: 0, alpha: 1)
+    private let blue = NSColor(srgbRed: 0, green: 0, blue: 1, alpha: 1)
+    // XTPOPCOLORS restores indexed colors 16 and up through the color map; 0-15 go through the
+    // profile (screenRestoreColorsFromSlot:), so use one above 15.
+    private let indexedKey = kColorMap8bitBase + 20
+
+    private func feed(_ harness: TerminalTestHarness, _ string: String) {
+        harness.send(Array(string.utf8))
+        harness.sync()
+    }
+
+    /// Gives the map three of the four colors (no selection color) and sets the indexed color.
+    private func setColorsLackingSelection(_ harness: TerminalTestHarness, indexed: NSColor) {
+        harness.screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.setColor(self.red, forKey: Int32(kColorMapForeground))
+            mutableState.setColor(self.blue, forKey: Int32(kColorMapBackground))
+            mutableState.setColor(self.red, forKey: Int32(kColorMapSelectedText))
+            // NSNull removes the key, as setColorsFromDictionary: does for the app.
+            mutableState.setColorsFrom([NSNumber(value: kColorMapSelection): NSNull()],
+                                       harmonize: false)
+            mutableState.setColor(indexed, forKey: Int32(self.indexedKey))
+        })
+        harness.sync()
+    }
+
+    private func setIndexed(_ harness: TerminalTestHarness, _ color: NSColor) {
+        harness.screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.setColor(color, forKey: Int32(self.indexedKey))
+        })
+        harness.sync()
+    }
+
+    private func indexedHex(_ harness: TerminalTestHarness) -> String? {
+        var hex: String?
+        harness.screen.performBlock(joinedThreads: { _, mutableState, _ in
+            hex = mutableState.colorMap.color(forKey: self.indexedKey)?.hexString()
+        })
+        return hex
+    }
+
+    // SSH Integration saves the terminal's state when a conductor hooks and puts it back when the
+    // conductor ends. The saved colors must come back even though the map lacked one color.
+    func testSSHIntegrationRestoresSavedColorsWhenTheMapLackedAColor() throws {
+        let harness = TerminalTestHarness()
+        setColorsLackingSelection(harness, indexed: red)
+        var saved: [AnyHashable: Any]?
+        harness.screen.performBlock(joinedThreads: { _, mutableState, _ in
+            saved = mutableState.savedState() as? [AnyHashable: Any]
+        })
+        let savedState = try XCTUnwrap(saved)
+
+        setIndexed(harness, blue)
+        XCTAssertEqual(indexedHex(harness), blue.hexString())
+
+        harness.screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.restore(fromSavedState: savedState)
+        })
+        harness.sync()
+        XCTAssertEqual(indexedHex(harness), red.hexString(),
+                       "the conductor ending must restore the saved indexed color")
+    }
+
+    // XTPUSHCOLORS's stack is saved with the terminal's state. After a restore, XTPOPCOLORS must
+    // still find the pushed slot even though the map lacked one color when it was pushed.
+    func testRestoredSessionKeepsXTPUSHCOLORSStackWhenTheMapLackedAColor() throws {
+        let source = TerminalTestHarness()
+        setColorsLackingSelection(source, indexed: red)
+        feed(source, "\u{1b}[#P")
+        var state: [AnyHashable: Any]?
+        source.screen.performBlock(joinedThreads: { terminal, _, _ in
+            state = terminal?.stateDictionary as? [AnyHashable: Any]
+        })
+        let stateDictionary = try XCTUnwrap(state)
+
+        let destination = TerminalTestHarness()
+        destination.screen.performBlock(joinedThreads: { terminal, _, _ in
+            terminal?.setStateFrom(stateDictionary)
+        })
+        destination.sync()
+        setIndexed(destination, blue)
+
+        feed(destination, "\u{1b}[#Q")
+        XCTAssertEqual(indexedHex(destination), red.hexString(),
+                       "XTPOPCOLORS after a restore must pop the slot pushed before it")
     }
 }
