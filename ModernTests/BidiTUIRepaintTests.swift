@@ -450,4 +450,104 @@ class BidiTUIRepaintTests: XCTestCase {
         XCTAssertEqual(histRow1.visual, gridRow1.visual,
                        "continuation row must render the same from history as on the grid, not scrambled")
     }
+
+    // A TUI that brackets each repaint in a synchronized update (DECSET 2026)
+    // makes the terminal draw a saved copy of the grid until the update ends.
+    // The saved copy is taken between syncs, when the grid's bidi tables are
+    // not marked dirty. It has to carry them anyway. Otherwise every RTL row
+    // is drawn unreordered for as long as the saved copy is on screen, which
+    // shows up as the whole page flashing while you type.
+    func testSynchronizedUpdateSnapshotKeepsBidiInfo() {
+        let screen = makeScreen()
+        // The sync at the end of the joined block computes the row's bidi info
+        // and copies it to the main-thread state.
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.appendString(atCursor: self.persian)
+            mutableState.appendCarriageReturnLineFeed()
+        })
+        let live = screen.bidiInfo(forLine: 0)
+        assertHasRTLRuns(live, "live grid before the synchronized update")
+
+        // Begin a synchronized update. The sync at the end of this block hands
+        // the saved grid to the main-thread state.
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            // Keep the one-second expiration timer out of the test.
+            mutableState.unconditionalTemporaryDoubleBuffer.manualExpirationForTesting = true
+            mutableState.terminalSynchronizedUpdate(true)
+        })
+
+        // What the renderer consumes while the update is open.
+        var drewSavedGrid = false
+        var saved: BidiDisplayInfoObjc?
+        screen.performBlock(savedGrid: { state in
+            drewSavedGrid = (state != nil)
+            saved = screen.bidiInfo(forLine: 0)
+        })
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.terminalSynchronizedUpdate(false)
+        })
+
+        XCTAssertTrue(drewSavedGrid, "probe: the saved grid must be in use during a synchronized update")
+        XCTAssertEqual(saved, live,
+                       "the saved grid must draw the row with the same bidi info as the live grid")
+    }
+
+    // Rewrites row 0 and begins a synchronized update in one joined block, as
+    // happens when the new text and CSI ? 2026 h arrive in the same read. The
+    // saved grid is copied before the end-of-block sync recomputes bidi for
+    // the rewritten row. Returns the saved grid's bidi info for row 0 and the
+    // live grid's after the sync.
+    private func rewriteRowAndBeginSynchronizedUpdate(
+        _ screen: VT100Screen,
+        to text: String) -> (saved: BidiDisplayInfoObjc?, live: BidiDisplayInfoObjc?) {
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.appendString(atCursor: self.persian)
+            mutableState.appendCarriageReturnLineFeed()
+        })
+        assertHasRTLRuns(screen.bidiInfo(forLine: 0), "row 0 before the rewrite")
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.unconditionalTemporaryDoubleBuffer.manualExpirationForTesting = true
+            mutableState.cursorUp(1, andToStartOfLine: true)
+            mutableState.eraseLine(beforeCursor: true, afterCursor: true, decProtect: false)
+            mutableState.appendString(atCursor: text)
+            mutableState.terminalSynchronizedUpdate(true)
+        })
+        let live = screen.bidiInfo(forLine: 0)
+
+        var drewSavedGrid = false
+        var saved: BidiDisplayInfoObjc?
+        screen.performBlock(savedGrid: { state in
+            drewSavedGrid = (state != nil)
+            saved = screen.bidiInfo(forLine: 0)
+        })
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.terminalSynchronizedUpdate(false)
+        })
+        XCTAssertTrue(drewSavedGrid, "probe: the saved grid must be in use during a synchronized update")
+        return (saved, live)
+    }
+
+    // A row that held RTL text is rewritten with LTR text in the same read
+    // that begins the update. The saved grid must not keep the old reorder
+    // table, which would draw the new text scrambled.
+    func testSynchronizedUpdateSnapshotDropsStaleBidiInfoForRewrittenRow() {
+        let screen = makeScreen()
+        let (saved, live) = rewriteRowAndBeginSynchronizedUpdate(screen, to: "hello world")
+        XCTAssertNil(live, "probe: an LTR row has no bidi info")
+        XCTAssertNil(saved, "the saved grid must not keep the old row’s reorder table")
+    }
+
+    // A row is rewritten with different RTL text in the same read that begins
+    // the update. The saved grid must draw it with a table built for the new
+    // text, not the old one and not none.
+    func testSynchronizedUpdateSnapshotRefreshesBidiInfoForRewrittenRow() {
+        let screen = makeScreen()
+        let (saved, live) = rewriteRowAndBeginSynchronizedUpdate(screen, to: mixed)
+        assertHasRTLRuns(live, "live grid after the rewrite")
+        XCTAssertEqual(saved, live,
+                       "the saved grid must draw the rewritten row with bidi info for its new text")
+    }
 }

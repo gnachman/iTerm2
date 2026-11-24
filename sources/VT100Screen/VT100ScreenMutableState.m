@@ -9041,6 +9041,13 @@ launchCoprocessWithCommand:(NSString *)command
 - (PTYTextViewSynchronousUpdateState *)temporaryDoubleBufferedGridSavedState {
     PTYTextViewSynchronousUpdateState *state = [[PTYTextViewSynchronousUpdateState alloc] init];
 
+    // Text written since the last sync has not had its bidi recomputed yet, so the grid's tables
+    // for those lines describe their old contents. The copy keeps whatever tables the grid has
+    // and is drawn until the update ends, so bring them up to date first. The next sync recomputes
+    // the same lines again, since they are still dirty.
+    if ([iTermPreferences bidiEnabled]) {
+        [self populateRTLStateIfNeeded];
+    }
     state.grid = self.currentGrid.copy;
     // The grid can't be copied later unless it has a delegate. Use _state since it is an immutable snapshot of this point in time.
     state.grid.delegate = self;

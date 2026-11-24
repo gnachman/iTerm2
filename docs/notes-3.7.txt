@@ -157,3 +157,8 @@ Bug Fixes:
   ran as a command if you pressed Return.
   iTerm2’s replies to these programs no longer
   include text the program sent.
+- Right-to-left text no longer flashes
+  unreordered while a program that uses
+  synchronized updates (such as Claude Code)
+  repaints the screen. Thanks to Nimanou
+  (nuved) for the fix.
