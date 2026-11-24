@@ -130,6 +130,9 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 @property(nonatomic, copy) NSString *currentBlockIDList;
 @property(nonatomic, readonly) screen_char_t defaultChar;
 @property(nonatomic, readonly) screen_char_t processedDefaultChar;
+// Attribute for cells filled with defaultChar. Non-nil only when defaultChar's
+// colors are dual-mode (ColorModeExternal), so the light/dark pair survives erase.
+@property(nonatomic, readonly) iTermExternalAttribute *defaultExternalAttribute;
 
 @property(atomic) BOOL dirty;
 typedef NS_ENUM(NSUInteger, VT100TerminalFramerRecoveryMode) {

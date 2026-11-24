@@ -1292,6 +1292,7 @@ static int VT100TerminalSaturatingAdd(int a, int b) {
     c.image = 0;
     c.virtualPlaceholder = NO;
     _defaultChar = c;
+    _defaultExternalAttribute = VT100GraphicRenditionEraseExternalAttribute(&graphicRendition_);
 
     CopyForegroundColor(&c, self.foregroundColorCode);
     CopyBackgroundColor(&c, self.backgroundColorCode);

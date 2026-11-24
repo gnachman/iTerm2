@@ -1908,7 +1908,8 @@ static BOOL sOSC7DisabledWarningShown;
                                                  VT100GridCoordMake(x2, y2),
                                                  self.currentGrid.size.width);
     if (shouldHonorProtected) {
-        const BOOL foundProtected = [self selectiveEraseRange:VT100GridCoordRangeMake(x1, yStart, x2, y2)
+        // x2 is inclusive but a coord range's end is exclusive.
+        const BOOL foundProtected = [self selectiveEraseRange:VT100GridCoordRangeMake(x1, yStart, x2 + 1, y2)
                                               eraseAttributes:YES];
         const BOOL eraseAll = (x1 == 0 && yStart == 0 && x2 == self.currentGrid.size.width - 1 && y2 == self.currentGrid.size.height - 1);
         if (!foundProtected && eraseAll) {  // xterm has this logic, so we do too. My guess is that it's an optimization.
@@ -1995,9 +1996,10 @@ static BOOL sOSC7DisabledWarningShown;
     }
 
     if (shouldHonorProtected) {
+        // x2 is inclusive but a coord range's end is exclusive.
         [self selectiveEraseRange:VT100GridCoordRangeMake(x1,
                                                           self.currentGrid.cursor.y,
-                                                          x2,
+                                                          x2 + 1,
                                                           self.currentGrid.cursor.y)
                   eraseAttributes:YES];
     } else {
@@ -2077,6 +2079,7 @@ static BOOL sOSC7DisabledWarningShown;
 - (BOOL)selectiveEraseRange:(VT100GridCoordRange)range eraseAttributes:(BOOL)eraseAttributes {
     __block BOOL foundProtected = NO;
     const screen_char_t dc = self.currentGrid.defaultChar;
+    iTermExternalAttribute *fillEA = eraseAttributes ? [self.currentGrid externalAttributeForFillChar:&dc] : nil;
     [self.currentGrid mutateCharactersInRange:range
                                       dwcFree:YES
                                         block:^(screen_char_t *sct,
@@ -2087,7 +2090,7 @@ static BOOL sOSC7DisabledWarningShown;
             foundProtected = YES;
             return;
         }
-        VT100ScreenEraseCell(sct, eaOut, eraseAttributes, &dc);
+        VT100ScreenEraseCell(sct, eaOut, eraseAttributes, &dc, fillEA);
     }];
     [self clearTriggerLine];
     return foundProtected;
@@ -2096,11 +2099,12 @@ static BOOL sOSC7DisabledWarningShown;
 void VT100ScreenEraseCell(screen_char_t *sct,
                           iTermExternalAttribute **eaOut,
                           BOOL eraseAttributes,
-                          const screen_char_t *defaultChar) {
+                          const screen_char_t *defaultChar,
+                          iTermExternalAttribute *fillAttribute) {
     if (eraseAttributes) {
         *sct = *defaultChar;
         sct->code = ' ';
-        *eaOut = nil;
+        *eaOut = fillAttribute;
         return;
     }
     sct->code = ' ';
@@ -2951,7 +2955,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         if (self.protectedMode == VT100TerminalProtectedModeDEC && sct->guarded) {
             return;
         }
-        VT100ScreenEraseCell(sct, eaOut, NO, &dc);
+        VT100ScreenEraseCell(sct, eaOut, NO, &dc, nil);
     }];
     [self clearTriggerLine];
 }
@@ -8881,6 +8885,10 @@ launchCoprocessWithCommand:(NSString *)command
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenDidResize];
     } name:@"grid did resize"];
+}
+
+- (iTermExternalAttribute *)gridDefaultExternalAttribute {
+    return self.terminal.defaultExternalAttribute;
 }
 
 #pragma mark - VT100InlineImageHelperDelegate

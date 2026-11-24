@@ -144,6 +144,13 @@ VT100GraphicRendition VT100GraphicRenditionFromCharacter(const screen_char_t *c,
 iTermDualModeColor VT100GraphicRenditionDualModeFg(const VT100GraphicRendition *r);
 iTermDualModeColor VT100GraphicRenditionDualModeBg(const VT100GraphicRendition *r);
 
+// The external attribute that cells filled with the current background (by
+// erasing, scrolling, inserting, etc.) must carry so their ColorModeExternal
+// colors resolve. Holds only the unreversed dual-mode colors, never a URL or
+// other per-character attribute. Nil when the rendition has no dual-mode
+// colors, which is the normal case.
+iTermExternalAttribute *VT100GraphicRenditionEraseExternalAttribute(const VT100GraphicRendition *r);
+
 // Updates the foreground attributes of c
 void VT100GraphicRenditionUpdateForeground(const VT100GraphicRendition *rendition, BOOL applyReverse, BOOL protectedMode, screen_char_t *c);
 

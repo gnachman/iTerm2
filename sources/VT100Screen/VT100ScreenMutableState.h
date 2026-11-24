@@ -247,10 +247,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)moveScreenContentToBottom;
 - (void)removeLastLine;
 
+// fillAttribute is what an attribute-erased cell gets: the grid's
+// -externalAttributeForFillChar: for defaultChar (normally nil).
 void VT100ScreenEraseCell(screen_char_t *sct,
                           iTermExternalAttribute * _Nullable * _Nonnull eaOut,
                           BOOL eraseAttributes,
-                          const screen_char_t *defaultChar);
+                          const screen_char_t *defaultChar,
+                          iTermExternalAttribute * _Nullable fillAttribute);
 
 #pragma mark Bell
 

@@ -197,3 +197,11 @@ Bug Fixes:
 - Changing the theme could freeze iTerm2 for a
   long time after many tabs had been opened,
   even ones already closed. Issue 13233.
+- A background color with separate light and
+  dark mode values (SGR 48:12 or 48:13) used
+  the light value in dark mode in cells that
+  were erased, scrolled in, or added by making
+  the window bigger. Issue 13231.
+- In protected mode, erasing a line or the
+  screen skipped the last column, and erasing
+  up to the cursor left the cursor’s cell.

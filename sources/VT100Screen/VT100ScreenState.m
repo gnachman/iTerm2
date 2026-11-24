@@ -1793,5 +1793,10 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
 - (void)gridDidResize {
 }
 
+- (iTermExternalAttribute *)gridDefaultExternalAttribute {
+    // Read-only state never fills cells.
+    return nil;
+}
+
 @end
 

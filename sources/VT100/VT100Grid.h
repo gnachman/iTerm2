@@ -24,6 +24,9 @@
 - (iTermUnicodeNormalization)gridUnicodeNormalizationForm;
 - (void)gridCursorDidChangeLineFrom:(int)previuos;
 - (void)gridDidResize;
+// The attribute for cells filled with the grid's defaultChar when its colors are
+// dual-mode (ColorModeExternal). Only consulted in that case.
+- (iTermExternalAttribute *)gridDefaultExternalAttribute;
 @end
 
 @protocol VT100GridReading<NSCopying, NSObject>
@@ -225,6 +228,11 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 
 // Did the whole screen scroll up? Won't be reflected in dirty bits.
 @property(nonatomic, assign) BOOL haveScrolled;
+
+// The external attribute cells filled with `c` need so their dual-mode colors
+// resolve. Nil unless `c` has ColorModeExternal colors equal to defaultChar's,
+// so the normal case costs only a color-mode check.
+- (iTermExternalAttribute *)externalAttributeForFillChar:(const screen_char_t *)c;
 
 // Serialized state, but excludes screen contents.
 // DEPRECATED - use encode: instead.

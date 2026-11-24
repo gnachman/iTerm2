@@ -407,17 +407,7 @@ VT100TerminalColorValue VT100TerminalColorValueFromCSI(CSIParam *csi, int *index
     };
 }
 
-iTermDualModeColor VT100GraphicRenditionDualModeFg(const VT100GraphicRendition *r) {
-    if (r->reversed) {
-        if (!r->hasDualModeBg) {
-            return (iTermDualModeColor){ 0 };
-        }
-        return (iTermDualModeColor){
-            .valid = YES,
-            .light = { .red = r->bgColorCode, .green = r->bgGreen, .blue = r->bgBlue, .mode = r->bgColorMode },
-            .dark = { .red = r->bgDarkColorCode, .green = r->bgDarkGreen, .blue = r->bgDarkBlue, .mode = r->bgDarkColorMode },
-        };
-    }
+static iTermDualModeColor VT100GraphicRenditionStoredDualModeFg(const VT100GraphicRendition *r) {
     if (!r->hasDualModeFg) {
         return (iTermDualModeColor){ 0 };
     }
@@ -428,17 +418,7 @@ iTermDualModeColor VT100GraphicRenditionDualModeFg(const VT100GraphicRendition *
     };
 }
 
-iTermDualModeColor VT100GraphicRenditionDualModeBg(const VT100GraphicRendition *r) {
-    if (r->reversed) {
-        if (!r->hasDualModeFg) {
-            return (iTermDualModeColor){ 0 };
-        }
-        return (iTermDualModeColor){
-            .valid = YES,
-            .light = { .red = r->fgColorCode, .green = r->fgGreen, .blue = r->fgBlue, .mode = r->fgColorMode },
-            .dark = { .red = r->fgDarkColorCode, .green = r->fgDarkGreen, .blue = r->fgDarkBlue, .mode = r->fgDarkColorMode },
-        };
-    }
+static iTermDualModeColor VT100GraphicRenditionStoredDualModeBg(const VT100GraphicRendition *r) {
     if (!r->hasDualModeBg) {
         return (iTermDualModeColor){ 0 };
     }
@@ -447,6 +427,35 @@ iTermDualModeColor VT100GraphicRenditionDualModeBg(const VT100GraphicRendition *
         .light = { .red = r->bgColorCode, .green = r->bgGreen, .blue = r->bgBlue, .mode = r->bgColorMode },
         .dark = { .red = r->bgDarkColorCode, .green = r->bgDarkGreen, .blue = r->bgDarkBlue, .mode = r->bgDarkColorMode },
     };
+}
+
+iTermDualModeColor VT100GraphicRenditionDualModeFg(const VT100GraphicRendition *r) {
+    if (r->reversed) {
+        return VT100GraphicRenditionStoredDualModeBg(r);
+    }
+    return VT100GraphicRenditionStoredDualModeFg(r);
+}
+
+iTermDualModeColor VT100GraphicRenditionDualModeBg(const VT100GraphicRendition *r) {
+    if (r->reversed) {
+        return VT100GraphicRenditionStoredDualModeFg(r);
+    }
+    return VT100GraphicRenditionStoredDualModeBg(r);
+}
+
+iTermExternalAttribute *VT100GraphicRenditionEraseExternalAttribute(const VT100GraphicRendition *r) {
+    if (!r->hasDualModeFg && !r->hasDualModeBg) {
+        return nil;
+    }
+    // Matches VT100GraphicRenditionUpdateForeground/Background with applyReverse=NO,
+    // which is how the terminal's default (erase) character gets its colors.
+    return [iTermExternalAttribute attributeHavingUnderlineColor:NO
+                                                  underlineColor:(VT100TerminalColorValue){ 0 }
+                                                             url:nil
+                                                     blockIDList:nil
+                                                     controlCode:nil
+                                              dualModeForeground:VT100GraphicRenditionStoredDualModeFg(r)
+                                              dualModeBackground:VT100GraphicRenditionStoredDualModeBg(r)];
 }
 
 VT100GraphicRendition VT100GraphicRenditionFromCharacter(const screen_char_t *c, iTermExternalAttribute *attr) {

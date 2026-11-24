@@ -383,6 +383,53 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
     }
 }
 
+static inline BOOL VT100GridCharsHaveSameColors(const screen_char_t *a, const screen_char_t *b) {
+    return (a->foregroundColor == b->foregroundColor &&
+            a->fgGreen == b->fgGreen &&
+            a->fgBlue == b->fgBlue &&
+            a->foregroundColorMode == b->foregroundColorMode &&
+            a->backgroundColor == b->backgroundColor &&
+            a->bgGreen == b->bgGreen &&
+            a->bgBlue == b->bgBlue &&
+            a->backgroundColorMode == b->backgroundColorMode);
+}
+
+- (iTermExternalAttribute *)externalAttributeForFillChar:(const screen_char_t *)c {
+    if (c->foregroundColorMode != ColorModeExternal && c->backgroundColorMode != ColorModeExternal) {
+        return nil;
+    }
+    if (!VT100GridCharsHaveSameColors(c, &_defaultChar)) {
+        return nil;
+    }
+    return [delegate_ gridDefaultExternalAttribute];
+}
+
+// Lines cleared by copying defaultChar lose their external attributes when their
+// metadata is reset. Give them the dual-mode attribute, if any.
+- (void)setFillExternalAttribute:(iTermExternalAttribute *)ea onClearedLine:(int)lineNumber {
+    [[self externalAttributesOnLine:lineNumber createIfNeeded:YES] setAttributes:ea
+                                                                             at:0
+                                                                          count:size_.width];
+}
+
+// Gives fillEA to cells on the line that have fill's colors but no external
+// attribute: cells left holding the fill character after content was copied
+// over part of the row. Content cells with dual-mode colors already have one.
+- (void)setFillExternalAttribute:(iTermExternalAttribute *)fillEA
+       onUnattributedCellsOfLine:(int)lineNumber
+                            like:(const screen_char_t *)fill {
+    const screen_char_t *line = [self immutableScreenCharsAtLineNumber:lineNumber];
+    iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:lineNumber createIfNeeded:YES];
+    for (int x = 0; x < size_.width; x++) {
+        if (eaIndex[x] != nil) {
+            continue;
+        }
+        if (VT100GridCharsHaveSameColors(&line[x], fill)) {
+            [eaIndex setAttributes:fillEA at:x count:1];
+        }
+    }
+}
+
 - (void)clearAllWithChar:(screen_char_t)c {
     [self setLineAttribute:iTermLineAttributeSingleWidth
                onLinesFrom:0
@@ -906,6 +953,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     // Clear the bottom lines which have scrolled in.
     const int height = self.size.height;
     const screen_char_t *first = nil;
+    iTermExternalAttribute *fillEA = [self externalAttributeForFillChar:&_defaultChar];
     for (int i = 0; i <= y; i++) {
         const int line = height - i - 1;
         screen_char_t *chars = VT100GridScreenCharsAtLine(self, line);
@@ -917,6 +965,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         }
         const int j = VT100GridLineInfoIndex(self, line);
         [lineInfos_[j] resetMetadata];
+        if (fillEA) {
+            [self setFillExternalAttribute:fillEA onClearedLine:line];
+        }
     }
 
     // Advance the generation of the recycled (now-blank) lines. setAllDirty:YES
@@ -956,6 +1007,10 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         const int i = VT100GridLineInfoIndex(self, size_.height - 1);
         if (i >= 0) {
             [lineInfos_[i] resetMetadata];
+            iTermExternalAttribute *fillEA = [self externalAttributeForFillChar:&_defaultChar];
+            if (fillEA) {
+                [self setFillExternalAttribute:fillEA onClearedLine:size_.height - 1];
+            }
         }
     }
 
@@ -1258,6 +1313,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
   externalAttributes:(iTermExternalAttribute *)attrs {
     if (unsafeFrom.x > unsafeTo.x || unsafeFrom.y > unsafeTo.y) {
         return;
+    }
+    if (!attrs) {
+        attrs = [self externalAttributeForFillChar:&c];
     }
     if (c.complexChar || c.code > 127) {
         [self resetDWCFreeCount];
@@ -2395,6 +2453,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 
     screen_char_t *defaultLine = [[self lineOfWidth:size_.width
                                      filledWithChar:defaultChar] mutableBytes];
+    // Popped lines rarely fill the width; the rest of each row keeps defaultChar.
+    iTermExternalAttribute *fillEA = [self externalAttributeForFillChar:&defaultChar];
 
     BOOL foundCursor = NO;
     BOOL prevLineStartsWithDoubleWidth = NO;
@@ -2429,6 +2489,9 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                                      continuation:&continuation]);
         iTermImmutableMetadataDeriveLineAttributeFromExternalAttributes(&metadata);
         [[self lineInfoAtLineNumber:destLineNumber] setMetadataFromImmutable:metadata];
+        if (fillEA) {
+            [self setFillExternalAttribute:fillEA onUnattributedCellsOfLine:destLineNumber like:&defaultChar];
+        }
         if (cont && dest[size_.width - 1].code == 0 && prevLineStartsWithDoubleWidth) {
             // If you pop a soft-wrapped line that's a character short and the
             // line below it starts with a DWC, it's safe to conclude that a DWC
@@ -3257,6 +3320,12 @@ static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
         VT100GridDidChangeContent(&_contentGeneration);
         lines_ = [self linesWithSize:newSize];
         lineInfos_ = [self lineInfosWithSize:newSize];
+        iTermExternalAttribute *fillEA = [self externalAttributeForFillChar:&_defaultChar];
+        if (fillEA) {
+            for (int y = 0; y < size_.height; y++) {
+                [self setFillExternalAttribute:fillEA onClearedLine:y];
+            }
+        }
 
         scrollRegionRows_.location = MIN(scrollRegionRows_.location, size_.height - 1);
         scrollRegionRows_.length = MIN(scrollRegionRows_.length,
@@ -3514,8 +3583,15 @@ static void DumpBuf(screen_char_t* p, int n) {
                              at:VT100GridCoordMake(i, lineNumber)
                 updateTimestamp:YES];
         }
-        [self eraseExternalAttributesAt:VT100GridCoordMake(offset, lineNumber)
-                                  count:dwcRightOffset - offset + 1];
+        iTermExternalAttribute *fillEA = [self externalAttributeForFillChar:&c];
+        if (fillEA) {
+            [[self externalAttributesOnLine:lineNumber createIfNeeded:YES] setAttributes:fillEA
+                                                                                     at:offset
+                                                                                  count:dwcRightOffset - offset + 1];
+        } else {
+            [self eraseExternalAttributesAt:VT100GridCoordMake(offset, lineNumber)
+                                      count:dwcRightOffset - offset + 1];
+        }
 
         if (offset == 0 && lineNumber > 0) {
             [self erasePossibleSplitDwcAtLineNumber:lineNumber - 1];
