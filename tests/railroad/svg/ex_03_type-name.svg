@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="railroad" viewBox="0 0 586 104">
+<style type="text/css">
+svg.railroad {
+background-color: hsl(30, 20%, 95%);
+background-size: 15px 15px;
+background-image: linear-gradient(to right, rgba(30, 30, 30, .05) 1px, transparent 1px),
+		  linear-gradient(to bottom, rgba(30, 30, 30, .05) 1px, transparent 1px);
+}
+
+svg.railroad rect.railroad_canvas {
+stroke-width: 0px;
+fill: none;
+}
+
+svg.railroad path {
+stroke-width: 3px;
+stroke: black;
+fill: none;
+}
+
+svg.railroad .continuation circle,
+svg.railroad .continuation-start circle,
+svg.railroad .continuation-end circle {
+fill: black;
+stroke: none;
+}
+
+svg.railroad .debug {
+stroke-width: 1px;
+stroke: red;
+}
+
+svg.railroad text {
+font: 14px monospace;
+text-anchor: middle;
+}
+
+svg.railroad .nonterminal text {
+font-weight: bold;
+}
+
+svg.railroad text.comment {
+font: italic 12px monospace;
+}
+
+svg.railroad rect,
+svg.railroad .annotation > path.annotation-marker {
+stroke-width: 3px;
+stroke: black;
+fill:hsl(-290, 70%, 90%);
+}
+
+svg.railroad g.labeledbox > rect,
+svg.railroad .annotation > path.annotation-connector {
+stroke-width: 1px;
+stroke: grey;
+stroke-dasharray: 5px;
+fill: rgb(90, 90, 150);
+fill-opacity: .1;
+}
+
+svg.railroad .annotation > path.annotation-connector {
+fill: none;
+}
+
+/* Annotation markers use wavy arrows distinct from rail traversal arrows. */
+
+svg.railroad .annotation > path.annotation-direction {
+stroke-width: 2px;
+stroke: black;
+}
+</style>
+<rect width="100%" height="100%" class="railroad_canvas"/>
+<g class="sequence">
+<path d=" M 10 26 a 5 5 0 0 1 5 -5 a 5 5 0 0 1 5 5 a 5 5 0 0 1 -5 5 a 5 5 0 0 1 -5 -5 m 10 0 h 5"/>
+<g class="sequence">
+<g class="repeat">
+<path d=" M 35 26 h 5 h 12 m 52 0 h 12 h 5 m -17 0 a 12 12 0 0 1 12 12 v 0 a 12 12 0 0 1 -12 12 m 0 0 h -52 m 29 0 l 5 -5 m 0 10 l -5 -5 m -29 0 a 12 12 0 0 1 -12 -12 v 0 a 12 12 0 0 1 12 -12"/>
+<g>
+</g>
+<g class="nonterminal">
+<rect x="52" y="15" height="22" width="52"/>
+<text x="78" y="31">
+name</text>
+</g>
+</g>
+<g class="choice">
+<path d=" M 131 26 h 24 m 0 0 l 396 0"/>
+<g>
+</g>
+<path d=" M 131 26 a 12 12 0 0 1 12 12 v 0 m 396 0 v 0 a 12 12 0 0 1 12 -12"/>
+<path d=" M 143 38 v 33 m 396 0 v -33"/>
+<path d=" M 143 38 v 0 a 12 12 0 0 0 12 12 m 200 0 h 172 m -83 0 l -5 -5 m 0 10 l 5 -5 m 83 0 a 12 12 0 0 0 12 -12 v 0"/>
+<g class="sequence">
+<g class="terminal">
+<rect x="155" y="39" height="22" width="28" rx="10" ry="10"/>
+<text x="169" y="55">
+(</text>
+</g>
+<g class="nonterminal">
+<rect x="193" y="39" height="22" width="124"/>
+<text x="255" y="55">
+signed-number</text>
+</g>
+<g class="terminal">
+<rect x="327" y="39" height="22" width="28" rx="10" ry="10"/>
+<text x="341" y="55">
+)</text>
+</g>
+<path d=" M 183 50 h 10"/>
+<path d=" M 317 50 h 10"/>
+</g>
+<path d=" M 143 71 v 0 a 12 12 0 0 0 12 12 m 372 0 h 0 a 12 12 0 0 0 12 -12 v 0"/>
+<g class="sequence">
+<g class="terminal">
+<rect x="155" y="72" height="22" width="28" rx="10" ry="10"/>
+<text x="169" y="88">
+(</text>
+</g>
+<g class="nonterminal">
+<rect x="193" y="72" height="22" width="124"/>
+<text x="255" y="88">
+signed-number</text>
+</g>
+<g class="terminal">
+<rect x="327" y="72" height="22" width="28" rx="10" ry="10"/>
+<text x="341" y="88">
+,</text>
+</g>
+<g class="nonterminal">
+<rect x="365" y="72" height="22" width="124"/>
+<text x="427" y="88">
+signed-number</text>
+</g>
+<g class="terminal">
+<rect x="499" y="72" height="22" width="28" rx="10" ry="10"/>
+<text x="513" y="88">
+)</text>
+</g>
+<path d=" M 183 83 h 10"/>
+<path d=" M 317 83 h 10"/>
+<path d=" M 355 83 h 10"/>
+<path d=" M 489 83 h 10"/>
+</g>
+</g>
+<path d=" M 121 26 h 10"/>
+</g>
+<path d=" M 561 26 h 5 a 5 5 0 0 1 5 -5 a 5 5 0 0 1 5 5 a 5 5 0 0 1 -5 5 a 5 5 0 0 1 -5 -5"/>
+<path d=" M 25 26 h 10"/>
+<path d=" M 551 26 h 10"/>
+</g>
+</svg>

@@ -1,0 +1,1 @@
+{"[tab]", "[line feed]", "[carriage return]"}

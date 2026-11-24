@@ -1,0 +1,1 @@
+{"http", <!, "s">, "://", {`not`, <"[whitespace]", "/", "$", ".", "?", "#">}, "[any character]", <!, {{`not`, <"[whitespace]">}*!}>}

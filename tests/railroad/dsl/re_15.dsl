@@ -1,0 +1,1 @@
+{`start of line`, "foo", `end of line`}

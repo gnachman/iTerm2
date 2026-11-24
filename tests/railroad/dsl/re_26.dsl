@@ -1,0 +1,1 @@
+{"[whitespace]", "[non-whitespace]", "[non-digit]", "[non-word character]"}

@@ -1,0 +1,1 @@
+{{"[word character]"*!}, "@", {"[word character]"*!}, ".", "com"}

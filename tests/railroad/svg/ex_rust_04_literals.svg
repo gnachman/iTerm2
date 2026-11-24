@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="railroad" viewBox="0 0 485 259">
+<style type="text/css">
+svg.railroad {
+background-color: hsl(30, 20%, 95%);
+background-size: 15px 15px;
+background-image: linear-gradient(to right, rgba(30, 30, 30, .05) 1px, transparent 1px),
+		  linear-gradient(to bottom, rgba(30, 30, 30, .05) 1px, transparent 1px);
+}
+
+svg.railroad rect.railroad_canvas {
+stroke-width: 0px;
+fill: none;
+}
+
+svg.railroad path {
+stroke-width: 3px;
+stroke: black;
+fill: none;
+}
+
+svg.railroad .continuation circle,
+svg.railroad .continuation-start circle,
+svg.railroad .continuation-end circle {
+fill: black;
+stroke: none;
+}
+
+svg.railroad .debug {
+stroke-width: 1px;
+stroke: red;
+}
+
+svg.railroad text {
+font: 14px monospace;
+text-anchor: middle;
+}
+
+svg.railroad .nonterminal text {
+font-weight: bold;
+}
+
+svg.railroad text.comment {
+font: italic 12px monospace;
+}
+
+svg.railroad rect,
+svg.railroad .annotation > path.annotation-marker {
+stroke-width: 3px;
+stroke: black;
+fill:hsl(-290, 70%, 90%);
+}
+
+svg.railroad g.labeledbox > rect,
+svg.railroad .annotation > path.annotation-connector {
+stroke-width: 1px;
+stroke: grey;
+stroke-dasharray: 5px;
+fill: rgb(90, 90, 150);
+fill-opacity: .1;
+}
+
+svg.railroad .annotation > path.annotation-connector {
+fill: none;
+}
+
+/* Annotation markers use wavy arrows distinct from rail traversal arrows. */
+
+svg.railroad .annotation > path.annotation-direction {
+stroke-width: 2px;
+stroke: black;
+}
+</style>
+<rect width="100%" height="100%" class="railroad_canvas"/>
+<g class="verticalgrid">
+<g class="sequence">
+<path d=" M 10 21 a 5 5 0 0 1 5 -5 a 5 5 0 0 1 5 5 a 5 5 0 0 1 -5 5 a 5 5 0 0 1 -5 -5 m 10 0 h 5"/>
+<g class="sequence">
+<text class="comment" x="75" y="26">
+lit_suffix</text>
+<g class="nonterminal">
+<rect x="125" y="10" height="22" width="60"/>
+<text x="155" y="26">
+ident</text>
+</g>
+<path d=" M 115 21 h 10"/>
+</g>
+<path d=" M 195 21 h 5 a 5 5 0 0 1 5 -5 a 5 5 0 0 1 5 5 a 5 5 0 0 1 -5 5 a 5 5 0 0 1 -5 -5"/>
+<path d=" M 25 21 h 10"/>
+<path d=" M 185 21 h 10"/>
+</g>
+<g class="sequence">
+<path d=" M 10 73 a 5 5 0 0 1 5 -5 a 5 5 0 0 1 5 5 a 5 5 0 0 1 -5 5 a 5 5 0 0 1 -5 -5 m 10 0 h 5"/>
+<g class="sequence">
+<text class="comment" x="64" y="78">
+literal</text>
+<g class="sequence">
+<g class="choice">
+<path d=" M 104 73 h 24 m 100 0 h 64 m -29 0 l -5 -5 m 0 10 l 5 -5 m 29 0"/>
+<g class="nonterminal">
+<rect x="128" y="62" height="22" width="100"/>
+<text x="178" y="78">
+string_lit</text>
+</g>
+<path d=" M 104 73 a 12 12 0 0 1 12 12 v 9 m 164 0 v -9 a 12 12 0 0 1 12 -12"/>
+<path d=" M 116 94 v 33 m 164 0 v -33"/>
+<path d=" M 116 127 v 33 m 164 0 v -33"/>
+<path d=" M 116 160 v 33 m 164 0 v -33"/>
+<path d=" M 116 193 v 33 m 164 0 v -33"/>
+<path d=" M 116 94 v 0 a 12 12 0 0 0 12 12 m 84 0 h 56 m -25 0 l -5 -5 m 0 10 l 5 -5 m 25 0 a 12 12 0 0 0 12 -12 v 0"/>
+<g class="nonterminal">
+<rect x="128" y="95" height="22" width="84"/>
+<text x="170" y="111">
+char_lit</text>
+</g>
+<path d=" M 116 127 v 0 a 12 12 0 0 0 12 12 m 140 0 h 0 a 12 12 0 0 0 12 -12 v 0"/>
+<g class="nonterminal">
+<rect x="128" y="128" height="22" width="140"/>
+<text x="198" y="144">
+byte_string_lit</text>
+</g>
+<path d=" M 116 160 v 0 a 12 12 0 0 0 12 12 m 84 0 h 56 m -25 0 l -5 -5 m 0 10 l 5 -5 m 25 0 a 12 12 0 0 0 12 -12 v 0"/>
+<g class="nonterminal">
+<rect x="128" y="161" height="22" width="84"/>
+<text x="170" y="177">
+byte_lit</text>
+</g>
+<path d=" M 116 193 v 0 a 12 12 0 0 0 12 12 m 76 0 h 64 m -29 0 l -5 -5 m 0 10 l 5 -5 m 29 0 a 12 12 0 0 0 12 -12 v 0"/>
+<g class="nonterminal">
+<rect x="128" y="194" height="22" width="76"/>
+<text x="166" y="210">
+num_lit</text>
+</g>
+<path d=" M 116 226 v 0 a 12 12 0 0 0 12 12 m 84 0 h 56 m -25 0 l -5 -5 m 0 10 l 5 -5 m 25 0 a 12 12 0 0 0 12 -12 v 0"/>
+<g class="nonterminal">
+<rect x="128" y="227" height="22" width="84"/>
+<text x="170" y="243">
+bool_lit</text>
+</g>
+</g>
+<g class="optional">
+<path d=" M 302 73 h 24 m -24 0 a 12 12 0 0 0 12 -12 v 0 a 12 12 0 0 1 12 -12 h 100 m -47 0 l -5 -5 m 0 10 l 5 -5 m 47 0 a 12 12 0 0 1 12 12 v 0 a 12 12 0 0 0 12 12 h -24"/>
+<g class="nonterminal">
+<rect x="326" y="62" height="22" width="100"/>
+<text x="376" y="78">
+lit_suffix</text>
+</g>
+</g>
+<path d=" M 292 73 h 10"/>
+</g>
+<path d=" M 94 73 h 10"/>
+</g>
+<path d=" M 460 73 h 5 a 5 5 0 0 1 5 -5 a 5 5 0 0 1 5 5 a 5 5 0 0 1 -5 5 a 5 5 0 0 1 -5 -5"/>
+<path d=" M 25 73 h 10"/>
+<path d=" M 450 73 h 10"/>
+</g>
+</g>
+</svg>

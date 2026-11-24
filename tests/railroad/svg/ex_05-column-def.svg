@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="railroad" viewBox="0 0 544 109">
+<style type="text/css">
+svg.railroad {
+background-color: hsl(30, 20%, 95%);
+background-size: 15px 15px;
+background-image: linear-gradient(to right, rgba(30, 30, 30, .05) 1px, transparent 1px),
+		  linear-gradient(to bottom, rgba(30, 30, 30, .05) 1px, transparent 1px);
+}
+
+svg.railroad rect.railroad_canvas {
+stroke-width: 0px;
+fill: none;
+}
+
+svg.railroad path {
+stroke-width: 3px;
+stroke: black;
+fill: none;
+}
+
+svg.railroad .continuation circle,
+svg.railroad .continuation-start circle,
+svg.railroad .continuation-end circle {
+fill: black;
+stroke: none;
+}
+
+svg.railroad .debug {
+stroke-width: 1px;
+stroke: red;
+}
+
+svg.railroad text {
+font: 14px monospace;
+text-anchor: middle;
+}
+
+svg.railroad .nonterminal text {
+font-weight: bold;
+}
+
+svg.railroad text.comment {
+font: italic 12px monospace;
+}
+
+svg.railroad rect,
+svg.railroad .annotation > path.annotation-marker {
+stroke-width: 3px;
+stroke: black;
+fill:hsl(-290, 70%, 90%);
+}
+
+svg.railroad g.labeledbox > rect,
+svg.railroad .annotation > path.annotation-connector {
+stroke-width: 1px;
+stroke: grey;
+stroke-dasharray: 5px;
+fill: rgb(90, 90, 150);
+fill-opacity: .1;
+}
+
+svg.railroad .annotation > path.annotation-connector {
+fill: none;
+}
+
+/* Annotation markers use wavy arrows distinct from rail traversal arrows. */
+
+svg.railroad .annotation > path.annotation-direction {
+stroke-width: 2px;
+stroke: black;
+}
+</style>
+<rect width="100%" height="100%" class="railroad_canvas"/>
+<g class="sequence">
+<path d=" M 10 51 a 5 5 0 0 1 5 -5 a 5 5 0 0 1 5 5 a 5 5 0 0 1 -5 5 a 5 5 0 0 1 -5 -5 m 10 0 h 5"/>
+<g class="sequence">
+<g class="terminal">
+<rect x="35" y="40" height="22" width="108" rx="10" ry="10"/>
+<text x="89" y="56">
+column-name</text>
+</g>
+<g class="choice">
+<path d=" M 153 51 h 24 m 92 0 h 24"/>
+<g class="nonterminal">
+<rect x="177" y="40" height="22" width="92"/>
+<text x="223" y="56">
+type-name</text>
+</g>
+<path d=" M 153 51 a 12 12 0 0 1 12 12 v 9 m 116 0 v -9 a 12 12 0 0 1 12 -12"/>
+<path d=" M 165 72 v 0 a 12 12 0 0 0 12 12 m 0 0 l 92 0 a 12 12 0 0 0 12 -12 v 0"/>
+<g>
+</g>
+</g>
+<g class="labeledbox">
+<rect x="303" y="10" height="89" width="206"/>
+<path d=" M 303 51 h 8 m 190 0 h 8"/>
+<text class="comment" x="368" y="33">
+Zero or more...</text>
+<g class="sequence">
+<g class="repeat">
+<path d=" M 311 51 h 5 h 12 m 0 0 h 168 m -81 0 l -5 -5 m 0 10 l 5 -5 m 81 0 h 5 m -17 0 a 12 12 0 0 1 12 12 v 0 a 12 12 0 0 1 -12 12 m -156 0 h 0 a 12 12 0 0 1 -12 -12 v 0 a 12 12 0 0 1 12 -12"/>
+<g class="terminal">
+<rect x="328" y="64" height="22" width="156" rx="10" ry="10"/>
+<text x="406" y="80">
+column-constraint</text>
+</g>
+<g>
+</g>
+</g>
+</g>
+</g>
+<path d=" M 143 51 h 10"/>
+<path d=" M 293 51 h 10"/>
+</g>
+<path d=" M 519 51 h 5 a 5 5 0 0 1 5 -5 a 5 5 0 0 1 5 5 a 5 5 0 0 1 -5 5 a 5 5 0 0 1 -5 -5"/>
+<path d=" M 25 51 h 10"/>
+<path d=" M 509 51 h 10"/>
+</g>
+</svg>

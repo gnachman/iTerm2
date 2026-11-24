@@ -1,0 +1,1 @@
+{`word boundary`, {{{"[digit]", <!, "[digit]">, <!, "[digit]">}, "."}, {{"[digit]", <!, "[digit]">, <!, "[digit]">}, "."}, {{"[digit]", <!, "[digit]">, <!, "[digit]">}, "."}}, {"[digit]", <!, "[digit]">, <!, "[digit]">}, `word boundary`}
