@@ -186,39 +186,7 @@ class iTermBrowserPageSaverTestHelper {
         let url = URL(string: "http://localhost:\(serverPort)/")!
         let request = URLRequest(url: url)
 
-        return try await withCheckedThrowingContinuation { continuation in
-            @MainActor
-            class NavigationDelegate: NSObject, WKNavigationDelegate {
-                let continuation: CheckedContinuation<Void, Error>
-                weak var helper: iTermBrowserPageSaverTestHelper?
-
-                init(continuation: CheckedContinuation<Void, Error>, helper: iTermBrowserPageSaverTestHelper) {
-                    self.continuation = continuation
-                    self.helper = helper
-                    super.init()
-                }
-
-                func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-                    helper?.navigationDelegate = nil // Clean up reference
-                    continuation.resume()
-                }
-
-                func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-                    helper?.navigationDelegate = nil // Clean up reference
-                    continuation.resume(throwing: error)
-                }
-
-                func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-                    helper?.navigationDelegate = nil // Clean up reference
-                    continuation.resume(throwing: error)
-                }
-            }
-
-            let delegate = NavigationDelegate(continuation: continuation, helper: self)
-            self.navigationDelegate = delegate // Keep strong reference
-            webView.navigationDelegate = delegate
-            webView.load(request)
-        }
+        try await loadPage(request)
     }
     
     func savePageAndVerify() async throws -> (originalHTML: String, savedHTML: String, savedFolder: URL) {
@@ -231,8 +199,17 @@ class iTermBrowserPageSaverTestHelper {
         // Save the page
         let baseURL = webView.url!
         let pageSaver = iTermBrowserPageSaver(webView: webView, baseURL: baseURL)
-        try await pageSaver.savePageWithResources(to: SSHLocation(path: saveFolder.path,
-                                                                  endpoint: LocalhostEndpoint.instance))
+        let location = SSHLocation(path: saveFolder.path, endpoint: LocalhostEndpoint.instance)
+        let _: Void = try await awaitWithDeadline("the page saver to save the page to \(saveFolder.path)") { done in
+            Task { @MainActor in
+                do {
+                    try await pageSaver.savePageWithResources(to: location)
+                    done(.success(()))
+                } catch {
+                    done(.failure(error))
+                }
+            }
+        }
 
         // Read saved HTML
         let savedHTMLFile = saveFolder.appendingPathComponent("index.html")
@@ -275,14 +252,14 @@ class iTermBrowserPageSaverTestHelper {
     
     @MainActor
     private func getPageHTML() async throws -> String {
-        return try await withCheckedThrowingContinuation { continuation in
+        return try await awaitWithDeadline("the web view to evaluate JavaScript for getPageHTML()") { done in
             webView.evaluateJavaScript("document.documentElement.outerHTML") { result, error in
                 if let error = error {
-                    continuation.resume(throwing: error)
+                    done(.failure(error))
                 } else if let html = result as? String {
-                    continuation.resume(returning: html)
+                    done(.success(html))
                 } else {
-                    continuation.resume(throwing: NSError(domain: "TestError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to get HTML"]))
+                    done(.failure(NSError(domain: "TestError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to get HTML"])))
                 }
             }
         }
@@ -297,14 +274,14 @@ class iTermBrowserPageSaverTestHelper {
     
     @MainActor
     func getImageSrc() async throws -> String {
-        return try await withCheckedThrowingContinuation { continuation in
+        return try await awaitWithDeadline("the web view to evaluate JavaScript for getImageSrc()") { done in
             webView.evaluateJavaScript("document.getElementById('test-image').src") { result, error in
                 if let error = error {
-                    continuation.resume(throwing: error)
+                    done(.failure(error))
                 } else if let src = result as? String {
-                    continuation.resume(returning: src)
+                    done(.success(src))
                 } else {
-                    continuation.resume(throwing: NSError(domain: "TestError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to get image src"]))
+                    done(.failure(NSError(domain: "TestError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to get image src"])))
                 }
             }
         }
@@ -312,7 +289,7 @@ class iTermBrowserPageSaverTestHelper {
     
     @MainActor
     func pageHasDataSavedAttributes() async throws -> Bool {
-        return try await withCheckedThrowingContinuation { continuation in
+        return try await awaitWithDeadline("the web view to evaluate JavaScript for pageHasDataSavedAttributes()") { done in
             let script = """
             (function() {
                 const elementsWithDataSaved = document.querySelectorAll('[data-saved-src], [data-saved-href], [data-saved-css-content]');
@@ -322,11 +299,11 @@ class iTermBrowserPageSaverTestHelper {
             
             webView.evaluateJavaScript(script) { result, error in
                 if let error = error {
-                    continuation.resume(throwing: error)
+                    done(.failure(error))
                 } else if let hasAttributes = result as? Bool {
-                    continuation.resume(returning: hasAttributes)
+                    done(.success(hasAttributes))
                 } else {
-                    continuation.resume(returning: false)
+                    done(.success(false))
                 }
             }
         }
@@ -334,14 +311,14 @@ class iTermBrowserPageSaverTestHelper {
     
     @MainActor
     func getPageTitle() async throws -> String {
-        return try await withCheckedThrowingContinuation { continuation in
+        return try await awaitWithDeadline("the web view to evaluate JavaScript for getPageTitle()") { done in
             webView.evaluateJavaScript("document.title") { result, error in
                 if let error = error {
-                    continuation.resume(throwing: error)
+                    done(.failure(error))
                 } else if let title = result as? String {
-                    continuation.resume(returning: title)
+                    done(.success(title))
                 } else {
-                    continuation.resume(returning: "")
+                    done(.success(""))
                 }
             }
         }
@@ -349,18 +326,18 @@ class iTermBrowserPageSaverTestHelper {
     
     @MainActor
     func getCSSLinkCount() async throws -> Int {
-        return try await withCheckedThrowingContinuation { continuation in
+        return try await awaitWithDeadline("the web view to evaluate JavaScript for getCSSLinkCount()") { done in
             let script = """
             document.querySelectorAll('link[rel="stylesheet"]').length
             """
             
             webView.evaluateJavaScript(script) { result, error in
                 if let error = error {
-                    continuation.resume(throwing: error)
+                    done(.failure(error))
                 } else if let count = result as? Int {
-                    continuation.resume(returning: count)
+                    done(.success(count))
                 } else {
-                    continuation.resume(returning: 0)
+                    done(.success(0))
                 }
             }
         }
@@ -368,7 +345,7 @@ class iTermBrowserPageSaverTestHelper {
     
     @MainActor
     func isImageVisible() async throws -> Bool {
-        return try await withCheckedThrowingContinuation { continuation in
+        return try await awaitWithDeadline("the web view to evaluate JavaScript for isImageVisible()") { done in
             let script = """
             (function() {
                 const img = document.getElementById('test-image');
@@ -381,11 +358,11 @@ class iTermBrowserPageSaverTestHelper {
             
             webView.evaluateJavaScript(script) { result, error in
                 if let error = error {
-                    continuation.resume(throwing: error)
+                    done(.failure(error))
                 } else if let isVisible = result as? Bool {
-                    continuation.resume(returning: isVisible)
+                    done(.success(isVisible))
                 } else {
-                    continuation.resume(returning: false)
+                    done(.success(false))
                 }
             }
         }
@@ -393,41 +370,110 @@ class iTermBrowserPageSaverTestHelper {
     
     @MainActor
     private func loadPageWithRequest(_ request: URLRequest) async throws {
-        return try await withCheckedThrowingContinuation { continuation in
-            @MainActor
-            class NavigationDelegate: NSObject, WKNavigationDelegate {
-                let continuation: CheckedContinuation<Void, Error>
-                weak var helper: iTermBrowserPageSaverTestHelper?
-                
-                init(continuation: CheckedContinuation<Void, Error>, helper: iTermBrowserPageSaverTestHelper) {
-                    self.continuation = continuation
-                    self.helper = helper
-                    super.init()
-                }
-                
-                func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-                    helper?.navigationDelegate = nil
-                    continuation.resume()
-                }
-                
-                func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-                    helper?.navigationDelegate = nil
-                    continuation.resume(throwing: error)
-                }
-                
-                func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-                    helper?.navigationDelegate = nil
-                    continuation.resume(throwing: error)
-                }
+        try await loadPage(request)
+    }
+
+    /// How long a page load, a JavaScript evaluation or a page save may take before the test fails
+    /// instead of waiting forever. Generous, so that a slow or loaded machine does not fail it; a
+    /// test host whose dispatch pool is exhausted never gets the callback at all.
+    static let deadline: TimeInterval = 60
+
+    /// Resumes a continuation exactly once: with the first result given, or with a timeout error
+    /// (failing the test) if none came first. Later results are ignored.
+    @MainActor
+    private final class ResumeOnce<T> {
+        private var continuation: CheckedContinuation<T, Error>?
+
+        init(_ continuation: CheckedContinuation<T, Error>) {
+            self.continuation = continuation
+        }
+
+        func resume(_ result: Result<T, Error>) {
+            guard let continuation else {
+                return
             }
-            
-            let delegate = NavigationDelegate(continuation: continuation, helper: self)
-            self.navigationDelegate = delegate
-            webView.navigationDelegate = delegate
-            webView.load(request)
+            self.continuation = nil
+            continuation.resume(with: result)
+        }
+
+        func timeOut(_ message: String) {
+            guard continuation != nil else {
+                return
+            }
+            XCTFail(message)
+            resume(.failure(NSError(domain: "iTermBrowserPageSaverTestHelper",
+                                    code: 1,
+                                    userInfo: [NSLocalizedDescriptionKey: message])))
         }
     }
-    
+
+    /// Calls `start` with a completion to call when the awaited thing has happened, and returns
+    /// its result. If the completion has not been called within `deadline` seconds, fails the
+    /// test with a message naming `what` and throws.
+    @MainActor
+    private func awaitWithDeadline<T>(_ what: String,
+                                      _ start: (@escaping @MainActor (Result<T, Error>) -> Void) -> Void) async throws -> T {
+        return try await withCheckedThrowingContinuation { continuation in
+            let once = ResumeOnce(continuation)
+            let timeout = Self.deadline
+            // On the main queue, not Task.sleep: Task.sleep's timer runs on a global dispatch
+            // queue, which is what a starved host cannot run.
+            DispatchQueue.main.asyncAfter(deadline: .now() + timeout) {
+                MainActor.assumeIsolated {
+                    once.timeOut("Timed out after \(Int(timeout)) seconds waiting for \(what)")
+                }
+            }
+            start { result in
+                once.resume(result)
+            }
+        }
+    }
+
+    /// Loads `request` and returns when the navigation finishes, throws when it fails, and fails
+    /// the test and throws if neither has happened within `deadline` seconds.
+    @MainActor
+    private func loadPage(_ request: URLRequest) async throws {
+        @MainActor
+        class NavigationDelegate: NSObject, WKNavigationDelegate {
+            private let done: @MainActor (Result<Void, Error>) -> Void
+            // The navigation this delegate waits for. Callbacks for any other, such as a late
+            // one from an earlier load that timed out, are ignored.
+            var navigation: WKNavigation?
+
+            init(done: @escaping @MainActor (Result<Void, Error>) -> Void) {
+                self.done = done
+                super.init()
+            }
+
+            func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+                if navigation === self.navigation {
+                    done(.success(()))
+                }
+            }
+
+            func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+                if navigation === self.navigation {
+                    done(.failure(error))
+                }
+            }
+
+            func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+                if navigation === self.navigation {
+                    done(.failure(error))
+                }
+            }
+        }
+
+        let url = request.url?.absoluteString ?? "(no URL)"
+        let _: Void = try await awaitWithDeadline("the web view to finish loading \(url)") { done in
+            let delegate = NavigationDelegate(done: done)
+            navigationDelegate = delegate // Keep strong reference; the web view's is weak.
+            webView.navigationDelegate = delegate
+            delegate.navigation = webView.load(request)
+        }
+        navigationDelegate = nil
+    }
+
     // MARK: - Additional Test Page Creation Methods
     
     @MainActor

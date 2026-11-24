@@ -33,6 +33,11 @@ final class AdvancedSettingsThreadSafetyTests: XCTestCase {
             iTermAdvancedSettingsModel.setSearchCommand(values[i % values.count])
         }
         done.set(true)
-        readersFinished.wait()
+        // Bounded, so that a host whose dispatch pool is exhausted (the readers never start)
+        // fails this test instead of hanging the run.
+        let timeout: TimeInterval = 60
+        if readersFinished.wait(timeout: .now() + timeout) == .timedOut {
+            XCTFail("Timed out after \(Int(timeout)) seconds waiting for the 4 reader blocks on the global queue to finish")
+        }
     }
 }

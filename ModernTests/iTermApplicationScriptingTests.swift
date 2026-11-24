@@ -153,14 +153,25 @@ final class iTermApplicationScriptingTests: XCTestCase {
         XCTAssertFalse(first === second, "each lookup makes a new wrapper")
     }
 
-    // The answer does not depend on which window is key. In the test host the
-    // app is usually inactive, so no window is key in any of these tests; this
-    // case makes sure of it for the current terminal by ordering its window
-    // out, which cannot then be key, while the other terminal's window stays
-    // on screen.
+    // The answer does not depend on which window is key. The current
+    // terminal's window is ordered out, so it cannot be key, while the other
+    // terminal's window stays on screen. When the app is active (an earlier
+    // test can leave the test host active), making a terminal current makes
+    // its window key, and ordering out the key window would make the other
+    // terminal's window key and so current. So a window that belongs to no
+    // terminal takes the key first: only a terminal window becoming key
+    // changes the current terminal. This holds whether or not the app is
+    // active.
     func testCurrentScriptingWindowIsTheCurrentTerminalsEvenWhenNotKey() throws {
         let (a, b) = openTwoTerminals()
         makeCurrent(b.terminal)
+        let other = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 100, height: 100),
+                             styleMask: [.titled],
+                             backing: .buffered,
+                             defer: false)
+        other.isReleasedWhenClosed = false
+        defer { other.close() }
+        other.makeKeyAndOrderFront(nil)
         b.window.orderOut(nil)
         XCTAssertTrue(controller.currentTerminal === b.terminal, "precondition: still current")
         XCTAssertFalse(b.window.isKeyWindow, "precondition: not key")

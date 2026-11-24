@@ -19,6 +19,12 @@
       },
       {
         "argument" : "iterm2-tests"
+      },
+      {
+        "argument" : "-NSAutomaticWindowAnimationsEnabled"
+      },
+      {
+        "argument" : "NO"
       }
     ],
     "environmentVariableEntries" : [

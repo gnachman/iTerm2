@@ -14,9 +14,15 @@ final class TabBarSearchWindowTests: XCTestCase {
     // Set by tests that change the tab style, which tearDown restores.
     private var savedTabStyle: Int32?
     private var fixture: TerminalWindowTestFixture!
+    // Whether the test host was the active app before the test. Editing a
+    // tab's title activates it, which takes focus from the app the person at
+    // the Mac is using and changes which window becomes key in later tests,
+    // so tearDown gives it back.
+    private var appWasActive = false
 
     override func setUp() {
         super.setUp()
+        appWasActive = NSApp.isActive
         savedTabPosition = iTermPreferences.int(forKey: kPreferenceKeyTabPosition)
         iTermPreferences.setInt(2 /* PSMTab_LeftTab */, forKey: kPreferenceKeyTabPosition)
         fixture = TerminalWindowTestFixture()
@@ -36,6 +42,11 @@ final class TabBarSearchWindowTests: XCTestCase {
         if let savedTabStyle {
             iTermPreferences.setInt(savedTabStyle, forKey: kPreferenceKeyTabStyle)
             self.savedTabStyle = nil
+        }
+        // Not conditional on NSApp.isActive: an activation a test asked for
+        // may not have been handled yet, and would land during the next test.
+        if !appWasActive {
+            NSApp.deactivate()
         }
         super.tearDown()
     }
