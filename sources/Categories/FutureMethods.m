@@ -65,6 +65,33 @@ CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRadiusFun
     return function;
 }
 
+CGSCopyManagedDisplaySpacesFunction *GetCGSCopyManagedDisplaySpacesFunction(void) {
+    static dispatch_once_t onceToken;
+    static CGSCopyManagedDisplaySpacesFunction *function;
+    dispatch_once(&onceToken, ^{
+        function = GetFunctionByName(kApplicationServicesFramework, "CGSCopyManagedDisplaySpaces");
+    });
+    return function;
+}
+
+CGSCopySpacesForWindowsFunction *GetCGSCopySpacesForWindowsFunction(void) {
+    static dispatch_once_t onceToken;
+    static CGSCopySpacesForWindowsFunction *function;
+    dispatch_once(&onceToken, ^{
+        function = GetFunctionByName(kApplicationServicesFramework, "CGSCopySpacesForWindows");
+    });
+    return function;
+}
+
+CGSMoveWindowsToManagedSpaceFunction *GetCGSMoveWindowsToManagedSpaceFunction(void) {
+    static dispatch_once_t onceToken;
+    static CGSMoveWindowsToManagedSpaceFunction *function;
+    dispatch_once(&onceToken, ^{
+        function = GetFunctionByName(kApplicationServicesFramework, "CGSMoveWindowsToManagedSpace");
+    });
+    return function;
+}
+
 MTActuatorCreateFromDeviceIDFunction *iTermGetMTActuatorCreateFromDeviceIDFunction(void) {
     static dispatch_once_t onceToken;
     static MTActuatorCreateFromDeviceIDFunction *function;

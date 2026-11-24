@@ -37,6 +37,7 @@
 #import "PseudoTerminal.h"
 #import "iTermPromptOnCloseReason.h"
 #import "PseudoTerminal+Private.h"
+#import "iTermWindowSpace.h"
 #import "PseudoTerminal+WindowStyle.h"
 #import "AtomicHelpers.h"
 #import "iTermAnnouncementView.h"

@@ -142,6 +142,7 @@
 #import "iTermVariableScope.h"
 #import "iTermWarning.h"
 #import "iTermWindowHacks.h"
+#import "iTermWindowSpace.h"
 #import "iTermWindowOcclusionChangeMonitor.h"
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
 #include "iTermFileDescriptorClient.h"
@@ -218,6 +219,7 @@ NSString *const TERMINAL_ARRANGEMENT_SCROLLER_WIDTH = @"Scroller Width";
 NSString *const TERMINAL_ARRANGEMENT_MINIATURIZED = @"miniaturized";
 NSString *const TERMINAL_ARRANGEMENT_SIZE_LOCKED = @"Size Locked";
 NSString *const TERMINAL_ARRANGEMENT_LAYOUT_LOCKED = @"Layout Locked";
+NSString *const TERMINAL_ARRANGEMENT_SPACE = @"Space";
 
 static void iTermPercentageSanitize(iTermPercentage *percentage) {
     if (percentage->width >= 0) {
@@ -5369,6 +5371,20 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         [locationLockController enforce];
     });
+    // Put the window back on the Space it was saved from. Like the lock above,
+    // this waits until the window is on screen, because a window that has not
+    // been ordered in has no window number to move. A window that joins all
+    // Spaces stays that way.
+    NSDictionary *space = [NSDictionary castFrom:arrangement[TERMINAL_ARRANGEMENT_SPACE]];
+    if (space && !(self.window.collectionBehavior & NSWindowCollectionBehaviorCanJoinAllSpaces)) {
+        __weak NSWindow *weakWindow = self.window;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSWindow *window = weakWindow;
+            if (window) {
+                [iTermWindowSpace moveWindow:window toSpaceFromArrangementValue:space];
+            }
+        });
+    }
     return YES;
 }
 
@@ -5468,6 +5484,12 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     }
     if (representsThisWindow) {
         [_locationLockController populateInArrangement:adapter];
+        // Only a window’s own arrangement remembers its Space. Tabs saved on their
+        // own open in a new window, which should appear where the user is.
+        NSDictionary *space = [iTermWindowSpace arrangementValueForWindow:self.window];
+        if (space) {
+            result[TERMINAL_ARRANGEMENT_SPACE] = space;
+        }
     }
     return result;
 }

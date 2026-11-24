@@ -13,6 +13,23 @@
 typedef CGError CGSSetWindowBackgroundBlurRadiusFunction(CGSConnectionID cid, CGSWindowID wid, NSUInteger blur);
 CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRadiusFunction(void);
 
+#pragma mark - Spaces
+
+// Returns one dictionary per display. Each has a "Spaces" array whose elements
+// have "ManagedSpaceID", "uuid", and "type" (0 for an ordinary desktop).
+typedef CFArrayRef CGSCopyManagedDisplaySpacesFunction(CGSConnectionID cid);
+
+// Returns the IDs of the Spaces the given windows are on. mask 7 means all Spaces.
+typedef CFArrayRef CGSCopySpacesForWindowsFunction(CGSConnectionID cid, int mask, CFArrayRef windowIDs);
+
+// Moves windows to the Space with the given ManagedSpaceID.
+typedef void CGSMoveWindowsToManagedSpaceFunction(CGSConnectionID cid, CFArrayRef windowIDs, uint64_t spaceID);
+
+// Each returns a function pointer, or NULL if this macOS does not have it.
+CGSCopyManagedDisplaySpacesFunction *GetCGSCopyManagedDisplaySpacesFunction(void);
+CGSCopySpacesForWindowsFunction *GetCGSCopySpacesForWindowsFunction(void);
+CGSMoveWindowsToManagedSpaceFunction *GetCGSMoveWindowsToManagedSpaceFunction(void);
+
 // Fills in its argument with the current process's serial number.
 typedef OSErr CPSGetCurrentProcessFunction(CPSProcessSerNum *);
 

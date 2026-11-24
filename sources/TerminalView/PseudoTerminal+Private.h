@@ -49,6 +49,7 @@ extern NSString *const TERMINAL_ARRANGEMENT_SCROLLER_WIDTH;
 extern NSString *const TERMINAL_ARRANGEMENT_MINIATURIZED;
 extern NSString *const TERMINAL_ARRANGEMENT_SIZE_LOCKED;
 extern NSString *const TERMINAL_ARRANGEMENT_LAYOUT_LOCKED;
+extern NSString *const TERMINAL_ARRANGEMENT_SPACE;
 
 @interface PseudoTerminal() {
     // Is this a full screen window?
