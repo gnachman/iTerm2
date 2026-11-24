@@ -146,16 +146,9 @@ class RegexVisualizationViewController: SVGViewController {
 
     private func reload(sync: Bool) {
         let dsl = ICURegexToRailroadConverter().convert(regex)
-        let svg = dsl.withCString { dslPtr -> UnsafeMutablePointer<CChar>? in
-            let cssPtr = railroad_dsl_css_for_theme(view.effectiveAppearance.it_isDark ? "dark" : "light")!
-            defer {
-                railroad_string_free(cssPtr)
-            }
-            if !railroad_dsl_is_valid(dslPtr) {
-                return nil
-            }
-            return railroad_dsl_to_svg(dslPtr, cssPtr)
-        }
+        let theme = view.effectiveAppearance.it_isDark ? "railroad-dark" : "railroad-light"
+        let css = iTermBrowserTemplateLoader.loadTemplate(named: theme, type: "css")
+        let svg = try? RailroadDSL.svg(dsl, css: css)
 
         guard let svg else {
             html = """
@@ -171,8 +164,7 @@ class RegexVisualizationViewController: SVGViewController {
             preferredContentSize = NSSize(width: 400, height: 100)
             return
         }
-        svgString = String(cString: svg)
-        railroad_string_free(svg)
+        svgString = svg
         if sync {
             sizeEstimator = SVGSizeEstimator(html: html)
             preferredContentSize = min(maxSize, sizeEstimator!.desiredSize)

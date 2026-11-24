@@ -12,7 +12,6 @@ NAME=$(shell echo $(VERSION) | sed -e "s/\\./_/g")
 HOMEBREW_PREFIX ?= $(shell brew --prefix 2>/dev/null || echo /opt/homebrew)
 CMAKE ?= $(HOMEBREW_PREFIX)/bin/cmake
 PKG_CONFIG ?= $(HOMEBREW_PREFIX)/bin/pkg-config
-RUSTUP ?= $(shell PATH="$(ORIG_PATH):$(HOME)/.cargo/bin" which rustup 2>/dev/null)
 DEPLOYMENT_TARGET=13.0
 
 # Build product directory: defaults to xcodebuild's SYMROOT.
@@ -52,13 +51,6 @@ ifdef UNIVERSAL
   CMAKE_ARCHS = x86_64;arm64
 else
   CMAKE_ARCHS = $(NATIVE_ARCH)
-endif
-
-# Rust target triple for the native architecture.
-ifeq ($(NATIVE_ARCH),arm64)
-  RUST_NATIVE_TARGET = aarch64-apple-darwin
-else
-  RUST_NATIVE_TARGET = x86_64-apple-darwin
 endif
 
 .PHONY: clean all backup-old-iterm restart setup dangerous-setup _setup-main help doctor companion-bump-build companion-bump-build-upload
@@ -211,15 +203,6 @@ _setup-main:
 	else \
 		sudo PATH="$(ORIG_PATH)" xcodebuild -license accept 2>/dev/null || true; \
 	fi
-	@if [ -z "$(RUSTUP)" ]; then \
-		echo "rustup is not installed."; \
-		if [ "$(SKIP_CONFIRM)" != "1" ]; then \
-			printf "Install rustup via 'curl https://sh.rustup.rs | sh'? [y/N] "; \
-			read ans </dev/tty; case "$$ans" in [yY]) ;; *) echo "Aborted."; exit 1;; esac; \
-		fi; \
-		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y; \
-		export PATH="$$HOME/.cargo/bin:$$PATH"; \
-	fi
 	@test -f plists/iTerm2.plist || cp plists/dev-iTerm2.plist plists/iTerm2.plist
 	@PATH="$(ORIG_PATH)" brew list cmake >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install cmake
 	@PATH="$(ORIG_PATH)" brew list pkg-config >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install pkg-config
@@ -252,9 +235,6 @@ _setup-main:
 		fi; \
 	fi
 	@$(HOMEBREW_PREFIX)/bin/python3 -c "import objc" 2>/dev/null || $(HOMEBREW_PREFIX)/bin/pip3 install --break-system-packages pyobjc
-	@PATH="$(ORIG_PATH):$$HOME/.cargo/bin" command -v cbindgen >/dev/null || $(or $(RUSTUP),$$HOME/.cargo/bin/rustup) run stable cargo install cbindgen
-	# Note: this installs arm tooling as well
-	$(or $(RUSTUP),$$HOME/.cargo/bin/rustup) target add x86_64-apple-darwin
 	git submodule update --init --recursive
 	PATH="$(ORIG_PATH)" xcodebuild -downloadComponent MetalToolchain || \
 		echo "WARNING: Metal Toolchain download failed. You can retry later with: xcodebuild -downloadComponent MetalToolchain"
@@ -278,8 +258,6 @@ doctor:
 		elif echo "$$ver" | grep -q "^Python 3"; then echo "$$ver"; \
 		else echo "$$ver (WARNING: needs Python 3)"; fi
 	@printf "  %-18s" "pyobjc:"; ($(HOMEBREW_PREFIX)/bin/python3 -c "import objc; print('installed')" 2>/dev/null) || echo "NOT FOUND"
-	@printf "  %-18s" "rustup:"; (PATH="$(ORIG_PATH):$(HOME)/.cargo/bin" rustup --version 2>/dev/null) || echo "NOT FOUND"
-	@printf "  %-18s" "cbindgen:"; (PATH="$(ORIG_PATH):$(HOME)/.cargo/bin" cbindgen --version 2>/dev/null) || echo "NOT FOUND"
 	@printf "  %-18s" "sf-symbols:"; (PATH="$(ORIG_PATH)" brew list --cask sf-symbols >/dev/null 2>&1 && echo "installed") || echo "NOT FOUND"
 
 TAGS:
@@ -614,17 +592,6 @@ NMSSH: force fatlibssh2
 paranoid-NMSSH: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" NMSSH
 
-ifdef UNIVERSAL
-librailroad_dsl: force
-	$(RUSTUP) target add x86_64-apple-darwin
-	$(RUSTUP) target add aarch64-apple-darwin
-	cd submodules/railroad_dsl && MACOSX_DEPLOYMENT_TARGET=$(DEPLOYMENT_TARGET) $(RUSTUP) run stable cargo build --release --target aarch64-apple-darwin && MACOSX_DEPLOYMENT_TARGET=$(DEPLOYMENT_TARGET) $(RUSTUP) run stable cargo build --release --target x86_64-apple-darwin && lipo -create target/aarch64-apple-darwin/release/librailroad_dsl.dylib target/x86_64-apple-darwin/release/librailroad_dsl.dylib -output ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
-else
-librailroad_dsl: force
-	$(RUSTUP) target add $(RUST_NATIVE_TARGET)
-	cd submodules/railroad_dsl && MACOSX_DEPLOYMENT_TARGET=$(DEPLOYMENT_TARGET) $(RUSTUP) run stable cargo build --release --target $(RUST_NATIVE_TARGET) && cp target/$(RUST_NATIVE_TARGET)/release/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
-endif
-
 pwmadapters: force
 	cd pwmplugin/ && UNIVERSAL=$(UNIVERSAL) ./build.sh
 
@@ -715,9 +682,6 @@ paranoid-sparkle: force
 paranoid-fatlibsixel: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" fatlibsixel
 
-paranoid-librailroad_dsl: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" librailroad_dsl
-
 paranoid-ColorPicker: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" ColorPicker
 
@@ -728,7 +692,7 @@ paranoid-pwmadapters: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" pwmadapters
 
 # You probably want make paranoid-deps to avoid depending on Homebrew stuff.
-deps: force fatlibsixel CoreParse NMSSH bindeps libgit2 sparkle librailroad_dsl sfsymbolenum pwmadapters
+deps: force fatlibsixel CoreParse NMSSH bindeps libgit2 sparkle sfsymbolenum pwmadapters
 
 sfsymbolenum:
 	cp submodules/SFSymbolEnum/Sources/SFSymbolEnum/* ThirdParty/SFSymbolEnum
