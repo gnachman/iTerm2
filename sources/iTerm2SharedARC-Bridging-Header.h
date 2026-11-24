@@ -30,6 +30,7 @@
 #import "PTYSession.h"
 #import "PTYTab.h"
 #import "PTYWindow.h"
+#import "iTermScriptingWindow.h"
 #import "PreferencePanel.h"
 #import "ThreeFingerTapGestureRecognizer.h"
 #import "WindowControllerInterface.h"
