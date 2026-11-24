@@ -95,6 +95,27 @@ final class KittyImageResponseInjectionTests: XCTestCase {
         }
         XCTAssertTrue(message.contains("EBADF:"), "the error code and its colon should be preserved verbatim")
     }
+
+    // Replacing control characters is not enough: any attacker-chosen text that
+    // reaches the prompt can be run with a single press of Enter, e.g. after a
+    // semicolon. The error reply must be a fixed string that echoes nothing from
+    // the request.
+    private let injectedCommand = ";SL=$'\\x2f';cat ${SL}etc${SL}passwd;#"
+
+    func testFileTransmitErrorDoesNotEchoPath() {
+        let (controller, delegate) = makeControllerWithDelegate()
+        controller.execute(command: fileTransmitCommand(path: "/tmp/x \(injectedCommand) z"))
+
+        XCTAssertEqual(delegate.lastMessage, "\u{1B}_Gi=1;EBADF:Failed to read image file\u{1B}\\")
+    }
+
+    func testSharedMemoryTransmitErrorDoesNotEchoName() {
+        let (controller, delegate) = makeControllerWithDelegate()
+        let b64 = Data("x\(injectedCommand)".utf8).base64EncodedString()
+        controller.execute(command: KittyImageCommand("a=t,f=100,t=s,i=1;\(b64)")!)
+
+        XCTAssertEqual(delegate.lastMessage, "\u{1B}_Gi=1;EBADF:Failed to read shared memory\u{1B}\\")
+    }
 }
 
 private final class CapturingKittyDelegate: NSObject, KittyImageControllerDelegate {

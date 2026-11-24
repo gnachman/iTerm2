@@ -748,7 +748,7 @@ final class KittyDnDAcceptTests: XCTestCase {
     }
 
     // A present-but-unparseable directory handle (Y) is EINVAL, not a fall-through
-    // to a plain MIME read; the raw key is echoed so the client can match it.
+    // to a plain MIME read. The key is not echoed because it is not a number.
     func testUnparseableDirectoryHandleIsEINVAL() {
         let recorder = Recorder()
         let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
@@ -758,7 +758,7 @@ final class KittyDnDAcceptTests: XCTestCase {
         c.handleInboundSequence("t=r:Y=zzz:x=1")
         XCTAssertEqual(recorder.last?.type, "R")
         XCTAssertEqual(recorder.last?.textPayload, "EINVAL")
-        XCTAssertEqual(recorder.last?.metadata["Y"], "zzz", "the raw Y key is echoed")
+        XCTAssertNil(recorder.last?.metadata["Y"], "a non-numeric Y must not be echoed")
     }
 
     // A present-but-unparseable sub-index (y) is EINVAL, not treated as absent.
@@ -1085,5 +1085,79 @@ final class KittyDnDAcceptTests: XCTestCase {
                              operations: 1, mimeTypes: ["text/uri-list"])
         XCTAssertEqual(restoredRecorder.last?.type, "m")
         XCTAssertEqual(restoredRecorder.last?.metadata["i"], "7")
+    }
+
+    // MARK: - Echoed keys are numbers only
+
+    // Replies are written to the PTY's input, so a request key echoed as the
+    // program's own text would sit at the shell prompt. The reply framing itself
+    // gives the shell a “;”, so a value like this runs the command on Enter.
+    private let injection = "x&&open -a Calculator"
+
+    private func assertNoInjection(_ recorder: Recorder, file: StaticString = #filePath, line: UInt = #line) {
+        for message in recorder.messages {
+            let serialized = message.serialized()
+            XCTAssertFalse(serialized.contains("&&") || serialized.contains("Calculator"),
+                           "reply echoes request text: \(serialized)", file: file, line: line)
+        }
+    }
+
+    func testQueryDoesNotEchoNonNumericI() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=q:i=\(injection)")
+        XCTAssertEqual(recorder.last?.type, "q")
+        XCTAssertNil(recorder.last?.metadata["i"])
+        assertNoInjection(recorder)
+    }
+
+    func testRegistrationIgnoresNonNumericI() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a:i=\(injection);text/plain")
+        c.dragEntered(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0,
+                      operations: 1, mimeTypes: ["text/plain"])
+        XCTAssertEqual(recorder.last?.type, "m")
+        XCTAssertNil(recorder.last?.metadata["i"])
+        assertNoInjection(recorder)
+    }
+
+    func testRestoreDropsNonNumericMultiplexerID() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.restoreRegistrationState(["accepting drops": true,
+                                    "accepted MIME types": ["text/plain"],
+                                    "multiplexer ID": injection])
+        c.dragEntered(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0,
+                      operations: 1, mimeTypes: ["text/plain"])
+        XCTAssertEqual(recorder.last?.type, "m")
+        XCTAssertNil(recorder.last?.metadata["i"])
+        assertNoInjection(recorder)
+    }
+
+    func testErrorRepliesDoNotEchoNonNumericKeys() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/plain"], dataByIndex: [1: Data("x".utf8)]))
+        // Unparseable Y, unparseable y, and an out-of-bounds x with an unparseable y.
+        c.handleInboundSequence("t=r:Y=\(injection):x=1")
+        c.handleInboundSequence("t=r:x=1:y=\(injection)")
+        c.handleInboundSequence("t=r:x=9:y=\(injection)")
+        XCTAssertEqual(recorder.messages.filter { $0.type == "R" }.count, 3)
+        assertNoInjection(recorder)
+    }
+
+    func testNumericKeysAreEchoedAsNumbers() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=q:i=4294967295")
+        XCTAssertEqual(recorder.last?.metadata["i"], "4294967295")
+        c.handleInboundSequence("t=a;text/plain")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/plain"]))
+        c.handleInboundSequence("t=r:x=9:y=-1")
+        XCTAssertEqual(recorder.last?.metadata["y"], "-1")
     }
 }

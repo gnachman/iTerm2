@@ -39,8 +39,9 @@ final class KittyDnDController {
     private var reassembler = KittyDnDChunkReassembler()
     // The multiplexer routing id from a t=a/t=o registration that set the i key.
     // Once set, every escape code we send carries it so a multiplexer (e.g. tmux)
-    // can route our replies back to the right pane. Cleared on reset().
-    private var multiplexerID: String?
+    // can route our replies back to the right pane. Cleared on reset(). Kept as a
+    // number so a reply can never carry text the program chose.
+    private var multiplexerID: UInt32?
 
     // Accept-drop state.
     private(set) var isAcceptingDrops = false
@@ -308,7 +309,7 @@ final class KittyDnDController {
             result[RegistrationKey.peerMachineID] = peerMachineID
         }
         if let multiplexerID {
-            result[RegistrationKey.multiplexerID] = multiplexerID
+            result[RegistrationKey.multiplexerID] = String(multiplexerID)
         }
         return result
     }
@@ -323,7 +324,9 @@ final class KittyDnDController {
         peerMachineID = (state[RegistrationKey.peerMachineID] as? String).flatMap {
             Self.isMachineIDToken($0) ? $0 : nil
         }
-        multiplexerID = state[RegistrationKey.multiplexerID] as? String
+        // Saved as a decimal string. Anything else, including a non-numeric value
+        // saved by an older version, is dropped.
+        multiplexerID = (state[RegistrationKey.multiplexerID] as? String).flatMap { UInt32($0) }
     }
 
     // MARK: - Inbound OSC 72
@@ -343,7 +346,7 @@ final class KittyDnDController {
         // A t=a or t=o registration carrying an i key sets the multiplexer routing
         // id for all our subsequent sends. (t=q is a one-off whose response echoes
         // its own i, handled in handleQuery, so it does not update this.)
-        if message.type == "a" || message.type == "o", let i = message.metadata["i"] {
+        if message.type == "a" || message.type == "o", let i = message.uint32Value("i") {
             multiplexerID = i
         }
         switch message.type {
@@ -400,8 +403,8 @@ final class KittyDnDController {
 
     private func handleQuery(_ message: KittyDnDMessage) {
         var metadata = ["t": "q"]
-        if let i = message.metadata["i"] {
-            metadata["i"] = i
+        if let i = message.uint32Value("i") {
+            metadata["i"] = String(i)
         }
         send(KittyDnDMessage(metadata: metadata))
     }
@@ -564,19 +567,20 @@ final class KittyDnDController {
         // drag-out in this same session. Echo the request's addressing keys.
         if currentDropIsSelfDrag {
             var addressing: [String: String] = [:]
-            for key in ["x", "y", "Y"] where message.metadata[key] != nil {
-                addressing[key] = message.metadata[key]
+            for key in ["x", "y", "Y"] {
+                addressing[key] = message.echoableIntegerValue(key)
             }
             sendError(baseMetadata: addressing, code: "EPERM")
             return
         }
         // A directory-handle request is part of the cross-machine traversal and
         // is not tied to the MIME index. A present-but-unparseable Y is a malformed
-        // request, not an absent one: reply EINVAL echoing the raw key so the client
-        // can match the response rather than falling through to a plain MIME read.
-        if let rawHandle = message.metadata["Y"] {
+        // request, not an absent one: reply EINVAL rather than falling through to a
+        // plain MIME read.
+        if message.metadata["Y"] != nil {
             guard let handle = message.intValue("Y") else {
-                sendError(baseMetadata: ["Y": rawHandle], code: "EINVAL")
+                // Not echoed: only numbers may be echoed, and this is not one.
+                sendError(baseMetadata: [:], code: "EINVAL")
                 return
             }
             handleDirectoryRequest(handle: handle, message: message)
@@ -598,7 +602,7 @@ final class KittyDnDController {
             // Echo a sub-index (y) if present so a pipelining client can match the
             // error to its request (every response is keyed by x, y, and Y).
             var addressing = ["x": String(index)]
-            if let rawY = message.metadata["y"] { addressing["y"] = rawY }
+            addressing["y"] = message.echoableIntegerValue("y")
             sendError(baseMetadata: addressing, code: "ENOENT")
             return
         }
@@ -607,9 +611,10 @@ final class KittyDnDController {
         // A sub-index (y) request is the cross-machine path: the program asks for
         // one file entry within the uri-list so it can pull the actual bytes. A
         // present-but-unparseable y is malformed (EINVAL), not absent.
-        if let rawEntryIndex = message.metadata["y"] {
+        if message.metadata["y"] != nil {
             guard let entryIndex = message.intValue("y") else {
-                sendError(baseMetadata: ["x": String(index), "y": rawEntryIndex], code: "EINVAL")
+                // y is not echoed: only numbers may be echoed, and this is not one.
+                sendError(baseMetadata: ["x": String(index)], code: "EINVAL")
                 return
             }
             guard mime == "text/uri-list" else {
@@ -1546,7 +1551,7 @@ final class KittyDnDController {
         // which each pass through here) unless the message already carries an
         // explicit i (e.g. a query response echoing the query's own i).
         if let multiplexerID, message.metadata["i"] == nil {
-            message.metadata["i"] = multiplexerID
+            message.metadata["i"] = String(multiplexerID)
         }
         DLog("Outbound \(KittyDnDMetadata.serialize(message.metadata)) payloadLength=\(message.rawPayload?.utf8.count ?? -1)")
         report(message.serialized())

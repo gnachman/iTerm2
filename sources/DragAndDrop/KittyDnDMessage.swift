@@ -47,14 +47,11 @@ enum KittyDnDMetadata {
     /// keys sorted ascending. Determinism lets tests assert exact bytes.
     ///
     /// Values are sanitized of all control characters so the serialized output
-    /// can never contain a control byte regardless of what a value holds. This is
-    /// the security invariant: the reply is written to the PTY input stream, and
-    /// several replies echo request-supplied values verbatim (the query `i`, and
-    /// the raw `Y`/`y` in error replies). A legitimate value is only ever a number
-    /// or an echoed MIME type, but a crafted request can embed a control character
-    /// (e.g. a newline, or a line-accepting key such as ^O) in an echoed value, so
-    /// stripping every control character is what guarantees no control-input
-    /// injection, not just stripping CR/LF.
+    /// can never contain a control byte regardless of what a value holds. The reply
+    /// is written to the PTY input stream. This is defense in depth: replies echo
+    /// request keys only as numbers re-serialized by `echoableIntegerValue` or
+    /// `uint32Value`, never as the program's own text, since even printable text
+    /// such as `&&cmd` would sit at the shell prompt waiting for Enter.
     static func serialize(_ metadata: [String: String]) -> String {
         var parts: [String] = []
         if let t = metadata["t"] {
@@ -126,6 +123,27 @@ struct KittyDnDMessage: Equatable {
             return nil
         }
         return Int(string)
+    }
+
+    /// The value of `key` re-serialized from its number, or nil if it is absent or
+    /// not a 32-bit decimal integer (signed or unsigned, as the spec allows). Use
+    /// this, never the raw metadata string, whenever a reply echoes a request's
+    /// key: replies are written to the PTY's input, so a raw value could put
+    /// attacker-chosen text at the shell prompt.
+    func echoableIntegerValue(_ key: String) -> String? {
+        guard let string = metadata[key], let value = Int64(string),
+              value >= Int64(Int32.min), value <= Int64(UInt32.max) else {
+            return nil
+        }
+        return String(value)
+    }
+
+    /// The value of `key` if it is an unsigned 32-bit decimal integer.
+    func uint32Value(_ key: String) -> UInt32? {
+        guard let string = metadata[key] else {
+            return nil
+        }
+        return UInt32(string)
     }
 
     var isMoreChunk: Bool {

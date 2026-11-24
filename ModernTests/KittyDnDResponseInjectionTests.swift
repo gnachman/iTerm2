@@ -70,8 +70,9 @@ final class KittyDnDResponseInjectionTests: XCTestCase {
         let controller = makeController()
         controller.handleInboundSequence("t=q:i=x&open -a Calculator&\u{0f}")
         assertNoInjection(recorder.last)
-        // The visible command text is still present but defanged (no raw ^O/newline).
-        XCTAssertEqual(recorder.last?.contains("open -a Calculator"), true)
+        // A non-numeric i is not echoed at all: even without control characters,
+        // text at the shell prompt runs when the user presses Enter.
+        XCTAssertEqual(recorder.last?.contains("open -a Calculator"), false)
     }
 
     // A spread of C0 controls and a TAB in the echoed "i", per the reported repro.

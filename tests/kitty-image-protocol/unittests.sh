@@ -1063,7 +1063,7 @@ test_error_response_p() {
     build_arg i $id
     build_end ""
 
-    read_expecting $'\e_Gi=99;ENOENT:Put command refers to non-existent image with id: 99 and number: 0\e\\'
+    read_expecting $'\e_Gi=99;ENOENT:Put command refers to non-existent image\e\\'
 }
 
 test_success_response_p() {

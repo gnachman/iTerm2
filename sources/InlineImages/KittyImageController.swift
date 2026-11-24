@@ -1060,8 +1060,10 @@ class KittyImageController: NSObject {
             RLog("executeTransmitSharedMemory: ERROR - object is larger than \(maximumDataSize) bytes")
             return Self.dataTooLargeError
         } catch {
+            // The reply is written to the PTY's input, so it must never contain error text,
+            // which can quote attacker-chosen names. The real reason goes to the log only.
             RLog("executeTransmitSharedMemory: ERROR - \(error.localizedDescription)")
-            return "EBADF:\(error.localizedDescription)"
+            return "EBADF:Failed to read shared memory"
         }
     }
 
@@ -1192,7 +1194,7 @@ class KittyImageController: NSObject {
                                  q: command.q)
             } else {
                 RLog("executeDisplay: NO IMAGE FOUND for identifier=\(command.identifier) (0x\(String(command.identifier, radix: 16))) - available keys: \(_images.keys.map { "0x\(String($0, radix: 16))" })")
-                respondToDisplay(error: "ENOENT:Put command refers to non-existent image with id: \(command.identifier) and number: 0",
+                respondToDisplay(error: "ENOENT:Put command refers to non-existent image",
                                  identifier: command.identifier,
                                  placement: command.placement,
                                  q: command.q)

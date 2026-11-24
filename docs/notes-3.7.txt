@@ -151,3 +151,9 @@ Bug Fixes:
   item was disabled could fire a different menu
   item with the same title, such as an Action
   named after it. It now does nothing.
+- A program using the kitty image or kitty drag
+  and drop protocol could make iTerm2 type text
+  of its choosing at the shell prompt, which
+  ran as a command if you pressed Return.
+  iTerm2’s replies to these programs no longer
+  include text the program sent.
