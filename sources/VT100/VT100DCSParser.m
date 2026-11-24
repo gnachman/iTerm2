@@ -526,11 +526,15 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
             _hookFinished = NO;
         } else if ([[self parameters] isEqual:@[ @"2000" ]]) {
             VT100Token *token = self.stateMachine.userInfo[kVT100DCSUserInfoToken];
-            if (token) {
-                token->type = DCS_SSH_HOOK;
-                _uniqueID = [[[NSUUID UUID] UUIDString] copy];
-                token.string = _uniqueID;
+            if (!token) {
+                // Only -startConductorRecoveryModeWithID:clientUniqueID:'s made-up sequence has no
+                // token, so no ID for a parser. It installs its own recovery-mode hook next.
+                _hookFinished = NO;
+                break;
             }
+            token->type = DCS_SSH_HOOK;
+            _uniqueID = [[[NSUUID UUID] UUIDString] copy];
+            token.string = _uniqueID;
 
             VT100ConductorParser *conductorParser = [[VT100ConductorParser alloc] initWithUniqueID:_uniqueID];
             conductorParser.carrierSendMilliseconds = _carrierSendMilliseconds;

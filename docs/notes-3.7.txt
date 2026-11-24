@@ -217,3 +217,10 @@ Bug Fixes:
   you to your own shell first, as clicking
   Cancel does, instead of running alongside it
   and finding you inside its helper shells.
+- When a restored session’s saved profile was
+  damaged (by the bug in iTerm2 3.5.7), iTerm2
+  offered Assign Profile even when there was no
+  saved arrangement to repair, and choosing a
+  profile then crashed iTerm2. The offer now
+  appears only for sessions restored from a
+  saved arrangement.

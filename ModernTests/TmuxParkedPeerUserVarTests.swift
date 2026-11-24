@@ -94,6 +94,82 @@ final class TmuxParkedPeerUserVarTests: XCTestCase {
         XCTAssertEqual(controller.userVars(forPane: 5)["user.host_name"], "new")
     }
 
+    // MARK: - The offer to repair a broken arrangement's profile
+
+    // The identifier of iTermNaggingController's offer to assign a profile to a session whose
+    // saved profile has no name or GUID (the 3.5.7 bug). Accepting it saves the chosen profile
+    // into the arrangement it names, finding the session there by its GUID.
+    private let repairOfferIdentifier = "ArrangementMissingProfile"
+    private var restoredSessions = [PTYSession]()
+
+    /// A session restored from a tmux pane's arrangement, whose profile is `[:]` (so it has
+    /// neither a name nor a GUID, and is in no profile model), optionally with a session GUID and
+    /// an arrangement name.
+    private func restoreSession(sessionGUID: String?, arrangementName: String?) throws -> PTYSession {
+        let leaf: [AnyHashable: Any] = [kLayoutDictWindowPaneKey: 6,
+                                        kLayoutDictWidthKey: 80,
+                                        kLayoutDictHeightKey: 24]
+        var arrangement = PTYSession.arrangement(fromTmuxParsedLayout: leaf,
+                                                 bookmark: [:],
+                                                 tmuxController: controller,
+                                                 window: 9)
+        if let sessionGUID {
+            // SESSION_ARRANGEMENT_GUID, which is private to PTYSession.m.
+            arrangement["Session GUID"] = sessionGUID
+        }
+        let view = SessionView(frame: NSRect(x: 0, y: 0, width: 400, height: 300))
+        let session = try XCTUnwrap(PTYSession(fromArrangement: arrangement,
+                                               named: arrangementName,
+                                               in: view,
+                                               with: nil,
+                                               for: .paneObject,
+                                               partialAttachments: nil,
+                                               options: nil))
+        restoredSessions.append(session)
+        // As the callers of the restore do in the app.
+        session.tmuxController = controller
+        return session
+    }
+
+    private func forgetRestoredSessions() {
+        for session in restoredSessions {
+            if let task = session.shell as AnyObject as? iTermTask {
+                TaskNotifier.sharedInstance().deregister(task)
+            }
+        }
+        restoredSessions = []
+    }
+
+    // Control: a session restored from a named arrangement, which has its GUID, can be repaired.
+    func testARestoredSessionFromANamedArrangementIsOfferedARepair() throws {
+        defer { forgetRestoredSessions() }
+        let session = try restoreSession(sessionGUID: "restored-session", arrangementName: "Saved Arrangement")
+        XCTAssertTrue(session.hasAnnouncement(withIdentifier: repairOfferIdentifier))
+    }
+
+    // With no arrangement name there is no saved arrangement to repair: accepting the offer saved
+    // the default arrangement under a nil name, which raised.
+    func testARestoredSessionWithoutAnArrangementNameIsNotOfferedARepair() throws {
+        defer { forgetRestoredSessions() }
+        let session = try restoreSession(sessionGUID: "restored-session", arrangementName: nil)
+        XCTAssertFalse(session.hasAnnouncement(withIdentifier: repairOfferIdentifier))
+    }
+
+    // With no session GUID nothing in the arrangement can be matched to the session.
+    func testARestoredSessionWithoutAGUIDIsNotOfferedARepair() throws {
+        defer { forgetRestoredSessions() }
+        let session = try restoreSession(sessionGUID: nil, arrangementName: "Saved Arrangement")
+        XCTAssertFalse(session.hasAnnouncement(withIdentifier: repairOfferIdentifier))
+    }
+
+    // A parked window's pane is restored from a tmux layout, with neither.
+    func testAParkedPanesBuriedSessionIsNotOfferedARepair() throws {
+        controller.openWindow(withId: 9, intentional: false, profile: [:])
+        tmux.reply([parkedWindowRecord(window: 9, pane: 5)])
+        let session = try XCTUnwrap(controller.session(forWindowPane: 5))
+        XCTAssertFalse(session.hasAnnouncement(withIdentifier: repairOfferIdentifier))
+    }
+
     // The parked window must stop counting as awaiting its layout, or every new pane's dropped
     // output would be scanned from then on.
     func testAParkedWindowStopsAwaitingItsLayout() {

@@ -2167,8 +2167,16 @@ ITERM_WEAKLY_REFERENCEABLE
         if (arrangementProfile) {
             if (arrangementProfile[KEY_NAME] == nil ||
                 arrangementProfile[KEY_GUID] == nil) {
-                [aSession.naggingController offerToFixSessionWithBrokenArrangementProfileIn:arrangementName
-                                                                                       guid:arrangement[SESSION_ARRANGEMENT_GUID]];
+                // Assigning a profile saves it into the named arrangement, finding this session
+                // there by its GUID. Without both there is nothing to save it to.
+                NSString *sessionGUID = arrangement[SESSION_ARRANGEMENT_GUID];
+                if (arrangementName && sessionGUID) {
+                    [aSession.naggingController offerToFixSessionWithBrokenArrangementProfileIn:arrangementName
+                                                                                           guid:sessionGUID];
+                } else {
+                    DLog(@"Not offering to fix the broken profile: arrangement name %@, session GUID %@",
+                         arrangementName, sessionGUID);
+                }
             }
         }
     }

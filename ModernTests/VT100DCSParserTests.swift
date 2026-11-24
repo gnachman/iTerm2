@@ -376,6 +376,38 @@ final class VT100DCSParserTests: XCTestCase {
         XCTAssertEqual(token.string, esc + "[1m")
     }
 
+    // MARK: - SSH conductor hook
+
+    // A real hook (ESC P 2000 p, with a token) gets a conductor parser named by a new ID.
+    func testDCSSSHHookMakesAConductorParser() {
+        let census = InstanceCensus.shared
+        census.track([VT100ConductorParser.self])
+        let mark = census.mark()
+        let token = dcs("2000p")
+        XCTAssertEqual(token.type, DCS_SSH_HOOK)
+        XCTAssertFalse((token.string ?? "").isEmpty, "the hook's ID")
+        XCTAssertEqual(census.count(of: VT100ConductorParser.self, since: mark), 1)
+    }
+
+    // Recovery mode puts the state machine in passthrough with a made-up hook sequence that has no
+    // token, so no ID, then installs its own recovery-mode parser. The made-up sequence used to
+    // make a conductor parser with a nil ID (passed to a non-optional Swift String) and drop it at
+    // once.
+    func testConductorRecoveryModeMakesNoThrowawayConductorParser() {
+        let census = InstanceCensus.shared
+        census.track([VT100ConductorParser.self])
+        let mark = census.mark()
+        autoreleasepool {
+            parser.startConductorRecoveryMode(withID: "dcs", clientUniqueID: nil)
+        }
+        XCTAssertEqual(parser.state, .passthrough)
+        XCTAssertEqual(census.count(of: VT100ConductorParser.self, since: mark), 1,
+                       "the recovery-mode parser")
+        XCTAssertEqual(census.deallocThreads(of: VT100ConductorParser.self, since: mark),
+                       InstanceCensus.DeallocThreads(main: 0, other: 0),
+                       "no conductor parser was made and thrown away")
+    }
+
     // MARK: - Saved state
 
     func testDCSSavedState() {
