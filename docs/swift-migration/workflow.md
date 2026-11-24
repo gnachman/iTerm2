@@ -228,16 +228,30 @@ nights have run, treat the mechanism as unproven.
   them onto it, and refuse the night only when the rebase fails or the
   upstream was force-pushed. The upstream is GitHub, not the owner's
   checkout, because porting stale code is pointless (the owner,
-  2026-11-20). Only that trusted script fetches; the session itself can
-  neither fetch nor push. The session is not headless: it is an ordinary
+  2026-11-20). Only that trusted script fetches from GitHub; a push by
+  the session is stopped or reported as below. The session is not headless: it is an ordinary
   interactive `claude` session in tmux on a private socket, in the clone,
   under `tools/swift_migration/deadline_run.py`, which ends it by a hard
   time limit and kills everything it started. The owner can attach to watch
-  or intervene. By default git in the session refuses every local-path and
-  `file://` transport, so the session cannot clone or fetch from a local
-  repository (an agent's own working copy is a build lane, below, which
-  needs no transport); `NIGHTLY_ALLOW_LOCAL_GIT=1` lifts that, and with it
-  a guard against pushing into the owner's checkout. The orchestrator is
+  or intervene. Git in the session may use local-path and `file://`
+  transports, as in the owner's own shell (the owner, 2026-11-23: “I
+  don't understand why the nightly session can't clone. That is a
+  senseless rule.”), so it can clone and fetch from a local repository,
+  and Xcode resolves Swift packages in the clone and the lanes as it does
+  anywhere else (SwiftPM makes each package's working copy with a local
+  `git clone`); nothing needs to be copied into DerivedData. A push to
+  any URL, to a path whose first character is `/` or `.`, or to origin still fails.
+  What the session can now do to the owner's checkout by local path,
+  with no environment guard against it: push through a remote with an
+  explicit pushurl, through `git send-pack`, or to a relative path whose
+  first character is neither, from any directory (from the clone,
+  `tmp/../../<his checkout>`), which the deny rules catch in their plain
+  forms; and fetch or pull into his checkout from the clone or a lane
+  (`git -C <his checkout> pull --ff-only <clone> master` moves his
+  checked-out branch and changes his working tree), which no deny rule
+  matches, so only the classifier reviews it. The owner-refs comparison
+  below reports any ref change from these routes; working tree changes
+  are not compared. The orchestrator is
   told to have stopped cleanly 45 minutes before the hard limit; the stop
   sequence starts early enough to end by the hard limit. For the scheduled
   midnight start the six-hour limit comes first: clean stop 05:15, hard
@@ -255,9 +269,8 @@ nights have run, treat the mechanism as unproven.
   mode 0700 and starts the session with `--add-dir <clone>.lanes`, so the
   session is allowed to edit there without a prompt, as in the clone.
   Lanes are `git worktree add` checkouts whose submodules borrow objects
-  through alternates, so they need no git transport and work under the
-  session's refusal of local-path transports. Each lane registers itself
-  in the clone's `.git/worktrees/`, in the one shape that
+  through alternates, so they need no git transport. Each lane registers
+  itself in the clone's `.git/worktrees/`, in the one shape that
   `nightly_clone.sh check` allows there. After the refresh and before the
   session, `nightly_start.sh` logs `lane_clone.py status` and runs
   `release --stale`, which frees lanes left held by an earlier night and

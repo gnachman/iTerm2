@@ -48,8 +48,7 @@ Submodules. Each submodule the repository has initialized is made in the
 lane as a repository of its own (an embedded .git directory) that borrows
 the repository's submodule objects through objects/info/alternates, then is
 checked out at the commit the lane's tree records. No transport is used, so
-this works offline and in the nightly session, which forbids local-path git
-transports. The repository's submodule working trees, its submodule
+this works offline. The repository's submodule working trees, its submodule
 repositories and its configuration are only read.
 
 Commands:

@@ -326,6 +326,23 @@ them as [lifecycle.md §3](lifecycle.md) says:
 Steps 7 and 8 run at the close of each unit and before anything is pushed:
 
 7. The full suite passes, normally and in the sanitizer configuration.
+   Under the nullability sanitizer the whole suite runs in the
+   non-aborting form (`sanitizer_tests.sh nullability` with no test
+   names): a violation does not end the test host, and the run fails on
+   every report outside the nullability baseline
+   (`docs/swift-migration/nullability-baseline.tsv`, the known, not yet
+   triaged violations; [nullability.md §7](nullability.md)), naming the
+   tests where the report's stack or file name shows them (reports from the
+   host's launch or other threads, and later hits of a location already
+   reported in the same host, name none). Judging this step against a
+   baseline was proposed by the migration on 2026-11-23 and awaits the
+   owner's confirmation (owner-queue.md Q26). The baseline was first generated on
+   2026-11-23 (69 entries, all untriaged). An entry is keyed by check, file, function, argument
+   number and the base name of the declaring header, so two violations in
+   one function on the same argument number whose declarations are in
+   headers of the same name (two `NSString.h` methods, or two Swift methods
+   in `iTerm2SharedARC-Swift.h`) share an entry. The aborting form, one
+   test-host relaunch per violation, is for targeted classes only.
 8. The app builds for `x86_64` with no warnings. Several hazards differ
    between the Intel and Apple silicon slices ([warnings.md](warnings.md)), and the native
    build alone lets an Intel-only error through. Rosetta is not available on

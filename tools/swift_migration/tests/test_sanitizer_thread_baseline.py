@@ -27,6 +27,11 @@ The fixtures in fixtures/sanitizer_thread:
   frame printed as the runtime prints a frame it has no name for
   ("<null> <null> (module:arch+offset)"). Edited by hand.
 
+- baseline-2.1.tsv: docs/swift-migration/thread-baseline.tsv with only its
+  header and entry 2.1 (entry 2.3 was added to the checked-in file on
+  2026-11-22), so the expectations below do not move with the checked-in
+  file.
+
 - tsan.kinds: synthetic, written by the first reviewer of the unit: one
   report of each other kind the runtime prints (thread leak,
   lock-order-inversion, heap-use-after-free, signal-unsafe call, destroy of
@@ -53,7 +58,11 @@ import sanitizer_summary  # noqa: E402
 
 FIXTURES = os.path.join(HERE, "fixtures", "sanitizer_thread")
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
-BASELINE = os.path.join(REPO, "docs", "swift-migration", "thread-baseline.tsv")
+# The mechanics tests read a fixture holding only entry 2.1, so that adding
+# an entry to the checked-in baseline does not change their expectations;
+# CheckedInBaselineTests reads the checked-in file.
+BASELINE = os.path.join(FIXTURES, "baseline-2.1.tsv")
+CHECKED_IN_BASELINE = os.path.join(REPO, "docs", "swift-migration", "thread-baseline.tsv")
 ROOT = "/Users/example/iterm2"
 
 METAL_READ = "__61-[iTermMetalDriver finishDrawingWithCommandBuffer:frameData:]_block_invoke_2"
@@ -166,7 +175,7 @@ class BaselineTests(unittest.TestCase):
         self.addCleanup(os.unlink, f.name)
         return f.name
 
-    def test_checked_in_baseline_accepts_metal(self):
+    def test_baseline_accepts_metal(self):
         r = run_json("--baseline", BASELINE, fixture("tsan.metal"))
         b = r["baseline"]
         self.assertEqual(b["verdict"], "PASS")
@@ -276,6 +285,26 @@ class BaselineTests(unittest.TestCase):
                 "9.9\tdata race\t-[VT100Grid currentDate]\t-[VT100Grid setCurrentDate:]\theap block of size 32\tx\n")
         r = run_json("--baseline", self.write(text), fixture("tsan.flag-across-writes-other-build"), expect=1)
         self.assertEqual(r["baseline"]["accepted"], [])
+
+
+class CheckedInBaselineTests(unittest.TestCase):
+    """The checked-in baseline parses, every entry of it. No report for
+    entry 2.3 is committed (its run records are in a lane's tmp/), so only
+    parsing is checked here, and that 2.1 still accepts the Metal report."""
+
+    def test_every_entry_parses(self):
+        with open(CHECKED_IN_BASELINE) as f:
+            data = [line.split("\t", 1)[0] for line in f
+                    if line.strip() and not line.startswith("#")]
+        self.assertEqual(data[0], "entry")
+        entries = sanitizer_summary.read_baseline(CHECKED_IN_BASELINE)
+        self.assertEqual([e["entry"] for e in entries], data[1:])
+        self.assertIn("2.1", data[1:])
+
+    def test_checked_in_baseline_accepts_metal(self):
+        r = run_json("--baseline", CHECKED_IN_BASELINE, fixture("tsan.metal"))
+        self.assertEqual(r["baseline"]["verdict"], "PASS")
+        self.assertEqual([(g["entry"], g["reports"]) for g in r["baseline"]["accepted"]], [("2.1", 1)])
 
 
 class KindsTests(unittest.TestCase):

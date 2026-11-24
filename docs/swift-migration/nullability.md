@@ -285,6 +285,91 @@ methods:
 | nil assigned to a `nonnull` property with dot syntax | No |
 | A `nonnull` method called on a nil receiver, yielding nil | No |
 
+How a violation is treated depends on the run
+(`tools/swift_migration/sanitizer_tests.sh`, whose header is the manual).
+A whole-suite run, as gate step 7 asks for ([README.md §5](README.md)),
+never aborts: each report goes to a file, the tests go on, and after the
+run the reports are compared with the nullability baseline,
+`docs/swift-migration/nullability-baseline.tsv`. The run fails on any
+report outside it, listing each with the tests it came from where its
+stack or report file name shows them: a report from the host's launch or
+from another thread names none, and the runtime reports a location once per
+host, so a later test that hits it again is not named. A targeted run
+aborts the test host at the first report the suppressions do not hide, so
+the violating test fails at once; the host exits without a crash report. The
+aborting form is for targeted classes only: a whole-suite run in it on
+2026-11-23 relaunched the app 197 times in nine minutes. `--collect` reports
+everything, suppressed or not, and fails nothing, for triage.
+
+The baseline is the known, not yet triaged violations. It was proposed by
+the migration on 2026-11-23, and judging gate step 7 against it awaits the
+owner's confirmation (owner-queue.md Q26). The app has several hundred
+untriaged violations (the collection of nullability-triage.md section 1
+found 1,794 reports at 364 locations), and without a baseline every unit's
+close would fail on reports that have nothing to do with the unit. It
+was first generated on 2026-11-23 from a whole-suite run: 69 entries for
+75 locations (92 reports), all untriaged.
+
+**The key and what it still merges.** An entry is the check kind, the
+reporting file, the function of the report's first stack frame (a block as
+"block in" its method, without its index), the message and the base name
+of the header named in the report's `note: ... specified here` line. The
+line is not in the key, so an unrelated edit does not break an entry. The
+report text holds no declaration name: UBSan's messages name only the
+argument number ("null pointer passed as argument 1, which is declared to
+never be null", "null pointer returned from function declared to never
+return null"), and the note line gives the header's path, line and column
+but not its source text. So **two violations in one function, of the same
+check and argument number, whose declarations are in headers with the same
+base name, share an entry**: a nil passed as argument 1 to two different
+`NSString.h` methods, or to two Swift methods declared in
+`iTerm2SharedARC-Swift.h`, from one Objective-C method. The second is
+accepted by the first's entry. Every Swift method of the main target that
+Objective-C can call is declared in the one generated header
+`iTerm2SharedARC-Swift.h`, so for Swift callees the header tells Swift from
+Objective-C and the SDK, not one Swift method from another: **once a caller
+function has an entry for argument N declared there, a port that adds a nil
+passed as argument N from that same function to any other Swift method is
+accepted silently.** A new report declared in a generated Swift header is
+flagged as port-relevant. On the 204 report files
+of one interrupted run on 2026-11-23 (31 distinct locations), no two
+locations shared an entry under either this key or the key without the
+header.
+
+**Generating and refreshing it.** From a whole-suite `--collect` run, with
+the script of the checkout that made the run (or `--root` naming it; a
+report under another checkout is refused, never written as a path):
+
+```
+python3 -B tools/swift_migration/sanitizer_summary.py \
+    --write-nullability-baseline docs/swift-migration/nullability-baseline.tsv \
+    tmp/sanitizers/runs/nullability-<time>/reports
+```
+
+It keeps each entry's note, keeps entries no report matched unless
+`--drop-unseen`, skips incomplete reports (cut off before their stack)
+with a warning, and prints every entry added, kept unseen or removed. A
+refresh that adds entries is a reviewed change: the reviewer checks that
+every added entry printed has a row in
+[nullability-triage.md](nullability-triage.md); the baseline never grows
+without one. It shrinks as violations are fixed by guards or annotations:
+an entry is removed when its violation's fix is identified. An entry a run
+did not see is only a candidate for removal, because skipped tests,
+`--skip`, tests gated by the environment, violations on other threads and
+timing can all hide a violation; remove it when its fix is identified, or
+after two whole-suite runs with no skips that do not see it
+(`--drop-unseen`, with care).
+
+Only `reports/` is read when generating. A report reaches only stderr
+when the runtime cannot open its log file; the runtime then prints the
+error and ends the process (compiler-rt's report file handling), so the
+test fails and the run shows it. A checking run also reads `test.log`,
+where such output would land.
+
+Nothing is hidden at run time: the runtime suppressions file,
+`tools/swift_migration/sanitizer_nullability_suppressions.txt`, stays
+empty, since a violation is fixed with a guard rather than suppressed.
+
 The sanitizer only checks code that runs. It finds mistakes in proofs; it does
 not replace them. Its value is highest for the claims nobody proved: the 464
 headers annotated before this process existed.

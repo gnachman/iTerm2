@@ -211,6 +211,58 @@ class FastTestsTests(unittest.TestCase):
         status, out = self.run_script("--dry-run", "--serial")
         self.assertEqual(status, 0, out)
         self.assertIn("-parallel-testing-enabled NO", out)
+        self.assertNotIn("-parallel-testing-worker-count", out)
+        self.assertNotIn("-maximum-parallel-testing-workers", out)
+
+    def dry_run_test_command(self, *args):
+        status, out = self.run_script("--dry-run", *args)
+        self.assertEqual(status, 0, out)
+        return [l for l in out.splitlines() if l.startswith("xcodebuild test-without-building")][0], out
+
+    def test_parallel_defaults_to_two_workers(self):
+        # The cap of tools/run_tests.expect -parallel.
+        command, _ = self.dry_run_test_command()
+        self.assertIn("-parallel-testing-enabled YES -parallel-testing-worker-count 2 "
+                      "-maximum-parallel-testing-workers 2", command)
+
+    def test_workers_changes_the_count(self):
+        command, _ = self.dry_run_test_command("--workers", "3")
+        self.assertIn("-parallel-testing-worker-count 3 -maximum-parallel-testing-workers 3", command)
+
+    def test_workers_with_serial_is_a_usage_error(self):
+        status, out = self.run_script("--serial", "--workers", "2")
+        self.assertEqual(status, 2, out)
+        self.assertIn("--workers needs a parallel run", out)
+        self.assertEqual(self.calls(), [])
+
+    def test_jobs_is_passed_to_the_build(self):
+        _, out = self.dry_run_test_command("--jobs", "4")
+        self.assertIn("tools/swift_migration/sanitizer_tests.sh plain --build-only --jobs 4", out)
+        status, out = self.run_script("--jobs", "4")
+        self.assertEqual(status, 0, out)
+        calls = self.calls()
+        self.assertTrue(calls[0].startswith("build-for-testing "), calls)
+        self.assertIn(" -jobs 4", calls[0])
+        # The test step builds nothing.
+        self.assertNotIn("-jobs", calls[-1])
+
+    def test_jobs_without_a_build_is_a_usage_error(self):
+        status, out = self.run_script("--no-build", "--jobs", "2")
+        self.assertEqual(status, 2, out)
+        self.assertIn("--jobs applies to the build, which --no-build leaves out", out)
+        self.assertEqual(self.calls(), [])
+
+    def test_no_jobs_by_default(self):
+        status, out = self.run_script()
+        self.assertEqual(status, 0, out)
+        self.assertNotIn("-jobs", self.calls()[0])
+
+    def test_bad_counts_are_usage_errors(self):
+        for option in ("--jobs", "--workers"):
+            for args in ((option,), (option, "0"), (option, "x")):
+                status, out = self.run_script(*args)
+                self.assertEqual(status, 2, (args, out))
+                self.assertEqual(self.calls(), [], args)
 
     def run_log_and_timing(self):
         runs = os.path.join(self.root, "tmp", "fast-tests", "runs")
@@ -322,6 +374,43 @@ class FastTestsTests(unittest.TestCase):
                 if p.poll() is None:
                     p.kill()
                 p.wait()
+
+    def set_budget(self, seconds):
+        """Changes the budget constant in the copied script (a budget below
+        zero makes any run go over without waiting)."""
+        path = os.path.join(self.root, "tools", "swift_migration", "fast_tests.sh")
+        with open(path) as f:
+            text = f.read()
+        self.assertEqual(text.count("\nFAST_TIER_BUDGET_SECONDS=300\n"), 1)
+        with open(path, "w") as f:
+            f.write(text.replace("\nFAST_TIER_BUDGET_SECONDS=300\n", "\nFAST_TIER_BUDGET_SECONDS=%d\n" % seconds))
+
+    def test_whole_command_is_reported_against_the_budget(self):
+        status, out = self.run_script()
+        self.assertEqual(status, 0, out)
+        self.assertRegex(out, r"Whole command: \d+ s; fast tier budget 300 s \(FAST_TIER_BUDGET_SECONDS\): under\.")
+
+    def test_over_budget_is_reported_and_fails_only_when_enforced(self):
+        self.set_budget(-1)
+        status, out = self.run_script()
+        self.assertEqual(status, 0, out)
+        self.assertRegex(out, r"Whole command: \d+ s; fast tier budget -1 s \(FAST_TIER_BUDGET_SECONDS\): OVER\.")
+        self.assertIn("not enforced (no --enforce-budget)", out)
+        status, out = self.run_script("--enforce-budget")
+        self.assertEqual(status, 1, out)
+        self.assertIn("error: the fast tier went over its budget", out)
+
+    def test_enforce_budget_is_refused_where_it_would_do_nothing(self):
+        for other in ("--dry-run", "--kill-test-hosts"):
+            status, out = self.run_script("--enforce-budget", other)
+            self.assertEqual(status, 2, (other, out))
+            self.assertIn("--enforce-budget applies to a run", out)
+            self.assertEqual(self.calls(), [])
+
+    def test_enforced_budget_keeps_a_test_failure_status(self):
+        self.set_budget(-1)
+        status, out = self.run_script("--enforce-budget", test_status=65)
+        self.assertEqual(status, 65, out)
 
     def test_unknown_option(self):
         status, out = self.run_script("--frobnicate")

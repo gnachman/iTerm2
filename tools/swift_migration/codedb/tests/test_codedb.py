@@ -2735,9 +2735,9 @@ class CaptureScriptTest(unittest.TestCase):
         self.lock = os.path.join(self.work, 'codedb.lock')
         self.env = dict(os.environ, PATH=stub + os.pathsep + os.environ['PATH'])
 
-    def run_capture(self, status):
-        return subprocess.run([self.script], env=dict(self.env, STUB_STATUS=str(status)), capture_output=True,
-                              text=True, timeout=110)
+    def run_capture(self, status, *args):
+        return subprocess.run([self.script] + list(args), env=dict(self.env, STUB_STATUS=str(status)),
+                              capture_output=True, text=True, timeout=110)
 
     def test_failed_build_leaves_the_previous_capture(self):
         r = self.run_capture(65)
@@ -2798,6 +2798,28 @@ class CaptureScriptTest(unittest.TestCase):
         self.write_lock('1\ncodedb.py update\n%s\n' % start_time(1))
         r = self.run_capture(0)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_jobs_limits_the_build(self):
+        r = self.run_capture(0, '--jobs', '4')
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        with open(self.stub_args) as f:
+            args = f.read().split()
+        self.assertEqual(args[:2], ['clean', 'build-for-testing'])
+        self.assertEqual([args[i + 1] for i, a in enumerate(args) if a == '-jobs'], ['4'])
+
+    def test_no_jobs_by_default(self):
+        r = self.run_capture(0)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        with open(self.stub_args) as f:
+            self.assertNotIn('-jobs', f.read().split())
+
+    def test_bad_arguments_are_refused_before_the_lock_and_the_build(self):
+        for args in (('--jobs',), ('--jobs', '0'), ('--jobs', 'four'), ('--frob',), ('--jobs', '2', 'extra')):
+            r = self.run_capture(0, *args)
+            self.assertEqual(r.returncode, 2, (args, r.stdout + r.stderr))
+            self.assertIn('usage:', r.stderr)
+            self.assertFalse(os.path.exists(self.stub_args), 'the build ran for %s' % (args,))
+        self.assertEqual(sorted(os.listdir(self.frags)), ['.captured', 'old.json'])
 
     def test_the_build_is_clean(self):
         # An incremental build writes fragments only for the files it

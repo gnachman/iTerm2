@@ -43,7 +43,11 @@ These figures come from one run. `tools/swift_migration/test_timing.py`
 turns a test log into per-test and per-class times (see its `--help`), and
 `tools/swift_migration/test_tiers.py` combines several logs, so the numbers
 are regenerated, not stored. Figures from 21 runs on 2026-11-20 are in
-[test-tiers.md](test-tiers.md).
+[test-tiers.md](test-tiers.md). `tools/swift_migration/test_load_profile.py`
+runs tests serially and gives each test's CPU time, the cores it kept busy,
+its peak count of threads and of threads running at once, and the threads
+it left behind (see its `--help`); it measures load, where `test_timing.py`
+measures time.
 
 ## 2. Plan
 
@@ -120,4 +124,13 @@ are regenerated, not stored. Figures from 21 runs on 2026-11-20 are in
 - The fast tier has a wall-clock budget, including the build. It is set
   once the fast tier has been measured in Phase 0, at the measured time plus
   a quarter. A commit that pushes the fast tier over budget fails the gate
-  until the offending test is fixed or reassigned.
+  until the offending test is fixed or reassigned. The budget is 300 s
+  with two test workers (the owner, 2026-11-23: “I don't want things to
+  fail because of too tight a budget. Let it go for 300 seconds.”),
+  replacing the 77 s measured on 2026-11-22 with xcodebuild's own worker
+  count, which two workers could not meet
+  ([test-tiers.md §1](test-tiers.md)). The gate still runs the whole suite
+  at step 3, not the fast tier, until the owner switches it; the budget
+  binds the gate only from then, and the gate will then run
+  `fast_tests.sh --enforce-budget`, which fails a run that goes over
+  (without the option the time is only printed).

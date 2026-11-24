@@ -13,7 +13,9 @@ scope listed apart from those in other code.
 Usage:
     sanitizer_summary.py [PATH ...] [--console LOG ...] [--test-log LOG]
                          [--top N] [--root DIR] [--mixed] [--json]
-                         [--baseline FILE [--collect]] [--symbolize DIR [--atos CMD]]
+                         [--baseline FILE] [--fail-on-reports [--nullability-baseline FILE]]
+                         [--collect] [--write-nullability-baseline FILE]
+                         [--symbolize DIR [--atos CMD]]
 
     PATH      a report file or a directory; a directory is searched
               recursively and every regular file in it is read
@@ -44,7 +46,37 @@ Usage:
               (docs/swift-migration/thread-baseline.tsv; see "Thread
               reports" below) and exit 1 if any report is outside it or
               cannot be compared with it
-    --collect with --baseline: print the comparison but do not exit 1
+    --fail-on-reports
+              exit 1 if there is any UBSan report (outside the
+              --nullability-baseline, when one is given), any incomplete
+              report or any report file that does not parse, and list each
+              location with the tests it came from (see "Failing on
+              reports" below). For the nullability mode of
+              sanitizer_tests.sh
+    --nullability-baseline FILE
+              with --fail-on-reports: reports that FILE (normally
+              docs/swift-migration/nullability-baseline.tsv) accepts do not
+              fail; see "The nullability baseline" below
+    --write-nullability-baseline FILE
+              write FILE as the baseline of every complete UBSan report
+              read (from the reports directory of a whole-suite --collect
+              run), keeping each existing entry's note and, unless
+              --drop-unseen, the existing entries no report matched; print
+              the counts and every entry added, kept unseen or removed, and
+              warn about every incomplete report skipped. Exit 0, or 2 if
+              the old FILE is malformed or an entry would name an absolute
+              path under the home directory (nothing is written then).
+              Nothing else is printed
+    --drop-unseen
+              with --write-nullability-baseline: remove the existing
+              entries no report matched
+    Root: --root defaults to the checkout the reports ran in when their
+              path is <checkout>/tmp/sanitizers/runs/<run>/..., else to the
+              checkout this script is in. A --root that disagrees with the
+              reports' checkout is refused (exit 2): run with the same
+              checkout's script, or pass --root
+    --collect with --baseline or --fail-on-reports: print the comparison
+              or the verdict but do not exit 1
     --symbolize DIR
               before grouping, name the unnamed application frames of the
               thread reports with atos on the binaries of the same name
@@ -167,12 +199,55 @@ comparison prints the groups outside the baseline and the unmatchable ones
 should be removed; after a targeted run it means nothing), and a verdict
 line, "Verdict: PASS: ..." or "Verdict: FAIL: ...".
 
+Failing on reports. With --fail-on-reports every UBSan report fails and is
+listed with its kind, location, message, the pids of the report files it is
+in (from a file name "ubsan.<pid>") and the tests it came from: a test named
+on any frame of its stack ("-[FooTests testBar]", "-[ModernTests.FooTests
+testBar]", "ModernTests.FooTests.testBar()"), and the test in the report
+file's name when the file is named "ubsan.<Class>.<method>.<pid>" (the name a
+test bundle that points the runtime's report path at the running test with
+__sanitizer_set_report_path makes; sanitizer_tests.sh describes it). A
+report with neither names no test. A report file (named "ubsan.<pid>" or
+"ubsan.<Class>.<method>.<pid>") with lines that are not sanitizer output,
+for example one cut short when a hung test host was killed, fails as well
+and is named, since a report may be lost in it. So does an incomplete
+report: one in a report file with no stack frame and no SUMMARY line (a
+host killed while writing it); it is listed as "incomplete report", never
+as a new location. Without a baseline the verdict line is "Verdict: PASS:
+no report outside the suppressions." or "Verdict: FAIL: N report(s) at M
+location(s) that no suppression hides." (with "; K incomplete report(s)"
+and "; K report file(s) with lines that are not a report" added when there
+are any). Reports whose declaring header is a generated Swift header
+(*-Swift.h) are listed first and flagged as port-relevant.
+
+The nullability baseline. A tab-separated file whose comment header
+(NULLABILITY_BASELINE_PREAMBLE below, written into every baseline) gives the
+columns, the matching rule and what still shares an entry. In short: kind,
+file (relative to the root; an SDK or toolchain file from usr/include/,
+usr/lib/ or System/Library/Frameworks/ on, so the Xcode and SDK versions do
+not appear), function (a block as "block in <method>", without its index;
+"@line N" when the first frame names no function), message, declared (the
+base name of the header in the report's "note: ... specified here" line,
+or -), note. The first five must be equal. The line is not in the key, so
+an unrelated edit keeps the match, as the thread baseline keys on frames.
+The report text has no declaration name: UBSan's messages name only the
+argument number, and the note line gives the header's path, line and
+column but no source text, so the header's base name is the most a stable
+key can take from it. With a baseline, the verdict counts the reports it
+accepted, lists the entries no report matched as candidates for removal,
+and reads "Verdict: PASS: no report outside the baseline; N report(s)
+accepted by it." or "Verdict: FAIL: N report(s) at M location(s) outside
+the baseline; K report(s) accepted by it." (plus the incomplete and
+unparsable counts).
+
 Exit status: 0 success, 1 with --baseline (and without --collect) a thread
-report outside the baseline or unmatchable, 2 usage error, unreadable input
+report outside the baseline or unmatchable, or with --fail-on-reports (and
+without --collect) a UBSan report outside the nullability baseline, an
+incomplete report or an unparsable report file, 2 usage error, unreadable input
 or a malformed baseline file, 3 --test-log names a log in which no test was
 executed (this outranks 1).
 Python 3 standard library only (and atos for --symbolize). Writes nothing to
-disk; run with python3 -B.
+disk except the file of --write-nullability-baseline; run with python3 -B.
 """
 
 import argparse
@@ -203,12 +278,21 @@ UNPARSED_SHOWN = 20
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
 UBSAN_ERROR = re.compile(r"^(?P<loc>.*?): runtime error: (?P<msg>.*)$")
 UBSAN_NOTE = re.compile(r"^.*?: note: ")
+# "<path>:<line>:<col>: note: _Nonnull type annotation specified here": the
+# declaration a nullability report is about.
+UBSAN_NOTE_PATH = re.compile(r"^(?P<path>.*?):\d+:\d+: note: ")
 UBSAN_SUMMARY = re.compile(r"^SUMMARY: UndefinedBehaviorSanitizer: (?P<kind>\S+)(?: (?P<loc>\S+))?")
 TSAN_WARNING = re.compile(r"^WARNING: ThreadSanitizer: (?P<kind>.+?)(?: \(pid=\d+\))?\s*$")
 TSAN_SUMMARY = re.compile(r"^SUMMARY: ThreadSanitizer: (?P<kind>.+?) (?P<loc>\S+:\d+(?::\d+)?) in (?P<func>.*)$")
 TSAN_SUMMARY_NOLOC = re.compile(r"^SUMMARY: ThreadSanitizer: (?P<kind>.+?)(?: \(.*\))?(?: in .*)?$")
 FRAME = re.compile(r"^\s+#\d+ ")
 FRAME0 = re.compile(r"^\s+#0 0x[0-9a-fA-F]+ in (?P<rest>.+)$")
+FRAME_ANY = re.compile(r"^\s+#\d+ 0x[0-9a-fA-F]+ in (?P<rest>.+)$")
+# A report file's name: "ubsan.<pid>" as log_path writes it, or
+# "ubsan.<Class>.<method>.<pid>" when the test bundle points the report path
+# at the running test (__sanitizer_set_report_path; see sanitizer_tests.sh).
+REPORT_FILE = re.compile(r"^ubsan(?:\.(?:[A-Za-z_]\w*\.)?(?P<cls>[A-Za-z_]\w*)\.(?P<method>[A-Za-z_]\w*))?"
+                         r"\.(?P<pid>\d+)$")
 # "-[Foo bar:]+0x24 (iTerm2.debug.dylib:arm64+0x6f0e88)": offset and module.
 FRAME_MODULE = re.compile(r"^(?P<func>.*?)(?:\+0x[0-9a-fA-F]+)? \([^()]*\)$")
 # "main SignProbe.m:11" or "@objc Foo.bar() /<compiler-generated>": file and line.
@@ -217,9 +301,10 @@ BETWEEN_REPORTS = re.compile(
     r"^(\s*|=+|==\d+==.*|ThreadSanitizer: reported \d+ warnings?|ThreadSanitizer: .*)$")
 
 
-def frame_function(line):
-    """The function named by a "#0" stack frame line, or None."""
-    m = FRAME0.match(line)
+def frame_function(line, pattern=FRAME0):
+    """The function named by a "#0" stack frame line (with pattern=FRAME_ANY,
+    any UBSan stack frame line), or None."""
+    m = pattern.match(line)
     if not m:
         return None
     rest = m.group("rest").strip()
@@ -305,6 +390,23 @@ class Summary:
         self.unparsed_shown = []        # (file, lineno, text)
         self.other_text = 0
         self.thread = ThreadParser()
+        # (kind, location) of each UBSan report -> {"pids": set, "tests": set}:
+        # the pids from the report files' names, and the tests named on the
+        # reports' frames or in the files' names (--fail-on-reports).
+        self.ubsan_info = {}
+        self.file_pid = None
+        self.file_test = None
+        # Report files (named as REPORT_FILE) with lines that are not
+        # sanitizer output: path -> number of such lines (--fail-on-reports).
+        self.unparsed_report_files = Counter()
+        # (kind, location) -> base name of the file of its first report's
+        # "note:" line (the declaring header), for the nullability baseline.
+        self.notes = {}
+        # UBSan reports in report files cut off before their first frame
+        # and with no SUMMARY line (a host killed while it wrote): (path,
+        # location). Never matched against or written into a baseline.
+        self.incomplete = []
+        self.current_path = None
 
     @property
     def reports(self):
@@ -320,7 +422,11 @@ class Summary:
     # or at the end of the file.
     def read(self, path, console=False):
         self.files += 1
+        m = None if console else REPORT_FILE.match(os.path.basename(path))
+        self.file_pid = m.group("pid") if m else None
+        self.file_test = "%s.%s" % (m.group("cls"), m.group("method")) if m and m.group("cls") else None
         self.current = self.console_reports if console else self.file_reports
+        self.current_path = path
         mixed = self.mixed
         self.mixed = mixed or console
         try:
@@ -343,12 +449,24 @@ class Summary:
         self.finish(pending)
         self.thread.finish()
 
-    def finish(self, pending, location=None, kind=None):
+    def finish(self, pending, location=None, kind=None, summarized=False):
         if pending is None:
             return
         if pending[0] == "ubsan":
-            _, loc, msg, pkind, function = pending
+            _, loc, msg, pkind, function, tests, note = pending
             self.add(kind or pkind, loc, msg, function)
+            if (not summarized and function is None and self.current is self.file_reports
+                    and REPORT_FILE.match(os.path.basename(self.current_path or ""))):
+                self.incomplete.append((self.current_path, loc))
+                return
+            if note:
+                self.notes.setdefault((kind or pkind, loc), note)
+            info = self.ubsan_info.setdefault((kind or pkind, loc), {"pids": set(), "tests": set()})
+            info["tests"] |= tests
+            if self.file_test:
+                info["tests"].add(self.file_test)
+            if self.file_pid:
+                info["pids"].add(self.file_pid)
         else:
             _, pkind, msg = pending
             self.add(kind or pkind, location or "<unknown>", msg or pkind)
@@ -363,7 +481,7 @@ class Summary:
         m = UBSAN_ERROR.match(line)
         if m:
             self.finish(pending)
-            return ("ubsan", m.group("loc"), m.group("msg"), "undefined-behavior", None)
+            return ("ubsan", m.group("loc"), m.group("msg"), "undefined-behavior", None, set(), None)
         m = TSAN_WARNING.match(line)
         if m:
             self.finish(pending)
@@ -374,7 +492,7 @@ class Summary:
             if pending is not None and pending[0] == "ubsan" and (
                     m.group("loc") == pending[1] or pending[1].startswith("<")):
                 kind = m.group("kind")
-                self.finish(pending, kind=None if kind == "undefined-behavior" else kind)
+                self.finish(pending, kind=None if kind == "undefined-behavior" else kind, summarized=True)
                 return None
             # Not the open report's SUMMARY (another process's, interleaved
             # with it, or one whose report line was lost): the open report
@@ -397,10 +515,21 @@ class Summary:
                     return ("tsan", pending[1], HEX.sub("0x...", line.strip()))
                 return pending
             if FRAME.match(line):
+                name = frame_function(line, FRAME_ANY)
+                if name:
+                    for pattern in TEST_FRAME:
+                        t = pattern.match(name)
+                        if t:
+                            pending[5].add("%s.%s" % (t.group(1), t.group(2)))
                 if pending[4] is None:
                     function = frame_function(line)
                     if function is not None or line.lstrip().startswith("#0 "):
-                        return pending[:4] + (function or "<unknown>",)
+                        return pending[:4] + (function or "<unknown>",) + pending[5:]
+                return pending
+            m = UBSAN_NOTE_PATH.match(line)
+            if m:
+                if pending[6] is None:
+                    return pending[:6] + (os.path.basename(m.group("path")),)
                 return pending
             if UBSAN_NOTE.match(line) or not line.strip():
                 return pending
@@ -414,6 +543,8 @@ class Summary:
 
     def count_unparsed(self, path, lineno, line):
         self.unparsed += 1
+        if self.current is self.file_reports and REPORT_FILE.match(os.path.basename(path)):
+            self.unparsed_report_files[path] += 1
         if len(self.unparsed_shown) < UNPARSED_SHOWN:
             self.unparsed_shown.append((path, lineno, line))
 
@@ -896,6 +1027,303 @@ def print_thread(r, out):
         out.write("Verdict: %s\n" % b["line"])
 
 
+## The nullability baseline
+#
+# See "The nullability baseline" in the module docstring.
+
+NULLABILITY_BASELINE_COLUMNS = ["kind", "file", "function", "message", "declared", "note"]
+NEW_ENTRY_NOTE = "untriaged"
+NO_DECLARATION = "-"
+# A block invoke function, "__57-[A b:]_block_invoke_2.448": keyed as
+# "block in -[A b:]", without the block's index (which a new block earlier in
+# the method would change) or the compiler's uniquing suffix.
+BLOCK_FUNCTION = re.compile(r"^__\d*(?P<owner>.+?)_block_invoke(?:_\d+)?(?:\.\d+)?$")
+# Where an SDK or toolchain path stops depending on the Xcode and SDK version.
+STABLE_SDK_MARKERS = ("/usr/include/", "/System/Library/Frameworks/", "/usr/lib/")
+RUNS_MARKER = "/tmp/sanitizers/runs/"
+ROOT_HINT = "run with the same checkout's script, or pass --root"
+NULLABILITY_BASELINE_PREAMBLE = """\
+# Nullability sanitizer baseline: the known, not yet triaged report
+# locations that a nullability run of tools/swift_migration/sanitizer_tests.sh
+# accepts. PROPOSED by the migration on 2026-11-23; judging gate step 7
+# against it awaits the owner's confirmation (owner-queue.md Q26). Compared
+# after the run by sanitizer_summary.py --nullability-baseline; nothing is
+# hidden at run time (the runtime suppressions file is separate and stays
+# empty).
+#
+# Written by sanitizer_summary.py --write-nullability-baseline from the
+# reports directory of a whole-suite --collect run, with the script of the
+# checkout that made the run (or --root naming it). A refresh keeps every
+# entry's note, keeps entries not seen unless --drop-unseen, and prints each
+# entry added, kept unseen or removed. The rules (docs/swift-migration/
+# nullability.md section 7): the baseline shrinks as violations are fixed by
+# guards or annotations; an entry not seen is a candidate for removal,
+# removed when its fix is identified or after two whole-suite runs with no
+# skips that do not see it; it never grows without an entry in
+# docs/swift-migration/nullability-triage.md, and a refresh that adds entries
+# is a reviewed change.
+#
+# Columns, separated by one tab:
+#   kind      the check, from the report's SUMMARY line
+#   file      the reporting file, relative to the checkout; an SDK or
+#             toolchain file from usr/include/, usr/lib/ or
+#             System/Library/Frameworks/ on
+#   function  the function of the report's first stack frame; a block as
+#             "block in <method>"; "@line N" when the frame names none (then
+#             a moved line breaks the match)
+#   message   the runtime's message, as is. For a nil argument or return it
+#             names only the argument number, never the callee
+#   declared  the base name of the header in the report's "note: ...
+#             specified here" line (NSString.h, iTerm2SharedARC-Swift.h), or
+#             - when there is none (a nil return has none)
+#   note      untriaged, or where the entry is judged
+# A report matches an entry when the first five are equal; the line is not
+# compared, so an unrelated edit that moves it keeps the match.
+#
+# What still shares an entry: two violations in one function with the same
+# check and argument number whose declarations are in headers of the same
+# base name, for example a nil passed as argument 1 to two different
+# NSString.h methods, or to two Swift methods of iTerm2SharedARC-Swift.h,
+# from one Objective-C method. The second is accepted by the first's entry.
+# Every Swift method of the main target that Objective-C can call is
+# declared in the one generated header iTerm2SharedARC-Swift.h, so for Swift
+# callees the declared column tells Swift from Objective-C and the SDK, not
+# one Swift method from another: once a caller function has an entry for
+# argument N declared there, a port that adds a nil passed as argument N
+# from that same function to ANY other Swift method is accepted silently.
+"""
+
+
+def read_nullability_baseline(path):
+    """The entries of a nullability baseline file, a list of dicts, in file
+    order. Raises BaselineError for a malformed file."""
+    entries = []
+    seen = set()
+    header = None
+    with open(path, "r", encoding="utf-8") as f:
+        for lineno, raw in enumerate(f, 1):
+            line = raw.rstrip("\n")
+            if not line.strip() or line.startswith("#"):
+                continue
+            fields = line.split("\t")
+            where = "nullability baseline %s line %d" % (path, lineno)
+            if header is None:
+                if fields != NULLABILITY_BASELINE_COLUMNS:
+                    raise BaselineError("%s: the header must be the columns %s, tab-separated"
+                                        % (where, " ".join(NULLABILITY_BASELINE_COLUMNS)))
+                header = fields
+                continue
+            if len(fields) != len(NULLABILITY_BASELINE_COLUMNS):
+                raise BaselineError("%s: %d columns, expected %d"
+                                    % (where, len(fields), len(NULLABILITY_BASELINE_COLUMNS)))
+            row = dict(zip(NULLABILITY_BASELINE_COLUMNS, fields))
+            for column in NULLABILITY_BASELINE_COLUMNS:
+                if not row[column].strip():
+                    raise BaselineError("%s: the %s column is empty" % (where, column))
+            key = nullability_entry_key(row)
+            if key in seen:
+                raise BaselineError("%s: the entry %s appears twice" % (where, " / ".join(key)))
+            seen.add(key)
+            entries.append(row)
+    if header is None:
+        raise BaselineError("nullability baseline %s: no header line" % path)
+    return entries
+
+
+def nullability_entry_key(row):
+    return tuple(row[c] for c in NULLABILITY_BASELINE_COLUMNS[:5])
+
+
+def describe_entry(key):
+    kind, path, function, _message, declared = key
+    return "%s  %s  %s  %s" % (kind, path, function, declared)
+
+
+def stable_file(summary, path):
+    """The file column for a report's path: relative to the root when under
+    it; from the first stable marker on for an SDK or toolchain path;
+    otherwise the path as given."""
+    found = summary.locations.candidates(path)
+    if len(found) == 1:
+        return found[0]
+    if os.path.isabs(path):
+        for marker in STABLE_SDK_MARKERS:
+            i = path.find(marker)
+            if i >= 0:
+                return path[i + 1:]
+    return path
+
+
+def nullability_function(function, line):
+    if not function or function == "<unknown>" or "+0x" in function or UNNAMED.match(function):
+        return "@line %s" % line
+    m = BLOCK_FUNCTION.match(function)
+    if m:
+        return "block in %s" % m.group("owner")
+    return function
+
+
+def nullability_key(summary, kind, loc):
+    """The baseline key of the UBSan reports at (kind, loc): kind, file,
+    function, message, declaring header."""
+    path, _, rest = loc.partition(":")
+    line = rest.split(":", 1)[0]
+    return (kind, stable_file(summary, path), nullability_function(summary.functions.get((kind, loc)), line),
+            summary.samples[(kind, loc)], summary.notes.get((kind, loc)) or NO_DECLARATION)
+
+
+def infer_root(paths):
+    """The checkout the reports under paths ran in, from their run directory
+    (<checkout>/tmp/sanitizers/runs/<run>/...), or None. Raises
+    BaselineError if they name more than one."""
+    roots = set()
+    for p in paths:
+        p = os.path.abspath(p)
+        i = p.find(RUNS_MARKER)
+        if i > 0:
+            roots.add(p[:i])
+    if len(roots) > 1:
+        raise BaselineError("the reports come from more than one checkout: %s" % ", ".join(sorted(roots)))
+    return roots.pop() if roots else None
+
+
+def write_nullability_baseline(summary, path, drop_unseen=False):
+    """Writes the baseline of every complete UBSan report read to path,
+    keeping the notes of entries already in the file and, unless
+    drop_unseen, the entries not seen. Returns the lines to print. Raises
+    BaselineError, writing nothing, when an entry would name an absolute
+    path under the home directory (a checkout other than --root)."""
+    old = {}
+    if os.path.exists(path):
+        old = {nullability_entry_key(e): e["note"] for e in read_nullability_baseline(path)}
+    seen = {nullability_key(summary, kind, loc) for kind, loc in summary.ubsan_info}
+    home = os.path.expanduser("~").rstrip("/") + "/"
+    for k in sorted(seen):
+        if os.path.isabs(k[1]) and k[1].startswith(home):
+            raise BaselineError("a report is in %s, outside the checkout %s; the baseline would name a path "
+                                "that exists only in one checkout. %s" % (k[1], summary.locations.root.rstrip("/"),
+                                                                          ROOT_HINT))
+    unseen = set(old) - seen
+    keys = seen | (set() if drop_unseen else unseen)
+    order = lambda k: (k[1], k[2], k[0], k[3], k[4])
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(NULLABILITY_BASELINE_PREAMBLE)
+        f.write("\t".join(NULLABILITY_BASELINE_COLUMNS) + "\n")
+        for k in sorted(keys, key=order):
+            f.write("\t".join(k + (old.get(k, NEW_ENTRY_NOTE),)) + "\n")
+    added = sorted(seen - set(old), key=order)
+    lines = ["Wrote %d entries to %s: %d seen and kept, %d not seen and kept, %d added, %d removed." % (
+        len(keys), path, len(seen & set(old)), 0 if drop_unseen else len(unseen), len(added),
+        len(unseen) if drop_unseen else 0)]
+    lines += ["  added: %s" % describe_entry(k) for k in added]
+    if drop_unseen:
+        lines += ["  removed: %s" % describe_entry(k) for k in sorted(unseen, key=order)]
+    else:
+        lines += ["  not seen, kept: %s" % describe_entry(k) for k in sorted(unseen, key=order)]
+        if unseen:
+            lines.append("  Entries not seen are kept; pass --drop-unseen to remove them (nullability.md section 7).")
+    if added:
+        lines.append("  Each added entry needs a row in docs/swift-migration/nullability-triage.md; a refresh "
+                     "that adds entries is a reviewed change.")
+    return lines
+
+
+def fail_on_reports(summary, collect, baseline=None):
+    """The verdict of --fail-on-reports: every UBSan report fails, except,
+    with a nullability baseline, those it accepts; an incomplete report or
+    an unparsable report file fails too. In the nullability mode the
+    runtime suppressions file (empty) is applied before any of this."""
+    reports = summary.reports
+    entries = {nullability_entry_key(e): e for e in baseline} if baseline is not None else None
+    groups = []
+    accepted = Counter()
+    for (kind, loc), info in summary.ubsan_info.items():
+        declared = summary.notes.get((kind, loc)) or NO_DECLARATION
+        if entries is not None:
+            key = nullability_key(summary, kind, loc)
+            if key in entries:
+                accepted[key] += reports[(kind, loc)]
+                continue
+        groups.append({"kind": kind, "location": summary.locations.display(loc),
+                       "reports": reports[(kind, loc)], "message": summary.samples[(kind, loc)],
+                       "function": summary.functions[(kind, loc)], "declared": declared,
+                       "swift_header": declared.endswith("-Swift.h"),
+                       "pids": sorted(info["pids"], key=int), "tests": sorted(info["tests"])})
+    groups.sort(key=lambda g: (not g["swift_header"], g["location"], g["kind"]))
+    not_seen = [] if entries is None else [e for k, e in entries.items() if k not in accepted]
+    # A report file with lines that are not a report, or a report cut off
+    # before its stack (a hung host killed while writing), may hide a
+    # report, and the verdict rests on parsing, so both fail too.
+    unparsed = [{"file": path, "lines": n} for path, n in sorted(summary.unparsed_report_files.items())]
+    incomplete = [{"file": path, "location": summary.locations.display(loc)} for path, loc in summary.incomplete]
+    n = sum(g["reports"] for g in groups)
+    verdict = "FAIL" if (groups or unparsed or incomplete) else "PASS"
+    if entries is None:
+        outside = "that no suppression hides"
+        accepted_text = ""
+        passed = "PASS: no report outside the suppressions."
+    else:
+        outside = "outside the baseline"
+        accepted_text = "; %d report(s) accepted by it" % sum(accepted.values())
+        passed = "PASS: no report outside the baseline%s." % accepted_text
+    if verdict == "PASS":
+        line = passed
+    else:
+        line = "FAIL: %d report(s) at %d location(s) %s%s" % (n, len(groups), outside, accepted_text)
+        if incomplete:
+            line += "; %d incomplete report(s)" % len(incomplete)
+        if unparsed:
+            line += "; %d report file(s) with lines that are not a report" % len(unparsed)
+        line += "."
+    return {"verdict": verdict, "collect": collect, "groups": groups, "unparsed_files": unparsed,
+            "incomplete": incomplete, "baseline": entries is not None, "accepted": sum(accepted.values()),
+            "not_seen": [{"kind": e["kind"], "file": e["file"], "function": e["function"],
+                          "declared": e["declared"], "note": e["note"]} for e in not_seen],
+            "line": line}
+
+
+def print_fail_on_reports(v, out):
+    out.write("\nUBSan reports that fail the run (--fail-on-reports): %d location(s)\n" % len(v["groups"]))
+    swift = sum(1 for g in v["groups"] if g["swift_header"])
+    if swift:
+        out.write("  Of these, %d location(s) declared in a generated Swift header (port-relevant).\n" % swift)
+    for g in v["groups"]:
+        out.write("  %6d  %s  %s\n" % (g["reports"], g["kind"], g["location"]))
+        out.write("          %s\n" % g["message"])
+        if g["function"] != "<unknown>":
+            out.write("          in %s\n" % g["function"])
+        if g["swift_header"]:
+            out.write("          declared in %s, a generated Swift header: port-relevant\n" % g["declared"])
+        elif g["declared"] != NO_DECLARATION:
+            out.write("          declared in %s\n" % g["declared"])
+        out.write("          tests:    %s\n" % (", ".join(g["tests"]) or "none identified"))
+        if g["pids"]:
+            out.write("          pids:     %s\n" % ", ".join(g["pids"]))
+    if v["groups"]:
+        out.write("  A test is named when it is on the report's stack, or when the report file is\n"
+                  "  named for it. A report from the test host's launch, or from work a test left\n"
+                  "  running on another thread, names none. The runtime reports a location once\n"
+                  "  per process, so a later test in the same host that hits it again is not named.\n")
+    for r in v["incomplete"]:
+        out.write("  incomplete report: %s (at %s; cut off before its stack, so it cannot be compared)\n"
+                  % (r["file"], r["location"]))
+    if v["baseline"]:
+        out.write("  Baseline entries not seen in this run: %d\n" % len(v["not_seen"]))
+        for e in v["not_seen"]:
+            out.write("    %s  %s  %s  %s  (%s)\n" % (e["kind"], e["file"], e["function"], e["declared"], e["note"]))
+        if v["not_seen"]:
+            out.write("    Informational. Each is a candidate for removal: remove it when its violation's fix\n"
+                      "    is identified, or after two whole-suite runs with no skips that do not see it\n"
+                      "    (skipped tests, environment-gated tests and other threads can hide a violation;\n"
+                      "    nullability.md section 7).\n")
+    for f in v["unparsed_files"]:
+        out.write("  not a report: %s (%d line(s)); see Unparsed lines above\n" % (f["file"], f["lines"]))
+    if v["collect"]:
+        out.write("Verdict (--collect, does not fail the run): %s\n" % v["line"])
+    else:
+        out.write("Verdict: %s\n" % v["line"])
+
+
 def count_tests(path):
     """The tests an xcodebuild log executed, by outcome. A test counts once
     however many results it has (a restart after a crash may repeat it); its
@@ -981,22 +1409,44 @@ def main(argv=None):
     parser.add_argument("--console", action="append", default=[])
     parser.add_argument("--test-log")
     parser.add_argument("--top", type=int, default=20)
-    parser.add_argument("--root", default=default_root())
+    parser.add_argument("--root")
     parser.add_argument("--mixed", action="store_true")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--baseline")
+    parser.add_argument("--fail-on-reports", action="store_true")
+    parser.add_argument("--nullability-baseline")
+    parser.add_argument("--write-nullability-baseline")
+    parser.add_argument("--drop-unseen", action="store_true")
     parser.add_argument("--collect", action="store_true")
     parser.add_argument("--symbolize")
     parser.add_argument("--atos", default="atos")
     args = parser.parse_args(argv)
     if not args.paths and not args.console:
         parser.error("give at least one PATH or --console LOG")
-    if args.collect and not args.baseline:
-        parser.error("--collect applies to --baseline")
-    summary = Summary(os.path.abspath(args.root), args.mixed)
+    if args.collect and not (args.baseline or args.fail_on_reports):
+        parser.error("--collect applies to --baseline and --fail-on-reports")
+    if args.nullability_baseline and not args.fail_on_reports:
+        parser.error("--nullability-baseline applies to --fail-on-reports")
+    if args.drop_unseen and not args.write_nullability_baseline:
+        parser.error("--drop-unseen applies to --write-nullability-baseline")
+    # The checkout the reports ran in, from their run directory, decides the
+    # root; a --root that disagrees is refused (a baseline written against
+    # the wrong root would name paths of one checkout only).
+    try:
+        ran_in = infer_root(args.paths)
+    except BaselineError as e:
+        sys.stderr.write("sanitizer_summary.py: %s; %s\n" % (e, ROOT_HINT))
+        return 2
+    if ran_in and args.root and os.path.realpath(args.root) != os.path.realpath(ran_in):
+        sys.stderr.write("sanitizer_summary.py: the reports ran in the checkout %s, not --root %s; %s\n"
+                         % (ran_in, args.root, ROOT_HINT))
+        return 2
+    root = args.root or ran_in or default_root()
+    summary = Summary(os.path.abspath(root), args.mixed)
     inputs = [(p, False) for p in input_files(args.paths)] + [(p, True) for p in args.console]
     try:
         entries = read_baseline(args.baseline) if args.baseline else None
+        null_entries = read_nullability_baseline(args.nullability_baseline) if args.nullability_baseline else None
         for path, console in inputs:
             summary.read(path, console=console)
         tests = count_tests(args.test_log) if args.test_log else None
@@ -1015,15 +1465,38 @@ def main(argv=None):
     result["thread"] = {"groups": groups}
     if entries is not None:
         result["baseline"] = compare_baseline(groups, entries, args.baseline, args.collect)
+    if args.write_nullability_baseline:
+        try:
+            for line in write_nullability_baseline(summary, args.write_nullability_baseline, args.drop_unseen):
+                print(line)
+        except BaselineError as e:
+            sys.stderr.write("sanitizer_summary.py: %s\n" % e)
+            return 2
+        if summary.incomplete:
+            print("warning: skipped %d incomplete report(s), cut off before their stack; not written into "
+                  "the baseline:" % len(summary.incomplete))
+            for path, loc in summary.incomplete:
+                print("  %s (at %s)" % (path, summary.locations.display(loc)))
+        if summary.unparsed_report_files:
+            print("warning: %d report file(s) have lines that are not a report; a report may be missing "
+                  "from the baseline: %s" % (len(summary.unparsed_report_files),
+                                             ", ".join(sorted(summary.unparsed_report_files))))
+        return 0
+    if args.fail_on_reports:
+        result["fail_on_reports"] = fail_on_reports(summary, args.collect, null_entries)
     if args.json:
         json.dump(result, sys.stdout, indent=1)
         sys.stdout.write("\n")
     else:
         print_text(result, sys.stdout)
         print_thread(result, sys.stdout)
+        if args.fail_on_reports:
+            print_fail_on_reports(result["fail_on_reports"], sys.stdout)
     if tests is not None and not tests["executed"]:
         return 3
     if entries is not None and result["baseline"]["verdict"] != "PASS" and not args.collect:
+        return 1
+    if args.fail_on_reports and result["fail_on_reports"]["verdict"] != "PASS" and not args.collect:
         return 1
     return 0
 

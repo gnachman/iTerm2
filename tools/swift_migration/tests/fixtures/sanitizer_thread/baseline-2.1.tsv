@@ -1,0 +1,5 @@
+# The thread baseline with only entry 2.1, for the mechanics tests of
+# test_sanitizer_thread_baseline.py, which must not change when an entry is
+# added to docs/swift-migration/thread-baseline.tsv. Same format.
+entry	kind	access	previous	location	ledger
+2.1	data race	__61-[iTermMetalDriver finishDrawingWithCommandBuffer:frameData:]_block_invoke_2	__copy_helper_block_e8_32s40s48b ; -[iTermMetalFrameData measureTimeForStat:ofBlock:] ; -[iTermMetalDriver finishDrawingWithCommandBuffer:frameData:]	heap block of size 56	thread-baseline.md section 2.1

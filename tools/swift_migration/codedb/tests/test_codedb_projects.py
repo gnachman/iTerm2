@@ -485,8 +485,8 @@ class CaptureScriptTest(unittest.TestCase):
                               'exit 0\n' % self.stub_args)
         self.env = dict(os.environ, PATH=stub + os.pathsep + os.environ['PATH'])
 
-    def run_capture(self, fail=''):
-        return subprocess.run([self.script, '--other-projects'], env=dict(self.env, STUB_FAIL=fail),
+    def run_capture(self, fail='', args=('--other-projects',)):
+        return subprocess.run([self.script] + list(args), env=dict(self.env, STUB_FAIL=fail),
                               capture_output=True, text=True, timeout=110)
 
     def invocations(self):
@@ -521,6 +521,24 @@ class CaptureScriptTest(unittest.TestCase):
         self.assertNotIn('Sub', ' '.join(' '.join(x) for x in runs))
         self.assertIn('-gen-cdb-fragment-path', ' '.join(sa))
         self.assertIn('%s/other-fragments/SignedArchive.partial' % self.work, ' '.join(sa))
+
+    def test_jobs_limits_each_build(self):
+        # Either order.
+        for args in (('--other-projects', '--jobs', '3'), ('--jobs', '3', '--other-projects')):
+            if os.path.exists(self.stub_args):
+                os.remove(self.stub_args)
+            r = self.run_capture(args=args)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            runs = self.invocations()
+            self.assertEqual(len(runs), 3)
+            for run in runs:
+                self.assertEqual([run[i + 1] for i, a in enumerate(run) if a == '-jobs'], ['3'], run)
+
+    def test_no_jobs_by_default(self):
+        r = self.run_capture()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        for run in self.invocations():
+            self.assertNotIn('-jobs', run)
 
     def test_success_replaces_each_capture_with_a_record(self):
         r = self.run_capture()

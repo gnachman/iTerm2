@@ -70,12 +70,26 @@ agents' builds, load average about 100 when the evening started):
 | Exit status | 0 |
 | Log | `tmp/fast-tests/runs/20261121-201852/` in lane-1 (not committed) |
 
-**The budget:** 77 s, set on 2026-11-22 from a quiet run of 61 s (build
+**The first budget:** 77 s, set on 2026-11-22 from a quiet run of 61 s (build
 about 21 s, tests 40 s). The run: the owner had quit his other programs,
 the tool called the machine quiet (load average 2.33, 3.92 over one and
 five minutes), no agent or build was running, the plain build directory
 was up to date, and one Swift file of the app was touched first so the
 build did real work.
+
+**The budget is now 300 s, with two test workers** (the owner,
+2026-11-23: “I don't want things to fail because of too tight a budget.
+Let it go for 300 seconds.”). It replaces the 77 s above (its run is
+Run 4 below), which was measured on 2026-11-22 with xcodebuild's own worker count (about one test
+host per core). Since 2026-11-23 `fast_tests.sh` runs two workers, the cap
+of `tools/run_tests.expect -parallel`, and two workers cannot meet 77 s:
+the budget run's 156 s of tests take at least about 78 s on two, about
+100 s with the build. The 300 s is the constant `FAST_TIER_BUDGET_SECONDS`
+in `fast_tests.sh`, which prints the whole command's wall time against it;
+going over fails the run only with `--enforce-budget`. The gate does not
+run the fast tier yet: step 3 runs the whole suite until the owner
+switches it (below), so the budget applies to `fast_tests.sh` runs, and to
+the gate only from that switch.
 
 | | Run 4 (the budget's run) |
 |---|---|
@@ -89,8 +103,9 @@ build did real work.
 | Exit status | 0 |
 | Log | `tmp/fast-tests/runs/20261122-100907/` (not committed) |
 
-The budget is the whole command's wall time times 1.25, as test-speed.md
-section 3 sets it. A cold build is not in it: whether one is to be budgeted
+The 77 s was that run's whole-command wall time times 1.25, as
+test-speed.md section 3 then set the budget; the 300 s is the owner's fixed
+figure, not derived from a run. A cold build is not in either: whether one is to be budgeted
 is not decided (owner-queue.md Q24 item 3; the ceiling and the malloc
 settings are Q23 item 4). An untimed run a quarter of an hour earlier on
 the same machine also passed with no test at or over ten seconds.

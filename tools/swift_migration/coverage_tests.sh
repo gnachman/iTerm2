@@ -14,8 +14,16 @@
 #
 #   Options:
 #     --parallel    Run test classes in parallel worker processes, like
-#                   tools/run_tests.expect -parallel. Every process writes its
-#                   own profile files, so nothing collides.
+#                   tools/run_tests.expect -parallel, and with the same cap:
+#                   two workers (-parallel-testing-worker-count 2
+#                   -maximum-parallel-testing-workers 2) unless --workers.
+#                   Every process writes its own profile files, so nothing
+#                   collides.
+#     --workers N   With --parallel: N workers instead of two. Refused
+#                   without --parallel and with --build-only.
+#     --jobs N      At most N concurrent build tasks (xcodebuild -jobs N), on
+#                   the build step and the test step. Without it xcodebuild
+#                   chooses (about one per core).
 #     --per-class   Run each TEST, which must name a class
 #                   (ModernTests/Class), in its own xcodebuild invocation with
 #                   its own profile, merged to classes/<Class>.profdata, for
@@ -153,10 +161,20 @@ OBSERVER=NO
 DO_BUILD=YES
 DO_TEST=YES
 TESTS=()
+WORKERS=""
+JOBS=""
 while [ $# -gt 0 ]; do
     case "$1" in
         -h|--help) usage; exit 0 ;;
         --parallel|-parallel) PARALLEL=YES ;;
+        --workers)
+            san_check_count "$1" "${2-}" || exit 2
+            WORKERS="$2"
+            shift ;;
+        --jobs)
+            san_check_count "$1" "${2-}" || exit 2
+            JOBS="$2"
+            shift ;;
         --per-class) PER_CLASS=YES ;;
         --observer) OBSERVER=YES ;;
         --build-only) DO_TEST=NO ;;
@@ -166,6 +184,10 @@ while [ $# -gt 0 ]; do
     esac
     shift
 done
+if [ -n "$WORKERS" ] && { [ "$PARALLEL" = NO ] || [ "$DO_TEST" = NO ]; }; then
+    echo "error: --workers needs --parallel and a test step" >&2
+    exit 2
+fi
 if [ "$PER_CLASS" = YES ]; then
     if [ "$PARALLEL" = YES ] || [ "$OBSERVER" = YES ]; then
         echo "error: --per-class cannot be combined with --parallel or --observer" >&2
@@ -218,6 +240,11 @@ ARGS=(
     "OTHER_SWIFT_FLAGS=$SWIFTFLAGS"
     "OTHER_LDFLAGS=$LDFLAGS"
 )
+# -jobs on both steps: `xcodebuild test` brings the build up to date too.
+if [ -n "$JOBS" ]; then
+    ARGS+=(-jobs "$JOBS")
+fi
+san_parallel_args "$PARALLEL" "$WORKERS"
 
 cd "$SAN_ROOT"
 echo "Build directory: $BUILD_DIR/Build. Run directory: $RUN_DIR"
@@ -283,7 +310,7 @@ test_step() {
     local bundle
     bundle="$RUN_DIR/results/$(basename "$log" .log).xcresult"
     rm -rf "$bundle"
-    xcodebuild test "${ARGS[@]}" "$@" -parallel-testing-enabled "$PARALLEL" -resultBundlePath "$bundle" 2>&1 \
+    xcodebuild test "${ARGS[@]}" "$@" "${SAN_PARALLEL_ARGS[@]}" -resultBundlePath "$bundle" 2>&1 \
         | tee "$log"
     return "${PIPESTATUS[0]}"
 }

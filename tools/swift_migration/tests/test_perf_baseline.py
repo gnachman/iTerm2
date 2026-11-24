@@ -17,7 +17,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TOOL_DIR = os.path.dirname(HERE)
@@ -1588,10 +1588,11 @@ class SafetyTests(unittest.TestCase):
             child.wait()
         self.assertIsNone(perf_lib.executable_path(child.pid))
 
-    def _run_baseline(self, dirty):
+    def _run_baseline(self, dirty, extra=(), build_args=None):
         """main(['run', '--baseline']) with the machine state, the tree's
         state, the build and the checkout all mocked: nothing here reads the
-        real checkout, the real machine, or builds anything."""
+        real checkout, the real machine, or builds anything. build_args, a
+        list, receives the arguments the build was called with."""
         class Stop(Exception):
             pass
 
@@ -1599,6 +1600,8 @@ class SafetyTests(unittest.TestCase):
 
         def fake_build(*a, **k):
             calls.append('build')
+            if build_args is not None:
+                build_args.append((a, k))
             raise Stop()
 
         saved = (perf_lib.machine_state, perf_baseline.build, perf_baseline.dirty_paths, perf_baseline.REPO)
@@ -1610,7 +1613,7 @@ class SafetyTests(unittest.TestCase):
                 perf_baseline.REPO = repo
                 with redirect_stdout(io.StringIO()) as out:
                     try:
-                        code = perf_baseline.main(['run', '--baseline', '--output', os.devnull])
+                        code = perf_baseline.main(['run', '--baseline', '--output', os.devnull] + list(extra))
                     except Stop:
                         code = 'built'
             finally:
@@ -1630,6 +1633,30 @@ class SafetyTests(unittest.TestCase):
         self.assertEqual(code, 'built')
         self.assertEqual(calls, ['build'])
 
+    def test_build_command_has_no_job_limit_by_default(self):
+        self.assertNotIn('-jobs', perf_baseline.build_command('Deployment'))
+
+    def test_build_command_with_a_job_limit(self):
+        command = perf_baseline.build_command('Deployment', jobs=4)
+        self.assertEqual(command[:2], ['xcodebuild', 'build-for-testing'])
+        self.assertEqual([command[i + 1] for i, a in enumerate(command) if a == '-jobs'], ['4'])
+
+    def test_jobs_reaches_the_build(self):
+        build_args = []
+        code, calls, _ = self._run_baseline([], extra=['--jobs', '3'], build_args=build_args)
+        self.assertEqual(code, 'built')
+        ((args, kwargs),) = build_args
+        self.assertEqual(kwargs.get('jobs'), 3)
+        build_args = []
+        self._run_baseline([], build_args=build_args)
+        self.assertIsNone(build_args[0][1].get('jobs'))
+
+    def test_jobs_must_be_at_least_one(self):
+        for value in ('0', '-2', 'four'):
+            with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as cm:
+                perf_baseline.main(['run', '--jobs', value])
+            self.assertEqual(cm.exception.code, 2, value)
+
     def test_dirty_submodule_message_says_how_to_proceed(self):
         code, _, out = self._run_baseline(['submodules/iTerm2-shell-integration'])
         self.assertEqual(code, 3)
@@ -1647,7 +1674,7 @@ class SafetyTests(unittest.TestCase):
                                       'run', '--help'], capture_output=True, text=True).stdout
         for option in ('--baseline', '--force', '--scenarios', '--iterations', '--app-runs', '--app-duration',
                        '--configuration', '--skip-build', '--settle-minutes', '--build-timeout',
-                       '--test-timeout', '--output'):
+                       '--test-timeout', '--output', '--jobs'):
             line = next((l for l in parser_help.splitlines() if l.strip().startswith(option)), None)
             self.assertIsNotNone(line, option)
             index = parser_help.index(line)

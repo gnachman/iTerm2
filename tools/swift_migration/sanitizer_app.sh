@@ -6,7 +6,10 @@
 # carries on.
 #
 # Usage:
-#   tools/swift_migration/sanitizer_app.sh [-h|--help]
+#   tools/swift_migration/sanitizer_app.sh [--jobs N] [-h|--help]
+#
+#   --jobs N    At most N concurrent build tasks (xcodebuild -jobs N). Without
+#               it xcodebuild chooses (about one per core).
 #
 # What it builds: the iTerm2 scheme, Development configuration, with
 #   OTHER_CFLAGS='$(inherited) -fsanitize=nullability,<integer group>
@@ -44,11 +47,18 @@ set -uo pipefail
 
 source "$(cd "$(dirname "$0")" && pwd)/sanitizer_common.sh"
 
-case "${1:-}" in
-    -h|--help) sed -n '2,/^$/s/^# \{0,1\}//p' "$0"; exit 0 ;;
-    "") ;;
-    *) echo "error: unknown argument $1" >&2; exit 2 ;;
-esac
+JOBS_ARGS=()
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -h|--help) sed -n '2,/^$/s/^# \{0,1\}//p' "$0"; exit 0 ;;
+        --jobs)
+            san_check_count "$1" "${2-}" || exit 2
+            JOBS_ARGS=(-jobs "$2")
+            shift ;;
+        *) echo "error: unknown argument $1" >&2; exit 2 ;;
+    esac
+    shift
+done
 
 san_check_root_path || exit 2
 BUILD_DIR="$SAN_ROOT/tmp/sanitizers/app"
@@ -65,7 +75,7 @@ cmp -s plists/dev-iTerm2.plist plists/iTerm2.plist || cp plists/dev-iTerm2.plist
 
 echo "Building the sanitized Development app (log: $LOG)..."
 START=$(date +%s)
-xcodebuild build "${SAN_XCODEBUILD_ARGS[@]}" \
+xcodebuild build "${SAN_XCODEBUILD_ARGS[@]}" ${JOBS_ARGS[@]+"${JOBS_ARGS[@]}"} \
     -scheme iTerm2 \
     -enableThreadSanitizer NO ENABLE_THREAD_SANITIZER=NO \
     "OTHER_CFLAGS=\$(inherited) -fsanitize=$BOTH_GROUPS -fsanitize-recover=$BOTH_GROUPS -fsanitize-ignorelist=$SAN_IGNORELIST" \

@@ -212,17 +212,27 @@ These exist as scripts, each documented by its `--help`:
 
 - `tools/swift_migration/sanitizer_tests.sh MODE [TEST ...]` builds and runs
   the tests in its own build directory, with MODE `nullability`, `integer`
-  or `thread`. In `nullability` mode the first violation that is not
-  suppressed writes its report to a file and aborts the test host, so the
-  test fails. It does this with `halt_on_error=1` on a recoverable build,
-  because the app violates a claim while launching. Known violations not
-  yet triaged are listed in
-  `tools/swift_migration/sanitizer_nullability_suppressions.txt` and do not
-  abort; `--collect` turns off both the abort and the suppressions, for
-  triage. `integer` and `thread` run in recover mode and write every report
-  to a file.
+  or `thread`. In `nullability` mode a targeted run (test names given)
+  writes the first violation that is not suppressed to a file and ends the
+  test host, so the test fails. It does this with `halt_on_error=1` on a
+  recoverable build, because the app violates a claim while launching, and
+  with `abort_on_error=0`, so the host exits without a crash report. A
+  whole-suite run, or one with `--recover`, does not end the host: every
+  report goes to a file and the run fails on any of them, listing the tests
+  they came from, except those in the nullability baseline
+  (`docs/swift-migration/nullability-baseline.tsv`, the known, not yet
+  triaged violations, compared after the run; nullability.md section 7).
+  The runtime suppressions file,
+  `tools/swift_migration/sanitizer_nullability_suppressions.txt`, stays
+  empty; `--collect` turns off the abort and the suppressions and fails on
+  nothing, for triage and for writing the baseline. `integer` and `thread` run in recover mode and write every report
+  to a file. `--parallel` runs two test workers unless `--workers N`;
+  `--skip ModernTests/Class[/test]` (repeatable) leaves a class or test out
+  (`-skip-testing:`); `--jobs N` limits the build tasks that run at once
+  (`-jobs N`).
 - `tools/swift_migration/sanitizer_app.sh` builds the Development app with
   the nullability and integer groups in recover mode: the second mode above.
+  `--jobs N` limits its build tasks.
 - `tools/swift_migration/sanitizer_summary.py` groups and counts the reports
   of a run by kind and location, with those in scope listed apart.
 
@@ -336,7 +346,8 @@ the port's. The type-aware lints (`swift_ast_lints.py`), `warning_survey.py`
 and `swift_interface.py` need a compile-command capture, which a lane does
 not have. The orchestrator runs them in its own checkout after the commit,
 or once after several:
-`capture_compile_commands.sh`, then `codedb.py update` (with
+`capture_compile_commands.sh` (a clean build, so a heavy job; `--jobs N`
+limits its build tasks), then `codedb.py update` (with
 `--accept-removals` when the port deleted files), then the three tools and
 `swift_lints.py REV` on the commit. A finding goes back to the author, and
 its fix is a new commit of the unit.
@@ -602,7 +613,8 @@ compiler, written once into a SQLite database and then queried
 
 - **Capture.** `capture_compile_commands.sh` runs one clean Development
   build with Clang's `-gen-cdb-fragment-path`, and keeps the build log's
-  Swift driver commands and each Swift module's file list.
+  Swift driver commands and each Swift module's file list. `--jobs N`
+  (xcodebuild `-jobs N`) limits the build tasks that run at once.
 - **Other projects.** `capture_compile_commands.sh --other-projects`
   captures, under the same lock, the in-repository Xcode projects that the
   main build does not compile, as listed in

@@ -4,6 +4,7 @@
 #
 # Usage:
 #   tools/swift_migration/fast_tests.sh [--dry-run] [--no-build] [--serial] [--no-skip]
+#                                       [--workers N] [--jobs N] [--enforce-budget]
 #
 # The fast tier is every ModernTests test except the slow tier, the entries of
 # tools/swift_migration/slow_tier.txt (each with its reason). It runs with no
@@ -21,7 +22,12 @@
 #      strip-env). Every other variable of the test plan is kept.
 #   3. Test: xcodebuild test-without-building -xctestrun that file, with one
 #      -skip-testing: argument per slow-tier entry (test_tiers.py skip-args),
-#      in parallel unless --serial. It runs on a pseudo-terminal
+#      in parallel unless --serial, with two workers
+#      (-parallel-testing-worker-count 2 -maximum-parallel-testing-workers 2,
+#      the cap of tools/run_tests.expect -parallel) unless --workers. Before
+#      2026-11-23 the count was left to xcodebuild (about one per core), so
+#      the wall-clock times of earlier fast-tier runs are not comparable.
+#      It runs on a pseudo-terminal
 #      (script -q /dev/null ...): xcodebuild writes results and its end
 #      marker on two streams, and through a pipe they arrive out of order.
 #      The log, with the terminal's carriage returns removed, goes to
@@ -37,14 +43,31 @@
 #               and the slow-tier entries with their reasons. Runs nothing.
 #   --no-build  Skip step 1 and use the build already in tmp/sanitizers/plain.
 #   --serial    Run the test classes one at a time (-parallel-testing-enabled NO).
+#   --workers N N parallel workers instead of two. Refused with --serial.
+#   --jobs N    At most N concurrent build tasks in step 1 (passed on as
+#               sanitizer_tests.sh --jobs N, which gives xcodebuild -jobs N).
+#               Step 3 builds nothing. Refused with --no-build.
 #   --no-skip   Skip nothing: run the whole suite as the fast tier runs
 #               (no address sanitizer, no MallocStackLogging). Its logs are
 #               the evidence test_tiers.py propose-removals needs to take
 #               entries out of the slow tier. Slow: about the whole suite.
+#   --enforce-budget
+#               Fail (status 1, unless the run already failed) when the whole
+#               command takes longer than the fast tier's budget. Without it
+#               the comparison is printed and fails nothing. Refused with
+#               --dry-run and --kill-test-hosts. See below.
 #   --kill-test-hosts
 #               Only kill this checkout's test hosts (below) and exit; for
 #               cleaning up after an interrupted run, and for the tests.
 #   -h, --help  Print this text.
+#
+# The budget: at the end the script prints the whole command's wall time,
+# build included, against FAST_TIER_BUDGET_SECONDS (300 s with two workers,
+# the owner, 2026-11-23; test-tiers.md section 1), "under" or "OVER". Going
+# over fails the run only with --enforce-budget: test-speed.md section 3
+# makes a commit that pushes the fast tier over budget fail the gate, but
+# the gate runs the whole suite at step 3, not this script, until the owner
+# switches it; from then the gate runs it with --enforce-budget.
 #
 # Interrupting the script kills the process group it started xcodebuild in
 # and any process whose command is the plain build's test host executable
@@ -54,11 +77,13 @@
 # normal end.
 #
 # Exit status: xcodebuild's (step 1 or 3), except 1 when the tests succeeded
-# but the log shows no executed test, or there is no .xctestrun to run, and 2
-# for a usage error.
+# but the log shows no executed test, there is no .xctestrun to run, or (with
+# --enforce-budget) the whole command went over the budget, and 2 for a
+# usage error.
 
 set -uo pipefail
 
+COMMAND_START=$(date +%s)
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
 
@@ -66,11 +91,22 @@ usage() {
     sed -n '2,/^$/s/^# \{0,1\}//p' "$0"
 }
 
+# san_check_count, san_parallel_args and SAN_DEFAULT_WORKERS.
+source "$HERE/sanitizer_common.sh"
+
+# The fast tier's wall-clock budget for the whole command, build included
+# (the owner, 2026-11-23: “Let it go for 300 seconds”; test-tiers.md
+# section 1).
+FAST_TIER_BUDGET_SECONDS=300
+
 DRY_RUN=NO
+ENFORCE_BUDGET=NO
 KILL_ONLY=NO
 NO_SKIP=NO
 DO_BUILD=YES
 PARALLEL=YES
+WORKERS=""
+JOBS=""
 while [ $# -gt 0 ]; do
     case "$1" in
         -h|--help) usage; exit 0 ;;
@@ -79,10 +115,31 @@ while [ $# -gt 0 ]; do
         --serial) PARALLEL=NO ;;
         --kill-test-hosts) KILL_ONLY=YES ;;
         --no-skip) NO_SKIP=YES ;;
+        --enforce-budget) ENFORCE_BUDGET=YES ;;
+        --workers)
+            san_check_count "$1" "${2-}" || exit 2
+            WORKERS="$2"
+            shift ;;
+        --jobs)
+            san_check_count "$1" "${2-}" || exit 2
+            JOBS="$2"
+            shift ;;
         *) echo "error: unknown argument $1" >&2; usage >&2; exit 2 ;;
     esac
     shift
 done
+if [ -n "$WORKERS" ] && [ "$PARALLEL" = NO ]; then
+    echo "error: --workers needs a parallel run; --serial runs one class at a time" >&2
+    exit 2
+fi
+if [ "$ENFORCE_BUDGET" = YES ] && { [ "$DRY_RUN" = YES ] || [ "$KILL_ONLY" = YES ]; }; then
+    echo "error: --enforce-budget applies to a run; --dry-run and --kill-test-hosts run nothing" >&2
+    exit 2
+fi
+if [ -n "$JOBS" ] && [ "$DO_BUILD" = NO ]; then
+    echo "error: --jobs applies to the build, which --no-build leaves out" >&2
+    exit 2
+fi
 
 SLOW_TIER="$HERE/slow_tier.txt"
 BUILD_DIR="$ROOT/tmp/sanitizers/plain/Build"
@@ -128,6 +185,10 @@ if [ "$NO_SKIP" = YES ]; then
 fi
 
 BUILD_COMMAND=("$HERE/sanitizer_tests.sh" plain --build-only)
+if [ -n "$JOBS" ]; then
+    BUILD_COMMAND+=(--jobs "$JOBS")
+fi
+san_parallel_args "$PARALLEL" "$WORKERS"
 # The .xctestrun the build writes; its name has the SDK version in it.
 find_source_xctestrun() {
     local found=()
@@ -141,7 +202,7 @@ find_source_xctestrun() {
     printf '%s\n' "${found[0]}"
 }
 TEST_COMMAND=(xcodebuild test-without-building -xctestrun "$XCTESTRUN" -destination 'platform=macOS'
-              -parallel-testing-enabled "$PARALLEL" ${SKIP_ARGS[@]+"${SKIP_ARGS[@]}"})
+              "${SAN_PARALLEL_ARGS[@]}" ${SKIP_ARGS[@]+"${SKIP_ARGS[@]}"})
 
 # Prints a command so that it can be pasted into a shell.
 print_command() {
@@ -244,5 +305,17 @@ EXECUTED=$(python3 -B "$HERE/test_timing.py" "$RUN_DIR/test.log" --json ${TIMING
 if [ "${EXECUTED:-0}" -eq 0 ]; then
     echo "error: the run executed no tests; it proves nothing" >&2
     [ "$STATUS" -eq 0 ] && STATUS=1
+fi
+ELAPSED=$(( $(date +%s) - COMMAND_START ))
+if [ "$ELAPSED" -gt "$FAST_TIER_BUDGET_SECONDS" ]; then
+    echo "Whole command: $ELAPSED s; fast tier budget $FAST_TIER_BUDGET_SECONDS s (FAST_TIER_BUDGET_SECONDS): OVER."
+    if [ "$ENFORCE_BUDGET" = YES ]; then
+        echo "error: the fast tier went over its budget (test-speed.md section 3)" >&2
+        [ "$STATUS" -eq 0 ] && STATUS=1
+    else
+        echo "Over budget, not enforced (no --enforce-budget)."
+    fi
+else
+    echo "Whole command: $ELAPSED s; fast tier budget $FAST_TIER_BUDGET_SECONDS s (FAST_TIER_BUDGET_SECONDS): under."
 fi
 exit $STATUS

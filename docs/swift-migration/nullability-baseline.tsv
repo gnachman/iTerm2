@@ -1,0 +1,49 @@
+# Nullability sanitizer baseline: the known, not yet triaged report
+# locations that a nullability run of tools/swift_migration/sanitizer_tests.sh
+# accepts. PROPOSED by the migration on 2026-11-23; judging gate step 7
+# against it awaits the owner's confirmation (owner-queue.md Q26). Compared
+# after the run by sanitizer_summary.py --nullability-baseline; nothing is
+# hidden at run time (the runtime suppressions file is separate and stays
+# empty).
+#
+# Written by sanitizer_summary.py --write-nullability-baseline from the
+# reports directory of a whole-suite --collect run, with the script of the
+# checkout that made the run (or --root naming it). A refresh keeps every
+# entry's note, keeps entries not seen unless --drop-unseen, and prints each
+# entry added, kept unseen or removed. The rules (docs/swift-migration/
+# nullability.md section 7): the baseline shrinks as violations are fixed by
+# guards or annotations; an entry not seen is a candidate for removal,
+# removed when its fix is identified or after two whole-suite runs with no
+# skips that do not see it; it never grows without an entry in
+# docs/swift-migration/nullability-triage.md, and a refresh that adds entries
+# is a reviewed change.
+#
+# Columns, separated by one tab:
+#   kind      the check, from the report's SUMMARY line
+#   file      the reporting file, relative to the checkout; an SDK or
+#             toolchain file from usr/include/, usr/lib/ or
+#             System/Library/Frameworks/ on
+#   function  the function of the report's first stack frame; a block as
+#             "block in <method>"; "@line N" when the frame names none (then
+#             a moved line breaks the match)
+#   message   the runtime's message, as is. For a nil argument or return it
+#             names only the argument number, never the callee
+#   declared  the base name of the header in the report's "note: ...
+#             specified here" line (NSString.h, iTerm2SharedARC-Swift.h), or
+#             - when there is none (a nil return has none)
+#   note      untriaged, or where the entry is judged
+# A report matches an entry when the first five are equal; the line is not
+# compared, so an unrelated edit that moves it keeps the match.
+#
+# What still shares an entry: two violations in one function with the same
+# check and argument number whose declarations are in headers of the same
+# base name, for example a nil passed as argument 1 to two different
+# NSString.h methods, or to two Swift methods of iTerm2SharedARC-Swift.h,
+# from one Objective-C method. The second is accepted by the first's entry.
+# Every Swift method of the main target that Objective-C can call is
+# declared in the one generated header iTerm2SharedARC-Swift.h, so for Swift
+# callees the declared column tells Swift from Objective-C and the SDK, not
+# one Swift method from another: once a caller function has an entry for
+# argument N declared there, a port that adds a nil passed as argument N
+# from that same function to ANY other Swift method is accepted silently.
+kind	file	function	message	declared	note

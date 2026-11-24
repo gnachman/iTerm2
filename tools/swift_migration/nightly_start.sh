@@ -45,8 +45,8 @@
 # the refresh's reset and fast-forward of the clone's master leave them be.
 # Worktrees and the lanes' submodule repositories (objects borrowed through
 # objects/info/alternates from the clone's .git/modules) use no git
-# transport, so lane_clone.py works under the session's protocol guard
-# (tested). Not checked: the lanes' contents, including their submodule
+# transport; lane_clone.py is tested in the session's environment. Not
+# checked: the lanes' contents, including their submodule
 # repositories' configuration, which the session can write and which
 # lane_clone.py's git commands read when this script runs release --stale
 # (hooks and fsmonitor are off there, filters are not); and what, if
@@ -232,8 +232,7 @@
 #       precedence"): pushes (`git push`, and `git <options> push` for
 #       `git -C . push` and `git -c x=y push`), `git remote` (adding a
 #       remote with an explicit pushurl), any command mentioning pushurl,
-#       send-pack, receive-pack, protocol.file or GIT_PROTOCOL_FROM_USER,
-#       `gh` entirely, osascript, launchctl, sudo, open, ssh, scp, it2 and
+#       send-pack or receive-pack, `gh` entirely, osascript, launchctl, sudo, open, ssh, scp, it2 and
 #       tmux (either can type into the owner's terminal sessions, outside
 #       every guard here; `env -u TMUX tmux` reaches his default tmux
 #       server), and the owner's GitLab issue scripts. Network commands are
@@ -243,7 +242,8 @@
 #     by another interpreter or shell (sh -c '...', python3 -c with
 #     subprocess, a script file), a git alias (git -c alias.p=push p), and
 #     a command assembled from variables. The environment guards and the
-#     clone's push layers do not depend on the pattern.
+#     clone's push layers do not depend on the pattern, except for the
+#     local-path routes listed below, which no environment guard stops.
 #   --add-dir <clone>.lanes: the build lanes (above) are a working
 #     directory of the session as the clone is, so auto mode lets file
 #     edits there run without asking (claude --help: "--add-dir
@@ -263,24 +263,60 @@
 #   GIT_CONFIG_COUNT/KEY/VALUE: credential.helper set to empty (no
 #     keychain credentials), and url.nightly-push-blocked://.pushInsteadOf
 #     for https://, http://, ssh://, git@, git://, file://, / and . so that
-#     a push to any URL, path or named remote is rewritten to a transport
-#     that does not exist and fails before any network use. Fetch is not
+#     a push to any URL, any path starting with / or ., or a named remote
+#     whose url is one of those is rewritten to a transport that does not
+#     exist and fails before any network use. Fetch is not
 #     affected. A remote with an explicit pushurl bypasses pushInsteadOf
 #     (the clone's own pushurl is itself unusable), and `git send-pack`
-#     ignores it, so:
-#   protocol.file.allow=user (in GIT_CONFIG_COUNT) with
-#     GIT_PROTOCOL_FROM_USER=0: git refuses every local-path and file://
-#     transport, which stops a push into the owner's checkout or his
-#     submodule repositories by a pushurl remote or by send-pack (tested).
-#     What it costs: the session cannot fetch from origin (it need not: the
-#     refresh has done it), cannot `git clone` or `git submodule update`
-#     from a local path (an agent's working copy is a lane, made by
-#     lane_clone.py with `git worktree add`, which needs no transport), and
-#     cannot fetch the night's work into another
-#     local repository. NIGHTLY_ALLOW_LOCAL_GIT=1 leaves both settings out
-#     and restores local transports, and with them the push into the
-#     owner's checkout; then only the deny rules, the classifier and the
-#     owner-refs comparison stand in the way.
+#     ignores it; see below.
+#   Local-path and file:// transports are not refused: git treats them as
+#     it does in the owner's own shell (the owner, 2026-11-23: “I don't
+#     understand why the nightly session can't clone. That is a senseless
+#     rule.”; until then protocol.file.allow=user with
+#     GIT_PROTOCOL_FROM_USER=0 refused them all). The session can clone
+#     and fetch from a local path, origin (the mirror) included, and
+#     resolve Swift packages: SwiftPM, inside xcodebuild, fills its
+#     repository cache with `git clone --mirror`, updates it with
+#     `git remote update -p`, and makes each working copy in
+#     SourcePackages/checkouts with a local `git clone --shared
+#     --no-checkout` from that cache (objects borrowed through alternates),
+#     then checks it out and runs `git submodule update --init
+#     --recursive`; those commands are tested in the session's
+#     environment. git's own default still applies to submodules: a
+#     submodule clone or update from a local path is refused unless the
+#     command says -c protocol.file.allow=always, as in the owner's shell.
+#     A clone of the mirror by plain path (origin is that path) links the
+#     mirror's object files into the copy; nightly_clone.sh check accepts
+#     such links and the refresh leaves them read-only (its header has the
+#     rule).
+#     What this makes possible that was refused before, all tested: writing
+#     refs in the owner's checkout or his submodule repositories by local
+#     path,
+#       - by a push through a remote with an explicit pushurl, or through
+#         `git send-pack`;
+#       - by a plain `git push <path>` whose path's first character is
+#         neither / nor . (pushInsteadOf rewrites only those). Such a path
+#         may climb out with .. after an ordinary name, so it works from
+#         any directory, the clone included, with no other option: from
+#         the clone, `git push tmp/../../iterm2-alt HEAD:refs/heads/x`
+#         reaches his checkout. Running from a directory above it with
+#         --git-dir or GIT_DIR naming the clone is another form. A push to
+#         an absolute path, a file:// URL or a path that begins with ../
+#         still fails;
+#       - by a fetch or pull run in his checkout from the clone or a lane,
+#         `git -C <his checkout> fetch <clone> master:refs/heads/x`, which
+#         creates the ref, or `git -C <his checkout> pull --ff-only <clone>
+#         master`, which moves his checked-out branch and changes his
+#         working tree and index (a push to a checked-out branch is refused;
+#         this is not).
+#     No environment guard stops any of these. The deny rules catch the
+#     plain forms of the first two (`git push`, `git <options> push`,
+#     `git remote`, pushurl, send-pack); nothing denies a fetch or pull, so
+#     only the classifier reviews that one. Detection: the owner-refs
+#     comparison (step 11) lists any ref, config or hook change in his
+#     repositories in the morning log (a pull's ref move included, though
+#     working tree and index changes are not compared), and a remote left
+#     in the clone's configuration fails the check of step 11.
 #   GIT_SSH_COMMAND: a wrapper that refuses git-receive-pack (push) and
 #     runs /usr/bin/ssh otherwise. GIT_TERMINAL_PROMPT=0,
 #     GIT_ASKPASS=/usr/bin/false, SSH_ASKPASS=/usr/bin/false, and no
@@ -320,6 +356,20 @@
 # screen nor its transcript changes in its first NIGHTLY_STALL_SECONDS
 # (a failed start, exit 14), and when this script gets SIGTERM (for example
 # from launchctl kill).
+# The session counts as ended when session.status appears, or when tmux
+# itself answers repeatedly that the session or its server is gone: over a
+# few seconds once the session's processes have died, over a minute while
+# they still run (exit 4, "ended without an exit status", with what was
+# observed in the supervisor's lines of the log; such an answer before the
+# supervisor has learned the pane is exit 4, "could not be started"). A
+# tmux call that fails (cannot be run, times out, any other error) is
+# logged and is not such an answer; deadline_run.py's header has the rule.
+# It also ends (exit 4, "ended without an exit status") when claude has
+# exited without session.status appearing for a minute. On the first unattended night, 2026-11-23, a single tmux call
+# that did not succeed under heavy load (most likely; nothing logged it
+# then) ended a healthy session at 01:55 and its processes were killed.
+# tmux calls in the stop sequence are short and bounded by the hard limit,
+# so a hung tmux does not delay it.
 #
 # Usage:
 #   tools/swift_migration/nightly_start.sh [--dry-run]
@@ -372,7 +422,6 @@
 #   NIGHTLY_INTERRUPT_WAIT      Escape to /exit at the limit (default 10)
 #   NIGHTLY_GRACE_SECONDS       /exit to SIGTERM at the limit (default 300)
 #   NIGHTLY_STALL_SECONDS       a failed start after this long with no change (default 300)
-#   NIGHTLY_ALLOW_LOCAL_GIT     1 to allow the session local-path git transports (default: not)
 #   NIGHTLY_REFRESH_SECONDS     time bound on the refresh, killed after it (default 1200)
 #   NIGHTLY_CLONE_TOOL          replaces nightly_clone.sh, for tests only
 #   NIGHTLY_MODEL               the session's model (default opus)
@@ -1191,7 +1240,6 @@ DENY_RULES=(
   'Bash(git send-pack *)' 'Bash(git * send-pack *)'
   'Bash(git remote *)' 'Bash(git * remote *)'
   'Bash(*pushurl*)' 'Bash(*send-pack*)' 'Bash(*receive-pack*)'
-  'Bash(*protocol.file*)' 'Bash(*GIT_PROTOCOL_FROM_USER*)'
   'Bash(gh *)'
   'Bash(osascript *)' 'Bash(launchctl *)' 'Bash(sudo *)' 'Bash(open *)'
   'Bash(ssh *)' 'Bash(scp *)'
@@ -1239,14 +1287,6 @@ for prefix in https:// http:// ssh:// git@ git:// file:// / .; do
                "GIT_CONFIG_VALUE_$n=$prefix")
   n=$((n + 1))
 done
-PROTOCOL_GUARD=()
-if [ "${NIGHTLY_ALLOW_LOCAL_GIT:-0}" = 1 ]; then
-  log "NIGHTLY_ALLOW_LOCAL_GIT=1: the session may use local-path git transports, including a push into the owner's checkout by a pushurl remote or send-pack"
-else
-  GIT_GUARDS+=("GIT_CONFIG_KEY_$n=protocol.file.allow" "GIT_CONFIG_VALUE_$n=user")
-  n=$((n + 1))
-  PROTOCOL_GUARD=(GIT_PROTOCOL_FROM_USER=0)
-fi
 GIT_GUARDS+=("GIT_CONFIG_COUNT=$n")
 
 UPSTREAM_NOTE=
@@ -1309,7 +1349,6 @@ TMUX_COMMAND=(env -u ANTHROPIC_API_KEY -u SSH_AUTH_SOCK
               SWIFT_MIGRATION_NIGHTLY=1
               "SWIFT_MIGRATION_NIGHT_DIR=$RUN_DIR"
               "${GIT_GUARDS[@]}"
-              ${PROTOCOL_GUARD[@]+"${PROTOCOL_GUARD[@]}"}
               GIT_TERMINAL_PROMPT=0
               GIT_ASKPASS=/usr/bin/false
               SSH_ASKPASS=/usr/bin/false

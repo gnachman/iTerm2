@@ -1,5 +1,6 @@
-# Shared settings for tools/swift_migration/sanitizer_tests.sh and
-# tools/swift_migration/sanitizer_app.sh. Sourced, not run. See those
+# Shared settings for tools/swift_migration/sanitizer_tests.sh,
+# tools/swift_migration/sanitizer_app.sh, tools/swift_migration/coverage_tests.sh
+# and tools/swift_migration/fast_tests.sh. Sourced, not run. See those
 # scripts for documentation.
 
 SAN_HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -18,6 +19,33 @@ san_check_root_path() {
                 "$SAN_IGNORELIST would exempt every file. Use a checkout elsewhere." >&2
             return 2 ;;
     esac
+}
+
+# Fails (status 2, with a message) unless $2, the value given to option $1,
+# is a whole number of at least 1. For --jobs and --workers.
+san_check_count() {
+    case "$2" in
+        ''|*[!0-9]*|0*) echo "error: $1 takes a whole number of at least 1, not '$2'" >&2; return 2 ;;
+    esac
+}
+
+# The number of parallel test workers when --parallel is given without
+# --workers: the cap tools/run_tests.expect -parallel uses (uncapped,
+# xcodebuild starts about one test host per core and together they exhaust
+# the machine's memory).
+SAN_DEFAULT_WORKERS=2
+
+# Sets SAN_PARALLEL_ARGS to the xcodebuild test arguments for $1 (YES or NO:
+# parallel or not) and $2 (the number of workers; empty for the default).
+# Both worker options are given, as tools/run_tests.expect gives them.
+san_parallel_args() {
+    if [ "$1" = YES ]; then
+        local n="${2:-$SAN_DEFAULT_WORKERS}"
+        SAN_PARALLEL_ARGS=(-parallel-testing-enabled YES
+                           -parallel-testing-worker-count "$n" -maximum-parallel-testing-workers "$n")
+    else
+        SAN_PARALLEL_ARGS=(-parallel-testing-enabled NO)
+    fi
 }
 
 # The number of entries (lines that are neither blank nor comments) in $1.

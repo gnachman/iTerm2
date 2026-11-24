@@ -103,7 +103,16 @@
 # units are captured: a project's Swift (BetterFontPicker,
 # SearchableComboListView) is not.
 #
-# Usage: tools/swift_migration/codedb/capture_compile_commands.sh [--other-projects]
+# With --jobs N, at most N build tasks run at once (xcodebuild -jobs N, on
+# the main build and on each build of --other-projects); without it
+# xcodebuild chooses (about one per core). The capture is a clean build, so
+# it is a heavy job (docs/swift-migration/orchestration.md section 3): a
+# limit lowers the load it puts on the machine, not the work, and the build
+# takes longer. Priority is a separate matter: started under `nice -n 15`,
+# xcodebuild, its build service (SWBBuildService, a child of xcodebuild) and
+# the compilers all run at that priority.
+#
+# Usage: tools/swift_migration/codedb/capture_compile_commands.sh [--other-projects] [--jobs N]
 # Writes: tmp/codedb/cdb-fragments/*.json, tmp/codedb/cdb-fragments/swift/
 # and tmp/codedb/capture-build.log; with --other-projects,
 # tmp/codedb/other-fragments/NAME/, tmp/codedb/other-build/NAME/ and
@@ -120,12 +129,26 @@ LOG="$OUT/capture-build.log"
 LOCK="$OUT/codedb.lock"
 
 MODE=main
-if [ "${1:-}" = "--other-projects" ] && [ $# -eq 1 ]; then
-    MODE=other
-elif [ $# -ne 0 ]; then
-    echo "usage: $(basename "$0") [--other-projects]" >&2
+JOBS_ARGS=()
+usage_error() {
+    echo "usage: $(basename "$0") [--other-projects] [--jobs N]" >&2
     exit 2
-fi
+}
+ARGV=("$@")
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --other-projects) MODE=other ;;
+        --jobs)
+            case "${2:-}" in
+                ''|*[!0-9]*|0*) echo "error: --jobs takes a whole number of at least 1, not '${2:-}'" >&2; usage_error ;;
+            esac
+            JOBS_ARGS=(-jobs "$2")
+            shift ;;
+        *) usage_error ;;
+    esac
+    shift
+done
+set -- ${ARGV[@]+"${ARGV[@]}"}
 
 cd "$ROOT"
 mkdir -p "$OUT"
@@ -211,7 +234,8 @@ if [ "$MODE" = other ]; then
                         ARCHS="$(uname -m)" ONLY_ACTIVE_ARCH=YES
                         SYMROOT="$build" OBJROOT="$build/obj" SHARED_PRECOMPS_DIR="$build/pch"
                         COMPILER_INDEX_STORE_ENABLE=NO)
-            args+=(${extra[@]+"${extra[@]}"} "OTHER_CFLAGS=\$(inherited) -gen-cdb-fragment-path $partial")
+            args+=(${extra[@]+"${extra[@]}"} ${JOBS_ARGS[@]+"${JOBS_ARGS[@]}"}
+                   "OTHER_CFLAGS=\$(inherited) -gen-cdb-fragment-path $partial")
             set +e
             set -m
             xcodebuild "${args[@]}" 9>&- < /dev/null >> "$log" 2>&1 &
@@ -276,6 +300,7 @@ xcodebuild clean build-for-testing \
     ARCHS="$(uname -m)" ONLY_ACTIVE_ARCH=YES \
     SYMROOT="$ROOT/Build" \
     COMPILER_INDEX_STORE_ENABLE=NO \
+    ${JOBS_ARGS[@]+"${JOBS_ARGS[@]}"} \
     "OTHER_CFLAGS=\$(inherited) -gen-cdb-fragment-path $PARTIAL" \
     9>&- > "$LOG" 2>&1 &
 BUILD_PID=$!

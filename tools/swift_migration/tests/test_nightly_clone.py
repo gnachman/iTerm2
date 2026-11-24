@@ -798,6 +798,28 @@ class UntrustedCloneTest(CloneBase):
                 os.path.join(self.mirror, 'linked'))
         self.assertRefused('hard-linked')
 
+    def test_read_only_hard_link_outside_objects_is_refused(self):
+        # Only data files under objects/ may have a second name: a read-only
+        # hard link anywhere else, or as objects/info/alternates (which tells
+        # git where else to read objects), is still refused.
+        precious = os.path.join(self.decoy, 'precious.txt')
+        os.chmod(precious, 0o444)
+        info = os.path.join(self.mirror, 'objects', 'info')
+        os.makedirs(info, exist_ok=True)
+        for where, name in ((self.mirror, 'linked'),
+                            (os.path.join(self.mirror, 'refs'), 'linked'),
+                            (info, 'alternates')):
+            os.chmod(where, 0o755)
+            os.link(precious, os.path.join(where, name))
+            os.chmod(where, 0o555)
+            proc = self.run_tool('check', '--source', self.owner, '--clone', self.clone)
+            self.assertEqual(proc.returncode, 10, proc.stdout)
+            self.assertIn('hard-linked', proc.stdout)
+            os.chmod(where, 0o755)
+            os.remove(os.path.join(where, name))
+            os.chmod(where, 0o555)
+        os.chmod(precious, 0o644)
+
     def test_origin_must_be_exactly_the_mirror(self):
         git(self.clone, 'config', 'remote.origin.url', self.owner)
         self.assertRefused('not the mirror')
@@ -953,6 +975,59 @@ class UntrustedCloneTest(CloneBase):
         proc = self.run_tool('check', '--source', self.owner,
                              '--clone', self.clone)
         self.assertEqual(proc.returncode, 0, proc.stdout)
+
+
+class MirrorLocalCloneTest(CloneBase):
+    """The session may clone by local path, and origin is the mirror's path,
+    so a plain `git clone <mirror>` happens. git links the mirror's object
+    and pack files into the copy instead of copying them: that must not
+    stop the nights, and the refresh must not change the copy's files."""
+
+    def setUp(self):
+        super().setUp()
+        self.setup_clone()
+        self.copy = os.path.join(self.tmp, 'copy')
+        git(self.tmp, 'clone', '-q', '--bare', self.mirror, self.copy)
+        self.linked = []
+        for root, dirs, files in os.walk(os.path.join(self.copy, 'objects')):
+            for name in files:
+                path = os.path.join(root, name)
+                if os.lstat(path).st_nlink > 1:
+                    self.linked.append(path)
+        # The premise: git did link them.
+        self.assertTrue(self.linked)
+
+    def check(self):
+        return self.run_tool('check', '--source', self.owner, '--clone', self.clone)
+
+    def test_a_plain_path_clone_of_the_mirror_passes_the_check(self):
+        proc = self.check()
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+
+    def test_refresh_leaves_the_linked_files_untouched(self):
+        before = {p: os.lstat(p) for p in self.linked}
+        self.upstream_commit('b.txt')
+        proc = self.refresh()
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        self.assertEqual(self.head(self.mirror), self.head(self.owner))
+        self.assertEqual(writable_entries(self.mirror), [])
+        for path, old in before.items():
+            new = os.lstat(path)
+            self.assertEqual(new.st_mode, old.st_mode, path)
+            # Not even a chmod there and back: the file's change time is
+            # the same, so it was never writable through the mirror's name.
+            self.assertEqual(new.st_ctime_ns, old.st_ctime_ns, path)
+        self.assertEqual(self.check().returncode, 0)
+
+    def test_a_writable_linked_file_is_refused_and_named(self):
+        path = self.linked[0]
+        os.chmod(path, 0o644)
+        ino = os.lstat(path).st_ino
+        proc = self.check()
+        self.assertEqual(proc.returncode, 10, proc.stdout)
+        self.assertIn('hard-linked', proc.stdout)
+        self.assertIn(self.mirror + '/objects/', proc.stdout)
+        self.assertIn('-inum %d' % ino, proc.stdout)
 
 
 class LaneRegistrationTest(CloneBase):

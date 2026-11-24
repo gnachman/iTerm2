@@ -95,3 +95,23 @@ Each entry says:
   snapshot comparison lists `-init` under CHECK AGAINST THE SOURCE, and the
   commit message says that `-init` and `+new` now trap.
 - **Found in:** `iTermColorSuggester`, the port commit.
+
+### A window subclass loaded from a nib traps if it declares an initializer
+
+- **Pattern:** an `NSWindow` or `NSPanel` subclass with no initializers of
+  its own is named as a window's custom class in a xib. Nib loading creates
+  the window with `-initWithContentRect:styleMask:backing:defer:`, not
+  `-initWithCoder:` (which `NSWindow` marks `NS_UNAVAILABLE`).
+- **Naive port:** the Swift class gains a designated initializer, or a
+  stored property without a default. Swift then stops inheriting
+  `init(contentRect:styleMask:backing:defer:)` and registers a stub in its
+  place, and nib loading dies with "Use of unimplemented initializer". Left
+  without `@objc(Name)`, the class is not found by its bare name and AppKit
+  quietly makes a plain `NSWindow`, so code that relies on the subclass
+  (for example an `NSPanel`-only message) raises later.
+- **Write instead:** pin the name with `@objc(Name)`, declare no
+  initializer and no stored property without a default, and test by
+  loading the real nib with its real owner. The runtime snapshot then
+  shows the inherited initializer as the class's one method, under CHECK
+  AGAINST THE SOURCE.
+- **Found in:** `iTermShellIntegrationPanel`, the dossier and the port.

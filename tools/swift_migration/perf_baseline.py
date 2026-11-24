@@ -35,6 +35,8 @@ Options for run:
     --settle-minutes M    After building, wait up to M minutes for the machine
                           to become quiet before measuring (default 10).
     --output PATH         Result file (default tmp/perf-baseline/results/).
+    --jobs N              At most N concurrent build tasks (xcodebuild -jobs N);
+                          without it xcodebuild chooses (about one per core).
 
 In-process scenarios run tests of the PerformanceTests target through
 `xcodebuild test-without-building` with a copy of the .xctestrun file that
@@ -185,11 +187,14 @@ def wait_for_memory(max_minutes=30):
         time.sleep(60)
 
 
-def build_command(configuration):
+def build_command(configuration, jobs=None):
     """The Makefile's flags for a release configuration, as a direct
     xcodebuild call: `make Deployment` would also run
-    tools/extract_strings.sh, which rewrites the tracked string catalog."""
+    tools/extract_strings.sh, which rewrites the tracked string catalog.
+    jobs, if given, limits the build to that many concurrent tasks
+    (xcodebuild -jobs)."""
     build_dir = os.path.join(REPO, 'Build')
+    limit = ['-jobs', str(jobs)] if jobs else []
     return ['xcodebuild', 'build-for-testing', '-project', 'iTerm2.xcodeproj', '-scheme', 'PerformanceTests',
             '-configuration', configuration, '-destination', 'platform=macOS,arch=%s' % ARCH,
             '-skipPackagePluginValidation',
@@ -197,16 +202,16 @@ def build_command(configuration):
             'ARCHS=%s' % ARCH, 'ONLY_ACTIVE_ARCH=YES',
             'SYMROOT=%s' % build_dir,
             'OBJROOT=%s' % os.path.join(build_dir, 'Intermediates-%s.noindex' % configuration),
-            'ENABLE_ADDRESS_SANITIZER=NO']
+            'ENABLE_ADDRESS_SANITIZER=NO'] + limit
 
 
-def build(configuration, work_dir, timeout):
+def build(configuration, work_dir, timeout, jobs=None):
     if not wait_for_memory():
         return False, 'memory stayed below %d%% free' % MIN_MEMORY_FREE_TO_BUILD
     log_path = os.path.join(work_dir, 'build-%s.log' % configuration)
     log('building %s (log: %s)' % (configuration, perf_lib.redact_path(log_path, REPO)))
     started = time.monotonic()
-    code, output = run_bounded(build_command(configuration), timeout, log_path)
+    code, output = run_bounded(build_command(configuration, jobs=jobs), timeout, log_path)
     log('build finished with %s after %.0f s' % (code, time.monotonic() - started))
     if code != 0:
         return False, 'build exited %s; see %s' % (code, perf_lib.redact_path(log_path, REPO))
@@ -464,7 +469,7 @@ def cmd_run(args):
     results = {}
     built = True
     if not args.skip_build:
-        built, why = build(args.configuration, work_dir, args.build_timeout)
+        built, why = build(args.configuration, work_dir, args.build_timeout, jobs=args.jobs)
         if not built:
             for s in scenarios:
                 results[s['name']] = {'status': 'failed', 'reason': why, 'source': s.get('test', ''),
@@ -521,6 +526,17 @@ def cmd_list(_args):
     return 0
 
 
+def positive_int(text):
+    """argparse type: a whole number of at least 1."""
+    try:
+        value = int(text)
+    except ValueError:
+        value = 0
+    if value < 1 or not text.isdigit():
+        raise argparse.ArgumentTypeError('a whole number of at least 1, not %r' % text)
+    return value
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest='command', required=True)
@@ -544,6 +560,8 @@ def main(argv=None):
     run.add_argument('--test-timeout', type=int, default=1800,
                      help='seconds before one in-process scenario is killed (default 1800)')
     run.add_argument('--output', help='result file (default tmp/perf-baseline/results/<time>.json)')
+    run.add_argument('--jobs', type=positive_int, metavar='N',
+                     help='at most N concurrent build tasks (xcodebuild -jobs N; default: xcodebuild chooses)')
     sub.add_parser('state', help='print the machine state and whether it is quiet')
     sub.add_parser('list', help='print the scenarios')
     args = parser.parse_args(argv)

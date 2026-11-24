@@ -80,7 +80,42 @@ and everything in the session inherit), and must exit 0 with the session
 present, else exit status 127. The run then lasts until the session ends,
 or the --status-file appears (the session wrapper writes the program's exit
 status there when it exits, even if another window keeps the tmux session
-alive), or the deadline. The wrapper should keep the pane open after
+alive), or the deadline.
+When the session has ended is decided by EndWatch (its docstring has the
+exact rule): the status file ends it at once; tmux's own answer that the
+session or its server does not exist ends it only as a streak of at least
+three such answers, none more than GONE_GAP (10) seconds after the last,
+spanning --tmux-confirm-seconds (default 3), and, while the pane's first
+process or the session root is still alive, spanning --tmux-doubt-seconds
+(default 60); "no server running" or "error connecting" while the tmux
+server process the run adopted is alive is not believed. A tmux call that
+cannot be run, times out (--tmux-timeout, default 30) or fails any other
+way is no answer at all; after --tmux-doubt-seconds with no answer that the
+session is present, the tracked processes decide (none alive: over;
+otherwise the session goes on, to the deadline at worst). The session root
+dead for --tmux-doubt-seconds with no status file also ends it (125, with
+its own log line). At the start the pane pid is asked for until it is
+known, the stop sequence is due, or the session is confirmed gone by the
+same rule (127). No tmux call runs past the start of the stop sequence, and
+in the stop sequence and the cleanup none runs past the hard limit:
+Escape, /exit and Enter take at most SEND_KEYS_TIMEOUT (10 seconds) out of
+their step's own wait (sent once, never retried), and every other call at
+most STOP_TMUX_TIMEOUT (1.5 seconds), so a hung tmux cannot delay the
+signals that end the session and a slow one still gets /exit. A signal
+stops the run at once, during the start too (after the tmux call in
+progress, at most --tmux-timeout).
+This replaces a rule under which any failed `tmux has-session` meant
+"gone": on the first unattended night (2026-11-23), while the machine was
+loaded by a sanitizer suite and a second build, the run was ended as if the
+session had gone while it sat healthy at its prompt (the tmux server still
+answered seven seconds later, and claude was still running when the stop
+killed it); nothing logged which tmux call failed or how. Every failed tmux
+call is now logged (arguments, exit status, stderr or exception; once per
+distinct failure, then at most once a minute with a count), a failed
+capture is no observation for the blocked and stall checks (never an empty
+or unchanged screen), the final cleanup kills the server by pid when tmux
+cannot be asked to, and an end without a status names what was observed.
+The wrapper should keep the pane open after
 writing the status (it is closed here): closing the pane hangs up its
 terminal, which kills what is left in it before it has been seen, and
 macOS then reports their children (in a new session, say) as their own
@@ -117,7 +152,8 @@ inside the pane responsibility links nothing unless the wrapper runs the
 program with `deadline_run.py --spawn-root FILE -- PROGRAM`, which spawns
 it with responsibility disclaimed (in the same process group, keeping the
 terminal) and writes its pid and start time to FILE. Exit status: the number in --status-file if the session
-ended by itself; 125 if it ended without one (killed from outside); 124 at
+ended by itself; 125 if it ended without one (killed from outside, or
+tmux's server died; the log says what was observed); 124 at
 the deadline; 122 if blocked; 121 if stalled at the start; 128 + the signal number if this runner was
 signalled; 127 if it could not start.
 
@@ -128,7 +164,10 @@ Usage:
     deadline_run.py --seconds N ... --tmux-socket PATH --tmux-session NAME
                     [--tmux PROGRAM] [--status-file FILE]
                     [--interrupt-wait S] [--blocked-pattern REGEX]
-                    [--blocked-seconds S] -- TMUX-CLIENT-COMMAND...
+                    [--blocked-seconds S] [--stall-seconds S]
+                    [--transcript FILE] [--root-file FILE]
+                    [--tmux-confirm-seconds S] [--tmux-doubt-seconds S]
+                    [--tmux-timeout S] -- TMUX-CLIENT-COMMAND...
     deadline_run.py --spawn-root FILE -- COMMAND [ARG...]
     deadline_run.py --show-deadline --seconds N [--until HH:MM]
                     [--clean-stop-margin S] [--now ISO] [--tz ZONE]
@@ -623,60 +662,440 @@ def sweep(tracker, grace):
 
 # The tmux mode.
 
+# What tmux 3.8 prints, with exit status 1, when what it was asked about
+# does not exist (checked by hand): "can't find session: NAME" (the server
+# runs, the session does not), "no server running on SOCKET" (the socket
+# file is there but nothing listens: tmux prints this for ECONNREFUSED), and
+# "error connecting to SOCKET (No such file or directory)" (no socket file).
+# "session not found" is an older tmux's wording. Any other "error
+# connecting to" errno, and every other message, is a failure to ask, not an
+# answer. A refused connection can also be transient (a full listen backlog
+# under load), which is one reason an answer must repeat before it counts.
+GONE_MESSAGES = re.compile(
+    r"^(can't find session|session not found|no server running on "
+    r'|error connecting to .*\(No such file or directory\)$)')
+ALIVE = 'alive'
+GONE = 'gone'
+UNKNOWN = 'unknown'
+
+# A failure that has been logged is logged again, with its count, at most
+# this often; distinct failures beyond MAX_FAILURE_KINDS share one entry
+# per tmux command.
+FAILURE_LOG_INTERVAL = 60
+MAX_FAILURE_KINDS = 100
+# The longest a tmux call outside the stop sequence's waits may take (the
+# kill-server of the sequence; list-sessions and kill-server in the
+# cleanup), and the existence checks inside them: STOP_SLACK's 10 seconds
+# for tmux commands cover them. MIN_TMUX_TIMEOUT is the least any call is
+# given.
+STOP_TMUX_TIMEOUT = 1.5
+MIN_TMUX_TIMEOUT = 0.2
+# The longest Escape, /exit and Enter may take. They come out of their
+# step's own wait, so a longer timeout cannot delay the SIGTERM; a tmux
+# that is slow under load still gets them delivered. Each is sent once and
+# never retried, since a call that timed out may have been delivered.
+SEND_KEYS_TIMEOUT = 10
+# The messages of GONE_MESSAGES that say no server runs: a contradiction
+# while the server process the run adopted is alive.
+NO_SERVER_MESSAGES = re.compile(r'^(no server running on |error connecting to )')
+
+
 class Tmux:
     """tmux commands against one server socket and one session; never the
-    default socket."""
+    default socket.
 
-    def __init__(self, program, socket, name):
+    Every call that does not succeed is logged with its arguments, its exit
+    status, tmux's stderr or the exception, once per distinct failure and
+    then at most once a minute with a count, so that a persistent failure
+    cannot fill the log. A result's `asked` is true when the tmux client ran
+    and exited by itself (not when it could not be run, timed out, or was
+    killed by a signal); only then is its exit status an answer from tmux."""
+
+    def __init__(self, program, socket, name, timeout=30,
+                 clock=time.monotonic):
         self.program = program
         self.socket = socket
         self.name = name
+        self.timeout = timeout
+        self.clock = clock
+        # A callable giving the longest any call may take now, or None:
+        # run_tmux sets it so that no tmux call runs past the start of the
+        # stop sequence, and in the stop sequence and the cleanup to
+        # STOP_TMUX_TIMEOUT within the hard limit.
+        self.cap = None
+        self.calls = 0
+        self.failed = 0
+        self.failures = {}  # key -> {'count', 'logged_at', 'since'}
 
-    def run(self, *args):
+    def run(self, *args, timeout=None):
+        """Run one tmux command, abandoned after the smallest of
+        --tmux-timeout, `timeout` and the cap (never less than
+        MIN_TMUX_TIMEOUT)."""
+        self.calls += 1
+        argv = [self.program, '-S', self.socket] + list(args)
+        limit = self.timeout
+        if timeout is not None:
+            limit = min(limit, timeout)
+        if self.cap is not None:
+            limit = min(limit, self.cap())
+        limit = max(limit, MIN_TMUX_TIMEOUT)
         try:
-            return subprocess.run([self.program, '-S', self.socket] + list(args),
-                                  stdin=subprocess.DEVNULL,
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE,
-                                  universal_newlines=True, timeout=30)
-        except (OSError, subprocess.TimeoutExpired) as e:
-            return subprocess.CompletedProcess(args, -1, '', str(e))
+            got = subprocess.run(argv, stdin=subprocess.DEVNULL,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 universal_newlines=True,
+                                 timeout=limit)
+            got.asked = got.returncode >= 0
+            got.error = (None if got.asked
+                         else 'killed by signal %d' % -got.returncode)
+        except OSError as e:
+            got = subprocess.CompletedProcess(argv, -1, '', '')
+            got.asked = False
+            got.error = 'cannot run %s: %s' % (self.program, e)
+        except subprocess.TimeoutExpired:
+            got = subprocess.CompletedProcess(argv, -1, '', '')
+            got.asked = False
+            got.error = 'timed out after %.1f seconds' % limit
+        if got.returncode != 0:
+            self.note_failure(args, got)
+        return got
 
-    def alive(self):
-        return self.run('has-session', '-t', '=' + self.name).returncode == 0
+    def note_failure(self, args, got):
+        self.failed += 1
+        words = (got.stderr or '').strip()
+        # A timeout's length varies with the cap; it is one kind of failure.
+        kind = re.sub(r'[0-9.]+ seconds', 'N seconds', got.error or '')
+        # Each key sent is its own kind, so that a failed /exit is not
+        # hidden behind a failed Escape logged before it.
+        what_kind = (' '.join(args) if args and args[0] == 'send-keys'
+                     else args[0] if args else '')
+        key = (what_kind, got.returncode, words, kind)
+        if key not in self.failures and len(self.failures) >= MAX_FAILURE_KINDS:
+            key = (key[0], 'other failures')
+        now = self.clock()
+        entry = self.failures.get(key)
+        what = ' '.join([self.program, '-S', self.socket] + list(args))
+        how = got.error or 'exit status %d' % got.returncode
+        if entry is None:
+            self.failures[key] = {'count': 1, 'logged_at': now, 'since': 0}
+            log('tmux call failed: %s: %s; stderr %r' % (what, how, words))
+            return
+        entry['count'] += 1
+        entry['since'] += 1
+        if now - entry['logged_at'] >= FAILURE_LOG_INTERVAL:
+            log('tmux call failed again (%d times since the last report, %d '
+                'in all): %s: %s; stderr %r'
+                % (entry['since'], entry['count'], what, how, words))
+            entry['logged_at'] = now
+            entry['since'] = 0
 
-    def server_alive(self):
-        return self.run('list-sessions').returncode == 0
+    def summary(self):
+        return 'tmux: %d calls, %d failed' % (self.calls, self.failed)
+
+    @staticmethod
+    def classify(got):
+        """ALIVE if tmux answered yes, GONE if it answered that the session
+        or its server does not exist, UNKNOWN if it could not be asked or
+        said anything else."""
+        if got.returncode == 0:
+            return ALIVE
+        if (got.asked and got.returncode == 1
+                and GONE_MESSAGES.search((got.stderr or '').strip())):
+            return GONE
+        return UNKNOWN
+
+    def session_state(self, timeout=None):
+        got = self.run('has-session', '-t', '=' + self.name, timeout=timeout)
+        return self.classify(got), got
+
+    def server_state(self, timeout=None):
+        got = self.run('list-sessions', timeout=timeout)
+        return self.classify(got), got
 
     def number(self, fmt):
         got = self.run('display-message', '-p', '-t', self.name, fmt)
+        if got.returncode != 0:
+            return None
         try:
             return int(got.stdout.strip())
         except ValueError:
+            log('tmux display-message %s printed %r, not a number'
+                % (fmt, got.stdout))
             return None
 
     def capture(self):
-        return self.run('capture-pane', '-p', '-t', self.name).stdout
+        """The pane's text, or None if it could not be captured: a failed
+        capture is no observation, never an empty screen."""
+        got = self.run('capture-pane', '-p', '-t', self.name)
+        return got.stdout if got.returncode == 0 else None
 
-    def send_keys(self, *keys):
-        return self.run('send-keys', '-t', self.name, *keys).returncode == 0
+    def send_keys(self, *keys, timeout=None):
+        return self.run('send-keys', '-t', self.name, *keys,
+                        timeout=timeout).returncode == 0
 
-    def kill_server(self):
-        return self.run('kill-server').returncode == 0
+    def kill_server(self, timeout=None):
+        return self.run('kill-server', timeout=timeout).returncode == 0
 
 
-def read_status(path):
+def read_status(path, settle=2.0):
+    """The number in the status file, or None. A file that exists but does
+    not hold a number yet (the wrapper's `echo` has created it and not yet
+    written) is read again for up to `settle` seconds."""
     if not path:
         return None
-    try:
-        with open(path) as fh:
-            return int(fh.read().strip())
-    except (OSError, ValueError):
-        return None
+    end = time.monotonic() + settle
+    while True:
+        try:
+            with open(path) as fh:
+                return int(fh.read().strip())
+        except FileNotFoundError:
+            return None
+        except (OSError, ValueError):
+            if time.monotonic() >= end:
+                return None
+        time.sleep(0.1)
+
+
+# A "gone" answer from tmux counts only after this many answers in a row
+# spanning --tmux-confirm-seconds.
+CONFIRM_ANSWERS = 3
+# Two gone answers further apart than this are not one streak: the second
+# starts a new one. Ten check intervals of the main loop; a has-session
+# call that takes longer than that under load is no evidence either way,
+# and a streak with such holes is not "sustained".
+GONE_GAP = 10
+# How often the fallback's "the session goes on" line is repeated.
+FALLBACK_LOG_INTERVAL = 300
+# How session_processes() names the session root (claude, through
+# --spawn-root) and the pane's first process (session.sh).
+SESSION_ROOT = 'the session root'
+PANE_FIRST = "the pane's first process"
+
+
+def tracked_alive(tracked):
+    """[(pid, start, what)] to [(pid, what, alive)]: alive while the pid is
+    still the process that was seen (same start time, not a zombie), so a
+    reused pid does not count."""
+    result = []
+    for pid, start, what in tracked:
+        now = proc_info(pid)
+        result.append((pid, what, now is not None and now.start == start
+                       and now.status != SZOMB))
+    return result
+
+
+class EndWatch:
+    """Decides whether the session has ended. The first night of the
+    unattended run (2026-11-23) was ended by a single failed `tmux
+    has-session` while the session sat healthy at its prompt, because "the
+    tmux client failed" was read as "the session is gone".
+
+    Each check asks `tmux has-session` once (about once a second in the main
+    loop, five times a second in the stop sequence) and gets one of three
+    results: present (exit 0), gone (exit 1 with one of GONE_MESSAGES from a
+    client that ran and exited by itself), or a failure to ask (anything
+    else: the client could not be run, timed out, was killed, or said
+    something else). A "no server running on" or "error connecting to"
+    answer while the tmux server process that the run adopted (same pid and
+    start time) is alive contradicts itself (a refused connection under
+    load, a deleted socket file) and counts as a failure to ask, logged.
+    "Tracked processes" are the pane's first process and the session root,
+    each while it is the process that was seen.
+
+    The rule; once it has concluded, it stays concluded:
+      1. The status file exists: over.
+      2. The session root has exited, no status file has appeared, and that
+         has lasted `doubt` seconds: over, whatever tmux says (claude is
+         gone; the wrapper could not write the status). Logged once when
+         first seen after `confirm` seconds.
+      3. Present: not over; the gone streak ends.
+      4. Gone answers form a streak: each within GONE_GAP seconds of the
+         previous one, with no present answer between (failures to ask
+         between them neither count nor break it, but a gap longer than
+         GONE_GAP starts a new streak). The streak ends the session when it
+         has at least CONFIRM_ANSWERS answers spanning at least `confirm`
+         seconds and either no tracked process is alive (or none is
+         tracked), or it spans at least `doubt` seconds (a session whose
+         tmux is truly gone has lost its terminal, so its processes
+         normally die of the hangup at once; tmux that is truly gone
+         answers at once, every time).
+      5. No present answer for `doubt` seconds (from the last present
+         answer, or from the start of watching): the tracked processes
+         decide. None alive: over. Any alive, or none tracked: the session
+         goes on, to the deadline at worst, logged every
+         FALLBACK_LOG_INTERVAL seconds.
+    So live tracked processes are killed on tmux's word only by rule 4's
+    sustained streak, and on the session root's death only by rule 2.
+
+    `session_processes()` returns [(pid, what, alive)] or None when nothing
+    is tracked; `server_running()` returns True, False, or None when the
+    server process is not tracked."""
+
+    def __init__(self, tmux, status_file, confirm, doubt, session_processes,
+                 clock=time.monotonic, server_running=None):
+        self.tmux = tmux
+        self.status_file = status_file
+        self.confirm = confirm
+        self.doubt = doubt
+        self.session_processes = session_processes
+        self.server_running = server_running or (lambda: None)
+        self.clock = clock
+        self.over = None  # why, once concluded
+        self.last_state = None
+        self.last_present = clock()
+        self.root_dead_since = None
+        self.root_logged = False
+        self.contradiction_logged = False
+        self.fallback_logged_at = None
+        self.unanswered = 0
+        self.gone_answers = 0
+        self.last_failure = ''
+        self.end_streak()
+        self.doubt_logged = False
+
+    def end_streak(self):
+        self.gone_first = None
+        self.gone_last = None
+        self.gone_count = 0
+        self.gone_words = ''
+
+    def conclude(self, why):
+        self.over = why
+        log('the session is over: %s' % why)
+        return True
+
+    @staticmethod
+    def describe(processes):
+        return ', '.join('pid %d (%s)' % (pid, what)
+                         for pid, what, _ in processes)
+
+    def look(self):
+        """(tracked, running): the tracked processes, or None, and those
+        of them still alive."""
+        tracked = self.session_processes()
+        if tracked is None:
+            return None, None
+        return tracked, [p for p in tracked if p[2]]
+
+    def check_root(self, now, tracked):
+        # Rule 2.
+        root = [p for p in tracked or [] if p[1] == SESSION_ROOT]
+        if not root or root[0][2]:
+            self.root_dead_since = None
+            return False
+        if self.root_dead_since is None:
+            self.root_dead_since = now
+        dead_for = now - self.root_dead_since
+        if dead_for >= self.doubt:
+            return self.conclude(
+                'the session root, pid %d, exited at least %.0f seconds ago '
+                'and no status file was written (%s); the pane goes on '
+                'without it' % (root[0][0], dead_for, self.status_file))
+        if dead_for >= self.confirm and not self.root_logged:
+            log('the session root, pid %d, has exited and no status file '
+                'has appeared; the run ends if none appears within %g '
+                'seconds' % (root[0][0], self.doubt))
+            self.root_logged = True
+        return False
+
+    def check(self, timeout=None):
+        if self.over is not None:
+            return True
+        if self.status_file and os.path.exists(self.status_file):
+            self.over = 'the status file %s appeared' % self.status_file
+            return True
+        state, got = self.tmux.session_state(timeout=timeout)
+        now = self.clock()
+        words = (got.stderr or '').strip()
+        if (state == GONE and NO_SERVER_MESSAGES.search(words)
+                and self.server_running() is True):
+            if not self.contradiction_logged:
+                log('tmux says %r, but the tmux server process (server pid '
+                    'tracked since the start) is alive; not believed, '
+                    'counted as a failure to ask' % words)
+                self.contradiction_logged = True
+            state = UNKNOWN
+        self.last_state = state
+        tracked, running = self.look()
+        if self.status_file and self.check_root(now, tracked):
+            return True
+        if state == ALIVE:
+            if self.doubt_logged:
+                log('tmux answers again that session %s is present; the '
+                    'session goes on' % self.tmux.name)
+                self.doubt_logged = False
+            self.end_streak()
+            self.last_present = now
+            self.unanswered = 0
+            self.gone_answers = 0
+            self.contradiction_logged = False
+            return False
+        if state == GONE:
+            self.gone_answers += 1
+            if self.gone_last is not None and now - self.gone_last > GONE_GAP:
+                self.end_streak()
+            if self.gone_first is None:
+                self.gone_first = now
+            self.gone_last = now
+            self.gone_count += 1
+            self.gone_words = words
+            span = now - self.gone_first
+            if self.gone_count >= CONFIRM_ANSWERS and span >= self.confirm:
+                what = ('tmux answered %d times over %.1f seconds, never more '
+                        'than %g seconds apart (has-session -t =%s, exit '
+                        'status 1), that the session is gone, in its words: '
+                        '%r' % (self.gone_count, span, GONE_GAP,
+                                self.tmux.name, self.gone_words))
+                if tracked is None:
+                    return self.conclude(what + '; no process of the session '
+                                         'is tracked to say otherwise')
+                if not running:
+                    return self.conclude(what + '; the tracked processes are '
+                                         'gone too: %s'
+                                         % self.describe(tracked))
+                if span >= self.doubt:
+                    return self.conclude(
+                        what + '; these still run after %g seconds of such '
+                        'answers and are killed with the rest: %s'
+                        % (self.doubt, self.describe(running)))
+                if not self.doubt_logged:
+                    log('%s; but these still run: %s; not believed unless '
+                        'such answers last %g seconds'
+                        % (what, self.describe(running), self.doubt))
+                    self.doubt_logged = True
+        else:
+            self.unanswered += 1
+            self.last_failure = '%s; stderr %r' % (
+                got.error or 'exit status %d' % got.returncode, words)
+        # Rule 5.
+        silent = now - self.last_present
+        if silent < self.doubt:
+            return False
+        what = ('could not ask tmux whether session %s is present: no '
+                'present answer for %.0f seconds (%d gone answers, %d '
+                'failures to ask; the last failure: %s)'
+                % (self.tmux.name, silent, self.gone_answers,
+                   self.unanswered, self.last_failure or 'none'))
+        if tracked is not None and not running:
+            return self.conclude(what + '; the tracked processes are gone, '
+                                 'so the session is over: %s'
+                                 % self.describe(tracked))
+        if (self.fallback_logged_at is None
+                or now - self.fallback_logged_at >= FALLBACK_LOG_INTERVAL):
+            if tracked is None:
+                log(what + '; no process of the session is tracked, so '
+                    'nothing decides: the session goes on until the deadline')
+            else:
+                log(what + '; these still run, so the session goes on: %s'
+                    % self.describe(running))
+            self.fallback_logged_at = now
+            self.doubt_logged = True
+        return False
 
 
 def run_tmux(args, command, env, limit, night_id, started):
-    tmux = Tmux(args.tmux, args.tmux_socket, args.tmux_session)
+    tmux = Tmux(args.tmux, args.tmux_socket, args.tmux_session,
+                timeout=args.tmux_timeout)
     stop = {'signal': None}
 
     def on_signal(signum, frame):
@@ -686,9 +1105,15 @@ def run_tmux(args, command, env, limit, night_id, started):
     for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
         signal.signal(sig, on_signal)
 
-    def ended():
-        return (args.status_file and os.path.exists(args.status_file)) \
-            or not tmux.alive()
+    def ask(question, tries=6, pause=0.5):
+        # At the start: ask again while tmux cannot be asked, a few times.
+        for attempt in range(tries):
+            got = question()
+            if got is not None and got != UNKNOWN:
+                return got
+            if attempt + 1 < tries:
+                time.sleep(pause)
+        return got
 
     try:
         client, disclaimed = spawn(command, env)
@@ -705,21 +1130,82 @@ def run_tmux(args, command, env, limit, night_id, started):
         signal_group(client.pid, signal.SIGKILL)
         client.wait()
     code = client.returncode
+    # The stop sequence starts early enough to be over by the hard limit.
+    # Both are counted from here, the end of the start; no tmux call before
+    # the stop sequence may run past its start.
+    stop_len = stop_seconds(args)
+    hard = Deadline(limit)
+    deadline = Deadline(max(0.0, limit - stop_len))
+    tmux.cap = lambda: max(MIN_TMUX_TIMEOUT, deadline.remaining())
     pane_pid = server_pid = None
-    if code == 0 and tmux.alive():
-        server_pid = tmux.number('#{pid}')
-        pane_pid = tmux.number('#{pane_pid}')
-        for pid, what in ((server_pid, 'the tmux server'),
-                          (pane_pid, "the pane's first process")):
-            if pid:
-                tracker.adopt(pid, what)
+    pane_info = server_info = None
+    adopted = {'root': False, 'pid': None, 'start': None}
+
+    def session_processes():
+        # The processes whose life says whether the session runs: the
+        # pane's first process and the session root, each while it is still
+        # the process that was seen. None when neither is tracked.
+        tracked = []
+        if pane_info is not None:
+            tracked.append((pane_pid, pane_info.start, PANE_FIRST))
+        if adopted['pid'] is not None:
+            tracked.append((adopted['pid'], adopted['start'], SESSION_ROOT))
+        return tracked_alive(tracked) if tracked else None
+
+    def server_running():
+        # Whether the tmux server process adopted at the start is alive;
+        # None while it is not known.
+        if server_info is None:
+            return None
+        return tracked_alive([(server_pid, server_info.start, 'server')])[0][2]
+
+    watch = EndWatch(tmux, args.status_file, args.tmux_confirm_seconds,
+                     args.tmux_doubt_seconds, session_processes,
+                     server_running=server_running)
+    ended = watch.check
+    stop_polling = threading.Event()
+    threading.Thread(target=poll, args=(tracker, stop_polling),
+                     daemon=True).start()
+
+    if code == 0:
+        # Learn the pane's first process. A failure to ask is no
+        # information: keep asking while the session is present or tmux
+        # cannot be asked, until the stop sequence is due. Only the watch's
+        # confirmed end (the status file, or tmux's sustained answer that
+        # the session is gone) stops this early.
+        asked_from = time.monotonic()
+        while not ended():
+            if stop['signal'] is not None:
+                # The main loop below stops on it at once; the pane pid
+                # may stay unknown (then only the sweep and tmux's own
+                # kill-server can reach the pane).
+                log('a signal arrived during the start; stopping')
+                break
+            if watch.last_state == ALIVE:
+                pane_pid = tmux.number('#{pane_pid}')
+                if pane_pid:
+                    break
+            if deadline.remaining() <= 0:
+                log('could not learn the pane pid before the stop sequence '
+                    'was due')
+                break
+            time.sleep(0.5)
+        if pane_pid:
+            if time.monotonic() - asked_from > 2:
+                log('learned the pane pid after %.0f seconds'
+                    % (time.monotonic() - asked_from))
+            server_pid = ask(lambda: tmux.number('#{pid}'), tries=10)
+            for pid, what in ((server_pid, 'the tmux server'),
+                              (pane_pid, PANE_FIRST)):
+                if pid:
+                    tracker.adopt(pid, what)
+            pane_info = proc_info(pane_pid)
+            server_info = proc_info(server_pid) if server_pid else None
     log('tmux client pid %d exited %s; session %s on %s; server pid %s; '
         'pane pid %s; %s=%s; responsibility %s'
         % (client.pid, code, args.tmux_session, args.tmux_socket, server_pid,
            pane_pid, MARKER, night_id,
            'disclaimed' if disclaimed else 'NOT disclaimed (marker only)'))
-    pane_info = proc_info(pane_pid) if pane_pid else None
-    adopted = {'root': False}
 
     def in_pane(pid, info):
         # The session can write the root file, so the pid it names counts
@@ -753,6 +1239,8 @@ def run_tmux(args, command, env, limit, night_id, started):
             if in_pane(pid, now):
                 with tracker.lock:
                     tracker.known[pid] = (start, 'the session root in the pane')
+                adopted['pid'] = pid
+                adopted['start'] = start
                 log('session root in the pane: pid %d' % pid)
             else:
                 log('the root file names pid %d (%s), which is not in the '
@@ -808,11 +1296,24 @@ def run_tmux(args, command, env, limit, night_id, started):
                 % (pane_pid, pid, name, line))
 
     def finish(result):
+        stop_polling.set()
         adopt_root()
         tracker.snapshot()
-        if tmux.server_alive():
-            tmux.kill_server()
-            log('killed the tmux server on %s' % args.tmux_socket)
+        stop_caps()
+        # Unless tmux answered that no server runs, ask it to stop; if it
+        # cannot be asked, the server is killed by pid below.
+        server_state, _ = tmux.server_state(timeout=STOP_TMUX_TIMEOUT)
+        if server_state != GONE:
+            if tmux.kill_server(timeout=STOP_TMUX_TIMEOUT):
+                log('killed the tmux server on %s' % args.tmux_socket)
+            else:
+                log('could not ask tmux to kill its server on %s (it '
+                    'answered %s to list-sessions); %s'
+                    % (args.tmux_socket, server_state,
+                       'killing it by pid %d' % server_pid if server_pid
+                       else 'its pid is not known, so only the sweep can '
+                       'reach it'))
+        log(tmux.summary())
         report_pane(signal_pane(signal.SIGKILL, 'SIGKILL'), 'SIGKILL', 2.0)
         if server_pid:
             server_info = tracker.known.get(server_pid)
@@ -830,22 +1331,26 @@ def run_tmux(args, command, env, limit, night_id, started):
         sweep(tracker, args.sweep_grace)
         return result
 
-    if code != 0 or (pane_pid is None and not ended()):
+    def stop_caps():
+        # From the stop sequence on, no tmux call runs past the hard limit;
+        # each call also gets its own short timeout (STOP_TMUX_TIMEOUT, or
+        # SEND_KEYS_TIMEOUT out of its step's wait), so the signals that end
+        # the session, which need no tmux, come on time.
+        tmux.cap = lambda: max(MIN_TMUX_TIMEOUT, hard.remaining())
+
+    if code != 0:
         log('the session could not be started (tmux client exit %s)' % code)
         return finish(EXIT_CANNOT_START)
+    if pane_pid is None and watch.over is not None and not (
+            args.status_file and os.path.exists(args.status_file)):
+        log('the session could not be started: %s' % watch.over)
+        return finish(EXIT_CANNOT_START)
 
-    stop_polling = threading.Event()
-    threading.Thread(target=poll, args=(tracker, stop_polling),
-                     daemon=True).start()
-    # The stop sequence starts early enough to be over by the hard limit.
-    stop_len = stop_seconds(args)
-    deadline = Deadline(max(0.0, limit - stop_len))
-    now_local = dt.datetime.now().astimezone()
+    zone = dt.datetime.now().astimezone().tzinfo
     log('hard limit %s; the stop sequence starts at %s (%d seconds before, '
         'the longest it can take)'
-        % (fmt(now_local + dt.timedelta(seconds=limit), now_local.tzinfo),
-           fmt(now_local + dt.timedelta(seconds=max(0.0, limit - stop_len)),
-               now_local.tzinfo), stop_len))
+        % (fmt(dt.datetime.fromtimestamp(hard.at, zone), zone),
+           fmt(dt.datetime.fromtimestamp(deadline.at, zone), zone), stop_len))
     if stop_len > limit:
         log('the limit (%d seconds) is shorter than the stop sequence; it '
             'starts at once and may end after the limit' % limit)
@@ -871,6 +1376,11 @@ def run_tmux(args, command, env, limit, night_id, started):
             stall['watching'] = False
             return False
         screen = tmux.capture()
+        if screen is None:
+            # A failed capture is no observation: it neither changes the
+            # screen nor counts as unchanged. A stall is two successful
+            # captures that agree, --stall-seconds apart.
+            return False
         if screen != stall['screen']:
             stall['screen'] = screen
             stall['changed'] = time.monotonic()
@@ -886,7 +1396,8 @@ def run_tmux(args, command, env, limit, night_id, started):
         if ended():
             break
         if pattern is not None and time.monotonic() < watch_until:
-            match = pattern.search(tmux.capture())
+            screen = tmux.capture()
+            match = pattern.search(screen) if screen is not None else None
             if match:
                 log('the session is waiting at a dialog nobody will answer '
                     '(the pane shows %r)' % match.group(0))
@@ -905,37 +1416,49 @@ def run_tmux(args, command, env, limit, night_id, started):
             break
         time.sleep(min(1.0, remaining))
 
-    def wait_end(seconds):
-        end = time.monotonic() + seconds
+    def left(end):
+        return max(MIN_TMUX_TIMEOUT, end - time.monotonic())
+
+    def wait_end(end):
+        # Until the monotonic time `end`; each check's tmux call gets no
+        # more than what is left, so the wait does not overrun.
         while time.monotonic() < end:
-            if ended():
+            if ended(timeout=min(STOP_TMUX_TIMEOUT, left(end))):
                 return True
             time.sleep(0.2)
-        return ended()
+        return ended(timeout=MIN_TMUX_TIMEOUT)
 
     if reason is not None:
+        stop_caps()
         tracker.snapshot()
         log('%s; sending Escape to the session'
             % {'deadline': 'the stop sequence starts (deadline)',
                'signal': 'stopping on a signal',
                'blocked': 'blocked at startup',
                'stalled': 'failed start'}[reason])
-        tmux.send_keys('Escape')
-        if not wait_end(args.interrupt_wait):
+        # Each step's tmux calls come out of its own wait, so a hung tmux
+        # cannot push the SIGTERM and the SIGKILL later.
+        step_end = time.monotonic() + args.interrupt_wait
+        tmux.send_keys('Escape',
+                       timeout=min(SEND_KEYS_TIMEOUT, left(step_end)))
+        if not wait_end(step_end):
             log('typing /exit')
-            tmux.send_keys('-l', '/exit')
-            tmux.send_keys('Enter')
-            if not wait_end(args.grace):
+            step_end = time.monotonic() + args.grace
+            tmux.send_keys('-l', '/exit',
+                           timeout=min(SEND_KEYS_TIMEOUT, left(step_end)))
+            tmux.send_keys('Enter',
+                           timeout=min(SEND_KEYS_TIMEOUT, left(step_end)))
+            if not wait_end(step_end):
                 tracker.snapshot()
                 log("still running; sending SIGTERM to the pane's process "
                     'group %s' % pane_pid)
                 members = signal_pane(signal.SIGTERM, 'SIGTERM')
-                ok = wait_end(args.term_grace)
+                ok = wait_end(time.monotonic() + args.term_grace)
                 report_pane(members, 'SIGTERM')
                 if not ok:
                     tracker.snapshot()
                     log('still running; killing the tmux server')
-                    tmux.kill_server()
+                    tmux.kill_server(timeout=STOP_TMUX_TIMEOUT)
                     report_pane(signal_pane(signal.SIGKILL, 'SIGKILL'),
                                 'SIGKILL', 2.0)
     stop_polling.set()
@@ -951,7 +1474,8 @@ def run_tmux(args, command, env, limit, night_id, started):
     elif status is not None:
         result = status
     elif args.status_file:
-        log('the session ended without an exit status (killed from outside?)')
+        log('the session ended without an exit status (killed from '
+            'outside?); what was observed: %s' % watch.over)
         result = EXIT_NO_STATUS
     else:
         result = 0
@@ -1041,6 +1565,16 @@ def main(argv=None):
                         help='tmux mode: a failed start when, from the start, '
                         'the pane does not change and --transcript does not '
                         'grow for this long (0: never)')
+    parser.add_argument('--tmux-confirm-seconds', type=float, default=3,
+                        help='tmux mode: how long tmux\'s answer that the '
+                        'session is gone must repeat before it counts')
+    parser.add_argument('--tmux-doubt-seconds', type=float, default=60,
+                        help='tmux mode: how long tmux may claim the session '
+                        'gone while its processes run, or be impossible to '
+                        'ask, before those processes decide')
+    parser.add_argument('--tmux-timeout', type=float, default=30,
+                        help='tmux mode: seconds before a tmux call is '
+                        'abandoned')
     parser.add_argument('--transcript',
                         help='tmux mode: the session\'s transcript file, '
                         'whose growth shows that it has started')

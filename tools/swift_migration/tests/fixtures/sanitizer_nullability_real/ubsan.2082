@@ -1,0 +1,7 @@
+/Users/example/iterm2/sources/PTYSession/PTYSession.m:18027:5: runtime error: null pointer returned from function declared to never return null
+    #0 0x00010b1e490c in -[PTYSession screenSelection]+0x74 (iTerm2.debug.dylib:arm64+0x49090c)
+    #1 0x00010be51eb4 in -[VT100ScreenMutableState(Resizing) setSize:delegate:]+0x58 (iTerm2.debug.dylib:arm64+0x10fdeb4)
+    #2 0x00010b28e198 in __23-[VT100Screen setSize:]_block_invoke+0x3c (iTerm2.debug.dylib:arm64+0x53a198)
+    #3 0x00010b9b9938 in -[VT100ScreenMutableState reallyPerformBlockWithJoinedThreads:delegate:topmost:]+0x5d0 (iTerm2.debug.dylib:arm64+0xc65938)
+
+SUMMARY: UndefinedBehaviorSanitizer: invalid-null-return /Users/example/iterm2/sources/PTYSession/PTYSession.m:18027:5 

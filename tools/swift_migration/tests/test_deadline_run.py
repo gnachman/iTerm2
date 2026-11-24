@@ -18,6 +18,7 @@ not start is left alone.
 
 import datetime as dt
 import os
+import re
 import uuid
 import shutil
 import signal
@@ -184,6 +185,337 @@ class WallClockDeadlineTest(unittest.TestCase):
         # the wall clock did.
         clock['wall'] += 7200
         self.assertLessEqual(deadline.remaining(), 0)
+
+
+def tmux_result(kind):
+    """A tmux call's result as Tmux.run returns it, for each kind of
+    outcome; the messages are tmux 3.8's own."""
+    sock = '/tmp/x/s'
+    table = {
+        'alive': (0, '', True, None),
+        'gone-session': (1, "can't find session: night\n", True, None),
+        'gone-server': (1, 'no server running on %s\n' % sock, True, None),
+        'gone-socket': (1, 'error connecting to %s (No such file or '
+                        'directory)\n' % sock, True, None),
+        'denied': (1, 'error connecting to %s (Permission denied)\n' % sock,
+                   True, None),
+        'error': (1, 'server exited unexpectedly\n', True, None),
+        'timeout': (-1, '', False, 'timed out after 30 seconds'),
+        'oserror': (-1, '', False, 'cannot run tmux: [Errno 35] Resource '
+                    'temporarily unavailable'),
+    }
+    code, err, asked, error = table[kind]
+    got = subprocess.CompletedProcess(['tmux'], code, '', err)
+    got.asked = asked
+    got.error = error
+    return got
+
+
+class ClassifyTest(unittest.TestCase):
+    def test_classify(self):
+        expected = {'alive': dr.ALIVE, 'gone-session': dr.GONE,
+                    'gone-server': dr.GONE, 'gone-socket': dr.GONE,
+                    'denied': dr.UNKNOWN, 'error': dr.UNKNOWN,
+                    'timeout': dr.UNKNOWN, 'oserror': dr.UNKNOWN}
+        for kind, state in expected.items():
+            self.assertEqual(dr.Tmux.classify(tmux_result(kind)), state, kind)
+
+    def test_a_gone_message_from_a_client_that_did_not_answer_is_unknown(self):
+        got = tmux_result('gone-server')
+        got.asked = False
+        self.assertEqual(dr.Tmux.classify(got), dr.UNKNOWN)
+
+
+class FakeClock:
+    def __init__(self):
+        self.now = 0.0
+
+    def __call__(self):
+        return self.now
+
+
+class FakeTmux:
+    """Answers has-session from a script of tmux_result kinds."""
+    name = 'night'
+
+    def __init__(self):
+        self.answers = []
+        self.timeouts = []
+
+    def session_state(self, timeout=None):
+        self.timeouts.append(timeout)
+        got = tmux_result(self.answers.pop(0))
+        return dr.Tmux.classify(got), got
+
+
+class EndWatchTest(unittest.TestCase):
+    """The rule for "the session has ended", with a fake tmux, a fake clock
+    and fake processes: no tmux, no sleeping."""
+
+    PANE = "the pane's first process"
+
+    def setUp(self):
+        self.clock = FakeClock()
+        self.tmux = FakeTmux()
+        self.processes = None  # nothing tracked
+        self.server = None     # the server's process not tracked
+        self.tmp = tempfile.mkdtemp(prefix='endwatch_test.')
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+        self.status = os.path.join(self.tmp, 'status')
+        # The watch's log lines are kept here instead of cluttering stderr.
+        self.logged = []
+        real_log = dr.log
+        dr.log = self.logged.append
+        self.addCleanup(setattr, dr, 'log', real_log)
+        self.watch = dr.EndWatch(self.tmux, self.status, confirm=3, doubt=60,
+                                 session_processes=lambda: self.processes,
+                                 clock=self.clock,
+                                 server_running=lambda: self.server)
+
+    def at(self, when, kind):
+        """The check at time `when`, with tmux answering `kind`."""
+        self.clock.now = when
+        self.tmux.answers.append(kind)
+        return self.watch.check()
+
+    def alive_pane(self, alive=True):
+        self.processes = [(101, self.PANE, alive)]
+
+    def alive_root(self, pane=True, root=True):
+        self.processes = [(101, self.PANE, pane),
+                          (102, dr.SESSION_ROOT, root)]
+
+    def test_the_status_file_ends_it_at_once(self):
+        open(self.status, 'w').close()
+        self.clock.now = 0
+        self.assertTrue(self.watch.check())
+        self.assertEqual(self.tmux.answers, [])
+
+    def test_present_is_not_over(self):
+        for t in range(100):
+            self.assertFalse(self.at(t, 'alive'))
+
+    def test_gone_counts_after_three_answers_over_the_confirm_time(self):
+        # Nothing tracked: tmux's confirmed answer decides.
+        self.assertFalse(self.at(0, 'gone-session'))
+        self.assertFalse(self.at(1, 'gone-session'))
+        self.assertFalse(self.at(2, 'gone-session'))
+        self.assertTrue(self.at(3, 'gone-session'))
+        self.assertIn('answered 4 times', self.watch.over)
+        self.assertIn("can't find session", self.watch.over)
+
+    def test_three_quick_gone_answers_are_not_enough(self):
+        self.assertFalse(self.at(0.0, 'gone-server'))
+        self.assertFalse(self.at(0.2, 'gone-server'))
+        self.assertFalse(self.at(0.4, 'gone-server'))
+        self.assertFalse(self.at(2.9, 'gone-server'))
+        self.assertTrue(self.at(3.0, 'gone-server'))
+
+    def test_two_gone_answers_over_the_confirm_time_are_not_enough(self):
+        self.assertFalse(self.at(0, 'gone-session'))
+        self.assertFalse(self.at(5, 'gone-session'))
+        self.assertTrue(self.at(6, 'gone-session'))
+
+    def test_a_present_answer_starts_the_streak_again(self):
+        self.assertFalse(self.at(0, 'gone-session'))
+        self.assertFalse(self.at(1, 'gone-session'))
+        self.assertFalse(self.at(2, 'alive'))
+        self.assertFalse(self.at(3, 'gone-session'))
+        self.assertFalse(self.at(4, 'gone-session'))
+        self.assertFalse(self.at(5, 'gone-session'))
+        self.assertTrue(self.at(6, 'gone-session'))
+
+    def test_failures_neither_count_nor_end_it(self):
+        for t, kind in enumerate(['error', 'timeout', 'oserror', 'denied'] * 5):
+            self.assertFalse(self.at(t, kind))
+
+    def test_gone_with_the_processes_dead_ends_it(self):
+        self.alive_pane(False)
+        for t in range(3):
+            self.assertFalse(self.at(t, 'gone-session'))
+        self.assertTrue(self.at(3, 'gone-session'))
+        self.assertIn('gone too', self.watch.over)
+
+    def test_gone_with_the_processes_alive_waits_for_the_doubt_time(self):
+        self.alive_pane()
+        for t in range(60):
+            self.assertFalse(self.at(t, 'gone-session'), t)
+        self.assertTrue(self.at(60, 'gone-session'))
+        self.assertIn('still run', self.watch.over)
+
+    def test_scattered_gone_answers_do_not_kill_live_processes(self):
+        # Gone, two 30 second timeouts, gone, gone: three answers over 62
+        # seconds, but with gaps longer than GONE_GAP the streak restarts.
+        self.alive_pane()
+        self.assertFalse(self.at(0, 'gone-session'))
+        self.assertFalse(self.at(30, 'timeout'))
+        self.assertFalse(self.at(60, 'timeout'))
+        self.assertFalse(self.at(61, 'gone-session'))
+        self.assertFalse(self.at(62, 'gone-session'))
+        self.assertFalse(self.at(63, 'gone-session'))
+        self.assertIsNone(self.watch.over)
+
+    def test_gone_answers_fifteen_seconds_apart_are_not_a_streak(self):
+        # Gaps between GONE_GAP and twice it: each answer starts a new
+        # streak, so live processes are never killed on them.
+        self.alive_pane()
+        for t in range(0, 181, 15):
+            self.assertFalse(self.at(t, 'gone-session'), t)
+            self.assertFalse(self.at(t + 1, 'timeout'), t)
+
+    def test_sustained_gone_answers_through_the_doubt_time_end_it(self):
+        # Gone answers no more than GONE_GAP apart, failures between them.
+        self.alive_pane()
+        gap = dr.GONE_GAP
+        t = 0.0
+        while t < 60:
+            self.assertFalse(self.at(t, 'gone-session'), t)
+            self.assertFalse(self.at(t + gap / 2, 'timeout'), t)
+            t += gap
+        self.assertTrue(self.at(t, 'gone-session'))
+
+    def test_no_server_while_the_server_process_lives_is_not_believed(self):
+        # The socket file was deleted, or the connection was refused under
+        # load: tmux says there is no server while its process runs.
+        self.server = True
+        for t in range(10):
+            self.assertFalse(self.at(t, 'gone-server' if t % 2 else
+                                     'gone-socket'))
+        self.assertEqual(sum('not believed' in line for line in self.logged),
+                         1, self.logged)
+        self.server = False
+        self.assertFalse(self.at(10, 'gone-server'))
+        self.assertFalse(self.at(11, 'gone-server'))
+        self.assertTrue(self.at(13, 'gone-server'))
+
+    def test_cant_find_session_while_the_server_lives_is_believed(self):
+        self.server = True
+        for t in range(3):
+            self.assertFalse(self.at(t, 'gone-session'))
+        self.assertTrue(self.at(3, 'gone-session'))
+
+    def test_no_present_answer_for_the_doubt_time_with_processes_dead(self):
+        self.alive_pane(False)
+        for t in range(60):
+            self.assertFalse(self.at(t, 'timeout'), t)
+        self.assertTrue(self.at(60, 'timeout'))
+        self.assertIn('tracked processes are gone', self.watch.over)
+
+    def test_no_present_answer_with_processes_alive_goes_on(self):
+        self.alive_pane()
+        for t in range(300):
+            self.assertFalse(self.at(t, 'timeout'), t)
+
+    def test_no_present_answer_with_nothing_tracked_goes_on(self):
+        for t in range(300):
+            self.assertFalse(self.at(t, 'error'), t)
+
+    def test_scattered_gone_answers_with_processes_dead_end_after_doubt(self):
+        # The streak never holds, but no present answer came for the doubt
+        # time and the tracked processes are gone.
+        self.alive_pane(False)
+        t = 0
+        while t < 60:
+            self.assertFalse(self.at(t, 'gone-session' if t % 30 == 0
+                                     else 'timeout'), t)
+            t += 15
+        self.assertTrue(self.at(60, 'timeout'))
+
+    def test_a_long_healthy_run_never_reaches_the_fallback(self):
+        # Present answers keep the fallback's clock at zero: one failure
+        # after a long healthy run, with the processes gone, is no reason
+        # to end, and nothing is logged about the fallback.
+        for t in range(200):
+            self.assertFalse(self.at(t, 'alive'), t)
+        self.alive_pane(False)
+        self.assertFalse(self.at(200, 'timeout'))
+        self.assertFalse(self.at(201, 'error'))
+        self.assertEqual([line for line in self.logged
+                          if 'could not ask tmux' in line], [])
+
+    def test_the_session_root_dead_without_a_status_ends_after_doubt(self):
+        # claude died, the wrapper wrote no status, the pane lives on.
+        self.alive_root(pane=True, root=False)
+        for t in range(60):
+            self.assertFalse(self.at(t, 'alive'), t)
+        # Logged once, when it has lasted the confirm time.
+        self.assertEqual(sum('has exited' in line for line in self.logged),
+                         1, self.logged)
+        self.assertTrue(self.at(60, 'alive'))
+        self.assertIn('session root', self.watch.over)
+        self.assertIn('no status', self.watch.over)
+
+    def test_the_session_root_alive_is_not_over(self):
+        self.alive_root()
+        for t in range(120):
+            self.assertFalse(self.at(t, 'alive'))
+
+    def test_the_timeout_is_passed_to_tmux(self):
+        self.tmux.answers.append('alive')
+        self.watch.check(timeout=0.7)
+        self.assertEqual(self.tmux.timeouts, [0.7])
+
+
+class TrackedAliveTest(unittest.TestCase):
+    def test_start_time_guards_against_pid_reuse(self):
+        me = dr.proc_info(os.getpid())
+        got = dr.tracked_alive([(os.getpid(), me.start, 'me'),
+                                (os.getpid(), me.start + 1, 'reused'),
+                                (99999999, 0, 'gone')])
+        self.assertEqual(got, [(os.getpid(), 'me', True),
+                               (os.getpid(), 'reused', False),
+                               (99999999, 'gone', False)])
+
+    def test_a_zombie_is_not_alive(self):
+        # proc_info on macOS returns nothing for a real zombie (its BSD
+        # info is gone), so the zombie check is for a kernel that reports
+        # one; proc_info is replaced here to report it.
+        real = dr.proc_info
+        dr.proc_info = lambda pid: dr.ProcInfo(pid, 1, 0, dr.SZOMB, 5)
+        self.addCleanup(setattr, dr, 'proc_info', real)
+        self.assertEqual(dr.tracked_alive([(4242, 5, 'z')]),
+                         [(4242, 'z', False)])
+
+
+class ReadStatusTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix='read_status_test.')
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+        self.path = os.path.join(self.tmp, 'status')
+
+    def test_missing_is_none_at_once(self):
+        started = time.monotonic()
+        self.assertIsNone(dr.read_status(self.path, settle=30))
+        self.assertLess(time.monotonic() - started, 5)
+
+    def test_a_number(self):
+        with open(self.path, 'w') as fh:
+            fh.write('3\n')
+        self.assertEqual(dr.read_status(self.path), 3)
+
+    def test_an_empty_file_is_read_again_until_written(self):
+        # The file is written only after the reader has found it empty
+        # (its first pause), so the first read always sees it empty.
+        open(self.path, 'w').close()
+        real_sleep = dr.time.sleep
+        written = []
+
+        def sleep(seconds):
+            if not written:
+                with open(self.path, 'w') as fh:
+                    fh.write('7\n')
+                written.append(True)
+            real_sleep(seconds)
+        dr.time.sleep = sleep
+        try:
+            self.assertEqual(dr.read_status(self.path, settle=30), 7)
+        finally:
+            dr.time.sleep = real_sleep
+        self.assertTrue(written)
+
+    def test_an_empty_file_that_stays_empty_is_none(self):
+        open(self.path, 'w').close()
+        self.assertIsNone(dr.read_status(self.path, settle=0.3))
 
 
 class RunBase(unittest.TestCase):
@@ -588,7 +920,10 @@ class TmuxRunTest(RunBase):
             'IFS= read -r first; printf %%s "$first" | od -c > %s\n'
             'case "$first" in *"/exit"*) echo exit > %s/got_exit; exit 0 ;; '
             'esac\n' % (keys, self.tmp) + self.EXIT_ON_SLASH_EXIT % self.tmp)
-        proc = self.run_tmux(pane, '--grace', '600', seconds='1')
+        # The grace is shorter than the harness's 180 second bound, so a
+        # pane that misses /exit is stopped by SIGTERM and fails the
+        # got_exit assertion with the log, instead of hanging the test.
+        proc = self.run_tmux(pane, '--grace', '60', seconds='1')
         self.assertEqual(proc.returncode, 124, proc.stderr)
         self.assertTrue(os.path.exists(os.path.join(self.tmp, 'got_exit')),
                         proc.stderr)
@@ -790,21 +1125,385 @@ class TmuxRunTest(RunBase):
 
     def test_tmux_ended_from_outside_without_status(self):
         pane = self.script('pane', 'while :; do sleep 1; done\n')
-        runner = subprocess.Popen(
-            [sys.executable, '-B', TOOL, '--seconds', '600', '--tmux-socket',
-             self.sock, '--tmux-session', self.NAME, '--tmux', TMUX,
-             '--status-file', self.status, '--'] + self.new_session(pane),
-            stderr=subprocess.PIPE, universal_newlines=True)
+        err_path = os.path.join(self.tmp, 'runner.err')
+        with open(err_path, 'w') as err_file:
+            runner = subprocess.Popen(
+                [sys.executable, '-B', TOOL, '--seconds', '600',
+                 '--tmux-socket', self.sock, '--tmux-session', self.NAME,
+                 '--tmux', TMUX, '--status-file', self.status, '--']
+                + self.new_session(pane),
+                stdout=subprocess.DEVNULL, stderr=err_file)
         try:
-            self.assertTrue(wait_until(self.server_running))
+            # Killed once the run has started (it knows the pane): a
+            # session gone before that is a failed start (127).
+            self.assertTrue(wait_until(
+                lambda: re.search(r'pane pid \d+', self.read_log(err_path))
+                or runner.poll() is not None))
             subprocess.run([TMUX, '-S', self.sock, 'kill-session', '-t',
                             self.NAME], check=True)
-            _, err = runner.communicate(timeout=120)
+            runner.wait(timeout=120)
         finally:
             if runner.poll() is None:
                 runner.kill()
-                runner.communicate()
+                runner.wait()
+        err = self.read_log(err_path)
         self.assertEqual(runner.returncode, 125, err)
+        # The log says what was observed, in tmux's own words, so that the
+        # next occurrence can be diagnosed.
+        self.assertIn('without an exit status', err)
+        self.assertRegex(err, r"(can't find session|no server running"
+                         r'|error connecting)')
+        self.assertRegex(err, r'answered \d+ times')
+
+    # A tmux client that cannot be run, times out, or fails some other way
+    # says nothing about the session; only tmux's own answer that the
+    # session or the server is gone does, and only when it repeats. The
+    # first unattended night (2026-11-23) was ended at 01:55 by one failed
+    # `tmux has-session` while the session sat healthy at its prompt.
+
+    STUB_TMUX = r"""
+d=%(dir)s
+cmd=$3
+mode=
+if [ -s "$d/plan.$cmd" ]; then
+  mode=$(head -n 1 "$d/plan.$cmd")
+  tail -n +2 "$d/plan.$cmd" > "$d/plan.tmp.$$" && mv "$d/plan.tmp.$$" "$d/plan.$cmd"
+elif [ -e "$d/broken.$cmd" ]; then
+  mode=$(cat "$d/broken.$cmd")
+elif [ -e "$d/broken.all" ]; then
+  mode=$(cat "$d/broken.all")
+fi
+echo "$cmd ${mode:-ok} $*" >> "$d/calls"
+case "$mode" in
+  gone-server) echo "no server running on $2" >&2; exit 1 ;;
+  gone-session) echo "can't find session: x" >&2; exit 1 ;;
+  error) echo "server exited unexpectedly" >&2; exit 1 ;;
+  hang) exec /bin/sleep 600 ;;
+  slow) /bin/sleep 3 ;;
+esac
+exec %(tmux)s "$@"
+"""
+
+    def stub_tmux(self):
+        """A tmux that passes every call to the real one, except as told by
+        files in the test's directory: plan.<command> holds one behavior
+        per line for the next calls of that command (ok, gone-server,
+        gone-session, error, hang, slow: answer after 3 seconds),
+        broken.<command> and broken.all one behavior for every call while
+        they exist. Each call is recorded in calls as "<command> <behavior>
+        <arguments>"."""
+        return self.script('stubtmux', self.STUB_TMUX
+                           % {'dir': self.tmp, 'tmux': TMUX})
+
+    def calls(self, prefix):
+        try:
+            with open(os.path.join(self.tmp, 'calls')) as fh:
+                return sum(1 for line in fh if line.startswith(prefix))
+        except OSError:
+            return 0
+
+    def start_stubbed(self, pane, *options, seconds='600'):
+        """The runner with the stub tmux, in the background; returns it and
+        the path of its log. Waits until the start is over: the main loop
+        has asked has-session (the start asks it once)."""
+        err_path = os.path.join(self.tmp, 'runner.err')
+        err = open(err_path, 'w')
+        self.addCleanup(err.close)
+        runner = subprocess.Popen(
+            [sys.executable, '-B', TOOL, '--seconds', seconds,
+             '--tmux-socket', self.sock, '--tmux-session', self.NAME,
+             '--tmux', self.stub_tmux(), '--status-file', self.status,
+             '--root-file', self.root_file, '--interrupt-wait', '1',
+             '--sweep-grace', '2', '--tmux-confirm-seconds', '2',
+             '--tmux-doubt-seconds', '30', '--tmux-timeout', '2']
+            + list(options) + ['--'] + self.new_session(pane),
+            stdout=subprocess.DEVNULL, stderr=err)
+
+        def stop():
+            if runner.poll() is None:
+                runner.kill()
+                runner.wait()
+        self.addCleanup(stop)
+        self.assertTrue(wait_until(lambda: self.calls('has-session') >= 2
+                                   or runner.poll() is not None),
+                        self.read_log(err_path))
+        return runner, err_path
+
+    def read_log(self, path):
+        with open(path) as fh:
+            return fh.read()
+
+    def finish_and_wait(self, runner, err_path):
+        open(os.path.join(self.tmp, 'finish'), 'w').close()
+        runner.wait(timeout=120)
+        return self.read_log(err_path)
+
+    def waiting_pane(self):
+        """A pane that runs until the test creates the file finish, then
+        exits 0 with its status written."""
+        return self.pane_script('while [ ! -e %s/finish ]; do sleep 0.1; done\n'
+                                'exit 0\n' % self.tmp)
+
+    def plan(self, command, *modes):
+        with open(os.path.join(self.tmp, 'plan.' + command), 'w') as fh:
+            fh.write(''.join(m + '\n' for m in modes))
+
+    def test_tmux_one_failed_check_does_not_end_the_session(self):
+        runner, err_path = self.start_stubbed(self.waiting_pane())
+        before = self.calls('has-session')
+        self.plan('has-session', 'error')
+        self.assertTrue(wait_until(
+            lambda: self.calls('has-session') >= before + 3
+            or runner.poll() is not None))
+        err = self.finish_and_wait(runner, err_path)
+        self.assertEqual(runner.returncode, 0, err)
+        # The failure is in the log with tmux's words and its exit status.
+        self.assertIn('server exited unexpectedly', err)
+        self.assertIn('has-session', err)
+
+    def test_tmux_intermittent_failures_do_not_end_the_session(self):
+        # Every kind of failure, and tmux claiming once or twice in a row
+        # that the server or the session is gone (a refused connection
+        # under load reads as "no server running").
+        runner, err_path = self.start_stubbed(self.waiting_pane())
+        before = self.calls('has-session')
+        modes = ['gone-server', 'ok', 'error', 'gone-session', 'ok',
+                 'gone-server', 'gone-server', 'ok', 'error', 'error',
+                 'gone-session', 'gone-server', 'ok']
+        self.plan('has-session', *modes)
+        self.assertTrue(wait_until(
+            lambda: self.calls('has-session') >= before + len(modes) + 1
+            or runner.poll() is not None))
+        err = self.finish_and_wait(runner, err_path)
+        self.assertEqual(runner.returncode, 0, err)
+
+    def test_tmux_a_call_that_times_out_does_not_end_the_session(self):
+        runner, err_path = self.start_stubbed(self.waiting_pane())
+        before = self.calls('has-session')
+        self.plan('has-session', 'hang')
+        self.assertTrue(wait_until(
+            lambda: self.calls('has-session') >= before + 3
+            or runner.poll() is not None))
+        err = self.finish_and_wait(runner, err_path)
+        self.assertEqual(runner.returncode, 0, err)
+        self.assertIn('timed out', err)
+
+    def test_tmux_that_cannot_be_run_for_seconds_does_not_end_the_session(self):
+        # The tmux program cannot be started at all (OSError) for longer
+        # than the confirmation time, as a fork that fails under load.
+        runner, err_path = self.start_stubbed(self.waiting_pane())
+        stub = os.path.join(self.tmp, 'stubtmux')
+        os.rename(stub, stub + '.away')
+        try:
+            time.sleep(4)
+        finally:
+            os.rename(stub + '.away', stub)
+        err = self.finish_and_wait(runner, err_path)
+        self.assertEqual(runner.returncode, 0, err)
+        self.assertIn('stubtmux', err)
+
+    def test_tmux_claiming_gone_while_the_session_runs_does_not_end_it(self):
+        # tmux says "can't find session" for longer than the confirmation
+        # time, but the pane's processes are alive: not over until the
+        # doubt time (30 seconds here) has passed. ("no server running"
+        # while the server process lives is not believed at all; see
+        # test_tmux_socket_file_deleted_under_a_healthy_server.)
+        runner, err_path = self.start_stubbed(self.waiting_pane())
+        broken = os.path.join(self.tmp, 'broken.has-session')
+        with open(broken, 'w') as fh:
+            fh.write('gone-session\n')
+        try:
+            time.sleep(5)
+        finally:
+            os.unlink(broken)
+        err = self.finish_and_wait(runner, err_path)
+        self.assertEqual(runner.returncode, 0, err)
+        self.assertIn('still run', err)
+
+    def test_tmux_failed_captures_are_not_a_stall(self):
+        # A capture that fails is not an unchanged (empty) screen.
+        with open(os.path.join(self.tmp, 'broken.capture-pane'), 'w') as fh:
+            fh.write('error\n')
+        runner, err_path = self.start_stubbed(
+            self.waiting_pane(), '--stall-seconds', '2', '--transcript',
+            os.path.join(self.tmp, 'transcript.jsonl'))
+        # Six failed captures span five seconds, more than --stall-seconds;
+        # a stall would start the stop sequence (send-keys Escape).
+        self.assertTrue(wait_until(
+            lambda: self.calls('capture-pane') >= 6
+            or self.calls('send-keys') or runner.poll() is not None))
+        self.assertEqual(self.calls('send-keys'), 0,
+                         self.read_log(err_path))
+        err = self.finish_and_wait(runner, err_path)
+        self.assertEqual(runner.returncode, 0, err)
+        self.assertIn('capture-pane', err)
+
+    def test_tmux_failures_are_logged_once_not_every_time(self):
+        runner, err_path = self.start_stubbed(self.waiting_pane())
+        before = self.calls('has-session')
+        self.plan('has-session', *(['error'] * 8 + ['ok']))
+        self.assertTrue(wait_until(
+            lambda: self.calls('has-session') >= before + 10
+            or runner.poll() is not None))
+        err = self.finish_and_wait(runner, err_path)
+        self.assertEqual(runner.returncode, 0, err)
+        self.assertEqual(err.count('server exited unexpectedly'), 1, err)
+
+    def test_tmux_broken_for_good_with_the_session_gone_ends(self):
+        # tmux cannot be asked at all, and the pane's processes have
+        # exited without writing a status: after the doubt time the
+        # tracked processes decide, and the run ends as one that lost its
+        # session (125), saying why.
+        pane = self.script('pane', '%s -B %s --spawn-root %s -- %s\nexit 0\n'
+                           % (sys.executable, TOOL, self.root_file,
+                              self.script('inner', 'while [ ! -e %s/finish ]; '
+                                          'do sleep 0.1; done\n' % self.tmp)))
+        runner, err_path = self.start_stubbed(pane, '--tmux-doubt-seconds',
+                                              '3')
+        self.assertTrue(wait_until(lambda: os.path.exists(self.root_file)))
+        with open(os.path.join(self.tmp, 'broken.all'), 'w') as fh:
+            fh.write('error\n')
+        err = self.finish_and_wait(runner, err_path)
+        self.assertEqual(runner.returncode, 125, err)
+        self.assertIn('could not ask tmux', err)
+
+    def test_tmux_broken_for_good_with_the_session_alive_runs_to_the_deadline(self):
+        # 32 seconds less the stop sequence (1 + 1 + 1 + 2 + 20 = 25): the
+        # deadline is 7 seconds after the start, well after the doubt time.
+        pane = self.pane_script('while :; do sleep 0.1; done\n')
+        runner, err_path = self.start_stubbed(
+            pane, '--tmux-doubt-seconds', '2', '--grace', '1',
+            '--term-grace', '1', seconds='32')
+        with open(os.path.join(self.tmp, 'broken.all'), 'w') as fh:
+            fh.write('error\n')
+        runner.wait(timeout=120)
+        err = self.read_log(err_path)
+        self.assertEqual(runner.returncode, 124, err)
+        self.assertIn('could not ask tmux', err)
+
+    def test_tmux_that_hangs_at_the_deadline_does_not_delay_the_hard_limit(self):
+        # Every tmux call hangs from just after the start, with the default
+        # 30 second tmux timeout. The stop sequence (1 + 3 + 2 seconds of
+        # waits, a 1 second sweep, 20 of slack: 27) starts 13 seconds in and
+        # must be over by the 40 second hard limit: the SIGTERM and SIGKILL
+        # of the pane need no tmux.
+        pane = self.pane_script("trap '' INT TERM HUP\necho $$ > %s/pid\n"
+                                'while :; do sleep 0.1; done < /dev/null\n'
+                                % self.tmp)
+        started = time.monotonic()
+        runner, err_path = self.start_stubbed(
+            pane, '--grace', '3', '--term-grace', '2', '--sweep-grace', '1',
+            '--tmux-timeout', '30', seconds='40')
+        with open(os.path.join(self.tmp, 'broken.all'), 'w') as fh:
+            fh.write('hang\n')
+        runner.wait(timeout=180)
+        elapsed = time.monotonic() - started
+        err = self.read_log(err_path)
+        self.assertEqual(runner.returncode, 124, err)
+        self.assertLessEqual(elapsed, 40, err)
+        self.assertTrue(gone(self.read_pid('pid')), err)
+
+    def test_tmux_that_cannot_be_asked_at_the_start_is_not_a_failed_start(self):
+        # The first eight has-session calls fail (more than the old start's
+        # six tries), then tmux answers: the session runs and ends normally.
+        self.plan('has-session', *(['error'] * 8))
+        runner, err_path = self.start_stubbed(self.waiting_pane())
+        # Twelve present answers after the failures: more than a few
+        # seconds of the start, so the session must be past it.
+        self.assertTrue(wait_until(
+            lambda: self.calls('has-session') >= 20
+            or runner.poll() is not None))
+        err = self.finish_and_wait(runner, err_path)
+        self.assertEqual(runner.returncode, 0, err)
+
+    def test_tmux_signal_while_tmux_cannot_be_asked_at_the_start(self):
+        # Every tmux call hangs from the start, so the pane pid is never
+        # learned; a SIGTERM must still stop the run at once (after the
+        # tmux call in progress), not when the stop sequence is due.
+        with open(os.path.join(self.tmp, 'broken.all'), 'w') as fh:
+            fh.write('hang\n')
+        runner, err_path = self.start_stubbed(
+            self.waiting_pane(), '--tmux-timeout', '3', '--grace', '2',
+            '--term-grace', '1')
+        signalled = time.monotonic()
+        runner.terminate()
+        runner.wait(timeout=120)
+        elapsed = time.monotonic() - signalled
+        err = self.read_log(err_path)
+        self.assertEqual(runner.returncode, 128 + signal.SIGTERM, err)
+        # 3 for the call in progress, then 1 + 2 + 1 of waits, short tmux
+        # calls and a 2 second sweep: far less than 40.
+        self.assertLess(elapsed, 40, err)
+
+    def test_tmux_session_gone_before_its_pane_is_known_is_a_failed_start(self):
+        # The pane pid cannot be learned (display-message fails), and the
+        # session ends after a second without writing a status: tmux's
+        # confirmed answer that it is gone makes it a failed start.
+        with open(os.path.join(self.tmp, 'broken.display-message'), 'w') as fh:
+            fh.write('error\n')
+        pane = self.script('pane', 'sleep 1\nexit 0\n')
+        runner, err_path = self.start_stubbed(pane)
+        runner.wait(timeout=120)
+        err = self.read_log(err_path)
+        self.assertEqual(runner.returncode, 127, err)
+        self.assertIn('could not be started', err)
+
+    def test_tmux_slow_at_the_deadline_still_gets_exit_typed_once(self):
+        # Every send-keys takes 3 seconds to answer. The stop sequence
+        # (1 + 20 + 1 seconds of waits, a 2 second sweep, 20 of slack: 44)
+        # starts 2 seconds into a 46 second limit; /exit and Enter come out
+        # of the 20 second grace, so they are typed, once, and the pane
+        # exits politely instead of being sent SIGTERM.
+        with open(os.path.join(self.tmp, 'broken.send-keys'), 'w') as fh:
+            fh.write('slow\n')
+        pane = self.pane_script(self.EXIT_ON_SLASH_EXIT % self.tmp)
+        runner, err_path = self.start_stubbed(
+            pane, '--grace', '20', '--term-grace', '1', '--tmux-timeout',
+            '30', seconds='46')
+        runner.wait(timeout=120)
+        err = self.read_log(err_path)
+        self.assertEqual(runner.returncode, 124, err)
+        self.assertTrue(os.path.exists(os.path.join(self.tmp, 'got_exit')),
+                        err)
+        with open(os.path.join(self.tmp, 'calls')) as fh:
+            typed = [line for line in fh
+                     if line.startswith('send-keys') and '/exit' in line]
+        self.assertEqual(len(typed), 1, typed)
+        self.assertNotIn('still running; sending SIGTERM', err)
+
+    def test_tmux_pane_pid_unknown_at_first_is_not_a_failed_start(self):
+        # display-message keeps failing for a while although the session
+        # is present: fourteen failures, more than the old start's six tries
+        # each for the server pid and the pane pid; then the pane pid and
+        # the server pid are answered.
+        self.plan('display-message', *(['error'] * 14))
+        runner, err_path = self.start_stubbed(self.waiting_pane())
+        self.assertTrue(wait_until(
+            lambda: self.calls('display-message') >= 16
+            or runner.poll() is not None))
+        self.assertTrue(wait_until(
+            lambda: 'pane pid' in self.read_log(err_path)
+            or runner.poll() is not None))
+        err = self.finish_and_wait(runner, err_path)
+        self.assertEqual(runner.returncode, 0, err)
+        self.assertNotIn('could not be started', err)
+
+    def test_tmux_socket_file_deleted_under_a_healthy_server(self):
+        # tmux then says "error connecting to ... (No such file or
+        # directory)", but the server process it started is alive: not
+        # believed, and with the pane's processes alive the session goes
+        # on past the (short) doubt time.
+        runner, err_path = self.start_stubbed(
+            self.waiting_pane(), '--tmux-doubt-seconds', '3')
+        os.unlink(self.sock)
+        before = self.calls('has-session')
+        self.assertTrue(wait_until(
+            lambda: self.calls('has-session') >= before + 7
+            or runner.poll() is not None))
+        err = self.finish_and_wait(runner, err_path)
+        self.assertEqual(runner.returncode, 0, err)
+        self.assertIn('server pid', err)
+        self.assertIn('not believed', err)
 
     def test_tmux_blocked_at_a_startup_dialog(self):
         pane = self.pane_script(

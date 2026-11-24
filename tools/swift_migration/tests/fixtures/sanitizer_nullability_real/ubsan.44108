@@ -1,0 +1,2 @@
+/Users/example/iterm2/sources/FileTransfer/VT100RemoteHost.m:116:40: runtime error: null pointer passed as argument 1, which is declared to never be null
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk/System/Library/Frameworks/Foundation.framework/Headers/NSString.h:344:35: note: _Nonnull type annotation specified here

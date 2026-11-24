@@ -64,8 +64,19 @@
 #   git directory's configuration and attributes inside the submodule);
 #   the configuration file disagrees with the derived paths;
 #   the mirror is a symbolic link, is missing its marker, is not laid out
-#   as a bare repository, holds a symbolic link, a hard-linked file or a
-#   file of another user (refresh runs chmod -R on it);
+#   as a bare repository, holds a symbolic link or a file of another user,
+#   or holds a file with a second name (a hard link) other than a regular,
+#   read-only file under objects/ that is not objects/info/alternates or
+#   http-alternates. The refresh changes the mirror's modes, and a mode
+#   change on a hard-linked file would reach its other name outside the
+#   mirror. The links allowed are what a `git clone` of the mirror by plain
+#   path leaves (the session may run one: origin is the mirror's path), and
+#   they cannot carry a change: git never writes into an existing file
+#   under objects/ (each is written whole under a temporary name and
+#   renamed, or deleted), and the refresh never makes a file with a second
+#   name writable (mirror_link_allowed and make_mirror_writable below). A
+#   refused link is named with its inode and a `find -inum` command that
+#   finds its other names;
 #   remote.origin.url is not exactly the mirror's path, or
 #   remote.origin.pushurl is not a nightly-push-disabled: URL;
 #   the owner's checkout is inside the clone or the mirror, or either is
@@ -117,30 +128,39 @@
 #      `git push` and `git push origin` fail before opening anything.
 #   3. nightly_start.sh sets, in the session's environment:
 #      url.nightly-push-blocked://.pushInsteadOf for every URL form (stops a
-#      push to a URL or a path given on the command line or as a remote's
-#      url); protocol.file.allow=user with GIT_PROTOCOL_FROM_USER=0 (stops
-#      every local-path and file:// transport, including a remote with an
-#      explicit pushurl, which pushInsteadOf does not rewrite, and
-#      `git send-pack`, which ignores pushInsteadOf; it also stops fetching
-#      and cloning from local paths, see NIGHTLY_ALLOW_LOCAL_GIT there); an
-#      empty credential helper, GIT_TERMINAL_PROMPT=0 and askpass
-#      /usr/bin/false (no https credentials); an ssh wrapper that refuses
-#      git-receive-pack, and no ssh agent socket.
+#      push to a URL, or to a path starting with / or ., given on the
+#      command line or as a remote's url; not a relative path starting with
+#      neither, not a remote with an explicit pushurl, which pushInsteadOf
+#      does not rewrite, nor `git send-pack`, which ignores it); an empty
+#      credential helper, GIT_TERMINAL_PROMPT=0 and askpass /usr/bin/false
+#      (no https credentials); an ssh wrapper that refuses git-receive-pack,
+#      and no ssh agent socket. Local-path and file:// transports are
+#      allowed (the owner, 2026-11-23), so the session can clone and fetch
+#      from local paths, as SwiftPM must to resolve packages; see
+#      nightly_start.sh's header.
 #   4. The session's deny rules (nightly_start.sh): git push, git send-pack,
-#      git remote, anything mentioning pushurl, send-pack, receive-pack or
-#      protocol.file, gh, ssh, ...
+#      git remote, anything mentioning pushurl, send-pack or receive-pack,
+#      gh, ssh, ...
 #   5. Detection, not prevention: nightly_start.sh records the refs of the
 #      owner's checkout and of each of his submodule repositories, with a
 #      checksum of their config files and hooks, before the session and
 #      compares after it; a difference is listed prominently in the
 #      morning log. It is a report only: his other agents and worktrees
 #      share the repository and change it overnight too.
-#   Known ways around them, for a session that tries: undo the environment
-#   guards (env -u, GIT_CONFIG_COUNT=0, GIT_PROTOCOL_FROM_USER=1, or
-#   `git -c protocol.file.allow=always`, since -c wins over the
-#   environment), then push into the owner's checkout (any branch but the
-#   checked-out one) or his submodule repositories by local path; write
-#   files in the owner's checkout or his .git directly, without git (refs,
+#   Known ways around them, for a session that tries: push into the owner's
+#   checkout (any branch but the checked-out one) or his submodule
+#   repositories by local path, through a remote with an explicit pushurl,
+#   `git send-pack`, or a relative path whose first character is neither
+#   / nor ., from any directory (from the clone, `tmp/../../<his checkout>`)
+#   (only layer 4 and the classifier stand in the way, and layer 5 reports
+#   it); fetch or pull into his checkout from the clone or a lane
+#   (`git -C <source> fetch <clone> master:refs/heads/x`, or `pull
+#   --ff-only`, which also moves his checked-out branch and working tree:
+#   no deny rule matches, only the classifier stands in the way, and layer 5
+#   reports the ref change but not the working tree); push after undoing
+#   the environment guards (env -u, GIT_CONFIG_COUNT=0, or `git -c`
+#   settings, since -c wins over the environment); write files in the
+#   owner's checkout or his .git directly, without git (refs,
 #   objects, config, hooks: only the refs, config and hooks are compared
 #   afterwards); use his keychain credential helper
 #   (git -c credential.helper=osxkeychain) or his ssh keys
@@ -515,6 +535,39 @@ clear_stale_locks() {
   [ "$mirror_touched" = 0 ] || make_mirror_read_only
 }
 
+# A file in the mirror with more than one name is allowed when it is a
+# regular file under objects/ (other than info/alternates and
+# info/http-alternates, which tell git where else to read objects) that
+# nobody may write. That is what a `git clone` of the mirror by plain path
+# leaves: git links the mirror's object, pack and index files into the copy
+# instead of copying them. Such a file cannot carry a change out of the
+# mirror or into it: git never writes into an existing file under objects/
+# (it writes each one whole under a temporary name and renames it into
+# place, or deletes it, both of which change only the directory), and the
+# refresh never chmods a file with more than one name
+# (make_mirror_writable). Every other hard link, and a writable one, is
+# refused.
+mirror_link_allowed() {
+  local f=$1 rel mode
+  rel=${f#"$MIRROR"/}
+  case "$rel" in
+    objects/info/alternates|objects/info/http-alternates) return 1 ;;
+    objects/*) ;;
+    *) return 1 ;;
+  esac
+  [ -f "$f" ] && [ ! -L "$f" ] || return 1
+  mode=$(stat -f %Lp "$f") || return 1
+  [ $((8#$mode & 8#222)) = 0 ]
+}
+
+# Makes the mirror writable for the refresh: every directory and every
+# file with one name. A file with more than one name is left as it is,
+# read-only (mirror_link_allowed), so that its other name, outside the
+# mirror, never changes mode; git does not need to write it.
+make_mirror_writable() {
+  find "$MIRROR" \( -type d -o \( -type f -links 1 \) \) -exec chmod u+w {} +
+}
+
 mirror_writable_entry() {
   find "$MIRROR" \( -perm -u+w -o -perm -g+w -o -perm -o+w \) -print 2>/dev/null | head -1
 }
@@ -573,7 +626,7 @@ fetch_upstream() {
     return 0
   fi
   MIRROR_OPEN=1
-  chmod -R -P u+w "$MIRROR" || { make_mirror_read_only; MIRROR_OPEN=0; return 7; }
+  make_mirror_writable || { make_mirror_read_only; MIRROR_OPEN=0; return 7; }
   if ! out=$(gnet --git-dir="$MIRROR" fetch -q --no-tags --no-recurse-submodules "$UPSTREAM" \
                "+refs/heads/$BRANCH:refs/nightly-incoming" 2>&1); then
     gm update-ref -d refs/nightly-incoming 2>/dev/null
@@ -767,9 +820,16 @@ check_mirror() {
   for name in commondir config.worktree info/grafts; do
     if [ -e "$MIRROR/$name" ]; then echo "the mirror has $MIRROR/$name"; return; fi
   done
-  bad=$(find "$MIRROR" \( -type l -o \( -type f -links +1 \) -o ! -user "$(id -u)" \) -print 2>/dev/null | head -1)
+  bad=$(find "$MIRROR" \( -type l -o ! -user "$(id -u)" \) -print 2>/dev/null | head -1)
   if [ -n "$bad" ]; then
-    echo "the mirror holds $bad, a symbolic link, a hard-linked file or another user's file (refresh would chmod it)"; return
+    echo "the mirror holds $bad, a symbolic link or another user's file (refresh would chmod it)"; return
+  fi
+  bad=$(find "$MIRROR" -type f -links +1 -print 2>/dev/null |
+        while IFS= read -r f; do mirror_link_allowed "$f" || { echo "$f"; break; }; done)
+  if [ -n "$bad" ]; then
+    local ino
+    ino=$(stat -f %i "$bad")
+    echo "the mirror holds $bad, a hard-linked file (inode $ino, $(stat -f %l "$bad") names) that is not a read-only file under objects/ (refresh would chmod it); find its other names with: find $(q "$(dirname "$CLONE")") $(q "${TMPDIR:-/tmp}") /private/tmp -xdev -inum $ino"; return
   fi
   config_problem "$MIRROR/config" "the mirror's configuration" "$MIRROR_KEYS"
   [ "$(g config -f "$MIRROR/config" --get-all core.bare 2>/dev/null)" = true ] ||

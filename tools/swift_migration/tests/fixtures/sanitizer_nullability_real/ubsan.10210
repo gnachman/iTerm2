@@ -1,0 +1,8 @@
+/Users/example/iterm2/sources/PTYSession/PTYSession.m:9703:33: runtime error: null pointer passed as argument 1, which is declared to never be null
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk/System/Library/Frameworks/Foundation.framework/Headers/NSString.h:344:35: note: _Nonnull type annotation specified here
+    #0 0x00010ca7f9c4 in -[PTYSession setFilter:]+0x7e0 (iTerm2.debug.dylib:arm64+0x4579c4)
+    #1 0x00011ea79e5c in TmuxWorkgroupFilteredMemberTests.makeFixture(peerInSlot:) TmuxWorkgroupFilteredMemberTests.swift:104
+    #2 0x00011ea7a5f8 in TmuxWorkgroupFilteredMemberTests.testAFilteredMemberParkedByAPeerSwitchIsBuriedAndComesBack() TmuxWorkgroupFilteredMemberTests.swift:118
+    #3 0x00011ea7b564 in @objc TmuxWorkgroupFilteredMemberTests.testAFilteredMemberParkedByAPeerSwitchIsBuriedAndComesBack() /<compiler-generated>
+
+SUMMARY: UndefinedBehaviorSanitizer: invalid-null-argument /Users/example/iterm2/sources/PTYSession/PTYSession.m:9703:33 

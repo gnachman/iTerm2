@@ -227,6 +227,125 @@ they have no assertion yet. The port of each one asserts as section 2 requires.
   ([test-speed.md §2](test-speed.md)).
 - **Found:** 2026-11-18.
 
+## Most of the load average of 467 on 2026-11-23 is unexplained
+
+- **Where:** the build machine, during migration test and build jobs.
+- **What:** the causes found by unit `suite-load-causes` (the entries
+  below, and the test host crash and relaunch storm of aborting
+  nullability runs and the uncapped parallel workers, both to be fixed by unit
+  `suite-script-options`) do not add up to most of it. By arithmetic,
+  about 16 test hosts, 15 simulation threads, 40 to 50 compile jobs of
+  three builds and 10 to 20 crash reporting and symbolizer threads come to
+  roughly 100. At a load average of 125 to 157 on 2026-11-23, only about
+  6 to 10 busy cores were counted among the processes libproc could read
+  (root processes cannot be read, so this undercounts), and many daemons
+  showed several threads runnable while using almost no CPU (BambuStudio
+  5.3 runnable threads at 0.05 cores). A hypothesis, not verified: the
+  load average counts background-priority threads queued for the four
+  efficiency cores, so on this Mac it overstates how busy the cores are.
+  The root causes of the 467 are therefore not fully found.
+- **Reproduce:** during a heavy job, compare `uptime` with the CPU usage
+  line of `top -l 2 -n 0`, and sum each process's running threads and CPU
+  time with libproc (`proc_pidinfo` `PROC_PIDTASKINFO`, as
+  `tools/swift_migration/test_load_profile.py` reads it).
+- **Meanwhile:** left as it is; no load-average threshold is used
+  anywhere (the owner, 2026-11-23).
+- **Found:** 2026-11-23, unit `suite-load-causes`.
+
+## Every sanitizer report starts `atos` in the test host
+
+- **Where:** `tools/swift_migration/sanitizer_tests.sh`, modes
+  `nullability`, `integer` and `integer-sign` (`UBSAN_OPTIONS` with
+  `print_stacktrace=1` and the default `symbolize=1`).
+- **What:** to print a report's stack the UBSan runtime starts
+  `atos -i -p <host>` in the reporting process and keeps it for the
+  process's life; `atos` reads the debug information of the whole app.
+  Measured on 2026-11-23: 0.5 to 2.2 CPU seconds each, 15 to 19 threads,
+  once 13 running at one instant; in one 45-second window of an aborting
+  run, 25 started. A non-aborting run starts one per reporting host too,
+  so the cost remains wherever reports are many and hosts are relaunched.
+- **Reproduce:** build a two-line Objective-C program that passes nil to
+  a `_Nonnull` parameter twice, with `-fsanitize=nullability
+  -fsanitize-recover=nullability`, run it with
+  `UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=0:log_path=<dir>/r`
+  and list its children while it sleeps: `/usr/bin/atos -i -p <pid>` is
+  one of them.
+- **Meanwhile:** left as it is. Proposal: `symbolize=0`, with the reports
+  symbolized afterwards by `sanitizer_summary.py --symbolize` as the
+  thread mode does, once nothing needs function names at run time
+  (suppressions matched by function name would).
+- **Found:** 2026-11-23, unit `suite-load-causes`.
+
+## Builds and test hosts are not limited by the callers' settings
+
+- **Where:** `tools/build.sh`, `tools/run_tests.expect` and every other
+  caller of `xcodebuild` that passes no `-jobs`.
+- **What:** a build runs one compile job per core (16 on this Mac) unless
+  given `-jobs`, so three builds at once have about 48 compile processes
+  wanting a core. `tools/build.sh` and `tools/run_tests.expect` accept no
+  job limit. `nice -n 15` on a test run reaches xcodebuild and its build
+  but not the test hosts, which launchd starts at nice 0.
+- **Reproduce:** start any build and count `clang` and `swift-frontend`
+  processes with `ps`; start `nice -n 15 tools/run_tests.expect <test>`
+  and read the test host's nice value with `ps -o nice= -p <pid>`.
+- **Meanwhile:** left as it is.
+- **Found:** 2026-11-23, unit `suite-load-causes`.
+
+## Dispatch threads pile up in a long-running test host
+
+- **Where:** unknown code driven by ModernTests; the stacks are in
+  AppKit.
+- **What:** two address sanitizer test hosts sampled at a stall on
+  2026-11-22 (the report `tmp/test-stall-20261122-220155.txt` in lane-12,
+  not committed) had 66 and 79 threads on the user-interactive dispatch
+  queue, each parked in `-[NSAnimation _runBlocking]` in a run loop of its
+  own, entered from a `dispatch_async` block. Both hosts had reached the
+  dispatch soft limit (`Dispatch Thread Soft Limit: 80 reached in 721 of
+  721 samples`) and had footprints of 7.9 and 6.0 GB after 11 and 4
+  minutes. In the first,
+  `TokenBudgetTests.testConcurrentRegisterAndReleaseNeverLosesOrDuplicatesAWakeup`
+  had deadlocked: its 15 `concurrentPerform` workers each waited in
+  `DispatchGroup.wait()` for work sent to the global queue, which could
+  get no thread. Who starts those animations was not found: no app code
+  sets `NSAnimationNonblockingThreaded`. Related, also unexplained: in a
+  serial run of `PSMTabGroupDragInvariantTests` followed by
+  `PTYTabManualTitleRefreshTests`, the host's threads jump from 8 to 85 at
+  the first run loop spin of the second class (in
+  `testManualTitleWinsOverSessionName`, whichever test runs first) and are
+  idle dispatch threads (`__workq_kernreturn`) half a second later; run
+  alone, `PTYTabManualTitleRefreshTests` stays at 18 threads. Something
+  the first class leaves queued sends dozens of blocking tasks to the
+  dispatch pool at once.
+- **Reproduce:** `python3 -B tools/swift_migration/test_load_profile.py run
+  ModernTests/PSMTabGroupDragInvariantTests
+  ModernTests/PTYTabManualTitleRefreshTests` and read the `thr` column; the
+  `NSAnimation` threads only after a long run, such as a full
+  `run_tests.expect -parallel`.
+- **Meanwhile:** the TokenBudget test no longer blocks dispatch threads on
+  dispatch work (unit `suite-load-causes`); before, with 120 global-queue
+  tasks blocked first, it hung until killed, and now it passes. The
+  thread source is left for an investigation of its own.
+- **Found:** 2026-11-23, unit `suite-load-causes`.
+
+## Test hosts may post real user notifications as iTerm2 (unconfirmed)
+
+- **Where:** unknown; a hypothesis. Test hosts run with the app's bundle
+  identifier, `com.googlecode.iterm2`, so a `UNUserNotificationCenter`
+  request from one would reach `usernoted` as the owner's iTerm2.
+- **What:** the notification database keeps the last 100 deliveries per
+  app. Those of `com.googlecode.iterm2` on 2026-11-22 and 23 come in
+  bursts of about seven within a few minutes, at times that match suite
+  runs (21:40 to 22:20, 00:10, 01:20, 01:40, 13:30 to 13:40), and seldom
+  in between. That is a timing correlation only: no delivery was traced
+  to a test host, and which tests would post them was not found.
+  `usernoted` has used 100 to 150% of a core for days; seven deliveries a
+  run do not obviously explain that, so this is a lead, not a cause.
+- **Reproduce:** count the deliveries of `com.googlecode.iterm2` in
+  `usernoted`'s database before and after a suite run, with no other
+  iTerm2 activity in between.
+- **Meanwhile:** left as it is.
+- **Found:** 2026-11-23, unit `suite-load-causes`.
+
 ## nil reaches non-optional Swift parameters from Objective-C (pending per site)
 - **Where:** switchToTmuxPoller(tmuxController:) (PTYSession.m:10884),
   metalView(_:drawableSizeWillChange:) (SessionView.m:1471),
@@ -237,6 +356,21 @@ they have no assertion yet. The port of each one asserts as section 2 requires.
   Array, Dictionary and Data.
 - **Meanwhile:** each Swift signature becomes optional with a guard, or the caller
   is fixed, decided per site.
+- **2026-11-23 (units `nullability-baseline-annotate` and
+  `nullability-baseline-guards`):** `switchToTmuxPoller(tmuxController:)` now
+  takes `TmuxController?`; with nil it logs “Missing gateway” and returns, as
+  the message to the nil controller made it do before.
+- **2026-11-23 (unit `nullability-zero-colors`):**
+  `VT100SavedColorsSlot.init(text:background:selectionText:selectionBackground:indexedColorProvider:)`
+  (`VT100SavedColors.swift`, from `-[iTermColorMap savedColorsSlot]`) now
+  takes and returns optional colors. A real color map lacks one when a
+  profile's value for it is not a color dictionary. What happened with the
+  nil is kept exactly: popping the slot leaves that color as it is, and the
+  slot is written with CodableColor's fallback form holding an empty keyed
+  archive, which does not decode, so the slot (and an XTPUSHCOLORS stack
+  holding it) fails to decode. Whether to store it differently is
+  owner-queue.md Q28. `VT100ConductorParser.init(uniqueID:)` no longer gets
+  a nil (unit `nullability-zero-bugs`). Still open: the other sites above.
 - **Found:** 2026-11-20, nullability collection.
 
 ## `MarkCache.copy(with:)` is not `-copyWithZone:`
@@ -566,33 +700,6 @@ or a crash from program output.
   convert with `it_floatToInteger` before that fix: it would assert in
   `testSixel`.
 - **Found:** 2026-11-20, unit `phase0-integer-discovery-2` and its review.
-
-## Assigning a profile to a broken arrangement with no name raises
-
-- **Where:** `-[PTYSession setProfileInArrangement:withGUID:toProfile:]`
-  (`PTYSession.m`), reached from
-  `-[iTermNaggingController offerToFixSessionWithBrokenArrangementProfileIn:guid:]`
-  through `-naggingControllerAssignProfileToSession:guid:`,
-  `-changeProfileInArrangementNamed:guid:completion:` and
-  `-reallyChangeProfileInArrangement:guid:profiles:completion:`.
-- **What:** the offer is made from the restore path in `PTYSession.m`
-  (`missingProfile`, a saved profile without a name or GUID) with the
-  arrangement's name, which is nil when the session was not restored from a
-  named arrangement. If the user accepts and picks a profile,
-  `+[WindowArrangements arrangementWithName:nil]` returns the default
-  arrangement, and `+[WindowArrangements setArrangement:withName:nil]` then
-  calls `-[NSMutableDictionary setObject:forKey:]` with a nil key, which
-  raises `NSInvalidArgumentException` outside its `@try`. The triage reason
-  for `iTermNaggingController.h:120` said a nil name gives no arrangements;
-  it does not.
-- **Reproduce:** not reproduced. It needs a session restored outside a named
-  arrangement whose saved profile lacks `Name` or `Guid`, then Assign Profile,
-  a profile selected, and OK.
-- **Meanwhile:** preserved. Unit `nullability-n9-session-triggers` left both
-  parameters of the nagging method nonnull. A `fix` commit, test first, can
-  skip the save (or not offer) when the name is nil; the claim can then be
-  made nullable.
-- **Found:** 2026-11-20, unit `nullability-n9-session-triggers`.
 
 ## Copying, dragging or opening an image without encoded data gives no usable image
 
@@ -1080,3 +1187,86 @@ or a crash from program output.
 - **Meanwhile:** left as they are. The destination's offset by the margins
   in origin mode, fixed in `terminal-fixes`, matches xterm.
 - **Found:** 2026-11-22, review of unit `terminal-fixes`.
+
+## A Python environment with no version gives a path under `versions/bin`
+
+- **Where:** `-[iTermPythonRuntimeDownloader executableNamed:atPyenvRoot:pythonVersion:searchPath:]`
+  (`sources/API/iTermPythonRuntimeDownloader.m`).
+- **What:** when no version is found (the `versions` directory is empty, or
+  no installed version matches a two-part version), the best version is nil,
+  and appending a nil (now `""`) path component leaves the path as it is. The
+  `versions` directory itself then passes the existence check, and the method
+  returns `<root>/versions/bin/<name>`, which does not exist, instead of nil.
+  `+[iTermAPIScriptLauncher environmentForScript:checkForMain:checkForSaved:]`
+  tests the result for existence and is unaffected; the callers that use
+  `pip3At:` (`iTermPythonRuntimeDownloader.m`, `iTermDependencyEditorWindowController.m`)
+  were not checked.
+- **Reproduce:** `APIScriptLauncherUvTests.testPyenvWithNoVersionNamesBinUnderTheVersionsDirectory`
+  pins it.
+- **Meanwhile:** preserved by unit `nullability-baseline-guards`, which
+  appends `""` in place of the nil (the same result).
+- **Found:** 2026-11-23, unit `nullability-baseline-guards`.
+
+## Canceling the Internet-Free install during its dotfile step leaves the helper shell in a here-document
+
+- **Where:** `sources/ShellIntegrationInstaller/iTermShellIntegrationWindowController.m`:
+  the dotfile step sets the helper state to unknown when it types its `if`
+  line, and `-helpersIdleExpectation` returns nil for that state, so
+  `-exitHelperShellsWhenPossible` types nothing.
+- **What:** Cancel during the dotfile step stops the step but leaves the
+  helper `sh` inside the `if` and here-document, and no installer is then
+  awaiting helper exit. A new install does not wait; its discovery line
+  goes into the here-document and gets no answer, so the new panel stays
+  busy with no time limit. The same happens when a new install replaces a
+  hidden installer that is in that step (unit
+  `ptytextview-installer-lifetime` sends it the Cancel button's action).
+  The window is a few shell round trips long. Found by reading; not
+  reproduced.
+- **Reproduce:** start the Internet-Free install, click Cancel (or switch
+  tabs and choose Install Shell Integration again) while the dotfile step
+  is typing, then start the install again.
+- **Meanwhile:** left as it is.
+- **Found:** 2026-11-23, review of unit `ptytextview-installer-lifetime`.
+
+## A tab dragged in from another copy of iTerm2 reaches the tab bar's drop code with no source
+
+- **Where:** `ThirdParty/PSMTabBarControl/source/PSMTabBarControl.m`,
+  `-draggingEntered:` and `-draggingUpdated:`, and
+  `-[PseudoTerminal tabView:shouldDropTabViewItem:inTabBar:moveSourceWindow:]`.
+- **What:** a tab drag puts `com.iterm2.psm.controlitem` on the drag
+  pasteboard, which every process sees. When the drag comes from another
+  running copy of iTerm2, `-draggingSource` is nil (Apple documents this for
+  a source in another application) and the receiving process has no dragged
+  cell, so the delegate is asked about a nil tab view and a nil tab view
+  item, and then passes nil to `-[NSTabView indexOfTabViewItem:]`. All three
+  are declared nonnull. Found by reading; not reproduced.
+- **Reproduce:** run two copies of iTerm2 and drag a tab from one over the
+  other's tab bar.
+- **Meanwhile:** left as it is.
+- **Found:** 2026-11-23, review of unit `psm-nullability-guards`.
+
+## A tmux client's queued mode change runs after the session ended
+
+- **Where:** `-[PTYSession setTmuxMode:]` (`sources/PTYSession/PTYSession.m`), which
+  queues `-reallySetTmuxMode:` with `dispatch_async` on the main queue, and
+  `-reallySetTmuxMode:`, whose `TMUX_CLIENT` case installs the tmux title,
+  foreground job, status bar and other option monitors from
+  `_tmuxController.gateway`.
+- **What:** if the session is terminated, or its controller detaches (which
+  clears the controller's gateway and terminates its buried sessions), in the
+  same main-queue turn that made it a client (`-setTmuxPane:` during a restore
+  from a tmux layout), the queued `TMUX_CLIENT` block runs afterwards on the
+  dead session: `_tmuxController` (or its gateway) is nil, and it installs
+  monitors with a nil gateway after `-terminate` already uninstalled them. In
+  the app that ordering needs the reply that opens the panes and the end of
+  the connection to be handled in one turn (one batch of tmux lines). The
+  monitors tolerate the nil gateway (they only message it), so nothing worse
+  is known than monitors that never update on a session that is gone.
+- **Reproduce:** many tests do it (they make a session a client and then
+  terminate it, or detach its controller in `tearDown`, before the main queue
+  runs); `OrchestratorQuitRestorationTests.testWillTerminateNotificationReportsTmuxClient`
+  is one.
+- **Meanwhile:** left. Unit `nullability-zero-claims` made the gateway
+  parameter of `-[iTermTmuxOptionMonitor initWithGateway:...]` nullable,
+  since this ordering passes nil.
+- **Found:** 2026-11-23, unit `nullability-zero-tests`.

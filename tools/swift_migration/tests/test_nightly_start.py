@@ -8,8 +8,9 @@ directory stands in for it: called as `claude /usage` it prints the text in
 $STUB_USAGE (or fails with $STUB_USAGE_EXIT, or hangs with
 $STUB_USAGE_HANG); called any other way, which happens inside the tmux
 pane, it records its arguments, one per line, and the environment it was
-given, tries the pushes and the fetch the guards must block or allow (with
-plain git, no model involved), and exits with $STUB_EXIT. With $STUB_HANG
+given, tries the pushes the guards must block and the fetch and local
+clones they must allow (with plain git, no model involved), and exits with
+$STUB_EXIT. With $STUB_HANG
 it instead reads its terminal until a line contains /exit, as Claude Code
 ends on /exit.
 
@@ -68,7 +69,8 @@ env > "$STUB_DIR/session_env"
 pwd > "$STUB_DIR/session_pwd"
 git rev-parse HEAD > "$STUB_DIR/session_head"
 if [ -d "$NIGHTLY_ROOT/lock" ]; then echo held > "$STUB_DIR/lock_during_session"; fi
-# The guards, exercised with plain git: every push fails, fetch works.
+# The guards, exercised with plain git: every push fails, fetching and
+# cloning from a local path work.
 # Only ever inside the test's throwaway checkout, never anywhere else.
 case "$(pwd -P)" in
   "$STUB_SAFE_ROOT"/*) ;;
@@ -87,18 +89,52 @@ esac
   done
   if git -C . push origin HEAD:refs/heads/pushed-by-stub >/dev/null 2>&1; then
     echo "push -C: SUCCEEDED"; else echo "push -C: failed"; fi
-  # The owner's (throwaway) checkout, by path; by a remote whose explicit
-  # pushurl pushInsteadOf does not rewrite; and by send-pack, which ignores
-  # pushInsteadOf.
+  # The owner's (throwaway) checkout, by absolute path, file:// URL and
+  # relative path: pushInsteadOf is the only environment layer here.
   if git push "$STUB_OWNER" HEAD:refs/heads/pushed-by-stub >/dev/null 2>&1; then
     echo "push owner path: SUCCEEDED"; else echo "push owner path: failed"; fi
-  git remote add stubv "$STUB_OWNER" && git config remote.stubv.pushurl "$STUB_OWNER"
-  if git push stubv HEAD:refs/heads/pushed-by-stub-pushurl -f >/dev/null 2>&1; then
-    echo "push pushurl remote: SUCCEEDED"; else echo "push pushurl remote: failed"; fi
-  git remote remove stubv
-  if git send-pack "$STUB_OWNER" HEAD:refs/heads/pushed-by-stub-send-pack >/dev/null 2>&1; then
-    echo "send-pack: SUCCEEDED"; else echo "send-pack: failed"; fi
+  if git push "file://$STUB_OWNER" HEAD:refs/heads/pushed-by-stub >/dev/null 2>&1; then
+    echo "push owner file url: SUCCEEDED"; else echo "push owner file url: failed"; fi
+  if git push "../$(basename "$STUB_OWNER")" HEAD:refs/heads/pushed-by-stub >/dev/null 2>&1; then
+    echo "push owner relative: SUCCEEDED"; else echo "push owner relative: failed"; fi
+  # With $STUB_LOCAL_PUSH, the local-path routes into the owner's checkout
+  # that no environment layer stops: a remote with an explicit pushurl,
+  # send-pack, a relative path that starts with neither / nor . (from the
+  # parent directory, with --git-dir), and a fetch run in his checkout.
+  if [ -n "${STUB_LOCAL_PUSH:-}" ]; then
+    night=$(pwd -P)
+    if (cd .. && git --git-dir="$night/.git" push "$(basename "$STUB_OWNER")" \
+          HEAD:refs/heads/pushed-by-stub-relative >/dev/null 2>&1); then
+      echo "push relative from parent: SUCCEEDED"; else echo "push relative from parent: failed"; fi
+    if git -C "$STUB_OWNER" fetch -q "$night" HEAD:refs/heads/fetched-by-stub >/dev/null 2>&1; then
+      echo "fetch into owner: SUCCEEDED"; else echo "fetch into owner: failed"; fi
+    git remote add stubv "$STUB_OWNER" && git config remote.stubv.pushurl "$STUB_OWNER"
+    if git push stubv HEAD:refs/heads/pushed-by-stub-pushurl -f >/dev/null 2>&1; then
+      echo "push pushurl remote: SUCCEEDED"; else echo "push pushurl remote: failed"; fi
+    git remote remove stubv
+    if git send-pack "$STUB_OWNER" HEAD:refs/heads/pushed-by-stub-send-pack >/dev/null 2>&1; then
+      echo "send-pack: SUCCEEDED"; else echo "send-pack: failed"; fi
+  fi
   if git fetch -q origin 2>/dev/null; then echo "fetch: ok"; else echo "fetch: failed"; fi
+  # A Swift package resolved as Xcode's SwiftPM does it: a mirror clone into
+  # its repositories cache, an update of it, then the working copy made by a
+  # local clone that shares the cache's objects (--shared: alternates), a
+  # checkout and a submodule update. Here from a scratch package repository,
+  # by path.
+  spm="$STUB_DIR/spm"
+  if git init -q -b master "$STUB_DIR/package" >/dev/null 2>&1 &&
+     git -C "$STUB_DIR/package" commit -q --allow-empty -m package >/dev/null 2>&1 &&
+     git clone -q -c core.symlinks=true -c core.fsmonitor=false -c core.longpaths=true \
+         --mirror "$STUB_DIR/package" "$spm/repositories/r" >/dev/null 2>&1 &&
+     git -C "$spm/repositories/r" remote update -p >/dev/null 2>&1 &&
+     git clone -q -c core.symlinks=true -c core.fsmonitor=false -c core.longpaths=true \
+         --shared --no-checkout "$spm/repositories/r" "$spm/checkouts/r" >/dev/null 2>&1 &&
+     git -C "$spm/checkouts/r" checkout -q -f master >/dev/null 2>&1 &&
+     git -C "$spm/checkouts/r" submodule update -q --init --recursive >/dev/null 2>&1 &&
+     [ -s "$spm/checkouts/r/.git/objects/info/alternates" ]; then
+    echo "package clone: ok"; else echo "package clone: failed"; fi
+  if git clone -q "file://$STUB_REMOTE" "$STUB_DIR/file-clone" >/dev/null 2>&1; then
+    echo "file clone: ok"; else echo "file clone: failed"; fi
   if git status --porcelain >/dev/null 2>&1; then echo "status: ok"; else echo "status: failed"; fi
 } > "$STUB_DIR/git_results"
 if [ -n "${STUB_TMUX:-}" ]; then
@@ -517,9 +553,13 @@ class NightlyStartTest(NightlyBase):
                      # receive-pack by any route.
                      'Bash(git remote *)', 'Bash(git * remote *)',
                      'Bash(*pushurl*)', 'Bash(*send-pack*)',
-                     'Bash(*receive-pack*)', 'Bash(*protocol.file*)',
-                     'Bash(*GIT_PROTOCOL_FROM_USER*)'):
+                     'Bash(*receive-pack*)'):
             self.assertIn(rule, deny)
+        # Local-path transports are allowed (the owner, 2026-11-23), so
+        # nothing denies the settings that govern them.
+        for rule in deny:
+            self.assertNotIn('protocol.file', rule)
+            self.assertNotIn('GIT_PROTOCOL_FROM_USER', rule)
         # Network access is the owner's to allow (2026-11-20).
         for rule in deny:
             self.assertNotIn('curl', rule)
@@ -544,9 +584,9 @@ class NightlyStartTest(NightlyBase):
         config = [(env['GIT_CONFIG_KEY_%d' % i], env['GIT_CONFIG_VALUE_%d' % i])
                   for i in range(count)]
         self.assertIn(('credential.helper', ''), config)
-        # Local transports are off for the session (NIGHTLY_ALLOW_LOCAL_GIT).
-        self.assertIn(('protocol.file.allow', 'user'), config)
-        self.assertEqual(env['GIT_PROTOCOL_FROM_USER'], '0')
+        # Local-path transports are not refused (the owner, 2026-11-23).
+        self.assertNotIn('protocol.file.allow', [k for k, v in config])
+        self.assertNotIn('GIT_PROTOCOL_FROM_USER', env)
         blocked = [v for k, v in config if k.endswith('.pushinsteadof')
                    or k.endswith('.pushInsteadOf')]
         for prefix in ('https://', 'http://', 'ssh://', 'git@', 'git://',
@@ -564,36 +604,49 @@ class NightlyStartTest(NightlyBase):
         self.assertTrue(os.access(env['GIT_SSH_COMMAND'], os.X_OK))
         # The marker the sweep looks for, unique to this run.
         self.assertTrue(env['SWIFT_MIGRATION_NIGHT_ID'])
-        # And they work: every push fails before reaching anything,
-        # including the pushurl remote and send-pack to the owner's
-        # checkout; status works; fetching from a local path is the cost.
+        # And they work: every push to a URL, a path or origin fails before
+        # reaching anything, the owner's checkout by absolute path, file://
+        # URL and ../ relative path included; fetching
+        # from origin (the mirror, by path), a Swift package resolution
+        # from a local repository the way SwiftPM does it, and a file://
+        # clone all work; status works.
         results = self.read_stub('git_results')
         self.assertNotIn('SUCCEEDED', results)
-        for line in ('push pushurl remote: failed', 'send-pack: failed',
-                     'push owner path: failed', 'fetch: failed',
-                     'status: ok'):
+        for line in ('push owner path: failed', 'push owner file url: failed',
+                     'push owner relative: failed', 'fetch: ok',
+                     'package clone: ok', 'file clone: ok', 'status: ok'):
             self.assertIn(line, results)
-        self.assertEqual(results.count('failed'), 11, results)
+        self.assertEqual(results.count('failed'), 10, results)
         for repo in (self.remote, os.path.join(self.owner, '.git')):
             refs = subprocess.run(['git', '--git-dir', repo, 'for-each-ref'],
                                   stdout=subprocess.PIPE,
                                   universal_newlines=True).stdout
             self.assertNotIn('pushed-by-stub', refs)
 
-    def test_allow_local_git_restores_fetch_and_the_owner_check_catches_a_push(self):
-        # With local transports allowed, fetch works again, and so does a
-        # push by a pushurl remote or send-pack into the owner's checkout:
-        # that is what the default costs to prevent. The owner-refs
-        # comparison then reports it in the morning log.
-        proc = self.run_script(NIGHTLY_ALLOW_LOCAL_GIT='1')
-        results = self.read_stub('git_results')
-        self.assertIn('fetch: ok', results)
-        self.assertNotIn('protocol.file.allow', self.read_stub('session_env'))
-        self.assertIn('send-pack: SUCCEEDED', results)
+    def test_local_routes_into_the_owner_checkout_are_reported_not_stopped(self):
+        # What allowing local-path transports makes possible: writing refs
+        # in the owner's checkout through a remote with an explicit pushurl
+        # (which pushInsteadOf does not rewrite), send-pack (which ignores
+        # it), a push to a relative path that starts with neither / nor .
+        # (run from his parent directory with --git-dir), or a fetch run in
+        # his checkout from the clone. No environment layer stops them; the
+        # deny rules catch the plain push, send-pack and remote forms, the
+        # classifier reviews the rest (the fetch matches no deny rule), and
+        # the owner-refs comparison reports every one in the morning log.
+        proc = self.run_script(STUB_LOCAL_PUSH='1')
         self.assertEqual(proc.returncode, 0, proc.stdout)
+        results = self.read_stub('git_results')
+        self.assertIn('push pushurl remote: SUCCEEDED', results)
+        self.assertIn('send-pack: SUCCEEDED', results)
+        self.assertIn('push relative from parent: SUCCEEDED', results)
+        self.assertIn('fetch into owner: SUCCEEDED', results)
         self.assertIn("THE OWNER'S REPOSITORY CHANGED DURING THE NIGHT",
                       proc.stdout)
+        self.assertIn('refs/heads/pushed-by-stub-pushurl', proc.stdout)
         self.assertIn('refs/heads/pushed-by-stub-send-pack', proc.stdout)
+        self.assertIn('refs/heads/pushed-by-stub-relative', proc.stdout)
+        self.assertIn('refs/heads/fetched-by-stub', proc.stdout)
+        self.assertNotIn('NIGHTLY_ALLOW_LOCAL_GIT', proc.stdout)
 
     def test_ssh_wrapper_refuses_receive_pack_only(self):
         self.assertEqual(self.run_script().returncode, 0)
@@ -1328,7 +1381,8 @@ class NightlyStartTest(NightlyBase):
         self.assertIn('Bash(git push *)', proc.stdout)
         self.assertIn('attach -t swift-migration', proc.stdout)
         self.assertIn('update-environment', proc.stdout)
-        self.assertIn('GIT_PROTOCOL_FROM_USER=0', proc.stdout)
+        self.assertNotIn('GIT_PROTOCOL_FROM_USER=0', proc.stdout)
+        self.assertNotIn('protocol.file.allow', proc.stdout)
         self.assertNotEqual(subprocess.run(
             [TMUX, '-S', self.socket, 'list-sessions'],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode, 0)
@@ -1597,8 +1651,7 @@ class LanesTest(NightlyBase):
 
 class LaneSessionEnvironmentTest(NightlyBase):
     """lane_clone.py works in exactly the environment nightly_start.sh gives
-    the session (local-path git transports refused), on a clone with a
-    submodule: worktrees and alternates need no transport."""
+    the session, on a clone with a submodule."""
 
     def prepare_owner(self):
         sub_up = os.path.join(self.tmp, 'sub-up.git')
@@ -1622,12 +1675,13 @@ class LaneSessionEnvironmentTest(NightlyBase):
         proc = self.run_script()
         self.assertEqual(proc.returncode, 0, proc.stdout)
         env = self.session_env()
-        # It is the guarded environment: a local-path fetch is refused.
-        self.assertEqual(env['GIT_PROTOCOL_FROM_USER'], '0')
+        # It is the session's environment, in which a local-path fetch from
+        # origin (the mirror) works.
+        self.assertIn('SWIFT_MIGRATION_NIGHT_ID', env)
         fetch = subprocess.run(['git', 'fetch', '-q', 'origin'], cwd=self.repo, env=env,
                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                universal_newlines=True)
-        self.assertNotEqual(fetch.returncode, 0, fetch.stdout)
+        self.assertEqual(fetch.returncode, 0, fetch.stdout)
         owner_before = subprocess.run(['/bin/bash', CLONE_TOOL, 'owner-refs', '--source',
                                        self.owner], stdout=subprocess.PIPE,
                                       universal_newlines=True).stdout

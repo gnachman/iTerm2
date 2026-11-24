@@ -245,18 +245,69 @@ gate runs in the full-suite lane on your current `HEAD` with the unit's
 change applied. The project-file swap is staged before the gate
 ([lifecycle.md §3](lifecycle.md), "The project file").
 
-**One heavy job at a time** (the owner, 2026-11-23: decisions.md). A heavy
-job is a whole-suite run, any suite run under a sanitizer, a full or
-`x86_64` build, or a code database capture. Across you and every agent you
-started, at most one runs at any moment, by day and by night, each started
-with `nice -n 15`; agents' targeted builds and test classes are not heavy,
-but say so in their briefs and never let two agents build while a heavy job
-runs. Do not start the next heavy job until the last has exited. While the
-owner is using the machine, suite runs under a sanitizer wait until he says
-it is free. If he says the machine is slow, stop your processes first and
-find the cause afterwards. On 2026-11-23 a resumed night session ran a
-sanitized whole suite, an `x86_64` build and a database capture together;
-the load average passed 400.
+**Heavy jobs and the machine** (the owner, 2026-11-23: decisions.md). A
+heavy job is a whole-suite run, any suite run under a sanitizer, a full or
+`x86_64` build, or a code database capture.
+
+- *While the owner is using the machine:* at most one heavy job at a time
+  across you and every agent you started, each started with `nice -n 15`.
+  If he says the machine is slow, stop your processes first and find the
+  cause afterwards.
+- *At night:* the load does not matter so long as the work makes progress.
+  There is no load threshold, by day or by night: waiting for a load
+  figure, or killing a job because of one, only made checks fail
+  (2026-11-23).
+- *A test or tool that takes the machine is a defect to fix, not something
+  to schedule around.* A test that uses many cores at once, spins while it
+  waits, or runs for minutes is fixed or disabled (the owner: “if a test
+  does something absurd like use 1400% disable or fix the test”), and the
+  cause is recorded in bugs.md.
+
+On 2026-11-23 a resumed night session ran a sanitized whole suite, an
+`x86_64` build and a database capture together by day; the load average
+passed 400.
+
+The scripts that run heavy jobs have options to control them (each
+script's header is its manual):
+- `sanitizer_tests.sh` and `coverage_tests.sh`: `--parallel` runs two
+  workers, the cap of `tools/run_tests.expect -parallel`, and
+  `--workers N` changes the count. `sanitizer_tests.sh --skip
+  ModernTests/Class[/test]` (repeatable) leaves a class or test out, so a
+  sanitized whole suite can run without a test the owner has excluded.
+  `fast_tests.sh` runs two workers too, `--workers N` to change it.
+- `sanitizer_tests.sh nullability` with no test names (gate step 7's
+  whole suite) does not abort on a violation: the tests go on and the run
+  fails on every report outside the nullability baseline
+  (`docs/swift-migration/nullability-baseline.tsv`, [nullability.md
+  §7](nullability.md)), listing the tests where the stack shows them.
+  Judging step 7 against the baseline was proposed on 2026-11-23 and
+  awaits the owner's confirmation (owner-queue.md Q26); until he answers,
+  a report outside the baseline blocks a unit's close. It was first
+  generated on 2026-11-23 (69 entries). Generate or refresh it in the
+  checkout that ran the whole-suite `--collect` run, with that checkout's
+  script (or pass `--root`):
+  `python3 -B tools/swift_migration/sanitizer_summary.py
+  --write-nullability-baseline docs/swift-migration/nullability-baseline.tsv
+  tmp/sanitizers/runs/nullability-<time>/reports`. It prints every entry
+  added; a refresh that adds entries is a reviewed change, each added entry
+  needing a row in nullability-triage.md. Entries not seen are kept unless
+  `--drop-unseen`. The aborting form (test names given, without
+  `--recover`) is for targeted classes only, since each violation
+  relaunches the test host.
+- `--jobs N` (xcodebuild `-jobs N`) limits the build tasks that run at
+  once, on `sanitizer_tests.sh`, `coverage_tests.sh`, `fast_tests.sh`,
+  `sanitizer_app.sh`, `perf_baseline.py run` and
+  `codedb/capture_compile_commands.sh` (with or without
+  `--other-projects`). A limit makes a build gentler and slower; it is not
+  a load threshold, and no script checks the load. The one exception is
+  `perf_baseline.py`, which waits for a quiet machine before it measures:
+  a baseline taken on a loaded machine measures the load, so that check is
+  a precondition of the measurement (the owner, 2026-11-22), not a
+  scheduling rule.
+- `nice -n 15` before a script reaches xcodebuild, its build service
+  (`SWBBuildService`, a child of xcodebuild) and the compilers, but not the
+  test hosts: xcodebuild has them launched by launchd (parent pid 1), so
+  they run at normal priority whatever the script's.
 
 ## 4. Briefing the author
 
@@ -469,7 +520,11 @@ Then, in any order that respects dependencies:
       fast, or in the slow tier with the reason
       ([test-tiers.md §4](test-tiers.md)).
 - [x] Fast test tier defined, without the address sanitizer, with its time
-      budget (77 s: [test-tiers.md §1](test-tiers.md)).
+      budget: 300 s with two test workers (the owner, 2026-11-23: “Let it
+      go for 300 seconds”), replacing the 77 s measured with xcodebuild's
+      own worker count ([test-tiers.md §1](test-tiers.md)). The gate runs
+      the whole suite at step 3 until the owner switches it to the fast
+      tier.
 - [x] Nil-lock assertions added to the existing Objective-C
       ([concurrency.md §2](concurrency.md)).
 - [x] Performance and memory baselines ([phase0.md §8](phase0.md);

@@ -1,6 +1,8 @@
 """Tests for tools/swift_migration/sanitizer_tests.sh: the mode logic (the
-integer and integer-sign build flags and run) and the exit status of the
-thread mode with its baseline comparison.
+integer and integer-sign build flags and run), the exit status of the
+thread mode with its baseline comparison, and the suite options (--skip,
+--workers, --jobs, the two-worker default of --parallel); and the --jobs
+option of tools/swift_migration/sanitizer_app.sh.
 
 Run from the repository root:
     python3 -B -m unittest discover -s tools/swift_migration/tests -p 'test_sanitizer*.py'
@@ -106,6 +108,13 @@ class ScriptTestCase(unittest.TestCase):
         docs = os.path.join(self.root, "docs", "swift-migration")
         os.makedirs(docs)
         shutil.copy2(os.path.join(REPO, "docs", "swift-migration", "thread-baseline.tsv"), docs)
+        # An empty baseline with the checked-in file's header: these tests
+        # must not depend on which entries the real baseline holds.
+        with open(os.path.join(REPO, "docs", "swift-migration", "nullability-baseline.tsv")) as f:
+            lines = f.read().split("\n")
+        header = next(i for i, line in enumerate(lines) if line and not line.startswith("#"))
+        with open(os.path.join(docs, "nullability-baseline.tsv"), "w") as f:
+            f.write("\n".join(lines[:header + 1]) + "\n")
         for d in ("xcstrings", "sources"):
             os.makedirs(os.path.join(self.root, d))
             with open(os.path.join(self.root, d, "Localizable.xcstrings"), "w") as f:
@@ -254,6 +263,256 @@ class ThreadModeStatusTests(ScriptTestCase):
         status, out, _ = self.run_script("thread", "ModernTests/ProbeTests")
         self.assertEqual(status, 0, out)
         self.assertIn("Verdict: PASS", out)
+
+
+class SuiteOptionTests(ScriptTestCase):
+    """--skip, --workers and --jobs, and the two-worker default of
+    --parallel (the same cap as tools/run_tests.expect -parallel). The
+    integer mode stands for all: the options do not depend on the mode."""
+
+    @staticmethod
+    def follows(call, flag):
+        """The values that follow each occurrence of flag in call's arguments."""
+        args = call["args"]
+        return [args[i + 1] for i, a in enumerate(args) if a == flag and i + 1 < len(args)]
+
+    def test_skip_is_passed_to_the_test_step_only(self):
+        status, out, calls = self.run_script("integer", "--skip", "ModernTests/SlowTests",
+                                             "--skip", "ModernTests/OtherTests/testHog")
+        self.assertEqual(status, 0, out)
+        build, test = calls
+        self.assertEqual(build["args"][0], "build-for-testing")
+        self.assertFalse([a for a in build["args"] if a.startswith("-skip-testing:")], build["args"])
+        self.assertEqual([a for a in test["args"] if a.startswith("-skip-testing:")],
+                         ["-skip-testing:ModernTests/SlowTests", "-skip-testing:ModernTests/OtherTests/testHog"])
+        # No TEST: the whole suite, minus the skipped.
+        self.assertFalse([a for a in test["args"] if a.startswith("-only-testing:")], test["args"])
+        self.assertIn("Skipped: ModernTests/SlowTests ModernTests/OtherTests/testHog", out)
+
+    def test_skip_combines_with_test_names(self):
+        status, out, calls = self.run_script("integer", "ModernTests/ProbeTests", "--skip", "ModernTests/ProbeTests/testB")
+        self.assertEqual(status, 0, out)
+        test = calls[-1]["args"]
+        self.assertIn("-only-testing:ModernTests/ProbeTests", test)
+        self.assertIn("-skip-testing:ModernTests/ProbeTests/testB", test)
+
+    def test_skip_works_with_no_build_and_collect(self):
+        status, out, _ = self.run_script("nullability", "--build-only")
+        self.assertEqual(status, 0, out)
+        status, out, calls = self.run_script("nullability", "--no-build", "--collect", "--skip", "ModernTests/A")
+        self.assertEqual(status, 0, out)
+        self.assertEqual(calls[-1]["args"][0], "test")
+        self.assertIn("-skip-testing:ModernTests/A", calls[-1]["args"])
+
+    def test_bad_skip_is_a_usage_error(self):
+        for args in (("--skip",), ("--skip", "SlowTests"), ("--skip", "ModernTests/"),
+                     ("--skip", "ModernTests/A/b/c"), ("--skip", "--parallel")):
+            status, out, calls = self.run_script("integer", *args)
+            self.assertEqual(status, 2, (args, out))
+            self.assertEqual(calls, [], args)
+
+    def test_skip_with_build_only_is_a_usage_error(self):
+        status, out, calls = self.run_script("integer", "--build-only", "--skip", "ModernTests/A")
+        self.assertEqual(status, 2, out)
+        self.assertIn("--skip and --workers apply to the test step", out)
+        self.assertEqual(calls, [])
+
+    def test_parallel_defaults_to_two_workers(self):
+        status, out, calls = self.run_script("integer", "--parallel", "ModernTests/ProbeTests")
+        self.assertEqual(status, 0, out)
+        test = calls[-1]
+        self.assertEqual(self.follows(test, "-parallel-testing-enabled"), ["YES"])
+        self.assertEqual(self.follows(test, "-parallel-testing-worker-count"), ["2"])
+        self.assertEqual(self.follows(test, "-maximum-parallel-testing-workers"), ["2"])
+        self.assertIn("Parallel: 2 workers.", out)
+
+    def test_workers_changes_the_count(self):
+        status, out, calls = self.run_script("integer", "--parallel", "--workers", "3", "ModernTests/ProbeTests")
+        self.assertEqual(status, 0, out)
+        test = calls[-1]
+        self.assertEqual(self.follows(test, "-parallel-testing-worker-count"), ["3"])
+        self.assertEqual(self.follows(test, "-maximum-parallel-testing-workers"), ["3"])
+        self.assertNotIn("-parallel-testing-worker-count", calls[0]["args"])
+
+    def test_serial_run_has_no_worker_count(self):
+        status, out, calls = self.run_script("integer", "ModernTests/ProbeTests")
+        self.assertEqual(status, 0, out)
+        test = calls[-1]
+        self.assertEqual(self.follows(test, "-parallel-testing-enabled"), ["NO"])
+        self.assertNotIn("-parallel-testing-worker-count", test["args"])
+        self.assertNotIn("-maximum-parallel-testing-workers", test["args"])
+
+    def test_workers_without_parallel_is_a_usage_error(self):
+        status, out, calls = self.run_script("integer", "--workers", "2", "ModernTests/ProbeTests")
+        self.assertEqual(status, 2, out)
+        self.assertIn("--workers needs --parallel", out)
+        self.assertEqual(calls, [])
+
+    def test_bad_counts_are_usage_errors(self):
+        for option in ("--workers", "--jobs"):
+            for value in ("0", "-1", "two", "2x", ""):
+                status, out, calls = self.run_script("integer", "--parallel", option, value, "ModernTests/A")
+                self.assertEqual(status, 2, (option, value, out))
+                self.assertEqual(calls, [], (option, value))
+            status, out, calls = self.run_script("integer", "--parallel", option)
+            self.assertEqual(status, 2, (option, out))
+            self.assertEqual(calls, [], option)
+
+    def test_jobs_limits_the_build_and_the_test_step(self):
+        status, out, calls = self.run_script("integer", "--jobs", "4", "ModernTests/ProbeTests")
+        self.assertEqual(status, 0, out)
+        self.assertEqual([c["args"][0] for c in calls], ["build-for-testing", "test"])
+        for call in calls:
+            self.assertEqual(self.follows(call, "-jobs"), ["4"], call["args"])
+        self.assertIn("Build jobs: at most 4.", out)
+
+    def test_jobs_with_build_only(self):
+        status, out, calls = self.run_script("thread", "--build-only", "--jobs", "2")
+        self.assertEqual(status, 0, out)
+        self.assertEqual(self.follows(calls[0], "-jobs"), ["2"])
+
+    def test_no_jobs_by_default(self):
+        status, out, calls = self.run_script("integer", "ModernTests/ProbeTests")
+        self.assertEqual(status, 0, out)
+        for call in calls:
+            self.assertNotIn("-jobs", call["args"])
+
+
+NULLABILITY_FIXTURE = os.path.join(HERE, "fixtures", "sanitizer_summary", "ubsan.launch-nullability")
+
+
+class NullabilityFailureTests(ScriptTestCase):
+    """How the nullability mode behaves on a violation. A whole-suite run
+    (no TEST names) never aborts: the runtime recovers, every report goes to
+    a file, and the run fails on any report the suppressions do not hide,
+    naming the tests. A targeted run aborts the test host on the first such
+    report, unless --recover, and exits with _exit (abort_on_error=0), not
+    abort, so that macOS writes no crash report."""
+
+    @staticmethod
+    def options(call):
+        return call["ubsan"].split(":")
+
+    def test_whole_suite_does_not_abort(self):
+        status, out, calls = self.run_script("nullability")
+        self.assertEqual(status, 0, out)
+        options = self.options(calls[-1])
+        self.assertIn("halt_on_error=0", options)
+        self.assertTrue(any(o.startswith("suppressions=") for o in options), options)
+        self.assertIn("Verdict: PASS: no report outside the baseline; 0 report(s) accepted by it.", out)
+        self.assertIn("Whole suite: violations do not abort the test host", out)
+
+    def test_a_bare_target_name_is_the_whole_suite(self):
+        for tests in (("ModernTests",), ("ModernTests", "ModernTests/ProbeTests")):
+            status, out, calls = self.run_script("nullability", *tests)
+            self.assertEqual(status, 0, (tests, out))
+            self.assertIn("halt_on_error=0", self.options(calls[-1]), tests)
+            self.assertIn("Whole suite: violations do not abort the test host", out)
+            os.remove(self.record)
+
+    def test_whole_suite_minus_skips_does_not_abort(self):
+        status, out, calls = self.run_script("nullability", "--skip", "ModernTests/SlowTests")
+        self.assertEqual(status, 0, out)
+        self.assertIn("halt_on_error=0", self.options(calls[-1]))
+
+    def test_targeted_run_aborts_without_a_crash_report(self):
+        status, out, calls = self.run_script("nullability", "ModernTests/ProbeTests")
+        self.assertEqual(status, 0, out)
+        options = self.options(calls[-1])
+        self.assertIn("halt_on_error=1", options)
+        self.assertIn("abort_on_error=0", options)
+        self.assertTrue(any(o.startswith("suppressions=") for o in options), options)
+
+    def test_recover_for_a_targeted_run(self):
+        status, out, calls = self.run_script("nullability", "--recover", "ModernTests/ProbeTests")
+        self.assertEqual(status, 0, out)
+        options = self.options(calls[-1])
+        self.assertIn("halt_on_error=0", options)
+        self.assertNotIn("halt_on_error=1", options)
+        self.assertTrue(any(o.startswith("suppressions=") for o in options), options)
+
+    def test_reports_fail_the_run_and_name_their_tests(self):
+        status, out, _ = self.run_script("nullability", fixture=NULLABILITY_FIXTURE)
+        self.assertEqual(status, 1, out)
+        self.assertIn("Verdict: FAIL: 9 report(s) at 9 location(s) outside the baseline; 0 report(s) accepted by it.", out)
+        self.assertIn("tests:    SanitizerProbeTests.testNullabilityProbe", out)
+        self.assertIn("error: the nullability run failed its verdict: reports outside the baseline", out)
+
+    def test_a_baseline_written_from_a_collect_run_accepts_its_reports(self):
+        status, out, _ = self.run_script("nullability", "--collect", fixture=NULLABILITY_FIXTURE)
+        self.assertEqual(status, 0, out)
+        runs = os.path.join(self.root, "tmp", "sanitizers", "runs")
+        (run_dir,) = os.listdir(runs)
+        baseline = os.path.join(self.root, "docs", "swift-migration", "nullability-baseline.tsv")
+        p = subprocess.run(["python3", "-B", os.path.join(self.root, "tools", "swift_migration", "sanitizer_summary.py"),
+                            "--root", self.root, "--write-nullability-baseline", baseline,
+                            os.path.join(runs, run_dir, "reports")],
+                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, timeout=60)
+        self.assertEqual(p.returncode, 0, p.stdout)
+        # Nine locations, six keys: several are in one function with one
+        # message (iTermVariables.m lines 422 and 442, for example).
+        self.assertIn("Wrote 6 entries", p.stdout)
+        status, out, _ = self.run_script("nullability", fixture=NULLABILITY_FIXTURE)
+        self.assertEqual(status, 0, out)
+        self.assertIn("Baseline: %s (6 entries)" % baseline, out)
+        self.assertIn("Verdict: PASS: no report outside the baseline; 9 report(s) accepted by it.", out)
+
+    def test_reports_fail_a_targeted_aborting_run_too(self):
+        status, out, _ = self.run_script("nullability", "ModernTests/ProbeTests", fixture=NULLABILITY_FIXTURE)
+        self.assertEqual(status, 1, out)
+        self.assertIn("Verdict: FAIL: 9 report(s)", out)
+
+    def test_collect_keeps_its_meaning(self):
+        status, out, calls = self.run_script("nullability", "--collect", fixture=NULLABILITY_FIXTURE)
+        self.assertEqual(status, 0, out)
+        options = self.options(calls[-1])
+        self.assertIn("halt_on_error=0", options)
+        self.assertFalse(any(o.startswith("suppressions=") for o in options), options)
+        self.assertIn("Verdict (--collect, does not fail the run): FAIL: 9 report(s)", out)
+
+    def test_recover_is_refused_elsewhere(self):
+        for args in (("integer", "--recover", "ModernTests/A"), ("nullability", "--recover", "--collect"),
+                     ("thread", "--recover")):
+            status, out, calls = self.run_script(*args)
+            self.assertEqual(status, 2, (args, out))
+            self.assertEqual(calls, [], args)
+
+    def test_integer_mode_does_not_fail_on_reports(self):
+        # Only the nullability mode fails on a report; integer collects.
+        status, out, _ = self.run_script("integer-sign", "ModernTests/SignProbeTests", fixture=SIGN_FIXTURE)
+        self.assertEqual(status, 0, out)
+        self.assertNotIn("Verdict:", out)
+
+
+class SanitizerAppJobsTests(ScriptTestCase):
+    """sanitizer_app.sh --jobs N: xcodebuild -jobs N."""
+
+    def setUp(self):
+        super().setUp()
+        tools = os.path.dirname(self.script)
+        shutil.copy2(os.path.join(TOOLS, "sanitizer_app.sh"), tools)
+        os.makedirs(os.path.join(self.root, "plists"))
+        with open(os.path.join(self.root, "plists", "dev-iTerm2.plist"), "w") as f:
+            f.write("dev\n")
+        self.script = os.path.join(tools, "sanitizer_app.sh")
+
+    def test_jobs(self):
+        status, out, calls = self.run_script("--jobs", "3")
+        self.assertEqual(status, 0, out)
+        (call,) = calls
+        self.assertEqual(call["args"][0], "build")
+        self.assertEqual(SuiteOptionTests.follows(call, "-jobs"), ["3"])
+
+    def test_no_jobs_by_default(self):
+        status, out, calls = self.run_script()
+        self.assertEqual(status, 0, out)
+        self.assertNotIn("-jobs", calls[0]["args"])
+
+    def test_bad_jobs_and_unknown_arguments(self):
+        for args in (("--jobs",), ("--jobs", "0"), ("--frob",)):
+            status, out, calls = self.run_script(*args)
+            self.assertEqual(status, 2, (args, out))
+            self.assertEqual(calls, [], args)
 
 
 # An otool that writes its lines one at a time, the matching line first, then

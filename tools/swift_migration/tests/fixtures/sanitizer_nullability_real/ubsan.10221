@@ -1,0 +1,8 @@
+/Users/example/iterm2/sources/ExternalSessionState/iTermColorMap.m:796:60: runtime error: null pointer passed as argument 1, which is declared to never be null
+/Users/example/iterm2/tmp/sanitizers/nullability/Build/Intermediates.noindex/iTerm2.build/Development/iTerm2SharedARC.build/DerivedSources/iTerm2SharedARC-Swift.h:7613:54: note: _Nonnull type annotation specified here
+    #0 0x00010d5f3c98 in -[iTermColorMap savedColorsSlot]+0x134 (iTerm2.debug.dylib:arm64+0x973c98)
+    #1 0x00010dae8c68 in -[VT100ScreenState savedState]+0x22c (iTerm2.debug.dylib:arm64+0xe68c68)
+    #2 0x00010dbb3ab0 in -[VT100ScreenMutableState(TerminalDelegate) terminalDidHookSSHConductorWithParams:parentDepth:]+0x6ec (iTerm2.debug.dylib:arm64+0xf33ab0)
+    #3 0x00010d9efcac in -[VT100Terminal reallyExecuteToken:]+0x7ff8 (iTerm2.debug.dylib:arm64+0xd6fcac)
+
+SUMMARY: UndefinedBehaviorSanitizer: invalid-null-argument /Users/example/iterm2/sources/ExternalSessionState/iTermColorMap.m:796:60 

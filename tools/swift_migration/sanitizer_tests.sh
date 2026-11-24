@@ -8,33 +8,103 @@
 #   tools/swift_migration/sanitizer_tests.sh MODE [options] [TEST ...]
 #
 #   MODE is one of:
-#     nullability  -fsanitize=nullability on the Objective-C, C and C++. The
-#                  first violated nullability claim writes its report (with
-#                  its stack) to a file in the run's reports/ directory and
-#                  then aborts the test host, so the test fails and
-#                  tools/swift_migration/test_timing.py reports the log as
-#                  incomplete. The report is not in test.log (with --parallel
-#                  xcodebuild would not pass a worker's stderr on anyway);
-#                  the summary reads reports/ and test.log both. Reports
-#                  matching
+#     nullability  -fsanitize=nullability on the Objective-C, C and C++.
+#                  Reports matching
 #                  tools/swift_migration/sanitizer_nullability_suppressions.txt
-#                  (known, not yet triaged violations) are hidden: not
-#                  written anywhere and no abort. With --collect nothing
-#                  aborts and nothing is suppressed: every report goes to a
-#                  file, for triage.
+#                  are hidden by the runtime: not written anywhere and no
+#                  abort. The file stays empty (the owner chose guards over
+#                  suppressions as the fix for a violation). Every other
+#                  report goes, with its stack, to a file in the run's
+#                  reports/ directory. After the run the summary
+#                  (sanitizer_summary.py --fail-on-reports
+#                  --nullability-baseline) compares them with
+#                  docs/swift-migration/nullability-baseline.tsv, the known,
+#                  not yet triaged violations (proposed 2026-11-23, awaiting
+#                  the owner's confirmation; owner-queue.md Q26), keyed by
+#                  check kind, file, function, message and the declaring
+#                  header's base name, not line (the file's header says
+#                  what still shares an entry). A report outside it fails
+#                  the run and is listed with the tests it came from,
+#                  reports declared in a generated Swift header first; an
+#                  incomplete report (cut off before its stack) or an
+#                  unparsable report file fails it too; entries no report
+#                  matched are listed as candidates for removal; the
+#                  summary ends with "Verdict: PASS" or "Verdict: FAIL".
+#                  Write or refresh the baseline from a
+#                  whole-suite --collect run, with this checkout's script
+#                  (or pass --root naming the checkout that ran):
 #
-#                  The abort comes from UBSAN_OPTIONS=halt_on_error=1 on a
-#                  recoverable build, not from -fno-sanitize-recover: the
-#                  runtime calls abort after an unrecoverable check even when
-#                  the report is suppressed, and the app violates a claim
-#                  while launching (iTermVariables.m), so with
-#                  -fno-sanitize-recover no test could run at all. The same
-#                  build serves both the aborting run and --collect.
+#                    python3 -B tools/swift_migration/sanitizer_summary.py \
+#                        --write-nullability-baseline \
+#                        docs/swift-migration/nullability-baseline.tsv \
+#                        tmp/sanitizers/runs/nullability-<time>/reports
 #
-#                  Until the first triage of reports, ordinary tests also
-#                  violate claims (VT100ScreenTests aborts in
-#                  iTermLineBlockArray.m on most of its tests), and each
-#                  abort costs a test-host restart. Use --collect to survey.
+#                  It prints every entry added (each needs a row in
+#                  nullability-triage.md) and keeps entries not seen unless
+#                  --drop-unseen. What a report does to the test host
+#                  depends on the run:
+#
+#                  Whole suite (no TEST names, or a TEST naming only the
+#                  target, ModernTests; with or without --skip), and
+#                  any run with --recover: nothing aborts
+#                  (halt_on_error=0). The test goes on and so does the host;
+#                  the run fails afterwards on reports outside the
+#                  baseline. This is the form
+#                  for gate step 7. The aborting form is refused for the
+#                  whole suite (there is no option for it): each abort
+#                  relaunches the app under the sanitizer, and on 2026-11-23
+#                  the orchestrator's nine-minute whole-suite run in this
+#                  form that afternoon aborted 193 tests across 197 test
+#                  hosts, and the load average reached about 150, with two
+#                  other agents' test runs going at the same time. (The
+#                  load of 467 earlier that day came from the night
+#                  session's three concurrent heavy jobs.)
+#
+#                  Targeted (TEST names, without --recover): the first
+#                  report ends the test host, so the test that violated the
+#                  claim fails at once and test_timing.py reports the log as
+#                  incomplete. The host ends with _exit(1)
+#                  (halt_on_error=1:abort_on_error=0), not abort(), so macOS
+#                  writes no crash report and runs no ReportCrash or spindump
+#                  for it; xcodebuild still relaunches the host for the
+#                  remaining tests. For targeted classes only.
+#
+#                  --collect: nothing aborts and nothing is suppressed, every
+#                  report goes to a file for triage, and reports do not fail
+#                  the run (the verdict is printed as information).
+#
+#                  Which test a report came from: a test method on the
+#                  report's stack names it (a violation on the test's own
+#                  thread has one; one from the host's launch, or from work a
+#                  test left on another thread, has none). The UBSan runtime
+#                  reports a source location once per process, so a later
+#                  test in the same host that violates the same claim is not
+#                  named. The reports are not in test.log (with --parallel
+#                  xcodebuild would not pass a worker's stderr on anyway);
+#                  the summary reads reports/ and test.log both.
+#
+#                  Not built, a test-target change: a test observer in
+#                  ModernTests that, as each test starts, points the
+#                  runtime's report path at the test with
+#                  __sanitizer_set_report_path("<reports>/ubsan.<Class>.<method>")
+#                  (the reports directory is the log_path in UBSAN_OPTIONS,
+#                  which the host's environment carries) and restores it
+#                  when the test ends, and adds a teardown block that records
+#                  an issue on the test if its file exists. Then every report
+#                  names its test and the test fails in place. The summary
+#                  already reads a test from such a file name. A
+#                  __ubsan_on_report defined in the test bundle cannot do
+#                  this: the bundle is loaded after launch, and the
+#                  runtime's weak default is replaced only by a definition
+#                  in an image loaded at launch (an experiment, 2026-11-23).
+#
+#                  Every report needs a recoverable build, and the halt
+#                  comes from halt_on_error=1, not from
+#                  -fno-sanitize-recover: the runtime calls abort after an
+#                  unrecoverable check even when the report is suppressed,
+#                  and the app violates a claim while launching
+#                  (iTermVariables.m), so with -fno-sanitize-recover no test
+#                  could run at all. The same build serves every form.
 #     integer      The integer discovery group,
 #                  -fsanitize=signed-integer-overflow,implicit-conversion,
 #                  float-cast-overflow,integer-divide-by-zero,shift,bounds, in
@@ -99,11 +169,34 @@
 #                   (each commits one violation, to show the mode works). Without
 #                   it they are skipped, as they are under tools/run_tests.expect.
 #     --collect     nullability: report without aborting, every report to a
-#                   file, no suppressions (for the triage of reports).
+#                   file, no suppressions, reports do not fail the run (for
+#                   the triage of reports).
 #                   thread: compare with the baseline but do not fail the run
 #                   on reports (for building or re-judging the baseline).
+#     --recover     nullability, targeted run: do not abort on a report; the
+#                   run still fails on it. (A whole-suite run always works
+#                   this way.) Refused in the other modes and with --collect.
 #     --parallel    Run test classes in parallel worker processes, like
-#                   tools/run_tests.expect -parallel.
+#                   tools/run_tests.expect -parallel, and with the same cap:
+#                   two workers (-parallel-testing-worker-count 2
+#                   -maximum-parallel-testing-workers 2) unless --workers.
+#     --workers N   With --parallel: N workers instead of two (both options
+#                   above, with N). Refused without --parallel.
+#     --skip ModernTests/Class[/test]
+#                   Leave that class or test out (-skip-testing:, once per
+#                   --skip; repeatable). With TEST names, xcodebuild runs
+#                   what the TEST names select minus what --skip names; with
+#                   none, the whole suite minus what --skip names. A run
+#                   whose --skip leaves nothing fails as one that executed no
+#                   tests. It works with --collect and --no-build, and is
+#                   refused with --build-only, as is --workers: both act on
+#                   the test step only. What was skipped, the worker count
+#                   and the job limit are stated with the rest of what is in
+#                   force (console and summary.txt).
+#     --jobs N      At most N concurrent build tasks (xcodebuild -jobs N), on
+#                   the build step and on the test step (which brings the
+#                   build up to date). Without it xcodebuild chooses (about
+#                   one per core).
 #     --build-only  Build for testing and stop.
 #     --no-build    Skip the separate build-for-testing step. The test step
 #                   is `xcodebuild test`, which still brings the build up to
@@ -123,6 +216,13 @@
 #   tools/swift_migration/sanitizer_tests.sh integer-sign --parallel
 #   tools/swift_migration/sanitizer_tests.sh thread --parallel
 #   tools/swift_migration/sanitizer_tests.sh plain --parallel
+#   nice -n 15 tools/swift_migration/sanitizer_tests.sh integer --parallel --jobs 4 \
+#       --skip ModernTests/FramerFlowTwoHopSimulationTests
+#
+# Priority: started under nice, the script's xcodebuild, its build service
+# (SWBBuildService, a child of xcodebuild) and the compilers run at that
+# priority. The test hosts do not: xcodebuild has them launched outside its
+# process tree, so they run at normal priority whatever the script's.
 #
 # Where things go:
 #   tmp/sanitizers/<mode>/Build/                The mode's own SYMROOT and OBJROOT.
@@ -207,9 +307,11 @@
 #
 # Exit status: xcodebuild's, except 1 when xcodebuild succeeded but the run
 # executed no tests (a misspelled TEST runs nothing and would look clean;
-# skipped tests count as executed), the summary could not be made, or (thread
+# skipped tests count as executed), the summary could not be made, (thread
 # mode without --collect) a report is outside the baseline or cannot be
-# compared with it, and 2 for a usage error or a refused checkout path. So a
+# compared with it, or (nullability mode without --collect) there is a report
+# that neither the suppressions nor the nullability baseline accepts, or a
+# report file that does not parse (a host killed while writing it), and 2 for a usage error or a refused checkout path. So a
 # thread run exits 0 only if the tests passed and every report is in the
 # baseline.
 
@@ -224,18 +326,48 @@ usage() {
 MODE=""
 PROBE=NO
 COLLECT=NO
+RECOVER=NO
 PARALLEL=NO
+WORKERS=""
+JOBS=""
 DO_BUILD=YES
 DO_TEST=YES
 TESTS=()
+SKIPS=()
+# The value of option $1, which is $2; fails with status 2 if there is none.
+option_value() {
+    case "${2-}" in
+        ''|-*) echo "error: $1 needs a value" >&2; return 2 ;;
+    esac
+}
 while [ $# -gt 0 ]; do
     case "$1" in
         -h|--help) usage; exit 0 ;;
         --probe) PROBE=YES ;;
         --collect) COLLECT=YES ;;
+        --recover) RECOVER=YES ;;
         --parallel|-parallel) PARALLEL=YES ;;
         --build-only) DO_TEST=NO ;;
         --no-build) DO_BUILD=NO ;;
+        --skip)
+            option_value "$1" "${2-}" || exit 2
+            case "$2" in
+                */*/*/*|/*|*/|*//*|*/*/) echo "error: --skip takes Target/Class or Target/Class/test, not $2" >&2; exit 2 ;;
+                */*) ;;
+                *) echo "error: --skip takes Target/Class or Target/Class/test, not $2" >&2; exit 2 ;;
+            esac
+            SKIPS+=("$2")
+            shift ;;
+        --workers)
+            option_value "$1" "${2-}" || exit 2
+            san_check_count "$1" "$2" || exit 2
+            WORKERS="$2"
+            shift ;;
+        --jobs)
+            option_value "$1" "${2-}" || exit 2
+            san_check_count "$1" "$2" || exit 2
+            JOBS="$2"
+            shift ;;
         nullability|integer|integer-sign|thread|plain)
             if [ -n "$MODE" ]; then echo "error: more than one mode" >&2; exit 2; fi
             MODE="$1" ;;
@@ -252,6 +384,34 @@ if [ "$COLLECT" = YES ] && [ "$MODE" != nullability ] && [ "$MODE" != thread ]; 
     echo "error: --collect applies to the nullability and thread modes; the other modes always collect" >&2
     exit 2
 fi
+if [ "$RECOVER" = YES ] && { [ "$MODE" != nullability ] || [ "$COLLECT" = YES ]; }; then
+    echo "error: --recover applies to the nullability mode without --collect (--collect never aborts)" >&2
+    exit 2
+fi
+# The nullability mode aborts the test host on a report only in a targeted
+# run (TEST names given) without --recover. A whole-suite run never does:
+# each abort relaunches the app under the sanitizer, and on 2026-11-23 one
+# such run had 197 test hosts in nine minutes.
+# A TEST that names only the target (ModernTests, no class) selects the
+# whole suite, as no TEST does.
+WHOLE_SUITE=YES
+for t in ${TESTS[@]+"${TESTS[@]}"}; do
+    case "$t" in
+        */*) WHOLE_SUITE=NO ;;
+        *) WHOLE_SUITE=YES; break ;;
+    esac
+done
+if [ "$MODE" = nullability ] && [ "$COLLECT" = NO ] && [ "$WHOLE_SUITE" = YES ]; then
+    RECOVER=YES
+fi
+if [ "$DO_TEST" = NO ] && { [ ${#SKIPS[@]} -gt 0 ] || [ -n "$WORKERS" ]; }; then
+    echo "error: --skip and --workers apply to the test step, which --build-only leaves out" >&2
+    exit 2
+fi
+if [ -n "$WORKERS" ] && [ "$PARALLEL" = NO ]; then
+    echo "error: --workers needs --parallel" >&2
+    exit 2
+fi
 
 san_check_root_path || exit 2
 
@@ -259,6 +419,7 @@ BUILD_DIR="$SAN_ROOT/tmp/sanitizers/$MODE"
 RUN_DIR="$SAN_ROOT/tmp/sanitizers/runs/$MODE-$(date +%Y%m%d-%H%M%S)"
 REPORTS="$RUN_DIR/reports"
 THREAD_BASELINE="$SAN_ROOT/docs/swift-migration/thread-baseline.tsv"
+NULLABILITY_BASELINE="$SAN_ROOT/docs/swift-migration/nullability-baseline.tsv"
 mkdir -p "$BUILD_DIR" "$REPORTS"
 
 # What is in force, stated on the console and at the top of summary.txt.
@@ -266,6 +427,18 @@ IN_FORCE="Ignore list (C, Objective-C, C++ compiles): $SAN_IGNORELIST ($(san_cou
 if [ "$MODE" = nullability ] && [ "$COLLECT" = NO ]; then
     IN_FORCE+=$'\n'"Suppressions: $SAN_NULLABILITY_SUPPRESSIONS ($(san_count_entries "$SAN_NULLABILITY_SUPPRESSIONS") entries)."
     IN_FORCE+=$'\n'"Reports matching a suppression are hidden: not written anywhere, and they do not abort. Run with --collect to see them."
+    IN_FORCE+=$'\n'"Baseline: $NULLABILITY_BASELINE ($(( $(san_count_entries "$NULLABILITY_BASELINE") - 1 )) entries), compared after the run; a report outside it fails the run."
+    if [ "$RECOVER" = YES ]; then
+        if [ "$WHOLE_SUITE" = YES ]; then
+            IN_FORCE+=$'\n'"Whole suite: violations do not abort the test host (the aborting mode is for targeted classes)."
+        fi
+        IN_FORCE+=$'\n'"Recover: every report not suppressed goes to a file and the test goes on; a report outside the baseline fails the run, listed with the tests it came from."
+    else
+        IN_FORCE+=$'\n'"Aborting: the first report not suppressed ends the test host (with _exit, abort_on_error=0, so no crash report), which fails the test; a report outside the baseline fails the run."
+    fi
+elif [ "$MODE" = nullability ]; then
+    IN_FORCE+=$'\n'"Suppressions: none."
+    IN_FORCE+=$'\n'"--collect: nothing aborts and every report is listed; reports do not fail the run."
 else
     IN_FORCE+=$'\n'"Suppressions: none."
 fi
@@ -288,12 +461,16 @@ case "$MODE" in
         LDFLAGS+=" -fsanitize=$SAN_NULLABILITY_GROUP"
         if [ "$COLLECT" = YES ]; then
             export TEST_RUNNER_UBSAN_OPTIONS="$SAN_UBSAN_BASE_OPTIONS:halt_on_error=0:log_path=$REPORTS/ubsan"
+        elif [ "$RECOVER" = YES ]; then
+            export TEST_RUNNER_UBSAN_OPTIONS="$SAN_UBSAN_BASE_OPTIONS:halt_on_error=0:log_path=$REPORTS/ubsan:suppressions=$SAN_NULLABILITY_SUPPRESSIONS"
         else
-            # log_path: the report goes to a file, written before the abort,
+            # log_path: the report goes to a file, written before the halt,
             # and not to stderr. stderr would reach test.log only in a
             # serial run: xcodebuild does not pass on the stderr of
-            # parallel workers.
-            export TEST_RUNNER_UBSAN_OPTIONS="$SAN_UBSAN_BASE_OPTIONS:halt_on_error=1:log_path=$REPORTS/ubsan:suppressions=$SAN_NULLABILITY_SUPPRESSIONS"
+            # parallel workers. abort_on_error=0: the runtime ends the
+            # process with _exit(exitcode) (1) instead of abort(), so macOS
+            # writes no crash report (.ips) and runs no ReportCrash for it.
+            export TEST_RUNNER_UBSAN_OPTIONS="$SAN_UBSAN_BASE_OPTIONS:halt_on_error=1:abort_on_error=0:log_path=$REPORTS/ubsan:suppressions=$SAN_NULLABILITY_SUPPRESSIONS"
         fi
         ;;
     integer|integer-sign)
@@ -329,6 +506,22 @@ ARGS=(
     "OTHER_CFLAGS=$CFLAGS"
     "OTHER_LDFLAGS=$LDFLAGS"
 )
+# -jobs on both steps: `xcodebuild test` brings the build up to date too.
+if [ -n "$JOBS" ]; then
+    ARGS+=(-jobs "$JOBS")
+fi
+san_parallel_args "$PARALLEL" "$WORKERS"
+# Stated with the rest of what is in force, so summary.txt says whether the
+# run was the whole suite.
+if [ -n "$JOBS" ]; then
+    IN_FORCE+=$'\n'"Build jobs: at most $JOBS."
+fi
+if [ "$DO_TEST" = YES ] && [ "$PARALLEL" = YES ]; then
+    IN_FORCE+=$'\n'"Parallel: ${WORKERS:-$SAN_DEFAULT_WORKERS} workers."
+fi
+if [ ${#SKIPS[@]} -gt 0 ]; then
+    IN_FORCE+=$'\n'"Skipped: ${SKIPS[*]}"
+fi
 
 cd "$SAN_ROOT"
 echo "Mode: $MODE. Build directory: $BUILD_DIR. Run directory: $RUN_DIR"
@@ -371,7 +564,8 @@ build_step() {
     xcodebuild build-for-testing "${ARGS[@]}" > "$RUN_DIR/build.log" 2>&1
 }
 test_step() {
-    xcodebuild test "${ARGS[@]}" ${ONLY[@]+"${ONLY[@]}"} -parallel-testing-enabled "$PARALLEL" 2>&1 | tee "$RUN_DIR/test.log"
+    xcodebuild test "${ARGS[@]}" ${ONLY[@]+"${ONLY[@]}"} ${SKIP_ARGS[@]+"${SKIP_ARGS[@]}"} \
+        "${SAN_PARALLEL_ARGS[@]}" 2>&1 | tee "$RUN_DIR/test.log"
     return "${PIPESTATUS[0]}"
 }
 
@@ -407,6 +601,10 @@ ONLY=()
 for t in ${TESTS[@]+"${TESTS[@]}"}; do
     ONLY+=("-only-testing:$t")
 done
+SKIP_ARGS=()
+for t in ${SKIPS[@]+"${SKIPS[@]}"}; do
+    SKIP_ARGS+=("-skip-testing:$t")
+done
 echo "Testing (log: $RUN_DIR/test.log)..."
 START=$(date +%s)
 run_in_group test_step
@@ -428,6 +626,15 @@ if [ "$MODE" = thread ]; then
     if [ "$COLLECT" = YES ]; then
         SUMMARY_ARGS+=(--collect)
     fi
+elif [ "$MODE" = nullability ]; then
+    # A report outside the nullability baseline (after the empty runtime
+    # suppressions), an incomplete report or an unparsable report file
+    # fails the run (with --collect the verdict is printed and fails
+    # nothing).
+    SUMMARY_ARGS=(--fail-on-reports --nullability-baseline "$NULLABILITY_BASELINE")
+    if [ "$COLLECT" = YES ]; then
+        SUMMARY_ARGS+=(--collect)
+    fi
 fi
 python3 -B "$SAN_HERE/sanitizer_summary.py" "$REPORTS" --console "$RUN_DIR/test.log" \
     --test-log "$RUN_DIR/test.log" ${SUMMARY_ARGS[@]+"${SUMMARY_ARGS[@]}"} | tee -a "$RUN_DIR/summary.txt"
@@ -436,6 +643,8 @@ if [ "$SUMMARY_STATUS" -eq 3 ]; then
     echo "error: the run executed no tests; check the TEST names. Its report count proves nothing." >&2
 elif [ "$SUMMARY_STATUS" -eq 1 ] && [ "$MODE" = thread ]; then
     echo "error: the thread sanitizer reported races outside the baseline, or reports that cannot be compared with it (see the verdict above and docs/swift-migration/thread-baseline.md)" >&2
+elif [ "$SUMMARY_STATUS" -eq 1 ] && [ "$MODE" = nullability ]; then
+    echo "error: the nullability run failed its verdict: reports outside the baseline, incomplete reports or report files that do not parse (see the verdict above, with the tests the reports came from; docs/swift-migration/nullability.md section 7)" >&2
 elif [ "$SUMMARY_STATUS" -ne 0 ]; then
     echo "error: sanitizer_summary.py failed with status $SUMMARY_STATUS" >&2
 fi
