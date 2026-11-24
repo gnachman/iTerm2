@@ -224,3 +224,9 @@ Bug Fixes:
   profile then crashed iTerm2. The offer now
   appears only for sessions restored from a
   saved arrangement.
+- Programs that track the mouse, such as
+  Claude Code, now get the right cell when you
+  click or drag on right-to-left text. Before,
+  they got the column the mouse was in, so
+  selecting Persian text selected something
+  else. Thanks to Nimanou (nuved) for the fix.

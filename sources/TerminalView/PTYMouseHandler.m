@@ -1459,7 +1459,9 @@ typedef NS_ENUM(NSUInteger, iTermScrollWheelDisposition) {
         *reportableOut = YES;
     }
 
-    VT100GridCoord coord = [self.mouseDelegate mouseHandlerCoordForPointInView:point];
+    const VT100GridCoord coord =
+        [self.mouseDelegate mouseHandler:self
+           reportableCoordForVisualCoord:[self.mouseDelegate mouseHandlerCoordForPointInView:point]];
     const CGSize delta = [self.mouseDelegate mouseHandlerAccumulatedDelta:self forEvent:event];
     DLog(@"delta=%@", NSStringFromSize(delta));
     if (deltaOut) {
@@ -1705,7 +1707,11 @@ typedef NS_ENUM(NSUInteger, iTermScrollWheelDisposition) {
                  sideEffects:(iTermClickSideEffects)sideEffects {
     const NSPoint point =
     [self.mouseDelegate mouseHandler:self viewCoordForEvent:event clipped:NO];
-    const VT100GridCoord coord = [self.mouseDelegate mouseHandlerCoordForPointInView:point];
+    // Use the same cell a mouse report would send so the session's mouse info
+    // agrees with what the program received on a bidi-reordered line.
+    const VT100GridCoord coord =
+        [self.mouseDelegate mouseHandler:self
+           reportableCoordForVisualCoord:[self.mouseDelegate mouseHandlerCoordForPointInView:point]];
     iTermMouseState state;
     switch (event.type) {
         case NSEventTypeLeftMouseUp:

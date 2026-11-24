@@ -4046,6 +4046,21 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     return [extractor logicalCoordForVisualCoord:visualCoord];
 }
 
+- (VT100GridCoord)mouseReportCoordForVisualCoord:(VT100GridCoord)visualCoord {
+    // This runs for every reported mouse event, including any-event motion, so
+    // look up the line's bidi info directly instead of building an extractor
+    // and copying the line.
+    if (![iTermPreferences bidiEnabled]) {
+        return visualCoord;
+    }
+    const int firstLiveLine = [_dataSource numberOfLines] - [_dataSource height];
+    iTermBidiDisplayInfo *bidi = [_dataSource bidiInfoForLine:visualCoord.y + firstLiveLine];
+    if (!bidi) {
+        return visualCoord;
+    }
+    return VT100GridCoordMake([bidi logicalForVisual:visualCoord.x], visualCoord.y);
+}
+
 - (BOOL)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView {
     if (!_selection.live) {
         return NO;
@@ -8335,6 +8350,11 @@ static NSString *iTermStringFromRange(NSRange range) {
     coord.x = MAX(0, coord.x);
     coord.y = MAX(0, coord.y);
     return coord;
+}
+
+- (VT100GridCoord)mouseHandler:(PTYMouseHandler *)handler
+    reportableCoordForVisualCoord:(VT100GridCoord)visualCoord {
+    return [self mouseReportCoordForVisualCoord:visualCoord];
 }
 
 - (NSPoint)mouseHandlerReportablePointForPointInView:(NSPoint)point {

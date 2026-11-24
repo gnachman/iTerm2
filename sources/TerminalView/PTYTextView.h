@@ -885,6 +885,12 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries;
 + (int)accessibilityLogicalXForVisualX:(int)visualX
                               bidiInfo:(iTermBidiDisplayInfo *)bidiInfo;
 
+// The coordinate to send in a mouse report when the mouse is over `visualCoord`,
+// a column and a row of the live screen. A program that tracks the mouse knows
+// only the cells it wrote, so on a bidi-reordered line it gets the cell that is
+// drawn under the mouse, not the column the mouse is in.
+- (VT100GridCoord)mouseReportCoordForVisualCoord:(VT100GridCoord)visualCoord;
+
 // Best-effort VISUAL column span for a LOGICAL column range on one line, for
 // accessibility bounds. A logical range can be visually discontiguous on a bidi
 // line; this returns the tight bounding visual span (correct for VoiceOver focus
