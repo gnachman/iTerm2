@@ -20973,6 +20973,7 @@
 				C2208D973E2B454B2F60751E /* TabBarOrder.swift in Sources */,
 				615ED2799FC6812297162B2A /* TabBarOrderController.swift in Sources */,
 				CCA4BAAD4E3C42A2F57C67B0 /* RailroadWidthTable.swift in Sources */,
+				A6C762A61B45C52B00E3C992 /* iTermApplication+Scripting.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -21208,7 +21209,6 @@
 				A6C762CC1B45C52B00E3C992 /* iTermCursor.m in Sources */,
 				A6C763CD1B45C52B00E3C992 /* VT100XtermParser.m in Sources */,
 				A62C3B321BCC24AB00B5629D /* iTermRecentDirectoryMO.m in Sources */,
-				A6C762A61B45C52B00E3C992 /* iTermApplication+Scripting.m in Sources */,
 				A6C7632F1B45C52B00E3C992 /* iTermDropDownFindViewController.m in Sources */,
 				A6CEC1111DCE8146009F4FD2 /* GPBUnknownFieldSet.m in Sources */,
 				A6C763551B45C52B00E3C992 /* iTermOpenQuicklyTableRowView.m in Sources */,
