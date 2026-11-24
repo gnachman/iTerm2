@@ -180,7 +180,6 @@
 		1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */; };
 		1D53FD15181C4B4B00524D4F /* FindContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D53FD13181C4B4B00524D4F /* FindContext.h */; };
 		1D5655C919AD2B1A001C460B /* PTYTab+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D5655C719AD2B1A001C460B /* PTYTab+Scripting.h */; };
-		1D5655CE19AD2B9B001C460B /* iTermApplication+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D5655CC19AD2B9B001C460B /* iTermApplication+Scripting.h */; };
 		1D5FDD511208E8F000C46BA3 /* ITAddressBookMgr.h in Headers */ = {isa = PBXBuildFile; fileRef = 20E74F4804E9089700000106 /* ITAddressBookMgr.h */; };
 		1D5FDD5A1208E8F000C46BA3 /* PSMYosemiteTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = DD02572609CB9398008F320C /* PSMYosemiteTabStyle.h */; };
 		1D5FDD5B1208E8F000C46BA3 /* PSMOverflowPopUpButton.h in Headers */ = {isa = PBXBuildFile; fileRef = DD02572809CB9398008F320C /* PSMOverflowPopUpButton.h */; };
@@ -369,7 +368,6 @@
 		1D6ED90019AEA20D005A7799 /* PTYTab+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D5655C719AD2B1A001C460B /* PTYTab+Scripting.h */; };
 		1D6ED90119AEA20D005A7799 /* iTermLaunchServices.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E713B818FCCDD1008D94DD /* iTermLaunchServices.h */; };
 		1D6ED90219AEA20D005A7799 /* BellTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC0C142D7F5F0016228A /* BellTrigger.h */; };
-		1D6ED90319AEA20D005A7799 /* iTermApplication+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D5655CC19AD2B9B001C460B /* iTermApplication+Scripting.h */; };
 		1D6ED90419AEA20D005A7799 /* VT100WorkingDirectory.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30F3186D150A007F550F /* VT100WorkingDirectory.h */; };
 		1D6ED90519AEA20D005A7799 /* ScriptTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC10142D7F970016228A /* ScriptTrigger.h */; };
 		1D6ED90619AEA20D005A7799 /* AlertTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC14142D7FC10016228A /* AlertTrigger.h */; };
@@ -3527,7 +3525,7 @@
 		A6C760481B45C4CF00E3C992 /* SSKeychainQuery.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA7C8B1923E86400DF1410 /* SSKeychainQuery.h */; };
 		A6C760491B45C4CF00E3C992 /* iTermTip.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8BBA8F1B33529E0005A852 /* iTermTip.h */; };
 		A6C7604A1B45C4CF00E3C992 /* NSTableColumn+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA1C1F01A2E49A3007381D3 /* NSTableColumn+iTerm.h */; };
-		A6C762A61B45C52B00E3C992 /* iTermApplication+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D5655CD19AD2B9B001C460B /* iTermApplication+Scripting.m */; };
+		0ED6711868E6F0CA1AA5CDA1 /* iTermApplication+Scripting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2AAC08F9DE7DFF4A3E70203 /* iTermApplication+Scripting.swift */; };
 		A6C762A71B45C52B00E3C992 /* iTermNewWindowCommand.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE5419A4591E001E5C75 /* iTermNewWindowCommand.m */; };
 		A6C762A91B45C52B00E3C992 /* PTYTab+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D5655C819AD2B1A001C460B /* PTYTab+Scripting.m */; };
 		A6C762AA1B45C52B00E3C992 /* PTYWindow+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE4E199F302C001E5C75 /* PTYWindow+Scripting.m */; };
@@ -5495,8 +5493,7 @@
 		1D53FD18181C700B00524D4F /* VT100TerminalDelegate.h */ = {isa = PBXFileReference; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100TerminalDelegate.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D5655C719AD2B1A001C460B /* PTYTab+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PTYTab+Scripting.h"; sourceTree = "<group>"; };
 		1D5655C819AD2B1A001C460B /* PTYTab+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "PTYTab+Scripting.m"; sourceTree = "<group>"; };
-		1D5655CC19AD2B9B001C460B /* iTermApplication+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "iTermApplication+Scripting.h"; sourceTree = "<group>"; };
-		1D5655CD19AD2B9B001C460B /* iTermApplication+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "iTermApplication+Scripting.m"; sourceTree = "<group>"; };
+		F2AAC08F9DE7DFF4A3E70203 /* iTermApplication+Scripting.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "iTermApplication+Scripting.swift"; sourceTree = "<group>"; };
 		1D6578401CA5E90900358E62 /* PSMDarkHighContrastTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PSMDarkHighContrastTabStyle.h; sourceTree = "<group>"; };
 		1D6578411CA5E90900358E62 /* PSMDarkHighContrastTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PSMDarkHighContrastTabStyle.m; sourceTree = "<group>"; };
 		1D67AAA714284BF300D5DA4E /* ToolNotes.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolNotes.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -11209,8 +11206,7 @@
 			children = (
 				A6435114233B195D00828AF6 /* iTermApplescriptPythonCommands.h */,
 				A6435115233B195D00828AF6 /* iTermApplescriptPythonCommands.m */,
-				1D5655CC19AD2B9B001C460B /* iTermApplication+Scripting.h */,
-				1D5655CD19AD2B9B001C460B /* iTermApplication+Scripting.m */,
+				F2AAC08F9DE7DFF4A3E70203 /* iTermApplication+Scripting.swift */,
 				A6C7DE5319A4591E001E5C75 /* iTermNewWindowCommand.h */,
 				A6C7DE5419A4591E001E5C75 /* iTermNewWindowCommand.m */,
 				A665C1CE243A606C00F623F0 /* iTermRequestCookieCommand.h */,
@@ -15830,7 +15826,6 @@
 				1D6ED90019AEA20D005A7799 /* PTYTab+Scripting.h in Headers */,
 				1D6ED90119AEA20D005A7799 /* iTermLaunchServices.h in Headers */,
 				1D6ED90219AEA20D005A7799 /* BellTrigger.h in Headers */,
-				1D6ED90319AEA20D005A7799 /* iTermApplication+Scripting.h in Headers */,
 				A65B72A31B3134FB00F947A7 /* iTermTipController.h in Headers */,
 				1D6ED90419AEA20D005A7799 /* VT100WorkingDirectory.h in Headers */,
 				A60BD9141B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.h in Headers */,
@@ -16179,7 +16174,6 @@
 				1D5655C919AD2B1A001C460B /* PTYTab+Scripting.h in Headers */,
 				A6E713BA18FCCDD1008D94DD /* iTermLaunchServices.h in Headers */,
 				1D9DCC0E142D7F5F0016228A /* BellTrigger.h in Headers */,
-				1D5655CE19AD2B9B001C460B /* iTermApplication+Scripting.h in Headers */,
 				A68A30FD186D150B007F550F /* VT100WorkingDirectory.h in Headers */,
 				1D9DCC12142D7F970016228A /* ScriptTrigger.h in Headers */,
 				1D9DCC16142D7FC10016228A /* AlertTrigger.h in Headers */,
@@ -20973,7 +20967,7 @@
 				C2208D973E2B454B2F60751E /* TabBarOrder.swift in Sources */,
 				615ED2799FC6812297162B2A /* TabBarOrderController.swift in Sources */,
 				CCA4BAAD4E3C42A2F57C67B0 /* RailroadWidthTable.swift in Sources */,
-				A6C762A61B45C52B00E3C992 /* iTermApplication+Scripting.m in Sources */,
+				0ED6711868E6F0CA1AA5CDA1 /* iTermApplication+Scripting.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
