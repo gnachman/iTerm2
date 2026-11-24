@@ -261,8 +261,11 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // The point size of section headings: that of the tab titles.
 @property(nonatomic, readonly) CGFloat sectionHeadingFontSize;
 // How far a vertical bar's tabs under a section heading sit in from its
-// leading edge. A guide line is drawn there.
+// leading edge.
 @property(nonatomic, readonly) CGFloat sectionTabIndent;
+// How far in from a section heading's leading edge its text starts and the
+// guide line beside its tabs runs. At most sectionTabIndent.
+@property(nonatomic, readonly) CGFloat sectionGuideOffset;
 // Set transiently while capturing a group drag image: when non-nil, only this
 // group's decoration and its sub-groups' are drawn. A sub-group's image then
 // leaves out the outline of the parent it sits in.

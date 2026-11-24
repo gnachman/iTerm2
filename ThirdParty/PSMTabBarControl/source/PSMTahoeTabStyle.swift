@@ -973,6 +973,11 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         return false
     }
 
+    // The selected tab's pill would cover a guide line at its edge.
+    @objc func sectionGuideGap() -> CGFloat {
+        return 6
+    }
+
     // The chip cell draws nothing; the whole group run's decoration (name
     // capsule + enclosing pill) is drawn here in -drawTabBar:, since the pill
     // spans multiple cells.

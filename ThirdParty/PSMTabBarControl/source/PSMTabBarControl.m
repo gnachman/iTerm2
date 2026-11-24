@@ -1726,6 +1726,11 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
 }
 
 - (CGFloat)sectionTabIndent {
+    const CGFloat gap = [_style respondsToSelector:@selector(sectionGuideGap)] ? MAX(0, [_style sectionGuideGap]) : 0;
+    return self.sectionGuideOffset + gap;
+}
+
+- (CGFloat)sectionGuideOffset {
     return 12;
 }
 
@@ -1820,7 +1825,7 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
     };
     [self fillSectionBackgroundsInRect:dirtyRect];
     const CGFloat hairline = 1.0 / MAX(1, self.window.backingScaleFactor);
-    const CGFloat indent = self.sectionTabIndent;
+    const CGFloat guideOffset = self.sectionGuideOffset;
     const CGFloat trailing = 10;
     const CGFloat textGap = 8;
     for (PSMTabBarCell *cell in [self cells]) {
@@ -1836,7 +1841,7 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
             continue;
         }
         // The guide line's x, so the line drops from under the text.
-        const CGFloat textX = NSMinX(frame) + indent;
+        const CGFloat textX = NSMinX(frame) + guideOffset;
         const CGFloat midY = round(NSMidY(frame));
         NSMutableAttributedString *text = [[[NSMutableAttributedString alloc] init] autorelease];
         NSString *detail = [group respondsToSelector:@selector(detail)] ? group.detail : nil;
@@ -1949,7 +1954,7 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
         selectedFrame = NSZeroRect;
         if (cell && [self sectionHeadingGroupForChip:cell]) {
             inSection = YES;
-            guideX = NSMinX(cell.frame) + self.sectionTabIndent;
+            guideX = NSMinX(cell.frame) + self.sectionGuideOffset;
             // The text is one line, centered, so this starts 2 under it.
             // Not from the frame's bottom, which some styles shorten.
             top = round(NSMidY(cell.frame) + self.sectionHeadingLineHeight / 2) + 2;

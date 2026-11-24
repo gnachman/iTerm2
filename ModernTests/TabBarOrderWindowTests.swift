@@ -420,6 +420,20 @@ final class TabBarOrderWindowTests: XCTestCase {
         XCTAssertTrue(fixture.terminal.tabView().selectedTabViewItem === tabs[1].tabViewItem)
     }
 
+    // Tahoe's selected tab is a rounded pill that would cover a guide line at
+    // its edge, so its tabs sit a little to the right of the line. A style
+    // whose tabs are flat fills keeps the line at the tab's edge.
+    func testTahoeTabsLeaveRoomForTheGuide() throws {
+        guard #available(macOS 26, *) else {
+            throw XCTSkip("Tahoe style needs macOS 26")
+        }
+        let bar = PSMTabBarControl(frame: NSRect(x: 0, y: 0, width: 200, height: 300))
+        bar.style = PSMYosemiteTabStyle()
+        XCTAssertEqual(bar.sectionTabIndent, bar.sectionGuideOffset)
+        bar.style = PSMTahoeDarkTabStyle()
+        XCTAssertGreaterThanOrEqual(bar.sectionTabIndent - bar.sectionGuideOffset, 4)
+    }
+
     // A section coming or going slides the rows into place. The slide keeps
     // headings where they belong and tabs under them indented.
     func testRowsKeepTheirIndentWhileSliding() throws {

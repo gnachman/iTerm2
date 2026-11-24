@@ -88,7 +88,7 @@ final class RichTabContentIntegrationTests: XCTestCase {
 
     // Edits the profile the most recent window was created with, as Settings
     // does.
-    private func set(_ key: String, _ value: Any?, guid: String? = nil) {
+    private func set(_ key: String, _ value: Any, guid: String? = nil) {
         guard let guid = guid ?? profileGUIDs.last,
               let profile = ProfileModel.sharedInstance().bookmark(withGuid: guid) else {
             XCTFail("No profile")

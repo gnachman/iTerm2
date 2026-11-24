@@ -151,6 +151,9 @@ NS_ASSUME_NONNULL_BEGIN
 // Whether the guide line beside a section's tabs marks the selected one. NO
 // for a style whose selected tab already stands out. YES if unimplemented.
 - (BOOL)sectionGuideMarksSelectedTab;
+// Room between the guide line beside a section's tabs and the tabs, for a
+// style whose tabs would cover a line at their edge. 0 if unimplemented.
+- (CGFloat)sectionGuideGap;
 // The normal height of a group header row in a vertical bar, for styles whose
 // tabBarHeight doesn't give it. Rows made taller for rich tab content don't
 // make the header taller.
