@@ -96,6 +96,10 @@ Improvements:
   until the status changes.
 
 Bug Fixes:
+- Paths and URLs no longer absorb the
+  full-width punctuation that follows them in
+  Chinese and Japanese text, so ⌘-click opens
+  the right file or link.
 - When a program turned on light/dark mode
   change reports and exited without turning
   them off, text like 997;1n appeared at the

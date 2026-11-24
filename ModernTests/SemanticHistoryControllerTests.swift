@@ -386,6 +386,36 @@ final class SemanticHistoryControllerTests: XCTestCase, iTermObject, iTermSemant
         assertStripsTrailingPunctuation(":")
     }
 
+    // Full-width CJK punctuation is part of the URL/filename character set, so it stays attached
+    // to the path unless it is explicitly trimmed.
+    func testGetFullPathStripsTrailingIdeographicFullStop() {
+        assertStripsTrailingPunctuation("。")
+    }
+
+    func testGetFullPathStripsTrailingFullWidthComma() {
+        assertStripsTrailingPunctuation("，")
+    }
+
+    func testGetFullPathStripsTrailingFullWidthCloseParen() {
+        assertStripsTrailingPunctuation("）")
+    }
+
+    func testGetFullPathStripsFullWidthCloseParenFollowedByFullStop() {
+        controller.fakeFileManager.files.insert(filename)
+        let cleaned = cleanedUpPath(filename + "）。", workingDirectory: workingDirectory)
+        XCTAssertEqual(cleaned.path, filename)
+        XCTAssertNil(cleaned.lineNumber)
+    }
+
+    func testGetFullPathStripsFullWidthBrackets() {
+        assertStripsDelimiters(open: "（", close: "）")
+        assertStripsDelimiters(open: "【", close: "】")
+        assertStripsDelimiters(open: "《", close: "》")
+        assertStripsDelimiters(open: "「", close: "」")
+        assertStripsDelimiters(open: "『", close: "』")
+        assertStripsDelimiters(open: "“", close: "”")
+    }
+
     func testGetFullPathExtractsLineNumber() {
         controller.fakeFileManager.files.insert(filename)
         let cleaned = cleanedUpPath(filename + ":123", workingDirectory: workingDirectory)
@@ -1058,6 +1088,50 @@ final class SemanticHistoryControllerTests: XCTestCase, iTermObject, iTermSemant
                                        workingDirectory: searchDirectory,
                                        trimWhitespace: false)
         XCTAssertNil(found.path)
+    }
+
+    // A full-width period after a file name is part of the filename character set, but it is not
+    // part of the file name. The clickable range must not include it, or clicking the path fails.
+    func testPathOfExistingFileExcludesFullWidthPunctuation() {
+        addFile("报告.md", in: searchDirectory)
+        let found = pathOfExistingFile(prefix: "\(searchDirectory)/报告",
+                                       suffix: ".md。",
+                                       workingDirectory: searchDirectory,
+                                       trimWhitespace: false)
+        XCTAssertEqual(found.path, "\(searchDirectory)/报告.md")
+        XCTAssertEqual(found.prefixChars, "\(searchDirectory)/报告".count)
+        XCTAssertEqual(found.suffixChars, ".md".count)
+    }
+
+    // When the candidate is wrapped in delimiters that are not split characters, the cleaner
+    // removes the delimiters before trimming punctuation. The finder must not then cut the
+    // closing delimiter off the returned path, or the path no longer cleans up to the file.
+    private func assertBracketedPathWithPunctuationStillOpens(open: String, close: String, punctuation: String,
+                                                              file: StaticString = #filePath, line: UInt = #line) {
+        addFile("foo.txt", in: searchDirectory)
+        let prefix = "\(open)fo"
+        let suffix = "o.txt\(punctuation)\(close)"
+        let found = pathOfExistingFile(prefix: prefix,
+                                       suffix: suffix,
+                                       workingDirectory: searchDirectory,
+                                       trimWhitespace: false)
+        XCTAssertEqual(found.path, prefix + suffix, file: file, line: line)
+        XCTAssertEqual(found.prefixChars, prefix.count, file: file, line: line)
+        XCTAssertEqual(found.suffixChars, suffix.count, file: file, line: line)
+        let reopened = cleanedUpPath(found.path, workingDirectory: searchDirectory)
+        XCTAssertEqual(reopened.path, "\(searchDirectory)/foo.txt", file: file, line: line)
+    }
+
+    func testPathOfExistingFileKeepsFullWidthBracketsAroundPathWithTrailingPunctuation() {
+        assertBracketedPathWithPunctuationStillOpens(open: "「", close: "」", punctuation: "。")
+    }
+
+    func testPathOfExistingFileKeepsSquareBracketsAroundPathWithTrailingPeriod() {
+        assertBracketedPathWithPunctuationStillOpens(open: "[", close: "]", punctuation: ".")
+    }
+
+    func testPathOfExistingFileKeepsCurlyQuotesAroundPathWithTrailingPeriod() {
+        assertBracketedPathWithPunctuationStillOpens(open: "“", close: "”", punctuation: ".")
     }
 
     // Regression test for issue 4927

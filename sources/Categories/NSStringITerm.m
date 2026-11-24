@@ -1120,7 +1120,17 @@ int decode_utf8_char(const unsigned char *datap,
     NSDictionary *wrappers = @{ @('('): @")",
                                 @('[') : @"]",
                                 @('"'): @"\"",
-                                @('\''): @"'" };
+                                @('\''): @"'",
+                                @((unichar)0xFF08): @"）",
+                                @((unichar)0xFF3B): @"］",
+                                @((unichar)0xFF5B): @"｝",
+                                @((unichar)0x3010): @"】",
+                                @((unichar)0x300A): @"》",
+                                @((unichar)0x3008): @"〉",
+                                @((unichar)0x300C): @"」",
+                                @((unichar)0x300E): @"』",
+                                @((unichar)0x201C): @"”",
+                                @((unichar)0x2018): @"’" };
     unichar c = [self characterAtIndex:0];
     NSString *closingString = wrappers[@(c)];
     NSString *string = self;
@@ -1198,7 +1208,9 @@ int decode_utf8_char(const unsigned char *datap,
 }
 
 - (NSString *)stringByRemovingTerminatingPunctuation {
-    NSCharacterSet *punctuationCharacterSet = [NSCharacterSet characterSetWithCharactersInString:[iTermAdvancedSettingsModel trailingPunctuationMarks]];
+    // Full-width CJK marks are always trimmed, independent of the user-configurable ASCII marks.
+    NSString *marks = [[iTermAdvancedSettingsModel trailingPunctuationMarks] stringByAppendingString:@"。，、；：！？）］｝」』】》〉”’"];
+    NSCharacterSet *punctuationCharacterSet = [NSCharacterSet characterSetWithCharactersInString:marks];
     NSRange range = [self rangeOfCharacterFromSet:punctuationCharacterSet options:(NSBackwardsSearch | NSAnchoredSearch)];
     if (range.length > 0 && range.location != NSNotFound) {
         return [self substringToIndex:range.location];

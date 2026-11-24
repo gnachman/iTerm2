@@ -474,6 +474,33 @@ final class NSStringITermCategoryTests: XCTestCase {
         }
     }
 
+    // Full-width CJK punctuation is a member of the IDN character set, so a run of URL
+    // characters includes it. It must not become part of the URL.
+    func testRangeOfURLInString_WithSchemeAndFullWidthPunctuation() {
+        let strings = ["http://example.com。",
+                       "http://example.com，",
+                       "http://example.com；",
+                       "http://example.com！",
+                       "(http://example.com)。",
+                       "（http://example.com）",
+                       "「http://example.com」",
+                       "http://example.com/路径。"]
+        for string in strings {
+            let expected = string.contains("/路径") ? "http://example.com/路径" : "http://example.com"
+            XCTAssertEqual(urlSubstring(string), expected, "Input: \(string)")
+        }
+    }
+
+    func testRangeOfURLInString_WithoutSchemeAndFullWidthPunctuation() {
+        let strings = ["example.com。",
+                       "example.com，",
+                       "（example.com）",
+                       "「example.com」"]
+        for string in strings {
+            XCTAssertEqual(urlSubstring(string), "example.com", "Input: \(string)")
+        }
+    }
+
     // MARK: - stringByRemovingEnclosingBrackets
 
     func testRemovingEnclosingBrackets_NoBrackets() {

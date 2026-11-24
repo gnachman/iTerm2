@@ -128,7 +128,8 @@ static dispatch_queue_t iTermPathFinderQueue(void) {
             static NSArray *questionableSuffixes;
             static dispatch_once_t onceToken;
             dispatch_once(&onceToken, ^{
-                questionableSuffixes = @[ @"!", @"?", @".", @",", @";", @":", @"...", @"…" ];
+                questionableSuffixes = @[ @"!", @"?", @".", @",", @";", @":", @"...", @"…",
+                                          @"。", @"，", @"、", @"；", @"：", @"！", @"？" ];
             });
             for (NSString *modifiedPossiblePath in [self pathsFromPath:trimmedPath byRemovingBadSuffixes:questionableSuffixes]) {
                 if (self.canceled) {
@@ -136,6 +137,7 @@ static dispatch_queue_t iTermPathFinderQueue(void) {
                     return;
                 }
                 BOOL exists = NO;
+                NSInteger trailingCharactersStrippedByCleaner = 0;
                 if (workingDirectoryIsOk || [modifiedPossiblePath hasPrefix:@"/"]) {
                     iTermPathCleaner *cleaner = [[iTermPathCleaner alloc] initWithPath:modifiedPossiblePath
                                                                                 suffix:nil
@@ -147,13 +149,19 @@ static dispatch_queue_t iTermPathFinderQueue(void) {
                     cleaner.tryFallback = ![modifiedPossiblePath hasPrefix:@"/"];
                     [cleaner cleanSynchronously];
                     exists = (cleaner.cleanPath != nil);
+                    trailingCharactersStrippedByCleaner = cleaner.trailingCharactersStripped;
                 }
                 if (exists) {
                     NSString *extra = @"";
                     if (j + 1 < afterChunks.count) {
                         extra = [self columnAndLineNumberFromChunks:[afterChunks subarrayFromIndex:j + 1]];
                     }
-                    NSString *extendedPath = [modifiedPossiblePath stringByAppendingString:extra];
+                    // The cleaner may have found the file only after removing trailing punctuation
+                    // (e.g., "foo.txt。"). Exclude that punctuation from the path and the range.
+                    const NSInteger cleanerTrim = extra.length ? 0 : MIN(trailingCharactersStrippedByCleaner,
+                                                                          (NSInteger)modifiedPossiblePath.length);
+                    NSString *matchedPath = [modifiedPossiblePath stringByDroppingLastCharacters:cleanerTrim];
+                    NSString *extendedPath = [matchedPath stringByAppendingString:extra];
                     [right appendString:extra];
 
                     if (_trimWhitespace &&
@@ -165,7 +173,7 @@ static dispatch_queue_t iTermPathFinderQueue(void) {
                     } else {
                         _prefixChars = (int)left.length;
                     }
-                    NSInteger lengthOfBadSuffix = extra.length ? 0 : trimmedPath.length - modifiedPossiblePath.length;
+                    NSInteger lengthOfBadSuffix = extra.length ? 0 : trimmedPath.length - matchedPath.length;
                     int n;
                     if (_trimWhitespace) {
                         n = (int)([[right stringByTrimmingTrailingCharactersFromCharacterSet:whitespaceCharset] length] - lengthOfBadSuffix);

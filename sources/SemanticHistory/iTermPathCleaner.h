@@ -33,6 +33,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (atomic, readonly) NSString *cleanPath;
 @property (nullable, atomic, readonly) NSString *lineNumber;
 @property (nullable, atomic, readonly) NSString *columnNumber;
+// Number of characters of trailing punctuation (such as a period or an unbalanced close
+// parenthesis) removed from the end of the input path. Does not count enclosing brackets or a
+// line and column number.
+@property (atomic, readonly) NSInteger trailingCharactersStripped;
 @property (nonatomic, strong) NSFileManager *fileManager;
 @property (nonatomic) int reqid;
 

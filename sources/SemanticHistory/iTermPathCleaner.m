@@ -82,6 +82,7 @@ static dispatch_queue_t iTermPathCleanerQueue(void) {
 - (void)cleanSynchronously {
     self.lineNumber = nil;
     self.columnNumber = nil;
+    _trailingCharactersStripped = 0;
     self.cleanPath = [self reallyCleanSynchronously:_path];
 }
 
@@ -252,12 +253,21 @@ static dispatch_queue_t iTermPathCleanerQueue(void) {
     }
 
     // If it's in any form of bracketed delimiters, strip them
-    path = [path stringByRemovingEnclosingBrackets];
+    NSString *const unbracketed = [path stringByRemovingEnclosingBrackets];
+    // Trimmed characters are reported relative to the end of the input. Once a closing delimiter
+    // has been removed, anything trimmed after it is no longer at the end of the input, so report
+    // nothing and let the caller keep the whole bracketed string.
+    const BOOL removedBrackets = unbracketed.length != path.length;
+    path = unbracketed;
 
     // Strip various trailing characters that are unlikely to be part of the file name.
-    NSString *trailingPunctuationRegex = @"[.,:]$";
-    path = [path stringByReplacingOccurrencesOfRegex:trailingPunctuationRegex
-                                          withString:@""];
+    NSString *trailingPunctuationRegex = @"[.,:。，、：]$";
+    NSString *withoutPunctuation = [path stringByReplacingOccurrencesOfRegex:trailingPunctuationRegex
+                                                                  withString:@""];
+    if (!removedBrackets) {
+        _trailingCharactersStripped = path.length - withoutPunctuation.length;
+    }
+    path = withoutPunctuation;
 
     // Try to chop off a trailing line/column number.
     NSArray<NSString *> *regexes = [self.lineAndColumnNumberRegexes mapWithBlock:^id(NSString *anObject) {
@@ -275,7 +285,10 @@ static dispatch_queue_t iTermPathCleanerQueue(void) {
     }
 
     // No trailing line/column number. Drop a trailing paren.
-    if ([path hasSuffix:@")"]) {
+    if ([path hasSuffix:@")"] || [path hasSuffix:@"）"]) {
+        if (!removedBrackets) {
+            _trailingCharactersStripped += 1;
+        }
         return [path stringByDroppingLastCharacters:1];
     }
 

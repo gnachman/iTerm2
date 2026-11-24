@@ -19,7 +19,17 @@
                         @[ @"[", @"]" ],
                         @[ @"{", @"}", ],
                         @[ @"\'", @"\'" ],
-                        @[ @"\"", @"\"" ] ];
+                        @[ @"\"", @"\"" ],
+                        @[ @"（", @"）" ],
+                        @[ @"［", @"］" ],
+                        @[ @"｛", @"｝" ],
+                        @[ @"【", @"】" ],
+                        @[ @"《", @"》" ],
+                        @[ @"〈", @"〉" ],
+                        @[ @"「", @"」" ],
+                        @[ @"『", @"』" ],
+                        @[ @"“", @"”" ],
+                        @[ @"‘", @"’" ] ];
     for (NSArray *pair in pairs) {
         if ([trimmed hasPrefix:pair[0]] && [trimmed hasSuffix:pair[1]]) {
             return [[self substringWithRange:NSMakeRange(1, self.length - 2)] stringByRemovingEnclosingBrackets];
