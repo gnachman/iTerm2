@@ -50,6 +50,17 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     @objc var accessoryAppearance: NSAppearance? {
         return nil
     }
+
+    // Only a selected tab is filled with its tab color, with black or white
+    // text to stand out from it. An unselected one shows its color as a
+    // border and a faint tint, so its text is on the bar.
+    @objc(richLineColorAppearanceForCell:)
+    func richLineColorAppearance(for cell: PSMTabBarCell) -> NSAppearance? {
+        guard cell.tabColor != nil, cell.state == .on else {
+            return accessoryAppearance
+        }
+        return PSMTabRichContentRenderer.colorAppearance(contrastingWith: textColor(for: cell))
+    }
     
     @objc var edgeDragHeight: CGFloat {
         guard let tabBar, let delegate = tabBar.delegate,
@@ -955,6 +966,11 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         NSGraphicsContext.current?.restoreGraphicsState()
         NSGraphicsContext.current?.saveGraphicsState()
         drawTabGroupRunDecorations(forTabBar: bar, clipRect: clipRect)
+    }
+
+    // The selected tab is a pill, which is mark enough.
+    @objc func sectionGuideMarksSelectedTab() -> Bool {
+        return false
     }
 
     // The chip cell draws nothing; the whole group run's decoration (name
@@ -2520,7 +2536,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                                                textColor: textColor,
                                                secondaryColor: textColor.withAlphaComponent(textColor.alphaComponent * 0.7),
                                                alignment: .left,
-                                               colorAppearance: self.accessoryAppearance,
+                                               colorAppearance: self.richLineColorAppearance(for: cell),
                                                highlight: self.tabBar?.searchHighlightQuery)
             })
         } else if !skipLabel {

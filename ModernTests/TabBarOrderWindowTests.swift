@@ -70,10 +70,21 @@ final class TabBarOrderWindowTests: XCTestCase {
         }
     }
 
-    private func orderControl() throws -> NSSegmentedControl {
+    private func orderButton() throws -> NSButton {
         fixture.window.contentView?.layoutSubtreeIfNeeded()
         let accessory = try XCTUnwrap(try tabBar.topAccessoryView)
-        return try XCTUnwrap(accessory.subviews.compactMap { $0 as? NSSegmentedControl }.first)
+        return try XCTUnwrap(accessory.subviews.first { $0 is NSButton && !($0 is NSSearchField) } as? NSButton)
+    }
+
+    private var orderMenu: NSMenu {
+        get throws {
+            return try XCTUnwrap(fixture.terminal.tabBarSearchController?.orderMenu)
+        }
+    }
+
+    // The order the menu shows as chosen.
+    private func checkedOrder() throws -> Int? {
+        return try orderMenu.items.first { $0.state == .on }?.tag
     }
 
     private func searchField() throws -> NSSearchField {
@@ -83,9 +94,10 @@ final class TabBarOrderWindowTests: XCTestCase {
     }
 
     private func pick(_ mode: TabBarOrderMode) throws {
-        let control = try orderControl()
-        control.selectedSegment = mode.rawValue
-        control.sendAction(control.action, to: control.target)
+        let menu = try orderMenu
+        let index = menu.indexOfItem(withTag: mode.rawValue)
+        XCTAssertNotEqual(index, -1)
+        menu.performActionForItem(at: index)
     }
 
     // Tabs titled a, b, c, d.
@@ -141,13 +153,24 @@ final class TabBarOrderWindowTests: XCTestCase {
 
     // MARK: - The control
 
-    func testTheBarHasAnOrderControlUnderTheSearchField() throws {
-        let control = try orderControl()
+    func testTheBarHasAnOrderButtonBesideTheSearchField() throws {
+        let button = try orderButton()
         let field = try searchField()
-        XCTAssertEqual(control.segmentCount, 3)
-        XCTAssertEqual(control.selectedSegment, TabBarOrderMode.manual.rawValue)
-        XCTAssertLessThan(control.frame.maxY, field.frame.minY, "below the field")
+        XCTAssertEqual(try orderMenu.items.map(\.tag),
+                       [TabBarOrderMode.manual, .status, .workingDirectory].map(\.rawValue))
+        XCTAssertEqual(try checkedOrder(), TabBarOrderMode.manual.rawValue)
+        XCTAssertGreaterThanOrEqual(button.frame.minX, field.frame.maxX, "after the field")
         XCTAssertGreaterThanOrEqual(try tabBar.insets.top, TabBarSearchController.bandHeight)
+    }
+
+    // So it's clear the bar isn't in the usual order.
+    func testTheOrderButtonIsTintedWhileSorted() throws {
+        _ = try makeTabs(2)
+        try pick(.status)
+        XCTAssertEqual(try orderButton().contentTintColor, .controlAccentColor)
+        XCTAssertEqual(try checkedOrder(), TabBarOrderMode.status.rawValue)
+        try pick(.manual)
+        XCTAssertEqual(try orderButton().contentTintColor, .secondaryLabelColor)
     }
 
     // MARK: - Status
@@ -158,7 +181,7 @@ final class TabBarOrderWindowTests: XCTestCase {
         setStatus("Waiting", on: tabs[2])
         setStatus("Done", on: tabs[3])
         try pick(.status)
-        XCTAssertEqual(try shown(tabs), ["2", "3", "0", "1"])
+        XCTAssertEqual(try shown(tabs), ["[Waiting]", "2", "[Done]", "3", "[Working]", "0", "[No Status]", "1"])
         XCTAssertEqual(try windowOrder(tabs), [0, 1, 2, 3])
 
         try pick(.manual)
@@ -170,9 +193,21 @@ final class TabBarOrderWindowTests: XCTestCase {
         setStatus("Working", on: tabs[0])
         setStatus("Working", on: tabs[1])
         try pick(.status)
-        XCTAssertEqual(try shown(tabs), ["0", "1", "2"])
+        XCTAssertEqual(try shown(tabs), ["[Working]", "0", "1", "[No Status]", "2"])
         setStatus("Waiting", on: tabs[1])
-        XCTAssertEqual(try shown(tabs), ["1", "0", "2"])
+        XCTAssertEqual(try shown(tabs), ["[Waiting]", "1", "[Working]", "0", "[No Status]", "2"])
+        // Where they're drawn, not only the order of the cells.
+        XCTAssertEqual(try drawnTopToBottom(tabs), ["1", "0", "2"])
+    }
+
+    // Tabs by their index in `tabs`, sorted by where the bar draws them.
+    private func drawnTopToBottom(_ tabs: [PTYTab]) throws -> [String] {
+        let cells = (try tabBar.cells() as? [PSMTabBarCell] ?? []).filter {
+            !$0.isTabGroupChip && !$0.isCollapsedHidden
+        }
+        return cells.sorted { $0.frame.minY < $1.frame.minY }.compactMap { cell in
+            tabs.firstIndex { $0.tabViewItem === cell.representedObject as? NSTabViewItem }.map(String.init)
+        }
     }
 
     func testSnoozedTabsGoLast() throws {
@@ -180,9 +215,9 @@ final class TabBarOrderWindowTests: XCTestCase {
         setStatus("Waiting", on: tabs[0])
         setStatus("Working", on: tabs[1])
         try pick(.status)
-        XCTAssertEqual(try shown(tabs), ["0", "1", "2"])
+        XCTAssertEqual(try shown(tabs), ["[Waiting]", "0", "[Working]", "1", "[No Status]", "2"])
         SessionStatusController.instance.setSnoozed(true, sessionIDs: [tabs[0].activeSession.guid])
-        XCTAssertEqual(try shown(tabs), ["1", "2", "0"])
+        XCTAssertEqual(try shown(tabs), ["[Working]", "1", "[No Status]", "2", "[Snoozed]", "0"])
     }
 
     // Nothing moves under the pointer; changes wait for it to leave.
@@ -192,10 +227,10 @@ final class TabBarOrderWindowTests: XCTestCase {
         let bar = try tabBar
         bar.pointerIsInsideForTesting = NSNumber(value: true)
         setStatus("Waiting", on: tabs[2])
-        XCTAssertEqual(try shown(tabs), ["0", "1", "2", "3"], "waits for the pointer")
+        XCTAssertEqual(try shown(tabs), ["[No Status]", "0", "1", "2", "3"], "waits for the pointer")
         // Anything else refreshing the bar keeps the places too.
         fixture.terminal.updateTabColors()
-        XCTAssertEqual(try shown(tabs), ["0", "1", "2", "3"])
+        XCTAssertEqual(try shown(tabs), ["[No Status]", "0", "1", "2", "3"])
         // Next Tab goes by what the bar shows: 2 follows 1 there, but 3
         // would follow it in the new order.
         fixture.terminal.tabView().selectTabViewItem(tabs[1].tabViewItem)
@@ -204,7 +239,7 @@ final class TabBarOrderWindowTests: XCTestCase {
 
         bar.pointerIsInsideForTesting = NSNumber(value: false)
         bar.delegate?.tabViewPointerDidLeaveTabBar?(fixture.terminal.tabView())
-        XCTAssertEqual(try shown(tabs), ["2", "0", "1", "3"])
+        XCTAssertEqual(try shown(tabs), ["[Waiting]", "2", "[No Status]", "0", "1", "3"])
     }
 
     // MARK: - Working Directory
@@ -220,6 +255,28 @@ final class TabBarOrderWindowTests: XCTestCase {
         XCTAssertEqual(try windowOrder(tabs), [0, 1, 2, 3])
     }
 
+    // A restored session without shell integration has no path variable,
+    // but its directory is known.
+    func testATabWithNoPathVariableGoesUnderItsLastKnownDirectory() throws {
+        let tabs = try makeTabs(2)
+        setDirectory("/tmp/one", on: tabs[1])
+        // The tracker learns the directory, as from a restored arrangement,
+        // but the variable doesn't have it.
+        tabs[0].activeSession.screenLogWorkingDirectory(onAbsoluteLine: 0,
+                                                        remoteHost: nil,
+                                                        withDirectory: "/tmp/two",
+                                                        pushType: .strongPush,
+                                                        locality: .unverified,
+                                                        accepted: true)
+        tabs[0].activeSession.genericScope.setValue(nil, forVariableNamed: iTermVariableKeySessionPath)
+        XCTAssertNil(tabs[0].activeSession.genericScope.value(forVariableName: iTermVariableKeySessionPath))
+        try pick(.workingDirectory)
+        waitUntil("placed under a directory") {
+            let shown = (try? self.shown(tabs)) ?? []
+            return shown == ["[two]", "0", "[one]", "1"]
+        }
+    }
+
     func testASectionHeadingShowsTheFullPathAsItsToolTip() throws {
         let tabs = try makeTabs(2)
         setDirectory("/tmp/one", on: tabs[0])
@@ -228,6 +285,168 @@ final class TabBarOrderWindowTests: XCTestCase {
         let chip = try XCTUnwrap((try tabBar.cells() as? [PSMTabBarCell])?.first { $0.isTabGroupChip })
         let group = try XCTUnwrap(try tabBar.tabGroupDataSource?.tabGroup(withIdentifier: chip.tabGroupIdentifier ?? ""))
         XCTAssertEqual(group.toolTip, "/tmp/one")
+    }
+
+    // A heading is a quiet line of text, not a group: the styles don't
+    // decorate it, and it says where the directory is.
+    func testSectionHeadingsAreNotDecoratedAsGroups() throws {
+        let tabs = try makeTabs(2)
+        setDirectory(NSHomeDirectory() + "/git/one", on: tabs[0])
+        setDirectory("/tmp/two", on: tabs[1])
+        try pick(.workingDirectory)
+        let bar = try tabBar
+        let chips = (try bar.cells() as? [PSMTabBarCell] ?? []).filter { $0.isTabGroupChip }
+        XCTAssertEqual(chips.count, 2)
+        let groups = try chips.map { try XCTUnwrap(bar.tabGroupDataSource?.tabGroup(withIdentifier: $0.tabGroupIdentifier ?? "")) }
+        XCTAssertEqual(groups.map { $0.isSectionHeading }, [true, true])
+        XCTAssertEqual(groups.map { $0.detail }, ["~/git/", "/tmp/"])
+        var decorated = [String]()
+        bar.enumerateTabGroupRuns(rectForCell: nil) { _, _, _, gid in
+            decorated.append(gid)
+        }
+        XCTAssertEqual(decorated, [])
+        XCTAssertTrue(bar.hasSectionHeadings)
+
+        try pick(.manual)
+        XCTAssertFalse(bar.hasSectionHeadings)
+    }
+
+    // A heading is one short line, much shorter than a tab, so it reads as
+    // a label for the tabs under it rather than an empty row.
+    func testSectionHeadingsAreAsTallAsOneLineOfText() throws {
+        let tabs = try makeTabs(2)
+        setDirectory("/tmp/one", on: tabs[0])
+        setDirectory("/tmp/two", on: tabs[1])
+        try pick(.workingDirectory)
+        let bar = try tabBar
+        bar.layoutSubtreeIfNeeded()
+        let cells = try bar.cells() as? [PSMTabBarCell] ?? []
+        // The room a cell takes is from its top to the next cell's.
+        func room(_ i: Int) -> CGFloat {
+            return cells[i + 1].frame.minY - cells[i].frame.minY
+        }
+        let chipIndexes = cells.indices.filter { cells[$0].isTabGroupChip }
+        guard chipIndexes == [0, 2], cells.count == 4 else {
+            XCTFail("Expected a heading over each tab, got chips at \(chipIndexes) of \(cells.count) cells")
+            return
+        }
+        for i in chipIndexes {
+            XCTAssertEqual(room(i), bar.sectionHeadingHeight)
+        }
+        XCTAssertLessThan(bar.sectionHeadingHeight, room(1))
+    }
+
+    // A heading's text is as big as the tab titles under it.
+    func testSectionHeadingsAreAsBigAsTabTitles() throws {
+        let tabs = try makeTabs(2)
+        setDirectory("/tmp/one", on: tabs[0])
+        setDirectory("/tmp/two", on: tabs[1])
+        try pick(.workingDirectory)
+        let bar = try tabBar
+        XCTAssertEqual(bar.sectionHeadingFontSize, try XCTUnwrap(bar.style.fontSize))
+    }
+
+    // Tabs under a heading are indented, so the heading reads as their
+    // parent. Tabs that aren't in a section aren't.
+    func testTabsUnderAHeadingAreIndented() throws {
+        let tabs = try makeTabs(2)
+        setDirectory("/tmp/one", on: tabs[0])
+        setDirectory("/tmp/two", on: tabs[1])
+        let bar = try tabBar
+        func tabFrames() -> [NSRect] {
+            bar.layoutSubtreeIfNeeded()
+            let cells = (try? bar.cells() as? [PSMTabBarCell]) ?? []
+            return cells.filter { !$0.isTabGroupChip }.map(\.frame)
+        }
+        let manual = tabFrames()
+        let unindented = try XCTUnwrap(manual.first?.minX)
+        XCTAssertEqual(manual.map(\.minX), [unindented, unindented])
+
+        try pick(.workingDirectory)
+        let sorted = tabFrames()
+        XCTAssertGreaterThan(bar.sectionTabIndent, 0)
+        let indented = unindented + bar.sectionTabIndent
+        XCTAssertEqual(sorted.map(\.minX), [indented, indented])
+        XCTAssertEqual(sorted.map(\.maxX), manual.map(\.maxX), "the right edge stays put")
+
+        try pick(.manual)
+        XCTAssertEqual(tabFrames().map(\.minX), [unindented, unindented])
+    }
+
+    // The strip beside an indented tab looks like part of its row, so a
+    // click there goes to the tab.
+    func testAClickBesideAnIndentedTabHitsIt() throws {
+        let tabs = try makeTabs(2)
+        setDirectory("/tmp/one", on: tabs[0])
+        setDirectory("/tmp/one", on: tabs[1])
+        try pick(.workingDirectory)
+        let bar = try tabBar
+        bar.layoutSubtreeIfNeeded()
+        let cell = try XCTUnwrap((try bar.cells() as? [PSMTabBarCell])?.first { !$0.isTabGroupChip })
+        let point = NSPoint(x: cell.frame.minX - bar.sectionTabIndent / 2, y: cell.frame.midY)
+        XCTAssertTrue(bar.cell(for: point, cellFrame: nil) as? PSMTabBarCell === cell)
+    }
+
+    // Also when tabs are selected on mouse-up, which checks the click ended
+    // where it started.
+    func testAClickBesideAnIndentedTabSelectsItOnMouseUp() throws {
+        let tabs = try makeTabs(2)
+        setDirectory("/tmp/one", on: tabs[0])
+        setDirectory("/tmp/one", on: tabs[1])
+        try pick(.workingDirectory)
+        fixture.terminal.tabView().selectTabViewItem(tabs[0].tabViewItem)
+        let bar = try tabBar
+        let saved = bar.selectsTabsOnMouseDown
+        bar.selectsTabsOnMouseDown = false
+        defer { bar.selectsTabsOnMouseDown = saved }
+        bar.layoutSubtreeIfNeeded()
+        let cell = try XCTUnwrap((try bar.cells() as? [PSMTabBarCell])?.first {
+            $0.representedObject as? NSTabViewItem === tabs[1].tabViewItem
+        })
+        let point = bar.convert(NSPoint(x: cell.frame.minX - bar.sectionTabIndent / 2, y: cell.frame.midY), to: nil)
+        func event(_ type: NSEvent.EventType) -> NSEvent {
+            return NSEvent.mouseEvent(with: type,
+                                      location: point,
+                                      modifierFlags: [],
+                                      timestamp: 0,
+                                      windowNumber: fixture.window.windowNumber,
+                                      context: nil,
+                                      eventNumber: 0,
+                                      clickCount: 1,
+                                      pressure: 1)!
+        }
+        bar.mouseDown(with: event(.leftMouseDown))
+        bar.mouseUp(with: event(.leftMouseUp))
+        XCTAssertTrue(fixture.terminal.tabView().selectedTabViewItem === tabs[1].tabViewItem)
+    }
+
+    // A section coming or going slides the rows into place. The slide keeps
+    // headings where they belong and tabs under them indented.
+    func testRowsKeepTheirIndentWhileSliding() throws {
+        let tabs = try makeTabs(2)
+        setDirectory("/tmp/one", on: tabs[0])
+        setDirectory("/tmp/one", on: tabs[1])
+        try pick(.workingDirectory)
+        let bar = try tabBar
+        bar.layoutSubtreeIfNeeded()
+        func chipsAndTabs() -> (chips: [CGFloat], tabs: [CGFloat]) {
+            let cells = (try? bar.cells() as? [PSMTabBarCell]) ?? []
+            return (cells.filter { $0.isTabGroupChip }.map(\.frame.minX),
+                    cells.filter { !$0.isTabGroupChip }.map(\.frame.minX))
+        }
+        let settled = chipsAndTabs()
+        let headingX = try XCTUnwrap(settled.chips.first)
+        let tabX = try XCTUnwrap(settled.tabs.first)
+        XCTAssertEqual(tabX, headingX + bar.sectionTabIndent, "precondition")
+
+        // A new section appears without the window settling the bar.
+        setDirectory("/tmp/two", on: tabs[1])
+        fixture.terminal.updateTabColors()
+        XCTAssertTrue(bar.collapseAnimating, "precondition: sliding")
+        let sliding = chipsAndTabs()
+        XCTAssertEqual(sliding.chips.count, 2)
+        XCTAssertEqual(sliding.chips, sliding.chips.map { _ in headingX })
+        XCTAssertEqual(sliding.tabs, sliding.tabs.map { _ in tabX })
     }
 
     func testMoveTabStaysInItsSection() throws {
@@ -287,7 +506,7 @@ final class TabBarOrderWindowTests: XCTestCase {
         }
         fixture.terminal.updateTabColors()
         try pick(.status)
-        XCTAssertEqual(try shown(tabs), ["0", "1", "2"], "no chip, nothing collapsed")
+        XCTAssertEqual(try shown(tabs), ["[No Status]", "0", "1", "2"], "no group chip, nothing collapsed")
         XCTAssertEqual(tabs[1].tabGroupID, "G", "the group is unchanged")
         try pick(.manual)
         let cells = try tabBar.cells() as? [PSMTabBarCell] ?? []
@@ -303,10 +522,10 @@ final class TabBarOrderWindowTests: XCTestCase {
         let field = try searchField()
         field.stringValue = "b"
         field.sendAction(field.action, to: field.target)
-        XCTAssertEqual(try shown(tabs), ["1"])
+        XCTAssertEqual(try shown(tabs), ["[No Status]", "1"])
         field.stringValue = ""
         field.sendAction(field.action, to: field.target)
-        XCTAssertEqual(try shown(tabs), ["2", "0", "1"])
+        XCTAssertEqual(try shown(tabs), ["[Waiting]", "2", "[No Status]", "0", "1"])
     }
 
     // A section with no match goes away, as a group does.
@@ -397,7 +616,7 @@ final class TabBarOrderWindowTests: XCTestCase {
         try pick(.manual)
         let restore = NSSelectorFromString("restoreTabBarOrderFromArrangement:")
         fixture.terminal.perform(restore, with: arrangement)
-        XCTAssertEqual(try orderControl().selectedSegment, TabBarOrderMode.workingDirectory.rawValue)
+        XCTAssertEqual(try checkedOrder(), TabBarOrderMode.workingDirectory.rawValue)
     }
 
     // Moving the bar to the top puts the window's order and groups back by
@@ -468,7 +687,7 @@ final class TabBarOrderWindowTests: XCTestCase {
         let tabs = try makeTabs(3)
         setStatus("Waiting", on: tabs[2])
         try pick(.status)
-        XCTAssertEqual(try shown(tabs), ["2", "0", "1"])
+        XCTAssertEqual(try shown(tabs), ["[Waiting]", "2", "[No Status]", "0", "1"])
         func resize() {
             var frame = fixture.window.frame
             frame.size.width += 10
@@ -479,7 +698,7 @@ final class TabBarOrderWindowTests: XCTestCase {
         waitUntil("the window's order") { (try? self.shown(tabs)) == ["0", "1", "2"] }
         iTermPreferences.setInt(2 /* PSMTab_LeftTab */, forKey: kPreferenceKeyTabPosition)
         resize()
-        waitUntil("sorted again") { (try? self.shown(tabs)) == ["2", "0", "1"] }
+        waitUntil("sorted again") { (try? self.shown(tabs)) == ["[Waiting]", "2", "[No Status]", "0", "1"] }
     }
 
     // A sorted bar shows no groups, so collapsing one wouldn't show, but
@@ -510,7 +729,20 @@ final class TabBarOrderWindowTests: XCTestCase {
         fixture.terminal.tabView().selectTabViewItem(tabs[1].tabViewItem)
         fixture.terminal.moveTabRight(nil)
         XCTAssertEqual(try windowOrder(tabs), [1, 0, 2], "wraps within the group")
-        XCTAssertEqual(try shown(tabs), ["1", "0", "2"])
+        XCTAssertEqual(try shown(tabs), ["[No Status]", "1", "0", "2"])
+    }
+
+    // The headings name the priority patterns, so editing the list in
+    // Settings renames and re-sorts them.
+    func testEditingThePriorityListUpdatesTheHeadings() throws {
+        let tabs = try makeTabs(2)
+        setStatus("Waiting", on: tabs[1])
+        try pick(.status)
+        XCTAssertEqual(try shown(tabs), ["[Waiting]", "1", "[No Status]", "0"])
+        StatusPrioritySettings.shared.restoreEntries([StatusPriorityEntry(pattern: "for input")])
+        XCTAssertEqual(try shown(tabs), ["[Other]", "1", "[No Status]", "0"])
+        StatusPrioritySettings.shared.restoreEntries([StatusPriorityEntry(pattern: "waiting")])
+        XCTAssertEqual(try shown(tabs), ["[Waiting]", "1", "[No Status]", "0"], "named by the custom pattern")
     }
 
     // A horizontal bar has no control, so it shows the window's order.
@@ -518,7 +750,7 @@ final class TabBarOrderWindowTests: XCTestCase {
         let tabs = try makeTabs(3)
         setStatus("Waiting", on: tabs[2])
         try pick(.status)
-        XCTAssertEqual(try shown(tabs), ["2", "0", "1"])
+        XCTAssertEqual(try shown(tabs), ["[Waiting]", "2", "[No Status]", "0", "1"])
         iTermPreferences.setInt(0 /* PSMTab_TopTab */, forKey: kPreferenceKeyTabPosition)
         fixture.terminal.updateTabColors()
         XCTAssertEqual(try shown(tabs), ["0", "1", "2"])

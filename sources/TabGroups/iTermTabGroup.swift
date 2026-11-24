@@ -24,6 +24,11 @@ final class iTermTabGroup: NSObject, PSMTabGroup {
     @objc let parentIdentifier: String?
     // The chip's tooltip, when it isn't the name.
     @objc var toolTip: String?
+    // A heading for tabs that go together, such as a directory's, rather than
+    // a group the user made.
+    @objc var isSectionHeading = false
+    // Shown before a section heading’s name, dimmer.
+    @objc var detail: String?
 
     @objc init(uniqueIdentifier: String, name: String, color: NSColor, parentIdentifier: String?) {
         self.uniqueIdentifier = uniqueIdentifier

@@ -252,6 +252,17 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // decoration (chip + enclosing outline) is left out of it. The live bar keeps
 // its decoration during the drag so groups remain visible as drop targets.
 @property(nonatomic, assign) BOOL suppressTabGroupRunDecoration;
+
+// Whether any chip may head a section (see -[PSMTabGroup isSectionHeading]).
+// When NO, the bar doesn't ask the data source while drawing.
+@property(nonatomic, assign) BOOL hasSectionHeadings;
+// How tall a section heading is: one line of text and a little room.
+@property(nonatomic, readonly) CGFloat sectionHeadingHeight;
+// The point size of section headings: that of the tab titles.
+@property(nonatomic, readonly) CGFloat sectionHeadingFontSize;
+// How far a vertical bar's tabs under a section heading sit in from its
+// leading edge. A guide line is drawn there.
+@property(nonatomic, readonly) CGFloat sectionTabIndent;
 // Set transiently while capturing a group drag image: when non-nil, only this
 // group's decoration and its sub-groups' are drawn. A sub-group's image then
 // leaves out the outline of the parent it sits in.

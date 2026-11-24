@@ -147,7 +147,11 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 @end
 
 @interface PSMTabBarControl ()<PSMTabBarControlProtocol, NSMenuItemValidation, NSViewToolTipOwner>
+// The height of one line of heading text.
+@property(nonatomic, readonly) CGFloat sectionHeadingLineHeight;
 - (void)removeTabProgressBarForCell:(PSMTabBarCell *)cell;
+- (id<PSMTabGroup>)sectionHeadingGroupForChip:(PSMTabBarCell *)chip;
+- (void)drawSectionHeadingsInRect:(NSRect)dirtyRect;
 // Hit-test a group chip (chips are invisible to -cellForPoint:).
 - (PSMTabBarCell *)chipForPoint:(NSPoint)point;
 - (void)clearPreDragSelection;
@@ -1672,6 +1676,9 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
               clipRect:rect
             horizontal:horizontalFlag
           withOverflow:_lainOutWithOverflow];
+    if (!NSIsEmptyRect(rect)) {
+        [self drawSectionHeadingsInRect:rect];
+    }
     [self drawPreviewedTabOutline];
     if (needClip) {
         [NSGraphicsContext restoreGraphicsState];
@@ -1695,6 +1702,260 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
 
     os_signpost_interval_end(PSMTabBarLog(), OS_SIGNPOST_ID_EXCLUSIVE, "drawRect", "");
 #endif
+}
+
+#pragma mark - Section headings
+
+- (void)setHasSectionHeadings:(BOOL)hasSectionHeadings {
+    if (hasSectionHeadings == _hasSectionHeadings) {
+        return;
+    }
+    _hasSectionHeadings = hasSectionHeadings;
+    [self setNeedsDisplay:YES];
+}
+
+// One line of heading text with room above and below. It doesn't depend on
+// the tabs' height, so a heading stays a label even over tall rich tabs.
+- (CGFloat)sectionHeadingHeight {
+    return self.sectionHeadingLineHeight + 10;
+}
+
+- (CGFloat)sectionHeadingLineHeight {
+    NSFont *font = [self sectionHeadingFontWithWeight:NSFontWeightSemibold];
+    return ceil(font.ascender - font.descender + font.leading);
+}
+
+- (CGFloat)sectionTabIndent {
+    return 12;
+}
+
+// The tab titles' size: a tab with rich content draws its title as its first
+// line, scaled. Lines' sizes are the same for every tab, so the first tab
+// with lines tells. Pinned tabs don't draw them.
+- (CGFloat)sectionHeadingFontSize {
+    NSFont *baseFont = [NSFont systemFontOfSize:_style.fontSize];
+    for (PSMTabBarCell *cell in _cells) {
+        if ([cell isTabGroupChip] || cell.isPinned) {
+            continue;
+        }
+        id identifier = [(NSTabViewItem *)[cell representedObject] identifier];
+        if (![identifier respondsToSelector:@selector(psmTabRichLines)]) {
+            continue;
+        }
+        PSMTabRichLine *title = [[identifier psmTabRichLines] firstObject];
+        if (title) {
+            return [PSMTabRichContentRenderer fontForLine:title baseFont:baseFont].pointSize;
+        }
+    }
+    return baseFont.pointSize;
+}
+
+- (NSFont *)sectionHeadingFontWithWeight:(NSFontWeight)weight {
+    return [NSFont systemFontOfSize:self.sectionHeadingFontSize weight:weight];
+}
+
+// The group for a chip that heads a section, or nil for a group's chip.
+- (id<PSMTabGroup>)sectionHeadingGroupForChip:(PSMTabBarCell *)chip {
+    if (![chip isTabGroupChip]) {
+        return nil;
+    }
+    return [self sectionHeadingGroupWithIdentifier:chip.tabGroupIdentifier];
+}
+
+// How far in a cell's frame is: a tab under a section heading in a vertical
+// bar is indented, and nothing else is.
+- (CGFloat)sectionIndentForCell:(PSMTabBarCell *)cell {
+    if ([self orientation] != PSMTabBarVerticalOrientation || ![self tabCellIsInSection:cell]) {
+        return 0;
+    }
+    return self.sectionTabIndent;
+}
+
+// Whether a tab is under a section heading.
+- (BOOL)tabCellIsInSection:(PSMTabBarCell *)cell {
+    return ![cell isTabGroupChip] && [self sectionHeadingGroupWithIdentifier:cell.tabGroupIdentifier] != nil;
+}
+
+- (id<PSMTabGroup>)sectionHeadingGroupWithIdentifier:(NSString *)gid {
+    if (!_hasSectionHeadings || gid.length == 0) {
+        return nil;
+    }
+    id<PSMTabGroup> group = [self.tabGroupDataSource tabGroupWithIdentifier:gid];
+    if ([group respondsToSelector:@selector(isSectionHeading)] && group.isSectionHeading) {
+        return group;
+    }
+    return nil;
+}
+
+// A heading reads as the parent of the tabs under it: its text starts over the
+// guide line that runs down their leading edge, then a faint rule goes to the
+// trailing edge. The detail before the name is dimmer, so a directory reads as
+// its path with its own name standing out. A long path loses its start, never
+// the name.
+- (void)drawSectionHeadingsInRect:(NSRect)dirtyRect {
+    // A drag's image capture draws without decorations, or only one group's.
+    if (!_hasSectionHeadings || self.suppressTabGroupRunDecoration || self.onlyTabGroupRunDecorationIdentifier) {
+        return;
+    }
+    const BOOL mainAndActive = (self.window.isMainWindow && NSApp.isActive);
+    NSColor *textColor = [_style textColorDefaultSelected:NO
+                                          backgroundColor:nil
+                                windowIsMainAndAppIsActive:mainAndActive];
+    NSColor *nameColor = [textColor colorWithAlphaComponent:textColor.alphaComponent * 0.8];
+    NSColor *dimColor = [textColor colorWithAlphaComponent:textColor.alphaComponent * 0.45];
+    NSColor *ruleColor = [textColor colorWithAlphaComponent:textColor.alphaComponent * 0.25];
+    NSColor *guideColor = [textColor colorWithAlphaComponent:textColor.alphaComponent * 0.35];
+    NSFont *nameFont = [self sectionHeadingFontWithWeight:NSFontWeightSemibold];
+    NSMutableParagraphStyle *paragraph = [[[NSMutableParagraphStyle alloc] init] autorelease];
+    paragraph.lineBreakMode = NSLineBreakByTruncatingHead;
+    NSDictionary *nameAttributes = @{
+        NSFontAttributeName: nameFont,
+        NSForegroundColorAttributeName: nameColor,
+        NSParagraphStyleAttributeName: paragraph
+    };
+    NSDictionary *detailAttributes = @{
+        NSFontAttributeName: [self sectionHeadingFontWithWeight:NSFontWeightRegular],
+        NSForegroundColorAttributeName: dimColor,
+        NSParagraphStyleAttributeName: paragraph
+    };
+    [self fillSectionBackgroundsInRect:dirtyRect];
+    const CGFloat hairline = 1.0 / MAX(1, self.window.backingScaleFactor);
+    const CGFloat indent = self.sectionTabIndent;
+    const CGFloat trailing = 10;
+    const CGFloat textGap = 8;
+    for (PSMTabBarCell *cell in [self cells]) {
+        if (![self cellIsDrawnInBar:cell] || NSIsEmptyRect(cell.frame)) {
+            continue;
+        }
+        const NSRect frame = cell.frame;
+        if (!NSIntersectsRect(frame, dirtyRect)) {
+            continue;
+        }
+        id<PSMTabGroup> group = [self sectionHeadingGroupForChip:cell];
+        if (!group) {
+            continue;
+        }
+        // The guide line's x, so the line drops from under the text.
+        const CGFloat textX = NSMinX(frame) + indent;
+        const CGFloat midY = round(NSMidY(frame));
+        NSMutableAttributedString *text = [[[NSMutableAttributedString alloc] init] autorelease];
+        NSString *detail = [group respondsToSelector:@selector(detail)] ? group.detail : nil;
+        if (detail.length > 0) {
+            [text appendAttributedString:[[[NSAttributedString alloc] initWithString:detail
+                                                                          attributes:detailAttributes] autorelease]];
+        }
+        [text appendAttributedString:[[[NSAttributedString alloc] initWithString:group.name ?: @""
+                                                                      attributes:nameAttributes] autorelease]];
+        const CGFloat available = MAX(0, NSMaxX(frame) - trailing - textX);
+        const NSSize textSize = [text size];
+        const CGFloat lineHeight = ceil(textSize.height);
+        const NSRect textRect = NSMakeRect(textX,
+                                           round(NSMidY(frame) - lineHeight / 2),
+                                           available,
+                                           lineHeight);
+        [text drawWithRect:textRect options:NSStringDrawingUsesLineFragmentOrigin];
+
+        // The rule after the text, if there's room for one worth drawing.
+        const CGFloat ruleMinX = textX + ceil(MIN(textSize.width, available)) + textGap;
+        const CGFloat ruleMaxX = NSMaxX(frame) - trailing;
+        if (ruleMaxX - ruleMinX >= 8) {
+            [ruleColor set];
+            NSRectFillUsingOperation(NSMakeRect(ruleMinX, midY, ruleMaxX - ruleMinX, hairline),
+                                     NSCompositingOperationSourceOver);
+        }
+    }
+    [self drawSectionGuidesInRect:dirtyRect color:guideColor];
+}
+
+// Has the style fill each heading, and the strip beside each indented tab,
+// down to the next cell, if it wants to.
+- (void)fillSectionBackgroundsInRect:(NSRect)dirtyRect {
+    if (![_style respondsToSelector:@selector(drawSectionBackgroundInRect:)]) {
+        return;
+    }
+    NSArray<PSMTabBarCell *> *cells = [[self cells] filteredArrayUsingBlock:^BOOL(PSMTabBarCell *cell) {
+        return [self cellIsDrawnInBar:cell] && !NSIsEmptyRect(cell.frame);
+    }];
+    CGFloat headingMinX = 0;
+    for (NSUInteger i = 0; i < cells.count; i++) {
+        PSMTabBarCell *cell = cells[i];
+        const NSRect frame = cell.frame;
+        const CGFloat bottom = (i + 1 < cells.count) ? NSMinY(cells[i + 1].frame) : NSMaxY(frame);
+        NSRect fill = NSZeroRect;
+        if ([self sectionHeadingGroupForChip:cell]) {
+            headingMinX = NSMinX(frame);
+            fill = NSMakeRect(NSMinX(frame), NSMinY(frame), NSWidth(frame), bottom - NSMinY(frame));
+        } else if ([self tabCellIsInSection:cell]) {
+            // A point past the tab's edge, where the guide is drawn: a tab's
+            // background can start a point in (Minimal's does), and the bar's
+            // background showing there would make the guide look uneven.
+            // A colored tab fills its whole frame, so leave it alone.
+            const CGFloat overlap = cell.tabColor ? 0 : 1;
+            fill = NSMakeRect(headingMinX, NSMinY(frame), NSMinX(frame) - headingMinX + overlap, bottom - NSMinY(frame));
+        }
+        fill = NSIntersectionRect(fill, dirtyRect);
+        if (!NSIsEmptyRect(fill)) {
+            [_style drawSectionBackgroundInRect:fill];
+        }
+    }
+}
+
+// A line down the leading edge of each section's tabs, from just under its
+// heading's text to the bottom of its last tab. The selected tab's stretch
+// is drawn thicker in the accent color, unless the style says not to.
+- (void)drawSectionGuidesInRect:(NSRect)dirtyRect color:(NSColor *)color {
+    const CGFloat guideWidth = 1;
+    const CGFloat selectedWidth = 2;
+    const BOOL marksSelection = (![_style respondsToSelector:@selector(sectionGuideMarksSelectedTab)] ||
+                                 [_style sectionGuideMarksSelectedTab]);
+    NSTabViewItem *selectedItem = marksSelection ? [_tabView selectedTabViewItem] : nil;
+    // The section being walked: where its guide is and how far it goes.
+    BOOL inSection = NO;
+    CGFloat guideX = 0;
+    CGFloat top = 0;
+    CGFloat bottom = 0;
+    NSRect selectedFrame = NSZeroRect;
+    NSArray<PSMTabBarCell *> *cells = [self cells];
+    for (NSUInteger i = 0; i <= cells.count; i++) {
+        PSMTabBarCell *cell = i < cells.count ? cells[i] : nil;
+        if (cell && (![self cellIsDrawnInBar:cell] || NSIsEmptyRect(cell.frame))) {
+            continue;
+        }
+        if (cell && inSection && [self tabCellIsInSection:cell]) {
+            bottom = NSMaxY(cell.frame);
+            if ([cell.representedObject isEqual:selectedItem]) {
+                selectedFrame = cell.frame;
+            }
+            continue;
+        }
+        // The section ended: draw its guide.
+        if (inSection && bottom > top) {
+            const NSRect guide = NSMakeRect(guideX, top, selectedWidth, bottom - top);
+            if (NSIntersectsRect(guide, dirtyRect)) {
+                [color set];
+                NSRectFillUsingOperation(NSMakeRect(guideX, top, guideWidth, bottom - top),
+                                         NSCompositingOperationSourceOver);
+                if (!NSIsEmptyRect(selectedFrame)) {
+                    [[NSColor controlAccentColor] set];
+                    NSRectFillUsingOperation(NSMakeRect(guideX,
+                                                        NSMinY(selectedFrame),
+                                                        selectedWidth,
+                                                        NSHeight(selectedFrame)),
+                                             NSCompositingOperationSourceOver);
+                }
+            }
+        }
+        inSection = NO;
+        selectedFrame = NSZeroRect;
+        if (cell && [self sectionHeadingGroupForChip:cell]) {
+            inSection = YES;
+            guideX = NSMinX(cell.frame) + self.sectionTabIndent;
+            // The text is one line, centered, so this starts 2 under it.
+            // Not from the frame's bottom, which some styles shorten.
+            top = round(NSMidY(cell.frame) + self.sectionHeadingLineHeight / 2) + 2;
+            bottom = top;
+        }
+    }
 }
 
 - (void)moveTabAtIndex:(NSInteger)sourceIndex toIndex:(NSInteger)destIndex
@@ -2543,6 +2804,14 @@ static CGFloat PSMCollapseEase(CGFloat t) {
 // collapsed chip showing rich content lines is taller than an expanded one (see
 // -heightOfTabGroupChipCell:collapsed:). It's still a straight height
 // interpolation with no first-member remap.
+// The x and width the settled layout gives a vertical bar's rows before any
+// is indented under a section heading.
+- (NSRect)unindentedVerticalRow {
+    const NSRect generic = [self genericCellRectWithOverflow:_showAddTabButton];
+    return [_style adjustedCellRect:NSMakeRect(0, 0, NSWidth(self.frame), NSHeight(generic))
+                            generic:generic];
+}
+
 - (void)startVerticalCollapseAnimation {
     if (_animationTimer) {
         [_animationTimer invalidate];
@@ -2554,13 +2823,15 @@ static CGFloat PSMCollapseEase(CGFloat t) {
     // shorter than the slot advance. That difference is the inter-cell divider gap
     // the settled layout leaves; matching it keeps static cells perfectly still
     // and makes the finish seam-free.
-    CGFloat refX = 0;
-    CGFloat refW = NSWidth(self.frame);
+    // Where an unindented row goes, worked out as the settled layout does
+    // rather than from a tab, which may be indented under a section heading.
+    // Each row is indented as it's laid out.
+    const NSRect row = [self unindentedVerticalRow];
+    const CGFloat refX = NSMinX(row);
+    const CGFloat refW = NSWidth(row);
     CGFloat refDrawnH = tabHeight;
     const NSRect refCell = [PSMTabBarControl firstFullSizeTabCellFrameInCells:_cells];
     if (!NSIsEmptyRect(refCell)) {
-        refX = NSMinX(refCell);
-        refW = NSWidth(refCell);
         refDrawnH = NSHeight(refCell);
     }
     _collapseVerticalGap = MAX(0.0, tabHeight - refDrawnH);
@@ -2639,7 +2910,11 @@ static CGFloat PSMCollapseEase(CGFloat t) {
             // doesn't look sized.
             [_cells[i] setFrame:NSMakeRect(_collapseVerticalCellX, origin, 0, 0)];
         } else {
-            [_cells[i] setFrame:NSMakeRect(_collapseVerticalCellX, origin, _collapseVerticalCellWidth, drawnH)];
+            const CGFloat indent = MIN([self sectionIndentForCell:_cells[i]], _collapseVerticalCellWidth);
+            [_cells[i] setFrame:NSMakeRect(_collapseVerticalCellX + indent,
+                                           origin,
+                                           _collapseVerticalCellWidth - indent,
+                                           drawnH)];
         }
         origin += slot;
     }
@@ -2989,6 +3264,9 @@ typedef struct {
 }
 
 - (CGFloat)heightOfTabGroupChipCell:(PSMTabBarCell *)cell collapsed:(BOOL)collapsed {
+    if ([self sectionHeadingGroupForChip:cell]) {
+        return self.sectionHeadingHeight;
+    }
     // A collapsed chip showing its members' rich content lines below its name
     // takes a whole row, like the tabs it stands for.
     if (collapsed && [self tabGroupsShowRichContent]) {
@@ -3764,6 +4042,12 @@ typedef struct {
                 cellRect.origin.x = 0;
             }
             cellRect = [_style adjustedCellRect:cellRect generic:generic];
+            {
+                // In from the heading over it, with room for the guide line.
+                const CGFloat indent = MIN([self sectionIndentForCell:cell], NSWidth(cellRect));
+                cellRect.origin.x += indent;
+                cellRect.size.width -= indent;
+            }
             [cell setFrame:cellRect];
 
             // close button tracking rect
@@ -4250,7 +4534,8 @@ typedef struct {
         [self tabBarDoubleClick];
     }
 
-    const BOOL mouseUpInSameCellAsMouseDown = NSMouseInRect(clickPoint, mouseDownCellFrame, [self isFlipped]);
+    const BOOL mouseUpInSameCellAsMouseDown = (mouseDownCell != nil &&
+                                               NSMouseInRect(clickPoint, [self hitRectForCell:mouseDownCell], [self isFlipped]));
     const NSPoint trackingStartPoint = [self convertPoint:[[self lastMouseDownEvent] locationInWindow] fromView:nil];
     const BOOL mouseDownWasInCloseButton = NSMouseInRect(trackingStartPoint, [cell closeButtonRectForFrame:cellFrame], [self isFlipped]);
     const BOOL closeButtonDoesNotInterfere = (!mouseDownWasInCloseButton ||
@@ -4835,8 +5120,20 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     if ([NSWindow windowNumberAtPoint:screenPoint belowWindowWithWindowNumber:0] != window.windowNumber) {
         return NO;
     }
-    const NSPoint point = [self convertPoint:[window convertPointFromScreen:screenPoint] fromView:nil];
-    return NSMouseInRect(point, self.visibleRect, self.isFlipped);
+    const NSPoint windowPoint = [window convertPointFromScreen:screenPoint];
+    const NSPoint point = [self convertPoint:windowPoint fromView:nil];
+    if (!NSMouseInRect(point, self.visibleRect, self.isFlipped)) {
+        return NO;
+    }
+    // Whatever is under the pointer must be the bar or in it, not something
+    // drawn over it, such as the window's buttons. The frame view's
+    // coordinates are the window's.
+    NSView *frameView = window.contentView.superview ?: window.contentView;
+    NSView *hit = [frameView hitTest:windowPoint];
+    const BOOL inside = (hit == nil || [hit isDescendantOf:self]);
+    DLog(@"Pointer at %@ in the bar's visible rect %@; the view under it is %@, so inside=%@",
+         NSStringFromPoint(point), NSStringFromRect(self.visibleRect), hit, @(inside));
+    return inside;
 }
 
 - (void)mouseEntered:(NSEvent *)event {
@@ -5273,6 +5570,16 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     return temp;
 }
 
+// Where a click goes to a cell: its frame, and for a tab indented under a
+// section heading, the strip beside it too.
+- (NSRect)hitRectForCell:(PSMTabBarCell *)cell {
+    NSRect hitRect = [cell frame];
+    const CGFloat indent = NSIsEmptyRect(hitRect) ? 0 : [self sectionIndentForCell:cell];
+    hitRect.origin.x -= indent;
+    hitRect.size.width += indent;
+    return hitRect;
+}
+
 - (id)cellForPoint:(NSPoint)point
          cellFrame:(NSRectPointer)outFrame {
     if ([self orientation] == PSMTabBarHorizontalOrientation &&
@@ -5291,7 +5598,7 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
         if ([cell isTabGroupChip] || [cell isCollapsedHidden]) {
             continue;
         }
-        if (NSPointInRect(point, [cell frame])) {
+        if (NSPointInRect(point, [self hitRectForCell:cell])) {
             if (outFrame) {
                 *outFrame = [cell frame];
             }
@@ -5588,6 +5895,10 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 // While a group drag image is captured, only the dragged group and its own
 // sub-groups are decorated. A dragged sub-group still leaves out its parent.
 - (BOOL)tabGroupChipPassesDecorationFilter:(PSMTabBarCell *)chip {
+    // A section heading isn't decorated as a group; the bar draws it.
+    if ([self sectionHeadingGroupForChip:chip]) {
+        return NO;
+    }
     NSString *only = self.onlyTabGroupRunDecorationIdentifier;
     if (!only) {
         return YES;
@@ -5902,8 +6213,10 @@ static NSRect PSMRunUnionRect(NSRect a, NSRect b) {
                                                                                     cells:_cells];
                 }
             } else {
-                frame.origin.x = reference.origin.x;
-                frame.size.width = reference.size.width;
+                // Not the reference tab's, which may be indented.
+                const NSRect row = [self unindentedVerticalRow];
+                frame.origin.x = NSMinX(row);
+                frame.size.width = NSWidth(row);
                 frame.size.height = [self heightOfTabGroupChipCellAtIndex:i];
             }
             [chip setFrame:frame];

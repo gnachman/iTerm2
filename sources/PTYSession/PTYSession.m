@@ -475,6 +475,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 @end
 
 @implementation PTYSession {
+    // For -knownWorkingDirectory when nothing else knows the directory.
+    BOOL _knownWorkingDirectoryLookupInProgress;
+    NSTimeInterval _knownWorkingDirectoryLastLookupTime;
+    NSString *_knownWorkingDirectoryLookupResult;
     // See -isTmuxBuried and -hasBeenTmuxBuried.
     BOOL _tmuxBuried;
     BOOL _hasBeenTmuxBuried;
@@ -1387,6 +1391,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_substitutions release];
     [_automaticProfileSwitcher release];
     [_directoryTracker release];
+    [_knownWorkingDirectoryLookupResult release];
 
     [_keyLabels release];
     [_keyLabelsStack release];
@@ -7310,30 +7315,66 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     return _badgeSwiftyString.evaluatedString;
 }
 
-- (BOOL)isAtShellPrompt {
-    return _screen.commandRange.start.x >= 0;
+- (NSString *)knownWorkingDirectory {
+    NSString *path = self.variablesScope.path;
+    if (path.length > 0) {
+        [self forgetKnownWorkingDirectoryLookup];
+        return path;
+    }
+    if (self.isBrowserSession) {
+        return nil;
+    }
+    // A restored session's path variable comes from shell integration's
+    // marks, and a session without shell integration gets one only after
+    // the poller notices output, but the tracker may already know. Prefer
+    // the local directory: a restored lastDirectory may be on a host the
+    // session is no longer connected to.
+    NSString *local = _directoryTracker.lastLocalDirectory;
+    if (local.length > 0) {
+        [self forgetKnownWorkingDirectoryLookup];
+        return local;
+    }
+    NSString *last = _directoryTracker.lastDirectory;
+    if (last.length > 0) {
+        [self forgetKnownWorkingDirectoryLookup];
+        return last;
+    }
+    if (_knownWorkingDirectoryLookupResult.length > 0) {
+        return _knownWorkingDirectoryLookupResult;
+    }
+    // Callers poll, so don't look again soon after a lookup found nothing.
+    static const NSTimeInterval retryInterval = 5;
+    const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    if (_knownWorkingDirectoryLookupInProgress ||
+        now - _knownWorkingDirectoryLastLookupTime < retryInterval) {
+        return nil;
+    }
+    DLog(@"No known directory for %@; look it up", self);
+    _knownWorkingDirectoryLookupInProgress = YES;
+    _knownWorkingDirectoryLastLookupTime = now;
+    __weak __typeof(self) weakSelf = self;
+    [_directoryTracker asyncCurrentLocalWorkingDirectoryWithCompletion:^(NSString *pwd) {
+        DLog(@"Found directory %@ for %@", pwd, weakSelf);
+        PTYSession *strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        strongSelf->_knownWorkingDirectoryLookupInProgress = NO;
+        [strongSelf->_knownWorkingDirectoryLookupResult release];
+        strongSelf->_knownWorkingDirectoryLookupResult = [pwd copy];
+    }];
+    return nil;
 }
 
-- (BOOL)isWaitingForACommand {
-    // A shell in the foreground is at its prompt. While it runs a command,
-    // the command is in the foreground.
-    NSString *job = self.variablesScope.jobName;
-    if (job.length > 0 && [iTermLSOF processNameIsAShell:job]) {
-        return YES;
-    }
-    // Over ssh the local job is ssh, so only shell integration on the
-    // remote host can tell. Only while ssh is in the foreground, since what
-    // it left behind (the host, the prompt) goes stale when it exits. Read
-    // the host directly: the getter searches marks when there's none.
-    static NSSet<NSString *> *remoteJobs;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        remoteJobs = [[NSSet alloc] initWithArray:@[ @"ssh", @"mosh-client", @"et", @"autossh" ]];
-    });
-    if ([remoteJobs containsObject:job] && _currentHost.isRemoteHost) {
-        return self.isAtShellPrompt;
-    }
-    return NO;
+// Something better knows the directory, so a lookup's result would be stale
+// the next time it's needed.
+- (void)forgetKnownWorkingDirectoryLookup {
+    [_knownWorkingDirectoryLookupResult release];
+    _knownWorkingDirectoryLookupResult = nil;
+}
+
+- (BOOL)isAtShellPrompt {
+    return _screen.commandRange.start.x >= 0;
 }
 
 // You're processing if data was read off the socket in the last "idleTimeSeconds".

@@ -121,6 +121,15 @@
     return nil;
 }
 
+// The tab color fills the cell, selected or not, and textColorForCell: picks
+// black or white to stand out from it.
+- (NSAppearance *)richLineColorAppearanceForCell:(PSMTabBarCell *)cell {
+    if (!cell.tabColor) {
+        return self.accessoryAppearance;
+    }
+    return [PSMTabRichContentRenderer colorAppearanceContrastingWithTextColor:[self textColorForCell:cell]];
+}
+
 #pragma mark - Control Specific
 
 - (float)leftMarginForTabBarControl {
@@ -1034,7 +1043,7 @@ const void *PSMTabStyleDarkColorKey = "dark";
                                    textColor:textColor
                               secondaryColor:[textColor colorWithAlphaComponent:textColor.alphaComponent * 0.7]
                                    alignment:NSTextAlignmentLeft
-                             colorAppearance:self.accessoryAppearance
+                             colorAppearance:[self richLineColorAppearanceForCell:cell]
                                    highlight:self.tabBar.searchHighlightQuery];
         return;
     }

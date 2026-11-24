@@ -64,6 +64,8 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 // Where the status dot or other attention icon goes.
 - (NSRect)iconRectForTabCell:(PSMTabBarCell *)cell;
 - (CGFloat)tabColorBrightness:(PSMTabBarCell *)cell;
+// Which of a rich line's light and dark colors to use in this cell.
+- (nullable NSAppearance *)richLineColorAppearanceForCell:(PSMTabBarCell *)cell;
 - (NSEdgeInsets)insetsForTabBarDividers;
 - (NSEdgeInsets)backgroundInsetsWithHorizontalOrientation:(BOOL)horizontal;
 

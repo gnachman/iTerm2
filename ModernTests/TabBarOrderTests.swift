@@ -16,13 +16,11 @@ final class TabBarOrderTests: XCTestCase {
                      snoozed: Bool = false,
                      pinned: Bool = false,
                      directory: String? = nil,
-                     atPrompt: Bool = false,
                      group: String? = nil) -> TabBarOrderTab {
         return TabBarOrderTab(pinned: pinned,
                               statusPriority: priority,
                               snoozed: snoozed,
                               directory: directory,
-                              atPrompt: atPrompt,
                               group: group)
     }
 
@@ -40,7 +38,54 @@ final class TabBarOrderTests: XCTestCase {
     func testStatusSortsByPriorityThenManualOrder() {
         let result = TabBarOrder.apply(mode: .status, tabs: [tab(2), tab(0), tab(none), tab(0), tab(1)])
         XCTAssertEqual(result.order, [1, 3, 4, 0, 2])
-        XCTAssertTrue(result.sections.isEmpty)
+    }
+
+    // Like the Working Directory order, each run of tabs gets a heading,
+    // in the order shown.
+    func testEachStatusGetsASection() {
+        let patterns = StatusPrioritySettings.defaultPatterns
+        let result = TabBarOrder.apply(mode: .status,
+                                       tabs: [tab(3), tab(0), tab(none), tab(0), tab(patterns.count)],
+                                       statusPatterns: patterns)
+        XCTAssertEqual(result.order, [1, 3, 0, 4, 2])
+        XCTAssertEqual(result.sections.map(\.name), ["Waiting", "Working", "Other", "No Status"])
+        let ids = result.sections.map(\.identifier)
+        XCTAssertEqual(result.sectionIdentifiers as? [String], [ids[1], ids[0], ids[3], ids[0], ids[2]])
+        XCTAssertTrue(ids.allSatisfy { TabBarOrder.isSectionIdentifier($0) })
+        XCTAssertEqual(Set(ids).count, ids.count)
+    }
+
+    // A pattern the user added is shown as they wrote it, capitalized.
+    func testACustomPatternNamesItsSection() {
+        let result = TabBarOrder.apply(mode: .status, tabs: [tab(0)], statusPatterns: ["needs review"])
+        XCTAssertEqual(result.sections.map(\.name), ["Needs review"])
+    }
+
+    // Snoozed tabs are one section at the end, whatever their status.
+    func testSnoozedTabsShareALastSection() {
+        let result = TabBarOrder.apply(mode: .status,
+                                       tabs: [tab(0, snoozed: true), tab(1), tab(none, snoozed: true)],
+                                       statusPatterns: StatusPrioritySettings.defaultPatterns)
+        XCTAssertEqual(result.order, [1, 0, 2])
+        XCTAssertEqual(result.sections.map(\.name), ["Done", "Snoozed"])
+        XCTAssertEqual(result.sectionIdentifiers[0] as? String, result.sectionIdentifiers[2] as? String)
+    }
+
+    // A pinned tab is shown first, above every heading.
+    func testPinnedTabsHaveNoStatusSection() {
+        let result = TabBarOrder.apply(mode: .status,
+                                       tabs: [tab(0, pinned: true), tab(0)],
+                                       statusPatterns: StatusPrioritySettings.defaultPatterns)
+        XCTAssertTrue(result.sectionIdentifiers[0] is NSNull)
+        XCTAssertEqual(result.sections.count, 1)
+    }
+
+    // Changing the patterns renames the headings, so the bar must see a
+    // change even when the order is the same.
+    func testChangingAPatternChangesItsSectionIdentifier() {
+        let a = TabBarOrder.apply(mode: .status, tabs: [tab(0)], statusPatterns: ["wait"])
+        let b = TabBarOrder.apply(mode: .status, tabs: [tab(0)], statusPatterns: ["idle"])
+        XCTAssertNotEqual(a.sections[0].identifier, b.sections[0].identifier)
     }
 
     func testSnoozedTabsGoLast() {
@@ -69,33 +114,49 @@ final class TabBarOrderTests: XCTestCase {
                         result.sections[0].identifier, result.sections[1].identifier])
     }
 
-    func testTabsAtAPromptGoInALastSection() {
-        let result = TabBarOrder.apply(mode: .workingDirectory,
-                                       tabs: [tab(directory: "/y", atPrompt: true),
-                                              tab(directory: "/x"),
-                                              tab(directory: "/x", atPrompt: true)])
-        XCTAssertEqual(result.order, [1, 0, 2])
-        XCTAssertEqual(result.sections.map(\.identifier),
-                       [result.sectionIdentifiers[1] as? String, TabBarOrder.promptSectionIdentifier])
-        XCTAssertNil(result.sections.last?.toolTip)
-    }
-
-    // A tab whose directory isn't known, such as a web browser tab, isn't
-    // at a prompt either.
-    func testTabsWithNoDirectoryGetTheirOwnSectionBeforeThePromptSection() {
+    // Such as a web browser tab.
+    func testTabsWithNoDirectoryGoInALastSection() {
         let result = TabBarOrder.apply(mode: .workingDirectory,
                                        tabs: [tab(directory: nil),
-                                              tab(directory: "/x", atPrompt: true),
-                                              tab(directory: "/x")])
-        XCTAssertEqual(result.order, [2, 0, 1])
-        XCTAssertEqual(result.sections.map(\.identifier).suffix(2),
-                       [TabBarOrder.unknownSectionIdentifier, TabBarOrder.promptSectionIdentifier])
-        XCTAssertEqual(result.sectionIdentifiers[0] as? String, TabBarOrder.unknownSectionIdentifier)
+                                              tab(directory: "/x"),
+                                              tab(directory: "/y")])
+        XCTAssertEqual(result.order, [1, 2, 0])
+        XCTAssertEqual(result.sections.last?.identifier, TabBarOrder.otherSectionIdentifier)
+        XCTAssertEqual(result.sections.last?.name, "Other")
+        XCTAssertEqual(result.sectionIdentifiers[0] as? String, TabBarOrder.otherSectionIdentifier)
     }
 
-    func testTheHomeDirectoryIsNamedWithATilde() {
+    // The name alone can be ambiguous, so the heading says where it is.
+    // The heading reads as the path, with the parent dimmer before the name.
+    func testASectionsDetailIsItsParentDirectory() {
+        let home = NSHomeDirectory()
+        let result = TabBarOrder.apply(mode: .workingDirectory,
+                                       tabs: [tab(directory: home + "/git/iterm2"),
+                                              tab(directory: "/usr/local"),
+                                              tab(directory: home),
+                                              tab(directory: "/")])
+        XCTAssertEqual(result.sections.map(\.name), ["iterm2", "local", "Home", "/"])
+        XCTAssertEqual(result.sections.map(\.detail), ["~/git/", "/usr/", nil, nil])
+        XCTAssertEqual(result.sections[0].toolTip, home + "/git/iterm2")
+    }
+
+    // A shell can report a directory that isn't absolute. It has no parent
+    // to show, so the heading mustn't make one up.
+    func testARelativeDirectoryHasNoDetail() {
+        let result = TabBarOrder.apply(mode: .workingDirectory, tabs: [tab(directory: "foo")])
+        XCTAssertEqual(result.sections.map(\.name), ["foo"])
+        XCTAssertEqual(result.sections.map(\.detail), [nil])
+    }
+
+    func testADirectoryAtTheTopHasTheRootAsItsDetail() {
+        let result = TabBarOrder.apply(mode: .workingDirectory, tabs: [tab(directory: "/tmp")])
+        XCTAssertEqual(result.sections.map(\.name), ["tmp"])
+        XCTAssertEqual(result.sections.map(\.detail), ["/"])
+    }
+
+    func testTheHomeDirectoryIsNamedHome() {
         let result = TabBarOrder.apply(mode: .workingDirectory, tabs: [tab(directory: NSHomeDirectory())])
-        XCTAssertEqual(result.sections.map(\.name), ["~"])
+        XCTAssertEqual(result.sections.map(\.name), ["Home"])
     }
 
     func testPinnedTabsHaveNoSection() {
@@ -190,5 +251,19 @@ final class TabBarOrderTests: XCTestCase {
         XCTAssertEqual(TabBarOrder.adjacentVisibleIndex(order: order, visible: visible, selectedIndex: 1, offset: 1), 2,
                        "wraps around")
         XCTAssertEqual(TabBarOrder.adjacentVisibleIndex(order: order, visible: visible, selectedIndex: 2, offset: -1), 1)
+    }
+
+    // MARK: - The order button
+
+    // Squeezing the bar and widening it again must not leave the field
+    // under the button.
+    func testTheFieldStaysBesideTheButtonAfterTheBarIsSqueezed() {
+        let controller = TabBarSearchController()
+        let view = controller.accessoryView
+        view.setFrameSize(NSSize(width: 10, height: view.frame.height))
+        view.setFrameSize(NSSize(width: 200, height: view.frame.height))
+        XCTAssertLessThanOrEqual(controller.searchField.frame.maxX, controller.orderButton.frame.minX)
+        XCTAssertEqual(controller.orderButton.frame.maxX, 200)
+        XCTAssertGreaterThan(controller.searchField.frame.width, 150)
     }
 }

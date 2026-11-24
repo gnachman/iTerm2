@@ -24,6 +24,13 @@ NS_ASSUME_NONNULL_BEGIN
 @optional
 // The chip's tooltip, when it isn't the name.
 @property (nonatomic, readonly, nullable) NSString *toolTip;
+// A heading over tabs that go together rather than a group the user made.
+// The bar draws it as a quiet line of text, with no color or outline, and
+// draws its tabs as ungrouped.
+@property (nonatomic, readonly) BOOL isSectionHeading;
+// For a section heading, dimmer text before the name, such as the parent
+// directory of the directory the name gives.
+@property (nonatomic, readonly, nullable) NSString *detail;
 @end
 
 // Supplies group definitions to the tab bar by identifier. The window

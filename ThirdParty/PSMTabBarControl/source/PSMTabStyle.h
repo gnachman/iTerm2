@@ -141,6 +141,13 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) CGFloat tabBarHeight;
 
 @optional
+// Fills part of a section heading or the strip beside its indented tabs, for
+// a style whose bar background doesn't match its unselected tabs. Leave it
+// unimplemented to show the bar's background.
+- (void)drawSectionBackgroundInRect:(NSRect)rect;
+// Whether the guide line beside a section's tabs marks the selected one. NO
+// for a style whose selected tab already stands out. YES if unimplemented.
+- (BOOL)sectionGuideMarksSelectedTab;
 // The normal height of a group header row in a vertical bar, for styles whose
 // tabBarHeight doesn't give it. Rows made taller for rich tab content don't
 // make the header taller.

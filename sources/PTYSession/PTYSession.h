@@ -711,12 +711,6 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // NO if shell integration is not in use.
 @property(nonatomic, readonly) BOOL isAtShellPrompt;
 
-// Whether the session is waiting for a command at a shell prompt: the
-// foreground job is a shell, or, while ssh is in the foreground and the
-// remote host has shell integration, from the end of the prompt until
-// Return. ssh to a host without shell integration counts as a command.
-@property(nonatomic, readonly) BOOL isWaitingForACommand;
-
 // Has it been at least a second since isProcessing became false?
 @property(nonatomic, readonly) BOOL isIdle;
 // When output last arrived, ignoring output caused by resizing. Seconds since the reference date.
@@ -732,6 +726,12 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // home directory and stashes the unavailable path here so a notice can be shown once the shell
 // starts. Cleared after the notice is displayed. Issue 12955.
 @property(nonatomic, nullable, copy) NSString *unavailableWorkingDirectory;
+
+// The session's directory without blocking: the path variable, or else
+// the last directory the session is known to have been in. When neither is
+// known, this starts finding out and returns nil, and a later call returns
+// what it found. Nil for a browser session.
+- (nullable NSString *)knownWorkingDirectory;
 
 // Async version of currentLocalWorkingDirectory.
 - (void)asyncCurrentLocalWorkingDirectory:(void (^)(NSString * _Nullable pwd))completion;

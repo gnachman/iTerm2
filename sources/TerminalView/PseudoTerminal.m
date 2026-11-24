@@ -2029,6 +2029,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 #pragma mark - Tab bar order
 
+- (iTermTabBarSearchController *)tabBarSearchController {
+    return _tabBarSearch;
+}
+
 - (iTermTabBarOrderController *)tabBarOrderController {
     if (!_tabBarOrder) {
         _tabBarOrder = [[iTermTabBarOrderController alloc] init];
@@ -2104,8 +2108,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                       pinned:aTab.isPinned
                                               statusPriority:priority
                                                      snoozed:aTab.isSnoozed
-                                                   directory:byDirectory ? session.variablesScope.path : nil
-                                                    atPrompt:byDirectory && session.isWaitingForACommand
+                                                   directory:byDirectory ? session.knownWorkingDirectory : nil
                                                        group:groupKey] autorelease];
     }];
 }
@@ -10303,6 +10306,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                                                           color:[NSColor systemGrayColor]
                                                                parentIdentifier:nil] autorelease];
         group.toolTip = section.toolTip;
+        group.isSectionHeading = YES;
+        group.detail = section.detail;
         return group;
     }
     // A parent group may have no direct members; its definition then rides its
@@ -10445,8 +10450,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return;
     }
     if (_tabBarWasSorted) {
-        // Sections are drawn as groups, which the bar shows in the order
-        // given. Nothing is collapsed, so only the search hides tabs.
+        // Sections are chips, like groups' (the bar draws their headings
+        // itself), shown in the order given. Nothing is collapsed, so only
+        // the search hides tabs.
         NSArray<PTYTab *> *itemTabs = [items mapWithBlock:^id(NSTabViewItem *item) {
             return item.identifier;
         }];
@@ -10477,12 +10483,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         }
         [_tabBarOrderSections release];
         _tabBarOrderSections = [sections copy];
+        control.hasSectionHeadings = (sections.count > 0);
         control.displayOrder = [order.order mapWithBlock:^id(NSNumber *i) {
             return items[i.integerValue];
         }];
     } else {
         [_tabBarOrderSections release];
         _tabBarOrderSections = nil;
+        control.hasSectionHeadings = NO;
         control.displayOrder = nil;
         // So polling sees a change when the order shows again.
         [_tabBarOrder forgetApplied];
@@ -18903,6 +18911,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 
 - (void)statusPrioritiesDidChange:(NSNotification *)notification {
     [_contentView.tabBarControl setNeedsDisplay:YES];
+    // The Status order's sort and headings come from the list. Held
+    // priorities are stale even if the bar isn't sorted right now.
+    [_tabBarOrder statusPrioritiesDidChange];
 }
 
 - (void)tab:(PTYTab *)tab didChangeIcon:(NSImage *)icon {

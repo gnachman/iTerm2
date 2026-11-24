@@ -615,6 +615,21 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
     return color;
 }
 
+// The bar is the selected tab's color, so headings would look selected.
+// Tabs' backgrounds stop a point short of each side of a vertical bar (see
+// -drawCellBackgroundSelected:...), leaving its dividers showing, so this does
+// too.
+- (void)drawSectionBackgroundInRect:(NSRect)rect {
+    const NSRect fill = NSIntersectionRect(rect, NSInsetRect(self.tabBar.bounds, 1, 0));
+    if (NSIsEmptyRect(fill)) {
+        return;
+    }
+    // Copy, as tab backgrounds are filled, so a translucent color doesn't
+    // stack on the bar's background and come out denser than the tabs.
+    [[self backgroundColorSelected:NO highlightAmount:0] set];
+    NSRectFill(fill);
+}
+
 - (NSColor *)colorByDimmingColor:(NSColor *)color {
     const CGFloat dimmingAmount = [[self.tabBar.delegate tabView:self.tabBar
                                                    valueOfOption:PSMTabBarControlOptionDimmingAmount] doubleValue];
@@ -919,9 +934,11 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
         // (Covering only the button's slab left that gap painted with the
         // lighter selected-background base, so the last tab appeared to bleed
         // into the overflow area.) The overflow button draws on top of this.
+        // The bar's width, not the last tab's, which is narrower when it's
+        // indented under a section heading. With no tab shown, nothing.
         return NSMakeRect(0,
                           NSMaxY(cell.frame),
-                          NSWidth(cell.frame),
+                          cell ? NSWidth(self.tabBar.frame) : 0,
                           NSHeight(self.tabBar.frame) - NSMaxY(cell.frame));
     }
 }
@@ -1286,10 +1303,13 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
     const CGFloat top = 0.5;
     const CGFloat right = bar.frame.size.width - 0.5;
     const CGFloat bottom = NSMinY(frame) + 0.5;
+    // From the tab's leading edge, which is in from the bar's when the tab
+    // is indented under a section heading.
+    const CGFloat left = NSMinX(frame);
 
     [path moveToPoint:NSMakePoint(right, top)];
     [path lineToPoint:NSMakePoint(right, bottom)];
-    [path lineToPoint:NSMakePoint(0, bottom)];
+    [path lineToPoint:NSMakePoint(left, bottom)];
 
     [[self outlineColor] set];
     [path stroke];
@@ -1305,8 +1325,10 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
     const CGFloat top = NSMaxY(cell.frame) - 0.5;
     const CGFloat right = bar.frame.size.width - 0.5;
     const CGFloat bottom = NSMaxY(bar.frame) - 0.5;
+    // See -drawOutlineAboveSelectedTabInVerticalTabBar:.
+    const CGFloat left = NSMinX(cell.frame);
 
-    [path moveToPoint:NSMakePoint(0, top)];
+    [path moveToPoint:NSMakePoint(left, top)];
     [path lineToPoint:NSMakePoint(right, top)];
     [path lineToPoint:NSMakePoint(right, bottom)];
 

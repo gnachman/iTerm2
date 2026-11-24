@@ -3,15 +3,14 @@
 //  iTerm2SharedARC
 //
 //  A window's tab bar order (see TabBarOrder) and what it needs to keep it
-//  steady:
+//  current and steady:
 //
-//  - A tab moves between a directory section and the shell prompt section
-//    only after its state has held for a while, so a shell that is briefly in
-//    the foreground while starting a command doesn't make it flicker.
 //  - While the pointer is over the bar, tabs keep the places they were last
 //    shown in, so nothing moves under it. The window asks with useSnapshot.
 //  - Directories change without telling anyone, so while ordering by
 //    directory a timer checks for changes.
+//  - The bar may not hear the pointer leave, so while changes wait for it a
+//    timer checks whether it's gone.
 //
 
 import Foundation
@@ -24,25 +23,20 @@ final class TabBarOrderLiveTab: NSObject {
     let statusPriority: Int
     let snoozed: Bool
     let directory: String?
-    let atPrompt: Bool
     let group: String?
 
-    @objc init(key: Int, pinned: Bool, statusPriority: Int, snoozed: Bool, directory: String?, atPrompt: Bool, group: String?) {
+    @objc init(key: Int, pinned: Bool, statusPriority: Int, snoozed: Bool, directory: String?, group: String?) {
         self.key = key
         self.pinned = pinned
         self.statusPriority = statusPriority
         self.snoozed = snoozed
         self.directory = directory
-        self.atPrompt = atPrompt
         self.group = group
     }
 }
 
 @objc(iTermTabBarOrderController)
 final class TabBarOrderController: NSObject {
-    /// How long a change between at a prompt and running a command must hold
-    /// before the tab changes sections.
-    static let promptHoldInterval: TimeInterval = 1
     /// How often to check for changes while ordering by directory.
     static let pollInterval: TimeInterval = 0.5
 
@@ -53,9 +47,6 @@ final class TabBarOrderController: NSObject {
             }
             DLog("Tab bar order mode \(oldValue.rawValue) -> \(mode.rawValue)")
             snapshot.removeAll()
-            // Only the directory order tracks prompts, so others recorded
-            // tabs as never at one.
-            promptStates.removeAll()
             heldBackByPointer = false
             updateTimer()
         }
@@ -71,47 +62,52 @@ final class TabBarOrderController: NSObject {
     /// Whether the bar shows the order now. Polling is skipped otherwise.
     @objc var isActive: (() -> Bool)?
 
-    /// For tests.
-    var now: () -> TimeInterval = { Date.timeIntervalSinceReferenceDate }
-
-    private struct PromptState {
-        var stable: Bool
-        var pending: Bool
-        var pendingSince: TimeInterval
-    }
-    private var promptStates = [Int: PromptState]()
     private var snapshot = [Int: TabBarOrderTab]()
     /// What was last applied, to tell whether a check found a change.
     private var lastApplied: (order: [Int], sections: [String], membership: [String])?
-    private var heldBackByPointer = false
+    private var heldBackByPointer = false {
+        didSet {
+            updatePointerTimer()
+        }
+    }
     private var timer: Timer?
+    /// While changes wait for the pointer, checks whether it's gone, in case
+    /// the bar doesn't hear it leave.
+    private var pointerTimer: Timer?
 
     deinit {
         timer?.invalidate()
+        pointerTimer?.invalidate()
     }
 
     /// The order for these tabs. With `useSnapshot`, tabs keep the inputs
     /// they were last applied with (pinned state is always current). With
-    /// `store`, as when applying to the bar, the inputs used are remembered.
+    /// `store`, as when applying to the bar, the inputs used are remembered;
+    /// with both, if what tabs are now would show differently, that change
+    /// waits for the pointer to leave.
     @objc(resultForTabs:useSnapshot:store:)
     func result(for tabs: [TabBarOrderLiveTab], useSnapshot: Bool, store: Bool) -> TabBarOrderResult {
-        let time = now()
+        var differsFromSnapshot = false
+        var liveTabs = [TabBarOrderTab]()
         let orderTabs = tabs.map { live -> TabBarOrderTab in
-            if useSnapshot, let held = snapshot[live.key] {
-                return TabBarOrderTab(pinned: live.pinned,
-                                      statusPriority: held.statusPriority,
-                                      snoozed: held.snoozed,
-                                      directory: held.directory,
-                                      atPrompt: held.atPrompt,
-                                      group: live.group)
-            }
-            let atPrompt = stablePromptState(for: live, at: time, store: store)
             let tab = TabBarOrderTab(pinned: live.pinned,
                                      statusPriority: live.statusPriority,
                                      snoozed: live.snoozed,
                                      directory: live.directory,
-                                     atPrompt: atPrompt,
                                      group: live.group)
+            liveTabs.append(tab)
+            if useSnapshot, let held = snapshot[live.key] {
+                if held.statusPriority != tab.statusPriority ||
+                    held.snoozed != tab.snoozed ||
+                    held.directory != tab.directory {
+                    differsFromSnapshot = true
+                }
+                return TabBarOrderTab(pinned: live.pinned,
+                                      statusPriority: held.statusPriority,
+                                      snoozed: held.snoozed,
+                                      directory: held.directory,
+                                      group: live.group)
+            }
             if store {
                 snapshot[live.key] = tab
             }
@@ -120,9 +116,18 @@ final class TabBarOrderController: NSObject {
         if store {
             let keys = Set(tabs.map(\.key))
             snapshot = snapshot.filter { keys.contains($0.key) }
-            promptStates = promptStates.filter { keys.contains($0.key) }
         }
         let result = TabBarOrder.apply(mode: mode, tabs: orderTabs)
+        if store && differsFromSnapshot && !heldBackByPointer {
+            let now = Self.summary(of: TabBarOrder.apply(mode: mode, tabs: liveTabs))
+            let shown = Self.summary(of: result)
+            if now.order != shown.order || now.sections != shown.sections || now.membership != shown.membership {
+                // Shown as it was, so the change waits for the pointer to
+                // leave rather than being lost.
+                DLog("Applied the tab order under the pointer with a change waiting")
+                heldBackByPointer = true
+            }
+        }
         if store {
             lastApplied = Self.summary(of: result)
             if !useSnapshot {
@@ -132,34 +137,12 @@ final class TabBarOrderController: NSObject {
         return result
     }
 
-    private func stablePromptState(for live: TabBarOrderLiveTab, at time: TimeInterval, store: Bool) -> Bool {
-        guard var state = promptStates[live.key] else {
-            if store {
-                promptStates[live.key] = PromptState(stable: live.atPrompt, pending: live.atPrompt, pendingSince: time)
-            }
-            return live.atPrompt
-        }
-        if live.atPrompt == state.stable {
-            state.pending = state.stable
-        } else if live.atPrompt != state.pending {
-            state.pending = live.atPrompt
-            state.pendingSince = time
-        } else if time - state.pendingSince >= Self.promptHoldInterval {
-            state.stable = live.atPrompt
-        }
-        if store {
-            promptStates[live.key] = state
-        }
-        return state.stable
-    }
-
     /// The bar stopped showing the order.
     @objc func forgetApplied() {
         lastApplied = nil
-        // Nothing was frozen or tracked while it wasn't shown, so start
-        // from what tabs are when it shows again.
+        // Nothing was frozen while it wasn't shown, so start from what tabs
+        // are when it shows again.
         snapshot.removeAll()
-        promptStates.removeAll()
         heldBackByPointer = false
     }
 
@@ -178,6 +161,20 @@ final class TabBarOrderController: NSObject {
         needsUpdate?()
     }
 
+    /// The status priority list changed. Held priorities are indices into
+    /// the old list and would show under the wrong headings, so drop them
+    /// and show tabs as they are now. The list is edited in Settings, so
+    /// this doesn't wait for the pointer.
+    @objc func statusPrioritiesDidChange() {
+        guard mode == .status else {
+            return
+        }
+        DLog("Status priorities changed; drop the snapshot and update")
+        snapshot.removeAll()
+        heldBackByPointer = false
+        needsUpdate?()
+    }
+
     /// The pointer left the bar, or may have without saying so.
     @objc func applyChangesHeldBackByPointer() {
         guard heldBackByPointer, !(pointerIsInside?() ?? false) else {
@@ -192,6 +189,23 @@ final class TabBarOrderController: NSObject {
     /// should go by the snapshot.
     @objc var isHoldingBack: Bool {
         return heldBackByPointer
+    }
+
+    private func updatePointerTimer() {
+        if heldBackByPointer {
+            guard pointerTimer == nil else {
+                return
+            }
+            let timer = Timer(timeInterval: Self.pollInterval, repeats: true) { [weak self] _ in
+                self?.applyChangesHeldBackByPointer()
+            }
+            timer.tolerance = Self.pollInterval / 2
+            RunLoop.main.add(timer, forMode: .common)
+            pointerTimer = timer
+        } else {
+            pointerTimer?.invalidate()
+            pointerTimer = nil
+        }
     }
 
     private func updateTimer() {
@@ -215,12 +229,6 @@ final class TabBarOrderController: NSObject {
     @objc func poll() {
         guard mode != .manual, isActive?() ?? true, let tabs = liveTabs?() else {
             return
-        }
-        // Advance prompt states without applying: store the states but not
-        // the snapshot, so held tabs stay put.
-        let time = now()
-        for live in tabs {
-            _ = stablePromptState(for: live, at: time, store: true)
         }
         let candidate = Self.summary(of: self.result(for: tabs, useSnapshot: false, store: false))
         if let lastApplied,

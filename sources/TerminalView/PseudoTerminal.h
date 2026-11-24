@@ -23,6 +23,7 @@
 
 @class PTYSession;
 @class PSMTabBarControl;
+@class iTermTabBarSearchController;
 @class TabColorPickerState;
 @class iTermBrowserWebView;
 @class iTermPromptOnCloseReason;
@@ -435,6 +436,10 @@ deferringExpansion:(BOOL)deferExpansion;
 // Whether the tab bar shows tabs sorted by status or directory, without
 // their groups.
 - (BOOL)tabBarIsSorted;
+
+// The vertical tab bar's search field and order button, or nil if the bar
+// hasn't shown them.
+@property(nonatomic, readonly) iTermTabBarSearchController *tabBarSearchController;
 
 // Updates the window when screen parameters (number of screens, resolutions,
 // etc.) change.

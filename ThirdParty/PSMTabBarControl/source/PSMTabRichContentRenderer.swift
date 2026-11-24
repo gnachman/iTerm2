@@ -18,6 +18,7 @@ import AppKit
 
 @objc(PSMTabRichContentRenderer)
 final class PSMTabRichContentRenderer: NSObject {
+    @objc(fontForLine:baseFont:)
     static func font(for line: PSMTabRichLine, baseFont: NSFont) -> NSFont {
         let size = max(1, round(baseFont.pointSize * line.scale * 2) / 2)
         var font = NSFont.systemFont(ofSize: size, weight: line.bold ? .semibold : .regular)
@@ -151,10 +152,23 @@ final class PSMTabRichContentRenderer: NSObject {
         return top(lines: lines, in: rect, baseFont: baseFont) + singleLineHeight(for: first, baseFont: baseFont) / 2
     }
 
+    // For text on a color, given the text color a style chose to stand out
+    // from it: light text means the color behind it is dark.
+    @objc(colorAppearanceContrastingWithTextColor:)
+    static func colorAppearance(contrastingWith textColor: NSColor) -> NSAppearance? {
+        guard let rgb = textColor.usingColorSpace(.sRGB) else {
+            DLog("Can't convert text color \(textColor) to sRGB")
+            return nil
+        }
+        let luminance = 0.299 * rgb.redComponent + 0.587 * rgb.greenComponent + 0.114 * rgb.blueComponent
+        return NSAppearance(named: luminance > 0.5 ? .darkAqua : .aqua)
+    }
+
     // colorAppearance picks between a line's light and dark colors. Pass the
-    // style's accessoryAppearance, which is set when the bar is dark or light
-    // regardless of the window's appearance. nil means the current drawing
-    // appearance.
+    // style's richLineColorAppearanceForCell:, which is its accessoryAppearance
+    // (set when the bar is dark or light regardless of the window's
+    // appearance) unless a tab color fills the space behind the text. nil
+    // means the current drawing appearance.
     @objc(drawLines:inRect:baseFont:textColor:secondaryColor:alignment:colorAppearance:)
     static func draw(lines: [PSMTabRichLine],
                      in rect: NSRect,

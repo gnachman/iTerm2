@@ -8,11 +8,11 @@
 //
 //  - Manual: the window's order, with its tab groups.
 //  - Status: by status, ranked by the status priority settings, then in
-//    manual order. Snoozed tabs go after the rest.
+//    manual order, with a section for each status priority pattern. Snoozed
+//    tabs go in a last section.
 //  - Working Directory: a section for each directory, in the manual order of
-//    its first tab, with tabs in manual order. Tabs whose directory isn't
-//    known go in a section after those, and tabs at a shell prompt in a last
-//    section, since their directory changes with every cd.
+//    its first tab, with tabs in manual order. Tabs with no directory, such
+//    as web browser tabs, go in a last section.
 //
 //  Tab groups don't apply in the Status and Working Directory orders. Pinned
 //  tabs stay first, in manual order.
@@ -34,22 +34,18 @@ final class TabBarOrderTab: NSObject {
     /// Lower is more urgent. NSIntegerMax for no status.
     let statusPriority: Int
     let snoozed: Bool
-    /// The directory of its active session, or nil when it isn't known.
+    /// The directory of its active session, or nil when it has none.
     let directory: String?
-    /// Whether it's waiting for a command at a shell prompt, where its
-    /// directory changes with every cd.
-    let atPrompt: Bool
     /// Its tab group, or nil. The bar doesn't show groups in a sorted order,
     /// but the window keeps a group's tabs together, so a move stays among
     /// tabs in the same group.
     let group: String?
 
-    @objc init(pinned: Bool, statusPriority: Int, snoozed: Bool, directory: String?, atPrompt: Bool, group: String?) {
+    @objc init(pinned: Bool, statusPriority: Int, snoozed: Bool, directory: String?, group: String?) {
         self.pinned = pinned
         self.statusPriority = statusPriority
         self.snoozed = snoozed
         self.directory = directory
-        self.atPrompt = atPrompt
         self.group = group
     }
 }
@@ -61,12 +57,16 @@ final class TabBarOrderSection: NSObject {
     /// draws a group's.
     @objc let identifier: String
     @objc let name: String
+    /// Shown before the name, dimmer, so the two read as the path: where the
+    /// directory is, as “~/git/”, or nil.
+    @objc let detail: String?
     /// The full path, or nil.
     @objc let toolTip: String?
 
-    init(identifier: String, name: String, toolTip: String?) {
+    init(identifier: String, name: String, detail: String?, toolTip: String?) {
         self.identifier = identifier
         self.name = name
+        self.detail = detail
         self.toolTip = toolTip
     }
 }
@@ -97,14 +97,21 @@ final class TabBarOrder: NSObject {
     /// Every section identifier starts with this, so it can't be mistaken
     /// for a tab group's.
     @objc static let sectionIdentifierPrefix = "iTermTabBarOrderSection:"
-    @objc static let promptSectionIdentifier = sectionIdentifierPrefix + "prompt"
-    @objc static let unknownSectionIdentifier = sectionIdentifierPrefix + "unknown"
+    @objc static let otherSectionIdentifier = sectionIdentifierPrefix + "other"
 
     @objc static func isSectionIdentifier(_ identifier: String?) -> Bool {
         return identifier?.hasPrefix(sectionIdentifierPrefix) ?? false
     }
 
     @objc static func apply(mode: TabBarOrderMode, tabs: [TabBarOrderTab]) -> TabBarOrderResult {
+        return apply(mode: mode, tabs: tabs, statusPatterns: StatusPrioritySettings.shared.patterns)
+    }
+
+    /// `statusPatterns` are the status priority patterns, most urgent first.
+    /// They name the Status order's sections.
+    static func apply(mode: TabBarOrderMode,
+                      tabs: [TabBarOrderTab],
+                      statusPatterns: [String]) -> TabBarOrderResult {
         let indices = Array(tabs.indices)
         let pinned = indices.filter { tabs[$0].pinned }
         let unpinned = indices.filter { !tabs[$0].pinned }
@@ -136,21 +143,29 @@ final class TabBarOrder: NSObject {
                 let tab = tabs[i]
                 return moveKey(i, "status:\(tab.snoozed):\(tab.statusPriority)")
             }
+            // Sorted, so each section's tabs are one run.
+            var sections = [TabBarOrderSection]()
+            var identifiers = [Any](repeating: NSNull(), count: tabs.count)
+            for i in sorted {
+                let section = statusSection(for: tabs[i], patterns: statusPatterns)
+                if sections.last?.identifier != section.identifier {
+                    sections.append(section)
+                }
+                identifiers[i] = section.identifier
+            }
             return TabBarOrderResult(order: pinned + sorted,
-                                     sectionIdentifiers: indices.map { _ in NSNull() },
-                                     sections: [],
+                                     sectionIdentifiers: identifiers,
+                                     sections: sections,
                                      moveKeys: moveKeys)
         case .workingDirectory:
             var sectionOrder = [String]()
             var members = [String: [Int]]()
             var sections = [String: TabBarOrderSection]()
             var identifiers = [Any](repeating: NSNull(), count: tabs.count)
-            // These go last, in this order.
-            let trailing = [unknownSectionIdentifier, promptSectionIdentifier]
             for i in unpinned {
                 let section = self.section(for: tabs[i])
                 if members[section.identifier] == nil {
-                    if !trailing.contains(section.identifier) {
+                    if section.identifier != otherSectionIdentifier {
                         sectionOrder.append(section.identifier)
                     }
                     sections[section.identifier] = section
@@ -158,7 +173,10 @@ final class TabBarOrder: NSObject {
                 members[section.identifier, default: []].append(i)
                 identifiers[i] = section.identifier
             }
-            sectionOrder.append(contentsOf: trailing.filter { members[$0] != nil })
+            // Last.
+            if members[otherSectionIdentifier] != nil {
+                sectionOrder.append(otherSectionIdentifier)
+            }
             let order = pinned + sectionOrder.flatMap { members[$0] ?? [] }
             let moveKeys = indices.map { i in
                 moveKey(i, identifiers[i] as? String ?? "")
@@ -170,34 +188,116 @@ final class TabBarOrder: NSObject {
         }
     }
 
-    private static func section(for tab: TabBarOrderTab) -> TabBarOrderSection {
-        if tab.atPrompt {
+    private static func statusSection(for tab: TabBarOrderTab, patterns: [String]) -> TabBarOrderSection {
+        let prefix = sectionIdentifierPrefix + "status:"
+        if tab.snoozed {
             return TabBarOrderSection(
-                identifier: promptSectionIdentifier,
-                name: String(localized: "TabBarOrder.PromptSection",
-                             defaultValue: "At a Shell Prompt",
-                             comment: "Heading in a vertical tab bar ordered by working directory, over the tabs whose shell is waiting for a command. Their directory changes as the user types cd, so they aren’t put under a directory."),
+                identifier: prefix + "snoozed",
+                name: String(localized: "TabBarOrder.SnoozedSection",
+                             defaultValue: "Snoozed",
+                             comment: "Heading in a vertical tab bar ordered by status, over tabs the user snoozed."),
+                detail: nil,
                 toolTip: nil)
         }
+        let priority = tab.statusPriority
+        if priority >= 0 && priority < patterns.count {
+            let pattern = patterns[priority]
+            // The pattern is in the identifier so that changing it renames
+            // the heading.
+            return TabBarOrderSection(identifier: prefix + "\(priority):" + pattern,
+                                      name: statusSectionName(pattern: pattern),
+                                      detail: nil,
+                                      toolTip: nil)
+        }
+        if priority == patterns.count {
+            return TabBarOrderSection(
+                identifier: prefix + "unmatched",
+                name: String(localized: "TabBarOrder.OtherStatusSection",
+                             defaultValue: "Other",
+                             comment: "Heading in a vertical tab bar ordered by status, over tabs whose status matches none of the user’s status priority patterns."),
+                detail: nil,
+                toolTip: nil)
+        }
+        return TabBarOrderSection(
+            identifier: prefix + "none",
+            name: String(localized: "TabBarOrder.NoStatusSection",
+                         defaultValue: "No Status",
+                         comment: "Heading in a vertical tab bar ordered by status, over tabs that have no status."),
+            detail: nil,
+            toolTip: nil)
+    }
+
+    /// Patterns match status text, which is English, so the built-in ones
+    /// get localized names. One the user added is shown as written.
+    private static func statusSectionName(pattern: String) -> String {
+        switch pattern.lowercased() {
+        case "wait":
+            return String(localized: "TabBarOrder.WaitingSection", defaultValue: "Waiting",
+                          comment: "Heading in a vertical tab bar ordered by status, over tabs whose program is waiting for the user.")
+        case "done":
+            return String(localized: "TabBarOrder.DoneSection", defaultValue: "Done",
+                          comment: "Heading in a vertical tab bar ordered by status, over tabs whose program finished its work.")
+        case "error":
+            return String(localized: "TabBarOrder.ErrorSection", defaultValue: "Error",
+                          comment: "Heading in a vertical tab bar ordered by status, over tabs whose program reported an error.")
+        case "work":
+            return String(localized: "TabBarOrder.WorkingSection", defaultValue: "Working",
+                          comment: "Heading in a vertical tab bar ordered by status, over tabs whose program is working.")
+        case "background":
+            return String(localized: "TabBarOrder.BackgroundSection", defaultValue: "Background",
+                          comment: "Heading in a vertical tab bar ordered by status, over tabs whose program is waiting on work it started in the background.")
+        case "idle":
+            return String(localized: "TabBarOrder.IdleSection", defaultValue: "Idle",
+                          comment: "Heading in a vertical tab bar ordered by status, over tabs whose program is idle.")
+        default:
+            return pattern.prefix(1).uppercased() + pattern.dropFirst()
+        }
+    }
+
+    private static func section(for tab: TabBarOrderTab) -> TabBarOrderSection {
         guard let directory = tab.directory, !directory.isEmpty else {
             return TabBarOrderSection(
-                identifier: unknownSectionIdentifier,
-                name: String(localized: "TabBarOrder.UnknownSection",
-                             defaultValue: "Unknown Directory",
-                             comment: "Heading in a vertical tab bar ordered by working directory, over tabs whose directory isn’t known, such as web browser tabs."),
+                identifier: otherSectionIdentifier,
+                name: String(localized: "TabBarOrder.OtherSection",
+                             defaultValue: "Other",
+                             comment: "Heading in a vertical tab bar ordered by working directory, over tabs that have no directory, such as web browser tabs."),
+                detail: nil,
                 toolTip: nil)
         }
         let standardized = (directory as NSString).standardizingPath
+        let home = NSHomeDirectory()
         let name: String
-        if standardized == NSHomeDirectory() {
-            name = "~"
+        let detail: String?
+        if standardized == home || standardized == "/" {
+            name = standardized == home ? String(localized: "TabBarOrder.HomeSection",
+                                                 defaultValue: "Home",
+                                                 comment: "Heading in a vertical tab bar ordered by working directory, over tabs whose working directory is the user’s home directory.") : "/"
+            detail = nil
         } else {
-            let last = (standardized as NSString).lastPathComponent
-            name = last.isEmpty ? standardized : last
+            name = (standardized as NSString).lastPathComponent
+            let parent = abbreviatingHome((standardized as NSString).deletingLastPathComponent)
+            if parent.isEmpty {
+                // Not an absolute path, so there's no parent to show.
+                detail = nil
+            } else {
+                detail = parent.hasSuffix("/") ? parent : parent + "/"
+            }
         }
         return TabBarOrderSection(identifier: sectionIdentifierPrefix + "dir:" + standardized,
                                   name: name,
+                                  detail: detail,
                                   toolTip: standardized)
+    }
+
+    private static func abbreviatingHome(_ path: String) -> String {
+        let home = NSHomeDirectory()
+        if path == home {
+            return "~"
+        }
+        if path.hasPrefix(home + "/") {
+            return "~" + path.dropFirst(home.count)
+        }
+        return path
     }
 
     /// Move Tab Left or Right in a sorted order: the new manual order, as
