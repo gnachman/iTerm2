@@ -194,3 +194,6 @@ Bug Fixes:
   synchronized updates (such as Claude Code)
   repaints the screen. Thanks to Nimanou
   (nuved) for the fix.
+- Changing the theme could freeze iTerm2 for a
+  long time after many tabs had been opened,
+  even ones already closed. Issue 13233.

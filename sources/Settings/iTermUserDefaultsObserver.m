@@ -8,6 +8,7 @@
 #import "iTermUserDefaultsObserver.h"
 
 #import "DebugLogging.h"
+#import "NSObject+iTerm.h"
 #import "iTermUserDefaults.h"
 
 static char iTermAdvancedSettingsModelKVOKey;
@@ -43,13 +44,19 @@ static char iTermAdvancedSettingsModelKVOKey;
 }
 
 - (void)observeKey:(NSString *)key block:(void (^)(void))block {
+    BOOL needToRegister;
     @synchronized (ITNonnilLock(_blocks)) {
+        // -dealloc removes one KVO registration per key, so observing the same
+        // key again replaces the block without adding a second registration.
+        needToRegister = (_blocks[key] == nil);
         _blocks[key] = [block copy];
     }
-    [[iTermUserDefaults userDefaults] addObserver:self
-                                            forKeyPath:key
-                                               options:NSKeyValueObservingOptionNew
-                                               context:(void *)&iTermAdvancedSettingsModelKVOKey];
+    if (needToRegister) {
+        [[iTermUserDefaults userDefaults] addObserver:self
+                                           forKeyPath:key
+                                              options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
+                                              context:(void *)&iTermAdvancedSettingsModelKVOKey];
+    }
 }
 
 // This is called when user defaults are changed anywhere.
@@ -66,6 +73,13 @@ static char iTermAdvancedSettingsModelKVOKey;
                         change:(NSDictionary *)change
                        context:(void *)context {
     if (context == &iTermAdvancedSettingsModelKVOKey) {
+        // CFPreferences fires KVO on every write to the defaults domain even
+        // when the value is unchanged (e.g., a process rewrites the same
+        // value, or another process touches the domain). Drop no-op changes
+        // so observers don't pay for the side effects.
+        if ([NSObject object:change[NSKeyValueChangeOldKey] isEqualToObject:change[NSKeyValueChangeNewKey]]) {
+            return;
+        }
         void (^block)(void);
         @synchronized (ITNonnilLock(_blocks)) {
             block = _blocks[keyPath];

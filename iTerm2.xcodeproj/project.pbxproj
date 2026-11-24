@@ -994,8 +994,6 @@
 		53BCAAFB22668A1E00949829 /* iTermCachingFileManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 53BCAAF922668A1E00949829 /* iTermCachingFileManager.m */; };
 		53C166AA20C21FBB003B03AF /* iTermMigrationHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = 53C166A820C21FBB003B03AF /* iTermMigrationHelper.h */; };
 		53C166AB20C21FBB003B03AF /* iTermMigrationHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 53C166A920C21FBB003B03AF /* iTermMigrationHelper.m */; };
-		53C2D3A52152CA3900FF6471 /* NSUserDefaults+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 53C2D3A32152CA3900FF6471 /* NSUserDefaults+iTerm.h */; };
-		53C2D3A62152CA3900FF6471 /* NSUserDefaults+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 53C2D3A42152CA3900FF6471 /* NSUserDefaults+iTerm.m */; };
 		53C5650121B8C26C002B3167 /* PowerlineVersionControlBranch.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 53C5650021B8C26C002B3167 /* PowerlineVersionControlBranch.pdf */; };
 		53C5650321B8C8C2002B3167 /* PowerlineLN.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 53C5650221B8C8C1002B3167 /* PowerlineLN.pdf */; };
 		53C5650521B8CB1C002B3167 /* PowerlinePadlock.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 53C5650421B8CB1C002B3167 /* PowerlinePadlock.pdf */; };
@@ -6069,8 +6067,6 @@
 		53BCAAF922668A1E00949829 /* iTermCachingFileManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCachingFileManager.m; sourceTree = "<group>"; };
 		53C166A820C21FBB003B03AF /* iTermMigrationHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMigrationHelper.h; sourceTree = "<group>"; };
 		53C166A920C21FBB003B03AF /* iTermMigrationHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMigrationHelper.m; sourceTree = "<group>"; };
-		53C2D3A32152CA3900FF6471 /* NSUserDefaults+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSUserDefaults+iTerm.h"; sourceTree = "<group>"; };
-		53C2D3A42152CA3900FF6471 /* NSUserDefaults+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSUserDefaults+iTerm.m"; sourceTree = "<group>"; };
 		53C5650021B8C26C002B3167 /* PowerlineVersionControlBranch.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = PowerlineVersionControlBranch.pdf; path = images/PowerlineVersionControlBranch.pdf; sourceTree = "<group>"; };
 		53C5650221B8C8C1002B3167 /* PowerlineLN.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = PowerlineLN.pdf; path = images/PowerlineLN.pdf; sourceTree = "<group>"; };
 		53C5650421B8CB1C002B3167 /* PowerlinePadlock.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = PowerlinePadlock.pdf; path = images/PowerlinePadlock.pdf; sourceTree = "<group>"; };
@@ -13871,8 +13867,6 @@
 				A65EC0321F3181E700AC0A6B /* NSTimer+iTerm.m */,
 				A60251661CCD3E5E009BABF1 /* NSURL+iTerm.h */,
 				A60251671CCD3E5E009BABF1 /* NSURL+iTerm.m */,
-				53C2D3A32152CA3900FF6471 /* NSUserDefaults+iTerm.h */,
-				53C2D3A42152CA3900FF6471 /* NSUserDefaults+iTerm.m */,
 				A61B66C818D4D855009AC9D5 /* NSView+iTerm.h */,
 				A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */,
 				A605A1D62EB187D00072ED7E /* NSView+iTerm.swift */,
@@ -16617,7 +16611,6 @@
 				5370678421C9D2780088D0F3 /* SIGTrust.h in Headers */,
 				A6AFD68424496EC2007D0660 /* iTermMultiServerMessage.h in Headers */,
 				A666D5F0221A1EF100D6184A /* iTermVariableScope+Window.h in Headers */,
-				53C2D3A52152CA3900FF6471 /* NSUserDefaults+iTerm.h in Headers */,
 				A6047134213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h in Headers */,
 				A66719341DCE36C3000CE608 /* iTermQuickLookController.h in Headers */,
 				A61A85A924F23C9B00B03880 /* iTermGlobalSearchOutlineView.h in Headers */,
@@ -20099,7 +20092,6 @@
 				A6A9838F27E5C3DA003319D1 /* KeychainPasswordDataSource.swift in Sources */,
 				A6A39EC024B9A96B00A64433 /* iTermUnobtrusiveMessage.m in Sources */,
 				A6A4867D20B67F7E00493302 /* ProfilesWindowPreferencesViewController.m in Sources */,
-				53C2D3A62152CA3900FF6471 /* NSUserDefaults+iTerm.m in Sources */,
 				53E9DFE1220D51D50070C9C0 /* CoprocessTrigger.m in Sources */,
 				5370679821C9D2780088D0F3 /* SIGSHA2SigningAlgorithm.m in Sources */,
 				A6D441C72A91306400CA76E9 /* ProfileDocument.swift in Sources */,

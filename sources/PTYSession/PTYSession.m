@@ -31,7 +31,6 @@
 #import "NSTextField+iTerm.h"
 #import "NSThread+iTerm.h"
 #import "NSURL+iTerm.h"
-#import "NSUserDefaults+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "NSView+iTerm.h"
 #import "NSWindow+PSM.h"
@@ -846,7 +845,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     // Have we finished loading the address book and color map initially?
     BOOL _profileInitialized;
-    iTermUserDefaultsObserver *_disableTransparencyInKeyWindowObserver;
+    iTermUserDefaultsObserver *_userDefaultsObserver;
     VT100MutableScreenConfiguration *_config;
 
     BOOL _profileDidChange;
@@ -1133,8 +1132,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         iTermStandardKeyMapper *standardKeyMapper = [[iTermStandardKeyMapper alloc] init];
         standardKeyMapper.delegate = self;
         _keyMapper = standardKeyMapper;
-        _disableTransparencyInKeyWindowObserver = [[iTermUserDefaultsObserver alloc] init];
-        [_disableTransparencyInKeyWindowObserver observeKey:kPreferenceKeyDisableTransparencyForKeyWindow block:^{
+        _userDefaultsObserver = [[iTermUserDefaultsObserver alloc] init];
+        [_userDefaultsObserver observeKey:kPreferenceKeyDisableTransparencyForKeyWindow block:^{
             dispatch_async(dispatch_get_main_queue(), ^{
                 [weakSelf useTransparencyDidChange];
             });
@@ -1267,8 +1266,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
                                                                selector:@selector(activeSpaceDidChange:)
                                                                    name:NSWorkspaceActiveSpaceDidChangeNotification
                                                                  object:nil];
-        [[iTermUserDefaults userDefaults] it_addObserverForKey:kPreferenceKeyTabStyle
-                                                              block:^(id _Nonnull newValue) {
+        [_userDefaultsObserver observeKey:kPreferenceKeyTabStyle block:^{
             [weakSelf themeDidChange];
         }];
         [NSApp addObserver:self
@@ -1488,7 +1486,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_asyncFilter release];
     [_contentSubscribers release];
     [_foundingArrangement release];
-    [_disableTransparencyInKeyWindowObserver release];
+    [_userDefaultsObserver release];
     [_preferredProxyIcon release];
     [_savedStateForZoom release];
     [_config release];

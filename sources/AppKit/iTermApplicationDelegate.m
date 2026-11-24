@@ -44,7 +44,6 @@
 #import "NSObject+iTerm.h"
 #import "NSResponder+iTerm.h"
 #import "NSStringITerm.h"
-#import "NSUserDefaults+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "NSView+iTerm.h"
 #import "NSWindow+iTerm.h"
@@ -132,6 +131,7 @@
 #import "iTermURLStore.h"
 #import "iTermUntitledWindowStateMachine.h"
 #import "iTermUserDefaults.h"
+#import "iTermUserDefaultsObserver.h"
 #import "iTermWarning.h"
 #import "iTermWebSocketCookieJar.h"
 #import <Quartz/Quartz.h>
@@ -265,6 +265,7 @@ static BOOL hasBecomeActive = NO;
 
     iTermFocusFollowsMouseController *_focusFollowsMouseController;
     iTermGlobalScopeController *_globalScopeController;
+    iTermUserDefaultsObserver *_userDefaultsObserver;
     iTermRestorableStateController *_restorableStateController;
     iTermUntitledWindowStateMachine *_untitledWindowStateMachine;
     iTermGlobalSearchWindowController *_globalSearchWindowController;
@@ -1455,8 +1456,8 @@ void TurnOnDebugLoggingAutomatically(void) {
     }
     [iTermSoftwareUpdater shared].delegate = self;
     [[iTermApplication sharedApplication] updateAppearance];
-    [[iTermUserDefaults userDefaults] it_addObserverForKey:kPreferenceKeyTabStyle
-                                                     block:^(id _Nonnull newValue) {
+    _userDefaultsObserver = [[iTermUserDefaultsObserver alloc] init];
+    [_userDefaultsObserver observeKey:kPreferenceKeyTabStyle block:^{
         [[iTermApplication sharedApplication] updateAppearance];
         [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification
                                                             object:nil

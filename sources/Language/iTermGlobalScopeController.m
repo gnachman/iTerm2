@@ -9,7 +9,7 @@
 
 #import "NSAppearance+iTerm.h"
 #import "NSHost+iTerm.h"
-#import "NSUserDefaults+iTerm.h"
+#import "iTermUserDefaultsObserver.h"
 #import "iTermObject.h"
 #import "iTermPreferences.h"
 #import "iTermUserDefaults.h"
@@ -61,6 +61,7 @@ static char iTermGlobalScopeControllerKVOContext;
 
 @implementation iTermGlobalScopeController {
     iTermVariables *_userVariables;
+    iTermUserDefaultsObserver *_userDefaultsObserver;
 }
 
 + (instancetype)allocWithZone:(struct _NSZone *)zone {
@@ -74,10 +75,10 @@ static char iTermGlobalScopeControllerKVOContext;
     self = [super init];
     if (self) {
         __weak __typeof(self) weakSelf = self;
-        [[iTermUserDefaults userDefaults] it_addObserverForKey:kPreferenceKeyTabStyle
-                                                              block:^(id _Nonnull newValue) {
-                                                                  [weakSelf themeDidChange];
-                                                              }];
+        _userDefaultsObserver = [[iTermUserDefaultsObserver alloc] init];
+        [_userDefaultsObserver observeKey:kPreferenceKeyTabStyle block:^{
+            [weakSelf themeDidChange];
+        }];
         [[iTermVariableScope globalsScope] setValue:@(getpid()) forVariableNamed:iTermVariableKeyApplicationPID];
         _userVariables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
                                                            owner:self];

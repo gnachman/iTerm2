@@ -49,6 +49,9 @@
     NSDictionary<NSString *, id> *_savedPrefs;
     int _savedTabStyle;
     int _savedTabPosition;
+    // Set once setUp has snapshotted the prefs. XCTSkipUnless in setUp still runs tearDown, which
+    // must not write the zero-initialized snapshot over the real values.
+    BOOL _didSavePrefs;
 }
 
 - (void)setUp {
@@ -65,6 +68,7 @@
     _savedPrefs = saved;
     _savedTabStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     _savedTabPosition = [iTermPreferences intForKey:kPreferenceKeyTabPosition];
+    _didSavePrefs = YES;
     // In this style a visible top tab bar is a titlebar accessory. The BottomTabs tests cover the
     // tab bar living in the content view.
     [iTermPreferences setInt:TAB_STYLE_LIGHT forKey:kPreferenceKeyTabStyle];
@@ -76,16 +80,20 @@
 }
 
 - (void)tearDown {
-    [iTermPreferences setHideTabBarSuppressedDuringDrag:NO];
-    [_savedPrefs enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSNumber *value, BOOL *stop) {
-        [iTermPreferences setBool:value.boolValue forKey:key];
-    }];
-    [iTermPreferences setInt:_savedTabStyle forKey:kPreferenceKeyTabStyle];
-    [iTermPreferences setInt:_savedTabPosition forKey:kPreferenceKeyTabPosition];
-    for (TabBarSizeTerminal *term in _terms) {
-        [term.window close];
+    // When setUp was skipped nothing was saved, so there is nothing to restore.
+    if (_didSavePrefs) {
+        [iTermPreferences setHideTabBarSuppressedDuringDrag:NO];
+        [_savedPrefs enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSNumber *value, BOOL *stop) {
+            [iTermPreferences setBool:value.boolValue forKey:key];
+        }];
+        [iTermPreferences setInt:_savedTabStyle forKey:kPreferenceKeyTabStyle];
+        [iTermPreferences setInt:_savedTabPosition forKey:kPreferenceKeyTabPosition];
+        for (TabBarSizeTerminal *term in _terms) {
+            [term.window close];
+        }
+        _terms = nil;
+        _didSavePrefs = NO;
     }
-    _terms = nil;
     [super tearDown];
 }
 
