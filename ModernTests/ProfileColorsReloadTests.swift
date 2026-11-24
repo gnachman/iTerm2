@@ -98,6 +98,31 @@ final class ProfileColorsReloadTests: XCTestCase {
         XCTAssertEqual(session.modeHandler.mode, .copy, "a colors-only reset must not run the full reload")
     }
 
+    private func profileColor(_ key: String) -> NSColor? {
+        guard let dict = session.profile?[key] as? [AnyHashable: Any] else {
+            return nil
+        }
+        return ITAddressBookMgr.decodeColor(dict)
+    }
+
+    // XTPOPCOLORS of a slot pushed while the color map lacked its foreground color restores the
+    // colors the slot has and leaves the foreground as it is.
+    func testRestoringASlotWithoutAForegroundLeavesTheForeground() throws {
+        let foregroundBefore = profileColor(KEY_FOREGROUND_COLOR)
+        XCTAssertNotNil(foregroundBefore)
+        let pushed = iTermColorMap()
+        pushed.setColor(blue, forKey: kColorMapBackground)
+        pushed.setColor(green, forKey: kColorMapSelection)
+        pushed.setColor(blue, forKey: kColorMapSelectedText)
+
+        session.screenRestoreColors(from: try XCTUnwrap(pushed.savedColorsSlot()))
+
+        assertColor(profileColor(KEY_FOREGROUND_COLOR), equals: foregroundBefore)
+        assertColor(profileColor(KEY_BACKGROUND_COLOR), equals: blue)
+        assertColor(profileColor(KEY_SELECTION_COLOR), equals: green)
+        assertColor(profileColor(KEY_SELECTED_TEXT_COLOR), equals: blue)
+    }
+
     func testNonColorChangeStillRunsFullReload() {
         session.modeHandler.mode = .copy
 

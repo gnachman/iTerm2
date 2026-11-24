@@ -91,17 +91,19 @@ extension SavedColors {
 public class SavedColorsSlot: NSObject, Codable {
     private static let numberOfIndexedColors = 256
 
-    private let _text: CodableColor
-    var text: NSColor { return _text.color }
+    // The four colors are nil when the color map lacked them, which happens when a profile's
+    // value for one is not a color dictionary (the map then has no entry for its key).
+    private let _text: CodableColor?
+    var text: NSColor? { return _text?.color }
 
-    private let _background: CodableColor
-    var background: NSColor { return _background.color }
+    private let _background: CodableColor?
+    var background: NSColor? { return _background?.color }
 
-    private let _selectionText: CodableColor
-    var selectionText: NSColor { return _selectionText.color }
+    private let _selectionText: CodableColor?
+    var selectionText: NSColor? { return _selectionText?.color }
 
-    private let _selectionBackground: CodableColor
-    var selectionBackground: NSColor { return _selectionBackground.color }
+    private let _selectionBackground: CodableColor?
+    var selectionBackground: NSColor? { return _selectionBackground?.color }
 
     private let _indexedColors: [CodableColor]
     var indexedColors: [NSColor] { return _indexedColors.map { $0.color } }
@@ -115,23 +117,81 @@ public class SavedColorsSlot: NSObject, Codable {
         return result
     }
     override public var debugDescription: String {
-        return "<Slot text=\(text) background=\(background) selectionText=\(selectionText) selectionBackground=\(selectionBackground) indexedColors=\(indexedColors.map { $0.debugDescription }.joined(separator: ","))>"
+        // A present color prints as it did when these were non-optional.
+        func describe(_ color: NSColor?) -> String {
+            return color.map { String(describing: $0) } ?? "nil"
+        }
+        return "<Slot text=\(describe(text)) background=\(describe(background)) selectionText=\(describe(selectionText)) selectionBackground=\(describe(selectionBackground)) indexedColors=\(indexedColors.map { $0.debugDescription }.joined(separator: ","))>"
     }
 
     @objc(initWithTextColor:backgroundColor:selectionTextColor:selectionBackgroundColor:indexedColorProvider:)
-    init(text: NSColor,
-         background: NSColor,
-         selectionText: NSColor,
-         selectionBackground: NSColor,
+    init(text: NSColor?,
+         background: NSColor?,
+         selectionText: NSColor?,
+         selectionBackground: NSColor?,
          indexedColorProvider: (Int) -> (NSColor)) {
         let indexedColors = (0..<Self.numberOfIndexedColors).map {
             CodableColor(indexedColorProvider($0))
         }
-        _text = CodableColor(text)
-        _background = CodableColor(background)
-        _selectionText = CodableColor(selectionText)
-        _selectionBackground = CodableColor(selectionBackground)
+        _text = text.map { CodableColor($0) }
+        _background = background.map { CodableColor($0) }
+        _selectionText = selectionText.map { CodableColor($0) }
+        _selectionBackground = selectionBackground.map { CodableColor($0) }
         _indexedColors = indexedColors
+    }
+
+    // The keys, order and form of what the synthesized conformance wrote when the colors were
+    // non-optional. Stored slots must stay readable by other versions (stored-state.md).
+    private enum CodingKeys: String, CodingKey {
+        case _text
+        case _background
+        case _selectionText
+        case _selectionBackground
+        case _indexedColors
+    }
+
+    // Every color is required, as before, so a slot written with a missing color (see
+    // MissingColor) still fails to decode.
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        _text = try container.decode(CodableColor.self, forKey: ._text)
+        _background = try container.decode(CodableColor.self, forKey: ._background)
+        _selectionText = try container.decode(CodableColor.self, forKey: ._selectionText)
+        _selectionBackground = try container.decode(CodableColor.self, forKey: ._selectionBackground)
+        _indexedColors = try container.decode([CodableColor].self, forKey: ._indexedColors)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try Self.encode(_text, forKey: ._text, in: &container)
+        try Self.encode(_background, forKey: ._background, in: &container)
+        try Self.encode(_selectionText, forKey: ._selectionText, in: &container)
+        try Self.encode(_selectionBackground, forKey: ._selectionBackground, in: &container)
+        try container.encode(_indexedColors, forKey: ._indexedColors)
+    }
+
+    private static func encode(_ color: CodableColor?,
+                               forKey key: CodingKeys,
+                               in container: inout KeyedEncodingContainer<CodingKeys>) throws {
+        if let color {
+            try container.encode(color, forKey: key)
+        } else {
+            try container.encode(MissingColor(), forKey: key)
+        }
+    }
+
+    // What a missing color has always been written as: CodableColor's fallback form holding the
+    // keyed archive of a nil color, which has nothing in it. It does not decode.
+    private struct MissingColor: Encodable {
+        enum CodingKeys: String, CodingKey {
+            case fallback
+        }
+
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(NSKeyedArchiver(requiringSecureCoding: true).encodedData,
+                                 forKey: .fallback)
+        }
     }
 
     @objc var plist: Data? {
