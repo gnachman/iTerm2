@@ -199,58 +199,6 @@ static NSInteger sWindowArrangementGeneration;
     }
 }
 
-+ (void)showAlertWithText:(NSString *)prompt
-             defaultInput:(NSString *)defaultValue
-              offerExport:(BOOL)offerExport
-               completion:(void (^)(NSString *name, iTermSavePanelItem *saveItem))completion {
-    NSMutableArray<NSString *> *actions = [NSMutableArray arrayWithObject:iTermLocalizedOK()];
-    NSArray<NSString *> *localOnlyLabels = nil;
-    if (offerExport) {
-        NSString *saveToFile = NSLocalizedStringWithDefaultValue(@"WindowArrangements.SaveToFileButton", nil, [NSBundle mainBundle], @"Save to File with Contents…", @"Button to save a window arrangement to a file including its contents.");
-        [actions addObject:saveToFile];
-        // Opens a save panel on the Mac.
-        localOnlyLabels = @[ saveToFile ];
-    }
-    [actions addObject:iTermLocalizedCancel()];
-
-    NSTextField *input = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 300, 24)];
-    [input setStringValue:defaultValue];
-
-    iTermWarning *warning = [[iTermWarning alloc] init];
-    warning.heading = prompt;
-    warning.title = @"";
-    warning.actionLabels = actions;
-    warning.notOfferedRemotelyLabels = localOnlyLabels;
-    warning.cancelLabel = iTermLocalizedCancel();
-    warning.warningType = kiTermWarningTypePersistent;
-    warning.accessory = input;
-    warning.remoteInputs = @[ [iTermWarningRemoteInput textInputWithIdentifier:@"name" label:nil textField:input] ];
-    warning.initialFirstResponder = input;
-    const iTermWarningSelection button = [warning runModal];
-
-    const iTermWarningSelection okButton = kiTermWarningSelection0;
-    const NSInteger exportButton = offerExport ? kiTermWarningSelection1 : -1;
-    if (button == okButton) {
-        [input validateEditing];
-        completion([[input stringValue] stringByReplacingOccurrencesOfString:@"\n" withString:@" "],
-                   nil);
-    } else if (button == exportButton) {
-        [iTermSavePanel asyncShowWithOptions:kSavePanelOptionDefaultToLocalhost
-                                  identifier:@"NoSyncExportWindowArrangements"
-                            initialDirectory:NSHomeDirectory()
-                             defaultFilename:[[input stringValue] stringByAppendingPathExtension:@"iterm2arrangement"]
-                            allowedFileTypes:@[ @"iterm2arrangement" ]
-                                      window:nil
-                                  completion:^(iTermModernSavePanel *panel, iTermSavePanel *savePanel) {
-            if (panel.item) {
-                completion(nil, panel.item);
-            } else {
-                completion(nil, nil);
-            }
-        }];
-    }
-}
-
 + (NSString *)nameForNewArrangement {
     NSDate *now = [NSDate date];
     NSLocale *locale = [NSLocale currentLocale];
@@ -293,10 +241,9 @@ static NSInteger sWindowArrangementGeneration;
 }
 
 + (void)nameForNewArrangement:(void (^)(NSString *))completion {
-    [WindowArrangements showAlertWithText:NSLocalizedStringWithDefaultValue(@"WindowArrangements.NamePrompt", nil, [NSBundle mainBundle], @"Name for saved window arrangement:", @"Prompt asking the user to name a saved window arrangement.")
-                             defaultInput:[self nameForNewArrangement]
-                              offerExport:NO
-                               completion:^(NSString *name, iTermSavePanelItem *saveItem) {
+    [self promptForNameOfferingExport:NO
+                          offerSpaces:NO
+                           completion:^(NSString *name, iTermSavePanelItem *saveItem, BOOL remembersSpaces) {
         if (!name) {
             completion(nil);
             return;
@@ -321,11 +268,38 @@ static NSInteger sWindowArrangementGeneration;
     }];
 }
 
-+ (void)selectNameAndWhetherToIncludeContentsWithCompletion:(void (^)(NSString *name, iTermSavePanelItem *saveItem))completion {
-    [self showAlertWithText:NSLocalizedStringWithDefaultValue(@"WindowArrangements.NamePrompt", nil, [NSBundle mainBundle], @"Name for saved window arrangement:", @"Prompt asking the user to name a saved window arrangement.")
-               defaultInput:[self nameForNewArrangement]
-                offerExport:YES
-                 completion:completion];
++ (void)selectNameAndWhetherToIncludeContentsWithCompletion:(void (^)(NSString *name, iTermSavePanelItem *saveItem, BOOL remembersSpaces))completion {
+    [self promptForNameOfferingExport:YES offerSpaces:YES completion:completion];
+}
+
+// Not called if the user cancels the prompt. Called with neither a name nor a save item if they
+// cancel the save panel.
++ (void)promptForNameOfferingExport:(BOOL)offerExport
+                        offerSpaces:(BOOL)offerSpaces
+                         completion:(void (^)(NSString *name, iTermSavePanelItem *saveItem, BOOL remembersSpaces))completion {
+    iTermWindowArrangementNamePromptResult *result =
+        [iTermWindowArrangementNamePrompt showWithPrompt:NSLocalizedStringWithDefaultValue(@"WindowArrangements.NamePrompt", nil, [NSBundle mainBundle], @"Name for saved window arrangement:", @"Prompt asking the user to name a saved window arrangement.")
+                                             defaultName:[self nameForNewArrangement]
+                                             offerExport:offerExport
+                                             offerSpaces:offerSpaces];
+    if (!result) {
+        return;
+    }
+    const BOOL remembersSpaces = result.remembersSpaces;
+    if (!result.wantsExport) {
+        completion(result.name, nil, remembersSpaces);
+        return;
+    }
+    // The save panel's API takes Swift classes from this module, so Swift can't call it.
+    [iTermSavePanel asyncShowWithOptions:kSavePanelOptionDefaultToLocalhost
+                              identifier:@"NoSyncExportWindowArrangements"
+                        initialDirectory:NSHomeDirectory()
+                         defaultFilename:[result.name stringByAppendingPathExtension:@"iterm2arrangement"]
+                        allowedFileTypes:@[ @"iterm2arrangement" ]
+                                  window:nil
+                              completion:^(iTermModernSavePanel *panel, iTermSavePanel *savePanel) {
+        completion(nil, panel.item, remembersSpaces);
+    }];
 }
 
 - (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {

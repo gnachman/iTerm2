@@ -54,6 +54,15 @@ New Features:
   change.
 
 Improvements:
+- Saving a window arrangement can remember
+  which desktop (Space) each window is on: turn
+  on “Reopen windows on the desktops they’re on
+  now” when you name it. Restoring it puts each
+  window back on its desktop, or on the desktop
+  with the same number if that one was closed.
+  If there aren’t enough desktops, iTerm2 waits
+  while you add them in Mission Control.
+  Issues 5741 and 11895.
 - Tab groups look quieter in the Minimal theme.
   A group’s name sits in a small tinted capsule
   instead of a solid full-height block, and a

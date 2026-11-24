@@ -3447,9 +3447,9 @@ static NSString *const iTermAPIFloatingPanesFirstAwarePythonVersion = @"2.26";
             handler(response);
             return;
         }
-        [[iTermController sharedInstance] saveWindowArrangementForWindow:term name:name saveItem:nil];
+        [[iTermController sharedInstance] saveWindowArrangementForWindow:term name:name saveItem:nil includingSpaces:YES];
     } else {
-        [[iTermController sharedInstance] saveWindowArrangementForAllWindows:YES name:name saveItem:nil];
+        [[iTermController sharedInstance] saveWindowArrangementForAllWindows:YES name:name saveItem:nil includingSpaces:YES];
     }
     response.status = ITMSavedArrangementResponse_Status_Ok;
     handler(response);

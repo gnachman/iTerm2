@@ -37,7 +37,9 @@
                             identifier:(NSString *)identifier;
 
 + (void)nameForNewArrangement:(void (^)(NSString *))completion;
-+ (void)selectNameAndWhetherToIncludeContentsWithCompletion:(void (^)(NSString *name, iTermSavePanelItem *saveItem))completion;
+// remembersSpaces is whether the user wants the windows to reopen on the
+// desktops they are on now.
++ (void)selectNameAndWhetherToIncludeContentsWithCompletion:(void (^)(NSString *name, iTermSavePanelItem *saveItem, BOOL remembersSpaces))completion;
 
 - (IBAction)setDefault:(id)sender;
 - (IBAction)deleteSelectedArrangement:(id)sender;

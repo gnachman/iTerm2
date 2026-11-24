@@ -259,7 +259,6 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     iTermGraphCodable,
     iTermObject,
     iTermRestorableWindowController,
-    iTermSessionRestorationStatusProtocol,
     iTermTabBarControlViewDelegate,
     iTermPasswordManagerDelegate,
     iTermUniquelyIdentifiable,
@@ -5369,6 +5368,7 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         [locationLockController enforce];
     });
+    [self restoreSpaceFromArrangement:arrangement];
     return YES;
 }
 
@@ -5468,6 +5468,7 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     }
     if (representsThisWindow) {
         [_locationLockController populateInArrangement:adapter];
+        [self addSpaceToArrangement:result];
     }
     return result;
 }

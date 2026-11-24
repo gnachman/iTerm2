@@ -114,8 +114,15 @@ extern NSString *const iTermSnippetsTagsDidChange;
 - (int)allocateWindowNumber;
 
 - (void)saveWindowArrangement:(BOOL)allWindows;
-- (void)saveWindowArrangementForAllWindows:(BOOL)allWindows name:(NSString *)name saveItem:(iTermSavePanelItem *)saveItem;
-- (void)saveWindowArrangementForWindow:(PseudoTerminal *)currentTerminal name:(NSString *)name saveItem:(iTermSavePanelItem *)saveItem;
+// includingSpaces is whether the windows reopen on the desktops they are on now.
+- (void)saveWindowArrangementForAllWindows:(BOOL)allWindows
+                                      name:(NSString *)name
+                                  saveItem:(iTermSavePanelItem *)saveItem
+                           includingSpaces:(BOOL)includingSpaces;
+- (void)saveWindowArrangementForWindow:(PseudoTerminal *)currentTerminal
+                                  name:(NSString *)name
+                              saveItem:(iTermSavePanelItem *)saveItem
+                       includingSpaces:(BOOL)includingSpaces;
 
 - (void)loadWindowArrangementWithName:(NSString *)theName;
 - (BOOL)loadWindowArrangementWithName:(NSString *)theName asTabsInTerminal:(PseudoTerminal *)term;

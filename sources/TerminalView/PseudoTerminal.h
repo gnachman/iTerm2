@@ -64,6 +64,7 @@ extern NSString *const iTermTabContentFollowedProfileGUIDKey;
 @interface PseudoTerminal : NSWindowController <
   iTermInstantReplayDelegate,
   iTermPresentationControllerManagedWindowController,
+  iTermSessionRestorationStatusProtocol,
   iTermSubscribable,
   iTermWeaklyReferenceable,
   iTermWindowController,
