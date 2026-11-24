@@ -16,7 +16,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSScreen *)screenWithCursor;
 + (NSScreen * _Nullable)screenWithFrame:(NSRect)frame;
 + (NSScreen * _Nullable)it_screenWithUniqueKey:(NSString *)key;
-+ (BOOL)it_stringLooksLikeUniqueKey:(NSString *)string;
+// nil does not look like one: the implementation only sends -hasPrefix:.
++ (BOOL)it_stringLooksLikeUniqueKey:(nullable NSString *)string;
 + (double)fractionOfFrameOnAnyScreen:(NSRect)frame
                    recommendedOrigin:(NSPoint *)recommendedOriginPtr;
 + (NSScreen * _Nullable)screenContainingCoordinate:(NSPoint)point;

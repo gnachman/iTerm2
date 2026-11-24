@@ -212,7 +212,8 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 - (void)tabViewDidClickAddTabButton:(PSMTabBarControl *)tabView;
 - (BOOL)tabViewShouldDragWindow:(NSTabView *)tabView event:(NSEvent *)event;
 - (BOOL)tabViewShouldAllowDragOnAddTabButton:(NSTabView *)tabView;
-- (CGFloat)tabViewDesiredTabBarHeight:(NSTabView *)tabView;
+// tabView is nil while the bar is set up, before it has a tab view.
+- (CGFloat)tabViewDesiredTabBarHeight:(nullable NSTabView *)tabView;
 // Whether tabs show rich content (see -psmTabRichLines), which changes their
 // shape in some styles.
 - (BOOL)tabViewShowsRichTabContent:(NSTabView *)tabView;

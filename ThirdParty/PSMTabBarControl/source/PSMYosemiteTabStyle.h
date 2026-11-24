@@ -69,7 +69,8 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (NSEdgeInsets)insetsForTabBarDividers;
 - (NSEdgeInsets)backgroundInsetsWithHorizontalOrientation:(BOOL)horizontal;
 
-- (NSColor *)effectiveBackgroundColorForTabWithTabColor:(NSColor *)tabColor
+// tabColor is nil for a tab without a color; the result is then the plain background.
+- (NSColor *)effectiveBackgroundColorForTabWithTabColor:(nullable NSColor *)tabColor
                                                selected:(BOOL)selected
                                         highlightAmount:(CGFloat)highlightAmount
                                                  window:(NSWindow * _Nullable)window;

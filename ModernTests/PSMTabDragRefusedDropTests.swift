@@ -37,7 +37,7 @@ private final class RefusingDropDelegate: NSObject, PSMTabBarControlDelegate {
     // The bar calls these without checking that they're implemented.
     func tabViewShouldAllowDrag(onAddTabButton tabView: NSTabView) -> Bool { false }
     func tabView(_ tabView: PSMTabBarControl, valueOfOption option: PSMTabBarControlOptionKey) -> Any? { nil }
-    func tabViewDesiredTabBarHeight(_ tabView: NSTabView) -> CGFloat { 24 }
+    func tabViewDesiredTabBarHeight(_ tabView: NSTabView?) -> CGFloat { 24 }
     func tabViewShowsRichTabContent(_ tabView: NSTabView) -> Bool { false }
     func tabColor(for tabViewItem: NSTabViewItem) -> NSColor? { nil }
     func tabView(_ tabView: NSTabView, willRemove tabViewItem: NSTabViewItem) {}
@@ -129,7 +129,8 @@ final class PSMTabDragRefusedDropTests: XCTestCase {
         let pasteboard = NSPasteboard(name: NSPasteboard.Name("PSMTabDragRefusedDropTests"))
         pasteboard.clearContents()
         pasteboard.declareTypes([NSPasteboard.PasteboardType("com.iterm2.psm.controlitem")], owner: nil)
-        return TabDragInfoStub(pasteboard: pasteboard)
+        // Every drag here starts in control, which is a tab drag's source.
+        return TabDragInfoStub(pasteboard: pasteboard, source: control)
     }
 
     private func assertSnappedBack(_ dragged: NSTabViewItem, file: StaticString = #filePath, line: UInt = #line) {
@@ -321,12 +322,15 @@ final class PSMTabDragRefusedDropTests: XCTestCase {
     }
 }
 
-// Only the pasteboard matters to the tab bar's handling of a tab drag.
+// Only the pasteboard matters to the tab bar's handling of a tab drag, and
+// the source bar, whose tab view the bar passes to its delegate.
 private final class TabDragInfoStub: NSObject, NSDraggingInfo {
     let draggingPasteboard: NSPasteboard
+    private weak var source: PSMTabBarControl?
 
-    init(pasteboard: NSPasteboard) {
+    init(pasteboard: NSPasteboard, source: PSMTabBarControl) {
         draggingPasteboard = pasteboard
+        self.source = source
     }
 
     var draggingLocation: NSPoint { .zero }
@@ -334,7 +338,7 @@ private final class TabDragInfoStub: NSObject, NSDraggingInfo {
     var draggingSourceOperationMask: NSDragOperation { .move }
     var draggedImageLocation: NSPoint { .zero }
     var draggedImage: NSImage? { nil }
-    var draggingSource: Any? { nil }
+    var draggingSource: Any? { source }
     var draggingSequenceNumber: Int { 0 }
     func slideDraggedImage(to screenPoint: NSPoint) {}
     var draggingFormation: NSDraggingFormation = .default
