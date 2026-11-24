@@ -375,7 +375,12 @@ NSString *const iTermExternalAttributeBlockIDDelimiter = @"\uf8ff";
         return [other isEqualToExternalAttributeIndex:self];
     }
     NSMutableSet<NSNumber *> *keys = [NSMutableSet setWithArray:self.attributes.allKeys];
-    [keys addObjectsFromArray:other.attributes.allKeys];
+    // nil when other is nil. -addObjectsFromArray: is declared nonnull and does nothing
+    // with nil.
+    NSArray<NSNumber *> *otherKeys = other.attributes.allKeys;
+    if (otherKeys) {
+        [keys addObjectsFromArray:otherKeys];
+    }
     for (NSNumber *key in keys) {
         // Either side may be missing this key, so use the nil-safe comparison.
         if (![iTermExternalAttribute externalAttribute:self.attributes[key]

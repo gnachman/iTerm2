@@ -32,4 +32,16 @@ final class ScriptsNullabilityTests: XCTestCase {
         let identifier: String? = "no-such-entry-" + UUID().uuidString
         XCTAssertNil(iTermScriptHistory.sharedInstance().entry(withIdentifier: identifier))
     }
+
+    // A nil identifier matches no entry: -isEqualToString: returns NO for nil,
+    // so the search found nothing before the method tested for nil itself
+    // (unit nullability-baseline-guards).
+    func testEntryWithNilIdentifierIsNil() {
+        let history = iTermScriptHistory()
+        history.addEntry(iTermScriptHistoryEntry(name: "script",
+                                                 fullPath: nil,
+                                                 identifier: "known-" + UUID().uuidString,
+                                                 relaunch: nil))
+        XCTAssertNil(history.entry(withIdentifier: nil))
+    }
 }

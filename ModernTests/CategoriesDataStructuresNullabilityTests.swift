@@ -29,6 +29,16 @@ final class ColorCategoryNullabilityTests: XCTestCase {
 }
 
 final class StringCategoryNullabilityTests: XCTestCase {
+    // iTermObjectIsEqualToString stands in for -isEqualToString: where the argument can be nil:
+    // nil never equals anything, nil included, as the message itself answered.
+    func testObjectIsEqualToStringWithNil() {
+        XCTAssertFalse(iTermObjectIsEqualToString(nil, nil))
+        XCTAssertFalse(iTermObjectIsEqualToString("a", nil))
+        XCTAssertFalse(iTermObjectIsEqualToString(nil, "a"))
+        XCTAssertTrue(iTermObjectIsEqualToString("a", "a"))
+        XCTAssertFalse(iTermObjectIsEqualToString("a", "b"))
+    }
+
     // An empty string has no first composed character. While the return was
     // claimed nonnull, Swift read the nil as an empty string, and this
     // assertion failed.
@@ -42,6 +52,15 @@ final class StringCategoryNullabilityTests: XCTestCase {
         var rest: NSString?
         XCTAssertEqual(("ab" as NSString).firstComposedCharacter(&rest), "a")
         XCTAssertEqual(rest, "b")
+    }
+
+    // An empty string decodes to no data (+dataWithBase64EncodedString:
+    // returns nil), and -initWithData:nil encoding: gives an empty string,
+    // not nil. Unit nullability-baseline-guards passes empty data instead of
+    // nil and pins that result.
+    func testDecodingBase64ThatYieldsNoDataGivesAnEmptyString() {
+        let decoded = ("" as NSString).byBase64DecodingString(withEncoding: String.Encoding.utf8.rawValue)
+        XCTAssertEqual(decoded, "")
     }
 }
 

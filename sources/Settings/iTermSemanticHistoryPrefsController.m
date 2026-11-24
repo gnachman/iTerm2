@@ -570,7 +570,9 @@ enum {
     }
     NSString *editor = [prefs objectForKey:kSemanticHistoryEditorKey];
     NSDictionary *map = [[self class] identifierToTagMap];
-    NSNumber *tagNumber = map[editor];
+    // No editor is saved for most actions. -objectForKeyedSubscript: is declared nonnull and
+    // returns nil for nil.
+    NSNumber *tagNumber = editor ? map[editor] : nil;
     if (tagNumber) {
         [editors_ selectItemWithTag:[tagNumber integerValue]];
     }

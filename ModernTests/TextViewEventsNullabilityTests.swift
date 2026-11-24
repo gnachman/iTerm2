@@ -41,4 +41,19 @@ final class TextViewEventsNullabilityTests: XCTestCase {
         XCTAssertNotNil(haveOffscreenCommandLine as Any)
         XCTAssertNotNil(addBelowFindView as Any)
     }
+
+    // A toolbar that was already moved away is nil. AppKit ignores a nil view
+    // passed to -addSubview: and -addSubview:positioned:relativeTo:, so the
+    // subviews do not change. Unit nullability-baseline-guards skips those
+    // calls for nil and pins this.
+    func testAddingNilBelowTheFindViewChangesNoSubviews() {
+        let view = SessionView(frame: NSRect(x: 0, y: 0, width: 100, height: 100))
+        let before = view.subviews
+        view.addSubview(belowFind: nil)
+        XCTAssertEqual(view.subviews, before)
+        view.addSubview(belowFind: NSView(frame: .zero))
+        let afterAdd = view.subviews
+        view.addSubview(belowFind: nil)
+        XCTAssertEqual(view.subviews, afterAdd)
+    }
 }

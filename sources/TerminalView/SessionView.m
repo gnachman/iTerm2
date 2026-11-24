@@ -971,8 +971,24 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)addSubview:(NSView *)view positioned:(NSWindowOrderingMode)place relativeTo:(NSView *)otherView {
-    [super addSubview:view positioned:place relativeTo:otherView];
+    // The superclass method is declared nonnull. AppKit ignores a nil view: the subviews do
+    // not change and no -didAddSubview:, -setNeedsLayout: or -setNeedsDisplay: is sent.
+    if (view) {
+        [super addSubview:view positioned:place relativeTo:otherView];
+    }
     [self sanityCheckSubviewOrder];
+}
+
+// What -addSubview:positioned:relativeTo: does for a nil view (see above), without passing
+// it nil: only the order check.
+- (void)addSubviewAllowingNil:(NSView *)view
+                   positioned:(NSWindowOrderingMode)place
+                   relativeTo:(NSView *)otherView {
+    if (!view) {
+        [self sanityCheckSubviewOrder];
+        return;
+    }
+    [self addSubview:view positioned:place relativeTo:otherView];
 }
 
 - (void)sanityCheckSubviewOrder {
@@ -1185,13 +1201,15 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     // added via this method (the toolbar, right gutter panels such as
     // clippings, their dividers, etc.). Those may be (re-)added after the note,
     // so without explicit ordering they would land on top of it.
+    // aView is nil when a toolbar that was already moved away is moved again. AppKit ignores
+    // a nil view in both of the calls below, which are declared nonnull.
     if (aView != _sessionNoteView && _sessionNoteView && [self.subviews containsObject:_sessionNoteView]) {
-        [self addSubview:aView positioned:NSWindowBelow relativeTo:_sessionNoteView];
+        [self addSubviewAllowingNil:aView positioned:NSWindowBelow relativeTo:_sessionNoteView];
         return;
     }
     if (_dropDownFindViewController.view && [self.subviews containsObject:_dropDownFindViewController.view]) {
-        [self addSubview:aView positioned:NSWindowBelow relativeTo:[_dropDownFindViewController view]];
-    } else {
+        [self addSubviewAllowingNil:aView positioned:NSWindowBelow relativeTo:[_dropDownFindViewController view]];
+    } else if (aView) {
         [super addSubview:aView];
     }
 }

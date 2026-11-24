@@ -58,7 +58,10 @@
 }
 
 - (void)updateBackgroundView {
-    if ([NSStringFromClass(self.window.class) containsString:@"Popover"]) {
+    // The view has no window while it leaves one. NSStringFromClass() is declared nonnull and
+    // returns nil for Nil, which contains nothing.
+    Class windowClass = self.window.class;
+    if (windowClass && [NSStringFromClass(windowClass) containsString:@"Popover"]) {
         NSView *privateView = [[self.window contentView] superview];
         [_backgroundView removeFromSuperview];
         _backgroundView = [self newBackgroundViewWithFrame:privateView.bounds];

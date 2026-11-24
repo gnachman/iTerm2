@@ -436,7 +436,11 @@ static void HandleSigChld(int n) {
     id<iTermJobManager> jobManager = self.jobManager;
     assert(!jobManager || !self.jobManager.isReadOnly);
     [writeLock lock];
-    [writeBuffer appendData:data];
+    // A session can write a nil queue (an SSH unhook with nothing queued). -appendData: is
+    // declared nonnull and does nothing with nil; the task is still unblocked, as before.
+    if (data) {
+        [writeBuffer appendData:data];
+    }
     [[TaskNotifier sharedInstance] unblockTask:self];
     [writeLock unlock];
 }

@@ -11,6 +11,7 @@
 #import "iTermColorPresets.h"
 #import "iTermSnippetsModel.h"
 #import "NSArray+iTerm.h"
+#import "NSStringITerm.h"
 #import "ProfilesColorsPreferencesViewController.h"
 #import "ProfileModel.h"
 
@@ -39,7 +40,8 @@
         [self addItemWithTitle:temp];
         NSMenuItem* item = [self lastItem];
         [item setRepresentedObject:profile[KEY_GUID]];
-        if ([[item representedObject] isEqualToString:selectedGuid]) {
+        // selectedGuid may be nil; the helper gives what -isEqualToString: gave for nil.
+        if (iTermObjectIsEqualToString([item representedObject], selectedGuid)) {
             selectedIndex = i;
         }
         i++;
@@ -73,7 +75,9 @@
     NSDictionary* presetsDict = [iTermColorPresets builtInColorPresets];
     for (NSString* key in  [[presetsDict allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
         [self addItemWithTitle:key];
-        if ([key isEqualToString:presetName]) {
+        // presetName may be nil. -isEqualToString: is declared nonnull and returns NO
+        // for nil; keys of a property list dictionary are strings.
+        if (presetName && [key isEqualToString:presetName]) {
             selectedIndex = i;
         }
         i++;
@@ -85,7 +89,7 @@
         i++;
         for (NSString* key in  [[customPresets allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
             [self addItemWithTitle:key];
-            if ([key isEqualToString:presetName]) {
+            if (presetName && [key isEqualToString:presetName]) {
                 selectedIndex = i;
             }
             i++;

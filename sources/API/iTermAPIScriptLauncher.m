@@ -1105,7 +1105,9 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     {
         NSString *pyenvPython = [downloader pyenvAt:[path stringByAppendingPathComponent:@"iterm2env"]
                                       pythonVersion:[iTermAPIScriptLauncher pythonVersionForScript:path]];
-        if ([[NSFileManager defaultManager] fileExistsAtPath:pyenvPython isDirectory:nil]) {
+        // pyenvAt: returns nil when there is no environment. -fileExistsAtPath:isDirectory:
+        // is declared nonnull and returns NO for nil.
+        if (pyenvPython && [[NSFileManager defaultManager] fileExistsAtPath:pyenvPython isDirectory:nil]) {
             return pyenvPython;
         }
     }
@@ -1117,7 +1119,8 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     {
         NSString *pyenvPython = [downloader pyenvAt:[path stringByAppendingPathComponent:@"saved-iterm2env"]
                                       pythonVersion:[iTermAPIScriptLauncher pythonVersionForScript:path]];
-        if ([[NSFileManager defaultManager] fileExistsAtPath:pyenvPython isDirectory:nil]) {
+        // As above: NO for a nil path.
+        if (pyenvPython && [[NSFileManager defaultManager] fileExistsAtPath:pyenvPython isDirectory:nil]) {
             return pyenvPython;
         }
     }

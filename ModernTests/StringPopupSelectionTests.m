@@ -12,6 +12,7 @@
 #import <XCTest/XCTest.h>
 
 #import "NSPopUpButton+iTerm.h"
+#import "ProfileModel.h"
 
 @interface StringPopupSelectionTests : XCTestCase
 @end
@@ -54,6 +55,21 @@
 - (void)testNullValueLeavesTheSelectionAlone {
     [_popup it_selectItemWithRepresentedObject:[NSNull null] fallback:[NSNull null]];
     XCTAssertEqualObjects(_popup.selectedItem.representedObject, @"Blue");
+}
+
+// No profile GUID to select: -isEqualToString: returns NO for nil, so no
+// profile matches and the first item is selected. Unit
+// nullability-baseline-guards tests for nil before comparing and pins this.
+- (void)testNilProfileGuidSelectsTheFirstProfile {
+    [_popup populateWithProfilesSelectingGuid:nil profileTypes:ProfileTypeAll];
+    XCTAssertEqual(_popup.indexOfSelectedItem, _popup.numberOfItems > 0 ? 0 : -1);
+}
+
+// The same for the color presets.
+- (void)testNilColorPresetSelectsTheFirstPreset {
+    [_popup loadColorPresetsSelecting:nil];
+    XCTAssertGreaterThan(_popup.numberOfItems, 0);
+    XCTAssertEqual(_popup.indexOfSelectedItem, 0);
 }
 
 @end

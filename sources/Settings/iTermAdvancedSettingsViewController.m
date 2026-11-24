@@ -242,7 +242,9 @@ static NSDictionary *gIntrospection;
     NSMutableArray *result = [NSMutableArray array];
     for (NSDictionary *dict in sorted) {
         NSString *category = dict[kAdvancedSettingCategory];
-        if (![category isEqualToString:previousCategory]) {
+        // previousCategory is nil for the first setting. -isEqualToString: is declared
+        // nonnull and returns NO for nil, so the first setting always starts a category.
+        if (!previousCategory || ![category isEqualToString:previousCategory]) {
             previousCategory = [category copy];
             [result addObject:iTermLocalizedAdvancedSettingCategory(category)];
         }

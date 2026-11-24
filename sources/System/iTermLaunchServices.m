@@ -265,7 +265,10 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
 - (BOOL)iTermIsDefaultForScheme:(NSString *)scheme {
     NSString *handlerId = [self bundleIDForDefaultHandlerForScheme:scheme];
     NSString *iTermBundleId = [[NSBundle mainBundle] bundleIdentifier];
-    BOOL result = [handlerId isEqualToString:iTermBundleId] || [@"net.sourceforge.iterm" isEqualToString:handlerId];
+    // handlerId is nil when the scheme has no handler. -isEqualToString: is declared nonnull and
+    // returns NO for nil.
+    BOOL result = ((iTermBundleId && [handlerId isEqualToString:iTermBundleId]) ||
+                   (handlerId && [@"net.sourceforge.iterm" isEqualToString:handlerId]));
     return result;
 }
 

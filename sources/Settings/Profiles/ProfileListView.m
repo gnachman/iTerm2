@@ -32,6 +32,7 @@
 #import "NSArray+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
 #import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PTYSession.h"
@@ -729,10 +730,12 @@ const CGFloat kDefaultTagsWidth = 80;
         Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
         Profile *defaultBrowserProfile = [[ProfileModel sharedInstance] defaultBrowserProfile];
         *multilinePtr = [bookmark[KEY_TAGS] count] > 0;
+        // Either default profile can be missing; the helper gives what -isEqualToString:
+        // gave for nil.
         return [self attributedStringForName:bookmark[KEY_NAME] ?: @""
                                         tags:bookmark[KEY_TAGS]
                                     selected:[[tableView_ selectedRowIndexes] containsIndex:rowIndex]
-                                   isDefault:[bookmark[KEY_GUID] isEqualToString:defaultProfile[KEY_GUID]] || [bookmark[KEY_GUID] isEqualToString:defaultBrowserProfile[KEY_GUID]]
+                                   isDefault:iTermObjectIsEqualToString(bookmark[KEY_GUID], defaultProfile[KEY_GUID]) || iTermObjectIsEqualToString(bookmark[KEY_GUID], defaultBrowserProfile[KEY_GUID])
                                    isBrowser:[bookmark[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue]
                                    isDynamic:bookmark.profileIsDynamic
                                       filter:[searchField_ stringValue]];

@@ -3836,7 +3836,9 @@ growingSplitWindowsToClientSize:openWindowsMode != kOpenTmuxWindowsAsNativeTabsI
     NSString *command = [NSString stringWithFormat:@"set -t $%d @affinities \"%@\"",
                          sessionId_, [self encodedString:[arg stringByEscapingQuotes]
                                                   prefix:iTermTmuxControllerEncodingPrefixAffinities]];
-    if ([command isEqualToString:lastSaveAffinityCommand_]) {
+    // lastSaveAffinityCommand_ is nil before the first save. -isEqualToString: is declared nonnull and
+    // returns NO for nil.
+    if (lastSaveAffinityCommand_ && [command isEqualToString:lastSaveAffinityCommand_]) {
         return;
     }
     [self setAffinitiesFromString:arg];
@@ -3858,7 +3860,9 @@ growingSplitWindowsToClientSize:openWindowsMode != kOpenTmuxWindowsAsNativeTabsI
     NSString *command = [NSString stringWithFormat:@"set -t $%d @buried_indexes \"%@\"",
                          sessionId_, [self encodedString:[arg stringByEscapingQuotes]
                                                   prefix:iTermTmuxControllerEncodingPrefixBuriedIndexes]];
-    if ([command isEqualToString:_lastSaveBuriedIndexesCommand]) {
+    // _lastSaveBuriedIndexesCommand is nil before the first save. -isEqualToString: is declared nonnull and
+    // returns NO for nil.
+    if (_lastSaveBuriedIndexesCommand && [command isEqualToString:_lastSaveBuriedIndexesCommand]) {
         return;
     }
     _lastSaveBuriedIndexesCommand = command;
@@ -3917,7 +3921,9 @@ growingSplitWindowsToClientSize:openWindowsMode != kOpenTmuxWindowsAsNativeTabsI
     NSString *command = [NSString stringWithFormat:@"set -t $%d @per_tab_settings \"%@\"",
                          sessionId_,
                          [self encodedString:arg prefix:iTermTmuxControllerEncodingPrefixPerTabSettings]];
-    if ([command isEqualToString:_lastSavePerTabSettingsCommand]) {
+    // _lastSavePerTabSettingsCommand is nil before the first save. -isEqualToString: is declared nonnull and
+    // returns NO for nil.
+    if (_lastSavePerTabSettingsCommand && [command isEqualToString:_lastSavePerTabSettingsCommand]) {
         return;
     }
     _lastSavePerTabSettingsCommand = command;
@@ -4000,7 +4006,9 @@ growingSplitWindowsToClientSize:openWindowsMode != kOpenTmuxWindowsAsNativeTabsI
     NSString *command = [NSString stringWithFormat:@"set -t $%d @tab_groups \"%@\"",
                          sessionId_,
                          [self encodedString:arg prefix:iTermTmuxControllerEncodingPrefixTabGroups]];
-    if ([command isEqualToString:_lastSaveTabGroupsCommand]) {
+    // _lastSaveTabGroupsCommand is nil before the first save. -isEqualToString: is declared nonnull and
+    // returns NO for nil.
+    if (_lastSaveTabGroupsCommand && [command isEqualToString:_lastSaveTabGroupsCommand]) {
         return;
     }
     _lastSaveTabGroupsCommand = command;
@@ -4014,7 +4022,9 @@ growingSplitWindowsToClientSize:openWindowsMode != kOpenTmuxWindowsAsNativeTabsI
     NSString *command = [NSString stringWithFormat:@"set -t $%d @tab_group_parents \"%@\"",
                          sessionId_,
                          [self encodedString:arg prefix:iTermTmuxControllerEncodingPrefixTabGroupParents]];
-    if ([command isEqualToString:_lastSaveTabGroupParentsCommand]) {
+    // _lastSaveTabGroupParentsCommand is nil before the first save. -isEqualToString: is declared nonnull and
+    // returns NO for nil.
+    if (_lastSaveTabGroupParentsCommand && [command isEqualToString:_lastSaveTabGroupParentsCommand]) {
         return;
     }
     _lastSaveTabGroupParentsCommand = command;
@@ -4104,7 +4114,9 @@ growingSplitWindowsToClientSize:openWindowsMode != kOpenTmuxWindowsAsNativeTabsI
     NSString *command = [NSString stringWithFormat:@"set -t $%d @per_window_settings \"%@\"",
                          sessionId_,
                          [self encodedString:arg prefix:iTermTmuxControllerEncodingPrefixPerWindowSettings]];
-    if ([command isEqualToString:_lastSavePerWindowSettingsCommand]) {
+    // _lastSavePerWindowSettingsCommand is nil before the first save. -isEqualToString: is declared nonnull and
+    // returns NO for nil.
+    if (_lastSavePerWindowSettingsCommand && [command isEqualToString:_lastSavePerWindowSettingsCommand]) {
         return;
     }
     _lastSavePerWindowSettingsCommand = command;

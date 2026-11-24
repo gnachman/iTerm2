@@ -84,9 +84,13 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     } else {
         bestVersion = [iTermPythonRuntimeDownloader bestPythonVersionAt:path];
     }
-    if ([[NSFileManager defaultManager] fileExistsAtPath:[path stringByAppendingPathComponent:bestVersion]]) {
+    // bestVersion is nil when no version is found. -stringByAppendingPathComponent: is
+    // declared nonnull; for nil it returns the same string as for @"" (the receiver,
+    // standardized), so the versions directory itself is tested and named below.
+    NSString *const versionComponent = bestVersion ?: @"";
+    if ([[NSFileManager defaultManager] fileExistsAtPath:[path stringByAppendingPathComponent:versionComponent]]) {
         NSString *result = [root stringByAppendingPathComponent:@"versions"];
-        result = [result stringByAppendingPathComponent:bestVersion];
+        result = [result stringByAppendingPathComponent:versionComponent];
         result = [result stringByAppendingPathComponent:@"bin"];
         result = [result stringByAppendingPathComponent:name];
         return result;

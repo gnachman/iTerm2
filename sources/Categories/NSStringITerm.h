@@ -49,6 +49,13 @@ NS_ASSUME_NONNULL_BEGIN
 // be parsed properly but we need to render something there.
 #define UNICODE_REPLACEMENT_CHAR 0xfffd
 
+// What [object isEqualToString:string] returns, without passing a nil string to
+// -isEqualToString:, whose parameter is declared nonnull. For a nil string that is
+// NO when object is nil or a string: every Foundation string class returns NO for
+// nil, and so does a nil receiver. An object of another class (a malformed value
+// read from a property list) still gets the message with nil, as before.
+FOUNDATION_EXTERN BOOL iTermObjectIsEqualToString(id _Nullable object, NSString * _Nullable string);
+
 // Examine the leading UTF-8 sequence in a char array and check that it
 // is properly encoded. Computes the number of bytes to use for the
 // first code point. Returns the first code point, if it exists, in *result.

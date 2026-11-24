@@ -366,7 +366,9 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
 
 - (void)updateDuplicateWarning {
     NSArray<iTermHotKeyDescriptor *> *descriptors = [[iTermHotKeyController sharedInstance] descriptorsForProfileHotKeysExcept:nil];
-    _shortcutOverloaded.hidden = ![descriptors containsObject:[self hotkeyDescriptor]];
+    // No hotkey has no descriptor. -containsObject: is declared nonnull and returns NO for nil.
+    iTermHotKeyDescriptor *descriptor = [self hotkeyDescriptor];
+    _shortcutOverloaded.hidden = !(descriptor && [descriptors containsObject:descriptor]);
 }
 
 - (void)ensureUniquenessOfModifierForButton:(NSPopUpButton *)buttonThatChanged

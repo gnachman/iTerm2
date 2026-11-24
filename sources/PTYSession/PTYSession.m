@@ -6819,7 +6819,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
     DLog(@"%@: set prefs to address book entry:\n%@", self, aDict);
 
-    if ([self isTmuxClient] && ![_profile[KEY_NAME] isEqualToString:aePrefs[KEY_NAME]]) {
+    // The new profile may have no name; the helper gives what -isEqualToString: gave for nil.
+    if ([self isTmuxClient] && !iTermObjectIsEqualToString(_profile[KEY_NAME], aePrefs[KEY_NAME])) {
         _tmuxTitleOutOfSync = YES;
     }
 
@@ -9826,7 +9827,9 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
         return;
     }
     DLog(@"%@: findDriver=%@, filterMode=%@", self, findDriver, @(findDriver.filterMode));
-    if ([filter isEqualToString:_filter] && _asyncFilter.mode == findDriver.filterMode) {
+    // _filter is nil while there is no filter. -isEqualToString: is declared nonnull and
+    // returns NO for nil.
+    if (_filter && [filter isEqualToString:_filter] && _asyncFilter.mode == findDriver.filterMode) {
         DLog(@"%@: Filter unchanged (filter='%@', mode=%@), returning early", self, _filter, @(_asyncFilter.mode));
         return;
     }
@@ -24526,7 +24529,11 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
 
 - (void)removeContentSubscriber:(id<iTermContentSubscriber>)contentSubscriber {
     DLog(@"Remove content subscriber %@\n%@", contentSubscriber, [NSThread callStackSymbols]);
-    [_contentSubscribers removeObject:contentSubscriber];
+    // A session with no filter passes nil. -removeObject: is declared nonnull and does
+    // nothing with nil.
+    if (contentSubscriber) {
+        [_contentSubscribers removeObject:contentSubscriber];
+    }
     [self sync];
 }
 

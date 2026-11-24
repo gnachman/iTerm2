@@ -14,6 +14,7 @@
 #import "NSArray+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
 #import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSWorkspace+iTerm.h"
@@ -382,7 +383,8 @@ static NSString *iTermLocalizedSmartSelectionNote(NSString *note) {
 }
 
 - (void)setGuid:(NSString *)guid {
-    if (guid == guid_ || [guid isEqualToString:guid_]) {
+    // guid_ is nil at first; the helper gives what -isEqualToString: gave for nil.
+    if (guid == guid_ || iTermObjectIsEqualToString(guid, guid_)) {
         return;
     }
     guid_ = [guid copy];

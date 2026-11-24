@@ -6525,7 +6525,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (shouldAutoHideHotkeyWindow) {
         NSArray<NSWindowController *> *siblings = [[iTermHotKeyController sharedInstance] siblingWindowControllersOf:self];
         NSWindowController *newKeyWindowController = [newKeyWindow windowController];
-        if (![siblings containsObject:newKeyWindowController]) {
+        // No window may be becoming key. -containsObject: is declared nonnull and returns NO
+        // for nil.
+        if (!newKeyWindowController || ![siblings containsObject:newKeyWindowController]) {
             [[iTermHotKeyController sharedInstance] autoHideHotKeyWindows:siblings];
         }
     }
@@ -6581,7 +6583,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         ![[NSWorkspace sharedWorkspace] it_securityAgentIsActive]) {
         NSArray<NSWindowController *> *siblings = [[iTermHotKeyController sharedInstance] siblingWindowControllersOf:self];
         NSWindowController *newMainWindowController = [[NSApp mainWindow] windowController];
-        if (![siblings containsObject:newMainWindowController]) {
+        // As above, when no window is main.
+        if (!newMainWindowController || ![siblings containsObject:newMainWindowController]) {
             [[iTermHotKeyController sharedInstance] autoHideHotKeyWindows:siblings];
         }
     }

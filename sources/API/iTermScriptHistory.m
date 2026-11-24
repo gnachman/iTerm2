@@ -559,6 +559,11 @@ NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification = @"iTerm
 }
 
 - (nullable iTermScriptHistoryEntry *)entryWithIdentifier:(nullable NSString *)identifier {
+    if (!identifier) {
+        // -isEqualToString: is declared nonnull. With nil it returns NO for every
+        // entry, so the search below would find nothing.
+        return nil;
+    }
     return [_entries it_objectPassingTest:^BOOL(iTermScriptHistoryEntry *element, NSUInteger index, BOOL *stop) {
         return [element.identifier isEqualToString:identifier];
     }];

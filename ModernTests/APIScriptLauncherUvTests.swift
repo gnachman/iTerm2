@@ -43,4 +43,31 @@ final class APIScriptLauncherUvTests: XCTestCase {
         let c = try makeContainer()
         XCTAssertNil(iTermAPIScriptLauncher.environment(forScript: c, checkForMain: false, checkForSaved: true))
     }
+
+    // An environment whose versions directory holds no Python version: the
+    // best version is nil, and appending a nil path component leaves a path
+    // as it is, so the versions directory itself passes the existence check
+    // and the result names bin/python3 directly under versions, a file that
+    // does not exist. Unit nullability-baseline-guards appends "" instead of
+    // nil (the same result) and pins this.
+    func testPyenvWithNoVersionNamesBinUnderTheVersionsDirectory() throws {
+        let c = try makeContainer()
+        let env = (c as NSString).appendingPathComponent("iterm2env")
+        try FileManager.default.createDirectory(atPath: (env as NSString).appendingPathComponent("versions"),
+                                                withIntermediateDirectories: true)
+        let expected = (env as NSString).appendingPathComponent("versions/bin/python3")
+        let downloader = iTermPythonRuntimeDownloader.sharedInstance()
+        XCTAssertEqual(downloader.pyenv(at: env, pythonVersion: nil), expected)
+        XCTAssertEqual(downloader.pyenv(at: env, pythonVersion: "3.99"), expected)
+        // The launcher then finds no such file.
+        XCTAssertNil(iTermAPIScriptLauncher.environment(forScript: c, checkForMain: false, checkForSaved: true))
+    }
+
+    // With no versions directory at all the result is nil.
+    func testPyenvWithNoVersionsDirectoryIsNil() throws {
+        let c = try makeContainer()
+        let env = (c as NSString).appendingPathComponent("iterm2env")
+        try FileManager.default.createDirectory(atPath: env, withIntermediateDirectories: true)
+        XCTAssertNil(iTermPythonRuntimeDownloader.sharedInstance().pyenv(at: env, pythonVersion: nil))
+    }
 }

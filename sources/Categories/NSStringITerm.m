@@ -62,6 +62,13 @@
 
 #import "iTermCharacterWidth.h"
 
+BOOL iTermObjectIsEqualToString(id object, NSString *string) {
+    if (!string && (!object || [object isKindOfClass:[NSString class]])) {
+        return NO;
+    }
+    return [object isEqualToString:string];
+}
+
 @implementation NSString (iTerm)
 
 + (NSArray<NSNumber *> *)it_sortedAvailableStringEncodings {
@@ -1042,7 +1049,9 @@ int decode_utf8_char(const unsigned char *datap,
 }
 
 - (NSString *)stringByBase64DecodingStringWithEncoding:(NSStringEncoding)encoding {
-    return [[NSString alloc] initWithData:[NSData dataWithBase64EncodedString:self]
+    // The data is nil when nothing decodes. -initWithData:encoding: is declared nonnull and
+    // gives the same empty string for nil as for empty data.
+    return [[NSString alloc] initWithData:[NSData dataWithBase64EncodedString:self] ?: [NSData data]
                                  encoding:encoding];
 }
 

@@ -209,7 +209,11 @@ NSString *const iTermTmuxWindowCacheDidChange = @"iTermTmuxWindowCacheDidChange"
     iTermTmuxCacheSession *session = [self sessionInClient:[self clientNamed:controller.clientName]
                                                 withWindow:window];
     if (![controller windowIsHidden:wid]) {
-        [session.mutableWindows removeObject:window];
+        // The window may not be in the cache. -removeObject: is declared nonnull and does
+        // nothing with nil.
+        if (window) {
+            [session.mutableWindows removeObject:window];
+        }
     }
     [self invalidate];
 }

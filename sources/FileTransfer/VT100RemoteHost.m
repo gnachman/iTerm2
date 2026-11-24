@@ -111,10 +111,18 @@ static NSString *const kRemoteHostLocalityVerifiedKey = @"Locality Verified";
         // it's the same host. Compare only the user so that, e.g.,
         // me@localhost and root@localhost (after su) remain distinct for the
         // per-host key-mapping state stack.
-        return [_username isEqualToString:other.username];
+        // -isEqualToString: is declared nonnull and returns NO for nil, so a missing
+        // name on the other side never matches.
+        NSString *otherUsername = other.username;
+        return otherUsername && [_username isEqualToString:otherUsername];
     }
-    return ([_hostname isEqualToString:other.hostname] &&
-            [_username isEqualToString:other.username]);
+    // As above, for either name.
+    NSString *otherHostname = other.hostname;
+    if (!otherHostname || ![_hostname isEqualToString:otherHostname]) {
+        return NO;
+    }
+    NSString *otherUsername = other.username;
+    return otherUsername && [_username isEqualToString:otherUsername];
 }
 
 - (NSString *)usernameAndHostname {

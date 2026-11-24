@@ -47,7 +47,9 @@
 
     __block NSString *previousMessage = nil;
     NSArray *uniqueReasons = [sortedReasons filteredArrayUsingBlock:^BOOL(iTermPromptOnCloseReason *reason) {
-        BOOL ok = ![reason.message isEqualToString:previousMessage];
+        // previousMessage is nil for the first reason. -isEqualToString: is declared
+        // nonnull and returns NO for nil, so the first reason is always kept.
+        BOOL ok = !previousMessage || ![reason.message isEqualToString:previousMessage];
         previousMessage = reason.message;
         return ok;
     }];

@@ -34,6 +34,7 @@
 #import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSHost+iTerm.h"
+#import "NSStringITerm.h"
 #import "PTYAnnotation.h"
 #import "PTYTriggerEvaluator.h"
 #import "TmuxStateParser.h"
@@ -3792,7 +3793,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // aid first so the registry doesn't keep a phantom pointing at a
     // mark whose aid changed under it (to a new value, or to nil).
     NSString *previousAid = mark.aid;
-    if (previousAid != nil && ![previousAid isEqualToString:aid]) {
+    // aid may be nil. -isEqualToString: is declared nonnull and returns NO for nil.
+    if (previousAid != nil && (!aid || ![previousAid isEqualToString:aid])) {
         DLog(@"setPromptStartLine: mark reuse; dropping previous aid=%@ "
              @"(replaced by aid=%@)", previousAid, aid);
         [self.marksByAid removeObjectForKey:previousAid];
@@ -4252,7 +4254,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     DLog(@"currentDirectoryReallyDidChangeTo:%@ onAbsLine:%@ locality:%@",
          dir, @(cursorAbsLine), @(locality));
     self.shouldExpectWorkingDirectoryUpdates = YES;
-    BOOL willChange = ![dir isEqualToString:[self workingDirectoryOnLine:cursorAbsLine - self.cumulativeScrollbackOverflow]];
+    // No directory may be known on the line yet. -isEqualToString: is declared nonnull and
+    // returns NO for nil.
+    NSString *const previousDirectory = [self workingDirectoryOnLine:cursorAbsLine - self.cumulativeScrollbackOverflow];
+    BOOL willChange = !previousDirectory || ![dir isEqualToString:previousDirectory];
     [self setWorkingDirectory:dir
                     onAbsLine:cursorAbsLine
                        pushed:YES
@@ -7588,7 +7593,9 @@ lengthExcludingInBandSignaling:data.length
                                                    toReferToMark:screenMarkDoppelganger];
                     } name:@"fix up deserialized interval tree 1"];
                 }
-                if ([screenMark.guid isEqualToString:guidOfLastCommandMark]) {
+                // guidOfLastCommandMark is nil when no command mark was saved; the helper gives
+                // what -isEqualToString: gave for nil.
+                if (iTermObjectIsEqualToString(screenMark.guid, guidOfLastCommandMark)) {
                     self.lastCommandMark = screenMark;
                 }
                 if (screenMark.name) {

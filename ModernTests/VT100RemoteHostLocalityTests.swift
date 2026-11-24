@@ -139,4 +139,35 @@ final class VT100RemoteHostLocalityTests: XCTestCase {
         XCTAssertEqual(dop.localityState, .localhost)
         XCTAssertTrue(dop.isLocalhost)
     }
+
+    // MARK: - Missing names
+    //
+    // -isEqualToString: returns NO for nil, so a missing hostname or username
+    // on either side makes two hosts unequal, even when both are missing.
+    // Unit nullability-baseline-guards tests for nil before comparing and
+    // pins these results.
+
+    func testMissingHostnameIsNotEqual() {
+        let named = makeHost("me", foreignName)
+        let unnamed = VT100RemoteHost(username: "me", hostname: nil)
+        XCTAssertFalse(named.isEqual(toRemoteHost: unnamed))
+        XCTAssertFalse(unnamed.isEqual(toRemoteHost: named))
+        XCTAssertFalse(unnamed.isEqual(toRemoteHost: VT100RemoteHost(username: "me", hostname: nil)))
+        XCTAssertFalse(named.isEqual(toRemoteHost: nil))
+    }
+
+    func testMissingUsernameIsNotEqual() {
+        let named = makeHost("me", foreignName)
+        let unnamed = VT100RemoteHost(username: nil, hostname: foreignName)
+        XCTAssertFalse(named.isEqual(toRemoteHost: unnamed))
+        XCTAssertFalse(unnamed.isEqual(toRemoteHost: named))
+        XCTAssertTrue(named.isEqual(toRemoteHost: makeHost("me", foreignName)))
+    }
+
+    func testMissingUsernameOnLocalhostIsNotEqual() {
+        let named = makeHost("me", foreignName, .localhost)
+        let unnamed = VT100RemoteHost(username: nil, hostname: foreignName, locality: .localhost)
+        XCTAssertFalse(named.isEqual(toRemoteHost: unnamed))
+        XCTAssertFalse(unnamed.isEqual(toRemoteHost: named))
+    }
 }

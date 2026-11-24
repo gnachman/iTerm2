@@ -892,8 +892,12 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         return;
     }
 
-    BOOL isDirectory;
-    if (![self.fileManager fileExistsAtPath:path isDirectory:&isDirectory]) {
+    // Set by -fileExistsAtPath:isDirectory: whenever it returns YES, the only case that
+    // reads it; the initial value is never used.
+    BOOL isDirectory = NO;
+    // path is nil when it could not be cleaned up. -fileExistsAtPath:isDirectory: is declared
+    // nonnull; for nil it returns NO without calling any other file manager method.
+    if (!path || ![self.fileManager fileExistsAtPath:path isDirectory:&isDirectory]) {
         RLog(@"No file exists at %@, not running semantic history", path);
         completion(NO);
         return;

@@ -190,8 +190,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setCurrentDirectory:(NSString *)currentDirectory {
     DLog(@"%@: Set current directory to %@", self, currentDirectory);
+    // _currentDirectory is nil at first. -isEqualToString: is declared nonnull and returns NO
+    // for nil.
     if (currentDirectory == _currentDirectory ||
-        [currentDirectory isEqualToString:_currentDirectory]) {
+        (_currentDirectory && [currentDirectory isEqualToString:_currentDirectory])) {
         DLog(@"%@: Not changing", self);
         return;
     }
