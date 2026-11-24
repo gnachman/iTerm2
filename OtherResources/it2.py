@@ -501,14 +501,41 @@ def allowed_environment(env):
 # was unconditional.
 STDIN_CONSUMING_COMMANDS = ("handle-agent-hook",)
 
+# The hook command an agent runs on every event. See exit_status.
+AGENT_HOOK_COMMAND = "handle-agent-hook"
 
-def wants_stdin(argv):
-    """Whether this invocation's command reads a payload from stdin."""
+# The status for a failure of this client itself (no connection, a dropped one). Not 2: a Claude
+# Code hook that exits 2 blocks the prompt or tool call it ran for, so 2 must never mean "it2
+# could not reach iTerm2".
+CLIENT_FAILURE = 1
+
+
+def command_name(argv):
+    """The subcommand: the first argument that is not an option, or None."""
     for argument in argv:
         if argument.startswith("-"):
             continue
-        return argument in STDIN_CONSUMING_COMMANDS
-    return False
+        return argument
+    return None
+
+
+def wants_stdin(argv):
+    """Whether this invocation's command reads a payload from stdin."""
+    return command_name(argv) in STDIN_CONSUMING_COMMANDS
+
+
+def exit_status(code, argv):
+    """The status to exit with after main() returned `code`.
+
+    Always 0 for the agent hook. The hook is installed in the agent's user-level settings, so it
+    also runs where there is no iTerm2 to report to (another terminal, plain ssh, a dropped
+    connection), and a nonzero status there would surface an error on every event, or with 2
+    block every prompt (issue 13236). Reporting status is best effort and must never get in the
+    agent's way. Other commands keep their status.
+    """
+    if command_name(argv) == AGENT_HOOK_COMMAND:
+        return 0
+    return code
 
 
 def read_stdin_payload(stream):
@@ -546,7 +573,7 @@ def main():
         else:
             eprint("it2: this tmux server did not say which iTerm2 is showing this pane, so "
                    "it2 can\u2019t tell which connection to use.\n")
-        return 2
+        return CLIENT_FAILURE
     # The pane's own environment comes last: it is right for a tmux server no iTerm2 has
     # attached to with tmux -CC (plain tmux in an SSH Integration session), and a fallback
     # when every advertised socket is gone.
@@ -555,7 +582,7 @@ def main():
         candidates.append({"sock": own_sock_path, "nonce": os.environ.get("IT2_NONCE", "")})
     if not candidates:
         eprint("it2: not running under iTerm2 SSH integration (IT2_SOCK is unset).\n")
-        return 2
+        return CLIENT_FAILURE
 
     try:
         sock, candidate = connect_to_candidate(candidates)
@@ -572,7 +599,7 @@ def main():
         return 130
     if sock is None:
         eprint("it2: cannot reach iTerm2 (%s)\n" % candidate)
-        return 2
+        return CLIENT_FAILURE
     nonce = candidate.get("nonce")
     if not isinstance(nonce, str):
         nonce = ""
@@ -599,7 +626,7 @@ def main():
         send_frame(sock, HELLO, json.dumps(hello))
     except OSError as e:
         eprint("it2: connection lost: %s\n" % e)
-        return 2
+        return CLIENT_FAILURE
     except KeyboardInterrupt:
         return 130
 
@@ -674,7 +701,7 @@ def main():
         # EXIT is contractually the last frame; a disconnect without it means the
         # command did not complete normally (server crash, killed job, reset).
         eprint("it2: connection closed before completion.\n")
-        return 2
+        return CLIENT_FAILURE
     return exit_code
 
 
@@ -704,4 +731,4 @@ if __name__ == "__main__":
         # like a shell-interrupted process instead of dumping a traceback with status 1.
         code = 130
     _silence_std_stream_flush()
-    sys.exit(code)
+    sys.exit(exit_status(code, sys.argv[1:]))

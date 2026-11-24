@@ -50,7 +50,7 @@ def send_frame(conn, ftype, payload=b""):
     conn.sendall(ftype.encode() + struct.pack(">I", len(payload)) + payload)
 
 
-def run_scenario(serve_fn, argv):
+def run_scenario(serve_fn, argv, stdin=None):
     """Serve one connection via serve_fn(conn, captured) and run it2.py against it."""
     d = tempfile.mkdtemp()
     sock_path = os.path.join(d, "it2.sock")
@@ -76,7 +76,7 @@ def run_scenario(serve_fn, argv):
     # A real tmux server around the test run must not be consulted for its advertised socket.
     env.pop("TMUX", None)
     try:
-        result = subprocess.run([sys.executable, IT2] + argv, env=env,
+        result = subprocess.run([sys.executable, IT2] + argv, env=env, input=stdin,
                                 capture_output=True, text=True, timeout=10)
     finally:
         t.join(timeout=5)
@@ -123,7 +123,8 @@ def test_disconnect_without_exit():
 
     result, _ = run_scenario(serve, ["session", "list"])
     check(result.stdout == "partial output\n", "partial stdout still delivered: %r" % result.stdout)
-    check(result.returncode != 0, "premature close must be nonzero, got %r" % result.returncode)
+    check(result.returncode == it2mod.CLIENT_FAILURE,
+          "premature close is a client failure, got %r" % result.returncode)
     check("closed before completion" in result.stderr, "expected note on stderr: %r" % result.stderr)
 
 
@@ -480,7 +481,7 @@ def test_unreadable_tmux_server_fails_instead_of_using_the_inherited_socket():
                    PATH=d)
         result = subprocess.run([sys.executable, IT2, "app", "version"], env=env,
                                 capture_output=True, text=True, timeout=10)
-        check(result.returncode == 2, "exit status: %r" % result.returncode)
+        check(result.returncode == it2mod.CLIENT_FAILURE, "exit status: %r" % result.returncode)
         check("tmux" in result.stderr and "cannot reach" not in result.stderr,
               "says why: %r" % result.stderr)
     finally:
@@ -501,7 +502,7 @@ def test_tmux_that_reaches_no_server_fails_too():
                    PATH=d + ":/usr/bin:/bin")
         result = subprocess.run([sys.executable, IT2, "app", "version"], env=env,
                                 capture_output=True, text=True, timeout=10)
-        check(result.returncode == 2, "exit status: %r" % result.returncode)
+        check(result.returncode == it2mod.CLIENT_FAILURE, "exit status: %r" % result.returncode)
         check("did not say" in result.stderr, "says why: %r" % result.stderr)
     finally:
         shutil.rmtree(d, ignore_errors=True)
@@ -632,6 +633,100 @@ def test_record_py_is_reexeced_with_the_same_argv_and_stdin():
         check(seen.get("guard") == "1", "guarded against a second exec: %r" % seen)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+# Issue 13236: the hook is in the agent's user-level settings, so it runs in terminals with no
+# iTerm2 behind them. Claude Code treats a hook exit of 2 as "block this prompt", so every way
+# the client can fail must leave the hook at 0, and other commands must fail with 1, never 2.
+
+def _env_without_iterm2(d):
+    env = dict(os.environ, TERM="xterm", PATH=d + ":/usr/bin:/bin")
+    for name in ("IT2_SOCK", "IT2_NONCE", "TMUX", "TMUX_PANE", it2mod.REEXEC_GUARD_NAME):
+        env.pop(name, None)
+    return env
+
+
+def _run_it2(argv, env, stdin=""):
+    return subprocess.run([sys.executable, IT2] + argv, env=env, input=stdin,
+                          capture_output=True, text=True, timeout=10)
+
+
+def test_command_name_skips_options():
+    check(it2mod.command_name(["--x", "handle-agent-hook", "--agent", "codex"]) == "handle-agent-hook",
+          "first non-option")
+    check(it2mod.command_name(["--help"]) is None, "no command")
+    check(it2mod.command_name([]) is None, "no arguments")
+
+
+def test_exit_status_is_zero_only_for_the_hook():
+    for code in (0, 1, 2, 7, 130, 141):
+        check(it2mod.exit_status(code, ["handle-agent-hook"]) == 0, "hook %r" % code)
+        check(it2mod.exit_status(code, ["session", "list"]) == code, "other %r" % code)
+    check(it2mod.CLIENT_FAILURE != 2, "client failures must not look like a blocking hook exit")
+
+
+def test_hook_without_iterm2_exits_zero():
+    d = tempfile.mkdtemp()
+    try:
+        result = _run_it2(["handle-agent-hook"], _env_without_iterm2(d), stdin='{"hook_event_name":"UserPromptSubmit"}')
+        check(result.returncode == 0, "hook outside iTerm2: %r %r" % (result.returncode, result.stderr))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def test_other_command_without_iterm2_fails_with_one():
+    d = tempfile.mkdtemp()
+    try:
+        result = _run_it2(["session", "list"], _env_without_iterm2(d))
+        check(result.returncode == it2mod.CLIENT_FAILURE, "exit status: %r" % result.returncode)
+        check("IT2_SOCK is unset" in result.stderr, "says why: %r" % result.stderr)
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def test_hook_with_a_dead_socket_exits_zero():
+    # A stale IT2_SOCK left behind after the connection that set it went away.
+    d = tempfile.mkdtemp()
+    try:
+        env = _env_without_iterm2(d)
+        env["IT2_SOCK"] = os.path.join(d, "gone.sock")
+        env["IT2_NONCE"] = "x"
+        result = _run_it2(["handle-agent-hook"], env, stdin="{}")
+        check(result.returncode == 0, "hook with a dead socket: %r %r" % (result.returncode, result.stderr))
+        result = _run_it2(["session", "list"], env)
+        check(result.returncode == it2mod.CLIENT_FAILURE, "other command: %r" % result.returncode)
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def test_hook_in_tmux_without_tmux_exits_zero():
+    d = tempfile.mkdtemp()
+    try:
+        env = _env_without_iterm2(d)
+        env["PATH"] = d
+        env["TMUX"] = "/tmp/no-such-tmux-socket,999999999,0"
+        env["TMUX_PANE"] = "%1"
+        result = _run_it2(["handle-agent-hook"], env, stdin="{}")
+        check(result.returncode == 0, "hook in tmux with no tmux: %r %r" % (result.returncode, result.stderr))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def test_hook_exits_zero_when_the_connection_drops():
+    def serve(conn, _captured):
+        recv_frame(conn)  # HELLO, then close without an EXIT frame
+
+    result, _ = run_scenario(serve, ["handle-agent-hook"], stdin="{}")
+    check(result.returncode == 0, "hook after a dropped connection: %r" % result.returncode)
+
+
+def test_hook_exits_zero_whatever_iterm2_reports():
+    def serve(conn, _captured):
+        recv_frame(conn)
+        send_frame(conn, "X", json.dumps({"code": 2}))
+
+    result, _ = run_scenario(serve, ["handle-agent-hook"], stdin="{}")
+    check(result.returncode == 0, "hook whose command exited 2: %r" % result.returncode)
 
 
 def main():

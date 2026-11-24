@@ -139,3 +139,11 @@ Bug Fixes:
   such as that it did not exist. Those files
   are now refused, and every file that can’t be
   shown gets the same reply.
+- On a host where you installed the Claude Code
+  integration over SSH Integration, starting
+  Claude Code from any other terminal blocked
+  every prompt with “not running under iTerm2
+  SSH integration.” The status hook now does
+  nothing when it can’t reach iTerm2. Reconnect
+  to the host with SSH Integration to get the
+  fix. Issue 13236.
