@@ -27,22 +27,6 @@
         "value" : "malloc_context_size=0"
       },
       {
-        "key" : "MallocStackLogging",
-        "value" : "YES"
-      },
-      {
-        "key" : "MallocStackLoggingDirectory",
-        "value" : "\/tmp"
-      },
-      {
-        "key" : "NSZombieEnabled",
-        "value" : "YES"
-      },
-      {
-        "key" : "MallocStackLoggingNoCompact",
-        "value" : "1"
-      },
-      {
         "key" : "MallocGuardEdges",
         "value" : "1"
       },
