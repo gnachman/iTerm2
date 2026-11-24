@@ -591,7 +591,10 @@
 }
 
 - (CGFloat)fontSize {
-    NSNumber *override = [_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionFontSizeOverride];
+    // A style not attached to a tab bar has no delegate to ask; the message to the nil
+    // delegate gave no override. The delegate's tabView parameter is nonnull.
+    PSMTabBarControl *tabBar = _tabBar;
+    NSNumber *override = tabBar ? [tabBar.delegate tabView:tabBar valueOfOption:PSMTabBarControlOptionFontSizeOverride] : nil;
     if (override) {
         return override.doubleValue;
     }
@@ -1171,7 +1174,10 @@ const void *PSMTabStyleDarkColorKey = "dark";
            cellFrame:(NSRect)cellFrame
          labelOffset:(CGFloat)labelOffset
      mainLabelHeight:(CGFloat)mainLabelHeight {
-    if (cachedSubtitle.isEmpty) {
+    // A tab with no subtitle has a nil cachedSubtitle, as -willDrawSubtitle: knows. Going on
+    // would only measure and draw nil, and pass the nil string to PSMTabSearchHighlight, whose
+    // parameter is non-optional Swift.
+    if (!cachedSubtitle || cachedSubtitle.isEmpty) {
         return;
     }
     NSRect labelRect;
@@ -1528,6 +1534,8 @@ static const CGFloat kPSMCollapsedAttentionIconSize = 16;  // side of the attent
     }];
     // A fully collapsed run has no visible members, so the block above never
     // fires for it; draw the collapsed chip's self-contained affordance.
+    // nil when no drop is aimed at a collapsed group. -isEqualToString: is declared nonnull
+    // and returns NO for nil.
     NSString *dropTargetGID = [bar collapsedTabGroupDropTargetIdentifier];
     [bar enumerateCollapsedTabGroupChipsWithBlock:^(PSMTabBarCell *chip,
                                                     NSInteger memberCount,
@@ -1536,7 +1544,7 @@ static const CGFloat kPSMCollapsedAttentionIconSize = 16;  // side of the attent
                                    memberCount:memberCount
                                        groupID:gid
                                          inBar:bar
-                                  isDropTarget:[gid isEqualToString:dropTargetGID]];
+                                  isDropTarget:(dropTargetGID && [gid isEqualToString:dropTargetGID])];
     }];
 }
 

@@ -904,7 +904,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)_refreshLabels:(id)sender {
     if ([self activeSession]) {
         NSString *label = [self tabBarLabel];
-        const BOOL changed = ![label isEqualToString:tabViewItem_.label];
+        NSString *oldLabel = tabViewItem_.label;
+        // -isEqualToString: is NO for a nil argument, so a missing old label counts as a change.
+        const BOOL changed = !(oldLabel && [label isEqualToString:oldLabel]);
         [tabViewItem_ setLabel:label];
         [parentWindow_ setWindowTitle];
         if (changed) {

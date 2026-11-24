@@ -2233,10 +2233,13 @@ static os_log_t PSMTabDragLog(void) {
         // pill"), so the held state is what's applied. chipDebounce: 0=stable,
         // 1=just applied a change (recompute), 2=change pending (hold).
         NSString *rawChipGid = [chipUnderMouse tabGroupIdentifier];
+        // nil stands for no pill. -isEqualToString: is declared nonnull and returns NO for nil,
+        // so a nil that failed the pointer test differs.
         const BOOL rawEqualsCommitted = (rawChipGid == _committedChipGid) ||
-            [rawChipGid isEqualToString:_committedChipGid];
+            (_committedChipGid && [rawChipGid isEqualToString:_committedChipGid]);
         const BOOL rawEqualsPending = _chipChangePending &&
-            ((rawChipGid == _pendingChipGid) || [rawChipGid isEqualToString:_pendingChipGid]);
+            ((rawChipGid == _pendingChipGid) ||
+             (_pendingChipGid && [rawChipGid isEqualToString:_pendingChipGid]));
         NSInteger chipDebounce;
         if (rawEqualsCommitted) {
             // Stable on the committed pill (or stably off all pills): clear any
@@ -2301,8 +2304,10 @@ static os_log_t PSMTabDragLog(void) {
             // group the cursor has left. (We only ever CLEAR a mismatch, never
             // fabricate a join: a held between-zone target legitimately has no join
             // id, and must keep it nil.)
+            // With no committed pill (nil) it is a mismatch: -isEqualToString: is declared
+            // nonnull and returns NO for nil.
             if (_collapsedGroupJoinTargetID != nil &&
-                ![_collapsedGroupJoinTargetID isEqualToString:_committedChipGid]) {
+                (!_committedChipGid || ![_collapsedGroupJoinTargetID isEqualToString:_committedChipGid])) {
                 [_collapsedGroupJoinTargetID release];
                 _collapsedGroupJoinTargetID = nil;
             }
@@ -3846,7 +3851,12 @@ holdsOwnSlotOfTabGroup:(NSString *)gid {
             cell.dragBaseWidth = 0;  // out of the drag: the real layout owns widths again
         }
     }
-    // redraw
+    // redraw. control is nil when the drag has no source tab bar any more (finishDrag after
+    // the source was cleared). The target is declared nonnull; a request with a nil target
+    // raises nothing and is never delivered to any object.
+    if (!control) {
+        return;
+    }
     [[NSRunLoop currentRunLoop] performSelector:@selector(update)
                                          target:control
                                        argument:nil

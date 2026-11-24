@@ -648,4 +648,25 @@ final class PSMTabRichAccessoryPlacementTests: XCTestCase {
         }
         try checkDrawing(style: { PSMTahoeTabStyle() }, titleLineMidY: tahoeTitleLineMidY, tolerance: 1)
     }
+
+    // A classic Yosemite tab with no subtitle draws the same during a tab bar
+    // search: there is no subtitle to highlight. Its drawing passed the
+    // missing subtitle's nil string to PSMTabSearchHighlight, whose string
+    // parameter is non-optional Swift; unit psm-nullability-guards stops
+    // there, as -willDrawSubtitle: already did. Under the nullability
+    // sanitizer this test failed before.
+    func testYosemiteTabWithoutASubtitleDrawsTheSameDuringASearch() {
+        let cell = makeCell(style: PSMYosemiteTabStyle(), orientation: .horizontalOrientation, rich: false)
+        XCTAssertNil(cell.cachedSubtitle, "precondition: no subtitle")
+        let before = render(cell)
+        control.searchHighlightQuery = "zzz"
+        let searching = render(cell)
+        XCTAssertNil(differingBounds(before, searching))
+    }
+
+    // A style that is not attached to a tab bar has no delegate to ask for a
+    // font size override, so it uses its default.
+    func testYosemiteFontSizeWithoutATabBarIsTheDefault() {
+        XCTAssertEqual((PSMYosemiteTabStyle() as PSMTabStyle).fontSize, 11)
+    }
 }

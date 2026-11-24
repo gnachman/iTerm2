@@ -902,8 +902,10 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     // unbind
     [cell unbind:@"title"];
 
-    // remove indicator
-    if ([[self subviews] containsObject:[cell indicator]]) {
+    // remove indicator. A placeholder cell has none. -containsObject: is declared nonnull and
+    // returns NO for nil.
+    PSMProgressIndicator *indicator = [cell indicator];
+    if (indicator && [[self subviews] containsObject:indicator]) {
         [[cell indicator] setDelegate:nil];
         [[cell indicator] removeFromSuperview];
     }
@@ -2050,7 +2052,10 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
 }
 
 - (void)setSearchHighlightQuery:(NSString *)query {
-    if (query == _searchHighlightQuery || [query isEqualToString:_searchHighlightQuery]) {
+    // _searchHighlightQuery is nil while no search is going on. -isEqualToString: is declared
+    // nonnull and returns NO for nil.
+    if (query == _searchHighlightQuery ||
+        (_searchHighlightQuery && [query isEqualToString:_searchHighlightQuery])) {
         return;
     }
     [_searchHighlightQuery release];
@@ -6283,7 +6288,10 @@ static NSRect PSMRunUnionRect(NSRect a, NSRect b) {
 }
 
 - (void)setDisplayOrder:(NSArray<NSTabViewItem *> *)displayOrder {
-    if (displayOrder == _displayOrder || [displayOrder isEqualToArray:_displayOrder]) {
+    // _displayOrder is nil until an order is first set. -isEqualToArray: is declared nonnull
+    // and returns NO for nil.
+    if (displayOrder == _displayOrder ||
+        (_displayOrder && [displayOrder isEqualToArray:_displayOrder])) {
         return;
     }
     DLog(@"Display order changes to %@", displayOrder);

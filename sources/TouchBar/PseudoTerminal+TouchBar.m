@@ -153,7 +153,10 @@ ITERM_IGNORE_PARTIAL_BEGIN
             NSScrubber *scrubber = (NSScrubber *)self.tabsTouchBarItem.view;
             dispatch_async(dispatch_get_main_queue(), ^{
                 [scrubber reloadData];
-                [scrubber setSelectedIndex:[self.tabs indexOfObject:self.currentTab]];
+                // A window with no selected tab has no current tab. -indexOfObject: is declared
+                // nonnull and returns NSNotFound for nil.
+                PTYTab *currentTab = self.currentTab;
+                [scrubber setSelectedIndex:currentTab ? [self.tabs indexOfObject:currentTab] : NSNotFound];
             });
         }
         NSArray *ids = @[ NSTouchBarItemIdentifierCharacterPicker,

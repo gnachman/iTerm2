@@ -106,6 +106,11 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 
 - (NSRect)accessibilityFrame {
     PSMTabBarCell *cell = self.cell;
+    // The cell is nil once its tab closed. Its control view was then nil too, so no style was
+    // asked and the conversion gave NSZeroRect. The style's parameter is nonnull.
+    if (!cell) {
+        return NSZeroRect;
+    }
     NSView<PSMTabBarControlProtocol> *controlView = cell.psmTabControlView;
     return PSMConvertAccessibilityFrameToScreen(controlView, [[controlView style] closeButtonRectForTabCell:cell]);
 }

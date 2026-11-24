@@ -29,6 +29,7 @@ final class PSMTabAccessibilityElementLifetimeTests: XCTestCase {
         _ = element.accessibilityFrame()
         let closeButton = try XCTUnwrap(closeButtonElement as? NSAccessibilityElement)
         XCTAssertNil(closeButton.accessibilityParent())
-        _ = closeButton.accessibilityFrame()
+        // With no cell there is no control view, and so no frame.
+        XCTAssertEqual(closeButton.accessibilityFrame(), .zero)
     }
 }
