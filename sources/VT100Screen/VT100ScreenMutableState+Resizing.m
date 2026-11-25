@@ -35,11 +35,20 @@
         return;
     }
     [self.linebuffer beginResizing];
-    [self reallySetSize:newSize
-           visibleLines:previouslyVisibleLineRange
-              selection:selection
-               delegate:delegate
-                hasView:hasView];
+    const VT100GridSize oldSize = self.currentGrid.size;
+    [self performBlockAddingImageCodesOnlyInLastLinesOfHistory:^int{
+        [self reallySetSize:newSize
+               visibleLines:previouslyVisibleLineRange
+                  selection:selection
+                   delegate:delegate
+                    hasView:hasView];
+        // Only lines that were on screen can have entered history. Rewrapped to the new width, the
+        // old screen fills at most this many lines at the end of history. A wide character never
+        // straddles two rows, so a row of them may use only newWidth - 1 cells.
+        const int cellsPerRow = MAX(1, newSize.width - 1);
+        const int rowsPerOldRow = (oldSize.width + cellsPerRow - 1) / cellsPerRow;
+        return oldSize.height * MAX(1, rowsPerOldRow);
+    }];
     [self.linebuffer endResizing];
 
     if (gDebugLogging) {

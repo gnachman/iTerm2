@@ -60,6 +60,11 @@ NS_ASSUME_NONNULL_BEGIN
 // of one of those is stale and is dropped (see PTYSession).
 @property (nonatomic) NSInteger progressGeneration;
 @property (nullable, nonatomic, strong) VT100InlineImageHelper *inlineImageHelper;
+// Codes of the inline images that may have a cell in history. History never changes, so such an
+// image can't have been drawn over and must not be released while its mark lives. It may hold
+// codes no longer in history (a line popped back onto the screen), which only keeps an image
+// longer; it never lacks one that is, except for history loaded by session restoration.
+@property (nonatomic, readonly) NSIndexSet *imageCodesInHistory;
 @property (nonatomic, strong, readwrite) iTermOrderEnforcer *setWorkingDirectoryOrderEnforcer;
 @property (atomic, weak, nullable) id<VT100ScreenSideEffectPerforming> sideEffectPerformer;
 @property (nonatomic, readonly) iTermTokenExecutor *tokenExecutor;
@@ -208,7 +213,8 @@ NS_ASSUME_NONNULL_BEGIN
                       length:(int)length
       externalAttributeIndex:(nullable id<iTermExternalAttributeIndexReading>)externalAttributeIndex
              continuation:(screen_char_t)continuation
-                 rtlFound:(BOOL)rtlFound;
+                 rtlFound:(BOOL)rtlFound
+               imageFound:(BOOL)imageFound;
 
 // Like appendScreenChars: but handles DWL/DHL source data: sets the
 // lineAttribute on the current grid line and strips DWL_SPACERs before
@@ -218,6 +224,7 @@ NS_ASSUME_NONNULL_BEGIN
    externalAttributeIndex:(nullable id<iTermExternalAttributeIndexReading>)externalAttributeIndex
              continuation:(screen_char_t)continuation
                  rtlFound:(BOOL)rtlFound
+               imageFound:(BOOL)imageFound
             lineAttribute:(iTermLineAttribute)lineAttribute;
 
 - (void)appendBannerMessage:(NSString *)message;

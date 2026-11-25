@@ -320,9 +320,14 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
     return NSMakeRange(location, length);
 }
 
-// Search for images in the mutable area of the old instance of VT100ScreenState and check in the
-// updated version if any cell of that image is still present. If not, it can be released.
-- (void)releaseOverwrittenImagesIn:(VT100ScreenMutableState *)updated {
+// Release the images that were on screen at the last sync (in this instance, which hasn't merged
+// `updated` yet) and have since been drawn over. An image is in use if a cell of it is on screen,
+// or if one ever entered history, where it can't be drawn over. Neither check reads history, so
+// a burst of output costs nothing extra. `previousOverflow` is this instance's
+// cumulativeScrollbackOverflow from before the merge began, since copyFastStuffFrom: has already
+// replaced it.
+- (void)releaseOverwrittenImagesIn:(VT100ScreenMutableState *)updated
+                  previousOverflow:(long long)previousOverflow {
     DLog(@"Start");
     if (self.width != updated.width || self.height != updated.height) {
         // It's way too complicated to check if an image was overwritten when the grid resizes.
@@ -334,9 +339,10 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
         DLog(@"Don't scan for overwritten images because current grid remains unchanged");
         return;
     }
-    Interval *topOfScreen = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0, self.numberOfScrollbackLines, 0, self.numberOfScrollbackLines)];
+    const long long previousTopOfScreen = previousOverflow + self.numberOfScrollbackLines;
+    Interval *topOfScreen = [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeMake(0, previousTopOfScreen,
+                                                                                          0, previousTopOfScreen)];
     NSMutableArray<iTermImageMark *> *candidates = [NSMutableArray array];
-    __block int tallestImage = 0;
     [_intervalTree enumerateLimitsAfter:topOfScreen.location
                                   block:^(id<IntervalTreeObject> object, BOOL *stop) {
         DLog(@"Consider %@", object);
@@ -346,16 +352,16 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
             return;
         }
         [candidates addObject:imageMark];
-        iTermImageInfo *imageInfo = [[iTermImageRegistry sharedInstance] infoForCode:imageMark.imageCode.intValue];
-        tallestImage = MAX(tallestImage, (int)imageInfo.size.height);
     }];
     if (candidates.count == 0) {
         return;
     }
-    // A mark sits on the line below its image, but it stays put when a scroll region or inserted
-    // lines move the image's cells, so look for each image's code anywhere on screen rather than
-    // just above its mark. Include enough history to cover an image partly scrolled off the top.
-    NSIndexSet *codesInUse = [updated imageCodesOnScreenAndInHistoryLines:tallestImage];
+    // A mark sits on the line below its image, but it stays put when a scroll region, inserted
+    // lines, or DECCRA move or copy the image's cells, so look for each image's code anywhere on
+    // screen rather than just above its mark.
+    NSIndexSet *codesOnScreen = [updated.currentGrid imageCodesOnScreen];
+    NSIndexSet *codesInHistory = updated.imageCodesInHistory;
+    DLog(@"Image codes on screen: %@, in history: %@", codesOnScreen, codesInHistory);
     const int height = self.height;
     NSMutableArray<iTermMark *> *marksToRemove = [NSMutableArray array];
     for (iTermImageMark *imageMark in candidates) {
@@ -364,13 +370,22 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
             continue;
         }
         const int code = imageMark.imageCode.intValue;
-        if ([[iTermImageRegistry sharedInstance] infoForCode:code] != nil) {
-            if ([codesInUse containsIndex:code]) {
+        iTermImageInfo *imageInfo = [[iTermImageRegistry sharedInstance] infoForCode:code];
+        if (imageInfo != nil) {
+            if ([codesOnScreen containsIndex:code] || [codesInHistory containsIndex:code]) {
                 continue;
             }
             const long long markAbsY = [self absCoordRangeForInterval:imageMark.entry.interval].end.y;
             if ([updated anyFoldInAbsRange:NSRangeFromBounds(markAbsY - height, markAbsY)
                          containsImageMark:imageMark]) {
+                continue;
+            }
+            // History loaded by session restoration isn't in codesInHistory. No cell of an image
+            // can be more than max(its height, the screen's height) lines above its mark, so look
+            // there too. This reads only that many lines, and only for an image about to be
+            // released.
+            const int depth = MAX((int)imageInfo.size.height, height);
+            if ([updated imageCode:code isInHistoryInAbsRange:NSRangeFromBounds(markAbsY - depth, markAbsY + 1)]) {
                 continue;
             }
         } else {
@@ -385,13 +400,16 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
     }
 }
 
-// Codes of the inline images with a cell on screen or in the last `historyLines` lines of history.
-- (NSIndexSet *)imageCodesOnScreenAndInHistoryLines:(int)historyLines {
-    const long long screenTop = self.numberOfScrollbackLines;
-    const long long firstLine = MAX(0, screenTop - historyLines);
-    const long long lastLine = screenTop + self.height - 1;
-    NSMutableIndexSet *codes = [NSMutableIndexSet indexSet];
-    [self enumerateLinesInRange:NSMakeRange(firstLine, lastLine - firstLine + 1)
+// Whether a cell of image `code` is in a line of history in the given range of absolute lines.
+- (BOOL)imageCode:(int)code isInHistoryInAbsRange:(NSRange)absRange {
+    const long long overflow = self.cumulativeScrollbackOverflow;
+    const long long first = MAX(0, (long long)absRange.location - overflow);
+    const long long limit = MIN((long long)NSMaxRange(absRange) - overflow, (long long)self.numberOfScrollbackLines);
+    if (first >= limit) {
+        return NO;
+    }
+    __block BOOL found = NO;
+    [self enumerateLinesInRange:NSMakeRange(first, limit - first)
                           block:^(int line,
                                   ScreenCharArray *sca,
                                   iTermImmutableMetadata metadata,
@@ -399,13 +417,14 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
         const int width = sca.length;
         const screen_char_t *chars = sca.line;
         for (int i = 0; i < width; i++) {
-            if (chars[i].image && !chars[i].virtualPlaceholder) {
-                [codes addIndex:chars[i].code];
+            if (chars[i].image && !chars[i].virtualPlaceholder && chars[i].code == code) {
+                found = YES;
+                *stop = YES;
+                return;
             }
         }
     }];
-    DLog(@"Image codes in use: %@", codes);
-    return codes;
+    return found;
 }
 
 - (BOOL)anyFoldInAbsRange:(NSRange)lineRange containsImageMark:(iTermImageMark *)imageMark {
@@ -420,8 +439,9 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
 
 
 - (void)mergeFrom:(VT100ScreenMutableState *)source {
+    const long long previousOverflow = _cumulativeScrollbackOverflow;
     [self copyFastStuffFrom:source];
-    [self releaseOverwrittenImagesIn:source];
+    [self releaseOverwrittenImagesIn:source previousOverflow:previousOverflow];
     if ([iTermPreferences bidiEnabled]) {
         [source populateRTLStateIfNeeded];
     }
@@ -1796,6 +1816,11 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
 - (iTermExternalAttribute *)gridDefaultExternalAttribute {
     // Read-only state never fills cells.
     return nil;
+}
+
+- (void)gridDidAppendImageCodes:(NSIndexSet *)codes toLineBuffer:(LineBuffer *)lineBuffer {
+    // Only the mutable state tracks images in history. A read-only grid appends to a line buffer
+    // only to build a temporary copy.
 }
 
 @end

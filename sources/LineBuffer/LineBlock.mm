@@ -1719,6 +1719,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                               poppedAttrs,
                               base.lineAttribute);
             ((iTermMetadata *)metadataPtr)->bidiDirection = base.bidiDirection;
+            ((iTermMetadata *)metadataPtr)->imageFound = base.imageFound;
             iTermMetadataAutorelease(*(iTermMetadata *)metadataPtr);
         }
 

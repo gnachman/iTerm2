@@ -27,6 +27,10 @@
 // The attribute for cells filled with the grid's defaultChar when its colors are
 // dual-mode (ColorModeExternal). Only consulted in that case.
 - (iTermExternalAttribute *)gridDefaultExternalAttribute;
+// Called with the codes of the inline images that had a cell in the lines just appended to
+// lineBuffer. Not called when there are none. lineBuffer may be a temporary copy made only to
+// read the grid's contents.
+- (void)gridDidAppendImageCodes:(NSIndexSet *)codes toLineBuffer:(LineBuffer *)lineBuffer;
 @end
 
 @protocol VT100GridReading<NSCopying, NSObject>
@@ -351,6 +355,16 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 
 // Copy everything from another grid if needed.
 - (void)copyDirtyFromGrid:(VT100Grid *)otherGrid didScroll:(BOOL)didScroll;
+
+// Codes of the inline images with a cell on screen. Only lines whose mayContainImage is set are
+// examined.
+- (NSIndexSet *)imageCodesOnScreen;
+
+// Sets each line's mayContainImage from its contents, for use after writing lines directly.
+- (void)updateMayContainImageOnAllLines;
+
+// Sets one line's mayContainImage, for a caller that knows what it wrote there.
+- (void)setMayContainImage:(BOOL)mayContainImage onLine:(int)lineNumber;
 
 // Per-line RTL state, for writes that edit a line without going through
 // appendCharsAtCursor (a combining mark merged into its predecessor) and for the

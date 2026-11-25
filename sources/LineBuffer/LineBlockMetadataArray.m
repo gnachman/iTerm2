@@ -116,6 +116,7 @@
                           indexCopy,
                           value->lineMetadata.lineAttribute);
         destination->lineMetadata.bidiDirection = value->lineMetadata.bidiDirection;
+        destination->lineMetadata.imageFound = value->lineMetadata.imageFound;
 
         destination->continuation = value->continuation;
         destination->number_of_wrapped_lines = 0;
@@ -245,6 +246,7 @@
     NSNumber *rtlFound = (components.count > j && ![components[j] isKindOfClass:[NSArray class]]) ? components[j++] : @NO;
     NSNumber *lineAttribute = (components.count > j && ![components[j] isKindOfClass:[NSArray class]]) ? components[j++] : @0;
     NSNumber *bidiDirection = (components.count > j && ![components[j] isKindOfClass:[NSArray class]]) ? components[j++] : @0;
+    NSNumber *imageFound = (components.count > j && ![components[j] isKindOfClass:[NSArray class]]) ? components[j++] : @(iTermMetadataImageFoundWhenUnknown);
 
     iTermMetadataInit(&_guts->_array[i].lineMetadata,
                       timestamp.doubleValue,
@@ -252,6 +254,7 @@
                       eaIndex,
                       (iTermLineAttribute)lineAttribute.intValue);
     _guts->_array[i].lineMetadata.bidiDirection = (iTermBidiDirection)bidiDirection.intValue;
+    _guts->_array[i].lineMetadata.imageFound = imageFound.boolValue;
     _guts->_array[i].number_of_wrapped_lines = 0;
     if (_guts->_useDWCCache) {
         _guts->_array[i].doubleWidthCharacters = nil;
@@ -366,6 +369,7 @@
                       indexCopy,
                       value->lineMetadata.lineAttribute);
     destination->lineMetadata.bidiDirection = value->lineMetadata.bidiDirection;
+    destination->lineMetadata.imageFound = value->lineMetadata.imageFound;
 
     destination->continuation = value->continuation;
     destination->number_of_wrapped_lines = 0;

@@ -150,13 +150,15 @@ final class ScreenNullabilityTests: XCTestCase {
                                            length: line.length,
                                            externalAttributeIndex: none,
                                            continuation: continuation,
-                                           rtlFound: false)
+                                           rtlFound: false,
+                                           imageFound: false)
             line = screenCharArrayWithDefaultStyle("cd", eol: EOL_HARD)
             mutableState.appendScreenChars(line.line,
                                            length: line.length,
                                            externalAttributeIndex: none,
                                            continuation: continuation,
                                            rtlFound: false,
+                                           imageFound: false,
                                            lineAttribute: .singleWidth)
             XCTAssertEqual(mutableState.currentGrid.screenCharArray(atLine: 0)?.stringValue, "ab")
             XCTAssertEqual(mutableState.currentGrid.screenCharArray(atLine: 1)?.stringValue, "cd")

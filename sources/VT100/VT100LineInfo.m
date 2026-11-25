@@ -173,6 +173,18 @@ int64_t VT100LineInfoAllocateGenerationBlock(int64_t count) {
     return _metadata.rtlFound;
 }
 
+- (void)setMayContainImage:(BOOL)mayContainImage {
+    if (_metadata.imageFound == mayContainImage) {
+        return;
+    }
+    _metadata.imageFound = mayContainImage;
+    _cachedEncodedMetadata = nil;
+}
+
+- (BOOL)mayContainImage {
+    return _metadata.imageFound;
+}
+
 - (void)setBidiDirection:(iTermBidiDirection)bidiDirection {
     _metadata.bidiDirection = bidiDirection;
     _cachedEncodedMetadata = nil;

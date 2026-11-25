@@ -284,6 +284,7 @@
                         grid:grid
                 decodedImage:decodedImage];
 
+    [self.delegate inlineImageWillWriteImageWithCode:c.code];
     [self writeBaseCharacter:c
                       toGrid:grid
                        width:width

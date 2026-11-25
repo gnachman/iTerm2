@@ -9,6 +9,11 @@
 #import "iTermExternalAttributeIndex.h"
 #import "iTermTLVCodec.h"
 
+// Data saved before imageFound existed doesn't say whether a line has image cells. Treat it
+// as maybe: the first time such a line is checked on screen, its cells are scanned and the
+// flag is corrected, so each old line is scanned at most once.
+const BOOL iTermMetadataImageFoundWhenUnknown = YES;
+
 void iTermMetadataInit(iTermMetadata *obj,
                        NSTimeInterval timestamp,
                        BOOL rtlFound,
@@ -18,6 +23,7 @@ void iTermMetadataInit(iTermMetadata *obj,
     obj->rtlFound = rtlFound;
     obj->lineAttribute = lineAttribute;
     obj->bidiDirection = iTermBidiDirectionDefault;
+    obj->imageFound = NO;
     obj->externalAttributes = [(id)externalAttributes retain];
 }
 
@@ -52,7 +58,8 @@ iTermMetadata iTermImmutableMetadataMutableCopy(iTermImmutableMetadata obj) {
         .rtlFound = obj.rtlFound,
         .externalAttributes = index,
         .lineAttribute = obj.lineAttribute,
-        .bidiDirection = obj.bidiDirection
+        .bidiDirection = obj.bidiDirection,
+        .imageFound = obj.imageFound
     };
 }
 
@@ -111,7 +118,8 @@ NSArray *iTermImmutableMetadataEncodeToArray(iTermImmutableMetadata obj) {
               [eaIndex dictionaryValue] ?: @{},
               @(obj.rtlFound),
               @(obj.lineAttribute),
-              @(obj.bidiDirection) ];
+              @(obj.bidiDirection),
+              @(obj.imageFound) ];
 }
 
 NSArray *iTermMetadataEncodeToArray(iTermMetadata obj) {
@@ -156,6 +164,7 @@ void iTermImmutableMetadataDeriveLineAttributeFromExternalAttributes(iTermImmuta
 void iTermMetadataInitFromArray(iTermMetadata *obj, NSArray *array) {
     if (array.count < 2) {
         iTermMetadataInit(obj, 0, NO, nil, iTermLineAttributeSingleWidth);
+        obj->imageFound = iTermMetadataImageFoundWhenUnknown;
         return;
     }
     const iTermLineAttribute lineAttr = (array.count >= 4)
@@ -167,6 +176,7 @@ void iTermMetadataInitFromArray(iTermMetadata *obj, NSArray *array) {
                           NO,
                           [[[iTermExternalAttributeIndex alloc] initWithDictionary:array[1]] autorelease],
                           lineAttr);
+        obj->imageFound = iTermMetadataImageFoundWhenUnknown;
         return;
     }
     iTermMetadataInit(obj,
@@ -177,6 +187,7 @@ void iTermMetadataInitFromArray(iTermMetadata *obj, NSArray *array) {
     if (array.count >= 5) {
         obj->bidiDirection = (iTermBidiDirection)[array[4] intValue];
     }
+    obj->imageFound = (array.count >= 6) ? [array[5] boolValue] : iTermMetadataImageFoundWhenUnknown;
 }
 
 void iTermMetadataAppend(iTermMetadata *lhs,
@@ -185,6 +196,7 @@ void iTermMetadataAppend(iTermMetadata *lhs,
                          int rhsLength) {
     lhs->timestamp = rhs->timestamp;
     lhs->rtlFound |= rhs->rtlFound;
+    lhs->imageFound |= rhs->imageFound;
     // The paragraph direction belongs to the line that starts it.
     if (lhs->bidiDirection == iTermBidiDirectionDefault) {
         lhs->bidiDirection = rhs->bidiDirection;
@@ -214,6 +226,7 @@ void iTermMetadataInitByConcatenation(iTermMetadata *obj,
                                                 with:iTermMetadataGetExternalAttributesIndex(*rhs)
                                           length:rhsLength];
     iTermMetadataInit(obj, rhs->timestamp, lhs->rtlFound || rhs->rtlFound, eaIndex, lhs->lineAttribute);
+    obj->imageFound = lhs->imageFound || rhs->imageFound;
     obj->bidiDirection = (lhs->bidiDirection != iTermBidiDirectionDefault) ? lhs->bidiDirection : rhs->bidiDirection;
 }
 
@@ -229,6 +242,7 @@ void iTermMetadataInitCopyingSubrange(iTermMetadata *obj,
                       eaIndex,
                       source->lineAttribute);
     obj->bidiDirection = source->bidiDirection;
+    obj->imageFound = source->imageFound;
 }
 
 iTermMetadata iTermMetadataDefault(void) {
@@ -236,7 +250,8 @@ iTermMetadata iTermMetadataDefault(void) {
         .externalAttributes = NULL,
         .rtlFound = NO,
         .lineAttribute = iTermLineAttributeSingleWidth,
-        .bidiDirection = iTermBidiDirectionDefault
+        .bidiDirection = iTermBidiDirectionDefault,
+        .imageFound = NO
     };
 }
 
@@ -249,16 +264,18 @@ void iTermMetadataReset(iTermMetadata *obj) {
     obj->rtlFound = NO;
     obj->lineAttribute = iTermLineAttributeSingleWidth;
     obj->bidiDirection = iTermBidiDirectionDefault;
+    obj->imageFound = NO;
     iTermMetadataSetExternalAttributes(obj, NULL);
 }
 
 NSString *iTermMetadataShortDescription(iTermMetadata metadata, int length) {
-    return [NSString stringWithFormat:@"<timestamp=%@ ea=%@ rtl=%@ lineAttr=%d dir=%d>",
+    return [NSString stringWithFormat:@"<timestamp=%@ ea=%@ rtl=%@ lineAttr=%d dir=%d image=%@>",
             @(metadata.timestamp),
             iTermMetadataGetExternalAttributesIndex(metadata),
             @(metadata.rtlFound),
             (int)metadata.lineAttribute,
-            (int)metadata.bidiDirection];
+            (int)metadata.bidiDirection,
+            @(metadata.imageFound)];
 }
 
 NSArray *iTermMetadataArrayFromData(NSData *data) {
@@ -281,6 +298,9 @@ NSArray *iTermMetadataArrayFromData(NSData *data) {
     if ([decoder decodeInt:&bidiDirection]) {
         temp.bidiDirection = (iTermBidiDirection)bidiDirection;
     }
+    if (![decoder decodeBool:&temp.imageFound]) {
+        temp.imageFound = iTermMetadataImageFoundWhenUnknown;
+    }
     iTermExternalAttributeIndex *attr = [iTermExternalAttributeIndex fromData:attrData];
     iTermMetadataSetExternalAttributes(&temp, attr);
     NSArray *result = iTermMetadataEncodeToArray(temp);
@@ -300,6 +320,7 @@ NSData *iTermImmutableMetadataEncodeToData(iTermImmutableMetadata metadata) {
     [encoder encodeBool:metadata.rtlFound];
     [encoder encodeInt:(int)metadata.lineAttribute];
     [encoder encodeInt:(int)metadata.bidiDirection];
+    [encoder encodeBool:metadata.imageFound];
     return encoder.data;
 }
 
@@ -322,6 +343,9 @@ iTermMetadata iTermMetadataDecodedFromData(NSData *data) {
     int bidiDirection = 0;
     if ([decoder decodeInt:&bidiDirection]) {
         temp.bidiDirection = (iTermBidiDirection)bidiDirection;
+    }
+    if (![decoder decodeBool:&temp.imageFound]) {
+        temp.imageFound = iTermMetadataImageFoundWhenUnknown;
     }
     iTermExternalAttributeIndex *attr = [iTermExternalAttributeIndex fromData:attrData];
     iTermMetadataSetExternalAttributes(&temp, attr);

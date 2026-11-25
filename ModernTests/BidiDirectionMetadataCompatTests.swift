@@ -33,7 +33,7 @@ final class BidiDirectionMetadataCompatTests: XCTestCase {
             original.rtlFound = ObjCBool(true)
             original.bidiDirection = direction
             let encoded = iTermMetadataEncodeToArray(original)
-            XCTAssertEqual(encoded.count, 5)
+            XCTAssertEqual(encoded.count, 6)
             let decoded = decodeArray(encoded)
             XCTAssertEqual(decoded.bidiDirection, direction)
             XCTAssertTrue(decoded.rtlFound.boolValue)
@@ -95,7 +95,8 @@ final class BidiDirectionMetadataCompatTests: XCTestCase {
         source.rtlFound = ObjCBool(true)
         source.bidiDirection = .rightToLeft
         let fullData = iTermMetadataEncodeToData(source)
-        let legacyData = fullData.subdata(in: 0..<(fullData.count - MemoryLayout<Int32>.size))
+        // Drop the direction and the one-byte imageFound after it.
+        let legacyData = fullData.subdata(in: 0..<(fullData.count - MemoryLayout<Int32>.size - 1))
         let decoded = iTermMetadataDecodedFromData(legacyData)
         XCTAssertEqual(decoded.bidiDirection, .default)
         XCTAssertTrue(decoded.rtlFound.boolValue)
@@ -124,7 +125,7 @@ final class BidiDirectionMetadataCompatTests: XCTestCase {
         guard let array = iTermMetadataArrayFromData(iTermMetadataEncodeToData(source)) else {
             return XCTFail("decode returned nil")
         }
-        XCTAssertEqual(array.count, 5)
+        XCTAssertEqual(array.count, 6)
         XCTAssertEqual((array[4] as? NSNumber)?.intValue, Int(iTermBidiDirection.rightToLeft.rawValue))
     }
 
@@ -173,8 +174,9 @@ final class BidiDirectionMetadataCompatTests: XCTestCase {
         defer { iTermPreferences.setBool(savedBidi, forKey: kPreferenceKeyBidi) }
 
         var entry = encodedEntry(direction: .rightToLeft)
-        // 5 continuation scalars + [timestamp, eaDict, rtlFound, lineAttribute, bidiDirection].
-        XCTAssertEqual(entry.count, 10)
+        // 5 continuation scalars + [timestamp, eaDict, rtlFound, lineAttribute, bidiDirection,
+        // imageFound].
+        XCTAssertEqual(entry.count, 11)
         entry.append(NSNumber(value: 99))  // a scalar from some later version
         entry.append([Any]())              // the delimiter
         entry.append(["lut": [Int32](), "rtlIndexes": [NSValue](), "mirroredIndexes": [NSValue](), "paragraphIsRTL": true])

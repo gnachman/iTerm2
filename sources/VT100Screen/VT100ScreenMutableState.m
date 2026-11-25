@@ -81,6 +81,10 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
 
 @implementation VT100ScreenMutableState {
     NSString *_uniqueIdentifier;
+    // See imageCodesInHistory.
+    NSMutableIndexSet *_imageCodesInHistory;
+    // While positive, lines appended to a line buffer aren't taken to have entered history.
+    int _imageCodeReportSuppressionCount;
     BOOL _terminalEnabled;
     VT100Terminal *_terminal;
     BOOL _echoProbeShouldSendPassword;
@@ -921,17 +925,53 @@ static BOOL sOSC7DisabledWarningShown;
     _triggerEvaluator.disableExecution = saved;
 }
 
+// Appending text doesn't look for image cells, but a line being put back can hold some, and it
+// can be many rows long (such as a whole wrapped paragraph). Append it in pieces of at most half
+// the width, which touch at most two rows even on a double-width line or when a wide character
+// wraps, and flag the cursor's row before and after each piece. Flagging before also covers a row
+// that the piece scrolls into history.
+- (void)appendScreenCharsFlaggingImageRows:(const screen_char_t *)line
+                                    length:(int)length
+                    externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
+                                  rtlFound:(BOOL)rtlFound {
+    const int maxPieceLength = MAX(1, self.currentGrid.size.width / 2);
+    int start = 0;
+    do {
+        int n = MIN(maxPieceLength, length - start);
+        if (n > 1 && start + n < length && ScreenCharIsDWC_RIGHT(line[start + n])) {
+            // Keep a wide character with its right half.
+            n -= 1;
+        }
+        [self.currentGrid setMayContainImage:YES onLine:self.currentGrid.cursorY];
+        [self appendScreenCharArrayAtCursor:line + start
+                                     length:n
+                     externalAttributeIndex:[externalAttributeIndex subAttributesFromIndex:start maximumLength:n]
+                                   rtlFound:rtlFound
+                                    dwcFree:NO];
+        [self.currentGrid setMayContainImage:YES onLine:self.currentGrid.cursorY];
+        start += n;
+    } while (start < length);
+}
+
 - (void)appendScreenChars:(const screen_char_t *)line
                    length:(int)length
    externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
              continuation:(screen_char_t)continuation
-                 rtlFound:(BOOL)rtlFound {
+                 rtlFound:(BOOL)rtlFound
+               imageFound:(BOOL)imageFound {
     [self performBlockWithoutTriggers:^{
-        [self appendScreenCharArrayAtCursor:line
-                                     length:length
-                     externalAttributeIndex:externalAttributeIndex
-                                   rtlFound:rtlFound
-                                    dwcFree:NO];
+        if (imageFound) {
+            [self appendScreenCharsFlaggingImageRows:line
+                                              length:length
+                              externalAttributeIndex:externalAttributeIndex
+                                            rtlFound:rtlFound];
+        } else {
+            [self appendScreenCharArrayAtCursor:line
+                                         length:length
+                         externalAttributeIndex:externalAttributeIndex
+                                       rtlFound:rtlFound
+                                        dwcFree:NO];
+        }
         if (continuation.code == EOL_HARD) {
             [self carriageReturn];
             [self appendLineFeed];
@@ -944,6 +984,7 @@ static BOOL sOSC7DisabledWarningShown;
    externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
              continuation:(screen_char_t)continuation
                  rtlFound:(BOOL)rtlFound
+               imageFound:(BOOL)imageFound
             lineAttribute:(iTermLineAttribute)lineAttribute {
     // Always set the lineAttribute on the target grid line so the append
     // code uses the correct width class. This is essential when the target
@@ -973,7 +1014,8 @@ static BOOL sOSC7DisabledWarningShown;
                      length:len
      externalAttributeIndex:externalAttributeIndex
                continuation:continuation
-                   rtlFound:rtlFound];
+                   rtlFound:rtlFound
+                 imageFound:imageFound];
 }
 
 - (VT100StringConversionConfig)stringConversionConfigWithSoftAlternateScreenMode:(BOOL)mode {
@@ -2251,6 +2293,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 
     [self.linebuffer clear];
+    // History is empty, so no image has a cell there. A code left behind would keep an image
+    // drawn over on screen from being released.
+    [_imageCodesInHistory removeAllIndexes];
     [self resetScrollbackOverflow];
     // The bulkMoveObjects above rewrote every surviving fold's absolute coordinate, so the cached
     // bottommost-fold line is stale.
@@ -2412,6 +2457,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
          externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(savedLine.metadata)
                    continuation:savedLine.continuation
                        rtlFound:savedLine.metadata.rtlFound
+                     imageFound:savedLine.metadata.imageFound
                   lineAttribute:savedLine.metadata.lineAttribute];
 
         // Restore marks on that line.
@@ -2498,6 +2544,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)removeLastLine {
+    // Every line moved into the line buffer below comes back except the one removed.
+    [self performBlockAddingImageCodesOnlyInLastLinesOfHistory:^int{
+        [self reallyRemoveLastLine];
+        return 0;
+    }];
+}
+
+- (void)reallyRemoveLastLine {
     DLog(@"BEGIN removeLastLine with cursor at %@", VT100GridCoordDescription(self.currentGrid.cursor));
     const int preHocNumberOfLines = [self.linebuffer numberOfWrappedLinesWithWidth:self.width];
     const int numberOfLinesAppended = [self.currentGrid appendLines:self.currentGrid.numberOfLinesUsed
@@ -6001,14 +6055,26 @@ ofCapturedOutput:(id<CapturedOutputReading>)capturedOutput
     __block NSArray<iTermSavedIntervalTreeObject *> *removedMarks = nil;
     __block NSArray<ScreenCharArray *> *removedSCAs = nil;
     __block void (^localPost)(void) = nil;
+    const int height = self.height;
     [self performBlockWithoutTriggers:^{
-        result = [self reallyReplaceRange:absRange
-                                withLines:replacementLines
-               removedIntervalTreeObjects:&removedMarks
-                             removedLines:&removedSCAs
-                             markProvider:markProvider
-                                   reason:reason
-                          deferredPostOut:&localPost];
+        // The screen goes into the line buffer and back. What can be new to history afterwards is
+        // the replacement lines and the screen lines they push up, which end up at its end.
+        [self performBlockAddingImageCodesOnlyInLastLinesOfHistory:^int{
+            result = [self reallyReplaceRange:absRange
+                                    withLines:replacementLines
+                   removedIntervalTreeObjects:&removedMarks
+                                 removedLines:&removedSCAs
+                                 markProvider:markProvider
+                                       reason:reason
+                              deferredPostOut:&localPost];
+            return height;
+        }];
+        if (result.start.y >= 0) {
+            // Replacement lines that land in history, however far up.
+            const long long overflow = self.cumulativeScrollbackOverflow;
+            [self addImageCodesInHistoryLines:NSMakeRange(MAX(0, result.start.y - overflow),
+                                                          MAX(0, result.end.y - result.start.y + 1))];
+        }
     }];
     if (removedIntervalTreeObjects) {
         *removedIntervalTreeObjects = removedMarks;
@@ -7325,6 +7391,8 @@ lengthExcludingInBandSignaling:data.length
         }
         lineBuffer.delegate = self;
         self.linebuffer = lineBuffer;
+        // Codes recorded for the history this replaces don't describe the restored one.
+        [_imageCodesInHistory removeAllIndexes];
         if (!reattached) {
             // Only a program that is still running expects its scroll region back.
             [self.primaryGrid discardSavedScrollRegion];
@@ -8871,7 +8939,72 @@ launchCoprocessWithCommand:(NSString *)command
     } name:@"trigger fold"];
 }
 
+#pragma mark - Inline images in history
+
+- (NSIndexSet *)imageCodesInHistory {
+    return _imageCodesInHistory ?: [NSIndexSet indexSet];
+}
+
+- (void)addImageCodesToHistory:(NSIndexSet *)codes {
+    if (codes.count == 0) {
+        return;
+    }
+    DLog(@"Image codes entered history: %@", codes);
+    if (!_imageCodesInHistory) {
+        _imageCodesInHistory = [NSMutableIndexSet indexSet];
+    }
+    [_imageCodesInHistory addIndexes:codes];
+}
+
+- (void)performBlockAddingImageCodesOnlyInLastLinesOfHistory:(int (^NS_NOESCAPE)(void))block {
+    _imageCodeReportSuppressionCount += 1;
+    const int linesToScan = block();
+    _imageCodeReportSuppressionCount -= 1;
+    if (linesToScan <= 0) {
+        return;
+    }
+    const int historyLines = self.numberOfScrollbackLines;
+    const int count = MIN(linesToScan, historyLines);
+    [self addImageCodesInHistoryLines:NSMakeRange(historyLines - count, count)];
+}
+
+- (void)addImageCodesInHistoryLines:(NSRange)range {
+    const NSRange history = NSMakeRange(0, self.numberOfScrollbackLines);
+    const NSRange clamped = NSIntersectionRange(range, history);
+    if (clamped.length == 0) {
+        return;
+    }
+    DLog(@"Scan history lines %@ for image codes", NSStringFromRange(clamped));
+    NSMutableIndexSet *codes = [NSMutableIndexSet indexSet];
+    [self enumerateLinesInRange:clamped
+                          block:^(int line,
+                                  ScreenCharArray *sca,
+                                  iTermImmutableMetadata metadata,
+                                  BOOL *stop) {
+        const int width = sca.length;
+        const screen_char_t *chars = sca.line;
+        for (int i = 0; i < width; i++) {
+            if (chars[i].image && !chars[i].virtualPlaceholder) {
+                [codes addIndex:chars[i].code];
+            }
+        }
+    }];
+    [self addImageCodesToHistory:codes];
+}
+
 #pragma mark - VT100GridDelegate
+
+- (void)gridDidAppendImageCodes:(NSIndexSet *)codes toLineBuffer:(LineBuffer *)lineBuffer {
+    // Callers append the live grid to copies of the line buffer to read it, such as for a
+    // snapshot or while encoding restorable state with threads joined. Those aren't history.
+    if (lineBuffer != self.linebuffer) {
+        return;
+    }
+    if (_imageCodeReportSuppressionCount > 0) {
+        return;
+    }
+    [self addImageCodesToHistory:codes];
+}
 
 - (void)gridCursorDidChangeLineFrom:(int)previous {
     if (!self.trackCursorLineMovement) {
@@ -8937,6 +9070,12 @@ launchCoprocessWithCommand:(NSString *)command
 
 - (BOOL)inlineImageLinefeedWouldScroll {
     return self.currentGrid.cursor.y == VT100GridRangeMax(self.currentGrid.scrollRegionRows);
+}
+
+- (void)inlineImageWillWriteImageWithCode:(unichar)code {
+    // Codes are reused once an image is released. A new image has no cells in history yet, and an
+    // old entry for its code must not keep it alive.
+    [_imageCodesInHistory removeIndex:code];
 }
 
 - (void)inlineImageSetMarkOnScreenLine:(NSInteger)line

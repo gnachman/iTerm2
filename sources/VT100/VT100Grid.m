@@ -56,6 +56,31 @@ static inline void VT100GridDidChangeContent(int64_t *generation) {
     *generation = iTermGenerationNext();
 }
 
+static BOOL VT100GridCellIsImage(screen_char_t c) {
+    return c.image && !c.virtualPlaceholder;
+}
+
+static BOOL VT100GridLineContainsImage(const screen_char_t *line, int width) {
+    for (int i = 0; i < width; i++) {
+        if (VT100GridCellIsImage(line[i])) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+// Returns whether the line has any image cell.
+static BOOL VT100GridAddImageCodes(const screen_char_t *line, int width, NSMutableIndexSet *codes) {
+    BOOL found = NO;
+    for (int i = 0; i < width; i++) {
+        if (VT100GridCellIsImage(line[i])) {
+            [codes addIndex:line[i].code];
+            found = YES;
+        }
+    }
+    return found;
+}
+
 @implementation VT100Grid {
     VT100GridSize size_;
     int screenTop_;  // Index into lines_ and dirty_ of first line visible in the grid.
@@ -195,6 +220,9 @@ static inline void VT100GridDidChangeContent(int64_t *generation) {
             memmove(&savedDefaultChar_, data.bytes, sizeof(savedDefaultChar_));
         }
         _preferredCursorPosition = cursor_;
+        // Lines saved before imageFound existed decode with it set, and states older than
+        // per-line metadata have none, so get it right for the screen once, here.
+        [self updateMayContainImageOnAllLines];
         _haveSavedScrollRegion = YES;
         _savedScrollRegionGridSize = size_;
         _savedScrollRegionRows = scrollRegionRows_;
@@ -806,8 +834,10 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     if (numLines > 0) {
         lengthOfNextLine = [self lengthOfLineNumber:0];
     }
+    NSMutableIndexSet *imageCodes = nil;
     for (i = 0; i < numLines; ++i) {
         const screen_char_t *line = [self immutableScreenCharsAtLineNumber:i];
+        [self addImageCodesOnLine:i to:&imageCodes];
         int currentLineLength = lengthOfNextLine;
         if (i + 1 < size_.height) {
             lengthOfNextLine = [self lengthOfLine:[self immutableScreenCharsAtLineNumber:i+1]];
@@ -860,6 +890,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
 #endif
     }
     [lineBuffer commitLastBlock];
+    [self reportImageCodes:imageCodes appendedToLineBuffer:lineBuffer];
 
     return numLines;
 }
@@ -913,7 +944,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     CTVector(iTermAppendItem) items;
     const int width = self.size.width;
     CTVectorCreate(&items, y);
+    NSMutableIndexSet *imageCodes = nil;
     for (int i = 0; i < y; i++) {
+        [self addImageCodesOnLine:i to:&imageCodes];
         const screen_char_t *line = VT100GridScreenCharsAtLine(self, i);
         const screen_char_t continuation = line[width];
         iTermAppendItem item = {
@@ -943,10 +976,12 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         if (item.length > 0) {
             DLog(@"Scroll partial line %d with cursor into linebuffer: %@", y, ScreenCharArrayToStringDebug(item.buffer, item.length));
             CTVectorAppend(&items, item);
+            [self addImageCodesOnLine:y to:&imageCodes];
         }
     }
     [lineBuffer appendLines:&items width:width];
     CTVectorDestroy(&items);
+    [self reportImageCodes:imageCodes appendedToLineBuffer:lineBuffer];
     screenTop_ = (screenTop_ + y) % size_.height;
     _haveScrolled = YES;
 
@@ -1322,8 +1357,12 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     }
     const VT100GridCoord from = [self clamp:unsafeFrom];
     const VT100GridCoord to = [self clamp:unsafeTo];
+    const BOOL isImage = VT100GridCellIsImage(c);
     for (int y = MAX(0, from.y); y <= MIN(to.y, size_.height - 1); y++) {
         screen_char_t *line = [self screenCharsAtLineNumber:y];
+        if (isImage) {
+            [self setMayContainImage:YES onLine:y];
+        }
         [self erasePossibleDoubleWidthCharInLineNumber:y startingAtOffset:from.x - 1 withChar:c];
         [self erasePossibleDoubleWidthCharInLineNumber:y startingAtOffset:to.x withChar:c];
         const int minX = MAX(0, from.x);
@@ -1350,6 +1389,51 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                          count:maxX - minX + 1];
     }
     [self markCharsDirty:YES inRectFrom:from to:to];
+}
+
+#pragma mark - Inline images
+
+// Adds the image codes on a line whose mayContainImage is set, creating *codes if needed. A line
+// without the flag costs one test and its cells aren't read. A flagged line whose image cells have
+// all been drawn over loses the flag, so it isn't scanned again.
+- (void)addImageCodesOnLine:(int)lineNumber to:(NSMutableIndexSet **)codes {
+    VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:lineNumber];
+    if (!lineInfo.mayContainImage) {
+        return;
+    }
+    if (!*codes) {
+        *codes = [NSMutableIndexSet indexSet];
+    }
+    if (!VT100GridAddImageCodes([self immutableScreenCharsAtLineNumber:lineNumber], size_.width, *codes)) {
+        lineInfo.mayContainImage = NO;
+    }
+}
+
+- (void)reportImageCodes:(NSIndexSet *)codes appendedToLineBuffer:(LineBuffer *)lineBuffer {
+    if (codes.count == 0) {
+        return;
+    }
+    DLog(@"Image codes appended to line buffer: %@", codes);
+    [delegate_ gridDidAppendImageCodes:codes toLineBuffer:lineBuffer];
+}
+
+- (void)setMayContainImage:(BOOL)mayContainImage onLine:(int)lineNumber {
+    [self lineInfoAtLineNumber:lineNumber].mayContainImage = mayContainImage;
+}
+
+- (NSIndexSet *)imageCodesOnScreen {
+    NSMutableIndexSet *codes = [NSMutableIndexSet indexSet];
+    for (int y = 0; y < size_.height; y++) {
+        [self addImageCodesOnLine:y to:&codes];
+    }
+    return codes;
+}
+
+- (void)updateMayContainImageOnAllLines {
+    for (int y = 0; y < size_.height; y++) {
+        [self setMayContainImage:VT100GridLineContainsImage([self immutableScreenCharsAtLineNumber:y], size_.width)
+                          onLine:y];
+    }
 }
 
 - (void)setMetadata:(iTermMetadata)metadata forLine:(int)lineNumber {
@@ -2160,6 +2244,14 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                 [[self lineInfoAtLineNumber:destIndex] setRTLFound:YES];
                 [[self lineInfoAtLineNumber:destIndex] setBidiDirection:sourceMetadata.bidiDirection];
             }
+            // Image cells travel with the content too. A full-width move replaces the whole row;
+            // a partial one only adds to it, so it can't clear the flag.
+            const BOOL sourceMayContainImage = [self lineInfoAtLineNumber:sourceIndex].mayContainImage;
+            if (rect.origin.x == 0 && rect.size.width == size_.width) {
+                [self setMayContainImage:sourceMayContainImage onLine:destIndex];
+            } else if (sourceMayContainImage) {
+                [self setMayContainImage:YES onLine:destIndex];
+            }
 
             sourceIndex -= direction;
             destIndex -= direction;
@@ -2857,7 +2949,10 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 
 - (void)resetTimestamps {
     for (VT100LineInfo *info in lineInfos_) {
+        // The cells stay, so whether the line may hold an image must too.
+        const BOOL mayContainImage = info.mayContainImage;
         [info resetMetadata];
+        info.mayContainImage = mayContainImage;
     }
     // Per-line metadata (timestamps) is serialized by -encode:. Mark every line
     // dirty so copyDirtyFromGrid: copies the reset metadata into the immutable grid
@@ -3264,6 +3359,9 @@ static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
                      width:size_.width
                   metadata:[lineInfo immutableMetadata]
               continuation:line[size_.width]];
+    NSMutableIndexSet *imageCodes = nil;
+    [self addImageCodesOnLine:0 to:&imageCodes];
+    [self reportImageCodes:imageCodes appendedToLineBuffer:lineBuffer];
     int dropped;
     if (!unlimitedScrollback) {
         dropped = [lineBuffer dropExcessLinesWithWidth:size_.width];

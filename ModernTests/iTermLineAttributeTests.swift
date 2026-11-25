@@ -145,8 +145,8 @@ final class iTermLineAttributeTests: XCTestCase {
 
         let encoded = iTermMetadataEncodeToArray(original)
 
-        // lineAttribute is at index 3, followed by the bidi direction at index 4.
-        XCTAssertEqual(encoded.count, 5)
+        // lineAttribute is at index 3, followed by the bidi direction at index 4 and imageFound at 5.
+        XCTAssertEqual(encoded.count, 6)
         XCTAssertEqual((encoded[3] as! NSNumber).int32Value,
                        iTermLineAttribute.doubleWidth.rawValue)
 
@@ -1630,6 +1630,7 @@ final class iTermLineAttributeTests: XCTestCase {
                 externalAttributeIndex: iTermExternalAttributeIndex(),
                 continuation: continuation,
                 rtlFound: false,
+                imageFound: false,
                 lineAttribute: .doubleWidth)
         })
         // Target grid line 0 should now be DWL with A|B|C|....
@@ -1664,6 +1665,7 @@ final class iTermLineAttributeTests: XCTestCase {
                     externalAttributeIndex: iTermExternalAttributeIndex(),
                     continuation: continuation,
                     rtlFound: false,
+                    imageFound: false,
                     lineAttribute: .singleWidth)
             }
         })
@@ -1691,6 +1693,7 @@ final class iTermLineAttributeTests: XCTestCase {
                 externalAttributeIndex: iTermExternalAttributeIndex(),
                 continuation: continuation,
                 rtlFound: false,
+                imageFound: false,
                 lineAttribute: .doubleHeightTop)
         })
         XCTAssertEqual(lineAttribute(screen, line: 0), .doubleHeightTop)
@@ -1936,6 +1939,7 @@ final class iTermLineAttributeTests: XCTestCase {
                     externalAttributeIndex: iTermExternalAttributeIndex(),
                     continuation: continuation,
                     rtlFound: false,
+                    imageFound: false,
                     lineAttribute: .singleWidth)
             }
         })
@@ -1976,6 +1980,7 @@ final class iTermLineAttributeTests: XCTestCase {
                 externalAttributeIndex: iTermExternalAttributeIndex(),
                 continuation: continuation,
                 rtlFound: false,
+                imageFound: false,
                 lineAttribute: .doubleWidth)
         })
 

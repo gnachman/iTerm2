@@ -100,6 +100,13 @@ Bug Fixes:
   full-width punctuation that follows them in
   Chinese and Japanese text, so ⌘-click opens
   the right file or link.
+- Since 3.7.8, an inline image could turn into
+  a brown rectangle once it scrolled into
+  history, if a lot of output arrived at once
+  (as when printing a long file) or the screen
+  was cleared or reset. Images now stay until
+  they leave the scrollback buffer. Issue
+  13235.
 - When a program turned on light/dark mode
   change reports and exited without turning
   them off, text like 997;1n appeared at the

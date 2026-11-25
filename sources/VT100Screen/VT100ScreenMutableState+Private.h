@@ -234,4 +234,13 @@ iTermTriggerScopeProvider> {
 // cache, the last command mark caches, the named marks, and the aid registry.
 - (void)willRemoveScreenMarksFromIntervalTree:(NSArray<VT100ScreenMark *> *)objects;
 
+// For an operation that moves the screen into a line buffer and then (mostly) back: resizing,
+// folding, removing the last line. Lines it appends to a line buffer don't count as entering
+// history while `block` runs, since most come back. Afterwards the image codes in the last
+// `linesToScan` lines of history are added to imageCodesInHistory, which covers whatever stayed.
+- (void)performBlockAddingImageCodesOnlyInLastLinesOfHistory:(int (^NS_NOESCAPE)(void))block;
+
+// Adds the image codes in the given range of history lines (0 is the first) to imageCodesInHistory.
+- (void)addImageCodesInHistoryLines:(NSRange)range;
+
 @end

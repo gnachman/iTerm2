@@ -26,6 +26,8 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
                                                name:(NSString *)name;
 - (NSSize)inlineImageCellSize;
 - (void)inlineImageAppendLinefeed;
+// Called before an image's cells are written, which can scroll some of them into history.
+- (void)inlineImageWillWriteImageWithCode:(unichar)code;
 - (void)inlineImageSetMarkOnScreenLine:(NSInteger)line
                                   code:(unichar)code;
 - (void)inlineImageDidCreateTextDocumentInRange:(VT100GridAbsCoordRange)range

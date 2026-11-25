@@ -1754,6 +1754,7 @@ ITERM_WEAKLY_REFERENCEABLE
                      externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(metadata)
                                continuation:continuation
                                    rtlFound:metadata.rtlFound
+                                 imageFound:metadata.imageFound
                               lineAttribute:metadata.lineAttribute];
         }];
     }];
@@ -27569,6 +27570,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
                              externalAttributeIndex:sca.eaIndex
                                        continuation:sca.continuation
                                            rtlFound:sca.metadata.rtlFound
+                                         imageFound:sca.metadata.imageFound
                                       lineAttribute:sca.metadata.lineAttribute];
                 } else {
                     DLog(@"%@: Removing last line from filter results", self);

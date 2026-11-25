@@ -23,6 +23,10 @@ typedef struct {
     iTermLineAttribute lineAttribute;
     // Base direction for bidi analysis, from SCP. Only meaningful when rtlFound.
     iTermBidiDirection bidiDirection;
+    // YES if the line may hold a cell of an inline image. Like rtlFound it may be stale YES, which
+    // only costs a scan of the line, but never stale NO: that would let an image whose cells went
+    // into history be released.
+    BOOL imageFound;
 } iTermMetadata;
 
 // I'd like to make these const to keep users well-behaved but C++ makes structs with const fields
@@ -38,6 +42,7 @@ typedef struct {
     BOOL rtlFound;
     iTermLineAttribute lineAttribute;
     iTermBidiDirection bidiDirection;
+    BOOL imageFound;
 } iTermImmutableMetadata;
 
 NS_INLINE iTermImmutableMetadata iTermMetadataMakeImmutable(iTermMetadata obj) {
@@ -46,11 +51,15 @@ NS_INLINE iTermImmutableMetadata iTermMetadataMakeImmutable(iTermMetadata obj) {
         .externalAttributes = obj.externalAttributes,
         .rtlFound = obj.rtlFound,
         .lineAttribute = obj.lineAttribute,
-        .bidiDirection = obj.bidiDirection
+        .bidiDirection = obj.bidiDirection,
+        .imageFound = obj.imageFound
     };
     return result;
 }
 
+
+// What imageFound decodes as when saved data predates it.
+extern const BOOL iTermMetadataImageFoundWhenUnknown;
 
 void iTermMetadataInit(iTermMetadata *obj,
                        NSTimeInterval timestamp,

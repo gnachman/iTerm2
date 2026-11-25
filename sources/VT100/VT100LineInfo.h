@@ -41,6 +41,9 @@ void VT100LineInfoEnableGenerationTracking(void);
 // Prefer to use this class's APIs to change metadata. Assignment requires reasoning about manual memory management.
 @property(nonatomic) iTermMetadata metadata;
 
+// The metadata's imageFound: YES if the line may hold a cell of an inline image.
+@property(nonatomic) BOOL mayContainImage;
+
 - (instancetype)initWithWidth:(int)width;
 // Does nothing if now=0. This was super-hot when profiling spam.cc so make it direct. Good luck future me.
 - (void)setDirty:(BOOL)dirty inRange:(VT100GridRange)range updateTimestampTo:(NSTimeInterval)now __attribute__((objc_direct));
