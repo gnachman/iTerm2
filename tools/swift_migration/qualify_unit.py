@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""The light path's qualifying checks for one Objective-C class, or for every
-class under sources/.
+"""The path a unit takes (trivial, light or full) and the qualifying checks
+behind it, for one Objective-C class or category, or for every unit under
+sources/.
 
 Part of the Objective-C to Swift migration (docs/swift-migration/
-lifecycle.md section 3, "Which units qualify"). Each condition of that
+lifecycle.md section 3, "Which path"). Each condition of that
 section is printed PASS, FAIL or MANUAL with its evidence and the query or
 search that produced it. Facts the compiler sees come from the code database
 (tools/swift_migration/codedb/, phase0.md section 10), read through the
@@ -18,11 +19,16 @@ PASS.
 Usage:
 
   qualify_unit.py [options] CLASS [--callers-thread TEXT]
+  qualify_unit.py [options] 'CLASS(CATEGORY)'
   qualify_unit.py [options] --list
+  qualify_unit.py [options] --classify
 
 CLASS is the class whose non-category @implementation the database records.
 The unit is that implementation file, the header beside it, and the files of
-the class's categories named CLASS+Something. --callers-thread records a
+the class's categories named CLASS+Something. CLASS(CATEGORY) is a category
+unit: the files holding @implementation CLASS (CATEGORY) and the headers
+beside them; it takes the trivial or the full path (the light conditions are
+written for a class and are not evaluated for it). --callers-thread records a
 person's answer to the one condition no tool decides (5c, every caller on one
 known thread), for example --callers-thread "main thread: called only from
 -[Foo menuAction:]"; the answer is printed as the evidence and the condition
@@ -93,8 +99,57 @@ The conditions (ids in brackets):
        preference key constants, C file functions); MANUAL on a send to a
        repository method that itself stores directly (one level).
 
-Exit status: 0 when no condition FAILs (MANUAL ones still need a person), 1
-when any FAILs, 2 on error. --list exits 0.
+The trivial path's conditions (lifecycle.md section 3), each PASS, FAIL or
+MANUAL; the unit is trivial only when every one is PASS (a MANUAL is never
+settled by reading here):
+  [T1] the method and function bodies of the implementation files total at
+       most 50 lines, opening brace to closing brace, from Clang's AST
+       (unit_ast.py); MANUAL when the file cannot be parsed;
+  [T2] no state: no instance variable, no property with storage (a
+       synthesize row), no static or global variable that is not const
+       (objc_ivar, objc_property, c_static);
+  [T3] no lock, queue, thread API or timer: 5a and 5b both PASS, and no
+       such C function (dispatch_*, pthread_*, os_unfair_lock*, atomics)
+       among the calls in Clang's AST, which sees through macros;
+  [T4] compiled with ARC (objc_impl), or nothing in it that ARC changes or
+       rejects (unit_ast.py's ownership list), so the port itself is the
+       move to ARC and no arc commit comes first; and, with or without
+       ARC, no Core Foundation ownership a Swift port cannot promise to
+       Objective-C callers (unit_ast.py's retained list: a CF or CG ...Ref
+       returned retained by name or attribute, a Retain, Release or Create
+       Rule call, a __bridge_transfer or __bridge_retained cast);
+  [T5] no C++: 4a PASS;
+  [T6] no C pointer or C array (unit_ast.py's unsafe list). A borrowed CF
+       or CG ...Ref that only passes through (a CGContextRef parameter
+       handed to drawing calls) is not a C pointer and passes;
+  [T7] no +load or +initialize, associated object, swizzling (4b, 4e, 4f
+       PASS, and none of their C functions among the calls in Clang's AST)
+       and no -dealloc at all;
+  [T8] nothing that forces the full path whatever the size: not a hot path
+       (6), stores nothing (7), not archived (3c), all PASS; no Objective-C
+       subclass outside the unit (interop.md); nothing in the unit's files
+       adopts NSCoding or defines initWithCoder:/encodeWithCoder:; no Core
+       Data (a class of the unit, or a category's class, is an entity's
+       class, or the unit sends to a Core Data class).
+Names in the sdef, a xib, a selector string or the registry do not stop a
+trivial unit; its port carries the runtime snapshot comparison and a test
+through each such door instead.
+
+The path printed: trivial when T1 to T8 PASS; otherwise, for a class, light
+when no light condition FAILs (each MANUAL still settled by reading) and full
+when one does; for a category, full.
+
+--classify does the same for every class unit --list considers (one per
+implementation file, naming every class it implements) and every category
+unit under sources/, and prints how many take each path and the trivial
+units by body lines. A category in a file named for its class (Foo+Bar.m)
+is part of the class's unit and is also classified alone, marked part_of
+and counted apart (split_counts), since it can move alone. It runs clang
+once on each implementation file that reaches T1 (about 1 to 5 seconds each).
+
+Exit status: 0 when no light condition FAILs (MANUAL ones still need a
+person), 1 when any FAILs, 2 on error; for a category unit 0 when it is
+trivial and 1 otherwise. --list and --classify exit 0.
 """
 
 import argparse
@@ -112,9 +167,39 @@ if HERE not in sys.path:
 
 import entry_points as ep  # noqa: E402  (puts codedb on the path)
 import inventory  # noqa: E402
+import unit_ast  # noqa: E402
 
 codedb = ep.codedb
 
+MAX_TRIVIAL_BODY_LINES = 50
+TRIVIAL_CONDITIONS = collections.OrderedDict([
+    ('T1', 'The method and function bodies total at most %d lines (Clang\'s AST).' % MAX_TRIVIAL_BODY_LINES),
+    ('T2', 'No instance variable, property with storage, or static or global variable that is not const.'),
+    ('T3', 'No lock, dispatch queue, thread API or timer (5a and 5b).'),
+    ('T4', 'Compiled with ARC, or nothing in it that ARC changes or rejects.'),
+    ('T5', 'No C++ (4a).'),
+    ('T6', 'No C pointer or C array.'),
+    ('T7', 'No +load, +initialize, associated object, swizzling or -dealloc.'),
+    ('T8', 'Nothing that forces the full path: hot path (6), stored state (7, 3c, NSCoding, Core Data), an '
+           'Objective-C subclass.'),
+])
+# The order the trivial checks run in, cheapest first; the clang run last.
+TRIVIAL_ORDER = ('T2', 'T5', 'T7', 'T3', 'T8', 'T1', 'T4', 'T6')
+# Core Data classes: a send to one is stored state (T8).
+CORE_DATA_CLASSES = ('NSManagedObjectContext', 'NSEntityDescription', 'NSPersistentContainer', 'NSFetchRequest',
+                     'NSPersistentStoreCoordinator', 'NSManagedObjectModel', 'NSPersistentStore')
+# The C functions T3 and T7 look for in Clang's AST, as the light
+# conditions' text searches do in the unit's own text.
+AST_THREAD_FUNCTIONS = re.compile(r'^(?:dispatch_(?!after)\w+|pthread_\w+|os_unfair_lock\w*|OSAtomic\w*|'
+                                  r'OSSpinLock\w*|atomic_\w+|objc_sync_\w+)$')
+AST_TIMER_FUNCTIONS = re.compile(r'^dispatch_after\w*$')
+AST_STATE_FUNCTIONS = re.compile(r'^(?:%s)$' % '|'.join(re.escape(x) for x in ('objc_setAssociatedObject',
+                                 'objc_getAssociatedObject', 'objc_removeAssociatedObjects', 'method_exchangeImplementations',
+                                 'method_setImplementation', 'class_replaceMethod', 'class_addMethod',
+                                 'imp_implementationWithBlock', 'object_setClass', 'objc_allocateClassPair',
+                                 'object_getIvar', 'object_setIvar', 'class_getInstanceVariable', 'ivar_getOffset',
+                                 'object_getInstanceVariable', 'object_setInstanceVariable')))
+_CATEGORY_UNIT = re.compile(r'^([A-Za-z_]\w*)\(([A-Za-z_]\w*)\)$')
 MAX_LINES = 500
 MAX_USERS = 3
 HOT_PATHS = os.path.join('docs', 'swift-migration', 'hot-paths.md')
@@ -245,10 +330,13 @@ class Facts:
     database, resources, registry), indexes of class users, implementations
     and selectors, and the files the database does not parse."""
 
-    def __init__(self, census, hot_paths_path=None):
+    def __init__(self, census, hot_paths_path=None, clang=None):
         self.census = census
         self.con = census.con
         self.root = census.root
+        self.clang = clang
+        self._ast = {}
+        self._objc_classes = None
         con = self.con
         self.impls = collections.defaultdict(set)  # class: {(file, line)} of non-category @implementations
         self.categories = collections.defaultdict(set)  # class: {(category, file)}
@@ -476,18 +564,53 @@ class Facts:
             self._lines[f] = self.text(f, keep=False).count('\n')
         return self._lines[f]
 
-    def unit(self, cls):
+    def objc_classes(self):
+        """Every Objective-C class name the database knows: the repository's
+        (objc_class), the SDK's (sdk_class) and Swift's @objc classes; a
+        pointer to one of them is not a C pointer (unit_ast.py)."""
+        if self._objc_classes is None:
+            tables = codedb.table_names(self.con)
+            names = set(n for (n,) in self.con.execute('SELECT DISTINCT name FROM objc_class'))
+            if 'sdk_class' in tables:
+                names.update(n for (n,) in self.con.execute('SELECT DISTINCT name FROM sdk_class'))
+            if self.census.swift_tables:
+                names.update(n for (n,) in self.con.execute('SELECT DISTINCT class_name FROM swift_objc_decl WHERE '
+                                                            'class_name IS NOT NULL'))
+            names.update(self.impls)
+            self._objc_classes = names
+        return self._objc_classes
+
+    def ast(self, f, arc):
+        """unit_ast.py's facts of the implementation file f (relative), or an
+        ASTError; computed once."""
+        if f not in self._ast:
+            try:
+                args, main_abs = unit_ast.compile_command(self.root, f, self.census.paths.cdb)
+                self._ast[f] = unit_ast.file_facts(self.clang or unit_ast.default_clang(), args, main_abs,
+                                                   self.objc_classes(), arc, cwd=self.root)
+            except unit_ast.ASTError as e:
+                self._ast[f] = e
+        return self._ast[f]
+
+    def unit(self, cls, category=None):
         """(implementation files, unit files): the non-category
         implementation file, the header beside each implementation file, and
-        the files of categories named CLASS+Something."""
-        impl = sorted(set(f for f, _ in self.impls.get(cls, ())))
-        if not impl:
-            raise QualifyError('the code database records no Objective-C @implementation of %s (is it a Swift class, '
-                               'misspelled, or in a file no unit compiles?)' % cls)
-        impl_files = set(impl)
-        for cat, f in self.categories.get(cls, ()):
-            if os.path.basename(f).startswith(cls + '+'):
-                impl_files.add(f)
+        the files of categories named CLASS+Something; for a category unit,
+        the files of @implementation CLASS (CATEGORY) and their headers."""
+        if category:
+            impl = sorted(set(f for cat, f in self.categories.get(cls, ()) if cat == category))
+            if not impl:
+                raise QualifyError('the code database records no @implementation %s (%s)' % (cls, category))
+            impl_files = set(impl)
+        else:
+            impl = sorted(set(f for f, _ in self.impls.get(cls, ())))
+            if not impl:
+                raise QualifyError('the code database records no Objective-C @implementation of %s (is it a Swift '
+                                   'class, misspelled, or in a file no unit compiles?)' % cls)
+            impl_files = set(impl)
+            for cat, f in self.categories.get(cls, ()):
+                if os.path.basename(f).startswith(cls + '+'):
+                    impl_files.add(f)
         unit = set(impl_files)
         for f in impl_files:
             h = os.path.splitext(f)[0] + '.h'
@@ -503,9 +626,12 @@ class Checker:
         self.f = facts
         self.c = facts.census
         self.con = facts.con
-        self.cls = cls
+        m = _CATEGORY_UNIT.match(cls)
+        self.name = cls
+        self.cls, self.category = (m.group(1), m.group(2)) if m else (cls, None)
+        self.container = '%s(%s)' % (self.cls, self.category) if self.category else None
         self.callers_thread = callers_thread
-        self.impl, self.unit = facts.unit(cls)
+        self.impl, self.unit = facts.unit(self.cls, self.category)
         self.unit_set = set(self.unit)
         self.impl_lines = sum(facts.lines(f) for f in self.impl if f.endswith(('.m', '.mm')))
         # Units of the implementation files that are not current: rows from
@@ -568,13 +694,32 @@ class Checker:
 
     def methods(self):
         if self._methods is None:
-            self._methods = self.c.class_methods(self.cls)
+            if self.category:
+                # Only the category's own methods, in the shape of
+                # Census.class_methods.
+                out = collections.OrderedDict()
+                for sel, is_cls, f, line, kind, container, prop, definition in self.con.execute(
+                        "SELECT DISTINCT selector, is_class_method, file, line, container_kind, container_name, "
+                        "property_usr IS NOT NULL, is_definition OR is_synthesized_accessor FROM objc_method WHERE "
+                        "class_name = ? AND container_name = ? ORDER BY selector, is_class_method, file, line",
+                        (self.cls, self.container)):
+                    d = out.setdefault((is_cls, sel), {'objc': [], 'swift': [], 'property': False, 'defined': False})
+                    d['objc'].append((f, line, kind, container))
+                    d['property'] = d['property'] or bool(prop)
+                    d['defined'] = d['defined'] or bool(definition)
+                self._methods = out
+            else:
+                self._methods = self.c.class_methods(self.cls)
         return self._methods
 
     def selectors(self):
         return sorted(set(sel for _, sel in self.methods()))
 
     def properties(self):
+        if self.category:
+            return self.con.execute('SELECT DISTINCT name, attributes, file, line FROM objc_property WHERE class_name '
+                                    '= ? AND container_name = ? ORDER BY file, line',
+                                    (self.cls, self.container)).fetchall()
         return self.con.execute('SELECT DISTINCT name, attributes, file, line FROM objc_property WHERE class_name = ? '
                                 'ORDER BY file, line', (self.cls,)).fetchall()
 
@@ -701,10 +846,13 @@ class Checker:
     def coding(self):
         """Evidence that the class is archived with NSCoding."""
         out = []
+        if self.category:
+            where, params = 'class_or_category = ?', (self.container,)
+        else:
+            where, params = '(class_or_category = ? OR class_or_category LIKE ?)', (self.cls, self.cls + '(%')
         for proto, f, line in self.con.execute(
-                "SELECT DISTINCT protocol, file, line FROM objc_adoption WHERE (class_or_category = ? OR "
-                "class_or_category LIKE ?) AND protocol IN ('NSCoding', 'NSSecureCoding')",
-                (self.cls, self.cls + '(%')):
+                "SELECT DISTINCT protocol, file, line FROM objc_adoption WHERE %s AND protocol IN ('NSCoding', "
+                "'NSSecureCoding')" % where, params):
             out.append('%s:%d adopts %s' % (f, line, proto))
         for (is_cls, sel), info in self.methods().items():
             if not is_cls and sel in ('initWithCoder:', 'encodeWithCoder:') and info['defined']:
@@ -713,8 +861,11 @@ class Checker:
 
     def check_3c(self):
         fail = self.coding()
-        manual = ['%s:%d the class name as a whole string literal (an archive key, a lookup by name, or a log?)' % fl
-                  for fl in self.f.string_literals([self.cls])[self.cls] if fl[0] not in self.unit_set]
+        # A category is not archived by its own name; the class's archive does
+        # not change when one of its categories moves.
+        manual = [] if self.category else [
+            '%s:%d the class name as a whole string literal (an archive key, a lookup by name, or a log?)' % fl
+            for fl in self.f.string_literals([self.cls])[self.cls] if fl[0] not in self.unit_set]
         ev = fail + manual or ['none']
         status = self.db_status('FAIL' if fail else 'MANUAL' if manual else 'PASS', ev)
         return Condition('3c', status, ev,
@@ -1018,10 +1169,21 @@ class Checker:
 
         def hot(f):
             return f.startswith(inventory.HOT_PATH_DIRS) or os.path.basename(f).startswith(HOT_SENDER_PREFIXES)
-        manual = ['used from per-frame or per-token code: %s' % what
-                  for f, what in sorted(self.f.users.get(self.cls, {}).items())
-                  if f not in self.unit_set and hot(f)]
-        if not manual:
+        if self.category:
+            # A category's callers are the senders of its own selectors.
+            sels = self.selectors()
+            manual = []
+            for part in ep.chunks(sels):
+                for f, line, sel in self.con.execute(
+                        'SELECT DISTINCT file, line, selector FROM send WHERE selector IN (%s) ORDER BY file, line' %
+                        ','.join('?' * len(part)), part):
+                    if f not in self.unit_set and hot(f):
+                        manual.append('used from per-frame or per-token code: %s:%d sends %s' % (f, line, sel))
+        else:
+            manual = ['used from per-frame or per-token code: %s' % what
+                      for f, what in sorted(self.f.users.get(self.cls, {}).items())
+                      if f not in self.unit_set and hot(f)]
+        if not manual and not self.category:
             # One level: a user file's own class is used from hot code.
             for f, what in sorted(self.f.users.get(self.cls, {}).items()):
                 if f in self.unit_set:
@@ -1097,28 +1259,238 @@ class Checker:
                              ', '.join(STORAGE_CLASSES), ', '.join(STORAGE_SELECTORS), KEY_HEADER_MIN,
                              ', '.join(self.f.key_families) or 'none found'))
 
+    # --- The trivial path's conditions.
+
+    def light(self, cid):
+        """The light condition cid, computed once."""
+        if not hasattr(self, '_light'):
+            self._light = {}
+        if cid not in self._light:
+            self._light[cid] = getattr(self, 'check_' + cid)()
+        return self._light[cid]
+
+    def from_light(self, tid, cids, extra_fail=(), extra_ev=()):
+        """A trivial condition that holds when the light conditions cids all
+        PASS (and extra_fail is empty)."""
+        found = [self.light(c) for c in cids]
+        ev = ['%s %s: %s' % (c.id, c.status, '; '.join(c.evidence[:3])) for c in found] + list(extra_ev)
+        ev += list(extra_fail)
+        status = worst([c.status for c in found] + (['FAIL'] if extra_fail else []))
+        return Condition(tid, status, ev, 'the light conditions %s%s' % (
+            ', '.join(cids), ' and the extra checks listed' if extra_ev or extra_fail else ''))
+
+    def arc_files(self):
+        """{implementation file: True when every unit compiles it with ARC}."""
+        out = {}
+        marks = ','.join('?' * len(self.impl))
+        for f, arc in self.con.execute('SELECT DISTINCT file, arc FROM objc_impl WHERE file IN (%s)' % marks,
+                                       self.impl):
+            out[f] = out.get(f, True) and bool(arc)
+        return out
+
+    def asts(self):
+        """[(file, facts or ASTError)] of the implementation files."""
+        arc = self.arc_files()
+        return [(f, self.f.ast(f, arc.get(f, False))) for f in self.impl]
+
+    def ast_condition(self, tid, judge, how):
+        ev, statuses = [], []
+        for f, facts in self.asts():
+            if isinstance(facts, unit_ast.ASTError):
+                ev.append('%s: not measured: %s' % (f, facts))
+                statuses.append('MANUAL')
+                continue
+            status, lines = judge(f, facts)
+            statuses.append(status)
+            ev += lines
+        return Condition(tid, worst(statuses), ev, how)
+
+    def check_T1(self):
+        total = [0]
+
+        def judge(f, facts):
+            total[0] += facts['body_lines']
+            return 'PASS', ['%s: %d body lines: %s' % (f, facts['body_lines'], ', '.join(
+                '%s %d' % (b['name'], b['lines']) for b in facts['bodies']) or 'no bodies')]
+        c = self.ast_condition('T1', judge, 'Clang\'s AST of each implementation file (unit_ast.py): every method '
+                                            'and C function body, opening brace line to closing brace line')
+        self.body_lines = total[0] if c.status != 'MANUAL' else None
+        if c.status == 'MANUAL':
+            return c
+        ev = c.evidence + ['total: %d (at most %d)' % (total[0], MAX_TRIVIAL_BODY_LINES)]
+        return Condition('T1', 'PASS' if total[0] <= MAX_TRIVIAL_BODY_LINES else 'FAIL', ev, c.how)
+
+    def check_T2(self):
+        fail = []
+        for cls in self.unit_classes():
+            for name, container, f, line in self.con.execute(
+                    'SELECT DISTINCT name, container_kind, file, line FROM objc_ivar WHERE class_name = ? ORDER BY '
+                    'file, line', (cls,)):
+                fail.append('%s:%d instance variable %s of %s (%s)' % (f, line, name, cls, container))
+            for name, f, line in self.con.execute(
+                    "SELECT DISTINCT name, file, line FROM objc_property WHERE class_name = ? AND kind = 'synthesize' "
+                    "ORDER BY file, line", (cls,)):
+                fail.append('%s:%d property %s of %s has storage (synthesized)' % (f, line, name, cls))
+        marks = ','.join('?' * len(self.unit))
+        for name, kind, f, line in self.con.execute(
+                "SELECT DISTINCT name, kind, file, line FROM c_static WHERE file IN (%s) AND kind IN ('file-static', "
+                "'global', 'local-static') AND is_const = 0 ORDER BY file, line" % marks, self.unit):
+            fail.append('%s:%d %s variable %s is not const' % (f, line, kind, name))
+        ev = fail or ['none']
+        return Condition('T2', self.db_status('FAIL' if fail else 'PASS', ev), ev,
+                         'code database: objc_ivar rows and synthesize rows of objc_property of %s (none for a '
+                         'category, which cannot add storage; associated objects are T7); c_static rows in the unit\'s '
+                         'files that are file-static, global or local-static and not const' % (
+                             ', '.join(self.unit_classes()) or 'no class'))
+
+    def ast_function_hits(self, pattern):
+        """['file:line calls NAME (Clang's AST)'] of the C functions the
+        implementation files refer to whose name matches pattern, macro
+        expansions included (the text search misses a call a macro from
+        another header makes)."""
+        out = []
+        for f, facts in self.asts():
+            if not isinstance(facts, unit_ast.ASTError):
+                out += ['%s:%s calls %s (Clang\'s AST)' % (f, line, name) for line, name in facts['functions']
+                        if pattern.match(name)]
+        return out
+
+    def check_T3(self):
+        fail = self.ast_function_hits(AST_THREAD_FUNCTIONS)
+        manual = self.ast_function_hits(AST_TIMER_FUNCTIONS)
+        c = self.from_light('T3', ('5a', '5b'), extra_fail=fail)
+        if manual and c.status == 'PASS':
+            return Condition('T3', 'MANUAL', c.evidence + ['schedules work: %s' % x for x in manual], c.how)
+        return c
+
+    def check_T4(self):
+        def judge(f, facts):
+            bad = ['%s: Core Foundation ownership: %s' % (f, x) for x in facts['retained']]
+            if not facts['arc']:
+                bad = ['%s: not ARC, and ARC changes or rejects: %s' % (f, x) for x in facts['ownership']] + bad
+            if bad:
+                return 'FAIL', unit_ast.unique(bad)
+            if facts['arc']:
+                return 'PASS', ['%s: compiled with ARC, and no Core Foundation ownership' % f]
+            return 'PASS', ['%s: not ARC, but nothing in it that ARC changes or rejects, so the port is the move '
+                            'to ARC' % f]
+        return self.ast_condition('T4', judge, 'code database: objc_impl.arc; Clang\'s AST (unit_ast.py\'s '
+                                               'ownership list for a file without ARC, and its retained list for '
+                                               'every file)')
+
+    def check_T5(self):
+        return self.from_light('T5', ('4a',))
+
+    def check_T6(self):
+        def judge(f, facts):
+            if facts['unsafe']:
+                return 'FAIL', ['%s: %s' % (f, x) for x in facts['unsafe']]
+            return 'PASS', ['%s: none' % f]
+        return self.ast_condition('T6', judge, 'Clang\'s AST of each implementation file (unit_ast.py\'s unsafe '
+                                               'list)')
+
+    def unit_definitions(self, where, params=()):
+        """['file:line +[Container sel]'] of the method definitions in the
+        unit's files that match where."""
+        marks = ','.join('?' * len(self.unit))
+        return ['%s:%d %s[%s %s]' % (f, line, '+' if is_cls else '-', container, sel)
+                for f, line, is_cls, container, sel in self.con.execute(
+                    'SELECT DISTINCT file, line, is_class_method, container_name, selector FROM objc_method WHERE '
+                    'is_definition = 1 AND file IN (%s) AND (%s) ORDER BY file, line' % (marks, where),
+                    tuple(self.unit) + tuple(params))]
+
+    def check_T7(self):
+        # In the unit's files, so that every class of a file counts.
+        fail = ['defines %s' % x for x in self.unit_definitions(
+            "(selector = 'dealloc' AND is_class_method = 0) OR (selector IN ('load', 'initialize') AND "
+            "is_class_method = 1)")]
+        fail += self.ast_function_hits(AST_STATE_FUNCTIONS)
+        return self.from_light('T7', ('4b', '4e', '4f'), extra_fail=fail,
+                               extra_ev=[] if fail else ['no -dealloc, +load or +initialize in the unit\'s files'])
+
+    def check_T8(self):
+        extra = []
+        for cls in self.unit_classes():
+            for name, f, line in self.con.execute('SELECT DISTINCT name, file, line FROM objc_class WHERE superclass '
+                                                  '= ? ORDER BY file, line', (cls,)):
+                if f not in self.unit_set:
+                    extra.append('%s:%d declares the Objective-C subclass %s of %s (interop.md)' % (f, line, name, cls))
+        marks = ','.join('?' * len(self.unit))
+        for who, proto, f, line in self.con.execute(
+                "SELECT DISTINCT class_or_category, protocol, file, line FROM objc_adoption WHERE file IN (%s) AND "
+                "protocol IN ('NSCoding', 'NSSecureCoding') ORDER BY file, line" % marks, self.unit):
+            extra.append('%s:%d %s adopts %s (archived)' % (f, line, who, proto))
+        extra += ['defines %s (archived)' % x for x in self.unit_definitions(
+            "selector IN ('initWithCoder:', 'encodeWithCoder:') AND is_class_method = 0")]
+        # Core Data is stored state too.
+        for c in self.c.resources.coredata:
+            if c.kind == 'entity' and c.cls in set(self.unit_classes()) | {self.cls}:
+                extra.append('%s:%d %s is the class of the Core Data entity %s' % (c.file, c.line, c.cls, c.entity))
+        extra += ['%s:%d %s sends %s to %s (Core Data)' % (f, line, enc, sel, rtype)
+                  for f, line, sel, rtype, enc in self.unit_sends() if receiver_class(rtype) in CORE_DATA_CLASSES]
+        return self.from_light('T8', ('6', '7', '3c'), extra_fail=extra,
+                               extra_ev=[] if extra else ['no Objective-C subclass outside the unit; nothing in the '
+                                                          'unit\'s files adopts NSCoding or uses Core Data'])
+
+    def unit_classes(self):
+        """The classes whose non-category @implementation is in the unit's
+        files (none for a category unit): a port moves every one."""
+        if self.category:
+            return []
+        return sorted(c for c, fl in self.f.impls.items() if any(f in self.unit_set for f, _ in fl))
+
+    def trivial(self, stop=False):
+        """{id: Condition} of the trivial conditions in TRIVIAL_ORDER; with
+        stop, nothing after the first that is not PASS."""
+        out = collections.OrderedDict()
+        self.body_lines = None
+        for tid in TRIVIAL_ORDER:
+            out[tid] = getattr(self, 'check_' + tid)()
+            if stop and out[tid].status != 'PASS':
+                break
+        return out
+
     def run(self, stop_on_fail=False):
         """{id: Condition}, in LIST_ORDER; with stop_on_fail, nothing after
         the first FAIL."""
         out = {}
         for cid in LIST_ORDER:
-            c = getattr(self, 'check_' + cid)()
+            c = self.light(cid)
             out[cid] = c
             if stop_on_fail and c.status == 'FAIL':
                 break
         return out
 
 
+def condition_dicts(conditions, texts):
+    return [collections.OrderedDict([('id', c.id), ('condition', texts[c.id]), ('status', c.status),
+                                     ('evidence', c.evidence), ('how', c.how)]) for c in conditions]
+
+
+def path_of(trivial, light_fails, category):
+    if all(c.status == 'PASS' for c in trivial):
+        return 'trivial'
+    return 'full' if category or light_fails else 'light'
+
+
 def qualify(facts, cls, callers_thread=None):
     ch = Checker(facts, cls, callers_thread)
-    found = ch.run()
-    conditions = [found[cid] for cid in CONDITION_IDS]
-    status = 1 if any(c.status == 'FAIL' for c in conditions) else 0
+    trivial = ch.trivial()
+    trivial = [trivial[tid] for tid in TRIVIAL_CONDITIONS]
+    if ch.category:
+        conditions = []
+    else:
+        found = ch.run()
+        conditions = [found[cid] for cid in CONDITION_IDS]
+    fails = any(c.status == 'FAIL' for c in conditions)
+    path = path_of(trivial, fails, ch.category)
+    status = (0 if path == 'trivial' else 1) if ch.category else (1 if fails else 0)
     return collections.OrderedDict([
         ('class', cls), ('unit_files', ch.unit), ('implementation_lines', ch.impl_lines),
+        ('body_lines', ch.body_lines), ('path', path),
         ('database_incomplete', database_incomplete(facts.census)),
-        ('conditions', [collections.OrderedDict([('id', c.id), ('condition', CONDITIONS[c.id]), ('status', c.status),
-                                                 ('evidence', c.evidence), ('how', c.how)]) for c in conditions]),
+        ('conditions', condition_dicts(conditions, CONDITIONS)),
+        ('trivial_conditions', condition_dicts(trivial, TRIVIAL_CONDITIONS)),
         ('exit_status', status),
     ])
 
@@ -1160,20 +1532,117 @@ def list_classes(facts):
                                     ('exit_status', 0)])
 
 
-def write_text(d, out):
-    out.write('Light-path qualifying checks (lifecycle.md section 3) for %s\n' % d['class'])
-    out.write('Unit: %s (%d implementation lines)\n' % (' '.join(d['unit_files']), d['implementation_lines']))
+def classify(facts):
+    """Every class unit --list considers, and every category unit under
+    sources/ whose file belongs to no class unit, with its path."""
+    census = facts.census
+    classes = sorted(c for c, fl in facts.impls.items() if any(
+        f.startswith('sources/') and not census.is_generated(f) for f, _ in fl))
+    covered = {}  # category file inside a class unit: that class
+    for c in classes:
+        try:
+            impl = facts.unit(c)[0]
+        except QualifyError:
+            continue
+        mains = set(f for f, _ in facts.impls[c])
+        for f in impl:
+            if f not in mains:
+                covered.setdefault(f, c)
+    cats = sorted(set('%s(%s)' % (c, cat) for c, cl in facts.categories.items() for cat, f in cl
+                      if f.startswith('sources/') and not census.is_generated(f)
+                      and not any(f == g for g, _ in facts.impls.get(c, ()))))
+    sels = set()
+    for c in classes:
+        sels.update(sel for _, sel in census.class_methods(c))
+    census.prepare_whole_tree(sels)
+    facts.string_literals(classes)
+    facts.type_index(classes)
+    out = []
+    seen_files = {}
+    for name in classes + cats:
+        try:
+            ch = Checker(facts, name)
+        except QualifyError:
+            continue
+        main = ch.impl[0] if ch.category else min(f for f, _ in facts.impls[ch.cls])
+        if main in seen_files:
+            # Another class of a file already classified: one unit per file.
+            seen_files[main]['classes'].append(name)
+            continue
+        trivial = ch.trivial(stop=True)
+        blocked = [t for t, c in trivial.items() if c.status != 'PASS']
+        if blocked:
+            fails = bool(ch.category) or any(x.status == 'FAIL' for x in ch.run(stop_on_fail=True).values())
+            path = 'full' if fails else 'light'
+        else:
+            path = 'trivial'
+        part_of = covered.get(main) if ch.category else None
+        out.append(collections.OrderedDict([('unit', name), ('classes', [name]), ('file', main), ('path', path),
+                                            ('part_of', part_of),
+                                            ('body_lines', ch.body_lines), ('implementation_lines', ch.impl_lines),
+                                            ('not_trivial_because', blocked[:1]),
+                                            ('stop_status', trivial[blocked[0]].status if blocked else None)]))
+        seen_files[main] = out[-1]
+    def count(units):
+        return collections.OrderedDict((p, sum(1 for u in units if u['path'] == p)) for p in ('trivial', 'light',
+                                                                                              'full'))
+    counts = count([u for u in out if not u['part_of']])
+    split_counts = count([u for u in out if u['part_of']])
+    out.sort(key=lambda u: (('trivial', 'light', 'full').index(u['path']), u['body_lines'] or 0,
+                            u['implementation_lines'], u['unit']))
+    return collections.OrderedDict([('units', sum(counts.values())), ('counts', counts),
+                                    ('split_counts', split_counts),
+                                    ('database_incomplete', database_incomplete(census)), ('classified', out),
+                                    ('exit_status', 0)])
+
+
+def write_classify(d, out):
+    out.write('Paths of %d units under sources/ (lifecycle.md section 3): %s\n' % (
+        d['units'], ', '.join('%s %d' % kv for kv in d['counts'].items())))
+    out.write('Categories in files named for their class, which are part of the class\'s unit and may also move '
+              'alone: %s\n' % ', '.join('%s %d' % kv for kv in d['split_counts'].items()))
+    out.write('(light means no light condition FAILs; each MANUAL is still settled by reading)\n')
     for line in d['database_incomplete']:
         out.write(line + '\n')
-    for c in d['conditions']:
+    out.write('%-8s %5s %5s  %-50s  %-4s  %s\n' % ('path', 'body', 'lines', 'unit', 'stop', 'file'))
+    for u in d['classified']:
+        out.write('%-8s %5s %5d  %-50s  %-4s  %s\n' % (
+            u['path'], '-' if u['body_lines'] is None else u['body_lines'], u['implementation_lines'],
+            ', '.join(u['classes']) + (' (in %s\'s unit)' % u['part_of'] if u['part_of'] else ''),
+            ','.join(u['not_trivial_because']) or '-', u['file']))
+
+
+def write_conditions(conditions, out):
+    for c in conditions:
         out.write('\n%-7s %-4s %s\n' % (c['status'], c['id'], c['condition']))
         for e in c['evidence']:
             out.write('             %s\n' % e)
         out.write('             how: %s\n' % c['how'])
+
+
+def write_text(d, out):
+    out.write('Qualifying checks (lifecycle.md section 3) for %s\n' % d['class'])
+    out.write('Unit: %s (%d implementation lines, %s body lines)\n' % (
+        ' '.join(d['unit_files']), d['implementation_lines'],
+        'unmeasured' if d['body_lines'] is None else d['body_lines']))
+    for line in d['database_incomplete']:
+        out.write(line + '\n')
+    out.write('\nTrivial path:\n')
+    write_conditions(d['trivial_conditions'], out)
+    if d['conditions']:
+        out.write('\nLight path:\n')
+        write_conditions(d['conditions'], out)
+    else:
+        out.write('\nLight path: not evaluated for a category unit (trivial or full).\n')
     fails = [c['id'] for c in d['conditions'] if c['status'] == 'FAIL']
     manual = [c['id'] for c in d['conditions'] if c['status'] == 'MANUAL']
-    verdict = 'FAIL: ' + ', '.join(fails) if fails else 'no condition FAILs'
-    out.write('\nResult: %s; MANUAL: %s. Exit %d.\n' % (verdict, ', '.join(manual) or 'none', d['exit_status']))
+    not_trivial = [c['id'] for c in d['trivial_conditions'] if c['status'] != 'PASS']
+    out.write('\nPath: %s%s.\n' % (d['path'], ' (not trivial: %s)' % ', '.join(not_trivial) if not_trivial else ''))
+    if d['conditions']:
+        verdict = 'FAIL: ' + ', '.join(fails) if fails else 'no condition FAILs'
+        out.write('Result: %s; MANUAL: %s. Exit %d.\n' % (verdict, ', '.join(manual) or 'none', d['exit_status']))
+    else:
+        out.write('Exit %d.\n' % d['exit_status'])
 
 
 def write_list(d, out):
@@ -1196,7 +1665,9 @@ def build_parser():
                 '--hot-paths'):
         p.add_argument(opt)
     p.add_argument('--json', action='store_true')
+    p.add_argument('--clang', help='the clang for the AST checks (default: upstream clang 22, as unit_ast.py finds it)')
     p.add_argument('--list', action='store_true', help='every class under sources/ with no FAIL, by size')
+    p.add_argument('--classify', action='store_true', help='the path of every unit under sources/')
     p.add_argument('--callers-thread', metavar='TEXT', help='a person\'s answer to condition 5c')
     p.add_argument('cls', metavar='CLASS', nargs='?')
     return p
@@ -1205,16 +1676,21 @@ def build_parser():
 def main(argv=None, out=None):
     out = out or sys.stdout
     args = build_parser().parse_args(sys.argv[1:] if argv is None else argv)
-    if bool(args.list) == bool(args.cls):
-        print('qualify_unit: error: give a CLASS or --list', file=sys.stderr)
+    if int(bool(args.list)) + int(bool(args.classify)) + int(bool(args.cls)) != 1:
+        print('qualify_unit: error: give a CLASS, --list or --classify', file=sys.stderr)
         return 2
     try:
         paths = codedb.Paths(args.root, db=args.db, cdb=args.cdb, fragments=args.fragments, extractor=args.extractor,
                              swift_reader=args.swift_reader, swift_work=args.swift_work)
         census = ep.Census(paths, registry_path=args.registry)
         try:
-            facts = Facts(census, args.hot_paths)
-            d = list_classes(facts) if args.list else qualify(facts, args.cls, args.callers_thread)
+            facts = Facts(census, args.hot_paths, clang=args.clang)
+            if args.list:
+                d = list_classes(facts)
+            elif args.classify:
+                d = classify(facts)
+            else:
+                d = qualify(facts, args.cls, args.callers_thread)
         finally:
             census.close()
     except (QualifyError, ep.CensusError, codedb.CodeDBError, sqlite3.Error, OSError) as e:
@@ -1225,6 +1701,8 @@ def main(argv=None, out=None):
         out.write('\n')
     elif args.list:
         write_list(d, out)
+    elif args.classify:
+        write_classify(d, out)
     else:
         write_text(d, out)
     return d['exit_status']

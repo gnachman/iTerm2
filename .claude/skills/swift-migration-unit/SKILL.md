@@ -1,6 +1,6 @@
 ---
 name: swift-migration-unit
-description: Run one unit of the iTerm2 Objective-C to Swift migration as its orchestrator, on the light or the full path, from claim to commit. Give a unit name (an Objective-C class or file), or none to pick the next eligible unit.
+description: Run one unit of the iTerm2 Objective-C to Swift migration as its orchestrator, on the trivial, light or full path, from claim to commit, and the session's closing checks. Give a unit name (an Objective-C class, Class(Category), or file), or none to pick the next eligible unit.
 argument-hint: "[unit]"
 ---
 
@@ -22,22 +22,57 @@ You are the orchestrator. This skill is the order of work; the rules are in
 ## 1. Pick and assign the path
 
 1. Unit given: use it. None given: resume an unparked entry in `claims.md`,
-   else take the next eligible unit (`orchestration.md` §2, step 4).
-2. Assign the path as `lifecycle.md` §3 says. Answer the callers' thread
-   from the call sites and run
-   `tools/swift_migration/qualify_unit.py CLASS --callers-thread "<answer>"`.
-   The light path only when no condition prints FAIL. Each MANUAL is
+   else take the next eligible unit (`orchestration.md` §2, step 4),
+   preferring a batch of eligible trivial units from
+   `qualify_unit.py --classify`, smallest first. At night up to three
+   trivial or light units with no dependency on each other may be
+   authored at once, each in its own lane, commits landing one at a time;
+   by day one at a time (`orchestration.md` §2, step 4). Start no unit
+   that cannot be committed before the closing checks must start.
+2. Assign the path that
+   `tools/swift_migration/qualify_unit.py UNIT --callers-thread "<answer>"`
+   prints (`lifecycle.md` §3; UNIT is a class or `Class(Category)`; answer
+   the callers' thread from the call sites). Trivial only when T1 to T8
+   all PASS. Light only when no light condition FAILs; each MANUAL is
    settled by an agent's reading, recorded in the dossier (the tool's
    evidence line, what was read, the conclusion) and checked by the
    reviewer; a MANUAL not clearly settled in the unit's favour counts as a
-   FAIL, and a FAIL is never overridden. Otherwise the full path. Hot
-   path: add it to `hot-paths.md` and pick another.
+   FAIL, and a FAIL is never overridden. Otherwise full. Hot path: add it
+   to `hot-paths.md` and pick another.
 3. Claim it in `claims.md`: unit, path, step, date, round 1.
 
-## 2. Light path (`lifecycle.md` §3)
+## 2. Trivial path (`lifecycle.md` §3, "The trivial path")
 
-Check the budget before each subagent and each gate run
+Check the budget before each subagent and each gate run, on every path
 (`orchestration.md` §3 step 1; `workflow.md` §4).
+
+1. **Lane.** `lane_clone.py acquire --purpose "<unit> author"`.
+2. **Author** (agent `migration-author`), kind `port`. Give it: `README.md`
+   in full; `lifecycle.md` §1 step 3 and §3; `translation-rules.md`;
+   `assertions.md`; `concurrency.md` §9; `nullability.md` §6; `phase0.md`
+   §9; `traps.md`; `bugs.md`; the `qualify_unit.py` output; the lane instructions. No
+   dossier. It writes the tests (one per reflective entry, through the
+   system's door), sees them pass against the Objective-C and each fail
+   once against a broken body, snapshots, ports, runs `pbxproj_swap.py`,
+   snapshots again, and returns one change with the unit notes for the
+   commit message.
+3. **Collect** as on the light path (step 3 below), without a `test` patch.
+4. **One reviewer** (new), given the diff, the deleted Objective-C, the new
+   Swift, the qualifying output, the snapshot comparison, `traps.md` and
+   `translation-rules.md`; it compares block captures and observer or
+   notification registrations with the Objective-C. Another round only for
+   a blocking finding that stood.
+5. **Gate**: `README.md` §5 (the build and the targeted tests; no whole
+   suite on the trivial path). If the project-file change no longer
+   applies because another unit landed, run `pbxproj_swap.py` in your
+   checkout (step 3 of the light path).
+6. **Commit** one `port` commit by pathspec, trailer
+   `Swift-Port: <unit> kind=port`, the unit notes in the message. Mark the
+   unit *landed, closing checks pending* (and, for a unit named in the
+   sdef, "AppleScript comparison owed" until a day session runs it,
+   `lifecycle.md` §3); release its lanes. Next unit.
+
+## 3. Light path (`lifecycle.md` §3, "The light path")
 
 1. **Lane.** `lane_clone.py acquire --purpose "<unit> author"`.
 2. **Author** (agent `migration-author`). Give it: the unit, kinds `test`
@@ -66,16 +101,17 @@ Check the budget before each subagent and each gate run
    full; `lifecycle.md` §1 step 6 and §3; `translation-rules.md`;
    `traps.md`; the dossier; the diff; the deleted Objective-C; the new
    Swift; the snapshot comparison, the comparison of the generated
-   Objective-C declaration with the old header, the bridging-boundary
-   probes and the lint output (`lifecycle.md` §3, "What the light path
-   keeps"; `orchestration.md` §5). It checks each MANUAL reading in the
+   Objective-C declaration with the old header and the bridging-boundary
+   probes (`lifecycle.md` §3, "What it keeps"; `orchestration.md` §5). It checks each MANUAL reading in the
    dossier. Never the author's reasoning or earlier rounds.
 5. **Findings.** Loop as in `orchestration.md` §3 steps 5 to 7 and
    `workflow.md` §1 and §2. A finding showing the unit fails a qualifying
    condition moves it to the full path.
 6. **Gate.** You run it on the staged tree, in the full-suite lane
-   (`acquire --full-suite` with `--apply-staged`): `README.md` §5 steps 1
-   to 6 and the whole suite, once per port, before committing.
+   (`acquire --full-suite` with `--apply-staged`): `README.md` §5,
+   including the plain whole suite through `whole_suite.sh` before the
+   `port` commit (under the whole-suite lock, which serializes whole
+   suites; a stall is exit 124).
 7. **Commit** by pathspec (`orchestration.md` §3 "Build lanes", and §6):
    first the `test` commit (tests, bridging-header line, dossier added)
    from the saved patch through a temporary index, then the `port` commit:
@@ -84,18 +120,15 @@ Check the budget before each subagent and each gate run
    the dossier deleted. Trailers
    `Swift-Port: <unit> kind=test` and `kind=port`.
 8. **Release** every lane the unit held.
-9. **After committing** (one pass may cover several units): recapture,
-   `codedb.py update --accept-removals`, and the lints that need a
-   capture (`phase0.md` §6, "Where they run"). A finding goes back to the
-   author; its fix is a new commit of the unit.
-10. **Close**: new traps into `traps.md` and bugs into `bugs.md`
-   (`lifecycle.md` §1 step 8; `orchestration.md` §3 step 10), then remove
-   the claim.
+9. **Close**: new traps into `traps.md` and bugs into `bugs.md`
+   (`lifecycle.md` §1 step 8; `orchestration.md` §3 step 10); the claim
+   becomes *landed, closing checks pending*.
 
-## 3. Full path (`lifecycle.md` §1)
+## 4. Full path (`lifecycle.md` §1)
 
 Each step that commits goes through `orchestration.md` §3: record the step,
-lane, author, fresh reviewer, findings, gate steps 1 to 6, commit by
+lane, author, fresh reviewer, findings, the gate (with the plain whole
+suite through `whole_suite.sh`, except on a `dossier` commit), commit by
 pathspec, release. Give every author and reviewer `README.md` in full,
 `traps.md`, `bugs.md`, the dossier and the lane instructions, plus:
 
@@ -113,20 +146,15 @@ pathspec, release. Give every author and reviewer `README.md` in full,
 
 Reviewers also get the tool outputs the kind requires (`orchestration.md`
 §5). VM checks need the owner to start vm1: queue that and work elsewhere.
-**Close** as `lifecycle.md` §1 step 8 and `orchestration.md` §3 step 10
-say (gate steps 7 and 8, the commit deleting the dossier, the claim
-removed). Run the whole suites of step 7 one after another, each under the
-lock, each with the stall watchdog: `tools/swift_migration/whole_suite.sh`
-for the plain suite and `sanitizer_tests.sh <mode>` for each sanitizer
-(the thread mode without `--parallel`), never two at once
-(`orchestration.md` §3). Wait for one in the background only with
-`suite_guard.py wait --pid PID --seconds 540` in the foreground, never by
-ending the turn.
+Dossier commits pass `dossier_cap.py` (`lifecycle.md` §4). **Close** as
+`lifecycle.md` §1 step 8 and `orchestration.md` §3 step 10 say (the commit
+deleting the dossier; the claim becomes *landed, closing checks pending*).
 
-## 4. Stop conditions
+## 5. Stop conditions
 
-- A qualifying condition fails during the light path: the unit moves to
-  the full path, and the reason is recorded as `lifecycle.md` §3 says.
+- A qualifying condition fails during the trivial or light path: the unit
+  moves to a heavier path, and the reason is recorded as `lifecycle.md` §3
+  says.
 - Blocking findings still standing at the round cap: split or park
   (`workflow.md` §2), then take another unit.
 - Anything the owner must decide (`workflow.md` §3): add it to
@@ -134,12 +162,19 @@ ending the turn.
 - Usage at the night's cap, usage unknown, or the owner at the checkout:
   stop cleanly (`workflow.md` §4).
 
-## 5. End of session
+## 6. End of session: the closing checks
 
-Run the thread sanitizer suite (serially, under the lock, with the stall
-watchdog) and the x86_64 build over the light ports
-that landed (`lifecycle.md` §3); fix a failure by a new commit or
-`git revert`, never a reset; list uncovered ports in the report. Put changes that belong to no unit into the session's one document commit,
+Once, after the last unit and by the time the prompt names, run the
+closing checks of `lifecycle.md` §5 over everything that landed, in order,
+one at a time, each under the lock with its stall watchdog:
+`whole_suite.sh`; `sanitizer_tests.sh nullability`, `integer`, then
+`thread` (never `--parallel`); the `x86_64` build; the capture,
+`codedb.py update --accept-removals` and the lints. Wait for one in the
+background only with `suite_guard.py wait --pid PID --seconds 540` in the
+foreground, never by ending the turn. Fix a failure by a new commit of the
+unit or `git revert`, never a reset. Units the checks passed over leave
+`claims.md`; the rest stay *landed, closing checks pending*, and the report
+says which checks did not run. Put changes that belong to no unit into the session's one document commit,
 with no trailer, amended while unpushed (`README.md` §5, "Where commits
 go"); a new tool or a Phase 0 item is its own `tool` commit. Write the night's report
 (`orchestration.md` §8). Leave the tree clean, every lane released and no
@@ -150,4 +185,5 @@ process of yours running.
 - Never push, fetch, rebase or merge. Commit on master, by pathspec.
 - Never touch a submodule, another checkout, `CLAUDE.md`, a settings file
   or `tools/add_file_to_xcodeproj.rb`. Subagents never commit.
-- One author lane per unit at a time.
+- One author lane per unit at a time; at most three unit authors at once,
+  and only at night.

@@ -8,9 +8,9 @@ data race the thread sanitizer reports in the existing code when the whole
 ModernTests suite runs, with a verdict for each and how the gate treats it.
 
 **What "baseline" means for a port.** The races below are known and judged.
-When the thread sanitizer runs for a unit (at the close of any unit whose
-dossier shows state shared across threads, and in the periodic full-suite
-run), a report that is not in this ledger fails the gate. It is a new race,
+When the thread sanitizer runs (once per session, among the closing checks
+of [lifecycle.md §5](lifecycle.md)), a report that is not in this ledger
+fails them. It is a new race,
 and it is the port's until shown otherwise: the author either fixes it or
 shows from the source that it exists unchanged in the Objective-C, in which
 case it is added here with its verdict, in its own commit. A report that is

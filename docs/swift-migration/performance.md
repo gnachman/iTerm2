@@ -45,9 +45,10 @@ Measurement:
   (offered “Compare best time against best time; more than 5% slower means
   check it and triggers a back-to-back run; only a slowdown that survives
   the back-to-back run counts”, he answered “Sure simplicity is good”).
-  There is no measure of a scenario's variation. Memory and counts get the
-  same flat 5% on the median, the migration's reading of that answer and
-  open to him (owner-queue.md Q23 item 20). Fewer than five samples
+  There is no measure of a scenario's variation. Memory and counts get a
+  flat 15% on the median (2026-11-24, asked 5%, 10% or 15% and told that
+  5% falsely flags about 58% of unchanged builds, 10% about 11% and 15%
+  about 4%: “15”). Fewer than five samples
   is inconclusive (“Sure”); a timing is never inconclusive because its
   samples vary (“Just pick the best value for timing”). A suspected
   regression blocks until a confirmation run clears it (section 3,
@@ -220,24 +221,17 @@ Read with care:
   resident size under the flat 5% on the median: `app.stress_buffer_1tab`
   steady 7.27%, `app.stress_clearcodes_1tab` peak 5.69% and steady 9.20%,
   `app.stress_flood_1tab` steady 6.79%, `app.stress_htop_unthrottled_1tab`
-  peak 8.67% and steady 12.25%. The rule before widened the median's
-  threshold to three times its noise and read four (htop's two fell
-  within 11.7% and 12.6%). Without that widening the flat 5% raises false
-  memory suspicions often, not only in a busy file. Resampling the
-  committed baseline's own samples (five a side drawn with replacement,
-  median against median, 20,000 trials) gives, on identical code, a
-  false suspicion on
-  `app.stress_normal_10tabs` `rss_steady` 22% of the time and `rss_peak`
-  14%, `app.stress_normal_1tab` `rss_steady` 14% and `rss_peak` 5.4%,
-  `app.stress_htop_unthrottled_1tab` 12% each, and every other memory
-  metric under 0.5%: at least one false memory suspicion for about 58%
-  of candidates, before any drift between sessions such as `busy-after`
-  shows. Each costs a back-to-back confirmation of the app scenarios.
-  Whether memory keeps the flat 5% or gets a wider fixed allowance is
-  asked of the owner (owner-queue.md Q23 item 20); until he answers it
-  stays at 5%. No compared memory metric in any of these
+  peak 8.67% and steady 12.25%; under the owner's 15% (section 1) it reads
+  none (re-run 2026-11-24). Resampling the committed baseline's own
+  samples (five a side drawn with replacement, median against median,
+  20,000 trials) gives, on identical code, at least one false memory
+  suspicion for about 58% of candidates under 5%, 11% under 10% and 3.5%
+  under 15% (the last from `app.stress_normal_1tab` alone, 1.8% for each
+  of its two sizes), before any drift between sessions such as
+  `busy-after` shows; that is why the owner chose 15% for memory and
+  counts. No compared memory metric in any of these
   files has a robust spread over 10%, so the earlier rule that such a
-  metric is inconclusive never fired; it was dropped too. Two candidates
+  metric is inconclusive never fired; it was dropped. Two candidates
   of the same day hold the one-line change measured below, which costs at
   most about 1%, on a machine that was not quiet:
   `candidate-draw-2026-11-22.json` reads 3 under the rule
@@ -396,10 +390,10 @@ otherwise take the baseline in a clean checkout.
 
 **Comparison.** `perf_compare.py BASELINE CANDIDATE` gives a verdict per
 scenario and metric. Which statistic a metric is judged on follows from its
-unit, in one place, `statistic_for` in `perf_lib.py`. The owner decided
-the statistics, the flat 5% for timings, the confirmation and the
-five-sample floor; the flat 5% for memory and counts is the migration's
-reading of his words, as the third item says:
+unit, in one place, `statistic_for` in `perf_lib.py`, and its threshold
+from the statistic (`threshold_for` in `perf_compare.py`). The owner
+decided the statistics, both thresholds, the confirmation and the
+five-sample floor:
 
 - Time and rate metrics (units `s`, `ms`, `us`, `ns`, `iterations/s`) are
   estimated by the best sample, the minimum when lower is better and the
@@ -408,10 +402,11 @@ reading of his words, as the third item says:
   since that's our best estimate.”).
 - Memory and count metrics (`kB`, `count`, and any unit not listed) are
   compared median against median (2026-11-23: “That's fine”).
-- The threshold is a flat 5% of the reference's statistic, for every
-  compared metric, in both directions. Worse by more than 5% is a
-  suspected regression, better by more than 5% an improvement, and
-  exactly 5% is no change. On 2026-11-22 he had chosen “per-scenario
+- The threshold is a flat 5% of the reference's best for time and rate
+  metrics and a flat 15% of the reference's median for memory and count
+  metrics, in both directions. Worse by more than the threshold is a
+  suspected regression, better by more an improvement, and exactly the
+  threshold is no change. On 2026-11-22 he had chosen “per-scenario
   variation plus a back-to-back confirmation”. Asked on 2026-11-23 “Do we
   have to measure variation?”, told that it was there only to reduce
   false alarms and that the back-to-back confirmation does the real work,
@@ -422,22 +417,19 @@ reading of his words, as the third item says:
   the rule of 2026-11-22 is gone; the confirmation stays. One comparison
   of a candidate against a reference can therefore only give `suspected
   regression`; a regression counts only when `perf_compare.py --confirm`
-  confirms it (below, **Confirming a suspected regression**). His words
-  cover timings. For memory and counts the same flat 5% on the median,
-  with no widening for noise, is the migration's reading of “Do we have
-  to measure variation?” and “Sure simplicity is good”, not his decision;
-  it raises false suspicions often (“Read with care”, above), and whether
-  memory should get a wider fixed allowance is asked of him
-  (owner-queue.md Q23 item 20).
+  confirms it (below, **Confirming a suspected regression**). For memory
+  and counts, asked on 2026-11-24 for 5%, 10% or 15% and told how often
+  each falsely flags an unchanged build (“Read with care”, above), he
+  answered “15”. Neither threshold widens for noise.
 - Fewer than five samples on either side is inconclusive, for both
   statistics (“Sure”). A timing is never inconclusive because its samples
   vary (“Just pick the best value for timing”). For memory and counts the
   earlier rule that a median over 10% noise is inconclusive was dropped
   with the noise widening, also the migration's reading; it never fired
   on the result files.
-- Exactly 5% is no change, and so is anything within 1e-9 percent of it,
-  so that rounding in floating point does not turn exactly 5% into a
-  suspicion.
+- Exactly the threshold is no change, and so is anything within 1e-9
+  percent of it, so that rounding in floating point does not turn exactly
+  5% or 15% into a suspicion.
 
 **Metrics not compared.** A metric that gives very different results on
 identical code would, under a flat 5%, raise a false suspicion on most
@@ -529,18 +521,18 @@ to back, on the same machine:
            --candidate confirm-candidate-1.json confirm-candidate-2.json ...
 
 Per metric, `--confirm` pools each side's samples and compares the pooled
-statistic (best or median, as above) against the same flat 5%, and takes
-each run's own statistic (each run's best, or its median). There is no
-measure of variation here either. The verdict:
+statistic (best or median, as above) against the same threshold (5% or
+15%), and takes each run's own statistic (each run's best, or its
+median). There is no measure of variation here either. The verdict:
 
-- `confirmed regression`: the pooled candidate is worse by more than 5%,
-  and every candidate run's statistic is worse than every base run's (the
-  best candidate run is worse than the worst base run).
-- `not confirmed`: worse by more than 5% pooled, but some candidate run
-  is as good as some base run. It is named in a warning and does not
-  block.
-- `improvement`: better by more than 5% pooled and in every run; better
-  pooled but not in every run reads `no change`, with a note.
+- `confirmed regression`: the pooled candidate is worse by more than the
+  threshold, and every candidate run's statistic is worse than every base
+  run's (the best candidate run is worse than the worst base run).
+- `not confirmed`: worse by more than the threshold pooled, but some
+  candidate run is as good as some base run. It is named in a warning and
+  does not block.
+- `improvement`: better by more than the threshold pooled and in every
+  run; better pooled but not in every run reads `no change`, with a note.
 - `no change`, `inconclusive` (fewer than five samples in any run),
   `not compared (unsteady)` for a listed metric, and the scenario verdicts
   of a single comparison, where a failure or a missing metric in any
@@ -556,9 +548,9 @@ change` because the base runs' bests were far apart, this one reads `not
 confirmed`; neither blocks. For a median metric the threshold no longer
 widens with the spread of the base runs' medians or with their noise, so
 base run medians of 100 and 120 (lower is better) and candidate run
-medians of 125 and 126 are now a confirmed regression (about 14% worse
-than the pooled 110, and worse in every run), where before the 20%
-between the base runs hid them.
+medians of 128 and 129 are a confirmed regression (about 17% worse than
+the pooled 110, and worse in every run), where before the 20% between the
+base runs hid them.
 
 **What the confirmation can see.** A run's best barely moves with a slow
 sample or two, so the bests of interleaved runs of one version lie close

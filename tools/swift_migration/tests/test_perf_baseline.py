@@ -395,7 +395,8 @@ class CompareTests(unittest.TestCase):
         self.assertAlmostEqual(rows[('parse.mixed_1mb', 'time')]['change_percent'], 20.0, places=6)
         # Listed in perf_lib.UNSTEADY_METRICS: recorded, shown, not compared.
         self.assertEqual(rows[('app.stress_normal_1tab', 'iterations_per_sec')]['verdict'], 'not compared (unsteady)')
-        self.assertEqual(rows[('app.stress_normal_1tab', 'rss_peak')]['verdict'], 'improvement')
+        # 10% better: within a median metric's 15% (the owner, 2026-11-24).
+        self.assertEqual(rows[('app.stress_normal_1tab', 'rss_peak')]['verdict'], 'no change')
         self.assertEqual(rows[('memory.scrollback_fill_20k', 'process_peak_footprint')]['verdict'], 'inconclusive')
         self.assertEqual(rows[('draw.attributed_strings_mono', 'time_per_frame')]['verdict'], 'no change')
         self.assertEqual(rows[('screen.gang_fast_path', 'time')]['verdict'], 'no reference result')
@@ -423,12 +424,12 @@ class CompareTests(unittest.TestCase):
         self.assertEqual(report['exit_code'], 0)
 
     def test_noise_does_not_widen_a_median_threshold(self):
-        # The owner, 2026-11-23: a flat 5%, no variation measure. A median
-        # metric 7% worse is suspected however noisy its samples; before,
-        # 3 x noise widened its threshold past 7% and this read no change.
+        # No variation measure (the owner, 2026-11-23); a median metric's
+        # threshold is a flat 15% (the owner, 2026-11-24). A median metric
+        # 17% worse is suspected however noisy its samples.
         base = copy.deepcopy(self.base)
         noisy = [10.0, 10.4, 9.6, 10.3, 9.7, 10.2, 9.8, 10.0, 10.5, 9.5]
-        for k, verdict in ((1.07, 'suspected regression'), (1.04, 'no change')):
+        for k, verdict in ((1.17, 'suspected regression'), (1.14, 'no change')):
             cand = copy.deepcopy(self.base)
             for result, samples in ((base, noisy), (cand, [x * k for x in noisy])):
                 result['scenarios']['parse.mixed_1mb']['metrics']['time'].update(unit='kB', samples=samples)
@@ -440,12 +441,12 @@ class CompareTests(unittest.TestCase):
     def test_a_noisy_median_metric_is_not_inconclusive(self):
         # Before 2026-11-23 a median metric over 10% noise was inconclusive;
         # now only fewer than five samples is. These samples spread about
-        # 49% around a median of 0.055 against the reference's 0.05 (10%).
+        # 46% around a median of 0.065 against the reference's 0.05 (30%).
         base = copy.deepcopy(self.base)
         cand = copy.deepcopy(self.base)
         base['scenarios']['parse.mixed_1mb']['metrics']['time']['unit'] = 'kB'
         cand['scenarios']['parse.mixed_1mb']['metrics']['time'].update(unit='kB', samples=[
-            0.05, 0.08, 0.03, 0.09, 0.02, 0.07, 0.04, 0.10, 0.05, 0.06])
+            0.06, 0.09, 0.04, 0.10, 0.03, 0.08, 0.05, 0.11, 0.06, 0.07])
         self.assertGreater(perf_lib.summarize(
             cand['scenarios']['parse.mixed_1mb']['metrics']['time']['samples'])['robust_rel_spread_percent'], 10.0)
         report, rows = self.rows(base=base, cand=cand)
@@ -774,13 +775,97 @@ class InformationalMetricTests(unittest.TestCase):
             ('footprint_growth', 'memory_physical', 'live_malloc_blocks', 'live_malloc_bytes')})
 
 
+class MedianThresholdTests(unittest.TestCase):
+    """The owner, 2026-11-24, asked 5%, 10% or 15% for metrics judged by the
+    median (memory, counts), told that 5% falsely flags about 58% of
+    unchanged builds, 10% about 11% and 15% about 4%: "15". Best-of metrics
+    (times, rates) keep 5%. Both directions, single and confirm mode, the
+    same epsilon."""
+
+    KEY = ('s.x', 'm')
+
+    def single(self, unit, better, base, cand):
+        report = perf_compare.compare(_one_metric(self.KEY[0], self.KEY[1], unit, better, base),
+                                      _one_metric(self.KEY[0], self.KEY[1], unit, better, cand))
+        return report['rows'][0]
+
+    def confirm(self, unit, better, base, cand):
+        def runs(sample_lists, start, side):
+            return [_run_result({self.KEY: s}, '20261122T21%02d00Z' % (start + 2 * i),
+                                uncommitted=(['x.m'] if side == 'cand' else []), unit=unit, better=better)
+                    for i, s in enumerate(sample_lists)]
+        report = perf_compare.compare_confirm(runs(base, 0, 'base'), runs(cand, 1, 'cand'))
+        return report['rows'][0]
+
+    def test_exactly_15_percent_is_no_change_for_a_median_metric_both_directions(self):
+        for unit in ('kB', 'count', 'u'):
+            for better, worse, better_value, just_worse, just_better in (
+                    ('lower', 115.0, 85.0, 115.01, 84.99), ('higher', 85.0, 115.0, 84.99, 115.01)):
+                row = self.single(unit, better, [100.0] * 5, [worse] * 5)
+                self.assertEqual(row['statistic'], 'median')
+                self.assertEqual(row['change_percent'], 15.0)
+                self.assertEqual(row['verdict'], 'no change', (unit, better))
+                self.assertEqual(self.single(unit, better, [100.0] * 5, [better_value] * 5)['verdict'],
+                                 'no change', (unit, better))
+                self.assertEqual(self.single(unit, better, [100.0] * 5, [just_worse] * 5)['verdict'],
+                                 'suspected regression', (unit, better))
+                self.assertEqual(self.single(unit, better, [100.0] * 5, [just_better] * 5)['verdict'],
+                                 'improvement', (unit, better))
+
+    def test_a_median_metric_10_percent_worse_is_no_change(self):
+        self.assertEqual(self.single('kB', 'lower', [100.0] * 5, [110.0] * 5)['verdict'], 'no change')
+        self.assertEqual(self.single('kB', 'lower', [100.0] * 5, [90.0] * 5)['verdict'], 'no change')
+
+    def test_15_percent_from_values_not_exactly_representable_is_no_change(self):
+        base = 438784.0  # the baseline's app.stress_normal_10tabs rss_steady, kB
+        self.assertLess(perf_compare._percent_worse('lower', base * 0.85, base), -15.0)
+        self.assertEqual(self.single('kB', 'lower', [base] * 5, [base * 0.85] * 5)['verdict'], 'no change')
+        self.assertEqual(self.single('kB', 'lower', [base] * 5, [base * 1.15] * 5)['verdict'], 'no change')
+        self.assertEqual(self.single('kB', 'lower', [base] * 5, [base * 0.8499] * 5)['verdict'], 'improvement')
+        self.assertEqual(self.single('kB', 'lower', [base] * 5, [base * 1.1501] * 5)['verdict'],
+                         'suspected regression')
+
+    def test_timings_and_rates_keep_5_percent(self):
+        for unit, better, inside, outside in (('s', 'lower', 105.0, 106.0), ('ms', 'lower', 105.0, 105.01),
+                                              ('iterations/s', 'higher', 95.0, 94.0)):
+            row = self.single(unit, better, [100.0] * 5, [inside] * 5)
+            self.assertEqual(row['statistic'], 'best')
+            self.assertEqual(row['verdict'], 'no change', unit)
+            self.assertEqual(self.single(unit, better, [100.0] * 5, [outside] * 5)['verdict'],
+                             'suspected regression', unit)
+
+    def test_confirm_mode_uses_15_percent_for_a_median_metric_and_5_for_a_timing(self):
+        for better, worse, just_worse in (('lower', 115.0, 115.01), ('higher', 85.0, 84.99)):
+            row = self.confirm('kB', better, [[100.0] * 5] * 2, [[worse] * 5] * 2)
+            self.assertEqual(row['change_percent'], 15.0)
+            self.assertEqual(row['verdict'], 'no change', better)
+            self.assertEqual(self.confirm('kB', better, [[100.0] * 5] * 2, [[just_worse] * 5] * 2)['verdict'],
+                             'confirmed regression', better)
+        self.assertEqual(self.confirm('kB', 'lower', [[100.0] * 5] * 2, [[110.0] * 5] * 2)['verdict'],
+                         'no change')
+        self.assertEqual(self.confirm('kB', 'lower', [[100.0] * 5] * 2, [[84.99] * 5] * 2)['verdict'],
+                         'improvement')
+        self.assertEqual(self.confirm('s', 'lower', [[100.0] * 5] * 2, [[106.0] * 5] * 2)['verdict'],
+                         'confirmed regression')
+
+    def test_rule_states_the_threshold(self):
+        self.assertEqual(perf_compare.threshold_for('median'), 15.0)
+        self.assertEqual(perf_compare.threshold_for('best'), 5.0)
+        report = perf_compare.compare(_one_metric('s.x', 'm', 'kB', 'lower', [1.0] * 5),
+                                      _one_metric('s.x', 'm', 'kB', 'lower', [1.0] * 5))
+        self.assertIn('15%', report['rule'])
+        self.assertIn('2026-11-24', report['rule'])
+        self.assertIn('"15"', report['rule'])
+
+
 class ThresholdBoundaryTests(unittest.TestCase):
     """Review B2, rewritten for the owner's rule of 2026-11-23: the threshold
-    is a flat 5% on both sides, in both directions, whatever the noise."""
+    of a best-of metric is a flat 5% on both sides, in both directions,
+    whatever the noise (a median metric's is 15%: MedianThresholdTests)."""
 
     KEY = ('parse.mixed_1mb', 'time')
 
-    def verdict(self, base_samples, cand_samples, better, unit='u'):
+    def verdict(self, base_samples, cand_samples, better, unit='s'):
         base = _constant_result({self.KEY: base_samples}, better=better)
         cand = _constant_result({self.KEY: cand_samples}, better=better)
         for result in (base, cand):
@@ -802,8 +887,9 @@ class ThresholdBoundaryTests(unittest.TestCase):
 
     def test_exactly_5_percent_is_no_change(self):
         # "More than 5%": 5% itself is within. 100 to 105 is exactly 5.0 in
-        # floating point. Both statistics, both directions.
-        for unit in ('u', 's'):
+        # floating point. Both best-of kinds, both directions (a median
+        # metric's 15%: MedianThresholdTests).
+        for unit in ('ms', 's'):
             for better, worse, better_value, just_worse, just_better in (
                     ('lower', 105.0, 95.0, 105.001, 94.999), ('higher', 95.0, 105.0, 94.999, 105.001)):
                 verdict, row = self.verdict([100.0] * 5, [worse] * 5, better, unit)
@@ -820,7 +906,7 @@ class ThresholdBoundaryTests(unittest.TestCase):
         # change; a real step past 5% still counts.
         base = 2.93073  # the baseline's best draw.attributed_strings_mono, ms
         self.assertGreater(perf_compare._percent_worse('lower', base * 1.05, base), 5.0)
-        for unit in ('ms', 'u'):
+        for unit in ('ms', 's'):
             self.assertEqual(self.verdict([base] * 5, [base * 1.05] * 5, 'lower', unit)[0], 'no change', unit)
             self.assertEqual(self.verdict([base] * 5, [base * 0.95] * 5, 'lower', unit)[0], 'no change', unit)
             self.assertEqual(self.verdict([base] * 5, [base * 1.0501] * 5, 'lower', unit)[0],
@@ -831,7 +917,7 @@ class ThresholdBoundaryTests(unittest.TestCase):
         self.assertEqual(self.verdict([rate] * 5, [rate * 1.05] * 5, 'higher', 'iterations/s')[0], 'no change')
 
     # Noise of 2.9652% (MAD 2 around a median of 100). Before 2026-11-23
-    # 3 x noise = 8.8956% was the threshold of a median metric; now 5%.
+    # 3 x noise = 8.8956% widened the threshold; now a best-of metric's is 5%.
     NOISY = [98.0, 98.0, 98.0, 100.0, 100.0, 100.0, 100.0, 102.0, 102.0, 102.0]
 
     def scaled(self, k):
@@ -859,8 +945,8 @@ class ThresholdBoundaryTests(unittest.TestCase):
         # inconclusive. Now only fewer than five samples does.
         over = [93.2] * 3 + [100.0] * 4 + [106.8] * 3
         self.assertGreater(perf_lib.summarize(over)['robust_rel_spread_percent'], 10.0)
-        self.assertEqual(self.verdict(over, over, 'lower')[0], 'no change')
-        self.assertEqual(self.verdict(over, [x * 1.06 for x in over], 'lower')[0], 'suspected regression')
+        self.assertEqual(self.verdict(over, over, 'lower', 'u')[0], 'no change')
+        self.assertEqual(self.verdict(over, [x * 1.16 for x in over], 'lower', 'u')[0], 'suspected regression')
 
 
 def _one_metric(scenario, metric, unit, better, samples, summary=None):
@@ -991,16 +1077,18 @@ class BestSampleTests(unittest.TestCase):
         self.assertEqual(row['baseline_best'], 100.0)
         self.assertEqual(row['candidate_best'], 90.0)
 
-    def test_count_metric_is_judged_on_the_median_against_a_flat_5_percent(self):
+    def test_count_metric_is_judged_on_the_median_against_a_flat_15_percent(self):
         # The owner, 2026-11-23, on memory and counts judged by the median:
-        # "That's fine". No noise rule: 10.08% noise is neither inconclusive
-        # nor a wider threshold.
+        # "That's fine"; 2026-11-24, on their threshold: "15". No noise
+        # rule: 10.08% noise is neither inconclusive nor a wider threshold.
         noisy = [93.2] * 3 + [100.0] * 4 + [106.8] * 3
         _, row = self.row('count', 'lower', noisy, noisy, scenario='memory.x', metric='blocks')
         self.assertEqual(row['statistic'], 'median')
         self.assertEqual(row['verdict'], 'no change')
-        _, row = self.row('count', 'lower', noisy, [x * 1.06 for x in noisy], scenario='memory.x', metric='blocks')
+        _, row = self.row('count', 'lower', noisy, [x * 1.16 for x in noisy], scenario='memory.x', metric='blocks')
         self.assertEqual(row['verdict'], 'suspected regression')
+        _, row = self.row('count', 'lower', noisy, [x * 1.14 for x in noisy], scenario='memory.x', metric='blocks')
+        self.assertEqual(row['verdict'], 'no change')
 
     def test_old_format_file_without_best_is_computed_from_samples(self):
         # Every result file has samples; older ones have no 'best' in the
@@ -1054,7 +1142,8 @@ class FlatThresholdTests(unittest.TestCase):
     more than 5% slower means check it and triggers a back-to-back run; only
     a slowdown that survives the back-to-back run counts": "Sure simplicity
     is good". No per-scenario variation: the threshold is 5% for every
-    compared metric. (These replace the tests of the per-scenario variation
+    best-of metric and 15% for every median metric (the owner, 2026-11-24:
+    "15"). (These replace the tests of the per-scenario variation
     rule of 2026-11-22; each keeps its data and states the new verdict.)"""
 
     def row(self, unit, better, base_samples, cand_samples, scenario='s.x', metric='m'):
@@ -1131,11 +1220,11 @@ class FlatThresholdTests(unittest.TestCase):
         self.assertEqual(self.row('iterations/s', 'higher', base, [94.99] * 5)[1]['verdict'],
                          'suspected regression')
 
-    def test_median_metric_threshold_is_5_percent_whatever_the_spread(self):
+    def test_median_metric_threshold_is_15_percent_whatever_the_spread(self):
         noisy = [98.0, 98.0, 98.0, 100.0, 100.0, 100.0, 100.0, 102.0, 102.0, 102.0]
-        self.assertEqual(self.row('kB', 'lower', noisy, [x * 1.06 for x in noisy])[1]['verdict'],
+        self.assertEqual(self.row('kB', 'lower', noisy, [x * 1.16 for x in noisy])[1]['verdict'],
                          'suspected regression')
-        self.assertEqual(self.row('kB', 'lower', noisy, [x * 1.04 for x in noisy])[1]['verdict'], 'no change')
+        self.assertEqual(self.row('kB', 'lower', noisy, [x * 1.14 for x in noisy])[1]['verdict'], 'no change')
 
     def test_suspected_regression_tells_the_reader_to_confirm(self):
         report, _ = self.row('s', 'lower', STEADY, [x * 1.08 for x in STEADY])
@@ -1199,8 +1288,9 @@ def _run_result(samples_by_key, created, unit='s', better='lower', commit='a' * 
 class ConfirmTests(unittest.TestCase):
     """Part two of the owner's rule: a suspected regression counts only if it
     shows again when both versions are run back to back on one machine.
-    Since 2026-11-23: pooled against pooled with a flat 5%, and worse in
-    every candidate run than in every base run; no variation measure."""
+    Since 2026-11-23: pooled against pooled with a flat 5% (15% for a
+    median metric since 2026-11-24), and worse in every candidate run than
+    in every base run; no variation measure."""
 
     KEY = ('s.x', 'm')
 
@@ -1277,37 +1367,37 @@ class ConfirmTests(unittest.TestCase):
         self.assertEqual(rows[self.KEY]['verdict'], 'not confirmed')
 
     def test_exactly_5_percent_pooled_is_no_change(self):
-        for unit, better, worse, just_worse in (('s', 'lower', 105.0, 105.01), ('kB', 'lower', 105.0, 105.01),
+        for unit, better, worse, just_worse in (('s', 'lower', 105.0, 105.01), ('kB', 'lower', 115.0, 115.01),
                                                 ('iterations/s', 'higher', 95.0, 94.99)):
             report, rows = self.confirm([[100.0] * 5] * 2, [[worse] * 5] * 2, unit=unit, better=better)
-            self.assertEqual(rows[self.KEY]['change_percent'], 5.0)
+            self.assertEqual(rows[self.KEY]['change_percent'], 15.0 if unit == 'kB' else 5.0)
             self.assertEqual(rows[self.KEY]['verdict'], 'no change', unit)
             report, rows = self.confirm([[100.0] * 5] * 2, [[just_worse] * 5] * 2, unit=unit, better=better)
             self.assertEqual(rows[self.KEY]['verdict'], 'confirmed regression', unit)
 
     def test_5_percent_pooled_from_values_not_exactly_representable_is_no_change(self):
         base = 2.93073
-        for unit in ('ms', 'kB'):
-            report, rows = self.confirm([[base] * 5] * 2, [[base * 1.05] * 5] * 2, unit=unit)
+        for unit, k in (('ms', 0.05), ('kB', 0.15)):
+            report, rows = self.confirm([[base] * 5] * 2, [[base * (1 + k)] * 5] * 2, unit=unit)
             self.assertEqual(rows[self.KEY]['verdict'], 'no change', unit)
-            report, rows = self.confirm([[base] * 5] * 2, [[base * 0.95] * 5] * 2, unit=unit)
+            report, rows = self.confirm([[base] * 5] * 2, [[base * (1 - k)] * 5] * 2, unit=unit)
             self.assertEqual(rows[self.KEY]['verdict'], 'no change', unit)
-            report, rows = self.confirm([[base] * 5] * 2, [[base * 1.0501] * 5] * 2, unit=unit)
+            report, rows = self.confirm([[base] * 5] * 2, [[base * (1.0001 + k)] * 5] * 2, unit=unit)
             self.assertEqual(rows[self.KEY]['verdict'], 'confirmed regression', unit)
 
     def test_a_median_metric_is_judged_run_by_run_on_each_run_s_median_not_its_best(self):
-        # Run medians: base 100 and 101, candidate 110 and 111, so worse run
+        # Run medians: base 100 and 101, candidate 120 and 121, so worse run
         # by run. Run bests order the other way: each candidate run has one
         # fast sample (90), better than every base run's best (99). Judged
         # on the bests, a candidate run would be as good as a base run and
         # this would read not confirmed.
         base = [[99.0, 100.0, 100.0, 100.0, 104.0], [99.0, 101.0, 101.0, 101.0, 105.0]]
-        cand = [[90.0, 110.0, 110.0, 110.0, 112.0], [90.0, 111.0, 111.0, 111.0, 113.0]]
+        cand = [[90.0, 120.0, 120.0, 120.0, 122.0], [90.0, 121.0, 121.0, 121.0, 123.0]]
         report, rows = self.confirm(base, cand, unit='kB')
         row = rows[self.KEY]
         self.assertEqual(row['statistic'], 'median')
         self.assertEqual(row['baseline_runs'], [100.0, 101.0])
-        self.assertEqual(row['candidate_runs'], [110.0, 111.0])
+        self.assertEqual(row['candidate_runs'], [120.0, 121.0])
         self.assertEqual(row['verdict'], 'confirmed regression')
         # And the mirror: a best-of metric is judged on each run's best.
         # Run bests 1.0 and 1.01 against 1.1 and 1.11; run medians mixed.
@@ -1335,31 +1425,31 @@ class ConfirmTests(unittest.TestCase):
         self.assertEqual(report['exit_code'], 1)
 
     def test_median_metric_mixed_run_by_run_is_not_confirmed(self):
-        # Pooled medians 10% apart, but one candidate run's median (105) is
-        # better than one base run's (106): the direction does not hold run
+        # Pooled medians 20% apart, but one candidate run's median (119) is
+        # better than one base run's (121): the direction does not hold run
         # by run.
-        base = [[100.0] * 5, [100.0] * 5, [106.0] * 5]
-        cand = [[110.0] * 5, [110.0] * 5, [105.0] * 5]
+        base = [[100.0] * 5, [100.0] * 5, [121.0] * 5]
+        cand = [[120.0] * 5, [120.0] * 5, [119.0] * 5]
         report, rows = self.confirm(base, cand, unit='kB')
         row = rows[self.KEY]
         self.assertEqual(row['statistic'], 'median')
-        self.assertGreater(row['change_percent'], 5.0)
+        self.assertGreater(row['change_percent'], 15.0)
         self.assertEqual(row['verdict'], 'not confirmed')
         self.assertEqual(report['exit_code'], 0)
         self.assertTrue(any('not confirmed' in w and 's.x' in w for w in report['warnings']), report['warnings'])
 
     def test_median_metric_consistent_run_by_run_is_confirmed(self):
-        report, rows = self.confirm([[100.0] * 5, [101.0] * 5], [[110.0] * 5, [109.0] * 5], unit='kB')
+        report, rows = self.confirm([[100.0] * 5, [101.0] * 5], [[120.0] * 5, [119.0] * 5], unit='kB')
         self.assertEqual(rows[self.KEY]['verdict'], 'confirmed regression')
         self.assertEqual(report['exit_code'], 1)
 
     def test_improvement_must_also_hold_run_by_run(self):
-        report, rows = self.confirm([[100.0] * 5, [101.0] * 5], [[90.0] * 5, [91.0] * 5], unit='kB')
+        report, rows = self.confirm([[100.0] * 5, [101.0] * 5], [[80.0] * 5, [81.0] * 5], unit='kB')
         self.assertEqual(rows[self.KEY]['verdict'], 'improvement')
-        report, rows = self.confirm([[100.0] * 5, [100.0] * 5, [94.0] * 5], [[90.0] * 5, [90.0] * 5, [95.0] * 5],
+        report, rows = self.confirm([[100.0] * 5, [100.0] * 5, [79.0] * 5], [[80.0] * 5, [80.0] * 5, [81.0] * 5],
                                     unit='kB')
         row = rows[self.KEY]
-        self.assertGreater(-row['change_percent'], 5.0)
+        self.assertGreater(-row['change_percent'], 15.0)
         self.assertEqual(row['verdict'], 'no change')
         self.assertIn('run by run', row['note'])
 
@@ -1380,17 +1470,17 @@ class ConfirmTests(unittest.TestCase):
         self.assertEqual(rows[self.KEY]['verdict'], 'not confirmed')
         self.assertEqual(report['exit_code'], 0)
 
-    def test_median_metric_threshold_is_5_percent_whatever_the_runs_or_their_noise(self):
-        # Run medians 100 and 108 against 110 and 111: pooled 104 against
-        # 110.5, 6.25% worse, and worse run by run. Under the rule of
-        # 2026-11-22 the 8% between the base runs was the threshold.
-        report, rows = self.confirm([[100.0] * 5, [108.0] * 5], [[110.0] * 5, [111.0] * 5], unit='kB')
-        self.assertAlmostEqual(rows[self.KEY]['change_percent'], 100.0 * 6.5 / 104, places=6)
+    def test_median_metric_threshold_is_15_percent_whatever_the_runs_or_their_noise(self):
+        # Run medians 100 and 108 against 120 and 121: pooled 104 against
+        # 120.5, 15.87% worse, and worse run by run. Under the rule of
+        # 2026-11-22 the 8% between the base runs widened the threshold.
+        report, rows = self.confirm([[100.0] * 5, [108.0] * 5], [[120.0] * 5, [121.0] * 5], unit='kB')
+        self.assertAlmostEqual(rows[self.KEY]['change_percent'], 100.0 * 16.5 / 104, places=6)
         self.assertEqual(rows[self.KEY]['verdict'], 'confirmed regression')
-        # A noisy base run (3 x its robust spread was 8.9%): 7% worse in
+        # A noisy base run (3 x its robust spread was 8.9%): 17% worse in
         # every run is confirmed.
         noisy = [98.0, 98.0, 98.0, 100.0, 100.0, 100.0, 100.0, 102.0, 102.0, 102.0]
-        report, rows = self.confirm([noisy, [100.0] * 10], [[107.0] * 10, [107.0] * 10], unit='kB')
+        report, rows = self.confirm([noisy, [100.0] * 10], [[117.0] * 10, [117.0] * 10], unit='kB')
         self.assertEqual(rows[self.KEY]['verdict'], 'confirmed regression')
         # And a median run over 10% noise is not inconclusive.
         over = [93.2] * 3 + [100.0] * 4 + [106.8] * 3
@@ -1610,7 +1700,7 @@ class UnsteadyMetricTests(unittest.TestCase):
         self.assertFalse([w for w in report['warnings'] if 'unsteady' in w], report['warnings'])
 
     def test_the_same_scenario_s_memory_metrics_are_still_compared(self):
-        report = self.pair([400000.0] * 5, [440000.0] * 5, metric='rss_peak', unit='kB', better='lower')
+        report = self.pair([400000.0] * 5, [480000.0] * 5, metric='rss_peak', unit='kB', better='lower')
         self.assertEqual(report['rows'][0]['verdict'], 'suspected regression')
         self.assertEqual(report['exit_code'], 1)
 

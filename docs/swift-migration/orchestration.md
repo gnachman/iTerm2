@@ -107,9 +107,10 @@ Do these every time a session begins, before anything else.
       runs `tools/run_tests.expect -parallel` under the whole-suite lock,
       section 3) in the full-suite lane (`lane_clone.py acquire --full-suite`) on the new
       `HEAD`, so that a failure that arrived with the new code is recorded
-      as such and not blamed on the night's first unit. If those commits
-      touched a unit in progress or its dependencies, also run gate steps 7
-      and 8 ([README.md §5](README.md)) for it.
+      as such and not blamed on the night's first unit. Units an earlier
+      session left *landed, closing checks pending* (`claims.md`) get the
+      closing checks ([lifecycle.md §5](lifecycle.md)) before any new
+      unit starts.
    7. **Lanes.** `nightly_start.sh` released lanes left held by a dead
       session after the refresh; a free lane is reset to the new `HEAD`
       when it is next acquired. A lane you still hold from before is
@@ -142,7 +143,12 @@ Work out which stage the migration is in, in this order:
    2026-11-22 ([lifecycle.md §3](lifecycle.md)): one unit in the night of
    2026-11-23, then the ordinary usage rule.
 4. **Further units.** Resume anything in `claims.md` that is in progress
-   and not parked. Otherwise take the next eligible unit from the inventory
+   and not parked. Otherwise take the next eligible unit. When
+   `qualify_unit.py --classify` lists eligible trivial units, prefer a
+   batch of them (the owner, 2026-11-24: “Batch trivial units”), smallest
+   body first (chosen by the migration and confirmed by the owner on
+   2026-11-24: “keep them as is”), each its own commit with its own
+   review, under the session's one set of closing checks; otherwise take the inventory
    script's ordering. A unit is eligible when:
    - it is in the current tier, or it is a giant-class extraction;
    - it is not a hot path, and not listed in `hot-paths.md`;
@@ -150,9 +156,18 @@ Work out which stage the migration is in, in this order:
      ([interop.md](interop.md));
    - it is not parked.
 
-   Assign its path as [lifecycle.md §3](lifecycle.md) says, including
-   where the light path may be assigned. Light-path units with no
-   dependency on each other may run at once, each in its own lane.
+   Assign its path as [lifecycle.md §3](lifecycle.md) says. At night,
+   trivial and light units with no dependency on each other may be
+   authored at once, each in its own lane, at most three (trivial units:
+   the owner, 2026-11-24, “allow it”; light units were already allowed;
+   three is the migration's number, since each author builds). Commits land one at a time, each gated on the tree it
+   lands on; whole suites serialize through their lock. When a later
+   unit's project-file change no longer applies, run `pbxproj_swap.py`
+   again in your checkout ([lifecycle.md §3](lifecycle.md), "The project
+   file"). By day the owner's one heavy job at a time (section 3) holds,
+   so units are authored one at a time. Start no unit that
+   cannot be committed before the session must start its closing checks
+   (the prompt names the time; [workflow.md §4](workflow.md)).
 5. **The current tier is nearly exhausted.** Queue a tier-transition request
    in [owner-queue.md](owner-queue.md) with what was done and any crash
    reports attributed to its ports. Keep working on what remains, on
@@ -180,15 +195,16 @@ produces a commit goes through this sequence.
    the step into smaller commits. If that is not possible, park the unit
    ([workflow.md §2](workflow.md)) and return to section 2.
 8. **When a review has no blocking findings**, run the gate
-   ([README.md §5](README.md)), steps 1 to 6. You run it, not a subagent,
+   ([README.md §5](README.md)). You run it, not a subagent,
    in the full-suite lane ("Build lanes" below).
    If the gate fails, the failure goes back to the author as a finding and
    the loop continues.
 9. **Commit** (section 6).
-10. **At the close of a unit**, run gate steps 7 and 8 (for light-path
-    units, as [lifecycle.md §3](lifecycle.md) defers them), do the closing
-    updates in [lifecycle.md §1](lifecycle.md), step 8, and remove the
-    unit from `claims.md`.
+10. **At the close of a unit**, do the closing updates in
+    [lifecycle.md §1](lifecycle.md), step 8, and mark the unit *landed,
+    closing checks pending* in `claims.md`. Once per session, after the
+    last unit, run the closing checks ([lifecycle.md §5](lifecycle.md));
+    a unit leaves `claims.md` when they pass over it.
 
 **Build lanes.** Agents that change code or run builds each work in their
 own checkout, so that they neither wait on one shared `Build/` nor
@@ -380,14 +396,14 @@ script's header is its manual):
   ModernTests/Class[/test]` (repeatable) leaves a class or test out, so a
   sanitized whole suite can run without a test the owner has excluded.
   `fast_tests.sh` runs two workers too, `--workers N` to change it.
-- `sanitizer_tests.sh nullability` with no test names (gate step 7's
-  whole suite) does not abort on a violation: the tests go on and the run
+- `sanitizer_tests.sh nullability` with no test names (the closing
+  checks' whole suite) does not abort on a violation: the tests go on and the run
   fails on every report outside the nullability baseline
   (`docs/swift-migration/nullability-baseline.tsv`, [nullability.md
   §7](nullability.md)), listing the tests where the stack shows them.
-  Judging step 7 against the baseline was proposed on 2026-11-23 and
+  Judging this run against the baseline was proposed on 2026-11-23 and
   awaits the owner's confirmation (owner-queue.md Q26); until he answers,
-  a report outside the baseline blocks a unit's close. It was first
+  a report outside the baseline fails the closing checks. It was first
   generated on 2026-11-23 (69 entries). Generate or refresh it in the
   checkout that ran the whole-suite `--collect` run, with that checkout's
   script (or pass `--root`):
@@ -424,7 +440,8 @@ Give it:
   topic files for this step, which you name explicitly from the table in
   [README.md §1](README.md).
 - The dossier (`units/<name>.md`), or for step 2, the instruction to write
-  it in full.
+  it within its cap ([lifecycle.md §4](lifecycle.md)); a trivial unit has
+  none, and gets its `qualify_unit.py` output instead.
 - `traps.md` and `bugs.md`.
 - The exact scope: which files and which methods, and what must not be
   touched.
@@ -447,7 +464,8 @@ continue or reuse a reviewer. Give it:
   topic files for this commit kind, named explicitly.
 - The dossier, the diff, the code before and after, `traps.md`, and the
   tool outputs the commit kind requires (runtime snapshot, interface
-  snapshot, lint results, coverage report).
+  snapshot, coverage report). Lint results come from the closing checks,
+  not per commit.
 - Its task, in two parts: find anything incorrect, and verify that every
   documented procedure that applies to this commit was followed. For a
   `port`, the first instruction is to find a behavioral difference with an
@@ -489,10 +507,11 @@ rejected" section.
 ## 7. Stopping
 
 Stop when the budget is reached, when usage cannot be read, when the owner
-begins using the checkout, or when there is no eligible work. Follow the
-five steps under "Stopping cleanly" in [workflow.md §4](workflow.md): start
-nothing new, let running subagents finish, commit what is complete, save
-other work as a patch and record it in `claims.md`, and restore the tree.
+begins using the checkout, or when there is no eligible work. Run the
+closing checks ([lifecycle.md §5](lifecycle.md)) over what landed, then
+follow "Stopping cleanly" in [workflow.md §4](workflow.md): start nothing
+new, let running subagents finish, commit what is complete, save other
+work as a patch and record it in `claims.md`, and restore the tree.
 
 Before you finish, confirm: `git status` is clean, the tree builds, every
 unit you touched has an accurate entry in `claims.md` or none, and
@@ -627,9 +646,10 @@ Then, in any order that respects dependencies:
 - [x] Fast test tier defined, without the address sanitizer, with its time
       budget: 300 s with two test workers (the owner, 2026-11-23: “Let it
       go for 300 seconds”), replacing the 77 s measured with xcodebuild's
-      own worker count ([test-tiers.md §1](test-tiers.md)). The gate runs
-      the whole suite at step 3 until the owner switches it to the fast
-      tier.
+      own worker count ([test-tiers.md §1](test-tiers.md)). The gate
+      runs the plain whole suite on light and full commits, not the fast
+      tier ([README.md §5](README.md), step 3), and once more among the
+      closing checks ([lifecycle.md §5](lifecycle.md)).
 - [x] Nil-lock assertions added to the existing Objective-C
       ([concurrency.md §2](concurrency.md)).
 - [x] Performance and memory baselines ([phase0.md §8](phase0.md);

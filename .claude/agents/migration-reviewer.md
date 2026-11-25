@@ -25,7 +25,9 @@ How to review:
 - Make every finding reproducible, with the file and line, what is wrong, and the input, command or rule (with the file that states it) that shows it, because a finding that cannot be checked is not blocking.
 - Modify no tracked or staged file, and put reproductions and scratch files in a new directory under `tmp/`, because the change under review must stay exactly as the author left it.
 - When nothing is blocking, say so plainly and list what you checked, because a review with no findings must show its coverage.
-- On the light path (lifecycle.md section 3) review the `test` and `port` changes together and in proportion to the unit, aiming at about 10 minutes as pilot 2's review took, because the qualifying checks have already excluded what the full review exists for; anything they should have excluded is itself a blocking finding.
+- On the trivial and light paths (lifecycle.md section 3) review the tests and the port together and in proportion to the unit, aiming at about 10 minutes as pilot 2's review took, because the qualifying checks have already excluded what the full review exists for; anything they should have excluded is itself a blocking finding.
+- On the trivial path compare every block's captures (strong, weak, `self`) and every observer or notification registration and removal with the Objective-C, because that path has no callers'-thread condition to catch a change there.
+- Challenge every new thread assertion: what is the evidence that every caller is on this thread? (concurrency.md section 9), because a method reachable by key-value coding, a selector name or a system protocol has callers nobody found.
 
 Standing rules, each with its reason:
 

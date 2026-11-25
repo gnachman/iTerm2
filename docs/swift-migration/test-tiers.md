@@ -86,10 +86,10 @@ of `tools/run_tests.expect -parallel`, and two workers cannot meet 77 s:
 the budget run's 156 s of tests take at least about 78 s on two, about
 100 s with the build. The 300 s is the constant `FAST_TIER_BUDGET_SECONDS`
 in `fast_tests.sh`, which prints the whole command's wall time against it;
-going over fails the run only with `--enforce-budget`. The gate does not
-run the fast tier yet: step 3 runs the whole suite until the owner
-switches it (below), so the budget applies to `fast_tests.sh` runs, and to
-the gate only from that switch.
+going over fails the run only with `--enforce-budget`. The gate runs no
+suite since 2026-11-24 (the whole suite is a closing check,
+[lifecycle.md §5](lifecycle.md)), so the budget applies to `fast_tests.sh`
+runs.
 
 | | Run 4 (the budget's run) |
 |---|---|
@@ -331,8 +331,9 @@ are under one second: enforcing the ceiling run by run would fail the gate at
 random. Should the ceiling be judged on the median of several runs, or should
 those tests be fixed first and the ceiling then enforced per run?
 
-Until the owner switches gate step 3 ([README.md §5](README.md)) to the
-fast tier, the gate runs the whole suite.
+The gate runs the plain whole suite on light and full code commits
+([README.md §5](README.md), step 3), and it runs once more per session
+among the closing checks.
 
 ## 4. Work list: the slow tests
 

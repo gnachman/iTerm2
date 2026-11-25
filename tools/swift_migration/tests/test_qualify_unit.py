@@ -14,7 +14,9 @@ particular conditions. No xcodebuild, nothing written to tmp/codedb.
 import io
 import json
 import os
+import shutil
 import sys
+import tempfile
 import unittest
 from unittest import mock
 
@@ -186,9 +188,121 @@ add_class(QUALIFY_FILES, 'iTermQTimer', '\n- (void)qtimerStart;',
           '- (void)qtimerStart {\n    [NSTimer scheduledTimerWithTimeInterval:1 repeats:NO block:^(NSTimer *t) {\n'
           '    }];\n}\n')
 
+
+def body_method(sel, lines):
+    """A method whose body is lines long, opening brace to closing brace."""
+    return '- (int)%s {\n%s    return 0;\n}\n' % (sel, ''.join('    // body line\n' for _ in range(lines - 3)))
+
+
+# The trivial path (conditions T1 to T8).
+# The shape of the category the trivial path was made for: two methods, one
+# reached by key-value coding, on a class whose own file is large.
+add_class(QUALIFY_FILES, 'iTermQApp', '\n- (int)qappValue;', one_line_method('qappValue', 20))
+QUALIFY_FILES['sources/QAppScripting.h'] = ('#import "QApp.h"\n@interface iTermQApp (Scripting)\n'
+                                            '- (id)currentScriptingThing;\n@end\n')
+QUALIFY_FILES['sources/QAppScripting.m'] = (
+    '#import "QAppScripting.h"\n@implementation iTermQApp (Scripting)\n'
+    '- (id)valueForUndefinedKey:(NSString *)key {\n    return @[];\n}\n'
+    '- (id)currentScriptingThing {\n    return @([self qappValue]);\n}\n@end\n')
+# A category whose body has a block, which ARC copies differently.
+QUALIFY_FILES['sources/QAppBlocks.m'] = (
+    '#import "QApp.h"\n@implementation iTermQApp (Blocks)\n'
+    '- (void)qappRun {\n    void (^b)(void) = ^{\n    };\n    b();\n}\n@end\n')
+# A category in a file named for its class: part of the class's unit, and
+# also classified on its own, since it can move alone.
+QUALIFY_FILES['sources/iTermQApp+Extra.m'] = ('#import "QApp.h"\n@implementation iTermQApp (Extra)\n'
+                                              '- (int)qappExtra {\n    return 2;\n}\n@end\n')
+# A category of an SDK class, a unit of its own.
+QUALIFY_FILES['sources/NSString+QExtra.h'] = ('#import <Foundation/Foundation.h>\n@interface NSString (QExtra)\n'
+                                              '- (NSString *)qextraTrimmed;\n@end\n')
+QUALIFY_FILES['sources/NSString+QExtra.m'] = (
+    '#import "NSString+QExtra.h"\n@implementation NSString (QExtra)\n- (NSString *)qextraTrimmed {\n'
+    '    return [self stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];\n}\n@end\n')
+# The boundary at 50 body lines: two methods of 25, then one line more.
+add_class(QUALIFY_FILES, 'iTermQFifty', '\n- (int)qfiftyA;\n- (int)qfiftyB;',
+          body_method('qfiftyA', 25) + body_method('qfiftyB', 25))
+add_class(QUALIFY_FILES, 'iTermQFiftyOne', '\n- (int)qfiftyOneA;\n- (int)qfiftyOneB;',
+          body_method('qfiftyOneA', 25) + body_method('qfiftyOneB', 26))
+# T2: a static variable that is not const (and one that is, which passes).
+add_class(QUALIFY_FILES, 'iTermQStatic', '\n- (int)qstaticNext;',
+          '- (int)qstaticNext {\n    return ++gQStaticCount;\n}\n')
+QUALIFY_FILES['sources/QStatic.m'] = QUALIFY_FILES['sources/QStatic.m'].replace(
+    '@implementation', 'static int gQStaticCount;\nstatic NSString *const kQStaticName = @"q";\n@implementation')
+# T4: ownership code without ARC: a retain, a retained-result family, and
+# the same block in a file without ARC and in one with it.
+add_class(QUALIFY_FILES, 'iTermQRetain', '\n- (id)qretainKeep:(id)x;',
+          '- (id)qretainKeep:(id)x {\n    return [x retain];\n}\n')
+add_class(QUALIFY_FILES, 'iTermQMaker', '\n- (id)newQMakerThing;',
+          '- (id)newQMakerThing {\n    return [[NSObject alloc] init];\n}\n')
+BLOCK_BODY = '- (void)qblockRun {\n    void (^b)(void) = ^{\n    };\n    b();\n}\n'
+add_class(QUALIFY_FILES, 'iTermQBlock', '\n- (void)qblockRun;', BLOCK_BODY)
+add_class(QUALIFY_FILES, 'iTermQBlockArc', '\n- (void)qblockRun;', BLOCK_BODY)
+# T6: a C pointer; and an &error out-parameter, which passes.
+add_class(QUALIFY_FILES, 'iTermQPointer', '\n- (int)qpointerFirst:(int *)values;',
+          '- (int)qpointerFirst:(int *)values {\n    return values[0];\n}\n')
+add_class(QUALIFY_FILES, 'iTermQErrorOut', '\n- (NSString *)qerrorOutRead:(NSString *)path;',
+          '- (NSString *)qerrorOutRead:(NSString *)path {\n    NSError *error = nil;\n'
+          '    NSString *s = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&error];\n'
+          '    return s ?: error.localizedDescription;\n}\n')
+# T8: an Objective-C subclass outside the unit.
+add_class(QUALIFY_FILES, 'iTermQParent', '\n- (int)qparentValue;', one_line_method('qparentValue', 21))
+QUALIFY_FILES['sources/QChild.h'] = '#import "QParent.h"\n@interface iTermQChild : iTermQParent\n@end\n'
+QUALIFY_FILES['sources/QChild.m'] = '#import "QChild.h"\n@implementation iTermQChild\n@end\n'
+# Named in the sdef: that does not stop the trivial path.
+add_class(QUALIFY_FILES, 'iTermQScript', '\n- (int)qscriptValue;', one_line_method('qscriptValue', 22))
+# Two classes in one file: the second's storage and -dealloc stop the
+# first, since a port moves the whole file.
+QUALIFY_FILES['sources/QPair.h'] = ('#import <Foundation/Foundation.h>\n@interface iTermQPairA : NSObject\n'
+                                    '- (int)qpairAValue;\n@end\n@interface iTermQPairB : NSObject\n'
+                                    '@property (nonatomic) int qpairBCount;\n@end\n')
+QUALIFY_FILES['sources/QPair.m'] = ('#import "QPair.h"\n@implementation iTermQPairA\n- (int)qpairAValue {\n'
+                                    '    return 1;\n}\n@end\n@implementation iTermQPairB\n- (void)dealloc {\n'
+                                    '    [super dealloc];\n}\n@end\n')
+# Core Data is stored state: a send to its classes, or a category of an
+# entity's class (the fixture's model maps the entity Thing to iTermThingMO).
+add_class(QUALIFY_FILES, 'iTermQCoreData', '\n- (id)qcoreDataInsert:(NSManagedObjectContext *)context;',
+          '- (id)qcoreDataInsert:(NSManagedObjectContext *)context {\n'
+          '    return [NSEntityDescription insertNewObjectForEntityForName:@"Thing" inManagedObjectContext:context];\n'
+          '}\n', imports='#import <CoreData/CoreData.h>\n')
+QUALIFY_FILES['sources/QThing.h'] = ('#import <Foundation/Foundation.h>\n@interface iTermThingMO : NSObject\n@end\n'
+                                     '@interface iTermThingMO (QAdditions)\n- (NSString *)qthingKey;\n@end\n')
+QUALIFY_FILES['sources/QThingAdditions.m'] = ('#import "QThing.h"\n@implementation iTermThingMO (QAdditions)\n'
+                                              '- (NSString *)qthingKey {\n    return @"k";\n}\n@end\n')
+# An associated object set through a macro another header defines: the
+# text search of the unit's files cannot see it, Clang's AST can.
+QUALIFY_FILES['sources/QSetMacro.h'] = ('#import <objc/runtime.h>\n#define QSET(o, k, v) objc_setAssociatedObject(o, '
+                                          'k, v, OBJC_ASSOCIATION_RETAIN_NONATOMIC)\n')
+add_class(QUALIFY_FILES, 'iTermQAssocMacro', '\n- (void)qassocMacroSet:(id)v;',
+          '- (void)qassocMacroSet:(id)v {\n    QSET(self, @selector(qassocMacroSet:), v);\n}\n',
+          imports='#import "QSetMacro.h"\n')
+# Core Foundation ownership, which a Swift port cannot promise to
+# Objective-C callers, in files compiled with ARC; and a borrowed CGContextRef
+# passing through, which is allowed.
+CG = '#import <CoreGraphics/CoreGraphics.h>\n'
+add_class(QUALIFY_FILES, 'iTermQCFRelease', '\n- (void)qcfFree:(CGColorRef)c;',
+          '- (void)qcfFree:(CGColorRef)c {\n    CGColorRelease(c);\n}\n', imports=CG)
+add_class(QUALIFY_FILES, 'iTermQCFCreate', '\n- (CGColorRef)qcfColor;',
+          '- (CGColorRef)qcfColor {\n    return CGColorCreateGenericRGB(1, 0, 0, 1);\n}\n', imports=CG)
+add_class(QUALIFY_FILES, 'iTermQBridgeTransfer', '\n- (id)qbridgeTake:(CFStringRef)s;',
+          '- (id)qbridgeTake:(CFStringRef)s {\n    return (__bridge_transfer NSString *)s;\n}\n', imports=CG)
+add_class(QUALIFY_FILES, 'iTermQRetainedNew', '\n- (CGImageRef)newQImage;',
+          '- (CGImageRef)newQImage CF_RETURNS_RETAINED {\n    return NULL;\n}\n', imports=CG)
+add_class(QUALIFY_FILES, 'iTermQBorrowedCtx', '\n- (void)qborrowedDraw:(CGContextRef)ctx;',
+          '- (void)qborrowedDraw:(CGContextRef)ctx {\n    CGContextFillRect(ctx, CGRectMake(0, 0, 1, 1));\n}\n',
+          imports=CG)
+ARC_FILES = ('sources/QBlockArc.m', 'sources/QCFRelease.m', 'sources/QCFCreate.m', 'sources/QBridgeTransfer.m',
+             'sources/QRetainedNew.m', 'sources/QBorrowedCtx.m')
+SDEF_CLASS = '    <class name="qscript" code="Qscr" plural="qscripts">\n      <cocoa class="iTermQScript"/>\n    </class>\n'
+
 EXTRA_MAINS = tuple(f for f in QUALIFY_FILES if f.endswith(('.m', '.mm')) and f.startswith('sources/') and
                     f != 'sources/ShyUnbuilt.m')
 EXTRA_TEST_MAINS = ('ModernTests/iTermQLeafTests.m',)
+# Modules keep each file's AST dump small (Foundation is not dumped), as in
+# the app's own compile commands; one file is compiled with ARC.
+MODULE_CACHE = tempfile.mkdtemp(prefix='qualify-test-modcache-')
+EXTRA_ARGS = dict((m, ['-fmodules', '-fmodules-cache-path=' + MODULE_CACHE]) for m in EXTRA_MAINS)
+for _m in ARC_FILES:
+    EXTRA_ARGS[_m] = EXTRA_ARGS[_m] + ['-fobjc-arc']
 
 
 def write_qualify_files(root):
@@ -197,17 +311,27 @@ def write_qualify_files(root):
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, 'w') as f:
             f.write(text)
+    sdef = os.path.join(root, 'iTerm2.sdef')
+    with open(sdef) as f:
+        text = f.read()
+    with open(sdef, 'w') as f:
+        f.write(text.replace('  </suite>', SDEF_CLASS + '  </suite>'))
+
+
+def build_fixture():
+    return harness.build(edit=write_qualify_files, extra_mains=EXTRA_MAINS, extra_test_mains=EXTRA_TEST_MAINS,
+                         extra_args=EXTRA_ARGS)
 
 
 def tearDownModule():
     harness.cleanup()
+    shutil.rmtree(MODULE_CACHE, ignore_errors=True)
 
 
 class QualifyTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.root, cls.paths = harness.build(edit=write_qualify_files, extra_mains=EXTRA_MAINS,
-                                            extra_test_mains=EXTRA_TEST_MAINS)
+        cls.root, cls.paths = build_fixture()
 
     def args(self):
         p = self.paths
@@ -432,6 +556,182 @@ class QualifyTest(unittest.TestCase):
         self.assertEqual(d['qualifying'], len(names))
         self.assertGreater(d['considered'], len(names))
 
+    # --- The trivial path.
+
+    def trivial_statuses(self, d):
+        return dict((c['id'], c['status']) for c in d['trivial_conditions'])
+
+    def trivial_condition(self, d, tid):
+        return next(c for c in d['trivial_conditions'] if c['id'] == tid)
+
+    def test_every_trivial_condition_is_reported(self):
+        status, d = self.run_json('iTermQScript')
+        self.assertEqual([c['id'] for c in d['trivial_conditions']], list(qu.TRIVIAL_CONDITIONS))
+        for c in d['trivial_conditions']:
+            self.assertIn(c['status'], ('PASS', 'FAIL', 'MANUAL'))
+            self.assertTrue(c['evidence'] and c['how'], c['id'])
+
+    def test_named_in_the_sdef_but_trivial(self):
+        status, d = self.run_json('iTermQScript')
+        self.assertEqual(self.statuses(d)['3b'], 'FAIL')
+        self.assertEqual(set(self.trivial_statuses(d).values()), {'PASS'}, d['trivial_conditions'])
+        self.assertEqual(d['path'], 'trivial')
+        self.assertEqual(d['body_lines'], 3)
+        self.assertEqual(status, 1, 'the exit status still answers the light conditions')
+        status, text = self.run_text('iTermQScript')
+        self.assertIn('Path: trivial.', text)
+        self.assertRegex(text, r'(?m)^PASS +T1 ')
+
+    def test_reflective_names_do_not_stop_the_trivial_path(self):
+        for cls_name, cid in (('iTermQXib', '3a'), ('iTermQPlist', '3b'), ('iTermQSel', '3f'),
+                              ('iTermQReflect', '3d'), ('iTermQTyped', '2'), ('iTermQBig', '1')):
+            status, d = self.run_json(cls_name)
+            self.assertEqual(self.statuses(d)[cid], 'FAIL', cls_name)
+            self.assertEqual(d['path'], 'trivial', (cls_name, [c for c in d['trivial_conditions']
+                                                               if c['status'] != 'PASS']))
+
+    def test_body_lines_not_file_lines(self):
+        status, d = self.run_json('iTermQBig')
+        self.assertGreater(d['implementation_lines'], 500)
+        self.assertEqual(d['body_lines'], 3)
+
+    def test_the_boundary_at_fifty_body_lines(self):
+        status, d = self.run_json('iTermQFifty')
+        self.assertEqual(d['body_lines'], 50)
+        self.assertEqual(self.trivial_statuses(d)['T1'], 'PASS')
+        self.assertEqual(d['path'], 'trivial')
+        status, d = self.run_json('iTermQFiftyOne')
+        self.assertEqual(d['body_lines'], 51)
+        self.assertEqual(self.trivial_statuses(d)['T1'], 'FAIL')
+        self.assertEqual(d['path'], 'light')
+
+    # Each trivial condition, with a fixture that fails it and no other.
+    TRIVIAL_ALONE = [('T1', 'iTermQFiftyOne'), ('T2', 'iTermQStatic'), ('T2', 'iTermQLeaf'), ('T2', 'iTermQIvar'),
+                     ('T3', 'iTermQLock'), ('T4', 'iTermQRetain'), ('T4', 'iTermQMaker'), ('T4', 'iTermQBlock'),
+                     ('T5', 'iTermQCxx'), ('T6', 'iTermQPointer'), ('T7', 'iTermQLoad'), ('T7', 'iTermQSwizzle'),
+                     ('T8', 'iTermQStore'), ('T8', 'iTermQHot'), ('T8', 'iTermQCoder'), ('T8', 'iTermQParent'),
+                     ('T8', 'iTermQProfileKey'), ('T8', 'iTermQCoreData')]
+
+    def test_every_trivial_condition_fails_alone_on_its_fixture(self):
+        self.assertEqual(sorted(set(t for t, _ in self.TRIVIAL_ALONE)), sorted(qu.TRIVIAL_CONDITIONS))
+        for tid, cls_name in self.TRIVIAL_ALONE:
+            status, d = self.run_json(cls_name)
+            bad = sorted(c['id'] for c in d['trivial_conditions'] if c['status'] != 'PASS')
+            self.assertEqual(bad, [tid], (cls_name, [c for c in d['trivial_conditions'] if c['status'] != 'PASS']))
+            self.assertEqual(self.trivial_statuses(d)[tid], 'FAIL', cls_name)
+            self.assertNotEqual(d['path'], 'trivial', cls_name)
+
+    def test_a_manual_condition_is_never_trivial(self):
+        for cls_name, tid in (('iTermQStoreClient', 'T8'), ('iTermQPerFrame', 'T8'), ('iTermQTimer', 'T3')):
+            status, d = self.run_json(cls_name)
+            self.assertEqual(self.trivial_statuses(d)[tid], 'MANUAL', (cls_name, self.trivial_condition(d, tid)))
+            self.assertNotEqual(d['path'], 'trivial', cls_name)
+
+    def test_the_trivial_evidence_names_what_stops_it(self):
+        status, d = self.run_json('iTermQStatic')
+        text = '\n'.join(self.trivial_condition(d, 'T2')['evidence'])
+        self.assertIn('gQStaticCount', text)
+        self.assertNotIn('kQStaticName', text, 'a const static is not state')
+        status, d = self.run_json('iTermQRetain')
+        self.assertIn('sends retain', '\n'.join(self.trivial_condition(d, 'T4')['evidence']))
+        status, d = self.run_json('iTermQPointer')
+        self.assertIn('a C pointer (int *)', '\n'.join(self.trivial_condition(d, 'T6')['evidence']))
+        status, d = self.run_json('iTermQParent')
+        self.assertIn('iTermQChild', '\n'.join(self.trivial_condition(d, 'T8')['evidence']))
+
+    def test_arc_makes_a_block_harmless(self):
+        status, d = self.run_json('iTermQBlockArc')
+        self.assertEqual(self.trivial_statuses(d)['T4'], 'PASS', self.trivial_condition(d, 'T4'))
+        self.assertIn('compiled with ARC', '\n'.join(self.trivial_condition(d, 'T4')['evidence']))
+        self.assertEqual(d['path'], 'trivial')
+
+    def test_without_arc_nothing_ownership_related_folds_the_arc_step(self):
+        status, d = self.run_json('iTermQScript')
+        self.assertIn('the port is the move to ARC', '\n'.join(self.trivial_condition(d, 'T4')['evidence']))
+
+    def test_an_error_out_parameter_is_not_an_unsafe_pointer(self):
+        status, d = self.run_json('iTermQErrorOut')
+        self.assertEqual(self.trivial_statuses(d)['T6'], 'PASS', self.trivial_condition(d, 'T6'))
+        self.assertEqual(d['path'], 'trivial')
+
+    def test_the_scripting_category_shape_is_trivial(self):
+        status, d = self.run_json('iTermQApp(Scripting)')
+        self.assertEqual(d['unit_files'], ['sources/QAppScripting.h', 'sources/QAppScripting.m'])
+        self.assertEqual(d['path'], 'trivial', [c for c in d['trivial_conditions'] if c['status'] != 'PASS'])
+        self.assertEqual(d['body_lines'], 6)
+        self.assertEqual(d['conditions'], [], 'the light conditions are not evaluated for a category')
+        self.assertEqual(status, 0)
+        status, text = self.run_text('iTermQApp(Scripting)')
+        self.assertIn('not evaluated for a category unit', text)
+
+    def test_a_category_that_is_not_trivial_takes_the_full_path(self):
+        status, d = self.run_json('iTermQApp(Blocks)')
+        self.assertEqual(self.trivial_statuses(d)['T4'], 'FAIL')
+        self.assertEqual(d['path'], 'full')
+        self.assertEqual(status, 1)
+
+    def test_a_category_of_a_core_data_entity_is_not_trivial(self):
+        status, d = self.run_json('iTermThingMO(QAdditions)')
+        c = self.trivial_condition(d, 'T8')
+        self.assertEqual(c['status'], 'FAIL', c)
+        self.assertIn('Core Data entity', '\n'.join(c['evidence']))
+        self.assertEqual(d['path'], 'full')
+
+    def test_an_associated_object_through_a_macro_is_seen(self):
+        status, d = self.run_json('iTermQAssocMacro')
+        c = self.trivial_condition(d, 'T7')
+        self.assertEqual(c['status'], 'FAIL', c)
+        self.assertIn('objc_setAssociatedObject', '\n'.join(c['evidence']))
+        self.assertNotEqual(d['path'], 'trivial')
+
+    def test_core_foundation_ownership_is_not_trivial_even_with_arc(self):
+        for cls_name, what in (('iTermQCFRelease', 'CGColorRelease'), ('iTermQCFCreate', 'CGColorCreateGenericRGB'),
+                               ('iTermQBridgeTransfer', '__bridge_transfer'), ('iTermQRetainedNew', 'retained')):
+            status, d = self.run_json(cls_name)
+            c = self.trivial_condition(d, 'T4')
+            self.assertEqual(c['status'], 'FAIL', (cls_name, c))
+            self.assertIn(what, '\n'.join(c['evidence']), cls_name)
+            self.assertNotEqual(d['path'], 'trivial', cls_name)
+
+    def test_a_borrowed_core_graphics_value_passing_through_is_trivial(self):
+        status, d = self.run_json('iTermQBorrowedCtx')
+        self.assertEqual(d['path'], 'trivial', [c for c in d['trivial_conditions'] if c['status'] != 'PASS'])
+
+    def test_every_class_of_the_file_counts(self):
+        status, d = self.run_json('iTermQPairA')
+        st = self.trivial_statuses(d)
+        self.assertEqual(st['T2'], 'FAIL', self.trivial_condition(d, 'T2'))
+        self.assertIn('qpairBCount', '\n'.join(self.trivial_condition(d, 'T2')['evidence']))
+        self.assertEqual(st['T7'], 'FAIL', self.trivial_condition(d, 'T7'))
+        self.assertNotEqual(d['path'], 'trivial')
+
+    def test_classify(self):
+        status, d = self.run_json('--classify')
+        self.assertEqual(status, 0)
+        by = dict((u['unit'], u) for u in d['classified'])
+        for name in ('iTermQScript', 'iTermQXib', 'iTermQFifty', 'iTermQErrorOut', 'NSString(QExtra)',
+                     'iTermQApp(Scripting)'):
+            self.assertEqual(by[name]['path'], 'trivial', by[name])
+        for name in ('iTermQFiftyOne', 'iTermQRel'):
+            self.assertEqual(by[name]['path'], 'light', by[name])
+        for name in ('iTermQBusy', 'iTermQApp(Blocks)', 'iTermQCxx'):
+            self.assertEqual(by[name]['path'], 'full', by[name])
+        self.assertEqual(by['iTermQFiftyOne']['not_trivial_because'], ['T1'])
+        self.assertEqual(sum(d['counts'].values()), d['units'])
+        self.assertEqual(by['iTermQApp(Extra)']['part_of'], 'iTermQApp')
+        self.assertEqual(by['iTermQApp(Extra)']['path'], 'trivial')
+        self.assertIsNone(by['iTermQApp']['part_of'])
+        self.assertEqual(sum(d['split_counts'].values()),
+                         sum(1 for u in d['classified'] if u['part_of']))
+        self.assertEqual(d['units'], sum(1 for u in d['classified'] if not u['part_of']))
+        pair = [u for u in d['classified'] if 'iTermQPairA' in u['classes'] or 'iTermQPairB' in u['classes']]
+        self.assertEqual(len(pair), 1, 'one unit per implementation file')
+        self.assertEqual(pair[0]['classes'], ['iTermQPairA', 'iTermQPairB'])
+        trivial = [u['body_lines'] for u in d['classified'] if u['path'] == 'trivial']
+        self.assertEqual(trivial, sorted(trivial))
+        status, text = self.run_text('--classify')
+        self.assertRegex(text, r'trivial \d+, light \d+, full \d+')
+
     def test_list_agrees_with_the_single_class_answer(self):
         status, d = self.run_json('--list')
         for c in d['classes']:
@@ -447,8 +747,7 @@ class StaleUnitTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.root, cls.paths = harness.build(edit=write_qualify_files, extra_mains=EXTRA_MAINS,
-                                            extra_test_mains=EXTRA_TEST_MAINS)
+        cls.root, cls.paths = build_fixture()
         for rel in ('sources/Leaf.m', 'ModernTests/iTermQLeafTests.m', 'sources/LeafUser.m'):
             with open(os.path.join(cls.root, rel), 'a') as f:
                 f.write('// changed after the extraction\n')

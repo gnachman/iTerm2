@@ -339,18 +339,21 @@ with the reason. They fail the gate on:
   ([translation-rules.md §4](translation-rules.md)). This one may need to be a review checklist item instead of a
   lint.
 
-**Where they run.** In a lane the author runs `swift_lints.py --staged`.
-It counts every Swift file staged with a `kind=port` message as part of the
-port, so a test file staged in the same lane draws findings; those are not
-the port's. The type-aware lints (`swift_ast_lints.py`), `warning_survey.py`
-and `swift_interface.py` need a compile-command capture, which a lane does
-not have. The orchestrator runs them in its own checkout after the commit,
-or once after several:
+**Where they run.** Once per session, among the closing checks
+([lifecycle.md §5](lifecycle.md)), over the session's port commits: the
+type-aware lints (`swift_ast_lints.py`), `warning_survey.py` and
+`swift_interface.py` need a compile-command capture, which a lane does not
+have, so the orchestrator runs, in its own checkout,
 `capture_compile_commands.sh` (a clean build, so a heavy job; `--jobs N`
 limits its build tasks), then `codedb.py update` (with
-`--accept-removals` when the port deleted files), then the three tools and
-`swift_lints.py REV` on the commit. A finding goes back to the author, and
-its fix is a new commit of the unit.
+`--accept-removals` when a port deleted files), then the three tools and
+`swift_lints.py REV` on each port commit. A finding goes back to the
+author, and its fix is a new commit of the unit. In a lane the author may
+run `swift_lints.py --staged` early, as a check of its own; it counts every
+Swift file staged with a `kind=port` message as part of the port, so a
+test file staged in the same lane draws findings that are not the port's.
+The dossier's length is not a lint of this kind: `dossier_cap.py` runs in
+the gate of every commit that changes a dossier ([README.md §5](README.md)).
 
 ## 7. Helper library
 
@@ -583,7 +586,7 @@ been accepted:
 
 The snapshots come from arm64 only. On x86_64 swiftc encodes `Bool` as `c`,
 as clang encodes `BOOL` there (read with `otool -ov` from an Intel build in
-the `iTermCacheableImage` port; [README.md §5](README.md), step 8).
+the `iTermCacheableImage` port; the `x86_64` build of [README.md §5](README.md)).
 
 This is the main guarantee for hidden callers. Stage one keeps every selector,
 so a caller that reaches the class through a selector string, a xib, the
@@ -1064,13 +1067,24 @@ is matched case-insensitively and the report says so. Tests:
 `python3 -B -m unittest discover -s tools/swift_migration/extraction/tests
 -p 'test_*.py'`.
 
-## 12. Light-path qualifying checks
+## 12. Qualifying checks: trivial, light or full
 
-`tools/swift_migration/qualify_unit.py CLASS` prints each condition of
-[lifecycle.md §3](lifecycle.md) for an Objective-C class as PASS, FAIL or
-MANUAL, with its evidence and the query or search that produced it, and
-exits 0 when nothing FAILs; `--json` gives the same as data; its `--help`
-is the manual. Users, instance-variable accesses, overrides, properties,
+`tools/swift_migration/qualify_unit.py UNIT` prints the path a unit takes
+([lifecycle.md §3](lifecycle.md)), the trivial conditions T1 to T8 and the
+light conditions, each PASS, FAIL or MANUAL with its evidence and the query
+or search that produced it; `--json` gives the same as data; its `--help`
+is the manual. UNIT is a class or `Class(Category)`. The exit status
+answers the light conditions as before (0 when nothing FAILs); for a
+category unit, 0 when it is trivial. The trivial conditions that need the
+code (body lines brace to brace, what ARC would change, C pointers and
+arrays) come from Clang's AST of each implementation file, parsed with its
+compile command by upstream clang 22 (`unit_ast.py`, one to five seconds a
+file); the rest from the code database and the light conditions. A MANUAL
+is never trivial. `--classify` gives the path of every unit under
+`sources/` (class units, and category units whose file belongs to no class
+unit) and lists the trivial ones by body lines.
+
+The light conditions: users, instance-variable accesses, overrides, properties,
 reflective calls, sends, macro expansions and static references come from
 the code database; xibs, storyboards, the sdef, property lists, Core Data
 models and the registry from the entry-point census's parsers (section 2),
@@ -1092,7 +1106,7 @@ one class of a user file), a timer. Any access to its instance variables
 from outside the unit FAILs. The callers' thread is MANUAL until the
 orchestrator records the answer with `--callers-thread TEXT`, which is
 printed as RECORDED with the text as evidence. Every condition that can
-FAIL has a fixture that FAILs it alone. `--list` checks every class with an
+FAIL has a fixture that FAILs it alone, the trivial conditions too. `--list` checks every class with an
 implementation under `sources/` in one process (about 2.5 minutes, 300 MB)
 and prints those that no condition FAILs, by size, with the conditions
 still MANUAL for each. It needs the repository and a current code database,

@@ -2,7 +2,8 @@
 # Run the whole ModernTests suite with tools/run_tests.expect under the
 # whole-suite lock, for the Objective-C to Swift migration
 # (docs/swift-migration/orchestration.md section 3, "Heavy jobs and the
-# machine"; README.md section 5, gate steps 3 and 7).
+# machine"; README.md section 5, gate step 3; lifecycle.md section 5, the
+# closing checks).
 #
 # Usage:
 #   tools/swift_migration/whole_suite.sh [--serial] [--no-wait]

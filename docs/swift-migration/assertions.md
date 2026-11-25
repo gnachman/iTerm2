@@ -64,7 +64,9 @@ Assumptions the code makes and does not check:
 - Arguments relate to each other: lengths match, start does not exceed end,
   the range lies inside the string.
 - State: not yet terminated, already attached, not re-entered.
-- Thread or queue affinity (`dispatchPrecondition`).
+- Thread or queue affinity (`dispatchPrecondition`), only with evidence
+  that every entry to the method is on that thread
+  ([concurrency.md §9](concurrency.md)).
 - Postconditions on values the rest of the code relies on: a count that was
   preserved, a result inside the input's bounds.
 - The bound stated for an arithmetic site classified as Bounded

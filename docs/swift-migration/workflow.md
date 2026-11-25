@@ -167,12 +167,21 @@ by seven. If the reset time changes, the table follows it.
 - Work also stops when the owner starts using the checkout in the morning,
   whatever the budget says.
 
+**Closing checks before the stop.** The whole suites (the plain one
+again, after those in the gates of light and full commits), the `x86_64` build and the
+lints run once at the end of the session over everything that landed ([lifecycle.md §5](lifecycle.md)), about an hour by the measurements
+of 2026-11-24. The nightly prompt names the time they must start, 75
+minutes before the clean stop (`nightly_start.sh`, `CLOSING_RESERVE`); no
+unit starts that cannot be committed by then. A unit committed before the
+closing checks pass is *landed, closing checks pending*.
+
 **Stopping cleanly.** When the cap is reached, or at the night's clean
 stop time, the orchestrator:
 
 1. Starts nothing new and lets running subagents finish. A background
    job that has not finished (a suite run, a build) is stopped or
-   abandoned, and the report says which.
+   abandoned, and the report says which, and which closing checks did
+   not run.
 2. Commits anything that has completed the loop and passed the gate.
 3. Saves any other uncommitted work as a patch and records it in
    `claims.md`, with the round the loop had reached.
@@ -385,7 +394,8 @@ usage cannot spend the week's quota.
 - **The night's report** is for the morning review. It lists, from the
   commit trailers, each unit touched with its commits and kinds; how many
   review rounds each took; findings that were rejected, with the evidence;
-  anything parked; new entries in `owner-queue.md`, `bugs.md` and
+  anything parked; each closing check with its result, duration and run
+  directory, and the units still *landed, closing checks pending*; new entries in `owner-queue.md`, `bugs.md` and
   `traps.md`; the usage at the start and end; and why the run stopped. It is
   written to `tmp/` and is not committed, since everything in it that
   matters is also in the repository.

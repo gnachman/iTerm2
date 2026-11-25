@@ -189,7 +189,52 @@ Things only the owner can do, noted on 2026-11-20 at his request.
 
 ## Needs a decision
 
+### Q32. Choices the migration made in the lighter process (2026-11-24)
+
+- **ANSWERED 2026-11-24.** Item 3: “Bring it back for light and full”: the
+  whole suite gates every code commit on the light and full paths again;
+  trivial units have none. The parallel lanes question: “allow it” (at
+  night). Everything else: “keep them as is”.
+
+- **Added:** 2026-11-24, by the orchestrator, with unit `trivial-path`.
+- **What:** you agreed to four changes (“Yes, do that”): a trivial path
+  chosen by size, closing checks once per session, a dossier cap, and
+  batching. Writing them down needed choices you did not state. They are in
+  force as written until you change one:
+  1. **The size threshold is 50 lines** of method and function bodies,
+     counted by the compiler, with no stored state, locks, queues, timers,
+     C pointers, C++, retained Core Foundation results, `+load`,
+     `+initialize`, associated objects, swizzling or `-dealloc`. On the
+     tree of 2026-11-24 that is 24 units of 780 (72 light, 684 full).
+  2. **Still full whatever the size:** hot paths, anything that stores or
+     archives data (Core Data included), and a class with an Objective-C
+     subclass outside the unit.
+  3. **No whole suite per commit on any path.** You decided that the
+     sanitizer suites, the Intel build and the lints run once per session.
+     The migration also dropped the plain whole-suite run that used to
+     gate every commit on the light and full paths, so between a commit
+     and the session's closing checks the tree is gated by the build and
+     the unit's own tests only. A unit is not done until the closing
+     checks pass; until then it is listed as “landed, closing checks
+     pending”. Say if you want the per-commit whole suite back for the
+     light and full paths (about nine minutes each).
+  4. **Dossier caps:** none for trivial, 60 lines for light, and for full
+     one line per line of implementation, at least 100 and at most 600.
+  5. **Closing checks start 75 minutes before the session's stop time.**
+  6. **A night prefers a batch of trivial units, smallest first,** with no
+     limit on the batch but the clock.
+  7. **A unit named in the AppleScript definition** gets a real `osascript`
+     comparison before and after, against the build under test addressed by
+     its full path. The night session may not run `osascript`, so such a
+     unit stays pending until the orchestrator runs the comparison by day.
+- **Also open:** may trivial units be written in parallel lanes, with
+  commits landing one at a time, as the light path already allows?
+- **Meanwhile:** all of the above is in force as written.
+
 ### Q31. An old race in the fast preference accessors (2026-11-24)
+
+- **ANSWERED 2026-11-24:** “fix it”. Unit `fast-accessor-atomic` makes the
+  read and the write atomic.
 
 - **Added:** 2026-11-24, by the orchestrator, from the serial thread
   sanitizer suite that closed `iTermApplication+Scripting`.
@@ -212,6 +257,10 @@ Things only the owner can do, noted on 2026-11-20 at his request.
   report is read as passing for the unit being closed, and says so.
 
 ### Q30. Test hosts run with window animations off (2026-11-24)
+
+- **ANSWERED 2026-11-24:** “confirm both” (the rule and the exception). On
+  the three app questions: the locked-screen thread question, “leave it”;
+  the two waits with no deadline, “I wouldn't change it”.
 
 - **Added:** 2026-11-24, by the orchestrator.
 - **What:** the test plans now launch every test host with
@@ -702,8 +751,11 @@ except where an item says it waits.
     ports?
 13. **Thread assertions in a port** (added 2026-11-21; ANSWERED
     2026-11-22: “Add assertions generously because the code could change
-    later.” The rule is not narrowed: a port adds the assertion wherever
-    the thread is known).
+    later.” NARROWED 2026-11-24, when you asked of a port's main-thread
+    assertion in `valueForUndefinedKey:` “How do we know
+    value(forUndefinedKe:)y is only called on the main thread?”: we did
+    not, and it was removed. A port now adds one only with evidence that
+    every entry to the method is on that thread; concurrency.md §9).
     [concurrency.md §9](concurrency.md) adds a beta assertion at the entry
     of every ported method whose thread is known; README.md §4 allows it
     as the one addition to a translation. You called it appropriate where
@@ -849,7 +901,9 @@ except where an item says it waits.
     would let the thresholds rest on steadier samples
     ([performance.md §3](performance.md), "Read with care" and
     **Comparison**).
-20. **How much may memory grow before it is suspected?** (added
+20. **How much may memory grow before it is suspected?** (ANSWERED
+    2026-11-24: “15”: memory and counts are suspected at more than 15%
+    worse; times and rates stay at 5%. Added
     2026-11-24.) Your simple rule of 2026-11-23 is a flat 5% (item 3).
     Your words cover timings; applying the same flat 5% to memory and
     counts, judged by the median, with no allowance for their noise, was

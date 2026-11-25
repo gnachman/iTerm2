@@ -11,19 +11,20 @@ Usage:
 Every file is written by perf_baseline.py. For every scenario and metric in
 any file it prints the statistic compared (best or median), the reference
 and candidate values of it, both medians, the change in the bad direction,
-and a verdict:
+and a verdict, against the threshold T (5% for a best-of metric, 15% for a
+median metric; below):
 
-    suspected regression worse by more than 5% in a comparison of one
+    suspected regression worse by more than T in a comparison of one
                          candidate against one reference; not yet a
                          regression: confirm it with --confirm (below)
-    confirmed regression (--confirm only) worse by more than 5%, pooled, and
+    confirmed regression (--confirm only) worse by more than T, pooled, and
                          worse in every candidate run than in every base run
-    not confirmed        (--confirm only) worse by more than 5%, pooled, but
+    not confirmed        (--confirm only) worse by more than T, pooled, but
                          not in every run: some candidate run is as good as
                          some base run
-    improvement          better by more than 5% (with --confirm, also better
+    improvement          better by more than T (with --confirm, also better
                          in every run)
-    no change            within 5%
+    no change            within T
     inconclusive         fewer than 5 samples, or no relative change can be
                          computed
     informational        a metric with no usable signal; shown, never compared
@@ -64,12 +65,15 @@ from its unit, in perf_lib.statistic_for:
 The best is computed from the samples, so result files written before the
 summary carried a 'best' key compare the same way.
 
-The threshold is a flat 5% of the reference's statistic for every compared
+The threshold is a flat 5% of the reference's statistic for every best-of
 metric, with no measure of variation (2026-11-23, offered "Compare best time
 against best time; more than 5% slower means check it and triggers a
 back-to-back run; only a slowdown that survives the back-to-back run
-counts", the owner answered "Sure simplicity is good"). Exactly 5% is no
-change. Fewer than 5 samples on either side (with --confirm, in any run) is
+counts", the owner answered "Sure simplicity is good"), and a flat 15% for
+every median metric (2026-11-24, asked 5%, 10% or 15% for memory, told
+that 5% falsely flags about 58% of unchanged builds, 10% about 11% and 15%
+about 4%, the owner answered "15"). Exactly the threshold is no change.
+Fewer than 5 samples on either side (with --confirm, in any run) is
 inconclusive ("Sure"); a metric is never inconclusive because its samples
 vary ("Just pick the best value for timing"). The metrics listed in
 perf_lib.UNSTEADY_METRICS are not compared; that list is the migration's
@@ -81,7 +85,7 @@ The output then says how to confirm it. --confirm takes at least two result
 files a side (three are recommended) from runs of the two versions made
 alternately, back to back, in one lane with the same settings. Per metric
 it pools each side's samples and judges the pooled statistic against the
-same flat 5%. The regression is confirmed only if, besides, every candidate
+same threshold. The regression is confirmed only if, besides, every candidate
 run's statistic (each run's own best, or median) is worse than every base
 run's. Otherwise it is "not confirmed". An improvement must hold run by run
 too.
@@ -126,8 +130,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import perf_lib  # noqa: E402
 
-THRESHOLD_PERCENT = 5.0
-# A change counts only beyond THRESHOLD_PERCENT + EPSILON_PERCENT: a change of
+THRESHOLD_PERCENT = 5.0  # best-of metrics: times and rates
+MEDIAN_THRESHOLD_PERCENT = 15.0  # median metrics: memory, counts (the owner, 2026-11-24: "15")
+# A change counts only beyond the threshold + EPSILON_PERCENT: a change of
 # exactly 5% computed in floating point can come out a hair above it
 # (2.93073 * 1.05 against 2.93073 gives 5.00000000000001), and 1e-9 percent
 # is far below anything the harness can measure.
@@ -140,19 +145,21 @@ UNSTEADY = 'not compared (unsteady)'
 RULE = ('Decided by the owner. Time and rate metrics (units %s) compare the best sample (2026-11-22: "Given '
         'the variance you should take the fastest time, since that\'s our best estimate."; 2026-11-23: "Just '
         'pick the best value for timing"); memory, counts and other units compare the median (2026-11-23: '
-        '"That\'s fine"). The threshold is a flat %.0f%% for every compared metric (2026-11-23: "Sure '
-        'simplicity is good"): worse by more than %.0f%% in one comparison is only a suspected regression, '
+        '"That\'s fine"). The threshold is a flat %.0f%% for best-of metrics (2026-11-23: "Sure simplicity is '
+        'good") and a flat %.0f%% for median metrics (2026-11-24, asked 5%%, 10%% or 15%% for memory: "15"): '
+        'worse by more than the threshold in one comparison is only a suspected regression, '
         'which counts when perf_compare.py --confirm finds it again in runs of both versions made back to '
         'back. Inconclusive with fewer than %d samples on either side, never because samples are spread. '
         'Metrics in perf_lib.UNSTEADY_METRICS are recorded and shown but not compared: the migration\'s '
         'decision, open to the owner.'
-        % (', '.join(sorted(perf_lib.BEST_SAMPLE_UNITS)), THRESHOLD_PERCENT, THRESHOLD_PERCENT, MIN_SAMPLES))
+        % (', '.join(sorted(perf_lib.BEST_SAMPLE_UNITS)), THRESHOLD_PERCENT, MEDIAN_THRESHOLD_PERCENT,
+           MIN_SAMPLES))
 
 CONFIRM_RULE = ('Confirmation: each side\'s samples are pooled over its runs and the pooled statistic compared '
-                'against the same flat %.0f%%. A regression is confirmed only if, besides, every candidate '
+                'against the same threshold (%.0f%% best-of, %.0f%% median). A regression is confirmed only if, besides, every candidate '
                 'run\'s statistic is worse than every base run\'s; otherwise it is not confirmed. An '
                 'improvement must hold run by run too. Inconclusive when any run has fewer than %d samples.'
-                % (THRESHOLD_PERCENT, MIN_SAMPLES))
+                % (THRESHOLD_PERCENT, MEDIAN_THRESHOLD_PERCENT, MIN_SAMPLES))
 
 ADVICE = ('A suspected regression is not yet a regression: a busier machine than the reference\'s slows the '
           'best sample too. Confirm it back to back: in one lane, build and measure the two versions '
@@ -238,9 +245,15 @@ def _scenario_rows(name, b_entry, c_entry, compare_fn):
     return rows
 
 
-def _beyond_threshold(percent):
-    """True when `percent` exceeds the flat threshold, allowing for rounding."""
-    return percent > THRESHOLD_PERCENT + EPSILON_PERCENT
+def threshold_for(statistic):
+    """The flat threshold, in percent, of a metric judged on `statistic`."""
+    return THRESHOLD_PERCENT if statistic == 'best' else MEDIAN_THRESHOLD_PERCENT
+
+
+def _beyond_threshold(percent, statistic):
+    """True when `percent` exceeds the statistic's flat threshold, allowing
+    for rounding."""
+    return percent > threshold_for(statistic) + EPSILON_PERCENT
 
 
 def _percent_worse(better, value, reference):
@@ -281,9 +294,9 @@ def compare_metric(base, cand):
     row.update(change_percent=worse)
     if min(b['n'], c['n']) < MIN_SAMPLES:
         row.update(verdict='inconclusive', note='fewer than %d samples' % MIN_SAMPLES)
-    elif _beyond_threshold(worse):
+    elif _beyond_threshold(worse, statistic):
         row.update(verdict='suspected regression', note='confirm back to back with --confirm')
-    elif _beyond_threshold(-worse):
+    elif _beyond_threshold(-worse, statistic):
         row.update(verdict='improvement')
     else:
         row.update(verdict='no change')
@@ -324,13 +337,13 @@ def compare_runs(base, cand):
         better_every_run = min(c_runs) > max(b_runs)
     if min(len(run) for run in base['runs'] + cand['runs']) < MIN_SAMPLES:
         row.update(verdict='inconclusive', note='fewer than %d samples in a run' % MIN_SAMPLES)
-    elif _beyond_threshold(worse):
+    elif _beyond_threshold(worse, statistic):
         if worse_every_run:
             row.update(verdict='confirmed regression')
         else:
             row.update(verdict='not confirmed',
                        note='worse pooled, but not run by run: a candidate run is as good as a base run')
-    elif _beyond_threshold(-worse):
+    elif _beyond_threshold(-worse, statistic):
         if better_every_run:
             row.update(verdict='improvement')
         else:

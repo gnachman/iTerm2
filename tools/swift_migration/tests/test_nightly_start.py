@@ -686,6 +686,33 @@ class NightlyStartTest(NightlyBase):
         self.assertIn('Stopping cleanly', prompt)
         self.assertIn('kills the session and everything it started', prompt)
 
+    def test_closing_checks_start_time_is_in_the_prompt(self):
+        # The closing checks (lifecycle.md section 5) need about an hour;
+        # the reserve is 75 minutes before the clean stop at 06:15, so 05:00.
+        proc = self.run_script()
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        prompt = self.session_args()[-1]
+        self.assertIn('Start the closing checks (docs/swift-migration/lifecycle.md section 5) by 2026-11-19 '
+                      '05:00:00 PST', prompt)
+        self.assertIn('start no new unit after that', prompt)
+        self.assertIn('trivial', prompt)
+        self.assertIn('closing checks by 2026-11-19 05:00:00 PST', proc.stdout)
+        self.assertIn('osascript stays denied tonight', prompt)
+        self.assertIn('"AppleScript comparison owed"', prompt)
+
+    def test_prompt_states_the_per_commit_whole_suite_and_parallel_authoring(self):
+        # The owner, 2026-11-24: the per-commit whole suite, "Bring it back
+        # for light and full"; parallel trivial authoring at night, "allow
+        # it" (at most three, the migration's number).
+        proc = self.run_script()
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        prompt = self.session_args()[-1]
+        self.assertNotIn('No unit runs a whole suite', prompt)
+        self.assertIn('README.md section 5, step 3', prompt)
+        self.assertIn('the trivial path runs none', prompt)
+        self.assertIn('whole suites serialize through the whole-suite lock', prompt)
+        self.assertIn('at most three at once', prompt)
+
     NUDGE = ('It is the clean stop time. Stop now as docs/swift-migration/workflow.md section 4 says: '
              'start nothing new, stop or abandon background jobs that have not finished, commit what '
              "passed, write the night's report, release lanes, then stop.")

@@ -287,7 +287,7 @@ methods:
 
 How a violation is treated depends on the run
 (`tools/swift_migration/sanitizer_tests.sh`, whose header is the manual).
-A whole-suite run, as gate step 7 asks for ([README.md §5](README.md)),
+A whole-suite run, as the closing checks ask for ([lifecycle.md §5](lifecycle.md)),
 never aborts: each report goes to a file, the tests go on, and after the
 run the reports are compared with the nullability baseline,
 `docs/swift-migration/nullability-baseline.tsv`. The run fails on any
@@ -302,11 +302,11 @@ aborting form is for targeted classes only: a whole-suite run in it on
 everything, suppressed or not, and fails nothing, for triage.
 
 The baseline is the known, not yet triaged violations. It was proposed by
-the migration on 2026-11-23, and judging gate step 7 against it awaits the
+the migration on 2026-11-23, and judging the closing checks against it awaits the
 owner's confirmation (owner-queue.md Q26). The app has several hundred
 untriaged violations (the collection of nullability-triage.md section 1
-found 1,794 reports at 364 locations), and without a baseline every unit's
-close would fail on reports that have nothing to do with the unit. It
+found 1,794 reports at 364 locations), and without a baseline every
+session's closing checks would fail on reports that have nothing to do with the unit. It
 was first generated on 2026-11-23 from a whole-suite run: 69 entries for
 75 locations (92 reports), all untriaged.
 

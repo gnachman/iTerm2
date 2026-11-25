@@ -392,7 +392,7 @@ they have no assertion yet. The port of each one asserts as section 2 requires.
 
 Confirmed by observation, 2026-11-24 15:46 to 15:54, with the screen locked by the owner: one test host running `TabBarOrderWindowTests` then `TabBarSearchWindowTests` (address sanitizer build, animations on) had 20, 45, 62 and then 80 threads inside `-[NSAnimation _runBlocking]` in samples 30 seconds apart; `sample` reported the dispatch thread soft limit from the fourth sample on, and the count stayed at 80 for the remaining five minutes without falling. In that host, afterwards, `TokenBudgetTests.testAcquireWaitsForRelease` (one `DispatchQueue.global().async` block awaited for 30 seconds) failed because the block never ran, where it takes a millisecond unlocked, and `WorkgroupModelThreadSafetyTests.testReadingOffMainWhileMainReplacesTheList`, which waits with no deadline, started and never finished; 62 assertions failed in the tab bar classes. The same minute, a host launched with `-NSAutomaticWindowAnimationsEnabled NO` ran `TabBarOrderWindowTests` locked with no such thread in any sample, and a host with animations on, locked, had 19 after one minute. Unlocked, the same build had 0 to 3. So the locked screen is the trigger and the launch argument removes it. Not observed: whether the parked threads finish when the screen is unlocked.
 
-## App code waits forever for work delivered on a global queue (owner question)
+## App code waits forever for work delivered on a global queue
 
 - **Where:** `sources/XPC/iTermSandboxedWorkerClient.m`,
   `+performSynchronously:` (line 47), used by `+imageFromData:` and
@@ -415,10 +415,12 @@ Confirmed by observation, 2026-11-24 15:46 to 15:54, with the screen locked by t
   example 100 blocks that each wait on one semaphore), then decode an image
   through `iTermSandboxedWorkerClient` or run `iTermCommandRunner`
   `blockingRunWithTimeout:` with a short timeout on a command that sleeps.
-- **Meanwhile:** left as it is: changing app behavior needs the owner. The
-  tests that reach them (`KittyStalePlacementTests`, `WorkgroupUsageTests`)
-  still hang in a starved host; with window animations off the known cause
-  of starvation is gone.
+- **Decision:** neither changes. Asked on 2026-11-24 whether to add a
+  deadline to both, only the command runner, or neither, the owner
+  answered “I wouldn't change it”. The tests that reach them
+  (`KittyStalePlacementTests`, `WorkgroupUsageTests`) still hang in a
+  starved host; with window animations off the known cause of starvation
+  is gone. Known, not new: do not raise it again.
 - **Found:** 2026-11-24, unit `test-host-window-animations`.
 
 ## The real app may park a thread per window opened or closed while the screen is locked (unconfirmed)
@@ -440,7 +442,9 @@ Confirmed by observation, 2026-11-24 15:46 to 15:54, with the screen locked by t
   open and close about 20 windows from a script, and count the app's
   threads in `-[NSAnimation _runBlocking]` with `sample` before unlocking
   and again a few seconds after.
-- **Meanwhile:** left as it is: changing app behavior needs the owner.
+- **Decision:** not investigated. Asked on 2026-11-24 whether to find out,
+  the owner answered “leave it”. It stays unconfirmed, with no action
+  planned; do not raise it again.
 - **Found:** 2026-11-24, unit `test-host-window-animations`.
 
 ## Test hosts may post real user notifications as iTerm2 (unconfirmed)
@@ -1463,76 +1467,3 @@ or a crash from program output.
   owner (owner-queue.md).
 - **Found:** 2026-11-24, the nightly orchestrator's gate for
   `pbxproj-move-target`.
-
-## Data race on the fast-accessor caches of `iTermPreferences` (owner question)
-
-- **Where:** `sources/Settings/iTermPreferences.m`,
-  `+[iTermPreferences(FastAccessors) boolWithCache:]`, `+intWithCache:`
-  and `+doubleWithCache:`, behind every `FAST_BOOL_ACCESSOR`,
-  `FAST_INT_ACCESSOR` and `FAST_DOUBLE_ACCESSOR` (`bidiEnabled`,
-  `maximizeThroughput`, `sideMargins`, `splitPaneDimmingAmount` and the
-  rest).
-- **What:** each accessor returns `cache->value` with no lock, while the
-  cache's refresh block (run by the synchronous refresh after an
-  in-process write of the key, and by the key-value observer on the main
-  thread) assigns `cache->value` inside `@synchronized` on
-  `iTermPreferencesFastCacheLock()`. The field is a plain `BOOL`, `int` or
-  `double`, not an atomic, and the reader takes no lock, so a read on one
-  thread at the same time as a refresh on another is a data race by the
-  C11 memory model, which makes it undefined behavior. It is deliberate:
-  the comment above the lock says “Readers of cache->value do not take the
-  lock (a scalar load is atomic enough)”. Readers run off the main thread
-  all the time: `StringToScreenChars` (`ScreenChar.m`) reads `bidiEnabled`
-  for each string of input on the mutation queue, and
-  `VT100ScreenMutableState.m` reads it there too.
-- **What it means for users:** nothing seen in practice. On arm64 and
-  x86_64 an aligned load or store of a `BOOL`, `int` or `double` is one
-  instruction and cannot tear, so a reader gets either the old value or
-  the new one, and an old value for a moment after the setting changes is
-  what an unlocked cache gives anyway (the next call reads the new one). A
-  `double` could tear only on a 32-bit target, which iTerm2 does not build
-  for. What is left is theoretical: the compiler may assume there is no
-  race, for example to keep the value in a register, which it has no
-  occasion to do here, since each read is a call into this file.
-- **History:** the unlocked read is as old as the fast accessors (2018 for
-  `boolWithCache:`; the `int` variant January 2026, the `double` one July
-  2026). Until July 2026 the refresh wrote without a lock as well; the
-  July change put the lock around the refresh only, to stop lost updates
-  between two refreshers, and left the readers unlocked on purpose. The
-  race is not new and is not the migration's.
-- **The thread sanitizer:** seen on 2026-11-24 in the serial whole-suite
-  thread run on the tree containing unit `iTermApplication+Scripting`: one
-  report on the global `bidiEnabled.cache`, between the unlocked return in
-  `boolWithCache:` (about line 1510) and the assignment in its refresh
-  block (about line 1506), in
-  `AIAutomaticCredentialHostTests.testLegacyManualModelKeepsFormerKey` and
-  `BidiSupportModeTests.testReportedRowIsIntactInExplicitMode`. It was the
-  run's only report outside `thread-baseline.tsv`, so the verdict was
-  FAIL. The baseline run of 2026-11-21 did not report it, although both
-  tests, both accessor lines and the mutation-queue readers existed then.
-  Why was not established. The sanitizer reports a race only when it
-  sees both accesses with no synchronization between them, within its
-  limited history of earlier accesses, so whether a run reports it
-  depends on how the threads interleave in that run; one more
-  mutation-queue read was added on 2026-11-23
-  (`-temporaryDoubleBufferedGridSavedState`), after the baseline. Which
-  reader the report names was not looked at.
-- **Reproduce:** `tools/swift_migration/sanitizer_tests.sh thread` (whole
-  suite, serial); not in every run.
-- **The two options, for the owner:** (1) make the read race-free, an app
-  fix in its own `fix` commit: an atomic load of `cache->value` with a
-  matching atomic store in the refresh (relaxed ordering is enough, since
-  only the value itself is shared), which compiles to the same plain load
-  and store on arm64 and x86_64, so it changes no behavior and costs
-  nothing; or a read under the same lock, which adds a lock to accessors
-  that exist to be fast. (2) accept the race in `thread-baseline.tsv` and
-  its ledger, with the reason above (an aligned scalar of at most 64 bits,
-  read stale at worst) and a “re-judge when” naming these three methods.
-- **Meanwhile:** neither is done. The race is not in the unit's code, and
-  the History above shows it unchanged in the Objective-C, the case for
-  which thread-baseline.md adds a report to the ledger in its own commit;
-  that was left to the owner because option 1 is also open. Until one
-  option is taken, every serial whole-suite thread run that hits it fails
-  its verdict.
-- **Found:** 2026-11-24, the whole-suite thread sanitizer run at the close
-  of `iTermApplication+Scripting`.

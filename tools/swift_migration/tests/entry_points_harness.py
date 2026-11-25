@@ -174,13 +174,16 @@ def add_pp_skipped(db, rows=None):
     con.close()
 
 
-def build(swift=True, edit=None, sdk_table=True, pp_skipped=True, extra_mains=(), extra_test_mains=()):
+def build(swift=True, edit=None, sdk_table=True, pp_skipped=True, extra_mains=(), extra_test_mains=(),
+          extra_args=None):
     """A scratch copy of the fixture with its database: (root, paths).
     edit(root), if given, changes the copy before anything is extracted.
     sdk_table: give the database an sdk_method table of the fixture's SDK
     declarations. pp_skipped: give it the skipped Objective-C ranges.
     extra_mains and extra_test_mains: more files (written by edit) that the
-    app and the test target compile."""
+    app and the test target compile. extra_args: {main file: [clang
+    arguments]} added to those files' compile commands (for example
+    -fobjc-arc)."""
     ensure_binaries()
     d = make_temp()
     root = os.path.join(d, 'repo')
@@ -197,7 +200,7 @@ def build(swift=True, edit=None, sdk_table=True, pp_skipped=True, extra_mains=()
         f.write(json.dumps({'meta': True, 'build_settings_sha256': codedb.build_settings_digest(root)}) + '\n')
         for m in app_mains + test_mains:
             target = 'ModernTests' if m in test_mains else 'App'
-            args = base.clang_args(root, m, extra=('-isysroot', sdk))
+            args = base.clang_args(root, m, extra=('-isysroot', sdk) + tuple((extra_args or {}).get(m, ())))
             f.write(json.dumps({'target': target, 'file': m, 'directory': root, 'arguments': args}) + '\n')
     status = codedb.update(paths, log=lambda m: None, swift=False)
     if status != 0:

@@ -2,7 +2,7 @@
 """Lints for migration Swift (docs/swift-migration/phase0.md, section 6).
 
 Part of the Objective-C to Swift migration. Applies the token-level lints
-that the gate runs (README.md section 5, step 5) to migration files only, and
+that the closing checks run (lifecycle.md section 5) to migration files only, and
 says for every rule in the process documents that it does not enforce why it
 does not.
 

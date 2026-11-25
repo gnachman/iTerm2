@@ -71,11 +71,13 @@ measures time.
      One run as it runs, without the address sanitizer, on a loaded machine,
      took 94 seconds of wall time in parallel plus the build
      ([test-tiers.md](test-tiers.md)). `tools/swift_migration/fast_tests.sh`
-     runs it. It is meant to be what the gate runs on every commit; until
-     the owner switches gate step 3 ([README.md §5](README.md)), the gate
-     runs the whole suite.
-   - *Full suite.* Everything. Run at the close of a unit and before any push,
-     normally and with the sanitizers.
+     runs it. The gate runs the whole suite instead
+     ([README.md §5](README.md), step 3); the fast tier is for an
+     author's own checks.
+   - *Full suite.* Everything. Run in the gate of light and full code
+     commits, and once per session among the closing checks
+     ([lifecycle.md §5](lifecycle.md)), normally and with the sanitizers,
+     and before any push.
    The fast tier is defined by the list of excluded tests in
    `tools/swift_migration/slow_tier.txt`, each with its reason, so the list
    is reviewable and a test cannot leave the fast tier unnoticed. It is a
@@ -129,11 +131,11 @@ measures time.
   fail because of too tight a budget. Let it go for 300 seconds.”),
   replacing the 77 s measured on 2026-11-22 with xcodebuild's own worker
   count, which two workers could not meet
-  ([test-tiers.md §1](test-tiers.md)). The gate still runs the whole suite
-  at step 3, not the fast tier, until the owner switches it; the budget
-  binds the gate only from then, and the gate will then run
-  `fast_tests.sh --enforce-budget`, which fails a run that goes over
-  (without the option the time is only printed).
+  ([test-tiers.md §1](test-tiers.md)). The gate runs the plain whole
+  suite, not the fast tier, on light and full code commits
+  ([README.md §5](README.md), step 3); the fast tier is for an author's
+  own checks, and `fast_tests.sh --enforce-budget` fails a run
+  that goes over (without the option the time is only printed).
 
 ## 4. Test host configuration
 
@@ -150,12 +152,11 @@ delivered and tests with unbounded waits hang (bugs.md, “Dispatch threads
 pile up in a long-running test host”). `TestHostWindowAnimationTests` fails
 if the argument goes missing.
 
-Two things in this section were proposed by the migration on 2026-11-24 and
-await the owner's confirmation (owner-queue.md Q30): the rule that tests
-must not depend on display frames arriving, and the exception below.
+Tests must not depend on display frames arriving. The owner confirmed this
+rule and the exception below on 2026-11-24 (“confirm both”).
 
-One test is proposed as an exception to the rule against real-time waits in
-migration tests (section 2, item 4):
+One test is an exception to the rule against real-time waits in migration
+tests (section 2, item 4):
 `TestHostWindowAnimationTests.testOpeningAndClosingWindowsStartsNoBlockingAnimation`
 runs the main run loop for up to 0.15 seconds after opening a window and
 again after closing it, because AppKit starts a window's animation only

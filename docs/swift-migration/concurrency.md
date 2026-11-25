@@ -427,11 +427,24 @@ classes (102 uses) record and enforce who may touch what.
 - Where the table shows a method is confined to one thread or queue and
   nothing asserts it, add a beta assertion ([assertions.md](assertions.md)) saying so. This is
   one of the most valuable kinds of assertion the port can add, and the one
-  addition [README.md §4](README.md) allows a translation. Until the owner
-  answers owner queue Q23 item 13, it is added wherever the thread is
-  known, and the commit message names what the code depends on there
-  (unsynchronized shared or instance state, AppKit, a process-wide facility
-  such as `drand48`) or says that nothing was found to depend on it.
+  addition [README.md §4](README.md) allows a translation. The owner,
+  2026-11-22: “Add assertions generously because the code could change
+  later.” He qualified it on 2026-11-24, asking of a port's main-thread
+  assertion in `valueForUndefinedKey:`: “How do we know
+  value(forUndefinedKe:)y is only called on the main thread?” Nobody did:
+  any code may look up any key on the application object from any thread,
+  and the body did not depend on the thread; the assertion was removed. So
+  a thread assertion is added only where there is evidence that *every*
+  entry to the method is on that thread. A method reachable by key-value
+  coding, by selector name from outside the tree, or through an
+  Objective-C protocol the system calls gets none on the strength of the
+  callers found, unless its own body already requires that thread (it
+  touches main-thread-only state), in which case the assertion documents
+  an existing requirement. The commit message says which case applies and
+  names what the code depends on (unsynchronized shared or instance state,
+  AppKit, a process-wide facility such as `drand48`). A reviewer
+  challenges every new assertion: what is the evidence that every caller
+  is on this thread?
 - State objects that are deliberately handed from one thread to another
   (copied, sanitized, or frozen first) keep exactly that discipline. Do not
   share where the Objective-C copied.
@@ -448,9 +461,8 @@ classes (102 uses) record and enforce who may touch what.
   from that configuration or covered by a suppression for the Metal
   libraries, whichever proves simpler.
 - **When it runs.** It cannot be combined with the address sanitizer and it
-  is slow, so it is a periodic full-suite run and a run at the close of any
-  unit whose dossier shows state shared across threads, not part of the
-  per-commit gate.
+  is slow, so it is a whole-suite run among each session's closing checks
+  ([lifecycle.md §5](lifecycle.md)), not part of the per-commit gate.
 - **Baseline first.** The existing code will report races of its own. They
   are triaged in Phase 0 into a list of known reports, each a bug-ledger
   entry, so that a port is judged on whether it adds any.
@@ -459,8 +471,9 @@ classes (102 uses) record and enforce who may touch what.
   not see races that only occur with the real UI and renderer running.
 - **Affinity assertions in nightly builds** cover that gap. A beta assertion
   that a method is on its expected thread or queue (section 9) fires in
-  real use, with Metal running. They are added generously: at the entry of
-  every ported method whose thread is known, outside hot paths.
+  real use, with Metal running. They are added generously, outside hot
+  paths, at the entry of every ported method whose thread is known by the
+  evidence section 9 asks for.
 - **The dossier's concurrency table.** For every class: each lock and what it
   protects; each piece of state touched from more than one thread; each
   atomic property with its classification; each atomic and volatile variable;

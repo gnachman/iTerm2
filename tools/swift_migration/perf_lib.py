@@ -110,7 +110,8 @@ SCENARIOS = [
 # - footprint_growth and memory_physical (about 150 to 200% spread): no signal.
 # - live_malloc_blocks (17% spread): was always inconclusive under the
 #   noise rule of the time, and would flag at random under the flat 5% of
-#   2026-11-23, so the allocation count is not effectively compared today.
+#   2026-11-23 (15% for median metrics since 2026-11-24), so the allocation
+#   count is not effectively compared today.
 # - live_malloc_bytes (0.0% spread, but a net change over a sample): a uniform
 #   regression in what each screen allocates would be largely cancelled by the
 #   previous sample's screen giving back the same amount.
@@ -611,7 +612,8 @@ def redact_path(path, checkout):
 # fast outliers too, and a busy machine slows the fastest run as well
 # (performance.md section 3, "Read with care"). Everything else (memory in
 # kB, counts, and any unit not listed) keeps the median: the owner,
-# 2026-11-23, "That's fine".
+# 2026-11-23, "That's fine". The thresholds (5% best-of, 15% median) are in
+# perf_compare.threshold_for.
 BEST_SAMPLE_UNITS = frozenset({'s', 'ms', 'us', 'ns', 'iterations/s'})
 
 

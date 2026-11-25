@@ -7,10 +7,15 @@ are the source of truth for every agent and person doing migration work.
 the topic files its task needs, as listed in section 1, before starting the
 task.
 
-A unit takes the light path of [lifecycle.md §3](lifecycle.md) (a short
-dossier, a `test` and a `port` commit, one review) when that section allows,
-or the full path of [lifecycle.md §1](lifecycle.md). The owner allowed
-further units after the two pilot units on 2026-11-22 (lifecycle.md §3).
+A unit takes one of three paths ([lifecycle.md §3](lifecycle.md)), which
+`qualify_unit.py` prints: the trivial path for very small code (no
+dossier, one commit holding tests and port, one review), the light path (a
+short dossier, a `test` and a `port` commit, one review), or the full path
+of [lifecycle.md §1](lifecycle.md). Light and full units pass the whole
+suite before their code commits; the sanitizer suites, the `x86_64`
+build, the lints and one more whole suite run once per session, over
+everything that landed ([lifecycle.md §5](lifecycle.md)). The owner allowed further units after
+the two pilot units on 2026-11-22.
 
 If a rule turns out to be wrong, the rule is changed here first, with the
 owner's agreement, and the reason is recorded in `decisions.md`. Factual
@@ -33,7 +38,7 @@ file it appears in.
 |---|---|---|
 | [workflow.md](workflow.md) | How work runs unattended: the author and reviewer loop, parking, the owner queue, the nightly schedule and usage budget, and the morning review | Before orchestrating anything; before acting as an author or a reviewer |
 | [orchestration.md](orchestration.md) | The orchestrator's runbook: what to do from a cold start with no memory, how to choose work, how to brief the author and the reviewer, how to commit and stop, and the Phase 0 checklist | The orchestrator, at the start of every session |
-| [lifecycle.md](lifecycle.md) | The eight steps of the full path, the dossier, runtime verification, crash reports, porting a large file a few methods at a time, and the light path for leaf units | Before any unit. The orchestrator knows it thoroughly |
+| [lifecycle.md](lifecycle.md) | The eight steps of the full path, the dossier and its length, runtime verification, crash reports, porting a large file a few methods at a time, the trivial and light paths, and the closing checks run once per session | Before any unit. The orchestrator knows it thoroughly |
 | [translation-rules.md](translation-rules.md) | How each Objective-C construct is written in Swift: integers, nil, things that trap, Foundation types, control flow, the shape of a stage-one class, unsafe pointers | Every `port` commit and every review of one |
 | [assertions.md](assertions.md) | Which assertion to use, what to assert, what not to | Every `port` commit |
 | [nullability.md](nullability.md) | How header annotations are made and proven, and other claims a header makes to Swift | An `annotate` commit, or a port that touches unannotated API |
@@ -147,9 +152,10 @@ the dated record with reasons; this section states the rules that follow.
 - The pilot started on 2026-11-21 with some Phase 0 items unfinished; they
   continue alongside it ([plan.md §1](plan.md)). No unit after the two
   pilot units starts without the owner's word ([lifecycle.md §3](lifecycle.md)).
-- A unit on the full path gets the full dossier, however small it looks; a
-  unit that qualifies for the light path gets the short one
-  ([lifecycle.md §3](lifecycle.md)).
+- A unit gets a dossier in proportion to its code: none on the trivial
+  path, a short one on the light path, and on the full path one within a
+  cap tied to its size ([lifecycle.md §3 and §4](lifecycle.md); the owner,
+  2026-11-24).
 - Bugs found while building tools or porting are recorded in `bugs.md` and
   not fixed, unless one blocks a port (changed 2026-11-21).
 - Large files are ported a few methods at a time, not in one commit
@@ -207,8 +213,9 @@ the dated record with reasons; this section states the rules that follow.
 - A `switch` over an enum in Objective-C has no `default:`. Every case is
   listed so that the compiler warns when a value is added. `-Wswitch-default`
   is not used.
-- The app is built for Intel as well as Apple silicon at the close of each
-  unit (section 5).
+- The app is built for Intel as well as Apple silicon once per session,
+  among the closing checks ([lifecycle.md §5](lifecycle.md); changed
+  2026-11-24 from the close of each unit).
 - Release builds keep Swift's safety checks ([performance.md §1](performance.md)).
 
 **Size**
@@ -283,7 +290,11 @@ never contains two versions of a method with a switch between them. A small
 file moves in one commit. A large file moves a few methods at a time, with the
 class living partly in each language until the last piece goes ([lifecycle.md §2](lifecycle.md)).
 
-**Every commit builds, passes the suite, and can be reverted alone.**
+**Every commit builds, passes its unit's tests (and the whole suite
+where gate step 3 says), and can be reverted alone. A unit is done only
+when a session's closing checks have passed over it
+([lifecycle.md §5](lifecycle.md)); until then it is landed, closing checks
+pending.**
 
 ## 5. Commit kinds and the gate
 
@@ -306,59 +317,43 @@ unit and the kind, for example `Swift-Port: iTermFooController kind=port`.
 | `fix` | Fixes one logged bug, test first | Yes, the fix |
 | `improve` | Stage two change to already-ported Swift | Only as stated in the message |
 
-The gate. Steps 1 to 6 run on every commit; a light-path unit defers some of
-them as [lifecycle.md §3](lifecycle.md) says:
+The gate runs on every commit:
 
 1. `tools/build.sh` succeeds with no new warning, and none from a file the
    commit touches. Warnings are errors.
 2. The targeted tests for the unit pass, run without `-parallel` so failures
    are readable.
-3. The fast tier of the suite passes ([test-speed.md](test-speed.md)). Until the fast tier
-   exists, the whole suite: `tools/swift_migration/whole_suite.sh`, which
-   runs `tools/run_tests.expect -parallel` under the whole-suite lock
-   ([orchestration.md §3](orchestration.md), "Heavy jobs and the machine").
-4. For `annotate`, `arc` and `port` commits, the targeted tests also pass in
-   the sanitizer configuration ([phase0.md §4](phase0.md)).
-5. The migration lints pass ([phase0.md §6](phase0.md), which says which
-   run only in the orchestrator's checkout after the commit).
+3. The plain whole suite passes, run by
+   `tools/swift_migration/whole_suite.sh` under the whole-suite lock (a
+   stall is exit 124; [orchestration.md §3](orchestration.md)): on every
+   full-path commit but a `dossier` commit, on the light path's `port`
+   commit, and on `tool`, `fix` and `improve` commits that change app or
+   test code (a commit that changes only scripts or documents is gated by
+   its own tests: the migration's reading, 2026-11-24); never on the
+   trivial path (the owner, 2026-11-24: “Bring it back for light and
+   full”). Whole suites serialize through the lock, so each such commit
+   waits its turn.
+4. For `annotate`, `arc` and `port` commits on the light and full paths,
+   the targeted tests also pass under the nullability and integer sanitizers ([phase0.md §4](phase0.md)).
+5. A commit that adds or changes a dossier passes
+   `tools/swift_migration/dossier_cap.py` ([lifecycle.md §4](lifecycle.md)).
 6. New files are `git add`ed; renames use `git mv`. A port's project-file
    change is made with `tools/swift_migration/pbxproj_swap.py`
    ([lifecycle.md §3](lifecycle.md)), never `tools/add_file_to_xcodeproj.rb`.
 
-Steps 7 and 8 run at the close of each unit and before anything is pushed:
-
-7. The full suite passes, normally and in the sanitizer configuration.
-   The whole suites run one after another, each under the whole-suite
-   lock and each with a stall watchdog, never two at once, the thread
-   sanitizer serially ([orchestration.md §3](orchestration.md)). The
-   sanitized suites (`sanitizer_tests.sh`) also give every test XCTest's
-   time allowance; the plain suite (`whole_suite.sh`, which runs
-   `tools/run_tests.expect -parallel`) cannot, and its watchdog is
-   `run_tests.expect`'s own. A stall exits 124 from either script; a test
-   over the allowance fails the run (exit 65).
-   Under the nullability sanitizer the whole suite runs in the
-   non-aborting form (`sanitizer_tests.sh nullability` with no test
-   names): a violation does not end the test host, and the run fails on
-   every report outside the nullability baseline
-   (`docs/swift-migration/nullability-baseline.tsv`, the known, not yet
-   triaged violations; [nullability.md §7](nullability.md)), naming the
-   tests where the report's stack or file name shows them (reports from the
-   host's launch or other threads, and later hits of a location already
-   reported in the same host, name none). Judging this step against a
-   baseline was proposed by the migration on 2026-11-23 and awaits the
-   owner's confirmation (owner-queue.md Q26). The baseline was first generated on
-   2026-11-23 (69 entries, all untriaged). An entry is keyed by check, file, function, argument
-   number and the base name of the declaring header, so two violations in
-   one function on the same argument number whose declarations are in
-   headers of the same name (two `NSString.h` methods, or two Swift methods
-   in `iTerm2SharedARC-Swift.h`) share an entry. The aborting form, one
-   test-host relaunch per violation, is for targeted classes only.
-8. The app builds for `x86_64` with no warnings. Several hazards differ
-   between the Intel and Apple silicon slices ([warnings.md](warnings.md)), and the native
-   build alone lets an Intel-only error through. Rosetta is not available on
-   the build machine, so nothing runs for `x86_64`: build with
-   `ARCHS=x86_64 ONLY_ACTIVE_ARCH=NO` into a separate directory and read the
-   unit's type encodings with `otool -ov`.
+No unit runs a sanitizer suite, the `x86_64` build or the lints. They,
+with the plain whole suite once more over everything, are the closing
+checks, run once at the end of each session over everything that landed
+([lifecycle.md §5](lifecycle.md)), and nothing is pushed before they pass
+(the owner, 2026-11-24, for the sanitizer suites, the `x86_64` build and
+the lints; the plain whole suite once more is the migration's, covering
+trivial units). The `x86_64` build matters because several
+hazards differ between the Intel and Apple silicon slices
+([warnings.md](warnings.md)) and the native build alone lets an
+Intel-only error through. Rosetta is not available on the build machine,
+so nothing runs for `x86_64`: build with `ARCHS=x86_64
+ONLY_ACTIVE_ARCH=NO` into a separate directory and read the ported
+classes' type encodings with `otool -ov`.
 
 **Where commits go.**
 
@@ -370,8 +365,8 @@ Steps 7 and 8 run at the close of each unit and before anything is pushed:
   `origin/master`; never create a merge commit. Other checkouts push to
   master too, so fetch first and expect to rebase.
 - Each commit keeps its own trailer through the rebase. If the rebase brought
-  in changes to the unit's files or their dependencies, step 7 runs again
-  before the push.
+  in changes to a unit's files or their dependencies, the next closing
+  checks cover it.
 - Agents commit locally and never push. The owner reviews each night's work
   in the morning and pushes ([workflow.md §5](workflow.md)).
 - The session's document commit holds only changes that belong to no unit:
@@ -401,8 +396,8 @@ last. Details are in [plan.md](plan.md).
 
 **A unit** is one implementation file with its header, or a small cluster
 that cannot be separated. A unit on the full path goes through these steps,
-described in [lifecycle.md](lifecycle.md); the light path keeps a few of
-them ([lifecycle.md §3](lifecycle.md)):
+described in [lifecycle.md](lifecycle.md); the light and trivial paths keep
+a few of them ([lifecycle.md §3](lifecycle.md)):
 
 1. **Claim.** The orchestrator records the unit as in progress.
 2. **Dossier.** Everything about the unit that a port could break.
@@ -452,7 +447,9 @@ No agent remembers what another did. The repository is the memory.
   any that have arrived to ports as described in
   [lifecycle.md §1](lifecycle.md), step 7.
 - Check beta assertion failures from those builds the same way.
-- Run the full suite under the thread sanitizer ([concurrency.md §10](concurrency.md)).
+- The closing checks, at the end of every session ([lifecycle.md §5](lifecycle.md)),
+  which include the full suite under the thread sanitizer
+  ([concurrency.md §10](concurrency.md)).
 
 **Stored in `docs/swift-migration/`, because it cannot be derived:**
 
@@ -475,7 +472,8 @@ No agent remembers what another did. The repository is the memory.
   ([workflow.md §3](workflow.md)).
 - `hot-paths.md`: units deferred under [performance.md §2](performance.md), with the reason.
 - `reflective-sites.md`: the registry from [hidden-callers.md §2](hidden-callers.md).
-- `units/<name>.md`: the dossier for a unit in progress. Its changes ride
+- `units/<name>.md`: the dossier for a unit in progress (none on the
+  trivial path). Its changes ride
   in the unit's commits; the closing commit deletes it (on the light path,
   the port commit). The history keeps it.
 
