@@ -11,9 +11,14 @@
 
 #import <XCTest/XCTest.h>
 
-#import "NSImageView+iTerm.h"
 #import "iTermStatusBarLayoutAlgorithm.h"
 #import "iTermStatusBarTextComponent.h"
+
+// Declared here, not imported: the category is in Swift since its port, and
+// ModernTests cannot import iTerm2SharedARC-Swift.h.
+@interface NSImageView (StatusBarNullabilityTests)
+- (void)it_setTintColor:(nullable NSColor *)color;
+@end
 
 // Declared only in iTermStatusBarTextComponent.m.
 @interface iTermStatusBarTextComponent (StatusBarNullabilityTests)

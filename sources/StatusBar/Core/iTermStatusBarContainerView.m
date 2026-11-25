@@ -14,7 +14,6 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "NSDictionary+iTerm.h"
 #import "NSEvent+iTerm.h"
-#import "NSImageView+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTimer+iTerm.h"
 #import "NSView+iTerm.h"

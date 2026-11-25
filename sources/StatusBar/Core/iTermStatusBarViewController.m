@@ -19,7 +19,7 @@
 #import "iTermVariableScope.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
-#import "NSImageView+iTerm.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "NSObject+iTerm.h"
 #import "NSTimer+iTerm.h"
 #import "NSView+iTerm.h"

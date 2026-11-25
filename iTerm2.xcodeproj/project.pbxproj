@@ -2709,8 +2709,7 @@
 		A673BFEC1E1A13E600FA2386 /* iTermSetTitleTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = A673BFEA1E1A13E600FA2386 /* iTermSetTitleTrigger.h */; };
 		A673DEBE22624A90004EBF4D /* iTermCopyModeHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = A673DEBC22624A90004EBF4D /* iTermCopyModeHandler.h */; };
 		A673DEBF22624A90004EBF4D /* iTermCopyModeHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = A673DEBD22624A90004EBF4D /* iTermCopyModeHandler.m */; };
-		A675271D213DB6E800035F2B /* NSImageView+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A675271B213DB6E800035F2B /* NSImageView+iTerm.h */; };
-		A675271E213DB6E800035F2B /* NSImageView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A675271C213DB6E800035F2B /* NSImageView+iTerm.m */; };
+		86F78CAEB52A0833063E4E64 /* NSImageView+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E655577D49B780614E69A3D /* NSImageView+iTerm.swift */; };
 		A6755F431D728FFA00F3726C /* iTermImage.h in Headers */ = {isa = PBXBuildFile; fileRef = A6755F411D728FFA00F3726C /* iTermImage.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		A675856024595D6C00827C25 /* iTermSquash.h in Headers */ = {isa = PBXBuildFile; fileRef = A675855E24595D6C00827C25 /* iTermSquash.h */; };
 		A675856124595D6C00827C25 /* iTermSquash.m in Sources */ = {isa = PBXBuildFile; fileRef = A675855F24595D6C00827C25 /* iTermSquash.m */; };
@@ -7466,8 +7465,7 @@
 		A673BFEB1E1A13E600FA2386 /* iTermSetTitleTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSetTitleTrigger.m; sourceTree = "<group>"; };
 		A673DEBC22624A90004EBF4D /* iTermCopyModeHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCopyModeHandler.h; sourceTree = "<group>"; };
 		A673DEBD22624A90004EBF4D /* iTermCopyModeHandler.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCopyModeHandler.m; sourceTree = "<group>"; };
-		A675271B213DB6E800035F2B /* NSImageView+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSImageView+iTerm.h"; sourceTree = "<group>"; };
-		A675271C213DB6E800035F2B /* NSImageView+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSImageView+iTerm.m"; sourceTree = "<group>"; };
+		9E655577D49B780614E69A3D /* NSImageView+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSImageView+iTerm.swift"; sourceTree = "<group>"; };
 		A6755F411D728FFA00F3726C /* iTermImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermImage.h; sourceTree = "<group>"; };
 		A6755F421D728FFA00F3726C /* iTermImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermImage.m; sourceTree = "<group>"; };
 		A675855E24595D6C00827C25 /* iTermSquash.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSquash.h; sourceTree = "<group>"; };
@@ -13813,8 +13811,7 @@
 				A69B45B6197C60FB00F5444D /* NSImage+iTerm.h */,
 				A69B45B7197C60FB00F5444D /* NSImage+iTerm.m */,
 				A6069EBB2DEFC3B000EE6CC7 /* NSImage+iTerm.swift */,
-				A675271B213DB6E800035F2B /* NSImageView+iTerm.h */,
-				A675271C213DB6E800035F2B /* NSImageView+iTerm.m */,
+				9E655577D49B780614E69A3D /* NSImageView+iTerm.swift */,
 				53D0FD4B237DC30E00DAFA8A /* NSIndexSet+iTerm.h */,
 				53D0FD4C237DC30F00DAFA8A /* NSIndexSet+iTerm.m */,
 				530AB89D20B08CAF00D2AA08 /* NSJSONSerialization+iTerm.h */,
@@ -16353,7 +16350,6 @@
 				A6A73D4027C7FAED002E4CCA /* NSFileManager+CommonAdditions.h in Headers */,
 				A62DBBA720F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.h in Headers */,
 				A653F68824CF4EC70062377E /* FMDatabasePool.h in Headers */,
-				A675271D213DB6E800035F2B /* NSImageView+iTerm.h in Headers */,
 				A618FFBD22409DF900B8FD88 /* iTermTheme.h in Headers */,
 				A66719111DCE36C3000CE608 /* iTermCommandHistoryCommandUseMO.h in Headers */,
 				537BFDD12101AD9F0098C91F /* iTermCPUUtilization.h in Headers */,
@@ -20246,7 +20242,7 @@
 				A6F718B12263CC3C0053488E /* ITAddressBookMgr.m in Sources */,
 				A61582A22E5FC37E0094B718 /* iTermHistogramVisualizationView.swift in Sources */,
 				A6415C782D971D390018FAFE /* MenuItemTipController.swift in Sources */,
-				A675271E213DB6E800035F2B /* NSImageView+iTerm.m in Sources */,
+				86F78CAEB52A0833063E4E64 /* NSImageView+iTerm.swift in Sources */,
 				A6354B982A1B27BF002836A3 /* NamedMarksDidChangeNotification.swift in Sources */,
 				A6A4867020B67A3B00493302 /* iTermSizeRememberingView.m in Sources */,
 				A66F52B22105ABCA00571168 /* iTermStatusBarAttributedTextComponent.m in Sources */,
