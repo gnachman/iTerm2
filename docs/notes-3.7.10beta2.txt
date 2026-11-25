@@ -1,0 +1,215 @@
+Version 3.7.10beta2 of iTerm2 was built on
+November 24, 2026.
+
+New Features:
+- Tabs can show several lines of information, such
+  as the directory, the running job, and its
+  status. Turn on “Show rich tab content” in
+  Settings > Profiles > Window, then click Rich
+  Tab Content… to choose the lines. It applies to
+  windows created with that profile. A collapsed
+  tab group shows its tabs’ lines combined.
+- A vertical tab bar has a search field at the
+  top. Typing in it hides tabs whose title, lines,
+  or tab group name don’t match. Return selects
+  the first match and Esc shows every tab again.
+- A button beside that search field shows a
+  vertical tab bar’s tabs in your order, in a
+  section for each status, or in a section for
+  each working directory. The window’s own tab
+  order doesn’t change.
+- With the Claude Code integration installed,
+  iTerm2 remembers which Claude Code or Codex
+  conversation was running in each session. If a
+  restart ends it, such as rebooting your Mac, the
+  restored session offers to resume the
+  conversation. Resume All resumes every one at
+  once. Issue 13171.
+- A workgroup’s browser session can follow a
+  variable: put \(user.browserURL) in its URL in
+  Settings > Arrangements > Workgroups, and the
+  browser goes wherever the variable points. A
+  program in another session of the workgroup sets
+  it with “it2 session set-var --peer-name Browser
+  user.browserURL URL”. The Claude Code
+  Integration’s setup has a new optional step that
+  adds a browser to the Claude Code workgroup, so
+  Claude can show the issue or pull request it is
+  working on, including when Claude runs on a host
+  reached through SSH Integration. Resuming the
+  conversation brings the page back.
+- A new built-in function,
+  iterm2.escape_html(string:), makes text safe to
+  use in HTML, such as an HTML tab title.
+
+Other Improvements:
+- Switching away from iTerm2 no longer stalls as
+  long when you have many sessions or long
+  scrollback with Shell Integration. Saving window
+  state for restoration now skips what hasn’t
+  changed and writes less to disk.
+- Saved window state takes much less disk space
+  for sessions with long scrollback history, so
+  restoring windows at launch is faster. Issue
+  9360.
+- A collapsed tab group shows an icon when one of
+  its tabs needs attention, such as a status dot,
+  a bell, or new output.
+- A tab’s context menu can snooze it, as the
+  Session Status tool can snooze a session: its
+  status dims and it stops asking for attention
+  until the status changes.
+- HTML tab titles, and text that scripts show in
+  the status bar, can color text with <font
+  color=#rrggbb>, and understand &gt;, &quot;, and
+  &#39;.
+
+Bug Fixes:
+- Fix crashes and hangs caused by certain control
+  sequences and inline images with very large
+  counts or sizes. A program’s output could crash
+  iTerm2 or freeze its window. Sequences that move
+  the cursor, insert, delete, or erase characters
+  or lines, or fill or erase a rectangle now stop
+  at the edge of the screen as they do for smaller
+  counts.
+- A program using the kitty image or kitty drag
+  and drop protocol could make iTerm2 type text of
+  its choosing at the shell prompt, which ran as a
+  command if you pressed Return. iTerm2’s replies
+  to these programs no longer include text the
+  program sent.
+- With “Terminal may report window title” turned
+  on, a program could set a title that, when
+  reported back, left a command such as “x && rm
+  file” at the shell prompt, which ran if you
+  pressed Return. Reported titles now have shell
+  punctuation such as &, $, and quotes replaced
+  with spaces.
+- A program using the kitty image protocol could
+  have iTerm2 read files in /etc and /var/db,
+  which iTerm2 meant to refuse, and iTerm2’s
+  replies told the program, even one on a remote
+  host, why a file could not be shown, such as
+  that it did not exist. Those files are now
+  refused, and every file that can’t be shown gets
+  the same reply.
+- Since 3.7.8, an inline image could turn into a
+  brown rectangle once it scrolled into history,
+  if a lot of output arrived at once (as when
+  printing a long file) or the screen was cleared
+  or reset. Images now stay until they leave the
+  scrollback buffer. Issue 13235.
+- On a host where you installed the Claude Code
+  integration over SSH Integration, starting
+  Claude Code from any other terminal blocked
+  every prompt with “not running under iTerm2 SSH
+  integration.” The status hook now does nothing
+  when it can’t reach iTerm2. Reconnect to the
+  host with SSH Integration to get the fix. Issue
+  13236.
+- If iTerm2 ran out of file descriptors, the
+  Python API stopped accepting connections until
+  you restarted it. Also, AI agent hooks no longer
+  open connections that iTerm2 will reject when a
+  busy Mac is slow to check their permission.
+  Issue 13230.
+- Changing the theme could freeze iTerm2 for a
+  long time after many tabs had been opened, even
+  ones already closed. Issue 13233.
+- When a restored session’s saved profile was
+  damaged (by the bug in iTerm2 3.5.7), iTerm2
+  offered Assign Profile even when there was no
+  saved arrangement to repair, and choosing a
+  profile then crashed iTerm2. The offer now
+  appears only for sessions restored from a saved
+  arrangement.
+- When an AI agent hook was stopped before it
+  finished, its entry in the Script Console stayed
+  “running” forever, so with many busy sessions
+  they piled up without limit. Issue 13183.
+- When a program turned on light/dark mode change
+  reports and exited without turning them off,
+  text like 997;1n appeared at the prompt each
+  time you switched between light and dark mode.
+  iTerm2 now offers to turn the reports off, and
+  turns them off when shell integration sees the
+  host change. Issue 13228.
+- Paths and URLs no longer absorb the full-width
+  punctuation that follows them in Chinese and
+  Japanese text, so ⌘-click opens the right file
+  or link.
+- Right-to-left text no longer flashes unreordered
+  while a program that uses synchronized updates
+  (such as Claude Code) repaints the screen.
+  Thanks to Nimanou (nuved) for the fix.
+- Programs that track the mouse, such as Claude
+  Code, now get the right cell when you click or
+  drag on right-to-left text. Before, they got the
+  column the mouse was in, so selecting Persian
+  text selected something else. Thanks to Nimanou
+  (nuved) for the fix.
+- A background color with separate light and dark
+  mode values (SGR 48:12 or 48:13) used the light
+  value in dark mode in cells that were erased,
+  scrolled in, or added by making the window
+  bigger. Issue 13231.
+- Toasts, Global Search, Instant Replay,
+  autocomplete popups, and the About window now
+  follow the theme: light under the Light themes,
+  dark under the Dark themes, and under the
+  Minimal theme, light or dark to match the
+  current session’s background color. Toasts used
+  to always be dark.
+- A Select Menu Item key binding whose menu item
+  was disabled could fire a different menu item
+  with the same title, such as an Action named
+  after it. It now does nothing.
+- If a profile was missing one of its text,
+  background, or selection colors, colors changed
+  during an SSH Integration session were not put
+  back when it ended, and a restored session lost
+  the colors saved with XTPUSHCOLORS.
+- Installing Shell Integration again after
+  switching away from the session’s tab while the
+  Internet-Free install was still running now
+  stops the earlier install and lets it return you
+  to your own shell first, as clicking Cancel
+  does, instead of running alongside it and
+  finding you inside its helper shells.
+- With Find open, clicking a command in the
+  terminal no longer scrolls the view to the first
+  match in that command.
+- Double-click selection now finds a match for the
+  “Characters considered part of a word” regular
+  expression when it continues onto the next line
+  of soft-wrapped text.
+- Checkmarks in the Captured Output tool are now
+  kept when windows are restored.
+- Double-clicking a line in the Captured Output
+  tool did nothing when the Capture Output
+  trigger’s command used session variables.
+- An inline image more than 255 rows tall is
+  limited to 255 rows, and is now narrowed to
+  match. Before, it took up extra columns.
+- An inline image too wide for the space right of
+  the cursor is now shrunk to fit that space.
+  Before, it could be cut off.
+- The control sequence that deletes characters now
+  deletes the one under the cursor when the cursor
+  has been moved to the last column, and the one
+  that copies a rectangle puts the copy at the
+  requested row and column instead of swapping
+  them, measured from the margins when origin mode
+  is on.
+- In protected mode, erasing a line or the screen
+  skipped the last column, and erasing up to the
+  cursor left the cursor’s cell.
+- The control sequence that reports a checksum of
+  part of the screen (off by default) now always
+  sends four hex digits; some checksums came out
+  as eight. It also no longer counts the right
+  half of a wide character or the cells a tab
+  skipped over, so screens with those give
+  different checksums than before.
+
