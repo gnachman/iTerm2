@@ -9,7 +9,6 @@
 #import "iTermNotificationCenter+Protected.h"
 
 #import "DebugLogging.h"
-#import "NSNull+iTerm.h"
 #import "NSObject+iTerm.h"
 
 static NSString *const iTermInternalNotification = @"iTermInternalNotification";

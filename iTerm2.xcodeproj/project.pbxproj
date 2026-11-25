@@ -2368,8 +2368,7 @@
 		A65660D52372A4A600DC6744 /* iTermCache.m in Sources */ = {isa = PBXBuildFile; fileRef = A65660D32372A4A600DC6744 /* iTermCache.m */; };
 		A656674F219EA46E005FE60E /* NSNumber+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A656674D219EA46E005FE60E /* NSNumber+iTerm.h */; };
 		A6566750219EA46E005FE60E /* NSNumber+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A656674E219EA46E005FE60E /* NSNumber+iTerm.m */; };
-		A6566753219EA582005FE60E /* NSNull+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6566751219EA582005FE60E /* NSNull+iTerm.h */; };
-		A6566754219EA582005FE60E /* NSNull+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6566752219EA582005FE60E /* NSNull+iTerm.m */; };
+		01E24D1D490067CBB3561E22 /* NSNull+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FAC8BF1A0DB485AE477EF27 /* NSNull+iTerm.swift */; };
 		A658716A1D85E6700061CEEE /* PFMoveApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = A65871681D85E6700061CEEE /* PFMoveApplication.h */; };
 		A658716B1D85E6750061CEEE /* PFMoveApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = A65871671D85E6700061CEEE /* PFMoveApplication.m */; };
 		A6587A4721D82B4200794775 /* iTermStandardKeyMapper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6587A4521D82B4200794775 /* iTermStandardKeyMapper.h */; };
@@ -7262,8 +7261,7 @@
 		A65660D32372A4A600DC6744 /* iTermCache.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCache.m; sourceTree = "<group>"; };
 		A656674D219EA46E005FE60E /* NSNumber+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSNumber+iTerm.h"; sourceTree = "<group>"; };
 		A656674E219EA46E005FE60E /* NSNumber+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSNumber+iTerm.m"; sourceTree = "<group>"; };
-		A6566751219EA582005FE60E /* NSNull+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSNull+iTerm.h"; sourceTree = "<group>"; };
-		A6566752219EA582005FE60E /* NSNull+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSNull+iTerm.m"; sourceTree = "<group>"; };
+		9FAC8BF1A0DB485AE477EF27 /* NSNull+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSNull+iTerm.swift"; sourceTree = "<group>"; };
 		A656AE4B1DBBE1CE00CE8448 /* libaprutil-1.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libaprutil-1.tbd"; path = "usr/lib/libaprutil-1.tbd"; sourceTree = SDKROOT; };
 		A65871671D85E6700061CEEE /* PFMoveApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PFMoveApplication.m; path = LetsMove/PFMoveApplication.m; sourceTree = "<group>"; };
 		A65871681D85E6700061CEEE /* PFMoveApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PFMoveApplication.h; path = LetsMove/PFMoveApplication.h; sourceTree = "<group>"; };
@@ -13832,8 +13830,7 @@
 				A680AA1718CEBF5C0034D4F8 /* NSMutableData+iTerm.m */,
 				A61ABBC01AE5F54A004656C2 /* NSMutableDictionary+Profile.h */,
 				A61ABBC11AE5F54A004656C2 /* NSMutableDictionary+Profile.m */,
-				A6566751219EA582005FE60E /* NSNull+iTerm.h */,
-				A6566752219EA582005FE60E /* NSNull+iTerm.m */,
+				9FAC8BF1A0DB485AE477EF27 /* NSNull+iTerm.swift */,
 				A656674D219EA46E005FE60E /* NSNumber+iTerm.h */,
 				A656674E219EA46E005FE60E /* NSNumber+iTerm.m */,
 				A6E312612E38633F008222DE /* NSObject.swift */,
@@ -16799,7 +16796,6 @@
 				A62A785D2F987DB1007CAA0B /* iTermScriptConsole.h in Headers */,
 				A62A785E2F987DB1007CAA0B /* iTermScriptsMenuController.h in Headers */,
 				A675856024595D6C00827C25 /* iTermSquash.h in Headers */,
-				A6566753219EA582005FE60E /* NSNull+iTerm.h in Headers */,
 				A6F718CA2266DB380053488E /* iTermURLActionHelper.h in Headers */,
 				A66EF82C1EF59CFC0005891A /* iTermRateLimitedUpdate.h in Headers */,
 				A6E2A6392B910EEE00EC6070 /* iTermTaskQueue.h in Headers */,
@@ -19857,7 +19853,7 @@
 				A65AEDED2CC1B625007F4A11 /* SearchEngine.swift in Sources */,
 				A6D693EC2E416AC6005E9AFE /* PointerControllerDelegate.swift in Sources */,
 				A62132D327862A4800B80724 /* TokenExecutor.swift in Sources */,
-				A6566754219EA582005FE60E /* NSNull+iTerm.m in Sources */,
+				01E24D1D490067CBB3561E22 /* NSNull+iTerm.swift in Sources */,
 				A629C706221016AA00E7D4AE /* iTermMoveTabToWindowBuiltInFunction.m in Sources */,
 				A601F8902328B3E800EEE4DC /* iTermWeakReference.m in Sources */,
 				A640487229BFCBCB0063C34A /* SpecialExceptionsWindowController.swift in Sources */,
