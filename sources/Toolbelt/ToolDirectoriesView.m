@@ -22,7 +22,6 @@
 #import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
-#import "NSTableColumn+iTerm.h"
 #import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSWindow+iTerm.h"

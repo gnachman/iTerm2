@@ -20,7 +20,6 @@
 #import "NSEvent+iTerm.h"
 #import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
-#import "NSTableColumn+iTerm.h"
 #import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSWorkspace+iTerm.h"

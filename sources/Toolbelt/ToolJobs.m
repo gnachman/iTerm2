@@ -17,7 +17,6 @@
 #import "NSArray+iTerm.h"
 #import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
-#import "NSTableColumn+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"

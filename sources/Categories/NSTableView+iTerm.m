@@ -11,7 +11,6 @@
 #import "iTermKeyboardNavigatableTableView.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
-#import "NSTableColumn+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 
 NSString *const iTermDynamicProfileSymbolName = @"iTermDynamicProfileSymbolName";
