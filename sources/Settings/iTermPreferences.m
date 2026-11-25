@@ -27,6 +27,8 @@
 #import "iTermUserDefaults.h"
 #import "iTermUserDefaultsObserver.h"
 
+#include <stdatomic.h>
+
 // Defined in PreferencePanel.m. Forward-declared here to avoid pulling the
 // heavyweight PreferencePanel.h into this file.
 extern NSString *const kRefreshTerminalNotification;
@@ -1380,23 +1382,36 @@ static BOOL gHideTabBarSuppressedDuringDrag = NO;
 
 @end
 
+// `value` is _Atomic because readers on any thread load it without a lock while
+// a refresh stores it (see iTermPreferencesFastCacheLock()). Both sides use
+// memory_order_relaxed: only the value itself is shared, so no ordering with
+// other memory is needed, and a relaxed load or store of a lock-free scalar is
+// the same single plain instruction as before on arm64 and x86_64. `key` and
+// `onceToken` are written before any read through the dispatch_once, so they
+// stay plain.
 typedef struct {
     NSString *key;
-    BOOL value;
+    _Atomic(BOOL) value;
     dispatch_once_t onceToken;
 } iTermPreferencesBoolCache;
 
 typedef struct {
     NSString *key;
-    int value;
+    _Atomic(int) value;
     dispatch_once_t onceToken;
 } iTermPreferencesIntCache;
 
 typedef struct {
     NSString *key;
-    double value;
+    _Atomic(double) value;
     dispatch_once_t onceToken;
 } iTermPreferencesDoubleCache;
+
+// A type that is not lock-free would make every atomic access call into a
+// lock, which these accessors exist to avoid.
+_Static_assert(__atomic_always_lock_free(sizeof(BOOL), 0), "_Atomic(BOOL) must be lock-free");
+_Static_assert(__atomic_always_lock_free(sizeof(int), 0), "_Atomic(int) must be lock-free");
+_Static_assert(__atomic_always_lock_free(sizeof(double), 0), "_Atomic(double) must be lock-free");
 
 #define FAST_BOOL_ACCESSOR(accessorName, userDefaultsKey) \
 + (BOOL)accessorName { \
@@ -1439,8 +1454,10 @@ typedef struct {
 // newer value -- a lost update. Holding this lock across the read AND the assign
 // makes the last refresher to acquire it read NSUserDefaults at that instant and
 // win, so the cache converges to the current value regardless of thread order.
-// Readers of cache->value do not take the lock (a scalar load is atomic enough);
-// only the refreshers serialize against each other.
+// Readers of cache->value do not take the lock: they do a relaxed atomic load,
+// which can see a value a moment old but never a torn or undefined one. Only the
+// refreshers serialize against each other, and each stores the value with a
+// relaxed atomic store while holding the lock.
 static id iTermPreferencesFastCacheLock(void) {
     static id lock;
     static dispatch_once_t onceToken;
@@ -1503,33 +1520,33 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key) {
     dispatch_once(&cache->onceToken, ^{
         [self installFastCacheForKey:cache->key refresh:^{
             @synchronized (ITNonnilLock(iTermPreferencesFastCacheLock())) {
-                cache->value = [self boolForKey:cache->key];
+                atomic_store_explicit(&cache->value, [self boolForKey:cache->key], memory_order_relaxed);
             }
         }];
     });
-    return cache->value;
+    return atomic_load_explicit(&cache->value, memory_order_relaxed);
 }
 
 + (int)intWithCache:(iTermPreferencesIntCache *)cache {
     dispatch_once(&cache->onceToken, ^{
         [self installFastCacheForKey:cache->key refresh:^{
             @synchronized (ITNonnilLock(iTermPreferencesFastCacheLock())) {
-                cache->value = [self intForKey:cache->key];
+                atomic_store_explicit(&cache->value, [self intForKey:cache->key], memory_order_relaxed);
             }
         }];
     });
-    return cache->value;
+    return atomic_load_explicit(&cache->value, memory_order_relaxed);
 }
 
 + (double)doubleWithCache:(iTermPreferencesDoubleCache *)cache {
     dispatch_once(&cache->onceToken, ^{
         [self installFastCacheForKey:cache->key refresh:^{
             @synchronized (ITNonnilLock(iTermPreferencesFastCacheLock())) {
-                cache->value = [self doubleForKey:cache->key];
+                atomic_store_explicit(&cache->value, [self doubleForKey:cache->key], memory_order_relaxed);
             }
         }];
     });
-    return cache->value;
+    return atomic_load_explicit(&cache->value, memory_order_relaxed);
 }
 
 // Only plain keys here: fast accessors must not be used on computed keys (see
