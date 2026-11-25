@@ -564,13 +564,34 @@ final class RuntimeSnapshotTests: XCTestCase {
             XCTFail("too few lines: \(lines)")
             return
         }
+        // The expected values are worked out here from the test host's own
+        // path, not taken from RuntimeSnapshot. The host is
+        // <directory>/<configuration>/iTerm2.app. In the plain test build the
+        // directory is Variant-<name> (Build/Variant-ASan/Development); the
+        // builds of tools/swift_migration/sanitizer_tests.sh have none
+        // (tmp/sanitizers/<mode>/Build/Development), and then the variant is
+        // absent and its line is the bare keyword.
+        let appURL = Bundle.main.bundleURL
+        let components = appURL.pathComponents
+        guard components.count >= 3 else {
+            XCTFail("unexpected test host path: \(appURL.path)")
+            return
+        }
+        let configuration = components[components.count - 2]
+        let directory = components[components.count - 3]
+        let variantPrefix = "Variant-"
+        let variant: String? = directory.hasPrefix(variantPrefix) && directory.count > variantPrefix.count ? String(directory.dropFirst(variantPrefix.count)) : nil
         XCTAssertEqual(lines[0], "# Objective-C runtime snapshot, format 3")
         XCTAssertEqual(lines[1], "architecture " + architecture)
-        XCTAssertEqual(lines[2], configurationLine)
-        XCTAssertEqual(lines[3], variantLine)
-        // The tests run from Build/Variant-<name>/<configuration>/iTerm2.app.
-        XCTAssertNotNil(RuntimeSnapshot.buildConfiguration)
-        XCTAssertNotNil(RuntimeSnapshot.buildVariant)
+        XCTAssertEqual(lines[2], "build-configuration " + RuntimeSnapshotFormat.escape(configuration))
+        XCTAssertEqual(lines[3], variant.map { "build-variant " + RuntimeSnapshotFormat.escape($0) } ?? "build-variant")
+        XCTAssertFalse(configuration.isEmpty)
+        XCTAssertEqual(RuntimeSnapshot.buildConfiguration, configuration)
+        XCTAssertEqual(RuntimeSnapshot.buildVariant, variant)
+        // A variant is recorded exactly when the host's path has a Variant-
+        // directory.
+        let pathHasVariant = components.contains { $0.hasPrefix(variantPrefix) && $0.count > variantPrefix.count }
+        XCTAssertEqual(RuntimeSnapshot.buildVariant != nil, pathHasVariant, appURL.path)
     }
 
     // Header values are escaped, and an absent one leaves only the keyword.
