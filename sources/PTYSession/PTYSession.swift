@@ -1734,24 +1734,51 @@ extension PTYSession {
 @objc
 extension PTYSession {
     func willOpenEditSessionSettings() {
-        if var triggerDicts = self.justProfile[KEY_TRIGGERS] as? [NSDictionary] {
-            var haveStats = false
-            screen.performBlock(joinedThreads: { _, state, _ in
-                let stats = state.triggerStats()
-                if stats.count == triggerDicts.count {
-                    for i in 0..<stats.count {
-                        if var dict = triggerDicts[i] as? [String: Any] {
-                            haveStats = true
-                            dict[kTriggerPerformanceKey] = stats[i].dictionaryValue
-                            triggerDicts[i] = dict as NSDictionary
-                        }
-                    }
-                }
-            })
-            if haveStats {
-                setSessionSpecificProfileValues([KEY_TRIGGERS: triggerDicts])
+        guard let triggerDicts = self.justProfile[KEY_TRIGGERS] as? [NSDictionary] else {
+            return
+        }
+        var stats = [iTermHistogram]()
+        screen.performBlock(joinedThreads: { _, state, _ in
+            stats = state.triggerStats()
+        })
+        if let updated = PTYSession.triggerDicts(triggerDicts, addingStats: stats) {
+            setSessionSpecificProfileValues([KEY_TRIGGERS: updated])
+        }
+    }
+}
+
+extension PTYSession {
+    // Trigger stats come from PTYTriggerEvaluator, which keeps only some of the profile's
+    // triggers. These are the profile indexes of the ones it keeps, in order.
+    static func indexesOfEvaluatedTriggers(in triggerDicts: [NSDictionary]) -> [Int] {
+        return triggerDicts.indices.filter { i in
+            guard let dict = triggerDicts[i] as? [AnyHashable: Any],
+                  let trigger = Trigger(fromUntrustedDict: dict) else {
+                return false
+            }
+            return PTYTriggerEvaluator.evaluatesTrigger(trigger)
+        }
+    }
+
+    // Returns the profile's triggers with each evaluated trigger's stats added, or nil if there
+    // is nothing to add or the stats don't line up with the triggers.
+    static func triggerDicts(_ triggerDicts: [NSDictionary],
+                             addingStats stats: [iTermHistogram]) -> [NSDictionary]? {
+        let indexes = indexesOfEvaluatedTriggers(in: triggerDicts)
+        guard stats.count == indexes.count else {
+            DLog("Have \(stats.count) trigger stats for \(indexes.count) evaluated triggers")
+            return nil
+        }
+        var result = triggerDicts
+        var haveStats = false
+        for (stat, i) in zip(stats, indexes) {
+            if var dict = result[i] as? [String: Any] {
+                haveStats = true
+                dict[kTriggerPerformanceKey] = stat.dictionaryValue
+                result[i] = dict as NSDictionary
             }
         }
+        return haveStats ? result : nil
     }
 }
 

@@ -301,3 +301,9 @@ Bug Fixes:
   “Session Restarted” banner, could stay a
   brown block after the image became
   available.
+- Full-screen programs such as Claude Code ran
+  slower, and iTerm2 could wrongly offer to turn
+  off triggers, when the profile had a trigger
+  that matches an event such as Job Started (the
+  Claude Code Integration adds some). Issue
+  13245.
