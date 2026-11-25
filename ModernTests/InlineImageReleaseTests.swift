@@ -128,12 +128,20 @@ final class InlineImageReleaseTests: XCTestCase {
         return result
     }
 
+    // Every joined block gets its own autorelease pool, even one that only reads: an object
+    // autoreleased during a joined block (including its closing sync) can hold an image mark,
+    // and left in the test's outer pool it keeps the image alive until the test ends. Whether
+    // such an object goes into the caller's pool depends on the build (the tests that read
+    // without a pool failed under the nullability and thread sanitizers).
+
     /// The first line of history is line 0; this is the line number of the top of the screen.
     private func screenTop(_ screen: VT100Screen) -> Int32 {
         var result: Int32 = 0
-        screen.performBlock(joinedThreads: { _, mutableState, _ in
-            result = mutableState.numberOfScrollbackLines
-        })
+        autoreleasepool {
+            screen.performBlock(joinedThreads: { _, mutableState, _ in
+                result = mutableState.numberOfScrollbackLines
+            })
+        }
         return result
     }
 
@@ -772,8 +780,10 @@ final class InlineImageReleaseTests: XCTestCase {
         let code = imageCode(screen, x: 0, y: 10)!
         let top = Int(screenTop(screen))
 
-        screen.foldAbsLineRange(NSRange(location: top - 10, length: 3))
-        screen.waitForQueuedTokensForTesting()
+        autoreleasepool {
+            screen.foldAbsLineRange(NSRange(location: top - 10, length: 3))
+            screen.waitForQueuedTokensForTesting()
+        }
         inject(screen, "\u{1b}[25;1Hworld")
         XCTAssertEqual(imageCode(screen, x: 0, y: 10), code, "premise: the image should not have moved")
         XCTAssertLessThan(Int(screenTop(screen)), top, "premise: the fold should have shortened history")
@@ -787,9 +797,11 @@ final class InlineImageReleaseTests: XCTestCase {
 
     private func imageCodesInHistory(_ screen: VT100Screen) -> IndexSet {
         var result = IndexSet()
-        screen.performBlock(joinedThreads: { _, mutableState, _ in
-            result = mutableState.imageCodesInHistory
-        })
+        autoreleasepool {
+            screen.performBlock(joinedThreads: { _, mutableState, _ in
+                result = mutableState.imageCodesInHistory
+            })
+        }
         return result
     }
 
@@ -913,9 +925,11 @@ final class InlineImageReleaseTests: XCTestCase {
         let screen = makeScreen()
         inject(screen, "\u{1b}[H" + imageSequence(widthInCells: 10, heightInCells: 4))
         let code = imageCode(screen, x: 0, y: 0)!
-        screen.performBlock(joinedThreads: { _, _, _ in
-            _ = screen.numberOfRawLines(in: VT100GridRange(location: 0, length: 30))
-        })
+        autoreleasepool {
+            screen.performBlock(joinedThreads: { _, _, _ in
+                _ = screen.numberOfRawLines(in: VT100GridRange(location: 0, length: 30))
+            })
+        }
         XCTAssertFalse(imageCodesInHistory(screen).contains(code))
 
         inject(screen, overwrite(rows: 0...3))
@@ -927,11 +941,13 @@ final class InlineImageReleaseTests: XCTestCase {
         let screen = makeScreen()
         inject(screen, "\u{1b}[H" + imageSequence(widthInCells: 10, heightInCells: 4))
         let code = imageCode(screen, x: 0, y: 0)!
-        screen.performBlock(joinedThreads: { _, mutableState, _ in
-            _ = TerminalContentSnapshot(lineBuffer: mutableState.linebuffer,
-                                        grid: mutableState.currentGrid,
-                                        cumulativeOverflow: 0)
-        })
+        autoreleasepool {
+            screen.performBlock(joinedThreads: { _, mutableState, _ in
+                _ = TerminalContentSnapshot(lineBuffer: mutableState.linebuffer,
+                                            grid: mutableState.currentGrid,
+                                            cumulativeOverflow: 0)
+            })
+        }
         XCTAssertFalse(imageCodesInHistory(screen).contains(code))
 
         inject(screen, overwrite(rows: 0...3))

@@ -127,7 +127,8 @@ isEqualToExternalAttribute:(iTermExternalAttribute * _Nullable)rhs;
 - (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index maximumLength:(int)maxLength;
 - (void)setObject:(iTermExternalAttribute * _Nullable)ea atIndexedSubscript:(NSUInteger)i;
 
-+ (iTermExternalAttributeIndex *)concatenationOf:(id<iTermExternalAttributeIndexReading>)lhs
+// A nil side has no external attributes: it contributes nothing.
++ (iTermExternalAttributeIndex *)concatenationOf:(nullable id<iTermExternalAttributeIndexReading>)lhs
                                       length:(int)lhsLength
                                         with:(nullable id<iTermExternalAttributeIndexReading>)rhs
                                       length:(int)rhsLength;
