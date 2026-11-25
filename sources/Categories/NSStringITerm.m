@@ -43,7 +43,6 @@
 #import "NSAttributedString+PSM.h"
 #import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
-#import "NSLocale+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSCharacterSet+iTerm.h"

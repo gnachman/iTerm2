@@ -12,7 +12,6 @@
 #import "iTermTuple.h"
 #import "iTermWeakBox.h"
 #import "NSData+iTerm.h"
-#import "NSLocale+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
