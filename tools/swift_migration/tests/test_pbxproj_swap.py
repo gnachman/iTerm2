@@ -1,5 +1,6 @@
 """Tests for tools/swift_migration/pbxproj_swap.py, which replaces a .m and
-.h with a .swift in an Xcode project file.
+.h with a .swift in an Xcode project file, or moves a .m from one target's
+Sources phase to another's.
 
 Run from the repository root:
     python3 -B -m unittest discover -s tools/swift_migration/tests -p 'test_pbxproj_swap.py'
@@ -242,6 +243,194 @@ class SwapTests(unittest.TestCase):
                               r'lastKnownFileType = sourcecode.swift; path = Foo.swift;')
 
 
+FOO_M_ENTRY = '\t\t\t\t333333333333333333333333 /* Foo.m in Sources */,'
+FOO_M_BUILD_FILE = ('\t\t333333333333333333333333 /* Foo.m in Sources */ = {isa = PBXBuildFile; '
+                    'fileRef = 444444444444444444444444 /* Foo.m */; };')
+EMPTY_OTHER_FILES = '\t\t\tfiles = (\n\t\t\t);'
+
+
+def with_other_files(text, *entries):
+    """The fixture with entries listed in the Other target's Sources phase."""
+    return text.replace(EMPTY_OTHER_FILES, '\t\t\tfiles = (\n' + ''.join(e + '\n' for e in entries) + '\t\t\t);')
+
+
+def with_build_file(text, line):
+    return text.replace('/* End PBXBuildFile section */', line + '\n/* End PBXBuildFile section */')
+
+
+class MoveTests(unittest.TestCase):
+    def move(self, text=FIXTURE, m='Things/Foo.m', from_target='App', to_target='Other'):
+        return pbxproj_swap.move_to_target(text, m, from_target, to_target)
+
+    def refusal(self, text=FIXTURE, **kw):
+        with self.assertRaises(pbxproj_swap.Refusal) as cm:
+            self.move(text, **kw)
+        return str(cm.exception)
+
+    def test_moves_the_sources_entry_and_nothing_else(self):
+        new = self.move()
+        removed, added = changed_lines(FIXTURE, new)
+        self.assertEqual(removed, [FOO_M_ENTRY])
+        self.assertEqual(added, [FOO_M_ENTRY])
+        # The PBXBuildFile is kept: it now belongs to the Other target's phase.
+        self.assertIn(FOO_M_BUILD_FILE, new)
+        self.assertIn('\t\tFFFFFFFFFFFFFFFFFFFFFFFF /* Sources */ = {\n\t\t\tisa = PBXSourcesBuildPhase;\n'
+                      '\t\t\tbuildActionMask = 2147483647;\n\t\t\tfiles = (\n' + FOO_M_ENTRY + '\n\t\t\t);', new)
+        self.assertIn('555555555555555555555555 /* Bar.swift in Sources */,\n'
+                      '\t\t\t\t777777777777777777777777 /* Baz.m in Sources */,\n\t\t\t);', new)
+        # The .h is left alone.
+        self.assertIn('111111111111111111111111 /* Foo.h in Headers */,', new)
+        self.assertTrue(new.endswith('}\n'))
+
+    def test_appends_after_existing_entries(self):
+        text = with_other_files(FIXTURE, '\t\t\t\t121212121212121212121212 /* Qux.m in Sources */,')
+        new = self.move(text)
+        self.assertIn('\t\t\t\t121212121212121212121212 /* Qux.m in Sources */,\n' + FOO_M_ENTRY + '\n\t\t\t);', new)
+
+    def test_moves_from_a_phase_later_in_the_file(self):
+        # Other's Sources phase comes after App's, as iTerm2Shared's comes after iTerm2SharedARC's.
+        text = with_other_files(FIXTURE.replace(FOO_M_ENTRY + '\n', ''), FOO_M_ENTRY,
+                                '\t\t\t\t121212121212121212121212 /* Qux.m in Sources */,')
+        new = self.move(text, from_target='Other', to_target='App')
+        self.assertEqual(changed_lines(text, new), ([FOO_M_ENTRY], [FOO_M_ENTRY]))
+        self.assertIn('\t\t\t\t555555555555555555555555 /* Bar.swift in Sources */,\n'
+                      '\t\t\t\t777777777777777777777777 /* Baz.m in Sources */,\n' + FOO_M_ENTRY + '\n\t\t\t);', new)
+        self.assertIn('\t\t\tfiles = (\n\t\t\t\t121212121212121212121212 /* Qux.m in Sources */,\n\t\t\t);', new)
+        self.assertEqual(new.count('333333333333333333333333'), 2)
+
+    def test_refuses_to_phase_without_files_list(self):
+        text = FIXTURE.replace(EMPTY_OTHER_FILES + '\n', '')
+        self.assertIn('no files list', self.refusal(text))
+
+    def test_refuses_unclosed_files_list(self):
+        text = FIXTURE.replace(EMPTY_OTHER_FILES, '\t\t\tfiles = (')
+        self.assertIn('not closed', self.refusal(text))
+
+    def test_refuses_missing_group_child(self):
+        # The group lists the reference under another name, so the counts still add up.
+        text = FIXTURE.replace('\t\t\t\t444444444444444444444444 /* Foo.m */,',
+                               '\t\t\t\t444444444444444444444444 /* Renamed.m */,')
+        self.assertIn('group child', self.refusal(text))
+
+    def test_refuses_build_file_in_a_phase_other_than_sources(self):
+        text = with_build_file(FIXTURE, '\t\t565656565656565656565656 /* Foo.m in Headers */ = {isa = PBXBuildFile; '
+                                        'fileRef = 444444444444444444444444 /* Foo.m */; };')
+        text = text.replace('\t\t\t\t111111111111111111111111 /* Foo.h in Headers */,\n',
+                            '\t\t\t\t111111111111111111111111 /* Foo.h in Headers */,\n'
+                            '\t\t\t\t565656565656565656565656 /* Foo.m in Headers */,\n')
+        self.assertIn('expected Sources', self.refusal(text))
+
+    def test_refuses_two_file_references_of_the_same_name(self):
+        text = FIXTURE.replace('/* End PBXFileReference section */',
+                               '\t\t787878787878787878787878 /* Foo.m */ = {isa = PBXFileReference; '
+                               'lastKnownFileType = sourcecode.c.objc; path = Foo.m; sourceTree = "<group>"; };\n'
+                               '/* End PBXFileReference section */')
+        self.assertIn('PBXFileReference of Foo.m', self.refusal(text))
+
+    def test_quoted_target_name_with_escaped_quotes(self):
+        text = FIXTURE.replace('\t\t\tname = Other;', '\t\t\tname = "Other \\"X\\"";')
+        new = self.move(text, to_target='Other "X"')
+        self.assertEqual(changed_lines(text, new), ([FOO_M_ENTRY], [FOO_M_ENTRY]))
+
+    def test_composes_with_swap(self):
+        new = pbxproj_swap.swap(self.move(), 'Things/Foo.m', 'Things/Foo.h', 'Things/Foo.swift', rng=random.Random(1))
+        self.assertRegex(new, r'FFFFFFFFFFFFFFFFFFFFFFFF /\* Sources \*/ = \{\n\t\t\tisa = PBXSourcesBuildPhase;\n'
+                              r'\t\t\tbuildActionMask = 2147483647;\n\t\t\tfiles = \(\n'
+                              r'\t\t\t\t[0-9A-F]{24} /\* Foo.swift in Sources \*/,\n\t\t\t\);')
+
+    def test_refuses_m_not_in_from_target(self):
+        # A third target, so that Baz.m (in App) is in neither the from- nor the to-target.
+        text = FIXTURE.replace('/* End PBXNativeTarget section */',
+                               '\t\tABABABABABABABABABABABAB /* Third */ = {\n\t\t\tisa = PBXNativeTarget;\n'
+                               '\t\t\tbuildPhases = (\n\t\t\t\tCDCDCDCDCDCDCDCDCDCDCDCD /* Sources */,\n\t\t\t);\n'
+                               '\t\t\tname = Third;\n\t\t};\n/* End PBXNativeTarget section */')
+        text = text.replace('/* End PBXSourcesBuildPhase section */',
+                            '\t\tCDCDCDCDCDCDCDCDCDCDCDCD /* Sources */ = {\n\t\t\tisa = PBXSourcesBuildPhase;\n'
+                            '\t\t\tbuildActionMask = 2147483647;\n\t\t\tfiles = (\n\t\t\t);\n'
+                            '\t\t\trunOnlyForDeploymentPostprocessing = 0;\n\t\t};\n'
+                            '/* End PBXSourcesBuildPhase section */')
+        self.move(text, m='Things/Baz.m', from_target='App', to_target='Third')  # the fixture is sound
+        message = self.refusal(text, m='Things/Baz.m', from_target='Other', to_target='Third')
+        self.assertIn('not in', message)
+        self.assertIn('Other', message)
+
+    def test_refuses_m_in_no_target(self):
+        text = FIXTURE.replace(FOO_M_ENTRY + '\n', '').replace(FOO_M_BUILD_FILE + '\n', '')
+        self.assertIn('not in', self.refusal(text))
+
+    def test_refuses_m_already_in_to_target(self):
+        text = with_other_files(FIXTURE, '\t\t\t\t123412341234123412341234 /* Foo.m in Sources */,')
+        text = with_build_file(text, '\t\t123412341234123412341234 /* Foo.m in Sources */ = {isa = PBXBuildFile; '
+                                     'fileRef = 444444444444444444444444 /* Foo.m */; };')
+        message = self.refusal(text)
+        self.assertIn('already', message)
+        self.assertIn('Other', message)
+
+    def test_refuses_m_twice_in_from_target(self):
+        text = FIXTURE.replace(FOO_M_ENTRY + '\n', FOO_M_ENTRY + '\n'
+                               '\t\t\t\t123412341234123412341234 /* Foo.m in Sources */,\n')
+        text = with_build_file(text, '\t\t123412341234123412341234 /* Foo.m in Sources */ = {isa = PBXBuildFile; '
+                                     'fileRef = 444444444444444444444444 /* Foo.m */; };')
+        message = self.refusal(text)
+        self.assertIn('2 times', message)
+        self.assertIn('App', message)
+
+    def test_refuses_target_with_two_sources_phases(self):
+        text = FIXTURE.replace('\t\t\t\tFFFFFFFFFFFFFFFFFFFFFFFF /* Sources */,\n',
+                               '\t\t\t\tFFFFFFFFFFFFFFFFFFFFFFFF /* Sources */,\n'
+                               '\t\t\t\tABABABABABABABABABABABAB /* Sources */,\n')
+        text = text.replace('/* End PBXSourcesBuildPhase section */',
+                            '\t\tABABABABABABABABABABABAB /* Sources */ = {\n\t\t\tisa = PBXSourcesBuildPhase;\n'
+                            '\t\t\tbuildActionMask = 2147483647;\n\t\t\tfiles = (\n\t\t\t);\n'
+                            '\t\t\trunOnlyForDeploymentPostprocessing = 0;\n\t\t};\n'
+                            '/* End PBXSourcesBuildPhase section */')
+        message = self.refusal(text)
+        self.assertIn('2 Sources phases', message)
+        self.assertIn('Other', message)
+
+    def test_refuses_build_settings_and_names_them(self):
+        for flag in ('-fno-objc-arc', '-fobjc-arc'):
+            text = FIXTURE.replace(FOO_M_BUILD_FILE, FOO_M_BUILD_FILE.replace(
+                '/* Foo.m */; };', '/* Foo.m */; settings = {COMPILER_FLAGS = "%s"; }; };' % flag))
+            message = self.refusal(text)
+            self.assertIn('settings', message)
+            self.assertIn(flag, message)
+
+    def test_refuses_unknown_target(self):
+        self.assertIn('Nope', self.refusal(to_target='Nope'))
+        self.assertIn('Nope', self.refusal(from_target='Nope'))
+
+    def test_refuses_ambiguous_target(self):
+        text = FIXTURE.replace('\t\t\tname = Other;', '\t\t\tname = App;')
+        message = self.refusal(text, from_target='App', to_target='Other')
+        self.assertIn('2 native targets', message)
+
+    def test_refuses_same_target(self):
+        self.assertIn('same', self.refusal(to_target='App'))
+
+    def test_refuses_unexplained_build_file_reference(self):
+        text = FIXTURE.replace('\trootObject', '\tstray = 333333333333333333333333;\n\trootObject')
+        self.assertIn('occurs', self.refusal(text))
+
+    def test_refuses_unexplained_file_reference(self):
+        text = FIXTURE.replace('\trootObject', '\tstray = 444444444444444444444444;\n\trootObject')
+        self.assertIn('occurs', self.refusal(text))
+
+    def test_refuses_shared_sources_phase(self):
+        # The Other target lists the App target's Sources phase too.
+        text = FIXTURE.replace('\t\t\t\tFFFFFFFFFFFFFFFFFFFFFFFF /* Sources */,\n',
+                               '\t\t\t\tDDDDDDDDDDDDDDDDDDDDDDDD /* Sources */,\n')
+        self.assertIn('occurs', self.refusal(text))
+
+    def test_refuses_not_a_dot_m(self):
+        self.refusal(m='Things/Bar.swift')
+
+    def test_quoted_target_name(self):
+        text = FIXTURE.replace('\t\t\tname = Other;', '\t\t\tname = "Other Thing";')
+        new = self.move(text, to_target='Other Thing')
+        self.assertEqual(changed_lines(text, new), ([FOO_M_ENTRY], [FOO_M_ENTRY]))
+
+
 class MainTests(unittest.TestCase):
     def run_main(self, args):
         out, err = io.StringIO(), io.StringIO()
@@ -275,6 +464,48 @@ class MainTests(unittest.TestCase):
             self.assertIn('refused', err)
             with open(path) as f:
                 self.assertEqual(f.read(), FIXTURE)
+
+    def test_move_check_writes_nothing_and_apply_writes(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, 'project.pbxproj')
+            with open(path, 'w') as f:
+                f.write(FIXTURE)
+            args = ['--project', path, '--m', 'Things/Foo.m', '--from-target', 'App', '--to-target', 'Other']
+            status, out, _ = self.run_main(args + ['--check'])
+            self.assertEqual(status, 0)
+            self.assertIn('-' + FOO_M_ENTRY, out)
+            self.assertIn('+' + FOO_M_ENTRY, out)
+            with open(path) as f:
+                self.assertEqual(f.read(), FIXTURE)
+            status, _, _ = self.run_main(['--project', path, '--m', 'Things/Foo.m', '--from-target', 'App',
+                                          '--move-to-target', 'Other'])
+            self.assertEqual(status, 0)
+            with open(path) as f:
+                self.assertEqual(f.read(), pbxproj_swap.move_to_target(FIXTURE, 'Things/Foo.m', 'App', 'Other'))
+
+    def test_move_refusal_exit_status(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, 'project.pbxproj')
+            with open(path, 'w') as f:
+                f.write(FIXTURE)
+            status, _, err = self.run_main(['--project', path, '--m', 'Things/Foo.m', '--from-target', 'App',
+                                            '--to-target', 'Nope'])
+            self.assertEqual(status, 1)
+            self.assertIn('refused', err)
+            with open(path) as f:
+                self.assertEqual(f.read(), FIXTURE)
+
+    def test_move_usage_errors(self):
+        base = ['--project', '/nonexistent/project.pbxproj', '--m', 'Things/Foo.m']
+        for extra in (['--to-target', 'Other'],
+                      ['--from-target', 'App'],
+                      ['--from-target', 'App', '--to-target', 'Other', '--swift', 'Things/Foo.swift'],
+                      ['--from-target', 'App', '--to-target', 'Other', '--h', 'Things/Foo.h'],
+                      ['--from-target', 'App', '--to-target', 'Other', '--all-targets'],
+                      []):
+            with self.assertRaises(SystemExit) as cm:
+                self.run_main(base + extra)
+            self.assertEqual(cm.exception.code, 2, extra)
 
 
 if __name__ == '__main__':

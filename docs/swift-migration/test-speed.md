@@ -134,3 +134,35 @@ measures time.
   binds the gate only from then, and the gate will then run
   `fast_tests.sh --enforce-budget`, which fails a run that goes over
   (without the option the time is only printed).
+
+## 4. Test host configuration
+
+Test hosts run with AppKit's automatic window animations off: the ModernTests
+and Benchmark test plans pass `-NSAutomaticWindowAnimationsEnabled NO`
+beside `-suite iterm2-tests`, and every script that runs tests through the
+ModernTests scheme or an `.xctestrun` file the build wrote from that plan
+inherits it. With animations on, every window a test orders in or out starts
+a zoom animation that holds a user-interactive dispatch thread until it has
+had enough display frames to finish. With the screen locked the frames
+apparently stop, so a long run piles up 80 such threads, the dispatch pool's
+limit, after which global-queue work and XPC replies are no longer
+delivered and tests with unbounded waits hang (bugs.md, “Dispatch threads
+pile up in a long-running test host”). `TestHostWindowAnimationTests` fails
+if the argument goes missing.
+
+Two things in this section were proposed by the migration on 2026-11-24 and
+await the owner's confirmation (owner-queue.md Q30): the rule that tests
+must not depend on display frames arriving, and the exception below.
+
+One test is proposed as an exception to the rule against real-time waits in
+migration tests (section 2, item 4):
+`TestHostWindowAnimationTests.testOpeningAndClosingWindowsStartsNoBlockingAnimation`
+runs the main run loop for up to 0.15 seconds after opening a window and
+again after closing it, because AppKit starts a window's animation only
+when the run loop runs, and the test must see the animation's thread if
+animations are on. It must run in every gate to catch the launch argument
+going missing or being ignored, so it cannot move to the slow tier. Its
+result does not depend on timing when animations are off, which is the
+passing state: no thread ever enters the animation's method, however slow
+the machine. Only the failing direction depends on timing (a very slow
+machine could miss an animation that is on).

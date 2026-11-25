@@ -167,15 +167,30 @@ by seven. If the reset time changes, the table follows it.
 - Work also stops when the owner starts using the checkout in the morning,
   whatever the budget says.
 
-**Stopping cleanly.** When the cap is reached, the orchestrator:
+**Stopping cleanly.** When the cap is reached, or at the night's clean
+stop time, the orchestrator:
 
-1. Starts nothing new and lets running subagents finish.
+1. Starts nothing new and lets running subagents finish. A background
+   job that has not finished (a suite run, a build) is stopped or
+   abandoned, and the report says which.
 2. Commits anything that has completed the loop and passed the gate.
 3. Saves any other uncommitted work as a patch and records it in
    `claims.md`, with the round the loop had reached.
 4. Returns the working tree to the last commit, so that in the morning the
    tree is clean and builds.
 5. Writes the night's report.
+
+The orchestrator never waits on a background job without a bound: it
+waits with `python3 tools/swift_migration/suite_guard.py wait --pid PID
+--seconds 540` in the foreground and looks at the clock after each return,
+instead of ending its turn to wait for the job's notification. An
+interactive session idle at its prompt gets no turn until something
+arrives: on 2026-11-24 the session ended its turn waiting for three suite
+runs that had hung, never got another turn, missed its clean stop at 05:15
+and was killed at the hard limit with no report. Since then the supervisor
+also types a fixed line into the session at the clean stop, once (the
+nudge, below), and the suite runs themselves have time bounds
+([orchestration.md §3](orchestration.md)).
 
 Every stop is resumable by a new orchestrator with no memory of the night:
 `claims.md`, the commit trailers, the saved patches, and `owner-queue.md`
@@ -253,7 +268,26 @@ nights have run, treat the mechanism as unproven.
   below reports any ref change from these routes; working tree changes
   are not compared. The orchestrator is
   told to have stopped cleanly 45 minutes before the hard limit; the stop
-  sequence starts early enough to end by the hard limit. For the scheduled
+  sequence starts early enough to end by the hard limit. At the clean stop
+  `deadline_run.py --nudge-text` types one fixed line into the session,
+  then presses Enter as a separate tmux call a second later, once each,
+  bounded, logged and never retried: “It is the clean stop time. Stop now
+  as docs/swift-migration/workflow.md section 4 says: start nothing new,
+  stop or abandon background jobs that have not finished, commit what
+  passed, write the night's report, release lanes, then stop.” Observed
+  with Claude Code 2.1.331 in a private tmux server on 2026-11-24: idle at
+  its prompt, the session took the line as a message and started a turn;
+  typed during a turn, the line was shown as “Queued” and delivered when
+  the turn ended; the same line with Enter in one tmux call was taken for
+  a paste and stayed unsubmitted in the input, so the Enter goes
+  separately. The stop sequence clears the input line with Ctrl-C before
+  it types /exit (text left in the input would otherwise have /exit
+  appended and go as a message): with leftover text, with an empty input
+  (one Ctrl-C there only shows a hint) and during a turn, the session
+  exited. An open dialog takes the nudge as its answer and the nudge is
+  lost (observed with AskUserQuestion), so the session runs without
+  AskUserQuestion; any other dialog open at the clean stop would still
+  take it. For the scheduled
   midnight start the six-hour limit comes first: clean stop 05:15, hard
   limit 06:00. The 07:00 limit applies only to a later start (then 06:15
   and 07:00). After the session the script compares the refs of the

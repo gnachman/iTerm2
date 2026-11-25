@@ -170,6 +170,26 @@ its assertion.
   disabling it.
 - **Found:** 2026-11-21.
 
+### Flaky tests `ExecutionPermitsTests.testWakeIsCalledWithoutTheLockHeld` and `FramerPaneJobManagerTests.testInputSizeAndKillGoToThePane`
+
+- **Where:** `ModernTests/ExecutionPermitsTests.swift` and
+  `ModernTests/FramerPaneJobManagerTests.swift`.
+- **What:** both failed once, on 2026-11-24, in one full
+  `tools/run_tests.expect -parallel` run (the gate of
+  `iTermApplication+Scripting kind=test`, at `f1e606764` plus that change),
+  in the same test host (pid 18605): the first after 10.0 s, the second
+  after 90.1 s, both looking like waits that timed out. Run alone on the
+  same tree, both passed (3.1 s together). The same commit's earlier
+  whole-suite run (with only a Python change) did not fail them. The cause
+  is unknown; the 9 `TabBarSearchWindowTests` that fail in the tree (below)
+  ran in the same run, and another lane was building and testing at the
+  same time.
+- **Reproduce:** not reliably.
+- **Meanwhile:** disabled on 2026-11-24 with the `FLAKY-DISABLED` marker.
+- **Found:** 2026-11-24.
+
+Re-enabled 2026-11-24. A reviewer ran each test alone three times with the skip removed and each passed every time (0.001 s; about 3.1 s). Both failures were waits that ran to their full timeout in the same test host while another lane was building and testing, which is what a starved host looks like, not a fault in the code under test. The machine's memory pressure was not recorded when they failed. If either fails again in a whole-suite run, record `memory_pressure` and `sysctl vm.swapusage` and run it alone before disabling it.
+
 ## `@synchronized` sites whose lock can be nil
 
 Found by the Phase 0 nil-lock audit ([concurrency.md §2](concurrency.md)).
@@ -323,9 +343,105 @@ they have no assertion yet. The port of each one asserts as section 2 requires.
   `run_tests.expect -parallel`.
 - **Meanwhile:** the TokenBudget test no longer blocks dispatch threads on
   dispatch work (unit `suite-load-causes`); before, with 120 global-queue
-  tasks blocked first, it hung until killed, and now it passes. The
-  thread source is left for an investigation of its own.
+  tasks blocked first, it hung until killed, and now it passes.
+- **2026-11-24, cause of the `NSAnimation` threads (unit
+  `test-host-window-animations`):** stall reports written by
+  `tools/run_tests.expect`'s watchdog while the screen was locked (one on
+  2026-11-22 at 22:01, three on 2026-11-24 at 02:31, 02:54 and 03:19) show
+  test hosts with 80 or 81 threads parked in `-[NSAnimation _runBlocking]`
+  on the user-interactive global queue (`-[NSRunLoop runMode:beforeDate:]`,
+  `mach_msg`), at the dispatch soft limit of 80. A debugger run by day
+  showed each is AppKit's `_NSWindowTransformAnimation`, the zoom AppKit
+  plays when a window is ordered in or out: started from
+  `-[NSWindow _doOrderWindow:]` under `-[iTermWindow orderWindow:relativeTo:]`
+  (by `makeKeyAndOrderFront:` in
+  `-[PseudoTerminal insertTab:atIndex:openInBackground:]`, from
+  `TerminalWindowTestFixture.addTab`), and from `orderOut:` by
+  `-[NSWindow _close]` in `TerminalWindowTestFixture.close()`. Each holds a
+  dispatch thread until it has had enough display frames to finish. By day
+  (screen unlocked) they finish within a second and at most 2 or 3 existed
+  at once in five runs of up to 459 tests; every pile-up whose lock state is
+  known happened with the screen locked, none unlocked. That a locked
+  screen delivers no frames is inferred, not confirmed (a locked-screen
+  experiment was planned in another lane). Once the pool is exhausted,
+  `DispatchQueue.global().async` work and XPC replies are no longer
+  delivered in the host, and any test with an unbounded wait hangs: on
+  2026-11-24 five hosts hung so, in
+  `iTermBrowserPageSaverTests.testBasicPageSaving` (twice),
+  `KittyStalePlacementTests.testDeleteByImageIdZeroKeepsOtherIdlessPlacements`,
+  `AdvancedSettingsThreadSafetyTests.testReadingOffMainWhileMainChangesASetting`
+  and `WorkgroupUsageTests.test_runCommand_findsClaudeOnSuppliedPath`.
+  **Fix:** test hosts now run with `-NSAutomaticWindowAnimationsEnabled NO`
+  (ModernTests and Benchmark test plans), so no window animation starts
+  ([test-speed.md §4](test-speed.md));
+  `TestHostWindowAnimationTests` (in
+  `ModernTests/TerminalWindowTestFixtureTests.swift`) fails if the
+  argument is missing or if opening and closing fixture windows leaves a
+  thread inside `-[NSAnimation _runBlocking]`. The waits in
+  `AdvancedSettingsThreadSafetyTests` and in
+  `iTermBrowserPageSaverTestHelper` (page loads, JavaScript evaluations
+  and the page save) now time out after 60 seconds and fail the test.
+  `iTermApplicationScriptingTests.testCurrentScriptingWindowIsTheCurrentTerminalsEvenWhenNotKey`
+  failed after `TabBarSearchWindowTests`, whose title-editing test
+  activates the host app (`-[PseudoTerminal openEditTabTitleWindow]`); it
+  now sets up its “current but not key” state whether or not the app is
+  active, and `TabBarSearchWindowTests` deactivates the app again in
+  tearDown if a test activated it. The jump from 8 to 85 idle threads in the
+  `PSMTabGroupDragInvariantTests` sequence above was not re-examined.
 - **Found:** 2026-11-23, unit `suite-load-causes`.
+
+Confirmed by observation, 2026-11-24 15:46 to 15:54, with the screen locked by the owner: one test host running `TabBarOrderWindowTests` then `TabBarSearchWindowTests` (address sanitizer build, animations on) had 20, 45, 62 and then 80 threads inside `-[NSAnimation _runBlocking]` in samples 30 seconds apart; `sample` reported the dispatch thread soft limit from the fourth sample on, and the count stayed at 80 for the remaining five minutes without falling. In that host, afterwards, `TokenBudgetTests.testAcquireWaitsForRelease` (one `DispatchQueue.global().async` block awaited for 30 seconds) failed because the block never ran, where it takes a millisecond unlocked, and `WorkgroupModelThreadSafetyTests.testReadingOffMainWhileMainReplacesTheList`, which waits with no deadline, started and never finished; 62 assertions failed in the tab bar classes. The same minute, a host launched with `-NSAutomaticWindowAnimationsEnabled NO` ran `TabBarOrderWindowTests` locked with no such thread in any sample, and a host with animations on, locked, had 19 after one minute. Unlocked, the same build had 0 to 3. So the locked screen is the trigger and the launch argument removes it. Not observed: whether the parked threads finish when the screen is unlocked.
+
+## App code waits forever for work delivered on a global queue (owner question)
+
+- **Where:** `sources/XPC/iTermSandboxedWorkerClient.m`,
+  `+performSynchronously:` (line 47), used by `+imageFromData:` and
+  `+imageFromSixelData:`; `sources/CommandExecution/iTermCommandRunner.m`,
+  `-blockingRun` (line 151) and `-blockingRunWithTimeout:` (line 176).
+- **What:** `performSynchronously:` waits with `DISPATCH_TIME_FOREVER` for
+  the reply of the sandboxed image decoder over XPC (or its connection
+  error handler). XPC delivers both on a dispatch thread, so with no thread
+  free, or a decoder that never answers, the caller (an image decode for a
+  Kitty, iTerm2 or sixel image, from the token executor) blocks forever.
+  `blockingRunWithTimeout:` waits up to the timeout, then kills the
+  command and waits with `DISPATCH_TIME_FOREVER` for the completion block,
+  which runs on the default-priority global queue; `blockingRun` waits for
+  it with no timeout at all. With no thread free, the caller blocks forever
+  despite its timeout. A deadline would turn a permanent hang of the
+  calling thread into a failed decode (no image shown) or a command result
+  of failure; it would also need care that a late reply after the deadline
+  writes into nothing that has been freed.
+- **Reproduce:** in a test host, occupy every global-queue thread (for
+  example 100 blocks that each wait on one semaphore), then decode an image
+  through `iTermSandboxedWorkerClient` or run `iTermCommandRunner`
+  `blockingRunWithTimeout:` with a short timeout on a command that sleeps.
+- **Meanwhile:** left as it is: changing app behavior needs the owner. The
+  tests that reach them (`KittyStalePlacementTests`, `WorkgroupUsageTests`)
+  still hang in a starved host; with window animations off the known cause
+  of starvation is gone.
+- **Found:** 2026-11-24, unit `test-host-window-animations`.
+
+## The real app may park a thread per window opened or closed while the screen is locked (unconfirmed)
+
+- **Where:** AppKit's window ordering animation for terminal windows. No
+  app code sets `animationBehavior` on a terminal window (only xib windows
+  set it, to `default`), and `-[iTermWindow orderWindow:relativeTo:]` calls
+  `super`, so PseudoTerminal windows get the same zoom animation as in the
+  test host.
+- **What:** if a locked screen delivers no display frames, as the test-host
+  stalls suggest, each terminal window the app opens or closes while locked
+  (from a script, the API, a trigger, tmux, or a restored arrangement)
+  would hold one user-interactive dispatch thread until frames resume.
+  About 80 would exhaust the dispatch pool, after which the app's own
+  global-queue work and XPC replies stop. Whether the threads drain at
+  unlock is not known; the animation waits on frames, so they probably do.
+  Not observed in the real app.
+- **Reproduce:** on a test VM, with a Development build, lock the screen,
+  open and close about 20 windows from a script, and count the app's
+  threads in `-[NSAnimation _runBlocking]` with `sample` before unlocking
+  and again a few seconds after.
+- **Meanwhile:** left as it is: changing app behavior needs the owner.
+- **Found:** 2026-11-24, unit `test-host-window-animations`.
 
 ## Test hosts may post real user notifications as iTerm2 (unconfirmed)
 
@@ -371,7 +487,43 @@ they have no assertion yet. The port of each one asserts as section 2 requires.
   holding it) fails to decode. Whether to store it differently is
   owner-queue.md Q28. `VT100ConductorParser.init(uniqueID:)` no longer gets
   a nil (unit `nullability-zero-bugs`). Still open: the other sites above.
+- **2026-11-24:** the slot's missing color is fixed upstream by the owner's
+  commit “Keep a saved colors slot when one of its colors is missing”: an
+  absent color, or one whose archive holds no color, decodes as missing
+  with the rest of the slot intact, and the stored form is unchanged, so
+  older versions read new data as before. The migration's own fix for the
+  same thing (unit `saved-colors-missing-color`, which also changed the
+  stored form and what a pop restores) was written the same day and
+  dropped as redundant before it was pushed. Not done by either: popping a
+  slot that lacks a color still leaves that color as it is. Still open: the
+  sites above other than the saved colors slot,
+  `switchToTmuxPoller(tmuxController:)` and the conductor parser.
 - **Found:** 2026-11-20, nullability collection.
+
+## A color baseline outlives a change of the session's profile
+
+- **Where:** `sources/PTYSession/PTYSession.m`: `_preEscapeSequenceColors`
+  is filled by `-setEscapeSequenceProfileValues:baselineKeys:` (OSC 10, 11
+  and the like) and read by `-screenResetColorWithColorMapKey:profileKey:dark:`
+  (OSC 110 and the like). `-setProfile:` and `-storeProfile:` replace
+  `_profile` wholesale and never clear it; only writes of the same keys
+  through `-setSessionSpecificProfileValues:` and the reset itself remove
+  entries.
+- **What:** after the session changes to another profile, a reset, or a
+  pop of a slot lacking that color, writes the old profile's value for the
+  color over the new profile's. An improbable sequence; found by reading,
+  not observed.
+- **Reproduce:** a session with profile P1 whose foreground is a valid
+  color F1. OSC 10 sets the foreground to X (baseline F1 recorded). Change
+  the session to profile P2 (Edit Session's profile change, or anything
+  that calls `-setProfile:`). Then either OSC 110: the foreground becomes
+  F1, not P2's; or, if P2's foreground is not a color dictionary,
+  XTPUSHCOLORS then XTPOPCOLORS: the pop writes F1 over P2's value.
+- **Meanwhile:** unfixed; changing when baselines are cleared is a behavior
+  change of its own.
+- **Found:** 2026-11-24, by reading, in review of a saved colors change
+  that was later dropped. It concerns OSC 110 and the like as the code
+  stands.
 
 ## `MarkCache.copy(with:)` is not `-copyWithZone:`
 
@@ -384,18 +536,6 @@ they have no assertion yet. The port of each one asserts as section 2 requires.
   declarations.
 - **Meanwhile:** preserved.
 - **Found:** 2026-11-20, by the code database's Swift side.
-
-## `RuntimeSnapshotTests` expects the normal test build directory
-
-- **Where:** `ModernTests`,
-  `RuntimeSnapshotTests.testHeaderRecordsArchitectureAndConfiguration`.
-- **What:** fails in the builds of `tools/swift_migration/sanitizer_tests.sh`,
-  which build into `tmp/sanitizers/<mode>/`, because it expects the normal
-  build directory. A limit of the test, not of the app.
-- **Reproduce:** `tools/swift_migration/sanitizer_tests.sh plain` with the
-  test's name.
-- **Meanwhile:** enabled; expect it in the failures of those runs.
-- **Found:** 2026-11-20, by the whole-suite sanitizer runs.
 
 ## `iTerm2.sdef` names properties that nothing implements
 
@@ -1270,3 +1410,129 @@ or a crash from program output.
   parameter of `-[iTermTmuxOptionMonitor initWithGateway:...]` nullable,
   since this ordering passes nil.
 - **Found:** 2026-11-23, unit `nullability-zero-tests`.
+
+## `codedb.py update` never re-extracts a unit recorded with parse errors
+
+- **Where:** `tools/swift_migration/codedb/codedb.py`, `update` (the test
+  for whether a unit is current).
+- **What:** a unit whose last extraction recorded parse errors counts as
+  current when its inputs have not changed since, so a plain `update` skips
+  it and the database stays incomplete: queries exit 3, `macrolint` exits 3
+  and `crosscheck` leaves the unit out ("database rows not current (parse
+  errors)"). On 2026-11-24, after a fresh capture and a whole `update
+  --accept-removals` that reported "extracted 634 (0 with parse errors)",
+  48 ModernTests units still had parse errors from an earlier extraction.
+  `update --file <path> --force` on each extracted every one of them with
+  no parse error, so the errors came from the earlier run (probably one
+  made while a capture was incomplete), not from the files.
+- **Reproduce:** not reproduced on purpose. The symptom is "N units in the
+  database have parse errors" at the end of an `update` that extracted none
+  with parse errors.
+- **Meanwhile:** force each such unit by hand (the list is in
+  `crosscheck`'s "not compared" section; strip the trailing colon).
+- **Found:** 2026-11-24, the nightly orchestrator's cold start.
+
+## `TabBarSearchWindowTests` and `TabBarOrderWindowTests` fail on the tree as it stands
+
+- **Where:** `ModernTests/TabBarSearchWindowTests.swift` and
+  `ModernTests/TabBarOrderWindowTests.swift`, added or changed by the
+  commits “Add an order control to the vertical tab bar”, “Add section
+  headings to the sorted vertical tab bar” and “Leave room for the section
+  guide beside Tahoe's tabs” (2026-11-23, evening).
+- **What:** in the whole-suite run of 2026-11-24 (`run_tests.expect
+  -parallel` in the full-suite lane, at `4cb83604f` plus a Python-only tool
+  change that the app and the tests do not use), 66 of the 90 tests of
+  `TabBarSearchWindowTests` and 33 of the 36 of `TabBarOrderWindowTests`
+  failed, and nothing else. Run alone,
+  `TabBarSearchWindowTests` failed 9 tests, the last nine in alphabetical
+  order (from `testSwipingGoesAmongShownTabs` to
+  `testTypingHidesTabsThatDontMatch`), each at
+  `TabBarSearchWindowTests.swift:46`: “Asynchronous wait failed: Exceeded
+  timeout of 5 seconds, with unfulfilled expectations: "titles shown"”.
+  The class's tests take 1.3 to 3.4 s each when they pass, so something
+  appears to accumulate in the test host as the class runs, until the
+  5-second wait no longer suffices. Another lane was building at the same
+  time, so load may contribute. They fail consistently, so by test-speed.md
+  section 3 they are failures, not flakes, and were not disabled.
+- **Reproduce:** `tools/run_tests.expect ModernTests/TabBarSearchWindowTests`
+  on `f1e606764`.
+- **Meanwhile:** the night's gate runs count these two classes as failures
+  that were already in the tree (orchestration.md section 1, step 4.6) and
+  judge each commit by the failures it adds; the list is in
+  `tmp/baseline-failures-2026-11-24.txt` of the nightly clone. Queued for the
+  owner (owner-queue.md).
+- **Found:** 2026-11-24, the nightly orchestrator's gate for
+  `pbxproj-move-target`.
+
+## Data race on the fast-accessor caches of `iTermPreferences` (owner question)
+
+- **Where:** `sources/Settings/iTermPreferences.m`,
+  `+[iTermPreferences(FastAccessors) boolWithCache:]`, `+intWithCache:`
+  and `+doubleWithCache:`, behind every `FAST_BOOL_ACCESSOR`,
+  `FAST_INT_ACCESSOR` and `FAST_DOUBLE_ACCESSOR` (`bidiEnabled`,
+  `maximizeThroughput`, `sideMargins`, `splitPaneDimmingAmount` and the
+  rest).
+- **What:** each accessor returns `cache->value` with no lock, while the
+  cache's refresh block (run by the synchronous refresh after an
+  in-process write of the key, and by the key-value observer on the main
+  thread) assigns `cache->value` inside `@synchronized` on
+  `iTermPreferencesFastCacheLock()`. The field is a plain `BOOL`, `int` or
+  `double`, not an atomic, and the reader takes no lock, so a read on one
+  thread at the same time as a refresh on another is a data race by the
+  C11 memory model, which makes it undefined behavior. It is deliberate:
+  the comment above the lock says “Readers of cache->value do not take the
+  lock (a scalar load is atomic enough)”. Readers run off the main thread
+  all the time: `StringToScreenChars` (`ScreenChar.m`) reads `bidiEnabled`
+  for each string of input on the mutation queue, and
+  `VT100ScreenMutableState.m` reads it there too.
+- **What it means for users:** nothing seen in practice. On arm64 and
+  x86_64 an aligned load or store of a `BOOL`, `int` or `double` is one
+  instruction and cannot tear, so a reader gets either the old value or
+  the new one, and an old value for a moment after the setting changes is
+  what an unlocked cache gives anyway (the next call reads the new one). A
+  `double` could tear only on a 32-bit target, which iTerm2 does not build
+  for. What is left is theoretical: the compiler may assume there is no
+  race, for example to keep the value in a register, which it has no
+  occasion to do here, since each read is a call into this file.
+- **History:** the unlocked read is as old as the fast accessors (2018 for
+  `boolWithCache:`; the `int` variant January 2026, the `double` one July
+  2026). Until July 2026 the refresh wrote without a lock as well; the
+  July change put the lock around the refresh only, to stop lost updates
+  between two refreshers, and left the readers unlocked on purpose. The
+  race is not new and is not the migration's.
+- **The thread sanitizer:** seen on 2026-11-24 in the serial whole-suite
+  thread run on the tree containing unit `iTermApplication+Scripting`: one
+  report on the global `bidiEnabled.cache`, between the unlocked return in
+  `boolWithCache:` (about line 1510) and the assignment in its refresh
+  block (about line 1506), in
+  `AIAutomaticCredentialHostTests.testLegacyManualModelKeepsFormerKey` and
+  `BidiSupportModeTests.testReportedRowIsIntactInExplicitMode`. It was the
+  run's only report outside `thread-baseline.tsv`, so the verdict was
+  FAIL. The baseline run of 2026-11-21 did not report it, although both
+  tests, both accessor lines and the mutation-queue readers existed then.
+  Why was not established. The sanitizer reports a race only when it
+  sees both accesses with no synchronization between them, within its
+  limited history of earlier accesses, so whether a run reports it
+  depends on how the threads interleave in that run; one more
+  mutation-queue read was added on 2026-11-23
+  (`-temporaryDoubleBufferedGridSavedState`), after the baseline. Which
+  reader the report names was not looked at.
+- **Reproduce:** `tools/swift_migration/sanitizer_tests.sh thread` (whole
+  suite, serial); not in every run.
+- **The two options, for the owner:** (1) make the read race-free, an app
+  fix in its own `fix` commit: an atomic load of `cache->value` with a
+  matching atomic store in the refresh (relaxed ordering is enough, since
+  only the value itself is shared), which compiles to the same plain load
+  and store on arm64 and x86_64, so it changes no behavior and costs
+  nothing; or a read under the same lock, which adds a lock to accessors
+  that exist to be fast. (2) accept the race in `thread-baseline.tsv` and
+  its ledger, with the reason above (an aligned scalar of at most 64 bits,
+  read stale at worst) and a “re-judge when” naming these three methods.
+- **Meanwhile:** neither is done. The race is not in the unit's code, and
+  the History above shows it unchanged in the Objective-C, the case for
+  which thread-baseline.md adds a report to the ledger in its own commit;
+  that was left to the owner because option 1 is also open. Until one
+  option is taken, every serial whole-suite thread run that hits it fails
+  its verdict.
+- **Found:** 2026-11-24, the whole-suite thread sanitizer run at the close
+  of `iTermApplication+Scripting`.

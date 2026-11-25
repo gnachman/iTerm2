@@ -48,6 +48,81 @@ san_parallel_args() {
     fi
 }
 
+# Fails (status 2, with a message) unless $2, the value given to option $1,
+# is a whole number of seconds (0 allowed: it turns the feature off). For
+# --stall-seconds and the test allowances.
+san_check_seconds() {
+    case "$2" in
+        ''|*[!0-9]*) echo "error: $1 takes a whole number of seconds (0 turns it off), not '$2'" >&2; return 2 ;;
+    esac
+}
+
+# Sets SAN_ALLOWANCE_ARGS to the xcodebuild test arguments that give every
+# test case at most $1 seconds (the default execution time allowance) and
+# let none ask for more than $2 (the maximum), so that XCTest fails a hung
+# test and restarts its test host instead of waiting for ever. XCTest
+# rounds an allowance up to whole minutes. $1 of 0 gives no arguments (test
+# timeouts stay as the test plan has them: ModernTests.xctestplan sets
+# none, so off). Added 2026-11-24, after five test hosts each waited hours
+# in one test that night.
+san_allowance_args() {
+    SAN_ALLOWANCE_ARGS=()
+    if [ "$1" -gt 0 ]; then
+        SAN_ALLOWANCE_ARGS=(-test-timeouts-enabled YES
+                            -default-test-execution-time-allowance "$1"
+                            -maximum-test-execution-time-allowance "$2")
+    fi
+}
+
+# Prints, from the test log $1, the tests that ran out of XCTest's time
+# allowance ($2 seconds; 0 or absent: only the first form below), counted
+# apart from passed and failed. Two forms were observed on 2026-11-24:
+#   `xcodebuild test`: "Test Case '...' exceeded execution time allowance of
+#   1 minute", then the test may still print as passed ("passed (83.065
+#   seconds)"); XCTest restarts the host ("Restarting after unexpected exit,
+#   crash, or test timeout"), lists the test under "Failing tests" and the
+#   run fails (TEST FAILED, xcodebuild exit 65).
+#   `xcodebuild test-without-building` (fast_tests.sh): no such line; the
+#   test prints only "failed ... (60.000 seconds)", its duration the
+#   allowance rounded up to whole minutes, and the run fails (exit 65).
+#   Such a failure is reported as having probably exceeded its allowance.
+# Prints nothing when there is neither.
+san_allowance_report() {
+    python3 - "$1" "${2:-0}" <<'SAN_EOF'
+import math, re, sys
+path, allowance = sys.argv[1], int(sys.argv[2] or 0)
+limit = math.ceil(allowance / 60.0) * 60 if allowance > 0 else None
+ansi = re.compile(r'\x1b\[[0-9;]*[A-Za-z]')
+exceeded = re.compile(r"^Test Case '([^']+)' exceeded execution time allowance of ([^.]*)")
+failed = re.compile(r"^Test [Cc]ase '([^']+)' failed(?: on '[^']*')? \(([0-9.]+) seconds\)")
+found = {}
+probable = set()
+try:
+    with open(path, errors='replace') as f:
+        for raw in f:
+            line = ansi.sub('', raw).strip()
+            m = exceeded.match(line)
+            if m:
+                found[m.group(1)] = 'exceeded its allowance of %s' % m.group(2)
+                probable.discard(m.group(1))
+                continue
+            m = failed.match(line)
+            if m and limit is not None and abs(float(m.group(2)) - limit) < 0.5:
+                if m.group(1) not in found:
+                    found[m.group(1)] = ('probably exceeded: failed at %s s, the allowance rounded up to '
+                                         'whole minutes' % m.group(2))
+                    probable.add(m.group(1))
+except OSError:
+    pass
+if found:
+    print('Tests that exceeded or probably exceeded their time allowance: %d (%d exceeded, %d probably), '
+          'counted above as passed or failed whatever XCTest printed; each fails the run:'
+          % (len(found), len(found) - len(probable), len(probable)))
+    for name in sorted(found):
+        print('  %s (%s)' % (name, found[name]))
+SAN_EOF
+}
+
 # The number of entries (lines that are neither blank nor comments) in $1.
 san_count_entries() {
     grep -cvE '^[[:space:]]*(#|$)' "$1"

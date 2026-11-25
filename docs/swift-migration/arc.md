@@ -53,7 +53,10 @@ Procedure for one file:
    across a call that might release it: replace with a strong local, and make
    sure the extended lifetime is the same.
 9. Move the file to `iTerm2SharedARC`, build, run the gate including the
-   witnesses and the instance census ([lifetimes.md](lifetimes.md)).
+   witnesses and the instance census ([lifetimes.md](lifetimes.md)). The
+   move mode of `tools/swift_migration/pbxproj_swap.py` (`--m <path>.m
+   --from-target iTerm2Shared --to-target iTerm2SharedARC`; its header is its
+   manual) makes the project-file change.
 
 Large files are not converted in one commit. `PTYSession.m` and
 `PTYTextView.m` already show the pattern: an ARC category file

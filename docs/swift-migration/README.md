@@ -314,7 +314,9 @@ them as [lifecycle.md §3](lifecycle.md) says:
 2. The targeted tests for the unit pass, run without `-parallel` so failures
    are readable.
 3. The fast tier of the suite passes ([test-speed.md](test-speed.md)). Until the fast tier
-   exists, the whole suite: `tools/run_tests.expect -parallel`.
+   exists, the whole suite: `tools/swift_migration/whole_suite.sh`, which
+   runs `tools/run_tests.expect -parallel` under the whole-suite lock
+   ([orchestration.md §3](orchestration.md), "Heavy jobs and the machine").
 4. For `annotate`, `arc` and `port` commits, the targeted tests also pass in
    the sanitizer configuration ([phase0.md §4](phase0.md)).
 5. The migration lints pass ([phase0.md §6](phase0.md), which says which
@@ -326,6 +328,14 @@ them as [lifecycle.md §3](lifecycle.md) says:
 Steps 7 and 8 run at the close of each unit and before anything is pushed:
 
 7. The full suite passes, normally and in the sanitizer configuration.
+   The whole suites run one after another, each under the whole-suite
+   lock and each with a stall watchdog, never two at once, the thread
+   sanitizer serially ([orchestration.md §3](orchestration.md)). The
+   sanitized suites (`sanitizer_tests.sh`) also give every test XCTest's
+   time allowance; the plain suite (`whole_suite.sh`, which runs
+   `tools/run_tests.expect -parallel`) cannot, and its watchdog is
+   `run_tests.expect`'s own. A stall exits 124 from either script; a test
+   over the allowance fails the run (exit 65).
    Under the nullability sanitizer the whole suite runs in the
    non-aborting form (`sanitizer_tests.sh nullability` with no test
    names): a violation does not end the test host, and the run fails on

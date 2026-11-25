@@ -136,11 +136,33 @@ Mac sleeps. The processes signalled by the pane-group kills are itemized
 in the log, as the sweep's are. The root file is written by the session's
 own wrapper, so the pid it names is adopted only if it descends from the
 pane's first process and started after the run.
+The nudge (--nudge-text TEXT; absent, none): at the clean stop, the hard
+limit minus --clean-stop-margin (default 2700 seconds; the time
+--show-deadline prints as clean_stop=, which nightly_start.sh puts in the
+prompt), TEXT is typed into the pane (`send-keys -l TEXT`), then Enter as a
+call of its own KEY_GAP (1 second) later, once each: marked done before
+they are sent and never retried (a call that timed out may have been
+delivered), each bounded by SEND_KEYS_TIMEOUT and the start of the stop
+sequence, and logged with the outcome. Enter is tried even if the text
+call failed; if Enter fails, the text may stay in the input line, which
+the stop sequence clears. Observed with Claude Code 2.1.331 idle at its
+prompt in a private tmux server (2026-11-24): the text and Enter as two
+calls a second apart are submitted as a message and start a turn; long
+text with Enter in one tmux call is taken for a paste and stays in the
+input unsubmitted; typed during a turn, the message is shown as "Queued"
+and is delivered when the turn ends. On 2026-11-24 a session idle waiting
+for background jobs got no turn and missed its clean stop. No nudge when
+the clean stop is already past at the start or is not before the stop
+sequence (both logged).
 To stop the session (at the deadline, when blocked, or when this runner
 gets SIGTERM, SIGINT or SIGHUP): Escape is sent to the pane (interactive
 Claude Code stops the current turn on Esc), then after --interrupt-wait
-seconds "/exit" and Enter are typed (Claude Code's command that ends the
-session, after its SessionEnd hooks); after --grace more seconds the
+seconds Ctrl-C clears the input line (text left in it would otherwise have
+/exit appended and go as a message; Ctrl-C on an empty line only shows a
+hint), and after KEY_GAP "/exit" and Enter are typed (Claude Code's command
+that ends the session, after its SessionEnd hooks; observed with 2.1.331 to
+end the session with leftover text, with an empty line, and during a
+turn); after --grace more seconds the
 pane's process group gets SIGTERM; after --term-grace more seconds the tmux
 server is killed (its panes get SIGHUP) and the pane's process group gets
 SIGKILL. Then, always, the tmux server on the socket is killed if it is
@@ -167,7 +189,8 @@ Usage:
                     [--blocked-seconds S] [--stall-seconds S]
                     [--transcript FILE] [--root-file FILE]
                     [--tmux-confirm-seconds S] [--tmux-doubt-seconds S]
-                    [--tmux-timeout S] -- TMUX-CLIENT-COMMAND...
+                    [--tmux-timeout S] [--nudge-text TEXT]
+                    [--clean-stop-margin S] -- TMUX-CLIENT-COMMAND...
     deadline_run.py --spawn-root FILE -- COMMAND [ARG...]
     deadline_run.py --show-deadline --seconds N [--until HH:MM]
                     [--clean-stop-margin S] [--now ISO] [--tz ZONE]
@@ -695,6 +718,14 @@ MIN_TMUX_TIMEOUT = 0.2
 # that is slow under load still gets them delivered. Each is sent once and
 # never retried, since a call that timed out may have been delivered.
 SEND_KEYS_TIMEOUT = 10
+# Between a line of text and the Enter that submits it, and between the
+# Ctrl-C that clears Claude Code's input line and the /exit typed after it.
+# Observed with Claude Code 2.1.331 in a private tmux server (2026-11-24):
+# long text with Enter in the same tmux call is taken for a paste and left
+# unsubmitted; the same text and Enter as two calls a second apart is
+# submitted. Ctrl-C clears a line that has text in it (Escape does not); on
+# an empty line one Ctrl-C only shows "Press Ctrl-C again to exit".
+KEY_GAP = 1.0
 # The messages of GONE_MESSAGES that say no server runs: a contradiction
 # while the server process the run adopted is alive.
 NO_SERVER_MESSAGES = re.compile(r'^(no server running on |error connecting to )')
@@ -1354,6 +1385,22 @@ def run_tmux(args, command, env, limit, night_id, started):
     if stop_len > limit:
         log('the limit (%d seconds) is shorter than the stop sequence; it '
             'starts at once and may end after the limit' % limit)
+    # The nudge: one line typed into the session at the clean stop, so that
+    # a session idle at its prompt waiting for background jobs gets a turn
+    # then (on 2026-11-24 one never did, and missed its clean stop).
+    nudge = {'pending': False, 'at': None}
+    if args.nudge_text:
+        at = hard.at - args.clean_stop_margin
+        if at <= time.time():
+            log('the clean stop (%s) is already past; no nudge will be typed'
+                % fmt(dt.datetime.fromtimestamp(at, zone), zone))
+        elif at >= deadline.at:
+            log('the clean stop (%s) is not before the stop sequence; no nudge '
+                'will be typed' % fmt(dt.datetime.fromtimestamp(at, zone), zone))
+        else:
+            nudge.update(pending=True, at=at)
+            log('the nudge is typed into the session once, at the clean stop, %s: %r'
+                % (fmt(dt.datetime.fromtimestamp(at, zone), zone), args.nudge_text))
     watch_until = time.monotonic() + (args.blocked_seconds or 0)
     pattern = re.compile(args.blocked_pattern) if args.blocked_pattern else None
 
@@ -1410,6 +1457,35 @@ def run_tmux(args, command, env, limit, night_id, started):
                 % (args.transcript, args.stall_seconds, stall['screen']))
             reason = 'stalled'
             break
+        if nudge['pending'] and time.time() >= nudge['at']:
+            # Marked done before it is sent, so it is never typed twice: a
+            # call that timed out may have been delivered. The text, then
+            # Enter as a call of its own KEY_GAP later (in one call with
+            # long text, Claude Code takes the Enter for part of a paste).
+            # Enter is tried whatever became of the text, so the text is
+            # never left without an Enter attempt; if Enter fails, the text
+            # may be left in the input, and the stop sequence clears the
+            # input (Ctrl-C) before it types /exit.
+            nudge['pending'] = False
+            log('the clean stop: typing the nudge into the session')
+            got = tmux.run('send-keys', '-t', args.tmux_session, '-l',
+                           args.nudge_text, timeout=SEND_KEYS_TIMEOUT)
+            if got.returncode != 0:
+                log('the nudge text could not be typed (%s); it is not '
+                    'retried; sending Enter anyway'
+                    % (got.error or 'tmux exit status %d' % got.returncode))
+            time.sleep(KEY_GAP)
+            enter = tmux.run('send-keys', '-t', args.tmux_session, 'Enter',
+                             timeout=SEND_KEYS_TIMEOUT)
+            if enter.returncode != 0:
+                log('the Enter after the nudge could not be sent (%s); it is '
+                    'not retried; the text may be left in the input, which '
+                    'the stop sequence clears before /exit'
+                    % (enter.error or 'tmux exit status %d' % enter.returncode))
+            elif got.returncode == 0:
+                log('nudge typed')
+            else:
+                log('the nudge could not be typed; it is not retried')
         remaining = deadline.remaining()
         if remaining <= 0:
             reason = 'deadline'
@@ -1442,8 +1518,16 @@ def run_tmux(args, command, env, limit, night_id, started):
         tmux.send_keys('Escape',
                        timeout=min(SEND_KEYS_TIMEOUT, left(step_end)))
         if not wait_end(step_end):
-            log('typing /exit')
             step_end = time.monotonic() + args.grace
+            # Text left in the input line (a nudge whose Enter failed, or
+            # anything typed by hand) would have /exit appended to it and
+            # be sent as a message: on 2026-11-24 a real session started a
+            # turn that way instead of exiting. Ctrl-C clears it.
+            log('clearing the input line (Ctrl-C)')
+            tmux.send_keys('C-c',
+                           timeout=min(SEND_KEYS_TIMEOUT, left(step_end)))
+            time.sleep(min(KEY_GAP, max(0.0, step_end - time.monotonic())))
+            log('typing /exit')
             tmux.send_keys('-l', '/exit',
                            timeout=min(SEND_KEYS_TIMEOUT, left(step_end)))
             tmux.send_keys('Enter',
@@ -1578,6 +1662,10 @@ def main(argv=None):
     parser.add_argument('--transcript',
                         help='tmux mode: the session\'s transcript file, '
                         'whose growth shows that it has started')
+    parser.add_argument('--nudge-text',
+                        help='tmux mode: a line typed into the session, '
+                        'once, at the clean stop (the hard limit minus '
+                        '--clean-stop-margin); absent: no nudge')
     try:
         args = parser.parse_args(options)
     except SystemExit:

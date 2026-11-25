@@ -115,3 +115,35 @@ Each entry says:
   shows the inherited initializer as the class's one method, under CHECK
   AGAINST THE SOURCE.
 - **Found in:** `iTermShellIntegrationPanel`, the dossier and the port.
+
+### An override in an extension of an imported Objective-C class must be `public`
+
+- **Pattern:** a category on an Objective-C class (one that stays in
+  Objective-C) overrides a method the SDK declares on a superclass, for
+  example `-valueForUndefinedKey:` from `NSObject`.
+- **Naive port:** `override func value(forUndefinedKey key: String) -> Any?`
+  in an `extension` of the class. It does not compile: “overriding
+  instance method must be as accessible as the declaration it overrides”.
+  Making it `@objc func` without `override` does not compile either
+  (“conflicts with method ... from superclass”), and a parameter of another
+  type than the SDK's (`Any?` for `NSString *`) is rejected the same way, so
+  the bridged parameter type, and the raise in the thunk for a wrong-typed
+  object (the entry above), cannot be avoided.
+- **Write instead:** `public override func ...` (or `open`). The selector
+  and encoding stay those of the SDK's declaration; check them with the
+  runtime snapshot comparison.
+- **Found in:** iTermApplication+Scripting, dossier E14 (toy probes) and
+  the port.
+
+### A non-ARC file cannot take a Swift replacement in its own target
+
+- **Pattern:** a `.m` compiled in the non-ARC target `iTerm2Shared`.
+- **Naive port:** `pbxproj_swap.py` replaces the `.m` with the `.swift` in
+  the `.m`'s own target, so the Swift lands in `iTerm2Shared`, which compiles
+  no Swift, has no bridging header and is set to `SWIFT_VERSION = 6.0`
+  (`iTerm2SharedARC` is 5.0; Swift 6 thunks of `@MainActor` classes trap off
+  the main thread).
+- **Write instead:** first an `arc` commit that moves the `.m` to
+  `iTerm2SharedARC` with `pbxproj_swap.py --m <path>.m --from-target
+  iTerm2Shared --to-target iTerm2SharedARC`, then the port's swap.
+- **Found in:** iTermApplication+Scripting, dossier E13.

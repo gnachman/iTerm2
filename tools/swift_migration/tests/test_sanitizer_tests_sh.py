@@ -25,6 +25,11 @@ written.
 - pkill: does nothing, so no real process is ever matched.
 - atos: prints each address back, as atos does for an address it cannot
   name.
+With $FAKE_HANG set, the stand-in xcodebuild's test step prints a test's
+start line and then goes silent (it sleeps), for the stall watchdog. The
+whole-suite lock is a file in the test's temporary directory
+(SWIFT_MIGRATION_SUITE_LOCK), never the machine's real one; the stand-in
+records whether its test step ran under it.
 """
 
 import json
@@ -33,6 +38,7 @@ import shutil
 import stat
 import subprocess
 import tempfile
+import time
 import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -48,6 +54,9 @@ COPIED = (
     "test_timing.py",
     "sanitizer_ignorelist.txt",
     "sanitizer_nullability_suppressions.txt",
+    "suite_guard.py",
+    "deadline_run.py",
+    "test_load_profile.py",
 )
 
 INTEGER_GROUP = "signed-integer-overflow,implicit-conversion,float-cast-overflow,integer-divide-by-zero,shift,bounds"
@@ -60,7 +69,8 @@ import json, os, shutil, sys
 args = sys.argv[1:]
 with open(os.environ["FAKE_RECORD"], "a") as f:
     f.write(json.dumps({"args": args,
-                        "ubsan": os.environ.get("TEST_RUNNER_UBSAN_OPTIONS", "")}) + "\n")
+                        "ubsan": os.environ.get("TEST_RUNNER_UBSAN_OPTIONS", ""),
+                        "held": os.environ.get("SWIFT_MIGRATION_SUITE_LOCK_HELD", "")}) + "\n")
 symroot = [a.split("=", 1)[1] for a in args if a.startswith("SYMROOT=")][0]
 macos = os.path.join(symroot, "Development", "iTerm2.app", "Contents", "MacOS")
 os.makedirs(macos, exist_ok=True)
@@ -78,7 +88,18 @@ if args and args[0] == "test":
     for report in os.environ.get("STUB_REPORTS", "").split():
         shutil.copy(report, os.path.dirname(tsan))
     print("Test Suite 'Selected tests' started at 2026-11-20 01:08:28.898.")
+    if os.environ.get("FAKE_HANG"):
+        import time
+        with open(os.path.join(os.path.dirname(os.environ["FAKE_RECORD"]), "hang.pid"), "w") as f:
+            f.write(str(os.getpid()))
+        print("Test Case '-[ProbeTests testHang]' started.", flush=True)
+        time.sleep(600)
     print("Test Case '-[ProbeTests testA]' started.")
+    if os.environ.get("FAKE_TIMEOUT"):
+        # What XCTest printed in a real run on 2026-11-24 for a test over
+        # its allowance, which it still reported as passed.
+        print("\x1b[1mTest Case '-[ProbeTests testA]' exceeded execution time allowance of 1 minute. "
+              "The test may have hung; check Xcode's test report for additional diagnostics.\x1b[0m")
     print("Test Case '-[ProbeTests testA]' passed (0.001 seconds).")
     print("** TEST SUCCEEDED ** [1.000 sec]")
     sys.stdout.flush()
@@ -130,8 +151,22 @@ class ScriptTestCase(unittest.TestCase):
         self.record = os.path.join(self.tmp, "record.jsonl")
         self.script = os.path.join(tools, "sanitizer_tests.sh")
 
-    def run_script(self, *args, fixture=None, reports=(), test_status=0):
+    def run_script(self, *args, fixture=None, reports=(), test_status=0, hang=False):
         """Runs the script; returns (exit status, output, recorded xcodebuild calls)."""
+        env = self.script_env(fixture=fixture, reports=reports, test_status=test_status, hang=hang)
+        p = subprocess.run(["bash", self.script] + list(args), env=env,
+                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                           universal_newlines=True, timeout=120)
+        return p.returncode, p.stdout, self.calls()
+
+    def calls(self):
+        calls = []
+        if os.path.exists(self.record):
+            with open(self.record) as f:
+                calls = [json.loads(line) for line in f]
+        return calls
+
+    def script_env(self, fixture=None, reports=(), test_status=0, hang=False):
         env = dict(os.environ)
         env["PATH"] = self.bin + os.pathsep + env["PATH"]
         env["FAKE_RECORD"] = self.record
@@ -142,14 +177,13 @@ class ScriptTestCase(unittest.TestCase):
         env["STUB_REPORTS"] = " ".join(os.path.join(THREAD_FIXTURES, r) for r in reports)
         env["STUB_TEST_STATUS"] = str(test_status)
         env.pop("SIGNED", None)
-        p = subprocess.run(["bash", self.script] + list(args), env=env,
-                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                           universal_newlines=True, timeout=120)
-        calls = []
-        if os.path.exists(self.record):
-            with open(self.record) as f:
-                calls = [json.loads(line) for line in f]
-        return p.returncode, p.stdout, calls
+        env.pop("FAKE_HANG", None)
+        if hang:
+            env["FAKE_HANG"] = "1"
+        self.lock = os.path.join(self.tmp, "locks", "whole-suite.lock")
+        env["SWIFT_MIGRATION_SUITE_LOCK"] = self.lock
+        env.pop("SWIFT_MIGRATION_SUITE_LOCK_HELD", None)
+        return env
 
     @staticmethod
     def setting(call, name):
@@ -482,6 +516,183 @@ class NullabilityFailureTests(ScriptTestCase):
         status, out, _ = self.run_script("integer-sign", "ModernTests/SignProbeTests", fixture=SIGN_FIXTURE)
         self.assertEqual(status, 0, out)
         self.assertNotIn("Verdict:", out)
+
+
+class StallAndLockTests(ScriptTestCase):
+    """The stall watchdog of the test step (2026-11-24: five test hosts in
+    three sanitized whole suites hung, each in a test that waits with no
+    deadline, and nothing stopped them) and the whole-suite lock (one whole
+    suite at a time on the machine)."""
+
+    def hold_lock(self, label):
+        """Takes the test's whole-suite lock in this process, as another run
+        would; released at cleanup (release twice is harmless)."""
+        import sys
+        if TOOLS not in sys.path:
+            sys.path.insert(0, TOOLS)
+        import suite_guard
+        self.script_env()  # sets self.lock
+        lock = suite_guard.SuiteLock(self.lock)
+        self.assertTrue(lock.acquire(label, ["xcodebuild", "test"], wait=False))
+        self.addCleanup(lock.release)
+        return lock
+
+    def run_dir(self):
+        runs = os.path.join(self.root, "tmp", "sanitizers", "runs")
+        (run_dir,) = os.listdir(runs)
+        return os.path.join(runs, run_dir)
+
+    def test_a_silent_test_step_is_stopped_and_reported(self):
+        status, out, calls = self.run_script("thread", "--stall-seconds", "2", "ModernTests/ProbeTests", hang=True)
+        self.assertEqual(status, 124, out)
+        self.assertIn("looks stalled (--stall-seconds 2): no test progress for 2 seconds", out)
+        self.assertIn("stalled and was stopped by the watchdog (status 124)", out)
+        with open(os.path.join(self.run_dir(), "summary.txt")) as f:
+            summary = f.read()
+        self.assertIn("STALLED", summary)
+        self.assertIn("in progress (log): -[ProbeTests testHang]", summary)
+        self.assertIn("The sanitizer summary was not made", summary)
+        self.assertNotIn("Verdict:", summary)
+        for name in ("stall.txt", "processes.txt", "memory.txt", "log-tail.txt", "in-progress.txt", "hosts.txt"):
+            self.assertTrue(os.path.exists(os.path.join(self.run_dir(), "stall", name)), name)
+        # The silent xcodebuild was killed.
+        with open(os.path.join(self.tmp, "hang.pid")) as f:
+            pid = int(f.read())
+        for _ in range(200):
+            try:
+                os.kill(pid, 0)
+            except ProcessLookupError:
+                break
+            time.sleep(0.05)
+        else:
+            self.fail("the stand-in xcodebuild %d is still running" % pid)
+
+    def test_the_allowance_and_the_watchdog_behind_it_by_default(self):
+        # A per-test allowance of 120 seconds (300 under the thread
+        # sanitizer), and the watchdog 300 seconds behind it.
+        for mode, allowance, stall in (("integer", "120", "420"), ("thread", "300", "600")):
+            if os.path.exists(self.record):
+                os.remove(self.record)
+            status, out, calls = self.run_script(mode, "ModernTests/ProbeTests")
+            self.assertEqual(status, 0, out)
+            test = calls[-1]["args"]
+            self.assertEqual(SuiteOptionTests.follows({"args": test}, "-test-timeouts-enabled"), ["YES"])
+            self.assertEqual(SuiteOptionTests.follows({"args": test}, "-default-test-execution-time-allowance"),
+                             [allowance])
+            self.assertEqual(SuiteOptionTests.follows({"args": test}, "-maximum-test-execution-time-allowance"),
+                             [allowance])
+            self.assertNotIn("-test-timeouts-enabled", calls[0]["args"])
+            self.assertIn("Test time allowance: %s seconds per test" % allowance, out)
+            self.assertIn("Stall watchdog: the test step is stopped after %s seconds with no test progress." % stall,
+                          out)
+
+    def test_the_allowances_are_options(self):
+        status, out, calls = self.run_script("integer", "--test-allowance-seconds", "120",
+                                             "--max-test-allowance-seconds", "240", "ModernTests/ProbeTests")
+        self.assertEqual(status, 0, out)
+        test = {"args": calls[-1]["args"]}
+        self.assertEqual(SuiteOptionTests.follows(test, "-default-test-execution-time-allowance"), ["120"])
+        self.assertEqual(SuiteOptionTests.follows(test, "-maximum-test-execution-time-allowance"), ["240"])
+        self.assertIn("Stall watchdog: the test step is stopped after 540 seconds", out)
+        os.remove(self.record)
+        status, out, calls = self.run_script("integer", "--test-allowance-seconds", "0", "ModernTests/ProbeTests")
+        self.assertEqual(status, 0, out)
+        self.assertNotIn("-test-timeouts-enabled", calls[-1]["args"])
+        self.assertIn("Test time allowance: off", out)
+        self.assertIn("stopped after 600 seconds", out)
+        status, out, calls = self.run_script("integer", "--test-allowance-seconds", "300",
+                                             "--max-test-allowance-seconds", "60", "ModernTests/A")
+        self.assertEqual(status, 2, out)
+
+    def test_the_test_step_writes_its_result_bundle_into_the_run(self):
+        status, out, calls = self.run_script("integer", "ModernTests/ProbeTests")
+        self.assertEqual(status, 0, out)
+        (bundle,) = SuiteOptionTests.follows({"args": calls[-1]["args"]}, "-resultBundlePath")
+        self.assertEqual(bundle, os.path.join(self.run_dir(), "results", "test.xcresult"))
+
+    def test_tests_over_the_allowance_are_counted_apart(self):
+        env = self.script_env()
+        env["FAKE_TIMEOUT"] = "1"
+        p = subprocess.run(["bash", self.script, "integer", "ModernTests/ProbeTests"], env=env,
+                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, timeout=120)
+        heading = "Tests that exceeded or probably exceeded their time allowance: 1 (1 exceeded, 0 probably)"
+        self.assertIn(heading, p.stdout)
+        self.assertIn("-[ProbeTests testA] (exceeded its allowance of 1 minute)", p.stdout)
+        with open(os.path.join(self.run_dir(), "summary.txt")) as f:
+            self.assertIn(heading, f.read())
+        os.remove(self.record)
+        import shutil as _shutil
+        _shutil.rmtree(os.path.join(self.root, "tmp", "sanitizers", "runs"))
+        status, out, _ = self.run_script("integer", "ModernTests/ProbeTests")
+        self.assertNotIn("exceeded their time allowance", out)
+
+    def test_thread_with_parallel_is_refused(self):
+        for args in (("thread", "--parallel"), ("thread", "--parallel", "ModernTests/A"),
+                     ("thread", "--parallel", "--workers", "2")):
+            status, out, calls = self.run_script(*args)
+            self.assertEqual(status, 2, (args, out))
+            self.assertIn("the thread mode runs serially", out)
+            self.assertIn("thread-baseline.md section 4", out)
+            self.assertEqual(calls, [], args)
+
+    def test_stall_seconds_zero_turns_it_off(self):
+        status, out, _ = self.run_script("integer", "--stall-seconds", "0", "ModernTests/ProbeTests")
+        self.assertEqual(status, 0, out)
+        self.assertIn("Stall watchdog: off (--stall-seconds 0).", out)
+
+    def test_bad_stall_seconds_are_usage_errors(self):
+        for option in ("--stall-seconds", "--test-allowance-seconds", "--max-test-allowance-seconds"):
+            for value in ("x", "-1", "1.5"):
+                status, out, calls = self.run_script("integer", option, value, "ModernTests/A")
+                self.assertEqual(status, 2, (option, value, out))
+                self.assertEqual(calls, [], (option, value))
+
+    def test_the_pid_comes_first(self):
+        status, out, _ = self.run_script("integer", "ModernTests/ProbeTests")
+        self.assertEqual(status, 0, out)
+        self.assertRegex(out.splitlines()[0], r"^sanitizer_tests\.sh: pid [0-9]+$")
+
+    def test_a_whole_suite_holds_the_lock_and_a_targeted_run_does_not(self):
+        status, out, calls = self.run_script("nullability")
+        self.assertEqual(status, 0, out)
+        self.assertEqual(calls[0]["held"], "", "the build step does not take the lock")
+        self.assertTrue(calls[-1]["held"].endswith(":" + self.lock), calls[-1])
+        self.assertIn("Whole-suite lock: held for the test step", out)
+        os.remove(self.record)
+        status, out, calls = self.run_script("nullability", "ModernTests/ProbeTests")
+        self.assertEqual(status, 0, out)
+        self.assertEqual(calls[-1]["held"], "")
+        self.assertNotIn("Whole-suite lock", out)
+
+    def test_no_wait_fails_naming_the_holder(self):
+        self.hold_lock("another lane's thread suite")
+        status, out, calls = self.run_script("thread", "--no-wait")
+        self.assertEqual(status, 75, out)
+        self.assertIn("another lane's thread suite", out)
+        self.assertIn("pid %d" % os.getpid(), out)
+        self.assertEqual([c["args"][0] for c in calls], ["build-for-testing"])
+
+    def test_a_whole_suite_waits_for_the_holder(self):
+        lock = self.hold_lock("the first suite")
+        out_path = os.path.join(self.tmp, "second.out")
+        with open(out_path, "w") as out:
+            p = subprocess.Popen(["bash", self.script, "integer"], env=self.script_env(),
+                                 stdout=out, stderr=subprocess.STDOUT)
+        self.addCleanup(lambda: p.poll() is None and (p.kill(), p.wait()))
+
+        def text():
+            with open(out_path) as f:
+                return f.read()
+        for _ in range(1200):
+            if "waiting for the whole-suite lock" in text() or p.poll() is not None:
+                break
+            time.sleep(0.05)
+        self.assertIn("waiting for the whole-suite lock", text())
+        self.assertIn("the first suite", text())
+        self.assertEqual([c["args"][0] for c in self.calls()], ["build-for-testing"])
+        lock.release()
+        self.assertEqual(p.wait(timeout=120), 0, text())
+        self.assertEqual([c["args"][0] for c in self.calls()], ["build-for-testing", "test"])
 
 
 class SanitizerAppJobsTests(ScriptTestCase):

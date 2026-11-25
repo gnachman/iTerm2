@@ -11,22 +11,27 @@ Usage:
 Every file is written by perf_baseline.py. For every scenario and metric in
 any file it prints the statistic compared (best or median), the reference
 and candidate values of it, both medians, the change in the bad direction,
-the noise, the scenario's variation, the threshold, and a verdict:
+and a verdict:
 
-    suspected regression worse by more than the threshold in a comparison of
-                         one candidate against one reference; not yet a
+    suspected regression worse by more than 5% in a comparison of one
+                         candidate against one reference; not yet a
                          regression: confirm it with --confirm (below)
-    confirmed regression (--confirm only) worse by more than the threshold,
-                         pooled, and worse in every candidate run than in
-                         every base run
-    not confirmed        (--confirm only) worse by more than the threshold,
-                         pooled, but not in every run: some candidate run is
-                         as good as some base run
-    improvement          better by more than the threshold (with --confirm,
-                         also better in every run)
-    no change            within the threshold
-    inconclusive         too few samples, or too noisy to tell
+    confirmed regression (--confirm only) worse by more than 5%, pooled, and
+                         worse in every candidate run than in every base run
+    not confirmed        (--confirm only) worse by more than 5%, pooled, but
+                         not in every run: some candidate run is as good as
+                         some base run
+    improvement          better by more than 5% (with --confirm, also better
+                         in every run)
+    no change            within 5%
+    inconclusive         fewer than 5 samples, or no relative change can be
+                         computed
     informational        a metric with no usable signal; shown, never compared
+    not compared (unsteady)
+                         a metric listed in perf_lib.UNSTEADY_METRICS, which
+                         gives very different results on identical code; its
+                         numbers are shown and named in a warning, and it is
+                         never judged: not a pass, a failure or a suspicion
     failed in candidate  the scenario failed (crashed, timed out, test failed)
                          in the candidate (with --confirm, in any candidate
                          run); the row carries its recorded reason
@@ -46,53 +51,40 @@ whatever the reference holds; when the reference failed too the note says
 "also failed in reference", so a before and after with the same failure
 does not read as clean. Any status other than ok or skipped counts as failed.
 
-THE RULE. Decided by the owner on 2026-11-22: time and rate metrics are
-estimated by the best sample ("Given the variance you should take the
-fastest time, since that's our best estimate."), and the regression rule is
-"per-scenario variation plus a back-to-back confirmation". How a scenario's
-variation is measured is our choice, not his. Proposals he has not
-confirmed: keeping the median for memory and count metrics, with its 10%
-noise limit; the five-sample floor; and that spread never makes a best-of
-row inconclusive. The statistic a metric
-is judged on comes from its unit, in perf_lib.statistic_for:
+THE RULE, decided by the owner. The statistic a metric is judged on comes
+from its unit, in perf_lib.statistic_for:
 
     best    time and rate units (s, ms, us, ns, iterations/s): the minimum
-            when lower is better, the maximum when higher is better.
-    median  everything else: memory (kB), counts, unknown units.
+            when lower is better, the maximum when higher is better
+            (2026-11-22: "Given the variance you should take the fastest
+            time, since that's our best estimate.")
+    median  everything else: memory (kB), counts, unknown units
+            (2026-11-23: "That's fine").
 
 The best is computed from the samples, so result files written before the
 summary carried a 'best' key compare the same way.
 
-    noise      = the larger of the two sides' robust relative spread,
-                 1.4826 * MAD / median, in percent; reported for every metric
-    variation  best-of metrics: how far the reference's worst sample lies
-                 from the reference's best, in percent of the best, after
-                 setting aside the reference's single worst sample when it
-                 has at least 5, so that one hiccup does not set the
-                 threshold. Only the reference's samples count, so a noisy
-                 candidate cannot widen its own threshold.
-               median metrics: 3 x noise (both sides count), as before.
-    threshold  = max(5%, variation)
-    inconclusive when either side has fewer than 5 samples (with --confirm,
-                 any run), and for a median metric when the noise is above
-                 10%
+The threshold is a flat 5% of the reference's statistic for every compared
+metric, with no measure of variation (2026-11-23, offered "Compare best time
+against best time; more than 5% slower means check it and triggers a
+back-to-back run; only a slowdown that survives the back-to-back run
+counts", the owner answered "Sure simplicity is good"). Exactly 5% is no
+change. Fewer than 5 samples on either side (with --confirm, in any run) is
+inconclusive ("Sure"); a metric is never inconclusive because its samples
+vary ("Just pick the best value for timing"). The metrics listed in
+perf_lib.UNSTEADY_METRICS are not compared; that list is the migration's
+decision, open to the owner.
 
 One comparison (BASELINE CANDIDATE) can only suspect a regression: a busy
 machine slows the best sample too, and nothing within one run sees that.
 The output then says how to confirm it. --confirm takes at least two result
-files a side from runs of the two versions made alternately, back to back,
-in one lane with the same settings. Per metric it pools each side's samples
-and judges the pooled statistic against max(5%, variation), the variation
-here measured between the base runs, not within them: for a best-of metric
-how far the worst base run's best lies from the best base run's best; for
-a median metric the same spread of the base runs' medians or 3 x the
-noisiest single base run's robust relative spread, whichever is larger. The
-regression is confirmed only if, besides, every candidate run's statistic
-(each run's own best, or median) is worse than every base run's.
-Otherwise it is "not confirmed". For a best-of metric the second condition
-follows from the first: a pooled candidate best worse than the best base
-run's best by more than the spread of the base runs' bests is worse than
-every base run's best. It binds for median metrics.
+files a side (three are recommended) from runs of the two versions made
+alternately, back to back, in one lane with the same settings. Per metric
+it pools each side's samples and judges the pooled statistic against the
+same flat 5%. The regression is confirmed only if, besides, every candidate
+run's statistic (each run's own best, or median) is worse than every base
+run's. Otherwise it is "not confirmed". An improvement must hold run by run
+too.
 
 Refuses (exit 2) to compare against a result that is not labeled a baseline,
 or across different configurations, architectures, or machines, unless told
@@ -120,7 +112,9 @@ listed in warnings naming each one and do not change the exit status: they
 were not compared, so a caller that needs a scenario must make sure it ran.
 Inconclusive and "not confirmed" rows do not change the exit status either;
 the caller decides whether to rerun. "not confirmed" rows are also named in
-a warning.
+a warning. "not compared (unsteady)" rows never change the exit status and
+are named in a warning: they were not judged, which is not the same as
+fine.
 """
 
 import argparse
@@ -132,43 +126,40 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import perf_lib  # noqa: E402
 
-MIN_THRESHOLD_PERCENT = 5.0
-NOISE_MULTIPLIER = 3.0
-MAX_NOISE_PERCENT = 10.0
+THRESHOLD_PERCENT = 5.0
+# A change counts only beyond THRESHOLD_PERCENT + EPSILON_PERCENT: a change of
+# exactly 5% computed in floating point can come out a hair above it
+# (2.93073 * 1.05 against 2.93073 gives 5.00000000000001), and 1e-9 percent
+# is far below anything the harness can measure.
+EPSILON_PERCENT = 1e-9
 MIN_SAMPLES = 5
 MIN_CONFIRM_FILES = 2
 
-OWNER_RULE_WORDS = 'per-scenario variation plus a back-to-back confirmation'
+UNSTEADY = 'not compared (unsteady)'
 
-RULE = ('Time and rate metrics (units %s) compare the best sample, decided by the owner on 2026-11-22. '
-        'Threshold, decided by the owner on 2026-11-22 ("%s"): the larger of %.0f%% and the scenario\'s '
-        'variation, measured as our choice, not his: for a best-of metric how far the reference\'s worst '
-        'sample lies from its best once its single worst sample is set aside (with %d samples or more); for a '
-        'median metric %.0f x noise, noise being the larger robust relative spread (1.4826 x MAD / median). '
-        'Worse by more than the threshold in one comparison is only a suspected regression, which counts when '
-        'perf_compare.py --confirm finds it again in runs of both versions made back to back. Each a PROPOSAL, '
-        'not yet approved by the owner: keeping the median for other metrics, inconclusive above %.0f%% noise '
-        'for them; the five-sample floor (inconclusive with fewer than %d samples on either side); and that '
-        'spread never makes a best-of row inconclusive.'
-        % (', '.join(sorted(perf_lib.BEST_SAMPLE_UNITS)), OWNER_RULE_WORDS, MIN_THRESHOLD_PERCENT, MIN_SAMPLES,
-           NOISE_MULTIPLIER, MAX_NOISE_PERCENT, MIN_SAMPLES))
+RULE = ('Decided by the owner. Time and rate metrics (units %s) compare the best sample (2026-11-22: "Given '
+        'the variance you should take the fastest time, since that\'s our best estimate."; 2026-11-23: "Just '
+        'pick the best value for timing"); memory, counts and other units compare the median (2026-11-23: '
+        '"That\'s fine"). The threshold is a flat %.0f%% for every compared metric (2026-11-23: "Sure '
+        'simplicity is good"): worse by more than %.0f%% in one comparison is only a suspected regression, '
+        'which counts when perf_compare.py --confirm finds it again in runs of both versions made back to '
+        'back. Inconclusive with fewer than %d samples on either side, never because samples are spread. '
+        'Metrics in perf_lib.UNSTEADY_METRICS are recorded and shown but not compared: the migration\'s '
+        'decision, open to the owner.'
+        % (', '.join(sorted(perf_lib.BEST_SAMPLE_UNITS)), THRESHOLD_PERCENT, THRESHOLD_PERCENT, MIN_SAMPLES))
 
-CONFIRM_RULE = ('Confirmation ("%s", the owner, 2026-11-22): each side\'s samples are pooled over its runs and '
-                'the pooled statistic compared, with the threshold the larger of %.0f%% and the variation '
-                'between the base runs (our choice): for a best-of metric how far the worst base run\'s best '
-                'lies from the best base run\'s best; for a median metric the same spread of the base runs\' '
-                'medians or %.0f x the noisiest base run\'s robust relative spread, whichever is larger. A '
-                'regression is confirmed only if, besides, every candidate run\'s statistic is worse than every '
-                'base run\'s; otherwise it is not confirmed. An improvement must hold run by run too. '
-                'Inconclusive when any run has fewer than %d samples.'
-                % (OWNER_RULE_WORDS, MIN_THRESHOLD_PERCENT, NOISE_MULTIPLIER, MIN_SAMPLES))
+CONFIRM_RULE = ('Confirmation: each side\'s samples are pooled over its runs and the pooled statistic compared '
+                'against the same flat %.0f%%. A regression is confirmed only if, besides, every candidate '
+                'run\'s statistic is worse than every base run\'s; otherwise it is not confirmed. An '
+                'improvement must hold run by run too. Inconclusive when any run has fewer than %d samples.'
+                % (THRESHOLD_PERCENT, MIN_SAMPLES))
 
 ADVICE = ('A suspected regression is not yet a regression: a busier machine than the reference\'s slows the '
           'best sample too. Confirm it back to back: in one lane, build and measure the two versions '
-          'alternately, at least twice each (for example base, candidate, candidate, base, base, candidate), '
-          'each with perf_baseline.py run --scenarios <the flagged scenarios> --output <its own file>, then run '
-          'perf_compare.py --confirm --base <the base files> --candidate <the candidate files>. It counts only '
-          'if that reports a confirmed regression.')
+          'alternately, at least three times each (for example base, candidate, candidate, base, base, '
+          'candidate), each with perf_baseline.py run --scenarios <the flagged scenarios> --output <its own '
+          'file>, then run perf_compare.py --confirm --base <the base files> --candidate <the candidate files>. '
+          'It counts only if that reports a confirmed regression.')
 
 IDENTITY_KEYS = ('model', 'chip', 'logical_cpus', 'memory_bytes', 'os_build')
 SOFTWARE_KEYS = ('xcode', 'os_version')
@@ -237,9 +228,19 @@ def _scenario_rows(name, b_entry, c_entry, compare_fn):
                    'candidate_median': _median(c_metrics[metric])}
         else:
             row = compare_fn(b_metrics[metric], c_metrics[metric])
+            unsteady = perf_lib.UNSTEADY_METRICS.get((name, metric))
+            if unsteady:
+                # The numbers stay; the verdict and its note do not.
+                row.update(verdict=UNSTEADY, note='listed as unsteady since %s: %s'
+                           % (unsteady['since'], unsteady['reason']))
         row.update(scenario=name, metric=metric)
         rows.append(row)
     return rows
+
+
+def _beyond_threshold(percent):
+    """True when `percent` exceeds the flat threshold, allowing for rounding."""
+    return percent > THRESHOLD_PERCENT + EPSILON_PERCENT
 
 
 def _percent_worse(better, value, reference):
@@ -249,89 +250,40 @@ def _percent_worse(better, value, reference):
     return sign * 100.0 * (value - reference) / abs(reference)
 
 
-def variation_percent(statistic, better, base_samples, noise):
-    """The scenario's variation, the term of the threshold beside the 5%
-    floor. How it is measured is our choice; the owner decided only that
-    the threshold is the larger of 5% and the scenario's variation.
-
-    best:   how far the reference's worst sample lies from its best, in
-            percent of the best, after setting aside the single worst
-            sample when there are at least MIN_SAMPLES, so that one hiccup
-            (often XCTest's slow first iteration) does not set the
-            threshold. Only the reference counts, so that a candidate made
-            noisy by the change cannot widen its own threshold. With five or
-            ten samples it still covers both levels of the two-level app
-            rates, which a spread around the median does not.
-    median: NOISE_MULTIPLIER x noise, the rule memory and counts had before.
-    """
-    if statistic != 'best':
-        return NOISE_MULTIPLIER * noise
-    ordered = sorted(base_samples, reverse=(better != 'lower'))  # best first
-    if len(ordered) >= MIN_SAMPLES:
-        ordered = ordered[:-1]
-    return _spread_from_best(better, ordered)
-
-
-def _spread_from_best(better, values):
-    """How far the worst of `values` lies from the best of them, in percent
-    of the best; 0 when there are none or the best is zero."""
-    best = perf_lib.best_sample(values, better)
-    if not best:
-        return 0.0
-    worst = perf_lib.best_sample(values, 'higher' if better == 'lower' else 'lower')
-    return _percent_worse(better, worst, best)
-
-
-def confirm_variation_percent(statistic, better, b_runs, run_noises):
-    """The variation in --confirm: between the base runs, not within them.
-
-    best:   how far the worst base run's best lies from the best base run's
-            best. A run's best barely moves with a slow sample or two, so one
-            busy base run widens the threshold only as much as it slowed
-            that run's fastest sample.
-    median: the larger of the same spread of the base runs' medians and
-            NOISE_MULTIPLIER x the noisiest single base run's robust
-            relative spread, which keeps the single comparison's noise rule for
-            memory and counts without counting the difference between runs
-            twice (pooling the runs would put it into the MAD as well).
-    """
-    between = _spread_from_best(better, b_runs)
-    if statistic == 'best':
-        return between
-    return max(between, NOISE_MULTIPLIER * max(run_noises))
+def _numbers(base, cand):
+    """The row's statistic, bests, medians and sample counts, computed from
+    the samples, never read from a stored summary, so that files written
+    before the summary carried 'best' compare the same. Returns the row and
+    the two summaries."""
+    better = base.get('better')
+    unit = base.get('unit')
+    statistic = perf_lib.statistic_for(unit)
+    b = perf_lib.summarize_metric(unit, better, base['samples'])
+    c = perf_lib.summarize_metric(unit, better, cand['samples'])
+    row = {'unit': unit, 'better': better, 'statistic': statistic,
+           'baseline_median': b.get('median'), 'candidate_median': c.get('median'),
+           'baseline_best': b.get('best'), 'candidate_best': c.get('best'),
+           'baseline_n': b['n'], 'candidate_n': c['n']}
+    return row, b, c
 
 
 def compare_metric(base, cand):
     """One reference metric against one candidate metric."""
-    # Always computed from the samples, never read from a stored summary, so
-    # that files written before the summary carried 'best' compare the same.
-    better = base.get('better')
-    statistic = perf_lib.statistic_for(base.get('unit'))
-    b = perf_lib.summarize_metric(base.get('unit'), better, base['samples'])
-    c = perf_lib.summarize_metric(base.get('unit'), better, cand['samples'])
-    row = {'unit': base.get('unit'), 'better': better, 'statistic': statistic,
-           'baseline_median': b.get('median'), 'candidate_median': c.get('median'),
-           'baseline_best': b.get('best'), 'candidate_best': c.get('best'),
-           'baseline_n': b['n'], 'candidate_n': c['n']}
+    row, b, c = _numbers(base, cand)
+    statistic = row['statistic']
     if b['n'] == 0 or c['n'] == 0:
         row.update(verdict='inconclusive', note='no samples')
         return row
     if not b[statistic]:
         row.update(verdict='inconclusive', note='baseline %s is zero, so no relative change' % statistic)
         return row
-    worse = _percent_worse(better, c[statistic], b[statistic])
-    noise = max(b['robust_rel_spread_percent'], c['robust_rel_spread_percent'])
-    variation = variation_percent(statistic, better, base['samples'], noise)
-    threshold = max(MIN_THRESHOLD_PERCENT, variation)
-    row.update(change_percent=worse, noise_percent=noise, variation_percent=variation,
-               threshold_percent=threshold)
+    worse = _percent_worse(row['better'], c[statistic], b[statistic])
+    row.update(change_percent=worse)
     if min(b['n'], c['n']) < MIN_SAMPLES:
         row.update(verdict='inconclusive', note='fewer than %d samples' % MIN_SAMPLES)
-    elif statistic == 'median' and noise > MAX_NOISE_PERCENT:
-        row.update(verdict='inconclusive', note='noise %.1f%% above %.0f%%' % (noise, MAX_NOISE_PERCENT))
-    elif worse > threshold:
+    elif _beyond_threshold(worse):
         row.update(verdict='suspected regression', note='confirm back to back with --confirm')
-    elif -worse > threshold:
+    elif _beyond_threshold(-worse):
         row.update(verdict='improvement')
     else:
         row.update(verdict='no change')
@@ -348,15 +300,8 @@ def compare_runs(base, cand):
     """One metric over several runs a side (--confirm). `base` and `cand`
     carry 'runs', one sample list per result file, and 'samples', all of
     them pooled."""
-    better = base.get('better')
-    unit = base.get('unit')
-    statistic = perf_lib.statistic_for(unit)
-    b = perf_lib.summarize_metric(unit, better, base['samples'])
-    c = perf_lib.summarize_metric(unit, better, cand['samples'])
-    row = {'unit': unit, 'better': better, 'statistic': statistic,
-           'baseline_median': b.get('median'), 'candidate_median': c.get('median'),
-           'baseline_best': b.get('best'), 'candidate_best': c.get('best'),
-           'baseline_n': b['n'], 'candidate_n': c['n']}
+    row, b, c = _numbers(base, cand)
+    statistic, better = row['statistic'], row['better']
     if any(not run for run in base['runs'] + cand['runs']):
         row.update(verdict='inconclusive', note='no samples in a run')
         return row
@@ -367,17 +312,7 @@ def compare_runs(base, cand):
         row.update(verdict='inconclusive', note='baseline %s is zero, so no relative change' % statistic)
         return row
     worse = _percent_worse(better, c[statistic], b[statistic])
-    # The noise of a run, not of the pool: pooling would count the
-    # difference between runs as noise. The noisiest run of either side
-    # decides whether a median row is inconclusive; only the base runs'
-    # noise enters the threshold, so a candidate made noisy by its change
-    # cannot widen its own threshold.
-    base_noises = [perf_lib.summarize(run)['robust_rel_spread_percent'] for run in base['runs']]
-    noise = max(base_noises + [perf_lib.summarize(run)['robust_rel_spread_percent'] for run in cand['runs']])
-    variation = confirm_variation_percent(statistic, better, b_runs, base_noises)
-    threshold = max(MIN_THRESHOLD_PERCENT, variation)
-    row.update(change_percent=worse, noise_percent=noise, variation_percent=variation,
-               threshold_percent=threshold)
+    row.update(change_percent=worse)
     # Worse in every run: the best candidate run is worse than the worst base
     # run. Better in every run: the worst candidate run is better than the
     # best base run.
@@ -389,15 +324,13 @@ def compare_runs(base, cand):
         better_every_run = min(c_runs) > max(b_runs)
     if min(len(run) for run in base['runs'] + cand['runs']) < MIN_SAMPLES:
         row.update(verdict='inconclusive', note='fewer than %d samples in a run' % MIN_SAMPLES)
-    elif statistic == 'median' and noise > MAX_NOISE_PERCENT:
-        row.update(verdict='inconclusive', note='noise %.1f%% above %.0f%%' % (noise, MAX_NOISE_PERCENT))
-    elif worse > threshold:
+    elif _beyond_threshold(worse):
         if worse_every_run:
             row.update(verdict='confirmed regression')
         else:
             row.update(verdict='not confirmed',
                        note='worse pooled, but not run by run: a candidate run is as good as a base run')
-    elif -worse > threshold:
+    elif _beyond_threshold(-worse):
         if better_every_run:
             row.update(verdict='improvement')
         else:
@@ -450,6 +383,11 @@ def compare(baseline, candidate, allow_non_baseline=False, allow_different_machi
 
 
 def _warn_uncompared(rows, warnings):
+    unsteady = sorted({'%s %s' % (r['scenario'], r['metric']) for r in rows if r['verdict'] == UNSTEADY})
+    if unsteady:
+        warnings.append('%s, recorded and shown but not judged (perf_lib.UNSTEADY_METRICS, the migration\'s '
+                        'decision, open to the owner): %s; "not compared" does not mean fine'
+                        % (UNSTEADY, ', '.join(unsteady)))
     uncompared = sorted({r['scenario'] for r in rows
                          if r['verdict'] in ('skipped in candidate', 'not run in candidate')})
     if uncompared:
@@ -623,9 +561,9 @@ def render(report):
     lines.append('')
     # baseline and candidate are the compared statistic (stat); the two
     # median columns are always the medians.
-    row_format = '%-44s %-24s %-6s %10s %10s %10s %10s %8s %7s %7s %7s  %s%s'
+    row_format = '%-44s %-24s %-6s %10s %10s %10s %10s %8s  %s%s'
     header = row_format % ('scenario', 'metric', 'stat', 'baseline', 'candidate', 'base med', 'cand med',
-                           'worse%', 'noise%', 'var%', 'thresh%', 'verdict', '')
+                           'worse%', 'verdict', '')
     lines.append(header)
     lines.append('-' * len(header))
     for r in report['rows']:
@@ -639,8 +577,7 @@ def render(report):
             r['scenario'], r['metric'], stat or '-',
             _fmt(r.get('baseline_' + key)), _fmt(r.get('candidate_' + key)),
             _fmt(r.get('baseline_median')), _fmt(r.get('candidate_median')),
-            _fmt(r.get('change_percent'), 3), _fmt(r.get('noise_percent'), 2),
-            _fmt(r.get('variation_percent'), 3), _fmt(r.get('threshold_percent'), 3), r['verdict'],
+            _fmt(r.get('change_percent'), 3), r['verdict'],
             (' (%s)' % '; '.join(notes)) if notes else ''))
     if report.get('advice'):
         lines.append('')

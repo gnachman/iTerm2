@@ -50,6 +50,24 @@
 #     --no-build    Skip the separate build-for-testing step. The test step
 #                   is `xcodebuild test`, which still brings the build up to
 #                   date (a no-op when nothing changed).
+#     --test-allowance-seconds N
+#                   XCTest's per-test time limit (-test-timeouts-enabled YES
+#                   -default-test-execution-time-allowance N): a test that
+#                   runs longer fails and its host is replaced. Default 120
+#                   (no test that passed took over 13.1 s in the night's
+#                   sanitized runs; orchestration.md section 3). 0 turns it
+#                   off.
+#     --max-test-allowance-seconds M
+#                   The most a test may ask for with executionTimeAllowance.
+#                   Default: N.
+#     --stall-seconds N
+#                   Stop a test step after N seconds with no test progress
+#                   (default: the larger allowance plus 300, so 420; 600
+#                   with the allowance off; 0 turns the watchdog off). See
+#                   below.
+#     --no-wait     A whole-suite run (no TEST, or only the target) whose
+#                   lock another run holds fails at once with status 75,
+#                   naming the holder, instead of waiting.
 #     -h, --help    Print this text.
 #
 #   Environment:
@@ -143,7 +161,37 @@
 # xcodebuild in and any process whose command is this build's test host
 # executable; nothing else. The same test hosts are killed after a normal end.
 #
-# Exit status: xcodebuild's, except 1 when the run executed no tests (a
+# Each test step runs under tools/swift_migration/suite_guard.py run (its
+# header is the manual), which copies xcodebuild's output to the console
+# and the log as tee did (on a pseudo-terminal, so that xcodebuild writes
+# each line as it happens; through a pipe it was block-buffered), with
+# XCTest's per-test allowance, and adds (2026-11-24, after five test hosts
+# in three whole suites each waited hours in one test one night):
+#   the stall watchdog, the backstop behind the allowance: a test step in
+#   which a host stays inside one test, or no test progress shows, for
+#   --stall-seconds (the signal is each host's output in the step's result
+#   bundle; suite_guard.py's header has the rule) is diagnosed (in
+#   <run>/stall/, or stall-<log name>/ for
+#   --per-class: a sample of each of this run's test hosts, the executable
+#   under tmp/coverage/Build/ with -suite iterm2-tests; the process list
+#   with CPU, threads and memory footprint; the machine's memory state; the
+#   log's tail and the tests in progress; every command bounded in time),
+#   then xcodebuild's group and the test hosts are killed, status.txt gets
+#   124 and the script exits 124 without merging. The idle watch above
+#   (after the end of testing) is unchanged;
+#   the whole-suite lock, for a whole-suite run (no TEST, or only the
+#   target), and across the whole of a --per-class run (one test host per
+#   class, one after another), not class by class: one whole suite, plain,
+#   sanitized or instrumented, at a time on the machine
+#   (docs/swift-migration/orchestration.md section 3), waited for unless
+#   --no-wait.
+# The script prints its pid first, so that a caller that runs it in the
+# background can wait for it with a bound (suite_guard.py wait --pid PID
+# --seconds N).
+#
+# Exit status: 124 when the stall watchdog stopped a test step; 75 when
+# --no-wait found the whole-suite lock held; otherwise
+# xcodebuild's, except 1 when the run executed no tests (a
 # misspelled TEST runs nothing), produced no profile data, or the merge
 # failed, and 2 for a usage error.
 
@@ -163,10 +211,23 @@ DO_TEST=YES
 TESTS=()
 WORKERS=""
 JOBS=""
+STALL_SECONDS=""
+ALLOWANCE=120
+MAX_ALLOWANCE=""
+NO_WAIT=NO
 while [ $# -gt 0 ]; do
     case "$1" in
         -h|--help) usage; exit 0 ;;
         --parallel|-parallel) PARALLEL=YES ;;
+        --no-wait) NO_WAIT=YES ;;
+        --stall-seconds|--test-allowance-seconds|--max-test-allowance-seconds)
+            san_check_seconds "$1" "${2-}" || exit 2
+            case "$1" in
+                --stall-seconds) STALL_SECONDS="$2" ;;
+                --test-allowance-seconds) ALLOWANCE="$2" ;;
+                *) MAX_ALLOWANCE="$2" ;;
+            esac
+            shift ;;
         --workers)
             san_check_count "$1" "${2-}" || exit 2
             WORKERS="$2"
@@ -205,6 +266,24 @@ if [ "$PER_CLASS" = YES ]; then
         esac
     done
 fi
+[ -n "$MAX_ALLOWANCE" ] || MAX_ALLOWANCE="$ALLOWANCE"
+if [ "$ALLOWANCE" -gt 0 ] && [ "$MAX_ALLOWANCE" -lt "$ALLOWANCE" ]; then
+    echo "error: --max-test-allowance-seconds ($MAX_ALLOWANCE) is below --test-allowance-seconds ($ALLOWANCE)" >&2
+    exit 2
+fi
+if [ -z "$STALL_SECONDS" ]; then
+    if [ "$ALLOWANCE" -gt 0 ]; then STALL_SECONDS=$(( MAX_ALLOWANCE + 300 )); else STALL_SECONDS=600; fi
+fi
+san_allowance_args "$ALLOWANCE" "$MAX_ALLOWANCE"
+# A run with no TEST, or with a TEST naming only the target, is the whole
+# suite, and its test step takes the whole-suite lock.
+WHOLE_SUITE=YES
+for t in ${TESTS[@]+"${TESTS[@]}"}; do
+    case "$t" in
+        */*) WHOLE_SUITE=NO ;;
+        *) WHOLE_SUITE=YES; break ;;
+    esac
+done
 IDLE_SECONDS="${COVERAGE_IDLE_SECONDS:-90}"
 case "$IDLE_SECONDS" in
     ''|*[!0-9]*) echo "error: COVERAGE_IDLE_SECONDS must be a whole number of seconds" >&2; exit 2 ;;
@@ -247,6 +326,7 @@ fi
 san_parallel_args "$PARALLEL" "$WORKERS"
 
 cd "$SAN_ROOT"
+echo "coverage_tests.sh: pid $$"
 echo "Build directory: $BUILD_DIR/Build. Run directory: $RUN_DIR"
 
 # Process groups and cleanup, as in sanitizer_tests.sh.
@@ -258,11 +338,15 @@ kill_test_hosts() {
 }
 GROUP_PID=""
 WATCHER_PID=""
+# suite_guard.py starts each test step's xcodebuild in a process group of
+# its own and writes its id here, so that an interruption reaches it too.
+PGID_FILE="$RUN_DIR/.test-pgid"
 on_signal() {
     trap '' INT TERM HUP
     echo "coverage_tests.sh: interrupted; stopping xcodebuild and the test hosts" >&2
     [ -n "$WATCHER_PID" ] && kill "$WATCHER_PID" 2>/dev/null
     [ -n "$GROUP_PID" ] && kill -KILL -- "-$GROUP_PID" 2>/dev/null
+    [ -s "$PGID_FILE" ] && kill -KILL -- "-$(cat "$PGID_FILE")" 2>/dev/null
     kill_test_hosts
     exit 130
 }
@@ -310,9 +394,28 @@ test_step() {
     local bundle
     bundle="$RUN_DIR/results/$(basename "$log" .log).xcresult"
     rm -rf "$bundle"
-    xcodebuild test "${ARGS[@]}" "$@" "${SAN_PARALLEL_ARGS[@]}" -resultBundlePath "$bundle" 2>&1 \
-        | tee "$log"
-    return "${PIPESTATUS[0]}"
+    local guard=(python3 -B "$SAN_HERE/suite_guard.py" run --log "$log"
+                 --stall-seconds "$STALL_SECONDS" --stall-dir "$(stall_dir_for "$log")"
+                 --pty --result-bundle "$bundle"
+                 --host-prefix "$BUILD_DIR/Build" --pgid-file "$PGID_FILE"
+                 --label "coverage_tests.sh (run $RUN_DIR)")
+    if [ "$WHOLE_SUITE" = YES ]; then
+        guard+=(--lock)
+        [ "$NO_WAIT" = YES ] && guard+=(--no-wait)
+    fi
+    "${guard[@]}" -- xcodebuild test "${ARGS[@]}" "$@" "${SAN_PARALLEL_ARGS[@]}" \
+        ${SAN_ALLOWANCE_ARGS[@]+"${SAN_ALLOWANCE_ARGS[@]}"} -resultBundlePath "$bundle"
+}
+# The stall watchdog's records for the log $1: stall/ for test.log,
+# stall-<name>/ for test-<name>.log.
+stall_dir_for() {
+    local name
+    name="$(basename "$1" .log)"
+    if [ "$name" = test ]; then
+        echo "$RUN_DIR/stall"
+    else
+        echo "$RUN_DIR/stall-${name#test-}"
+    fi
 }
 # Runs test_step in its own group with the idle watcher. $1: log file. The
 # rest: extra xcodebuild arguments. Returns the run's status.
@@ -332,6 +435,16 @@ run_tests() {
     wait "$WATCHER_PID" 2>/dev/null
     WATCHER_PID=""
     kill_test_hosts
+    if [ "$status" -eq 75 ] && [ ! -e "$log" ]; then
+        echo "error: --no-wait: another whole-suite run holds the whole-suite lock (named above); nothing was tested" >&2
+        echo 75 > "$RUN_DIR/status.txt"
+        exit 75
+    fi
+    if [ "$status" -eq 124 ] && [ -f "$(stall_dir_for "$log")/stall.txt" ]; then
+        echo "error: the test step stalled and was stopped by the watchdog (status 124); see $(stall_dir_for "$log")/stall.txt" >&2
+        echo 124 > "$RUN_DIR/status.txt"
+        exit 124
+    fi
     if [ -f "$marker" ]; then
         rm -f "$marker"
         status=$(python3 -B "$SAN_HERE/coverage_report.py" log-status "$log")
@@ -429,7 +542,33 @@ fi
 
 START=$(date +%s)
 STATUS=0
+HOLD_PID=""
 if [ "$PER_CLASS" = YES ]; then
+    # One test host per class, one class after another: the whole-suite
+    # lock is held across all of them (suite_guard.py hold, which lets go
+    # when this script ends however it ends), not taken class by class.
+    HOLD_FIFO="$RUN_DIR/.hold"
+    mkfifo "$HOLD_FIFO" || exit 1
+    HOLD_ARGS=(hold --pid $$ --label "coverage_tests.sh --per-class (run $RUN_DIR)")
+    [ "$NO_WAIT" = YES ] && HOLD_ARGS+=(--no-wait)
+    python3 -B "$SAN_HERE/suite_guard.py" "${HOLD_ARGS[@]}" > "$HOLD_FIFO" &
+    HOLD_PID=$!
+    HOLD_LINE=""
+    read -r HOLD_LINE < "$HOLD_FIFO"
+    rm -f "$HOLD_FIFO"
+    case "$HOLD_LINE" in
+        SWIFT_MIGRATION_SUITE_LOCK_HELD=*) export "$HOLD_LINE" ;;
+        *) wait "$HOLD_PID"
+           HOLD_STATUS=$?
+           if [ "$HOLD_STATUS" -eq 75 ]; then
+               echo "error: --no-wait: another whole-suite run holds the whole-suite lock (named above); nothing was tested" >&2
+           else
+               echo "error: could not take the whole-suite lock: suite_guard.py hold failed with status $HOLD_STATUS (see above); nothing was tested" >&2
+               [ "$HOLD_STATUS" -eq 0 ] && HOLD_STATUS=1
+           fi
+           echo "$HOLD_STATUS" > "$RUN_DIR/status.txt"
+           exit "$HOLD_STATUS" ;;
+    esac
     mkdir -p "$RUN_DIR/classes"
     echo per-class > "$RUN_DIR/per_class_route.txt"
     for t in "${TESTS[@]}"; do
@@ -448,6 +587,9 @@ if [ "$PER_CLASS" = YES ]; then
         merge_profiles "$PROFRAW/$cls" "$RUN_DIR/classes/$cls.profdata" || STATUS=1
     done
     cat "$RUN_DIR"/test-*.log > "$RUN_DIR/test.log"
+    kill "$HOLD_PID" 2>/dev/null
+    wait "$HOLD_PID" 2>/dev/null
+    HOLD_PID=""
 else
     ONLY=()
     for t in ${TESTS[@]+"${TESTS[@]}"}; do
@@ -458,6 +600,7 @@ else
     STATUS=$?
 fi
 echo "Tests finished with status $STATUS in $(( $(date +%s) - START )) seconds."
+san_allowance_report "$RUN_DIR/test.log" "$ALLOWANCE"
 
 EXECUTED=$(python3 -B "$SAN_HERE/coverage_report.py" log-executed "$RUN_DIR/test.log")
 if [ $? -ne 0 ]; then

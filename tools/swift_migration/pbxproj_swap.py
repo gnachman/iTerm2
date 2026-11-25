@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Replace an Objective-C .m (and optionally its .h) with a .swift file in an
-Xcode project file, in place.
+Xcode project file, in place, or move a .m from one target to another.
 
 Part of the Objective-C to Swift migration (docs/swift-migration/lifecycle.md
 section 3, "The project file"). A whole-class port deletes Foo.h and Foo.m
@@ -26,10 +26,40 @@ changes nothing. A .m in more than one target is refused unless
 flags) is refused: they would not apply to Swift. The new file reference's
 attribute set must already be used by some Swift file in the project.
 
+A second mode moves a .m from one native target to another, as an `arc`
+commit does when it moves a file from iTerm2Shared (compiled without ARC) to
+iTerm2SharedARC (docs/swift-migration/arc.md, step 9). It changes one thing:
+
+  - the .m's entry in the from-target's Sources phase is removed, and the
+    same line is appended to the end of the to-target's Sources phase, which
+    is where Xcode adds a new member. The PBXBuildFile itself is kept,
+    unchanged: each PBXBuildFile is listed by exactly one phase (one per
+    target membership), so moving its one entry moves the membership.
+
+The .h is left alone: its Headers phase entries do not affect how anything
+is compiled here. Other targets that compile the .m are left alone. The move
+refuses, changing nothing, when either target name names no native target
+or more than one, when the two are the same, when either target has other
+than one Sources phase or shares it with another target, when the .m is not
+in the from-target's Sources phase, is in it more than once, or is already
+in the to-target's, when the .m has a build file in a phase other than
+Sources, when the .m's file name matches no PBXFileReference or more than
+one (two files of the same name in different directories), when the moving
+PBXBuildFile has settings (compiler flags such as -fno-objc-arc; the
+refusal names them), when the to-target's Sources phase has no closed files
+list, and when an identifier involved, or the .m's group child line, does
+not occur exactly as often as expected.
+
 Usage:
   pbxproj_swap.py [--project PATH] [--check] [--all-targets]
                   --m sources/Dir/Foo.m [--h sources/Dir/Foo.h]
                   --swift sources/Dir/Foo.swift
+  pbxproj_swap.py [--project PATH] [--check]
+                  --m sources/Dir/Foo.m --from-target iTerm2Shared
+                  --to-target iTerm2SharedARC
+
+--move-to-target is a synonym of --to-target. The two modes compose: after
+a move, a swap of the same .m replaces it in the target it moved to.
 
 Paths are relative to the repository root (the project file's grandparent
 directory). The .swift must be in the same directory as the .m, since it
@@ -228,15 +258,141 @@ def swap(text, m_path, h_path, swift_path, all_targets=False, rng=None):
     return '\n'.join(l for l in out if l is not None)
 
 
+def unquote(value):
+    if len(value) >= 2 and value[0] == '"' and value[-1] == '"':
+        return re.sub(r'\\(.)', r'\1', value[1:-1])
+    return value
+
+
+def native_targets(lines):
+    """(name, [build phase ids]) of every PBXNativeTarget."""
+    out = []
+    i = 0
+    while i < len(lines):
+        if (re.match(r'^\t\t' + ID + r'( /\*.*\*/)? = \{$', lines[i]) and i + 1 < len(lines)
+                and lines[i + 1] == '\t\t\tisa = PBXNativeTarget;'):
+            name, phases, in_phases = None, [], False
+            i += 1
+            while i < len(lines) and lines[i] != '\t\t};':
+                line = lines[i]
+                if line == '\t\t\tbuildPhases = (':
+                    in_phases = True
+                elif in_phases:
+                    if line == '\t\t\t);':
+                        in_phases = False
+                    else:
+                        phases.append(line.split()[0].rstrip(','))
+                else:
+                    m = re.match(r'^\t\t\tname = (.*);$', line)
+                    if m:
+                        name = unquote(m.group(1))
+                i += 1
+            out.append((name, phases))
+        i += 1
+    return out
+
+
+def sources_phase(lines, text, targets, name):
+    """The id and definition index of the one Sources phase of the native target called name."""
+    matches = [phases for n, phases in targets if n == name]
+    if len(matches) != 1:
+        raise Refusal('%d native targets are named %s, expected 1' % (len(matches), name))
+    found = []
+    for phase_id in matches[0]:
+        di = find_exact(lines, r'^\t\t' + phase_id + r'( /\*.*\*/)? = \{$', 'build phase %s of %s' % (phase_id, name))
+        _, isa = object_isa(lines, di + 1)
+        if isa == 'PBXSourcesBuildPhase':
+            found.append((phase_id, di))
+    if len(found) != 1:
+        raise Refusal('target %s has %d Sources phases, expected 1' % (name, len(found)))
+    phase_id, di = found[0]
+    if count_id(text, phase_id) != 2:
+        raise Refusal('Sources phase %s of %s occurs %d times, expected 2'
+                      % (phase_id, name, count_id(text, phase_id)))
+    return phase_id, di
+
+
+def files_end(lines, di, name):
+    """The index of the line closing the files list of the phase defined at di."""
+    i = di + 1
+    while i < len(lines) and lines[i] not in ('\t\t\tfiles = (', '\t\t};'):
+        i += 1
+    if i >= len(lines) or lines[i] != '\t\t\tfiles = (':
+        raise Refusal('the Sources phase of %s has no files list' % name)
+    while i < len(lines) and lines[i] not in ('\t\t\t);', '\t\t};'):
+        i += 1
+    if i >= len(lines) or lines[i] != '\t\t\t);':
+        raise Refusal('the files list of the Sources phase of %s is not closed' % name)
+    return i
+
+
+def move_to_target(text, m_path, from_target, to_target):
+    if not m_path.endswith('.m'):
+        raise Refusal('expected a .m')
+    if from_target == to_target:
+        raise Refusal('the from-target and the to-target are the same (%s)' % from_target)
+    lines = text.split('\n')
+    m_name = os.path.basename(m_path)
+    targets = native_targets(lines)
+    from_phase, _ = sources_phase(lines, text, targets, from_target)
+    to_phase, to_di = sources_phase(lines, text, targets, to_target)
+
+    mi = file_ref_index(lines, m_name)
+    m_ref = lines[mi].split()[0].strip()
+    m_bfs = build_files(lines, m_ref, m_name)
+    in_from, in_to = [], []
+    for i, bf, phase, settings in m_bfs:
+        if phase != 'Sources':
+            raise Refusal('%s has a build file in %s, expected Sources' % (m_name, phase))
+        pi, phase_id = phase_entry(lines, bf, m_name, 'Sources')
+        if count_id(text, bf) != 2:
+            raise Refusal('build file %s of %s occurs %d times, expected 2' % (bf, m_name, count_id(text, bf)))
+        if phase_id == from_phase:
+            in_from.append((bf, pi, settings))
+        elif phase_id == to_phase:
+            in_to.append(bf)
+    if in_to:
+        raise Refusal('%s is already in the Sources phase of %s' % (m_name, to_target))
+    if not in_from:
+        raise Refusal('%s is not in the Sources phase of %s' % (m_name, from_target))
+    if len(in_from) > 1:
+        raise Refusal('%s is in the Sources phase of %s %d times, expected once'
+                      % (m_name, from_target, len(in_from)))
+    bf, pi, settings = in_from[0]
+    if settings:
+        raise Refusal('the build file of %s in %s has settings (%s); move it by hand or not at all'
+                      % (m_name, from_target, settings))
+    find_exact(lines, r'^\t\t\t\t' + m_ref + r' /\* ' + re.escape(m_name) + r' \*/,$', 'group child of %s' % m_name)
+    if count_id(text, m_ref) != 2 + len(m_bfs):
+        raise Refusal('file reference %s of %s occurs %d times, expected %d'
+                      % (m_ref, m_name, count_id(text, m_ref), 2 + len(m_bfs)))
+
+    end = files_end(lines, to_di, to_target)
+    entry = lines[pi]
+    out = lines[:end] + [entry] + lines[end:]
+    del out[pi if pi < end else pi + 1]
+    return '\n'.join(out)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--project', default=None)
     ap.add_argument('--m', required=True)
     ap.add_argument('--h')
-    ap.add_argument('--swift', required=True)
+    ap.add_argument('--swift')
     ap.add_argument('--check', action='store_true')
     ap.add_argument('--all-targets', action='store_true')
+    ap.add_argument('--from-target')
+    ap.add_argument('--to-target', '--move-to-target', dest='to_target')
     a = ap.parse_args(argv)
+    moving = a.from_target is not None or a.to_target is not None
+    if moving:
+        if a.from_target is None or a.to_target is None:
+            ap.error('a move needs both --from-target and --to-target')
+        if a.swift or a.h or a.all_targets:
+            ap.error('--swift, --h and --all-targets do not apply to a move')
+    elif not a.swift:
+        ap.error('--swift is required, or --from-target and --to-target for a move')
     project = a.project or os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
         os.path.abspath(__file__)))), 'iTerm2.xcodeproj', 'project.pbxproj')
     try:
@@ -246,7 +402,10 @@ def main(argv=None):
         print('cannot read %s: %s' % (project, e), file=sys.stderr)
         return 2
     try:
-        new = swap(text, a.m, a.h, a.swift, all_targets=a.all_targets)
+        if moving:
+            new = move_to_target(text, a.m, a.from_target, a.to_target)
+        else:
+            new = swap(text, a.m, a.h, a.swift, all_targets=a.all_targets)
     except Refusal as e:
         print('refused: %s' % e, file=sys.stderr)
         return 1

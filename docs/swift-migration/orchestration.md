@@ -103,8 +103,9 @@ Do these every time a session begins, before anything else.
       from the tree; nothing is stored.
    6. **The whole-suite baseline**, if the new commits touched `sources/`
       or `ModernTests/` (`git diff --stat <base>..<new> -- sources
-      ModernTests`): run `tools/run_tests.expect -parallel` in the
-      full-suite lane (`lane_clone.py acquire --full-suite`) on the new
+      ModernTests`): run `tools/swift_migration/whole_suite.sh` (which
+      runs `tools/run_tests.expect -parallel` under the whole-suite lock,
+      section 3) in the full-suite lane (`lane_clone.py acquire --full-suite`) on the new
       `HEAD`, so that a failure that arrived with the new code is recorded
       as such and not blamed on the night's first unit. If those commits
       touched a unit in progress or its dependencies, also run gate steps 7
@@ -253,10 +254,50 @@ heavy job is a whole-suite run, any suite run under a sanitizer, a full or
   across you and every agent you started, each started with `nice -n 15`.
   If he says the machine is slow, stop your processes first and find the
   cause afterwards.
-- *At night:* the load does not matter so long as the work makes progress.
-  There is no load threshold, by day or by night: waiting for a load
+- *One whole suite at a time, by day and by night* (the orchestrator's
+  decision of 2026-11-24, recorded in decisions.md and open to the
+  owner). At most one whole-suite run, plain or under a sanitizer or coverage, at
+  a time across you and every agent you started. Builds and targeted test
+  classes may overlap at night, but not by day. The tools enforce the
+  whole-suite part: `sanitizer_tests.sh`, `fast_tests.sh`,
+  `coverage_tests.sh` and `test_load_profile.py run` with no test names,
+  and `tools/swift_migration/whole_suite.sh` (the plain whole suite,
+  `tools/run_tests.expect -parallel`, which is the owner's script and
+  takes no lock itself), hold a machine-wide lock for their test step,
+  wait for it saying who holds it, and with `--no-wait` fail at once
+  (exit 75). A holder that died leaves no lock (`suite_guard.py`'s
+  header). Run the whole suite through `whole_suite.sh`, never
+  `run_tests.expect -parallel` directly. The owner, after the night of
+  2026-11-24: “We need this process to be reliable.” That night the session started
+  the thread, integer and nullability sanitized whole suites at once,
+  one per lane: five test hosts each entered a test that waits with no
+  deadline for a dispatch or XPC callback that was never delivered (the
+  cause, confirmed by observation the same day with the screen locked:
+  AppKit's window open and close animations never finish while the screen
+  is locked, each parks a user-interactive dispatch thread, and at 80 the
+  dispatch pool is exhausted, so global-queue work and XPC replies stop in
+  that host; bugs.md, “Dispatch threads pile up in a long-running test
+  host”; test hosts now launch with `-NSAutomaticWindowAnimationsEnabled
+  NO`; the allowances, the watchdog and the lock remain needed for any
+  other cause),
+  nothing had a per-test timeout or a stall watchdog, and the session
+  waited on the jobs without a bound until it was killed at the hard
+  limit with no report. Running three suites at once was not found to be
+  the cause (the hangs were per host, and memory pressure was normal);
+  one suite at a time bounds the memory in use and makes a failure
+  attributable to one run.
+- *Every suite run has a bound.* Each test gets XCTest's time allowance,
+  and each suite script has a stall watchdog behind it, described below.
+  `whole_suite.sh` is the exception for the allowance: it has
+  `run_tests.expect`'s own watchdog (300 seconds with no output), which
+  it reports as exit 124 when the stall report `tmp/test-stall-<time>.txt`
+  appears. Never wait on a background job without a bound: the scripts print
+  their pid first, and `python3 tools/swift_migration/suite_guard.py wait
+  --pid PID --seconds 540`, run in the foreground with a Bash timeout
+  above that, returns when the job ends (0) or the bound passes (3).
+- There is no load threshold, by day or by night: waiting for a load
   figure, or killing a job because of one, only made checks fail
-  (2026-11-23).
+  (2026-11-23). The lock is sequencing, not a threshold.
 - *A test or tool that takes the machine is a defect to fix, not something
   to schedule around.* A test that uses many cores at once, spins while it
   waits, or runs for minutes is fixed or disabled (the owner: “if a test
@@ -269,6 +310,70 @@ passed 400.
 
 The scripts that run heavy jobs have options to control them (each
 script's header is its manual):
+- The per-test time allowance (2026-11-24): `sanitizer_tests.sh`,
+  `fast_tests.sh`, `coverage_tests.sh` and `test_load_profile.py run`
+  give xcodebuild `-test-timeouts-enabled YES
+  -default-test-execution-time-allowance N
+  -maximum-test-execution-time-allowance M`, so that XCTest fails a test
+  that runs longer than N seconds instead of the run waiting for hours.
+  Options `--test-allowance-seconds N` and `--max-test-allowance-seconds
+  M` (M defaults to N; 0 turns it off). Defaults: 120 seconds, 300 under
+  the thread sanitizer, 60 for the fast tier. The evidence, from the
+  night's result bundles of 2026-11-24: in the integer and nullability
+  runs (about 24,600 test cases) no test that passed took over 6.3 s, and
+  the tests that failed stopped at their own waits of 10 to 90 s; in the
+  thread run, whose hosts hung after about 900 cases, no test that passed
+  took over 13.1 s. (The slowest test known,
+  FramerFlowTwoHopSimulationTests'
+  testANestedFloodRecoversWhenAJitteryOuterHopSpeedsUp, up to 271 s with
+  the address sanitizer, is skipped unless
+  ITERM2_FRAMER_SIMULATION_TESTS=1, so it is not evidence here.) So 120 s
+  is about nine times the slowest passing test and above the longest
+  wait a test sets for itself (90 s); under the thread sanitizer most of
+  the suite has never been timed, so 300 s; the fast tier, without a
+  sanitizer and without the slow tier, 60 s. XCTest rounds an allowance
+  up to whole minutes. ModernTests.xctestplan sets no test timeouts and
+  no test calls `executionTimeAllowance`, so the flags decide. What XCTest
+  does when a test runs out of time, observed in a real run on 2026-11-24
+  with a 60 s allowance: it prints “Test Case '...' exceeded execution
+  time allowance of 1 minute”, still prints the test as passed (83 s) when
+  it finishes, prints “Restarting after unexpected exit, crash, or test
+  timeout” and goes on in a new host (in the same result bundle
+  directory, with a second Session log), lists the test under “Failing
+  tests”, and ends with TEST FAILED and exit status 65. Under
+  `xcodebuild test-without-building` (`fast_tests.sh`) there is no such
+  line: the test prints only “failed ... (60.000 seconds)”, its duration
+  the allowance rounded up to whole minutes, and the run fails the same
+  way. The scripts count both forms apart, after the summary (“Tests that
+  exceeded or probably exceeded their time allowance: N”), the second as
+  probably exceeded.
+  A spindump attachment was not looked for.
+  `tools/run_tests.expect`
+  cannot take the flags (it turns every argument but `-parallel` into a
+  test name); adding them to its `spawn xcodebuild test` line is a change
+  only the owner may make.
+- The stall watchdog, the backstop behind the allowance (2026-11-24):
+  `sanitizer_tests.sh`, `fast_tests.sh` and `coverage_tests.sh` run their
+  test step under `suite_guard.py run` on a pseudo-terminal (through a
+  pipe xcodebuild's output was block-buffered: that night each test.log
+  stopped mid-line minutes before its tests hung) with the result bundle
+  in the run directory. The progress signal is each test host's output in
+  the bundle (`Staging/1_Test/Diagnostics/<configuration>/ModernTests-<uuid>/StandardOutputAndStandardError.txt`):
+  a host inside one test with no other test event for `--stall-seconds`,
+  or no test progress anywhere for that long, stops the run. Before the
+  kill, the run directory's `stall/` gets each host's test in progress, a
+  `sample` and thread count of each of this run's test hosts (never the
+  owner's iTerm2), the process list, `memory_pressure -Q`, `vm_stat`,
+  `vm.swapusage` and the log's tail; then the script exits 124
+  (`sanitizer_tests.sh` marks summary.txt STALLED). Defaults: the larger
+  allowance plus 300 seconds (420, or 600 under the thread sanitizer, 360
+  for the fast tier; 600, or 300 for the fast tier, with the allowance
+  off); 0 turns it off. `run_tests.expect`, under
+  `whole_suite.sh`, keeps its own watchdog (300 seconds with no output;
+  exit 124 from `whole_suite.sh`).
+- `sanitizer_tests.sh thread --parallel` is refused: the thread mode runs
+  serially (thread-baseline.md section 4); the night of 2026-11-24 ran it
+  in parallel anyway.
 - `sanitizer_tests.sh` and `coverage_tests.sh`: `--parallel` runs two
   workers, the cap of `tools/run_tests.expect -parallel`, and
   `--workers N` changes the count. `sanitizer_tests.sh --skip

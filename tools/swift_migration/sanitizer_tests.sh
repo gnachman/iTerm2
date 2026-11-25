@@ -152,7 +152,9 @@
 #                  just ran (sanitizer_summary.py --symbolize). With
 #                  --collect the comparison is printed and nothing fails on
 #                  reports. Run serially: --parallel loses test hosts in
-#                  this mode (thread-baseline.md section 4).
+#                  this mode (thread-baseline.md section 4), so the script
+#                  refuses `thread --parallel` (status 2; since 2026-11-24,
+#                  when a night session ran it anyway).
 #     plain        No sanitizer at all: the address sanitizer off as in every
 #                  mode, and nothing added. The fast test tier runs this way
 #                  (docs/swift-migration/test-speed.md section 2). The script
@@ -204,6 +206,28 @@
 #                   than test-without-building because only `test` ends its
 #                   log with the "** TEST SUCCEEDED **" or "** TEST FAILED **"
 #                   line that test_timing.py needs to call a log complete.
+#     --test-allowance-seconds N
+#                   XCTest's per-test time limit: every test case gets at
+#                   most N seconds (-test-timeouts-enabled YES
+#                   -default-test-execution-time-allowance N), so that a
+#                   hung test fails and its test host is replaced instead
+#                   of the run waiting for hours. Default 120, 300 in the
+#                   thread mode; 0 turns it off. XCTest rounds it up to
+#                   whole minutes. The evidence for the defaults is in
+#                   docs/swift-migration/orchestration.md section 3.
+#     --max-test-allowance-seconds M
+#                   The most any test may ask for with executionTimeAllowance
+#                   (-maximum-test-execution-time-allowance M). Default: N.
+#                   No test sets executionTimeAllowance today.
+#     --stall-seconds N
+#                   The stall watchdog (below), the backstop behind the
+#                   allowance: a test step with no test progress for N
+#                   seconds is diagnosed and killed. Default: the larger
+#                   allowance plus 300 (420; 600 in the thread mode), or
+#                   600 with the allowance off. 0 turns it off.
+#     --no-wait     A whole-suite run whose lock (below) another run holds
+#                   fails at once with status 75, naming the holder, instead
+#                   of waiting for it.
 #     -h, --help    Print this text.
 #
 #   Environment:
@@ -214,7 +238,7 @@
 #   tools/swift_migration/sanitizer_tests.sh nullability --probe ModernTests/SanitizerProbeTests
 #   tools/swift_migration/sanitizer_tests.sh integer ModernTests/SwiftMigrationArithmeticTests
 #   tools/swift_migration/sanitizer_tests.sh integer-sign --parallel
-#   tools/swift_migration/sanitizer_tests.sh thread --parallel
+#   tools/swift_migration/sanitizer_tests.sh thread
 #   tools/swift_migration/sanitizer_tests.sh plain --parallel
 #   nice -n 15 tools/swift_migration/sanitizer_tests.sh integer --parallel --jobs 4 \
 #       --skip ModernTests/FramerFlowTwoHopSimulationTests
@@ -302,10 +326,52 @@
 # whose command is this mode's test host executable
 # (tmp/sanitizers/<mode>/Build/Development/iTerm2.app/Contents/MacOS/iTerm2),
 # since test hosts are not started in that group; nothing else. The same
-# test hosts are killed after a normal end. There is no stall watchdog as in
-# tools/run_tests.expect.
+# test hosts are killed after a normal end.
 #
-# Exit status: xcodebuild's, except 1 when xcodebuild succeeded but the run
+# The test step runs under tools/swift_migration/suite_guard.py run (its
+# header is the manual), on a pseudo-terminal so that xcodebuild writes each
+# line as it happens (through tee's pipe it was block-buffered: on
+# 2026-11-24 each test.log stopped mid-line minutes before its tests hung),
+# with output to the console and test.log, the result bundle in
+# <run>/results/test.xcresult, XCTest's per-test time allowance
+# (--test-allowance-seconds), and two more things. That night five test
+# hosts in three whole suites each entered a test that waits with no
+# deadline for a dispatch or XPC callback that never came; nothing had a
+# per-test timeout or a stall watchdog, and the session waiting on the jobs
+# had no bound either.
+#
+#   The stall watchdog, the backstop behind the allowance. Its progress
+#   signal is each test host's output in the result bundle: when a host
+#   has been inside one test (its last test event a start) for
+#   --stall-seconds while alive, or neither xcodebuild nor any host has
+#   shown test progress for that long, then before anything is killed the
+#   run directory gets stall/: each host's test in progress (workers.txt),
+#   a `sample` of every test host of this run (an executable under
+#   tmp/sanitizers/<mode>/Build/ ending in iTerm2.app/Contents/MacOS/iTerm2,
+#   run with -suite iterm2-tests, started after the test step: never the
+#   owner's iTerm2) with its thread count, the process list with CPU,
+#   thread counts and memory footprint, the machine's memory state
+#   (memory_pressure -Q, vm_stat, vm.swapusage), the tail of test.log and
+#   the tests in progress. Every command there has a time bound. Then
+#   xcodebuild's process group and this run's test hosts are killed,
+#   summary.txt says STALLED with the tests in progress (the sanitizer
+#   summary is not made; the reports written so far stay in reports/), and
+#   the script exits 124.
+#
+#   The whole-suite lock. A whole-suite run (no TEST names, or only the
+#   target) holds the machine-wide whole-suite lock for its test step, so
+#   that at most one whole suite, plain or sanitized, runs at a time on the
+#   machine, across every checkout and lane (orchestration.md section 3).
+#   It waits for the lock, saying who holds it; with --no-wait it fails at
+#   once (status 75). The build step does not take it. A targeted run takes
+#   no lock and still has the watchdog.
+#
+# The script prints its pid first, so that a caller that runs it in the
+# background can wait for it with a bound: suite_guard.py wait --pid PID
+# --seconds N.
+#
+# Exit status: 124 when the stall watchdog stopped the run; 75 when
+# --no-wait found the whole-suite lock held; otherwise xcodebuild's, except 1 when xcodebuild succeeded but the run
 # executed no tests (a misspelled TEST runs nothing and would look clean;
 # skipped tests count as executed), the summary could not be made, (thread
 # mode without --collect) a report is outside the baseline or cannot be
@@ -332,6 +398,10 @@ WORKERS=""
 JOBS=""
 DO_BUILD=YES
 DO_TEST=YES
+STALL_SECONDS=""
+ALLOWANCE=""
+MAX_ALLOWANCE=""
+NO_WAIT=NO
 TESTS=()
 SKIPS=()
 # The value of option $1, which is $2; fails with status 2 if there is none.
@@ -349,6 +419,16 @@ while [ $# -gt 0 ]; do
         --parallel|-parallel) PARALLEL=YES ;;
         --build-only) DO_TEST=NO ;;
         --no-build) DO_BUILD=NO ;;
+        --no-wait) NO_WAIT=YES ;;
+        --stall-seconds|--test-allowance-seconds|--max-test-allowance-seconds)
+            option_value "$1" "${2-}" || exit 2
+            san_check_seconds "$1" "$2" || exit 2
+            case "$1" in
+                --stall-seconds) STALL_SECONDS="$2" ;;
+                --test-allowance-seconds) ALLOWANCE="$2" ;;
+                *) MAX_ALLOWANCE="$2" ;;
+            esac
+            shift ;;
         --skip)
             option_value "$1" "${2-}" || exit 2
             case "$2" in
@@ -408,6 +488,28 @@ if [ "$DO_TEST" = NO ] && { [ ${#SKIPS[@]} -gt 0 ] || [ -n "$WORKERS" ]; }; then
     echo "error: --skip and --workers apply to the test step, which --build-only leaves out" >&2
     exit 2
 fi
+if [ "$MODE" = thread ] && [ "$PARALLEL" = YES ]; then
+    echo "error: the thread mode runs serially: --parallel loses test hosts under the thread sanitizer (docs/swift-migration/thread-baseline.md section 4). Run it without --parallel." >&2
+    exit 2
+fi
+# The per-test allowance (evidence: orchestration.md section 3) and the
+# watchdog behind it, which must wait longer than XCTest would.
+if [ -z "$ALLOWANCE" ]; then
+    if [ "$MODE" = thread ]; then ALLOWANCE=300; else ALLOWANCE=120; fi
+fi
+[ -n "$MAX_ALLOWANCE" ] || MAX_ALLOWANCE="$ALLOWANCE"
+if [ "$ALLOWANCE" -gt 0 ] && [ "$MAX_ALLOWANCE" -lt "$ALLOWANCE" ]; then
+    echo "error: --max-test-allowance-seconds ($MAX_ALLOWANCE) is below --test-allowance-seconds ($ALLOWANCE)" >&2
+    exit 2
+fi
+if [ -z "$STALL_SECONDS" ]; then
+    if [ "$ALLOWANCE" -gt 0 ]; then
+        STALL_SECONDS=$(( MAX_ALLOWANCE + 300 ))
+    else
+        STALL_SECONDS=600
+    fi
+fi
+san_allowance_args "$ALLOWANCE" "$MAX_ALLOWANCE"
 if [ -n "$WORKERS" ] && [ "$PARALLEL" = NO ]; then
     echo "error: --workers needs --parallel" >&2
     exit 2
@@ -523,7 +625,24 @@ if [ ${#SKIPS[@]} -gt 0 ]; then
     IN_FORCE+=$'\n'"Skipped: ${SKIPS[*]}"
 fi
 
+if [ "$DO_TEST" = YES ]; then
+    if [ "$ALLOWANCE" -gt 0 ]; then
+        IN_FORCE+=$'\n'"Test time allowance: $ALLOWANCE seconds per test (at most $MAX_ALLOWANCE); XCTest fails a test that runs longer and restarts its host."
+    else
+        IN_FORCE+=$'\n'"Test time allowance: off (--test-allowance-seconds 0)."
+    fi
+    if [ "$STALL_SECONDS" -gt 0 ]; then
+        IN_FORCE+=$'\n'"Stall watchdog: the test step is stopped after $STALL_SECONDS seconds with no test progress."
+    else
+        IN_FORCE+=$'\n'"Stall watchdog: off (--stall-seconds 0)."
+    fi
+    if [ "$WHOLE_SUITE" = YES ]; then
+        IN_FORCE+=$'\n'"Whole-suite lock: held for the test step (one whole suite at a time on this machine)."
+    fi
+fi
+
 cd "$SAN_ROOT"
+echo "sanitizer_tests.sh: pid $$"
 echo "Mode: $MODE. Build directory: $BUILD_DIR. Run directory: $RUN_DIR"
 echo "$IN_FORCE"
 
@@ -540,10 +659,14 @@ kill_test_hosts() {
     pkill -9 -f "$pattern" 2>/dev/null || true
 }
 GROUP_PID=""
+# suite_guard.py starts the test step's xcodebuild in a process group of its
+# own and writes its id here, so that an interruption reaches it too.
+PGID_FILE="$RUN_DIR/.test-pgid"
 on_signal() {
     trap '' INT TERM HUP
     echo "sanitizer_tests.sh: interrupted; stopping xcodebuild and the test hosts" >&2
     [ -n "$GROUP_PID" ] && kill -KILL -- "-$GROUP_PID" 2>/dev/null
+    [ -s "$PGID_FILE" ] && kill -KILL -- "-$(cat "$PGID_FILE")" 2>/dev/null
     kill_test_hosts
     exit 130
 }
@@ -563,10 +686,21 @@ run_in_group() {
 build_step() {
     xcodebuild build-for-testing "${ARGS[@]}" > "$RUN_DIR/build.log" 2>&1
 }
+# The test step under suite_guard.py: output to the console and test.log,
+# the stall watchdog, and for a whole suite the whole-suite lock.
 test_step() {
-    xcodebuild test "${ARGS[@]}" ${ONLY[@]+"${ONLY[@]}"} ${SKIP_ARGS[@]+"${SKIP_ARGS[@]}"} \
-        "${SAN_PARALLEL_ARGS[@]}" 2>&1 | tee "$RUN_DIR/test.log"
-    return "${PIPESTATUS[0]}"
+    local guard=(python3 -B "$SAN_HERE/suite_guard.py" run --log "$RUN_DIR/test.log"
+                 --stall-seconds "$STALL_SECONDS" --stall-dir "$RUN_DIR/stall" --pty
+                 --result-bundle "$RUN_DIR/results/test.xcresult"
+                 --host-prefix "$BUILD_DIR/Build" --pgid-file "$PGID_FILE"
+                 --label "sanitizer_tests.sh $MODE (run $RUN_DIR)")
+    if [ "$WHOLE_SUITE" = YES ]; then
+        guard+=(--lock)
+        [ "$NO_WAIT" = YES ] && guard+=(--no-wait)
+    fi
+    "${guard[@]}" -- xcodebuild test "${ARGS[@]}" ${ONLY[@]+"${ONLY[@]}"} ${SKIP_ARGS[@]+"${SKIP_ARGS[@]}"} \
+        "${SAN_PARALLEL_ARGS[@]}" ${SAN_ALLOWANCE_ARGS[@]+"${SAN_ALLOWANCE_ARGS[@]}"} \
+        -resultBundlePath "$RUN_DIR/results/test.xcresult"
 }
 
 if [ "$DO_BUILD" = YES ]; then
@@ -612,6 +746,18 @@ STATUS=$?
 kill_test_hosts
 echo "Tests finished with status $STATUS in $(( $(date +%s) - START )) seconds."
 
+if [ "$STATUS" -eq 75 ] && [ ! -e "$RUN_DIR/test.log" ]; then
+    echo "error: --no-wait: another whole-suite run holds the whole-suite lock (named above); nothing was tested" >&2
+    exit 75
+fi
+if [ "$STATUS" -eq 124 ] && [ -f "$RUN_DIR/stall/stall.txt" ]; then
+    { echo "$IN_FORCE"; echo; cat "$RUN_DIR/stall/stall.txt"
+      echo "The sanitizer summary was not made. The reports written before the stall are in $REPORTS:"
+      echo "  python3 -B tools/swift_migration/sanitizer_summary.py $REPORTS"; } > "$RUN_DIR/summary.txt"
+    echo "error: the test step stalled and was stopped by the watchdog (status 124); see $RUN_DIR/summary.txt and $RUN_DIR/stall/" >&2
+    exit 124
+fi
+
 # Reports are in reports/ in every mode; test.log is read as well, for any
 # report a runtime wrote to stderr because it could not write its file. The
 # summarizer counts a report found in both once, and exits 3 if test.log
@@ -639,6 +785,12 @@ fi
 python3 -B "$SAN_HERE/sanitizer_summary.py" "$REPORTS" --console "$RUN_DIR/test.log" \
     --test-log "$RUN_DIR/test.log" ${SUMMARY_ARGS[@]+"${SUMMARY_ARGS[@]}"} | tee -a "$RUN_DIR/summary.txt"
 SUMMARY_STATUS=${PIPESTATUS[0]}
+# Tests that ran out of the time allowance, counted apart (the summary
+# above counts each as whatever XCTest printed for it, passed included).
+ALLOWANCE_REPORT=$(san_allowance_report "$RUN_DIR/test.log" "$ALLOWANCE")
+if [ -n "$ALLOWANCE_REPORT" ]; then
+    printf '%s\n' "$ALLOWANCE_REPORT" | tee -a "$RUN_DIR/summary.txt"
+fi
 if [ "$SUMMARY_STATUS" -eq 3 ]; then
     echo "error: the run executed no tests; check the TEST names. Its report count proves nothing." >&2
 elif [ "$SUMMARY_STATUS" -eq 1 ] && [ "$MODE" = thread ]; then

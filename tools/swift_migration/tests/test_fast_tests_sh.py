@@ -17,6 +17,12 @@ a directory of stubs first on PATH:
 - otool: lists no sanitizer runtime.
 - ps, pkill: print nothing, so no real process is ever matched.
 
+With $STUB_HANG the test step prints a suite's start and then goes silent,
+for the stall watchdog. The whole-suite lock is a file in the test's
+temporary directory (SWIFT_MIGRATION_SUITE_LOCK), never the machine's real
+one; the stub records whether its test step ran under it
+($STUB_DIR/test-held).
+
 Nothing is built and nothing is run but the scripts and the stubs.
 """
 
@@ -25,6 +31,7 @@ import shutil
 import stat
 import subprocess
 import tempfile
+import time
 import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -33,7 +40,8 @@ REPO = os.path.dirname(os.path.dirname(TOOLS))
 
 COPIED = ["fast_tests.sh", "sanitizer_tests.sh", "sanitizer_common.sh", "sanitizer_summary.py",
           "test_timing.py", "test_tiers.py", "slow_tier.txt", "sanitizer_ignorelist.txt",
-          "sanitizer_nullability_suppressions.txt"]
+          "sanitizer_nullability_suppressions.txt", "suite_guard.py", "deadline_run.py",
+          "test_load_profile.py"]
 
 XCODEBUILD = r"""#!/bin/bash
 echo "$*" >> "$STUB_DIR/calls"
@@ -80,6 +88,12 @@ EOF
 fi
 if [ "$action" = test-without-building ]; then
     echo "$*" > "$STUB_DIR/test-args"
+    printf '%s' "${SWIFT_MIGRATION_SUITE_LOCK_HELD:-}" > "$STUB_DIR/test-held"
+    if [ -n "${STUB_HANG:-}" ]; then
+        echo "Test suite 'HangTests' started on 'My Mac - iTerm2 (1)'"
+        echo $$ > "$STUB_DIR/hang.pid"
+        exec sleep 600
+    fi
     if grep -q MallocStackLogging "$xctestrun"; then echo "stub: MallocStackLogging still set" >&2; exit 3; fi
     grep -q MallocScribble "$xctestrun" || { echo "stub: other variables lost" >&2; exit 4; }
     echo "Command line invocation:"
@@ -115,6 +129,12 @@ if [ "$action" = test-without-building ]; then
             printf "Test case 'ProbeTests.testA()' passed on 'My Mac - iTerm2 (1)' (0.003 seconds)\r\n"
             echo "Test case 'ProbeTests.testX()' recorded an expected failure on 'My Mac - iTerm2 (1)' (0.002 seconds)"
             echo "Test case 'ProbeTests.testSlow()' passed on 'My Mac - iTerm2 (1)' (12.500 seconds)"
+            if [ -n "${STUB_TIMEOUT_FORM:-}" ]; then
+                # What test-without-building printed for a test over a 60
+                # second allowance (a real run, 2026-11-24): no "exceeded
+                # execution time allowance" line, only the failure.
+                echo "Test case 'ProbeTests.testHung()' failed on 'My Mac - iTerm2 (1)' (60.000 seconds)"
+            fi
         fi
     fi
     # xcodebuild prints its end marker on the other stream.
@@ -163,6 +183,9 @@ class FastTestsTests(unittest.TestCase):
             env["PATH"] = self.stubs + os.pathsep + env["PATH"]
         env["STUB_DIR"] = self.stubs
         env["STUB_TEST_STATUS"] = str(test_status)
+        self.lock = os.path.join(self.dir.name, "locks", "whole-suite.lock")
+        env["SWIFT_MIGRATION_SUITE_LOCK"] = self.lock
+        env.pop("SWIFT_MIGRATION_SUITE_LOCK_HELD", None)
         if no_tests:
             env["STUB_NO_TESTS"] = "1"
         p = subprocess.run(["bash", os.path.join(self.root, "tools", "swift_migration", "fast_tests.sh")] + list(args),
@@ -415,6 +438,143 @@ class FastTestsTests(unittest.TestCase):
     def test_unknown_option(self):
         status, out = self.run_script("--frobnicate")
         self.assertEqual(status, 2, out)
+
+    # The stall watchdog and the whole-suite lock (2026-11-24).
+
+    def last_run_dir(self):
+        runs = os.path.join(self.root, "tmp", "fast-tests", "runs")
+        return os.path.join(runs, sorted(os.listdir(runs))[-1])
+
+    def test_a_silent_test_step_is_stopped_and_reported(self):
+        status, out = self.run_script("--stall-seconds", "2", env={"STUB_HANG": "1"})
+        self.assertEqual(status, 124, out)
+        self.assertIn("looks stalled (--stall-seconds 2): no test progress for 2 seconds", out)
+        self.assertIn("stalled and was stopped by the watchdog (status 124)", out)
+        with open(os.path.join(self.last_run_dir(), "stall", "stall.txt")) as f:
+            stall = f.read()
+        self.assertIn("STALLED", stall)
+        self.assertIn("worker My Mac - iTerm2 (1): class in progress (log): HangTests", stall)
+        with open(os.path.join(self.stubs, "hang.pid")) as f:
+            pid = int(f.read())
+        for _ in range(200):
+            try:
+                os.kill(pid, 0)
+            except ProcessLookupError:
+                break
+            time.sleep(0.05)
+        else:
+            self.fail("the silent stand-in xcodebuild %d is still running" % pid)
+
+    def test_the_watchdog_defaults_and_its_option(self):
+        _, out = self.dry_run_test_command()
+        # The allowance (60) plus 300.
+        self.assertIn("--stall-seconds 360", out)
+        _, out = self.dry_run_test_command("--test-allowance-seconds", "600")
+        self.assertIn("--stall-seconds 900", out)
+        _, out = self.dry_run_test_command("--test-allowance-seconds", "0")
+        self.assertIn("--stall-seconds 300", out)
+        _, out = self.dry_run_test_command("--stall-seconds", "0")
+        self.assertIn("--stall-seconds 0", out)
+        for value in ("", "x", "-3"):
+            status, out = self.run_script("--stall-seconds", value)
+            self.assertEqual(status, 2, (value, out))
+            self.assertEqual(self.calls(), [], value)
+
+    def test_the_per_test_allowance_and_the_result_bundle(self):
+        command, _ = self.dry_run_test_command()
+        self.assertIn("-test-timeouts-enabled YES -default-test-execution-time-allowance 60 "
+                      "-maximum-test-execution-time-allowance 60", command)
+        self.assertRegex(command, r"-resultBundlePath \S*/tmp/fast-tests/runs/[0-9-]+/results/test\.xcresult")
+        command, _ = self.dry_run_test_command("--test-allowance-seconds", "120", "--max-test-allowance-seconds",
+                                               "300")
+        self.assertIn("-default-test-execution-time-allowance 120 -maximum-test-execution-time-allowance 300",
+                      command)
+        command, _ = self.dry_run_test_command("--test-allowance-seconds", "0")
+        self.assertNotIn("-test-timeouts-enabled", command)
+        status, out = self.run_script("--test-allowance-seconds", "300", "--max-test-allowance-seconds", "60")
+        self.assertEqual(status, 2, out)
+        status, out = self.run_script()
+        self.assertEqual(status, 0, out)
+        with open(os.path.join(self.stubs, "test-args")) as f:
+            self.assertIn("-default-test-execution-time-allowance 60", f.read())
+
+    def test_the_test_step_holds_the_whole_suite_lock(self):
+        status, out = self.run_script()
+        self.assertEqual(status, 0, out)
+        with open(os.path.join(self.stubs, "test-held")) as f:
+            self.assertTrue(f.read().endswith(":" + self.lock))
+        self.assertRegex(out, r"(?m)^fast_tests\.sh: pid [0-9]+$")
+
+    def test_the_budget_leaves_out_the_wait_for_the_lock(self):
+        import sys
+        import re
+        if TOOLS not in sys.path:
+            sys.path.insert(0, TOOLS)
+        import suite_guard
+        self.run_script("--dry-run")  # sets self.lock
+        lock = suite_guard.SuiteLock(self.lock)
+        self.assertTrue(lock.acquire("a sanitized suite in another lane", ["xcodebuild"], wait=False))
+        self.addCleanup(lock.release)
+        env = dict(os.environ)
+        env["PATH"] = self.stubs + os.pathsep + env["PATH"]
+        env.update({"STUB_DIR": self.stubs, "STUB_TEST_STATUS": "0", "SWIFT_MIGRATION_SUITE_LOCK": self.lock})
+        env.pop("SWIFT_MIGRATION_SUITE_LOCK_HELD", None)
+        out_path = os.path.join(self.dir.name, "queued.out")
+        began = time.monotonic()
+        with open(out_path, "w") as out:
+            p = subprocess.Popen(["bash", os.path.join(self.root, "tools", "swift_migration", "fast_tests.sh"),
+                                  "--enforce-budget"], env=env, stdout=out, stderr=subprocess.STDOUT)
+        self.addCleanup(lambda: p.poll() is None and (p.kill(), p.wait()))
+
+        def text():
+            with open(out_path) as f:
+                return f.read()
+        for _ in range(1200):
+            if "waiting for the whole-suite lock" in text() or p.poll() is not None:
+                break
+            time.sleep(0.05)
+        self.assertIn("waiting for the whole-suite lock", text())
+        # Held for a while longer: queued time the budget must not count.
+        time.sleep(4)
+        lock.release()
+        self.assertEqual(p.wait(timeout=120), 0, text())
+        total = time.monotonic() - began
+        waited = int(re.search(r"Waited (\d+) s for the whole-suite lock; left out of the budget\.", text()).group(1))
+        counted = int(re.search(r"Whole command: (\d+) s;", text()).group(1))
+        self.assertGreaterEqual(waited, 3, text())
+        self.assertLessEqual(counted, total - waited + 1, text())
+
+    def test_a_failure_at_the_allowance_is_counted_as_over_it(self):
+        status, out = self.run_script(env={"STUB_TIMEOUT_FORM": "1"})
+        heading = "Tests that exceeded or probably exceeded their time allowance: 1 (0 exceeded, 1 probably)"
+        self.assertIn(heading, out)
+        self.assertNotIn("Test time allowance exceeded", out)
+        self.assertIn("ProbeTests.testHung() (probably exceeded: failed at 60.000 s, the allowance rounded up "
+                      "to whole minutes)", out)
+        _, timing = self.run_log_and_timing()
+        self.assertIn(heading, timing)
+        # With a larger allowance the same failure is an ordinary one.
+        status, out = self.run_script("--test-allowance-seconds", "120", env={"STUB_TIMEOUT_FORM": "1"})
+        self.assertNotIn("exceeded their time allowance", out)
+
+    def test_the_pid_comes_first(self):
+        status, out = self.run_script("--dry-run")
+        self.assertEqual(status, 0, out)
+        self.assertRegex(out.splitlines()[0], r"^fast_tests\.sh: pid [0-9]+$")
+
+    def test_no_wait_fails_naming_the_holder(self):
+        import sys
+        if TOOLS not in sys.path:
+            sys.path.insert(0, TOOLS)
+        import suite_guard
+        self.run_script("--dry-run")  # sets self.lock
+        lock = suite_guard.SuiteLock(self.lock)
+        self.assertTrue(lock.acquire("a sanitized suite in another lane", ["xcodebuild"], wait=False))
+        self.addCleanup(lock.release)
+        status, out = self.run_script("--no-wait")
+        self.assertEqual(status, 75, out)
+        self.assertIn("a sanitized suite in another lane", out)
+        self.assertEqual([c.split()[0] for c in self.calls()], ["build-for-testing"])
 
 
 if __name__ == "__main__":

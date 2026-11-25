@@ -27,11 +27,13 @@
 #      the cap of tools/run_tests.expect -parallel) unless --workers. Before
 #      2026-11-23 the count was left to xcodebuild (about one per core), so
 #      the wall-clock times of earlier fast-tier runs are not comparable.
-#      It runs on a pseudo-terminal
-#      (script -q /dev/null ...): xcodebuild writes results and its end
-#      marker on two streams, and through a pipe they arrive out of order.
-#      The log, with the terminal's carriage returns removed, goes to
-#      tmp/fast-tests/runs/<time>/test.log.
+#      It runs on a pseudo-terminal, under
+#      tools/swift_migration/suite_guard.py run --pty (until 2026-11-24,
+#      script -q /dev/null): xcodebuild writes results and its end marker
+#      on two streams, and through a pipe they arrive out of order. The
+#      log, with the terminal's carriage returns removed, goes to
+#      tmp/fast-tests/runs/<time>/test.log. suite_guard.py also holds the
+#      whole-suite lock for the step and runs the stall watchdog (below).
 #   4. tools/swift_migration/test_timing.py (with --skip-list slow_tier.txt,
 #      so the suites -skip-testing emptied are not taken for damage) reports
 #      the run's times and the tests at or over the 10-second ceiling of
@@ -59,10 +61,53 @@
 #   --kill-test-hosts
 #               Only kill this checkout's test hosts (below) and exit; for
 #               cleaning up after an interrupted run, and for the tests.
+#   --test-allowance-seconds N
+#               XCTest's per-test time limit (-test-timeouts-enabled YES
+#               -default-test-execution-time-allowance N): a test that runs
+#               longer fails and its host is replaced. Default 60 (XCTest
+#               rounds up to whole minutes; the fast tier's slowest tests
+#               take seconds: orchestration.md section 3 has the evidence).
+#               0 turns it off.
+#   --max-test-allowance-seconds M
+#               The most a test may ask for with executionTimeAllowance
+#               (-maximum-test-execution-time-allowance M). Default: N.
+#   --stall-seconds N
+#               Stop the test step after N seconds with no test progress
+#               (default: the larger allowance plus 300, so 360; 300 with
+#               the allowance off; 0 turns the watchdog off). See below.
+#   --no-wait   When another whole-suite run holds the whole-suite lock,
+#               fail at once (status 75), naming it, instead of waiting.
 #   -h, --help  Print this text.
 #
+# The whole-suite lock: every run of the fast tier is a whole-suite run (the
+# suite less the slow tier), so its test step holds the machine-wide
+# whole-suite lock of suite_guard.py: one whole suite, plain or sanitized,
+# at a time on the machine, across every checkout and lane
+# (docs/swift-migration/orchestration.md section 3). It waits for the lock,
+# saying who holds it, unless --no-wait. The build (step 1) does not take
+# it.
+#
+# The stall watchdog (added 2026-11-24, after five test hosts in three
+# whole suites each waited for hours in one test one night): the backstop
+# behind the allowance. Its progress signal is each test host's output in
+# the step's result bundle (tmp/fast-tests/runs/<time>/results/
+# test.xcresult; suite_guard.py's header has the rule): when a host has
+# been inside one test for --stall-seconds, or no test progress has shown
+# for that long, suite_guard.py records, in the run directory's stall/,
+# a sample of each of this run's test hosts (the plain build's executable
+# with -suite iterm2-tests), the process list with CPU, threads and memory
+# footprint, the machine's memory state, the tail of the log and the tests
+# in progress per worker (each command bounded in time), then kills
+# xcodebuild's process group and the test hosts, prints its account (also
+# in stall/stall.txt), and the script exits 124.
+#
+# The script prints its pid first, so that a caller that runs it in the
+# background can wait for it with a bound (suite_guard.py wait --pid PID
+# --seconds N).
+#
 # The budget: at the end the script prints the whole command's wall time,
-# build included, against FAST_TIER_BUDGET_SECONDS (300 s with two workers,
+# build included and time spent waiting for the whole-suite lock left out
+# (the wait is printed on a line of its own), against FAST_TIER_BUDGET_SECONDS (300 s with two workers,
 # the owner, 2026-11-23; test-tiers.md section 1), "under" or "OVER". Going
 # over fails the run only with --enforce-budget: test-speed.md section 3
 # makes a commit that pushes the fast tier over budget fail the gate, but
@@ -76,7 +121,9 @@
 # followed by a space and arguments; nothing else. The same happens after a
 # normal end.
 #
-# Exit status: xcodebuild's (step 1 or 3), except 1 when the tests succeeded
+# Exit status: 124 when the stall watchdog stopped the test step; 75 when
+# --no-wait found the whole-suite lock held; otherwise
+# xcodebuild's (step 1 or 3), except 1 when the tests succeeded
 # but the log shows no executed test, there is no .xctestrun to run, or (with
 # --enforce-budget) the whole command went over the budget, and 2 for a
 # usage error.
@@ -107,10 +154,23 @@ DO_BUILD=YES
 PARALLEL=YES
 WORKERS=""
 JOBS=""
+STALL_SECONDS=""
+ALLOWANCE=60
+MAX_ALLOWANCE=""
+NO_WAIT=NO
 while [ $# -gt 0 ]; do
     case "$1" in
         -h|--help) usage; exit 0 ;;
         --dry-run) DRY_RUN=YES ;;
+        --no-wait) NO_WAIT=YES ;;
+        --stall-seconds|--test-allowance-seconds|--max-test-allowance-seconds)
+            san_check_seconds "$1" "${2-}" || exit 2
+            case "$1" in
+                --stall-seconds) STALL_SECONDS="$2" ;;
+                --test-allowance-seconds) ALLOWANCE="$2" ;;
+                *) MAX_ALLOWANCE="$2" ;;
+            esac
+            shift ;;
         --no-build) DO_BUILD=NO ;;
         --serial) PARALLEL=NO ;;
         --kill-test-hosts) KILL_ONLY=YES ;;
@@ -128,6 +188,16 @@ while [ $# -gt 0 ]; do
     esac
     shift
 done
+[ -n "$MAX_ALLOWANCE" ] || MAX_ALLOWANCE="$ALLOWANCE"
+# The watchdog waits longer than XCTest would, so that the allowance acts
+# first however it is raised.
+if [ -z "$STALL_SECONDS" ]; then
+    if [ "$ALLOWANCE" -gt 0 ]; then STALL_SECONDS=$(( MAX_ALLOWANCE + 300 )); else STALL_SECONDS=300; fi
+fi
+if [ "$ALLOWANCE" -gt 0 ] && [ "$MAX_ALLOWANCE" -lt "$ALLOWANCE" ]; then
+    echo "error: --max-test-allowance-seconds ($MAX_ALLOWANCE) is below --test-allowance-seconds ($ALLOWANCE)" >&2
+    exit 2
+fi
 if [ -n "$WORKERS" ] && [ "$PARALLEL" = NO ]; then
     echo "error: --workers needs a parallel run; --serial runs one class at a time" >&2
     exit 2
@@ -201,8 +271,11 @@ find_source_xctestrun() {
     fi
     printf '%s\n' "${found[0]}"
 }
+san_allowance_args "$ALLOWANCE" "$MAX_ALLOWANCE"
+RESULT_BUNDLE="$RUN_DIR/results/test.xcresult"
 TEST_COMMAND=(xcodebuild test-without-building -xctestrun "$XCTESTRUN" -destination 'platform=macOS'
-              "${SAN_PARALLEL_ARGS[@]}" ${SKIP_ARGS[@]+"${SKIP_ARGS[@]}"})
+              "${SAN_PARALLEL_ARGS[@]}" ${SAN_ALLOWANCE_ARGS[@]+"${SAN_ALLOWANCE_ARGS[@]}"}
+              -resultBundlePath "$RESULT_BUNDLE" ${SKIP_ARGS[@]+"${SKIP_ARGS[@]}"})
 
 # Prints a command so that it can be pasted into a shell.
 print_command() {
@@ -216,6 +289,7 @@ print_command() {
     printf '%s\n' "${out# }"
 }
 
+echo "fast_tests.sh: pid $$"
 echo "Fast tier: No address sanitizer, no MallocStackLogging (docs/swift-migration/test-speed.md section 2)."
 if [ "$NO_SKIP" = YES ]; then
     echo "--no-skip: no test is skipped; the slow tier runs too."
@@ -237,17 +311,21 @@ if [ "$DRY_RUN" = YES ]; then
     fi
     print_command python3 -B "${HERE#$ROOT/}/test_tiers.py" strip-env "$SOURCE" "$XCTESTRUN"
     print_command "${TEST_COMMAND[@]}"
-    echo "(run as: script -q /dev/null <that command>, its output to $RUN_DIR/test.log)"
+    echo "(run on a terminal under suite_guard.py run --pty --lock --stall-seconds $STALL_SECONDS, its output to $RUN_DIR/test.log)"
     exit 0
 fi
 
 cd "$ROOT"
 
 GROUP_PID=""
+# suite_guard.py starts the test command in a process group of its own and
+# writes its id here, so that an interruption reaches it too.
+PGID_FILE="$RUN_DIR/.test-pgid"
 on_signal() {
     trap '' INT TERM HUP
     echo "fast_tests.sh: interrupted; stopping xcodebuild and the test hosts" >&2
     [ -n "$GROUP_PID" ] && kill -KILL -- "-$GROUP_PID" 2>/dev/null
+    [ -s "$PGID_FILE" ] && kill -KILL -- "-$(cat "$PGID_FILE")" 2>/dev/null
     kill_test_hosts
     exit 130
 }
@@ -280,24 +358,45 @@ python3 -B "$HERE/test_tiers.py" strip-env "$SOURCE" "$XCTESTRUN" || exit 1
 
 mkdir -p "$RUN_DIR"
 test_step() {
-    # script exits with the command's status. Its stdin is /dev/null, and at
-    # that end of file the terminal echoes "^D" and two backspaces before the
-    # first line; perl removes them and the terminal's carriage returns.
-    script -q /dev/null "${TEST_COMMAND[@]}" < /dev/null 2>&1 \
-        | perl -pe 'BEGIN { $| = 1 } s/^\^D\x08\x08// if $. == 1; s/\r+$//' \
-        | tee "$RUN_DIR/test.log"
-    return "${PIPESTATUS[0]}"
+    # On a terminal (its carriage returns removed from the log), under the
+    # whole-suite lock and the stall watchdog. The command's stdin is
+    # /dev/null and is not the terminal, so no "^D" is echoed.
+    local guard=(python3 -B "$HERE/suite_guard.py" run --pty --lock --log "$RUN_DIR/test.log"
+                 --stall-seconds "$STALL_SECONDS" --stall-dir "$RUN_DIR/stall"
+                 --result-bundle "$RESULT_BUNDLE"
+                 --host-prefix "$BUILD_DIR" --pgid-file "$PGID_FILE"
+                 --lock-wait-file "$LOCK_WAIT_FILE"
+                 --label "fast_tests.sh (run $RUN_DIR)")
+    [ "$NO_WAIT" = YES ] && guard+=(--no-wait)
+    "${guard[@]}" -- "${TEST_COMMAND[@]}"
 }
+# Seconds the step waited for the whole-suite lock, which the budget leaves
+# out: a fast tier queued behind another whole suite is not slow.
+LOCK_WAIT_FILE="$RUN_DIR/.lock-wait"
 echo "Testing (log: $RUN_DIR/test.log)..."
 START=$(date +%s)
 run_in_group test_step
 STATUS=$?
 kill_test_hosts
 echo "Tests finished with status $STATUS in $(( $(date +%s) - START )) seconds."
+if [ "$STATUS" -eq 75 ] && [ ! -e "$RUN_DIR/test.log" ]; then
+    echo "error: --no-wait: another whole-suite run holds the whole-suite lock (named above); nothing was tested" >&2
+    exit 75
+fi
+if [ "$STATUS" -eq 124 ] && [ -f "$RUN_DIR/stall/stall.txt" ]; then
+    echo "error: the test step stalled and was stopped by the watchdog (status 124); see $RUN_DIR/stall/stall.txt" >&2
+    exit 124
+fi
 
 echo "Times, with the tests at or over the 10-second ceiling (reported, not enforced):"
 python3 -B "$HERE/test_timing.py" "$RUN_DIR/test.log" --threshold 10 ${TIMING_SKIP[@]+"${TIMING_SKIP[@]}"} \
     | tee "$RUN_DIR/timing.txt"
+# Tests that ran out of the time allowance, counted apart (test_timing.py
+# counts each as whatever XCTest printed for it, passed included).
+ALLOWANCE_REPORT=$(san_allowance_report "$RUN_DIR/test.log" "$ALLOWANCE")
+if [ -n "$ALLOWANCE_REPORT" ]; then
+    printf '%s\n' "$ALLOWANCE_REPORT" | tee -a "$RUN_DIR/timing.txt"
+fi
 # The number of results of any kind (passed, failed, skipped, other), in
 # either log format; 0 if the log has none (test_timing.py then exits 2).
 EXECUTED=$(python3 -B "$HERE/test_timing.py" "$RUN_DIR/test.log" --json ${TIMING_SKIP[@]+"${TIMING_SKIP[@]}"} 2>/dev/null \
@@ -306,7 +405,16 @@ if [ "${EXECUTED:-0}" -eq 0 ]; then
     echo "error: the run executed no tests; it proves nothing" >&2
     [ "$STATUS" -eq 0 ] && STATUS=1
 fi
-ELAPSED=$(( $(date +%s) - COMMAND_START ))
+LOCK_WAIT=0
+if [ -f "$LOCK_WAIT_FILE" ]; then
+    LOCK_WAIT=$(tr -cd '0-9' < "$LOCK_WAIT_FILE")
+    LOCK_WAIT=${LOCK_WAIT:-0}
+    rm -f "$LOCK_WAIT_FILE"
+fi
+if [ "$LOCK_WAIT" -gt 0 ]; then
+    echo "Waited $LOCK_WAIT s for the whole-suite lock; left out of the budget."
+fi
+ELAPSED=$(( $(date +%s) - COMMAND_START - LOCK_WAIT ))
 if [ "$ELAPSED" -gt "$FAST_TIER_BUDGET_SECONDS" ]; then
     echo "Whole command: $ELAPSED s; fast tier budget $FAST_TIER_BUDGET_SECONDS s (FAST_TIER_BUDGET_SECONDS): OVER."
     if [ "$ENFORCE_BUDGET" = YES ]; then

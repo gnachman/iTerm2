@@ -39,6 +39,11 @@ sys.dont_write_bytecode = True
 
 import deadline_run as dr  # noqa: E402
 
+# The stand-in for Claude Code's input line (its docstring says what of
+# Claude Code 2.1.331 it models: raw keys, C-c clears the line, an Enter in
+# the same burst as long text is a paste and does not submit, /exit exits).
+FAKE_CLAUDE = os.path.join(HERE, 'fake_claude_tui.py')
+
 LA = ZoneInfo('America/Los_Angeles')
 
 
@@ -874,10 +879,13 @@ class TmuxRunTest(RunBase):
                            % (sys.executable, TOOL, self.root_file, inner,
                               self.status))
 
-    EXIT_ON_SLASH_EXIT = (
-        'while IFS= read -r line; do\n'
-        '  case "$line" in *"/exit"*) echo exit > %s/got_exit; exit 0 ;; esac\n'
-        'done\n')
+    # Shell lines that hand the pane to the stand-in for Claude Code's input
+    # line, with %s for the test directory: /exit submitted ends it.
+    EXIT_ON_SLASH_EXIT = 'exec %s -B %s %%s\n' % (sys.executable, FAKE_CLAUDE)
+
+    def claude_with_banner(self, banner):
+        """The stand-in, printing a dialog's text once its terminal is raw."""
+        return 'exec %s -B %s %s "%s"\n' % (sys.executable, FAKE_CLAUDE, self.tmp, banner)
 
     def new_session(self, pane):
         return [TMUX, '-S', self.sock, '-f', '/dev/null', 'new-session', '-d',
@@ -913,23 +921,25 @@ class TmuxRunTest(RunBase):
             self.assertEqual(fh.read(), night_id + '\n')
 
     def test_tmux_deadline_interrupts_then_types_exit(self):
-        keys = os.path.join(self.tmp, 'keys')
-        pane = self.pane_script(
-            # Record the raw bytes of the first line, then behave like the
-            # session: /exit ends it.
-            'IFS= read -r first; printf %%s "$first" | od -c > %s\n'
-            'case "$first" in *"/exit"*) echo exit > %s/got_exit; exit 0 ;; '
-            'esac\n' % (keys, self.tmp) + self.EXIT_ON_SLASH_EXIT % self.tmp)
+        pane = self.pane_script(self.EXIT_ON_SLASH_EXIT % self.tmp)
         # The grace is shorter than the harness's 180 second bound, so a
         # pane that misses /exit is stopped by SIGTERM and fails the
         # got_exit assertion with the log, instead of hanging the test.
-        proc = self.run_tmux(pane, '--grace', '60', seconds='1')
+        # The stop sequence (1 + 60 + 60 + 5 + 20 = 146 seconds) starts
+        # four seconds into the 150 second limit, after the stand-in has
+        # its terminal in raw mode (keys before that are flushed).
+        proc = self.run_tmux(pane, '--grace', '60', seconds='150')
         self.assertEqual(proc.returncode, 124, proc.stderr)
         self.assertTrue(os.path.exists(os.path.join(self.tmp, 'got_exit')),
                         proc.stderr)
-        # Escape reached the pane before /exit.
-        with open(keys) as fh:
-            self.assertIn('033', fh.read())
+        # Escape, then Ctrl-C (which clears the input line), then /exit and
+        # Enter reached the pane in that order.
+        with open(os.path.join(self.tmp, 'keys'), 'rb') as fh:
+            keys = fh.read()
+        self.assertLess(keys.index(b'\x1b'), keys.index(b'\x03'), keys)
+        self.assertLess(keys.index(b'\x03'), keys.index(b'/exit'), keys)
+        self.assertLess(keys.index(b'/exit'), keys.rindex(b'\r'), keys)
+        self.assertIn('clearing the input line', proc.stderr)
         self.assertIn('deadline', proc.stderr)
         self.assertIn('Escape', proc.stderr)
         self.assertFalse(self.server_running())
@@ -973,8 +983,7 @@ class TmuxRunTest(RunBase):
     def test_tmux_session_that_makes_no_progress_is_a_failed_start(self):
         # A startup dialog other than the trust dialog: it prints once and
         # waits; no transcript appears.
-        pane = self.pane_script('echo "Some other question? (y/n)"\n'
-                                + self.EXIT_ON_SLASH_EXIT % self.tmp)
+        pane = self.pane_script(self.claude_with_banner('Some other question? (y/n)'))
         # A short bound, so that a broken detector fails fast instead of
         # waiting for the 600 second limit.
         proc = self.run_tmux(pane, '--stall-seconds', '3', '--transcript',
@@ -1505,10 +1514,180 @@ exec %(tmux)s "$@"
         self.assertIn('server pid', err)
         self.assertIn('not believed', err)
 
+    # The nudge (2026-11-24): a session idle at its prompt waiting for
+    # background jobs got no turn at its clean stop. With --nudge-text the
+    # supervisor types one line into it then. With the default 600 second
+    # limit and a 596 second --clean-stop-margin, the clean stop is four
+    # seconds after the start, long before the stop sequence (217 seconds).
+
+    # Long, as the real one is: tmux types it in one burst, and Claude Code
+    # takes long text with an Enter in the same burst for a paste.
+    NUDGE = ('It is the clean stop time. Stop now as docs/swift-migration/workflow.md section 4 says: '
+             'start nothing new, stop or abandon background jobs that have not finished, commit what '
+             "passed, write the night's report, release lanes, then stop.")
+
+    def recording_pane(self):
+        """The stand-in for Claude Code's input line: each submitted line
+        goes to the file lines; /exit ends it."""
+        return self.pane_script(self.EXIT_ON_SLASH_EXIT % self.tmp)
+
+    def type_exit(self, runner, err_path):
+        """Ends the stand-in by typing /exit and Enter as two calls, as the
+        owner would, through the real tmux (not the stub, so the calls
+        file shows only the supervisor's own)."""
+        # Keys typed before the stand-in has its terminal in raw mode are
+        # flushed.
+        self.assertTrue(wait_until(lambda: os.path.exists(os.path.join(self.tmp, 'ready'))))
+        subprocess.run([TMUX, '-S', self.sock, 'send-keys', '-t', self.NAME, '-l', '/exit'],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        time.sleep(0.5)
+        subprocess.run([TMUX, '-S', self.sock, 'send-keys', '-t', self.NAME, 'Enter'],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        runner.wait(timeout=120)
+        return self.read_log(err_path)
+
+    def typed_lines(self):
+        try:
+            with open(os.path.join(self.tmp, 'lines')) as fh:
+                return fh.read().splitlines()
+        except OSError:
+            return []
+
+    def nudge_calls(self):
+        try:
+            with open(os.path.join(self.tmp, 'calls')) as fh:
+                return [line for line in fh if line.startswith('send-keys') and self.NUDGE in line]
+        except OSError:
+            return []
+
+    def test_tmux_nudge_is_typed_once_at_the_clean_stop(self):
+        started = time.monotonic()
+        runner, err_path = self.start_stubbed(self.recording_pane(), '--clean-stop-margin', '596',
+                                              '--nudge-text', self.NUDGE)
+        self.assertTrue(wait_until(lambda: self.NUDGE in self.typed_lines()
+                                   or runner.poll() is not None), self.read_log(err_path))
+        # Not before the clean stop: four seconds after the start ended.
+        self.assertGreaterEqual(time.monotonic() - started, 3.5)
+        self.assertTrue(wait_until(lambda: 'nudge typed' in self.read_log(err_path)))
+        # Never again: ten more checks of the session go by.
+        before = self.calls('has-session')
+        self.assertTrue(wait_until(lambda: self.calls('has-session') >= before + 10
+                                   or runner.poll() is not None))
+        err = self.type_exit(runner, err_path)
+        self.assertEqual(runner.returncode, 0, err)
+        # Submitted as one message: not left in the input as a paste.
+        self.assertEqual(self.typed_lines(), [self.NUDGE])
+        self.assertEqual(len(self.nudge_calls()), 1)
+        # The text, then Enter as a call of its own a second later.
+        with open(os.path.join(self.tmp, 'calls')) as fh:
+            sends = [line.split(None, 2)[2] for line in fh if line.startswith('send-keys')]
+        self.assertEqual(len(sends), 2, sends)
+        self.assertIn(self.NUDGE, sends[0])
+        self.assertNotIn('Enter', sends[0].replace(self.NUDGE, ''))
+        self.assertTrue(sends[1].rstrip().endswith('Enter'), sends)
+        self.assertIn('the nudge is typed into the session once, at the clean stop', err)
+        self.assertIn(repr(self.NUDGE), err)
+        self.assertIn('the clean stop: typing the nudge into the session', err)
+
+    def test_tmux_no_nudge_without_the_option(self):
+        runner, err_path = self.start_stubbed(self.recording_pane(), '--clean-stop-margin', '596')
+        before = self.calls('has-session')
+        # Well past the four seconds a nudge would have needed.
+        self.assertTrue(wait_until(lambda: self.calls('has-session') >= before + 10
+                                   or runner.poll() is not None))
+        err = self.type_exit(runner, err_path)
+        self.assertEqual(runner.returncode, 0, err)
+        self.assertEqual(self.calls('send-keys'), 0)
+        self.assertNotIn('nudge', err)
+
+    def test_tmux_nudge_that_tmux_fails_to_type_is_logged_not_retried(self):
+        with open(os.path.join(self.tmp, 'broken.send-keys'), 'w') as fh:
+            fh.write('error\n')
+        runner, err_path = self.start_stubbed(self.recording_pane(), '--clean-stop-margin', '596',
+                                              '--nudge-text', self.NUDGE)
+        self.assertTrue(wait_until(lambda: 'could not be typed' in self.read_log(err_path)
+                                   or runner.poll() is not None))
+        before = self.calls('has-session')
+        self.assertTrue(wait_until(lambda: self.calls('has-session') >= before + 10
+                                   or runner.poll() is not None))
+        err = self.type_exit(runner, err_path)
+        # The session went on and ended by itself.
+        self.assertEqual(runner.returncode, 0, err)
+        self.assertEqual(len(self.nudge_calls()), 1)
+        # Enter is still tried after a failed text call, once.
+        self.assertEqual(self.calls('send-keys'), 2)
+        self.assertIn('it is not retried', err)
+
+    def test_tmux_nudge_into_a_hung_tmux_does_not_stop_the_supervisor(self):
+        with open(os.path.join(self.tmp, 'broken.send-keys'), 'w') as fh:
+            fh.write('hang\n')
+        runner, err_path = self.start_stubbed(self.recording_pane(), '--clean-stop-margin', '596',
+                                              '--nudge-text', self.NUDGE)
+        self.assertTrue(wait_until(lambda: 'could not be typed' in self.read_log(err_path)
+                                   or runner.poll() is not None))
+        self.assertIn('timed out', self.read_log(err_path))
+        before = self.calls('has-session')
+        self.assertTrue(wait_until(lambda: self.calls('has-session') >= before + 5
+                                   or runner.poll() is not None))
+        err = self.type_exit(runner, err_path)
+        self.assertEqual(runner.returncode, 0, err)
+        self.assertEqual(len(self.nudge_calls()), 1)
+
+    def test_tmux_no_nudge_when_the_clean_stop_is_already_past(self):
+        runner, err_path = self.start_stubbed(self.recording_pane(), '--clean-stop-margin', '700',
+                                              '--nudge-text', self.NUDGE)
+        self.assertTrue(wait_until(lambda: 'already past' in self.read_log(err_path)
+                                   or runner.poll() is not None))
+        err = self.type_exit(runner, err_path)
+        self.assertEqual(runner.returncode, 0, err)
+        self.assertEqual(self.calls('send-keys'), 0)
+
+    def paste_into_the_input(self):
+        """Types the nudge and Enter in one tmux call, which Claude Code
+        takes for a paste: the text stays in the input, unsubmitted."""
+        subprocess.run([TMUX, '-S', self.sock, 'send-keys', '-t', self.NAME, '-l', self.NUDGE, ';',
+                        'send-keys', '-t', self.NAME, 'Enter'],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    # A 54 second limit with --grace 20 and --term-grace 1: the stop
+    # sequence (1 + 20 + 1 + 2 + 20 = 44 seconds) starts 10 seconds in.
+    SHORT_STOP = ('--grace', '20', '--term-grace', '1')
+
+    def test_tmux_stop_sequence_exits_with_unsubmitted_text_in_the_input(self):
+        # On 2026-11-24, against a real Claude Code, a nudge left in the
+        # input made the old stop sequence submit "<nudge>/exit" as a
+        # message instead of exiting.
+        runner, err_path = self.start_stubbed(self.recording_pane(), *self.SHORT_STOP, seconds='54')
+        self.assertTrue(wait_until(lambda: os.path.exists(os.path.join(self.tmp, 'ready'))))
+        self.paste_into_the_input()
+        # The text is in the input, not submitted.
+        self.assertTrue(wait_until(lambda: os.path.exists(os.path.join(self.tmp, 'keys'))))
+        self.assertEqual(self.typed_lines(), [])
+        runner.wait(timeout=120)
+        err = self.read_log(err_path)
+        self.assertEqual(runner.returncode, 124, err)
+        self.assertTrue(os.path.exists(os.path.join(self.tmp, 'got_exit')), err)
+        self.assertFalse([line for line in self.typed_lines() if '/exit' in line], self.typed_lines())
+        self.assertNotIn('still running; sending SIGTERM', err)
+
+    def test_tmux_nudge_whose_enter_fails_is_cleared_by_the_stop_sequence(self):
+        # The text is typed, the Enter after it fails: the text stays in the
+        # input, and the stop sequence clears it before /exit. The clean
+        # stop is four seconds in (54 - 50), the stop sequence at 10.
+        self.plan('send-keys', 'ok', 'error')
+        runner, err_path = self.start_stubbed(self.recording_pane(), *self.SHORT_STOP,
+                                              '--clean-stop-margin', '50', '--nudge-text', self.NUDGE,
+                                              seconds='54')
+        runner.wait(timeout=120)
+        err = self.read_log(err_path)
+        self.assertEqual(runner.returncode, 124, err)
+        self.assertIn('the Enter after the nudge could not be sent', err)
+        self.assertTrue(os.path.exists(os.path.join(self.tmp, 'got_exit')), err)
+        self.assertEqual(self.typed_lines(), [])
+
     def test_tmux_blocked_at_a_startup_dialog(self):
-        pane = self.pane_script(
-            'echo "Quick safety check: Is this a project you created or '
-            'one you trust?"\n' + self.EXIT_ON_SLASH_EXIT % self.tmp)
+        pane = self.pane_script(self.claude_with_banner(
+            'Quick safety check: Is this a project you created or one you trust?'))
         proc = self.run_tmux(pane, '--blocked-pattern', 'one you trust',
                              '--blocked-seconds', '120')
         self.assertEqual(proc.returncode, 122, proc.stderr)

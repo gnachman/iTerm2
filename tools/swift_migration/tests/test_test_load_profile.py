@@ -382,5 +382,59 @@ class RunTests(unittest.TestCase):
             os.kill = original_kill
         self.assertEqual(killed, [])
 
+
+class WholeSuiteLockTests(unittest.TestCase):
+    """run with no TEST and no COMMAND holds the whole-suite lock; with
+    --no-wait it fails at once when another run holds it, before anything
+    is started."""
+
+    def setUp(self):
+        self.dir = tempfile.mkdtemp(prefix='tlp-lock-')
+        self.addCleanup(shutil.rmtree, self.dir, True)
+        self.env = dict(os.environ)
+        self.env['SWIFT_MIGRATION_SUITE_LOCK'] = os.path.join(self.dir, 'whole-suite.lock')
+        self.env.pop('SWIFT_MIGRATION_SUITE_LOCK_HELD', None)
+
+    def run_tool(self, *args):
+        import subprocess
+        tool = os.path.join(os.path.dirname(HERE), 'test_load_profile.py')
+        return subprocess.run([sys.executable, '-B', tool] + list(args), env=self.env, stdout=subprocess.PIPE,
+                              stderr=subprocess.STDOUT, universal_newlines=True, timeout=60)
+
+    def test_no_wait_fails_while_another_run_holds_it(self):
+        import suite_guard
+        lock = suite_guard.SuiteLock(self.env['SWIFT_MIGRATION_SUITE_LOCK'])
+        self.assertTrue(lock.acquire('a sanitized suite elsewhere', ['xcodebuild'], wait=False))
+        self.addCleanup(lock.release)
+        out_dir = os.path.join(self.dir, 'out')
+        p = self.run_tool('run', '--no-wait', '--out', out_dir)
+        self.assertEqual(p.returncode, suite_guard.EXIT_LOCK_BUSY, p.stdout)
+        self.assertIn('a sanitized suite elsewhere', p.stdout)
+        # Nothing was started.
+        self.assertFalse(os.path.exists(os.path.join(out_dir, 'output.log')))
+
+    def test_a_maximum_below_the_allowance_is_a_usage_error(self):
+        p = self.run_tool('run', '--test-allowance-seconds', '300', '--max-test-allowance-seconds', '60',
+                          'ModernTests/A')
+        self.assertEqual(p.returncode, 2, p.stdout)
+        self.assertIn('--max-test-allowance-seconds is below --test-allowance-seconds', p.stdout)
+
+
+class DefaultCommandTests(unittest.TestCase):
+    """The default command gives XCTest a per-test time allowance
+    (2026-11-24), unless it is 0."""
+
+    def test_allowance_by_default(self):
+        cmd = tlp.default_command(['ModernTests/A'])
+        i = cmd.index('-test-timeouts-enabled')
+        self.assertEqual(cmd[i:i + 6], ['-test-timeouts-enabled', 'YES', '-default-test-execution-time-allowance',
+                                        '120', '-maximum-test-execution-time-allowance', '120'])
+
+    def test_allowance_options_and_off(self):
+        cmd = tlp.default_command([], allowance=120, maximum=300)
+        self.assertIn('120', cmd)
+        self.assertEqual(cmd[cmd.index('-maximum-test-execution-time-allowance') + 1], '300')
+        self.assertNotIn('-test-timeouts-enabled', tlp.default_command([], allowance=0))
+
 if __name__ == '__main__':
     unittest.main()

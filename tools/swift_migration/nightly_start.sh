@@ -252,7 +252,12 @@
 #     ~/.claude.json, .mcp.json or a plugin (docs/en/cli-reference).
 #   --disallowedTools for tools that act outside the machine or schedule
 #     work: every MCP tool (mcp__*), RemoteTrigger, CronCreate, CronDelete,
-#     CronList, PushNotification, Workflow, DesignSync, ScheduleWakeup. The
+#     CronList, PushNotification, Workflow, DesignSync, ScheduleWakeup; and
+#     AskUserQuestion, whose dialog nobody answers at night and which takes
+#     a line typed into the session (the nudge) as its answer, losing it
+#     (observed with Claude Code 2.1.331, 2026-11-24). The prompt never
+#     asks for it. Any other dialog that is open at the clean stop would
+#     take the nudge the same way; that exposure remains. The
 #     Agent (Task) and SendMessage tools stay: the orchestrator needs them.
 #   This is not --dangerously-skip-permissions / bypassPermissions.
 #
@@ -342,10 +347,18 @@
 # after 01:00 (then 07:00:00, 06:53:20, 06:15:00). The prompt names the
 # clean stop as
 # the time by which the orchestrator must have stopped cleanly (workflow.md
-# section 4, "Stopping cleanly"; nothing is done at that time). The stop
+# section 4, "Stopping cleanly"). At that time deadline_run.py types the
+# fixed line NUDGE_TEXT into the session, once (--nudge-text; its header has
+# the care taken), so that a session idle at its prompt waiting on
+# background jobs gets a turn: on 2026-11-24 one got none, missed its
+# clean stop and was killed at the hard limit with no report. The prompt
+# also tells the session never to wait on a background job without a bound
+# (suite_guard.py wait --pid PID --seconds N in the foreground). The stop
 # sequence: deadline_run.py sends Escape (stops the turn in progress),
-# after NIGHTLY_INTERRUPT_WAIT seconds types /exit (ends the session,
-# running its SessionEnd hooks), after NIGHTLY_GRACE_SECONDS sends SIGTERM
+# after NIGHTLY_INTERRUPT_WAIT seconds clears the input line with Ctrl-C
+# (leftover text would otherwise have /exit appended and go as a message)
+# and a second later types /exit (ends the session, running its SessionEnd
+# hooks), after NIGHTLY_GRACE_SECONDS sends SIGTERM
 # to the pane's processes, after 60 more seconds kills the tmux server and
 # SIGKILLs the pane, then sweeps every process the run started (builds and
 # tests running in a lane are started by the session's tools like any other,
@@ -422,6 +435,8 @@
 #   NIGHTLY_INTERRUPT_WAIT      Escape to /exit at the limit (default 10)
 #   NIGHTLY_GRACE_SECONDS       /exit to SIGTERM at the limit (default 300)
 #   NIGHTLY_STALL_SECONDS       a failed start after this long with no change (default 300)
+#   NIGHTLY_CLEAN_STOP_MARGIN   the clean stop, this many seconds before the hard limit (default
+#                               2700); also when the nudge is typed (see "Stopping")
 #   NIGHTLY_REFRESH_SECONDS     time bound on the refresh, killed after it (default 1200)
 #   NIGHTLY_CLONE_TOOL          replaces nightly_clone.sh, for tests only
 #   NIGHTLY_MODEL               the session's model (default opus)
@@ -539,6 +554,11 @@ STOP_AT=${NIGHTLY_STOP_AT:-07:00}
 INTERRUPT_WAIT=${NIGHTLY_INTERRUPT_WAIT:-10}
 GRACE_SECONDS=${NIGHTLY_GRACE_SECONDS:-300}
 STALL_SECONDS=${NIGHTLY_STALL_SECONDS:-300}
+CLEAN_STOP_MARGIN=${NIGHTLY_CLEAN_STOP_MARGIN:-2700}
+# Typed into the session once at the clean stop (deadline_run.py
+# --nudge-text): an idle session waiting on background jobs gets no turn
+# otherwise (2026-11-24). Fixed text, one line.
+NUDGE_TEXT='It is the clean stop time. Stop now as docs/swift-migration/workflow.md section 4 says: start nothing new, stop or abandon background jobs that have not finished, commit what passed, write the night'"'"'s report, release lanes, then stop.'
 MODEL=${NIGHTLY_MODEL:-opus}
 REQUIRED_PROGRAMS=${NIGHTLY_REQUIRED_PROGRAMS:-git python3 xcodebuild expect ruby make}
 LOCK_DIR="$NIGHTLY_ROOT/lock"
@@ -1215,7 +1235,8 @@ log "agents: $AGENTS_DIR/migration-author.md and migration-reviewer.md parse and
 
 # 10. The session.
 DEADLINE_ARGS=(--seconds "$MAX_SECONDS" --until "$STOP_AT")
-SHOW_ARGS=("${DEADLINE_ARGS[@]}" --interrupt-wait "$INTERRUPT_WAIT" --grace "$GRACE_SECONDS")
+SHOW_ARGS=("${DEADLINE_ARGS[@]}" --interrupt-wait "$INTERRUPT_WAIT" --grace "$GRACE_SECONDS"
+           --clean-stop-margin "$CLEAN_STOP_MARGIN")
 if [ -n "${NIGHTLY_NOW:-}" ]; then
   SHOW_ARGS+=(--now "$NIGHTLY_NOW")
 fi
@@ -1249,7 +1270,7 @@ DENY_RULES=(
 )
 DISALLOWED_TOOLS=(
   'mcp__*' RemoteTrigger CronCreate CronDelete CronList PushNotification
-  Workflow DesignSync ScheduleWakeup
+  Workflow DesignSync ScheduleWakeup AskUserQuestion
 )
 if ! "$PYTHON" -c '
 import json, sys
@@ -1302,7 +1323,7 @@ if [ -n "${NIGHTLY_PROMPT:-}" ]; then
   log "prompt replaced by NIGHTLY_PROMPT"
   [ "$ONE_UNIT" = 0 ] || log "NIGHTLY_PROMPT replaces the prompt, so it does not carry the one-unit instruction"
 else
-  PROMPT="You are the Swift migration orchestrator, started unattended at $NOW_ISO by tools/swift_migration/nightly_start.sh (SWIFT_MIGRATION_NIGHTLY=1) in an interactive session inside tmux; nobody is watching, though the owner may attach. Follow docs/swift-migration/orchestration.md from the top. Never wait for the owner: permission prompts are denied automatically, so if something is denied, find another way or record it for the owner. This is the separate nightly clone, not the owner's checkout: its origin is a read-only mirror of the project's origin/master, which was fetched from GitHub and onto which the clone's commits were rebased before you started, so there is nothing to fetch or rebase; master may hold earlier nights' commits that are not upstream yet, which is normal. What the refresh did is in $REFRESH_STATUS: if it shows upstream-commits: taken, rebased: or already-upstream:, new code arrived, so bring derived data up to date before starting any unit (orchestration.md section 1, step 4); a submodule-stale: line names a submodule left behind, so the build may fail.$UPSTREAM_NOTE Never push and never add or change remotes: pushing, gh, osascript, launchctl, sudo, open, ssh, it2 and tmux are denied, and git is set up so that a push fails. Write each commit message to a file and commit with git commit -F, so that a message that mentions pushing is not taken for a push. Check usage with \`python3 tools/swift_migration/usage_check.py --run\` (exit 0 may start another agent, 1 at or over the ceiling, 2 unknown, which means stop) before each subagent and each gate run.$ONE_UNIT_NOTE Use the migration-author agent for authors and a new migration-reviewer agent for every review. Agents that build or test work in build lanes from tools/swift_migration/lane_clone.py (orchestration.md section 3); this clone's lanes are in $LANES, outside the clone, where this session may edit. You must have stopped cleanly, following \"Stopping cleanly\" in docs/swift-migration/workflow.md section 4, by $CLEAN_STOP local time: start nothing new after that, let running subagents finish, commit what passed the loop and the gate, save other work as a patch recorded in claims.md, restore the tree, and write the night's report to $REPORT. Then type nothing more: the session is ended for you. At $HARD the hard limit kills the session and everything it started, finished or not. This run's logs are in $RUN_DIR."
+  PROMPT="You are the Swift migration orchestrator, started unattended at $NOW_ISO by tools/swift_migration/nightly_start.sh (SWIFT_MIGRATION_NIGHTLY=1) in an interactive session inside tmux; nobody is watching, though the owner may attach. Follow docs/swift-migration/orchestration.md from the top. Never wait for the owner: permission prompts are denied automatically, so if something is denied, find another way or record it for the owner. This is the separate nightly clone, not the owner's checkout: its origin is a read-only mirror of the project's origin/master, which was fetched from GitHub and onto which the clone's commits were rebased before you started, so there is nothing to fetch or rebase; master may hold earlier nights' commits that are not upstream yet, which is normal. What the refresh did is in $REFRESH_STATUS: if it shows upstream-commits: taken, rebased: or already-upstream:, new code arrived, so bring derived data up to date before starting any unit (orchestration.md section 1, step 4); a submodule-stale: line names a submodule left behind, so the build may fail.$UPSTREAM_NOTE Never push and never add or change remotes: pushing, gh, osascript, launchctl, sudo, open, ssh, it2 and tmux are denied, and git is set up so that a push fails. Write each commit message to a file and commit with git commit -F, so that a message that mentions pushing is not taken for a push. Check usage with \`python3 tools/swift_migration/usage_check.py --run\` (exit 0 may start another agent, 1 at or over the ceiling, 2 unknown, which means stop) before each subagent and each gate run.$ONE_UNIT_NOTE Use the migration-author agent for authors and a new migration-reviewer agent for every review. Agents that build or test work in build lanes from tools/swift_migration/lane_clone.py (orchestration.md section 3); this clone's lanes are in $LANES, outside the clone, where this session may edit. Never wait on a background job without a bound. Run whole suites one at a time and only through the migration's scripts (tools/swift_migration/whole_suite.sh for the plain whole suite, fast_tests.sh, sanitizer_tests.sh, coverage_tests.sh). All of them take the machine-wide whole-suite lock and exit 124 when their stall watchdog stops a run; fast_tests.sh, sanitizer_tests.sh and coverage_tests.sh also give every test XCTest's time allowance, and a test over it fails the run (exit 65); whole_suite.sh cannot pass the allowance, and its watchdog is run_tests.expect's own (300 seconds with no output; it writes tmp/test-stall-<time>.txt). Never run sanitizer_tests.sh thread with --parallel. Such a script prints its pid first; when you run it in the background, wait for it only with a foreground command that returns when it ends or a bound passes, \`python3 tools/swift_migration/suite_guard.py wait --pid PID --seconds 540\` (exit 0: it ended; 3: still running) with a Bash timeout of 600000 ms, and after each return compare the time with the clean stop below before waiting again; do not end your turn to wait for a background job's notification, since an idle session gets no turn until something arrives. At $CLEAN_STOP the line \"$NUDGE_TEXT\" is typed into this session; when you see it, do what it says. You must have stopped cleanly, following \"Stopping cleanly\" in docs/swift-migration/workflow.md section 4, by $CLEAN_STOP local time: start nothing new after that, let running subagents finish, commit what passed the loop and the gate, save other work as a patch recorded in claims.md, restore the tree, and write the night's report to $REPORT. Then type nothing more: the session is ended for you. At $HARD the hard limit kills the session and everything it started, finished or not. This run's logs are in $RUN_DIR."
 fi
 printf '%s' "$PROMPT" > "$RUN_DIR/prompt.txt"
 
@@ -1366,6 +1387,7 @@ CMD=("$PYTHON" -B "$SCRIPT_DIR/deadline_run.py"
      --interrupt-wait "$INTERRUPT_WAIT"
      --blocked-pattern "$BLOCKED_PATTERN" --blocked-seconds 120
      --stall-seconds "$STALL_SECONDS" --transcript "$TRANSCRIPT"
+     --clean-stop-margin "$CLEAN_STOP_MARGIN" --nudge-text "$NUDGE_TEXT"
      --
      "${TMUX_COMMAND[@]}")
 

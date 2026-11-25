@@ -108,8 +108,9 @@ SCENARIOS = [
 # - memory_peak_physical (XCTest, 0.1% spread): the usable memory gate.
 # - process_peak_footprint: one sample per run, so always inconclusive.
 # - footprint_growth and memory_physical (about 150 to 200% spread): no signal.
-# - live_malloc_blocks (17% spread): would always be inconclusive, so the
-#   allocation count is not effectively compared today.
+# - live_malloc_blocks (17% spread): was always inconclusive under the
+#   noise rule of the time, and would flag at random under the flat 5% of
+#   2026-11-23, so the allocation count is not effectively compared today.
 # - live_malloc_bytes (0.0% spread, but a net change over a sample): a uniform
 #   regression in what each screen allocates would be largely cancelled by the
 #   previous sample's screen giving back the same amount.
@@ -123,6 +124,33 @@ INFORMATIONAL_METRICS = {
     ('memory.scrollback_fill_20k', 'memory_physical'),
     ('memory.scrollback_fill_20k', 'live_malloc_blocks'),
     ('memory.scrollback_fill_20k', 'live_malloc_bytes'),
+}
+
+
+# Metrics that are recorded and shown but not compared, because they give
+# very different results on identical code and under the flat 5% rule would
+# raise a false suspicion on most runs. perf_compare.py reports each as
+# "not compared (unsteady)" with its numbers, in both modes, and names them
+# in a warning, so that "not compared" is never read as "fine". Unlike
+# INFORMATIONAL_METRICS this is decided when comparing, not written into
+# result files, so files already written, the committed baseline among
+# them, follow the list as it stands. Each entry is the migration's
+# decision, open to the owner (performance.md section 3): add one only with
+# the evidence in its reason, and remove it when the cause is found and
+# fixed. A metric not listed here is compared.
+UNSTEADY_METRICS = {
+    ('app.stress_normal_10tabs', 'iterations_per_sec'): {
+        'since': '2026-11-23',
+        'reason': 'runs at two levels on identical code: 2056, 953, 2340, 959 and 953 iterations per second '
+                  'in the baseline of 2026-11-22, 924 to 1006 in a repeat; cause unknown'},
+    ('app.stress_normal_1tab', 'iterations_per_sec'): {
+        'since': '2026-11-23',
+        'reason': 'ranges by half again on identical code: 1890, 1119, 1323, 1059 and 1084 iterations per '
+                  'second in the baseline of 2026-11-22, 1212 to 2488 in a repeat; cause unknown'},
+    ('app.stress_clearcodes_1tab', 'iterations_per_sec'): {
+        'since': '2026-11-23',
+        'reason': 'ranges by half again on identical code: 870, 752, 1177, 764 and 851 iterations per second '
+                  'in the baseline of 2026-11-22, 734 to 785 in a repeat; cause unknown'},
 }
 
 
@@ -582,8 +610,8 @@ def redact_path(path, checkout):
 # usually the closest to what the code itself costs; the app rates have
 # fast outliers too, and a busy machine slows the fastest run as well
 # (performance.md section 3, "Read with care"). Everything else (memory in
-# kB, counts, and any unit not listed) keeps the median, a proposal the
-# owner has not confirmed.
+# kB, counts, and any unit not listed) keeps the median: the owner,
+# 2026-11-23, "That's fine".
 BEST_SAMPLE_UNITS = frozenset({'s', 'ms', 'us', 'ns', 'iterations/s'})
 
 

@@ -304,7 +304,10 @@ this list.
   runs the whole suite once on each port before committing it (pilot 2).
   The thread sanitizer run and the x86_64 build are deferred: the
   orchestrator runs them at the end of the session over the ports that
-  landed. A failure there is fixed by a new commit or undone with
+  landed. Whole suites, sanitized or not, run one after another, each
+  under the whole-suite lock, each with the stall watchdog
+  ([orchestration.md §3](orchestration.md)), the thread sanitizer
+  serially. A failure there is fixed by a new commit or undone with
   `git revert`, never a reset or a rewrite, since the port may already be
   pushed; the night's report lists any port they have not yet covered.
 - Mutation to prove each test can fail covers the behaviors the dossier

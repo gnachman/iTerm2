@@ -17,14 +17,23 @@ nice -n 15,
 
   xcodebuild test -project iTerm2.xcodeproj -scheme ModernTests
       -only-testing:TEST ... -parallel-testing-enabled NO
+      -test-timeouts-enabled YES -default-test-execution-time-allowance 120
+      -maximum-test-execution-time-allowance 120
       CODE_SIGN_IDENTITY= CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 
-(with -jobs N after -scheme when given --jobs N) from the repository root,
+(with -jobs N after -scheme when given --jobs N; the allowance, XCTest's
+per-test time limit, from --test-allowance-seconds and
+--max-test-allowance-seconds, 0 for none) from the repository root,
 the same test command tools/run_tests.expect runs (address sanitizer and
-all, as the ModernTests test plan has it). TEST is an
+all, as the ModernTests test plan has it) plus the allowance. TEST is an
 -only-testing name such as ModernTests/TokenBudgetTests. With no TEST the
 whole suite runs: do that only when nothing else is using the machine (at
-night), never while the owner works. With `-- COMMAND ...` that command runs
+night), never while the owner works. A whole-suite run (no TEST and no
+COMMAND) holds the machine-wide whole-suite lock of suite_guard.py while it
+runs, waiting for it unless --no-wait (then status 75 when it is held):
+one whole suite at a time on the machine (docs/swift-migration/
+orchestration.md section 3). With `-- COMMAND` no lock is taken here; a
+whole-suite script given as COMMAND takes it itself. With `-- COMMAND ...` that command runs
 instead, also under nice -n 15 (for example sanitizer_tests.sh plain
 --no-build TEST, or xcodebuild test-without-building -xctestrun FILE); it
 must run its tests serially, since attribution needs one test at a time, and
@@ -93,7 +102,8 @@ analyze RUN_DIR rebuilds profile.tsv and summary.txt from output.log and
 samples.jsonl, so a run can be re-read with other options.
 
 Stopping. Interrupting run (INT, TERM, HUP), a run longer than --timeout
-seconds, and no output for --stall-seconds seconds (default 600; 0 turns it
+seconds, and no output for --stall-seconds seconds (default 600, behind the
+per-test allowance; 0 turns it
 off) each kill the command's process group with SIGKILL, and then the test
 hosts seen during this run. Just before each signal the pid is checked
 again: its path and arguments must still make it a test host, and it must
@@ -617,12 +627,28 @@ class Sampler:
 
 # --- Running -----------------------------------------------------------------
 
-def default_command(tests, jobs=None):
+# XCTest's per-test time allowance for the default command (seconds; XCTest
+# rounds up to whole minutes), so that a hung test fails and its host is
+# replaced instead of the run waiting for ever (2026-11-24). No test that
+# passed took over 13.1 s in the night's sanitized runs (orchestration.md
+# section 3 has the evidence and the margins).
+DEFAULT_TEST_ALLOWANCE = 120
+
+
+def allowance_args(allowance, maximum=None):
+    if not allowance:
+        return []
+    return ['-test-timeouts-enabled', 'YES', '-default-test-execution-time-allowance', str(allowance),
+            '-maximum-test-execution-time-allowance', str(maximum or allowance)]
+
+
+def default_command(tests, jobs=None, allowance=DEFAULT_TEST_ALLOWANCE, maximum=None):
     cmd = ['xcodebuild', 'test', '-project', 'iTerm2.xcodeproj', '-scheme', 'ModernTests']
     if jobs:
         cmd += ['-jobs', str(jobs)]
     cmd += ['-only-testing:%s' % t for t in tests]
     cmd += ['-parallel-testing-enabled', 'NO']
+    cmd += allowance_args(allowance, maximum)
     if os.environ.get('SIGNED') != '1':
         cmd += ['CODE_SIGN_IDENTITY=', 'CODE_SIGNING_REQUIRED=NO', 'CODE_SIGNING_ALLOWED=NO']
     return cmd
@@ -774,10 +800,18 @@ def main(argv=None):
     r.add_argument('--timeout', type=int, default=0, help='kill the run after this many seconds (default none)')
     r.add_argument('--stall-seconds', type=int, default=600,
                    help='kill the run after this long with no output (default 600, 0 for never)')
+    r.add_argument('--test-allowance-seconds', type=int, default=DEFAULT_TEST_ALLOWANCE,
+                   help="default command: XCTest's per-test time allowance (default %d; 0 turns it off)"
+                        % DEFAULT_TEST_ALLOWANCE)
+    r.add_argument('--max-test-allowance-seconds', type=int,
+                   help='default command: the most a test may ask for (default: the allowance)')
     r.add_argument('--jobs', type=int,
                    help='xcodebuild -jobs for the build step of the default command (default: '
                         "xcodebuild's own, one per core)")
     r.add_argument('--top', type=int, default=25)
+    r.add_argument('--no-wait', action='store_true',
+                   help='whole suite: fail (status 75) instead of waiting when another whole-suite run '
+                        'holds the whole-suite lock')
     a = sub.add_parser('analyze', help='rebuild profile.tsv and summary.txt from a run directory')
     a.add_argument('run_dir')
     a.add_argument('--interval', type=float)
@@ -797,9 +831,13 @@ def main(argv=None):
         parser.error('--jobs applies to the default command only')
     if command is not None and not command:
         parser.error('-- must be followed by a command')
+    if (args.test_allowance_seconds and args.max_test_allowance_seconds is not None
+            and args.max_test_allowance_seconds < args.test_allowance_seconds):
+        parser.error('--max-test-allowance-seconds is below --test-allowance-seconds')
     if args.interval < 0.02:
         parser.error('--interval must be at least 0.02')
-    cmd = ['nice', '-n', '15'] + (command if command else default_command(args.tests, args.jobs))
+    cmd = ['nice', '-n', '15'] + (command if command else default_command(
+        args.tests, args.jobs, args.test_allowance_seconds, args.max_test_allowance_seconds))
     prefixes = args.host_prefix or [os.path.join(ROOT, 'Build'), os.path.join(ROOT, 'tmp', 'sanitizers')]
     out_dir = args.out or os.path.join(ROOT, 'tmp', 'test-load', time.strftime('%Y%m%d-%H%M%S'))
     os.makedirs(out_dir, exist_ok=True)
@@ -807,9 +845,21 @@ def main(argv=None):
         f.write(' '.join(cmd) + '\n')
     with open(os.path.join(out_dir, 'meta.json'), 'w') as f:
         json.dump({'interval': args.interval, 'prefixes': prefixes}, f)
+    # The default command with no TEST is the whole suite: it holds the
+    # machine-wide whole-suite lock (suite_guard.py) while it runs.
+    lock = None
+    if command is None and not args.tests:
+        import suite_guard
+        lock = suite_guard.SuiteLock()
+        if not lock.acquire('test_load_profile.py run (whole suite) in %s' % ROOT, cmd, wait=not args.no_wait):
+            return suite_guard.EXIT_LOCK_BUSY
     print('test_load_profile.py: running %s\n  output in %s' % (' '.join(cmd), out_dir), file=sys.stderr)
-    runner = Runner(args, Sampler(prefixes), out_dir)
-    status = runner.run(cmd)
+    try:
+        runner = Runner(args, Sampler(prefixes), out_dir)
+        status = runner.run(cmd)
+    finally:
+        if lock is not None:
+            lock.release()
     _, text = analyze(out_dir, args.interval, args.top)
     sys.stdout.write(text)
     print('test_load_profile.py: command exit status %s; profile in %s' % (status, out_dir), file=sys.stderr)

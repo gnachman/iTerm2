@@ -760,7 +760,10 @@ optional, with a hand-written Codable conformance that writes the same keys,
 in the same order, and the same empty archive for a missing color, and still
 requires all four on decoding, so nothing observable changed. Storing a
 missing color as an absent key and restoring it as unset is owner-queue.md
-Q28.
+Q28. (2026-11-24: the decoding was fixed upstream by the owner's commit
+“Keep a saved colors slot when one of its colors is missing”, with the
+stored form unchanged; bugs.md, “nil reaches non-optional Swift parameters
+from Objective-C”.)
 
 **Verification.** Before: `sanitizer_tests.sh nullability --recover
 --no-build` over 23 classes (280 tests, 0 failures) reported 15 of the 18

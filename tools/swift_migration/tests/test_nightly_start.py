@@ -181,22 +181,25 @@ time.sleep(600)
   /bin/sleep 602 &
   echo $! > "$STUB_DIR/plainchild"
 fi
+# The input line of Claude Code, modelled by fake_claude_tui.py (raw keys,
+# Ctrl-C clears the line, long text with Enter in one burst is a paste,
+# /exit submitted ends it); what it submits goes to $STUB_DIR/tui/lines.
+tui() {
+  mkdir -p "$STUB_DIR/tui"
+  "$STUB_PYTHON" -B "$STUB_FAKE_TUI" "$STUB_DIR/tui" "$@"
+}
 if [ -n "${STUB_HANG:-}" ]; then
-  while IFS= read -r line; do
-    case "$line" in *"/exit"*) echo exit > "$STUB_DIR/session_exit"; exit 0 ;; esac
-  done
+  tui
+  if [ -e "$STUB_DIR/tui/got_exit" ]; then echo exit > "$STUB_DIR/session_exit"; fi
+  exit 0
 fi
 if [ -n "${STUB_TRUST_DIALOG:-}" ]; then
-  echo "Quick safety check: Is this a project you created or one you trust?"
-  while IFS= read -r line; do
-    case "$line" in *"/exit"*) exit 0 ;; esac
-  done
+  tui "Quick safety check: Is this a project you created or one you trust?"
+  exit 0
 fi
 if [ -n "${STUB_DIALOG:-}" ]; then
-  echo "Some other startup question nobody will answer? (y/n)"
-  while IFS= read -r line; do
-    case "$line" in *"/exit"*) exit 0 ;; esac
-  done
+  tui "Some other startup question nobody will answer? (y/n)"
+  exit 0
 fi
 if [ -n "${STUB_TAMPER_CONFIG:-}" ]; then
   # Last, so that none of the stub's own git commands run it.
@@ -367,6 +370,7 @@ class NightlyBase(unittest.TestCase):
             'STUB_REMOTE': self.remote,
             'STUB_SAFE_ROOT': os.path.realpath(self.tmp),
             'STUB_PYTHON': sys.executable,
+            'STUB_FAKE_TUI': os.path.join(HERE, 'fake_claude_tui.py'),
             'ANTHROPIC_API_KEY': 'must-not-reach-claude',
             'GH_TOKEN': 'must-not-reach-claude',
             'GITHUB_TOKEN': 'must-not-reach-claude',
@@ -571,8 +575,10 @@ class NightlyStartTest(NightlyBase):
         removed = self.option_values(args, '--disallowedTools')
         for tool in ('mcp__*', 'RemoteTrigger', 'CronCreate', 'CronDelete',
                      'CronList', 'PushNotification', 'Workflow',
-                     'DesignSync', 'ScheduleWakeup'):
+                     'DesignSync', 'ScheduleWakeup', 'AskUserQuestion'):
             self.assertIn(tool, removed)
+        # Its dialog would take the nudge as an answer; nothing asks for it.
+        self.assertNotIn('AskUserQuestion', args[-1])
         # The orchestrator needs subagents and to message them.
         for tool in ('Task', 'Agent', 'SendMessage'):
             self.assertNotIn(tool, removed)
@@ -679,6 +685,45 @@ class NightlyStartTest(NightlyBase):
                       '2026-11-19 07:00:00 PST', proc.stdout)
         self.assertIn('Stopping cleanly', prompt)
         self.assertIn('kills the session and everything it started', prompt)
+
+    NUDGE = ('It is the clean stop time. Stop now as docs/swift-migration/workflow.md section 4 says: '
+             'start nothing new, stop or abandon background jobs that have not finished, commit what '
+             "passed, write the night's report, release lanes, then stop.")
+
+    def test_prompt_says_how_to_wait_and_names_the_nudge(self):
+        proc = self.run_script()
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        prompt = self.session_args()[-1]
+        self.assertIn('Never wait on a background job without a bound.', prompt)
+        self.assertIn('python3 tools/swift_migration/suite_guard.py wait --pid PID --seconds 540', prompt)
+        self.assertIn('Bash timeout of 600000 ms', prompt)
+        self.assertIn('do not end your turn to wait', prompt)
+        self.assertIn('whole_suite.sh', prompt)
+        self.assertIn('Never run sanitizer_tests.sh thread with --parallel', prompt)
+        self.assertIn('whole_suite.sh cannot pass the allowance', prompt)
+        self.assertIn('At 2026-11-19 06:15:00 PST the line "%s" is typed into this session' % self.NUDGE, prompt)
+        with open(os.path.join(self.night_dir_of(proc), 'command.txt')) as fh:
+            command = fh.read()
+        self.assertIn('--nudge-text', command)
+        self.assertIn('--clean-stop-margin 2700', command)
+        # The supervisor says when it will type it.
+        self.assertIn('the nudge is typed into the session once, at the clean stop', proc.stdout)
+
+    def test_the_session_is_nudged_once_at_the_clean_stop(self):
+        # A 150 second limit: the stop sequence (1 + 5 + 60 + 10 + 20 = 96
+        # seconds) starts at 54; a 140 second margin puts the clean stop,
+        # and the nudge, at 10. The session reads lines until /exit.
+        proc = self.run_script(STUB_HANG='1', NIGHTLY_MAX_SECONDS='150', NIGHTLY_GRACE_SECONDS='5',
+                               NIGHTLY_CLEAN_STOP_MARGIN='140')
+        self.assertEqual(proc.returncode, 5, proc.stdout)
+        # Submitted once, as a message of its own (not left in the input as
+        # a paste), and later /exit ended the session.
+        lines = self.read_stub(os.path.join('tui', 'lines')).splitlines()
+        self.assertEqual(lines, [self.NUDGE])
+        self.assertTrue(os.path.exists(self.stub_file('session_exit')), proc.stdout)
+        self.assertIn('nudge typed', proc.stdout)
+        self.assertIn('clearing the input line (Ctrl-C)', proc.stdout)
+        self.assertIn('typing /exit', proc.stdout)
 
     def test_git_state_logged_before_and_after(self):
         proc = self.run_script()

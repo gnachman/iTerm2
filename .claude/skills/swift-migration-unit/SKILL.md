@@ -115,7 +115,13 @@ Reviewers also get the tool outputs the kind requires (`orchestration.md`
 §5). VM checks need the owner to start vm1: queue that and work elsewhere.
 **Close** as `lifecycle.md` §1 step 8 and `orchestration.md` §3 step 10
 say (gate steps 7 and 8, the commit deleting the dossier, the claim
-removed).
+removed). Run the whole suites of step 7 one after another, each under the
+lock, each with the stall watchdog: `tools/swift_migration/whole_suite.sh`
+for the plain suite and `sanitizer_tests.sh <mode>` for each sanitizer
+(the thread mode without `--parallel`), never two at once
+(`orchestration.md` §3). Wait for one in the background only with
+`suite_guard.py wait --pid PID --seconds 540` in the foreground, never by
+ending the turn.
 
 ## 4. Stop conditions
 
@@ -130,7 +136,8 @@ removed).
 
 ## 5. End of session
 
-Run the thread sanitizer suite and the x86_64 build over the light ports
+Run the thread sanitizer suite (serially, under the lock, with the stall
+watchdog) and the x86_64 build over the light ports
 that landed (`lifecycle.md` §3); fix a failure by a new commit or
 `git revert`, never a reset; list uncovered ports in the report. Put changes that belong to no unit into the session's one document commit,
 with no trailer, amended while unpushed (`README.md` §5, "Where commits

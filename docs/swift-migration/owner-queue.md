@@ -189,6 +189,76 @@ Things only the owner can do, noted on 2026-11-20 at his request.
 
 ## Needs a decision
 
+### Q31. An old race in the fast preference accessors (2026-11-24)
+
+- **Added:** 2026-11-24, by the orchestrator, from the serial thread
+  sanitizer suite that closed `iTermApplication+Scripting`.
+- **What:** the thread sanitizer reported a race on `bidiEnabled`'s cache in
+  `+[iTermPreferences(FastAccessors) boolWithCache:]`. A background thread
+  reads the cached value with no lock while the main thread updates it under
+  one. The int and double accessors are written the same way. The code's own
+  comment says this is deliberate (“a scalar load is atomic enough”), and in
+  practice it can only mean one stale read of a setting. It is still
+  undefined behavior by the language's rules, and it fails the serial thread
+  suite whenever the sanitizer happens to see it. It is not from a port.
+  bugs.md has the details.
+- **Needed:** choose one. (1) A small app fix that makes the read and the
+  write atomic: the same machine instructions, no behavior change, no cost.
+  (2) Accept it in the thread baseline as benign, which thread-baseline.md
+  already allows for a race that exists unchanged in the Objective-C.
+- **Recommended:** (1), because it removes the report for good, where (2)
+  hides it and any real race that later looks like it.
+- **Meanwhile:** neither is done. A thread suite that fails only on this
+  report is read as passing for the unit being closed, and says so.
+
+### Q30. Test hosts run with window animations off (2026-11-24)
+
+- **Added:** 2026-11-24, by the orchestrator.
+- **What:** the test plans now launch every test host with
+  `-NSAutomaticWindowAnimationsEnabled NO`. Stall reports taken with the
+  screen locked showed test hosts with 80 threads parked in AppKit's window
+  open and close animation, which is the dispatch pool's limit; after that
+  background work stops in the host and tests that wait with no deadline
+  hang. test-speed.md section 4 has the account.
+- **Needed, when convenient:** your confirmation of two things the
+  migration wrote into test-speed.md section 4 on its own: the rule “tests
+  must not depend on display frames arriving”, and one exception to the rule
+  against real-time waits in migration tests:
+  `TestHostWindowAnimationTests.testOpeningAndClosingWindowsStartsNoBlockingAnimation`
+  runs the run loop for up to 0.15 seconds twice, because AppKit starts the
+  animation only when the run loop runs. It passes regardless of timing; only
+  its failing direction could be missed on a very slow machine.
+- **Also for you, no hurry:** bugs.md records three questions about the app
+  itself that this raised: the sandboxed image decoder's synchronous call
+  and the command runner's blocking run both wait forever for a callback,
+  and the app may park one thread for each window opened or closed while
+  the screen is locked.
+- **Meanwhile:** both are in force as proposed.
+
+### Q29. The new tab bar window tests fail in the whole suite (2026-11-24)
+
+- **Added:** 2026-11-24, by the one-unit night.
+- **What:** `TabBarSearchWindowTests` (66 of 90) and
+  `TabBarOrderWindowTests` (33 of 36) failed in the night's whole-suite
+  run, on a tree whose only change from `4cb83604f` was Python. Run alone,
+  the last nine `TabBarSearchWindowTests` in alphabetical order time out in
+  their 5-second “titles shown” wait. They arrived with the tab bar commits
+  of the evening of 2026-11-23. bugs.md has the details.
+- **Needed:** your word on whether another agent should fix them (they look
+  like something accumulating in the test host, which the test-speed rules
+  call a defect), and until then, confirmation that the gate may judge a
+  commit by the failures it adds to these.
+- **Meanwhile:** the night's gate runs treated them as failures already in
+  the tree (orchestration.md section 1, step 4.6) and committed only what
+  added no failure. Not disabled: they fail consistently, so they are not
+  flaky by test-speed.md section 3.
+- **Update, 2026-11-24, by day:** the cause appears to be the locked screen,
+  not the tests: the same tree passed 36 of 36 and 90 of 90 by day with the
+  screen unlocked, and the night's hosts were at the limit of 80 threads
+  parked in AppKit's window animation (Q30). With animations off in test
+  hosts these should pass at night too; the next locked run will show. No
+  answer is needed unless they still fail.
+
 ### Q28. Nullability baseline entries that stay after the triage of 2026-11-23
 
 - **Added:** 2026-11-23, by units `nullability-baseline-annotate` and
@@ -260,6 +330,14 @@ Things only the owner can do, noted on 2026-11-20 at his request.
      survives. Versions before the change would still fail to read such a
      slot, exactly as they fail on today's. This changes a stored format and
      needs your word.
+     **Answered 2026-11-23:** “SUre, probably rare but better to do it
+     properly”. Then, 2026-11-24: your own commit “Keep a saved colors slot
+     when one of its colors is missing” fixed the decoding upstream with the
+     stored form unchanged, and you called the migration's version of the
+     fix redundant (“you may find that [it] is redundant and will have
+     conflicts”), so it was dropped before being pushed. What yours does not
+     do, and the dropped one did: popping a slot that lacks a color still
+     leaves that color as it is. Nothing is pending unless you want that.
 
 ### Q27. The fast tier's budget no longer fits its worker count (2026-11-23)
 - **Added:** 2026-11-23, by day, with unit `suite-script-options`.
@@ -481,27 +559,39 @@ except where an item says it waits.
    windowed paths. Otherwise run the harness by hand against a sanitized
    build with every other iTerm2 quit
    ([integer-findings.md](integer-findings.md), Limits).
-3. **The performance regression rule.** ANSWERED 2026-11-22. Time and
-   rate metrics are estimated by the best sample (“Given the variance you
-   should take the fastest time, since that's our best estimate.”;
-   decisions.md). Asked next whether to keep the flat 5% for every
-   scenario or to use 5% or the scenario's own run-to-run variation,
-   whichever is larger, counting a flagged regression only if it shows
-   up again when both versions are run back to back on the same machine,
-   the owner answered: “per-scenario variation plus a back-to-back
-   confirmation” (decisions.md). Implemented in `perf_compare.py`
-   ([performance.md §3](performance.md), **Comparison** and **Confirming
-   a suspected regression**): one comparison gives at most a suspected
-   regression, and `--confirm` decides. How a scenario's variation is
-   measured is our choice (for a best-of metric, how far the reference's
-   worst sample but one lies from its best). The benefit: false
-   suspicions on identical code fell from 10 to 5 on time and rate
-   metrics. The cost: against the committed baseline the thresholds are
-   5% to 10.2% in process and 6.7% to 59.3% for the app rates, three of
-   which need a drop of 35% to 59% before anything is flagged (item 19).
-   Still proposals: the median for memory and counts, with its noise
-   rule; the five-sample floor; and that spread never makes a best-of row
-   inconclusive (item 19). What was asked, as it was:
+3. **The performance regression rule.** ANSWERED 2026-11-22, and
+   simplified by the owner on 2026-11-23. Time and rate metrics are
+   estimated by the best sample (“Given the variance you should take the
+   fastest time, since that's our best estimate.”; decisions.md). Asked
+   next whether to keep the flat 5% for every scenario or to use 5% or the
+   scenario's own run-to-run variation, whichever is larger, counting a
+   flagged regression only if it shows up again when both versions are
+   run back to back on the same machine, the owner answered:
+   “per-scenario variation plus a back-to-back confirmation”
+   (decisions.md). On 2026-11-23, asked about the variation measure (“the
+   gap between a scenario's best run and its worst, ignoring the single
+   worst”), he asked “Do we have to measure variation?”. Told that it was
+   there only to reduce false alarms, that the back-to-back confirmation
+   does the real work, and offered the simpler rule “Compare best time
+   against best time; more than 5% slower means check it and triggers a
+   back-to-back run; only a slowdown that survives the back-to-back run
+   counts” at the cost of more “check it” results (10 false suspicions
+   against 5 on the result files of identical code), he answered “Sure
+   simplicity is good”. On memory and count metrics judged by the median:
+   “That's fine”. On fewer than five samples meaning can't tell: “Sure”.
+   On a timing never being “can't tell” because its runs vary: “Just pick
+   the best value for timing”. So the variation half of the rule of
+   2026-11-22 is superseded; the back-to-back confirmation stays.
+   Implemented in `perf_compare.py` ([performance.md §3](performance.md),
+   **Comparison**, **Metrics not compared** and **Confirming a suspected
+   regression**): a flat 5% for every compared metric, the median for
+   memory and counts with no noise rule, fewer than five samples
+   inconclusive; one comparison gives at most a suspected regression, and
+   `--confirm` decides (pooled against pooled with the same 5%, and worse
+   in every candidate run than in every base run). The “10 against 5”
+   counted the three unsteady app rates; with them not compared (item 18)
+   the flat 5% gives 8 false suspicions on those files. Nothing is left to
+   decide in this item. What was asked on 2026-11-20, as it was:
    [performance.md §1](performance.md) said "beyond noise" without
    defining it. Proposed, not confirmed, and implemented in
    `perf_compare.py` ([performance.md §3](performance.md), **Comparison**):
@@ -659,13 +749,23 @@ except where an item says it waits.
     `.claude/skills/swift-migration-unit/SKILL.md` exists only in this
     checkout. Allowing it takes `!/.claude/skills/`.
 18. **The baseline is taken; three app rates in it are not steady** (added
-    2026-11-22; ANSWERED 2026-11-22 with item 3: the threshold is the
-    larger of 5% and the scenario's variation, which for these three rates
-    is 59.3%, 42.6% and 35.1% against this baseline, so a clean candidate
-    at the slow level reads no change, and a flagged regression counts only
-    when a back-to-back run confirms it. The cost is that on these rates
-    a real regression smaller than 35% to 59% is not flagged at all
-    (item 19); what follows is as it was asked). The numbers are in [performance.md §3](performance.md).
+    2026-11-22; ANSWERED 2026-11-22 with item 3, by a threshold of the
+    larger of 5% and the scenario's variation, 59.3%, 42.6% and 35.1% for
+    these three; that answer was superseded on 2026-11-23 when the owner
+    chose a flat 5% (item 3). Under a flat 5% these rates would raise a
+    false suspicion on most runs, so the orchestrator decided, recorded in
+    decisions.md for you to overrule (you were asked and did not take the
+    question up), that the iteration rates of `app.stress_normal_10tabs`,
+    `app.stress_normal_1tab` and `app.stress_clearcodes_1tab` are still
+    measured and recorded but left out of the pass or fail comparison
+    until the reason for their two levels is found. They are listed with
+    their evidence in `UNSTEADY_METRICS` in `perf_lib.py`, and
+    `perf_compare.py` shows them as `not compared (unsteady)` with their
+    numbers and a warning, in both modes, never as a pass. Their
+    resident sizes are still compared: the data does not set them apart
+    ([performance.md §3](performance.md), **Metrics not compared**). Say
+    if you want them compared, or the list changed; what follows is as it
+    was asked). The numbers are in [performance.md §3](performance.md).
     `app.stress_normal_10tabs` ran at two levels (about 950 and about 2,200
     iterations per second) within five runs, and `app.stress_normal_1tab`
     and `app.stress_clearcodes_1tab` ranged by half again. The cause is not
@@ -678,7 +778,20 @@ except where an item says it waits.
     2026-11-22 (“Put the baseline with other port-related files”): it is
     `tools/swift_migration/perf_baselines/baseline-2026-11-22.json`.
 19. **What the per-scenario threshold costs** (added 2026-11-22, after
-    item 3 was answered). The rule is yours; the measure of a scenario's
+    item 3 was answered; MOOT 2026-11-23: the owner replaced the
+    per-scenario threshold with a flat 5% (item 3), so there is no
+    variation measure left and the table of thresholds below no longer
+    applies. Of the proposals at its end, the median for memory and
+    counts, the five-sample floor and that spread never makes a timing
+    inconclusive were accepted (item 3); the 10% noise limit for medians
+    was dropped with the variation measure; discarding the first
+    in-process sample no longer matters, since a slow first sample does
+    not move the best. What the confirmation can and cannot see under the
+    simple rule is in [performance.md §3](performance.md); its chance of
+    confirming identical code is unchanged for timings, up to 1 in 6 with
+    two runs a side and 1 in 20 with three, and three a side is what the
+    procedure now asks for every scenario. What follows is as it was
+    asked.) The rule is yours; the measure of a scenario's
     variation is ours, and it decides what a comparison can catch. For a
     best-of metric it is how far the reference's worst sample but one
     lies from its best (the single worst is set aside so that one hiccup,
@@ -736,6 +849,28 @@ except where an item says it waits.
     would let the thresholds rest on steadier samples
     ([performance.md §3](performance.md), "Read with care" and
     **Comparison**).
+20. **How much may memory grow before it is suspected?** (added
+    2026-11-24.) Your simple rule of 2026-11-23 is a flat 5% (item 3).
+    Your words cover timings; applying the same flat 5% to memory and
+    counts, judged by the median, with no allowance for their noise, was
+    our reading of “Sure simplicity is good”, and that is what the code
+    does until you answer. It raises false alarms often. Drawing five runs
+    a side again and again from the committed baseline's own memory
+    figures (identical code, 20,000 tries), a flat 5% wrongly suspects
+    `app.stress_normal_10tabs` steady resident size 22% of the time, its
+    peak 14%, `app.stress_normal_1tab` steady 14% and peak 5%, and
+    `app.stress_htop_unthrottled_1tab` 12% each; every other memory
+    figure under 0.5%. About 58% of port measurements would get at least
+    one false memory suspicion, more when the machine differs between
+    sessions. Each one costs a back-to-back confirmation of the app
+    scenarios, three runs a side: six harness runs, each after a build,
+    with test windows coming to the front. Proposed instead: a flat 15%
+    for memory and counts (timings keep 5%). On the same draws it wrongly
+    suspects about 4% of measurements, all on `app.stress_normal_1tab`,
+    whose first run in the baseline used about 14% less memory than the
+    other four; a flat 10% would give about 11%. The cost of 15%: memory
+    growth under 15% in one comparison is never flagged. Choose: keep 5%,
+    15% for memory, or another figure.
 
 ### Q22. Questions raised on 2026-11-20 and answered the same day
 
