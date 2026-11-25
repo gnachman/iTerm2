@@ -261,6 +261,13 @@ const int kLayoutTabPositionRight = 3;
         inputs.contentViewHeight - outputs.decorationHeightBottom - outputs.decorationHeightTop
     );
 
+    if ([self leftToolbeltIsVisibleWithInputs:inputs]) {
+        // The left toolbelt takes the bottom of the left column; the tab bar keeps the rest.
+        const CGFloat toolbeltHeight = CGRectGetHeight([self leftToolbeltFrameWithInputs:inputs]);
+        outputs.tabBarFrame.origin.y += toolbeltHeight;
+        outputs.tabBarFrame.size.height -= toolbeltHeight;
+    }
+
     CGFloat widthAdjustment = 0;
     CGFloat xOffset = 0;
     if (inputs.tabBarFlashing) {
@@ -408,6 +415,34 @@ const int kLayoutTabPositionRight = 3;
 }
 
 #pragma mark - Toolbelt Frame
+
++ (BOOL)leftToolbeltIsVisibleWithInputs:(iTermLayoutInputs)inputs {
+    return (inputs.shouldShowLeftToolbelt &&
+            inputs.tabPosition == kLayoutTabPositionLeft &&
+            inputs.tabBarVisible &&
+            !inputs.tabBarOnLoan &&
+            !inputs.tabBarFlashing);
+}
+
++ (CGFloat)leftColumnHeightWithInputs:(iTermLayoutInputs)inputs {
+    // Same column as the left tab bar: below the notch and division view.
+    CGFloat columnTop = inputs.notchInset;
+    if (inputs.divisionViewVisible) {
+        columnTop += inputs.divisionViewHeight;
+    }
+    return MAX(0, inputs.contentViewHeight - columnTop);
+}
+
++ (CGRect)leftToolbeltFrameWithInputs:(iTermLayoutInputs)inputs {
+    if (![self leftToolbeltIsVisibleWithInputs:inputs]) {
+        return CGRectZero;
+    }
+    const CGFloat fraction = MIN(0.9, MAX(0.1, inputs.leftToolbeltFraction));
+    return CGRectMake(0,
+                      0,
+                      inputs.leftTabBarWidth,
+                      floor([self leftColumnHeightWithInputs:inputs] * fraction));
+}
 
 + (CGRect)toolbeltFrameWithInputs:(iTermLayoutInputs)inputs {
     if (!inputs.shouldShowToolbelt) {

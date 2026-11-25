@@ -137,6 +137,9 @@ typedef struct {
 @property(nonatomic, strong) SolidColorView *divisionView;
 @property(nonatomic, strong) iTermToolbeltView *toolbelt;
 @property(nonatomic, strong) iTermDragHandleView *verticalTabBarDragHandle;
+@property(nonatomic, strong, readwrite) iTermToolbeltView *leftToolbelt;
+// Horizontal handle between the left tab bar and the left toolbelt.
+@property(nonatomic, strong) iTermDragHandleView *leftToolbeltDragHandle;
 // How far the stoplight hotbox and everything that moves with it is slid left.
 // A single property drives all the views so a slide always starts from where
 // they are. (Animating layer-backed views' frames with their animators would
@@ -194,9 +197,18 @@ typedef struct {
 
 @end
 
+static NSString *const iTermLeftToolbeltFractionUserDefaultsKey = @"NoSyncLeftToolbeltFraction";
+
 @implementation iTermRootTerminalView {
     BOOL _tabViewFrameReduced;
     BOOL _haveShownToolbelt;
+    // Fraction of the left column's height given to the left toolbelt.
+    CGFloat _leftToolbeltFraction;
+    BOOL _lastRightToolbeltVisible;
+    BOOL _lastLeftToolbeltHasTools;
+    // Whether tabs were on the left at the last layout. When this changes, tools
+    // assigned to the left move between the two toolbelts.
+    BOOL _lastLeftToolbeltAvailable;
     iTermStoplightHotbox *_stoplightHotbox;
     // Shown in place of the hotbox's buttons when they would cover a toolbar
     // or status bar. It expands and collapses the hotbox.
@@ -343,6 +355,26 @@ typedef struct {
         [self setToolbeltProportions:[iTermToolbeltView savedProportions]];
         _toolbelt.autoresizingMask = (NSViewMinXMargin | NSViewHeightSizable);
         [self addSubview:_toolbelt];
+
+        NSNumber *savedFraction = [NSNumber castFrom:[[iTermUserDefaults userDefaults] objectForKey:iTermLeftToolbeltFractionUserDefaultsKey]];
+        _leftToolbeltFraction = savedFraction ? savedFraction.doubleValue : 0.5;
+        self.leftToolbelt = [[iTermToolbeltView alloc] initWithFrame:[self hiddenLeftToolbeltFrame]
+                                                            delegate:(id)_delegate
+                                                                side:iTermToolbeltSideLeft];
+        _leftToolbelt.autoresizingMask = (NSViewMaxXMargin | NSViewMaxYMargin);
+        _leftToolbelt.hidden = YES;
+        [self addSubview:_leftToolbelt];
+        _lastLeftToolbeltAvailable = [iTermToolbeltView leftToolbeltIsAvailable];
+        NSDictionary *leftProportions = [iTermToolbeltView savedProportionsForSide:iTermToolbeltSideLeft];
+        if (leftProportions) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self.leftToolbelt setProportions:leftProportions];
+            });
+        }
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(toolbeltToolSideDidChange:)
+                                                     name:iTermToolbeltToolSideDidChangeNotification
+                                                   object:nil];
         [self updateToolbeltForWindow:nil];
 
         _windowNumberLabel = [NSTextField newLabelStyledTextField];
@@ -835,7 +867,7 @@ typedef struct {
     // near the overflow boundary squeezes a cell under its minimum for that frame.
     // -constrainToolbeltWidth has not run yet either, so take the clamp it is about
     // to apply rather than the raw ivar: this is the value the layout inputs floor.
-    const CGFloat toolbeltWidth = ([self shouldShowToolbelt]
+    const CGFloat toolbeltWidth = ([self rightToolbeltIsVisible]
                                    ? floor([self maximumToolbeltWidthForViewWidth:NSWidth(self.frame)])
                                    : 0);
     const CGFloat stripWidth = NSWidth(self.frame) - toolbeltWidth;
@@ -967,7 +999,7 @@ typedef struct {
     // left-align it and make it as wide as the available space.
     // This mirrors what NSWindow's title does.
     const CGFloat mostGenerousInset = MAX(MAX(insets.left, insets.right), iTermRootTerminalViewWindowNumberLabelMargin);
-    const CGFloat containerWidth = NSWidth(self.frame) - ([self shouldShowToolbelt] ? NSWidth(_toolbelt.frame) : 0);
+    const CGFloat containerWidth = NSWidth(self.frame) - [self toolbeltWidthAtRightEdge];
     const NSSize fittingSize = textField.fittingSize;
     const CGFloat desiredWidth = fittingSize.width;
     CGFloat leftInset = mostGenerousInset;
@@ -1526,7 +1558,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
                                                  textColor:_windowTitleLabel.textColor
                                                       font:_windowTitleLabel.font
                                                      width:NSWidth(self.frame)
-                                             toolbeltWidth:[self shouldShowToolbelt] ? NSWidth(_toolbelt.frame) : 0.0
+                                             toolbeltWidth:[self toolbeltWidthAtRightEdge]
                                                     insets:[self.delegate tabBarInsets]
                                        tabBarControlOnLoan:_tabBarControlOnLoan
                                                  parseHTML:[iTermPreferences boolForKey:kPreferenceKeyHTMLTabTitles]
@@ -1726,9 +1758,82 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 
 - (void)updateToolbeltForWindow:(NSWindow *)thisWindow {
     _toolbelt.frame = [self toolbeltFrameInWindow:thisWindow];
-    _toolbelt.hidden = ![self shouldShowToolbelt];
+    _toolbelt.hidden = ![self rightToolbeltIsVisible];
     [_delegate repositionWidgets];
     [_toolbelt relayoutAllTools];
+    [_leftToolbelt relayoutAllTools];
+}
+
+- (void)toolbeltToolSideDidChange:(NSNotification *)notification {
+    [_toolbelt syncToolsWithConfiguration];
+    [_leftToolbelt syncToolsWithConfiguration];
+    _lastLeftToolbeltHasTools = !(_leftToolbelt.numberOfTools > 0);  // Force a relayout.
+    [self toolbeltToolsDidChange];
+}
+
+// Tabs moved to or from the left: left-assigned tools change toolbelts.
+- (void)syncToolbeltSidesIfTabPositionChanged {
+    const BOOL available = [iTermToolbeltView leftToolbeltIsAvailable];
+    if (available == _lastLeftToolbeltAvailable) {
+        return;
+    }
+    DLog(@"Left toolbelt availability changed to %@", @(available));
+    _lastLeftToolbeltAvailable = available;
+    [_toolbelt syncToolsWithConfiguration];
+    [_leftToolbelt syncToolsWithConfiguration];
+}
+
+- (void)toolbeltToolsDidChange {
+    const BOOL rightVisible = [self rightToolbeltIsVisible];
+    const BOOL leftHasTools = _leftToolbelt.numberOfTools > 0;
+    if (rightVisible == _lastRightToolbeltVisible && leftHasTools == _lastLeftToolbeltHasTools) {
+        return;
+    }
+    _lastRightToolbeltVisible = rightVisible;
+    _lastLeftToolbeltHasTools = leftHasTools;
+    [self updateToolbeltForWindow:_delegate.window];
+}
+
+// A hidden left toolbelt keeps a nonzero size so its tools never lay out at zero width.
+- (NSRect)hiddenLeftToolbeltFrame {
+    const CGFloat width = NSWidth(_leftToolbelt.frame) > 0 ? NSWidth(_leftToolbelt.frame) : MAX(_leftTabBarWidth, 150);
+    const CGFloat height = NSHeight(_leftToolbelt.frame) > 0 ? NSHeight(_leftToolbelt.frame) : MAX(NSHeight(self.bounds) / 2, 100);
+    return NSMakeRect(0, 0, width, height);
+}
+
+- (void)updateLeftToolbeltForWindow:(NSWindow *)thisWindow {
+    iTermLayoutInputs inputs = [self layoutInputsForWindow:thisWindow];
+    const BOOL visible = [iTermLayoutCalculator leftToolbeltIsVisibleWithInputs:inputs];
+    _leftToolbelt.hidden = !visible;
+    if (!visible) {
+        [self.leftToolbeltDragHandle removeFromSuperview];
+        self.leftToolbeltDragHandle = nil;
+        return;
+    }
+    const NSRect frame = [iTermLayoutCalculator leftToolbeltFrameWithInputs:inputs];
+    DLog(@"Set left toolbelt frame to %@", NSStringFromRect(frame));
+    if (!NSEqualRects(_leftToolbelt.frame, frame)) {
+        _leftToolbelt.frame = frame;
+        [_leftToolbelt relayoutAllTools];
+    }
+
+    // A thin handle straddling the boundary between the tabs and the left toolbelt.
+    const CGFloat handleHeight = 6;
+    const NSRect handleFrame = NSMakeRect(NSMinX(frame),
+                                          NSMaxY(frame) - handleHeight / 2,
+                                          NSWidth(frame) - 3,  // Leave room for the tab bar's width handle.
+                                          handleHeight);
+    if (!self.leftToolbeltDragHandle) {
+        self.leftToolbeltDragHandle = [[iTermDragHandleView alloc] initWithFrame:handleFrame];
+        self.leftToolbeltDragHandle.isVertical = YES;
+        self.leftToolbeltDragHandle.delegate = self;
+        self.leftToolbeltDragHandle.autoresizingMask = (NSViewMaxXMargin | NSViewMaxYMargin);
+    } else {
+        self.leftToolbeltDragHandle.frame = handleFrame;
+    }
+    // Keep it above the tab bar and the toolbelt so it gets the mouse.
+    [self addSubview:self.leftToolbeltDragHandle positioned:NSWindowAbove relativeTo:nil];
+    [self.window invalidateCursorRectsForView:self.leftToolbeltDragHandle];
 }
 
 - (void)constrainToolbeltWidth {
@@ -1755,7 +1860,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 }
 
 - (NSRect)toolbeltFrameInWindow:(NSWindow *)thisWindow {
-    if (![self shouldShowToolbelt]) {
+    if (![self rightToolbeltIsVisible]) {
         return [self hiddenToolbeltFrame];
     }
     // Use calculator for toolbelt frame calculation
@@ -1772,19 +1877,41 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
         _haveShownToolbelt = YES;
     }
     _shouldShowToolbelt = shouldShowToolbelt;
-    _toolbelt.hidden = !shouldShowToolbelt;
+    _toolbelt.hidden = ![self rightToolbeltIsVisible];
+    if (!shouldShowToolbelt) {
+        _leftToolbelt.hidden = YES;
+    }
+}
+
+- (BOOL)rightToolbeltIsVisible {
+    if (!_shouldShowToolbelt) {
+        // Don't compute layout inputs here: this runs during init, before the delegate is ready.
+        return NO;
+    }
+    return [self layoutInputsForWindow:_delegate.window].shouldShowToolbelt;
+}
+
+// Width the right toolbelt takes from the right edge of the window.
+- (CGFloat)toolbeltWidthAtRightEdge {
+    if (![self rightToolbeltIsVisible]) {
+        return 0;
+    }
+    return NSWidth(_toolbelt.frame);
 }
 
 - (void)updateToolbeltFrameForWindow:(NSWindow *)thisWindow {
     const NSRect toolbeltFrame = [self toolbeltFrameInWindow:thisWindow];
     DLog(@"Set toolbelt frame to %@", NSStringFromRect(toolbeltFrame));
     [self constrainToolbeltWidth];
+    _toolbelt.hidden = ![self rightToolbeltIsVisible];
     [self.toolbelt setFrame:toolbeltFrame];
 }
 
 - (void)shutdown {
     [_toolbelt shutdown];
     _toolbelt = nil;
+    [_leftToolbelt shutdown];
+    _leftToolbelt = nil;
     _delegate = nil;
 }
 
@@ -1926,7 +2053,8 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 
     // Toolbelt
     inputs.toolbeltWidth = floor(self.toolbeltWidth);
-    inputs.shouldShowToolbelt = self.shouldShowToolbelt;
+    // Filled in at the end, once the tab bar state the left toolbelt depends on is known.
+    inputs.shouldShowToolbelt = NO;
 
     // Status bar
     iTermStatusBarViewController *statusBarViewController = [_delegate rootTerminalViewSharedStatusBarViewController];
@@ -1961,6 +2089,15 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     // Title in tab bar
     inputs.drawWindowTitleInPlaceOfTabBar = [self.delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar];
     inputs.windowTitleInPlaceOfTabBarHeight = [self.delegate rootTerminalViewHeightOfWindowTitleInPlaceOfTabBar:self];
+
+    // Toolbelts. The left one shows only below a visible left tab bar. The right
+    // one shows if it has tools, or if the left one can't show (so the left
+    // side's tools, or the “no tools” message, still have somewhere to be).
+    inputs.shouldShowLeftToolbelt = (self.shouldShowToolbelt && _leftToolbelt.numberOfTools > 0);
+    inputs.leftToolbeltFraction = _leftToolbeltFraction;
+    const BOOL leftVisible = [iTermLayoutCalculator leftToolbeltIsVisibleWithInputs:inputs];
+    inputs.shouldShowToolbelt = (self.shouldShowToolbelt &&
+                                 (_toolbelt.numberOfTools > 0 || !leftVisible));
 
     return inputs;
 }
@@ -2151,7 +2288,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     NSRect leftTabBarDragHandleFrame = NSMakeRect(NSMaxX(tabBarFrame) - dragHandleWidth,
                                                   0,
                                                   dragHandleWidth,
-                                                  NSHeight(tabBarFrame));
+                                                  NSMaxY(tabBarFrame));
     if (!self.verticalTabBarDragHandle) {
         self.verticalTabBarDragHandle = [[iTermDragHandleView alloc] initWithFrame:leftTabBarDragHandleFrame];
         self.verticalTabBarDragHandle.delegate = self;
@@ -2323,6 +2460,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     // Everything the window name's width depends on -- our frame, the toolbelt,
     // the tab bar's settings -- may have moved since the last pass.
     [self invalidateWindowNameBesideTabsTextWidth];
+    [self syncToolbeltSidesIfTabPositionChanged];
 
     const BOOL showToolbeltInline = self.shouldShowToolbelt;
     NSWindow *thisWindow = _delegate.window;
@@ -2369,6 +2507,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     if (showToolbeltInline) {
         [self updateToolbeltFrameForWindow:thisWindow];
     }
+    [self updateLeftToolbeltForWindow:thisWindow];
 
     DLog(@"repositionWidgets - redraw view");
     // Note: this used to call setNeedsDisplay on each session in the current tab.
@@ -2679,6 +2818,9 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 
 // For the left-side or right-side tab bar.
 - (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)delta {
+    if (dragHandle == self.leftToolbeltDragHandle) {
+        return [self moveLeftToolbeltDividerBy:delta];
+    }
     CGFloat originalValue = _leftTabBarPreferredWidth;
     const BOOL isRight = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_RightTab);
     const CGFloat signedDelta = isRight ? -delta : delta;
@@ -2694,7 +2836,25 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 }
 
 - (void)dragHandleViewDidFinishMoving:(iTermDragHandleView *)dragHandle {
+    if (dragHandle == self.leftToolbeltDragHandle) {
+        [[iTermUserDefaults userDefaults] setDouble:_leftToolbeltFraction
+                                             forKey:iTermLeftToolbeltFractionUserDefaultsKey];
+        return;
+    }
     [_delegate rootTerminalViewDidResizeContentArea];
+}
+
+// Positive delta means the mouse moved up, which makes the left toolbelt taller.
+- (CGFloat)moveLeftToolbeltDividerBy:(CGFloat)delta {
+    const CGFloat columnHeight = [iTermLayoutCalculator leftColumnHeightWithInputs:[self layoutInputsForWindow:_delegate.window]];
+    if (columnHeight <= 0) {
+        return 0;
+    }
+    const CGFloat before = floor(columnHeight * _leftToolbeltFraction);
+    _leftToolbeltFraction = MIN(0.9, MAX(0.1, (before + delta) / columnHeight));
+    [self layoutSubviews];
+    const CGFloat after = floor(columnHeight * _leftToolbeltFraction);
+    return after - before;
 }
 
 #pragma mark - iTermStoplightHotboxDelegate

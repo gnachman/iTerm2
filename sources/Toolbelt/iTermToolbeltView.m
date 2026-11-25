@@ -60,6 +60,10 @@ NSString *const kDynamicToolsDidChange = @"kDynamicToolsDidChange";
 NSString *const iTermToolbeltDidRegisterDynamicToolNotification = @"iTermToolbeltDidRegisterDynamicToolNotification";
 
 static NSString *const iTermToolbeltProportionsUserDefaultsKey = @"NoSyncToolbeltProportions";
+static NSString *const iTermLeftToolbeltProportionsUserDefaultsKey = @"NoSyncLeftToolbeltProportions";
+// Names of the tools that live in the left toolbelt. All others are on the right.
+static NSString *const iTermToolbeltLeftToolsUserDefaultsKey = @"ToolbeltLeftTools";
+NSString *const iTermToolbeltToolSideDidChangeNotification = @"iTermToolbeltToolSideDidChangeNotification";
 
 @interface iTermToolbeltVibrantVisualEffectView : NSVisualEffectView
 @end
@@ -80,6 +84,7 @@ static NSString *const iTermToolbeltProportionsUserDefaultsKey = @"NoSyncToolbel
     iTermHamburgerButton *_menuButton;
     BOOL _inSplitViewDidResizeSubviews;
     NSTextField *_noToolsMessage;
+    iTermToolbeltSide _side;
 }
 
 static NSMutableDictionary<NSString *, Class> *gRegisteredTools;
@@ -282,6 +287,45 @@ static NSString *const kDynamicToolURL = @"URL";
     return [[iTermToolbeltView availableConfiguredToolsForProfileType:profileType] indexOfObject:name] != NSNotFound;
 }
 
++ (iTermToolbeltSide)sideForToolNamed:(NSString *)name {
+    NSArray *leftTools = [NSArray castFrom:[[iTermUserDefaults userDefaults] objectForKey:iTermToolbeltLeftToolsUserDefaultsKey]];
+    return [leftTools containsObject:name] ? iTermToolbeltSideLeft : iTermToolbeltSideRight;
+}
+
++ (BOOL)leftToolbeltIsAvailable {
+    // The left toolbelt shares the left tab bar's column, so it exists only with tabs on the left.
+    return [iTermPreferences intForKey:kPreferenceKeyTabPosition] == TAB_POSITION_LEFT;
+}
+
++ (iTermToolbeltSide)effectiveSideForToolNamed:(NSString *)name {
+    if (![self leftToolbeltIsAvailable]) {
+        // Without a left toolbelt, tools assigned to it fall back to the right one.
+        return iTermToolbeltSideRight;
+    }
+    return [self sideForToolNamed:name];
+}
+
++ (void)setSide:(iTermToolbeltSide)side forToolNamed:(NSString *)name {
+    if ([self sideForToolNamed:name] == side) {
+        return;
+    }
+    NSArray *existing = [NSArray castFrom:[[iTermUserDefaults userDefaults] objectForKey:iTermToolbeltLeftToolsUserDefaultsKey]] ?: @[];
+    NSMutableArray *leftTools = [existing mutableCopy];
+    [leftTools removeObject:name];
+    if (side == iTermToolbeltSideLeft) {
+        [leftTools addObject:name];
+    }
+    [[iTermUserDefaults userDefaults] setObject:leftTools forKey:iTermToolbeltLeftToolsUserDefaultsKey];
+    DLog(@"Tool %@ moved to side %@", name, @(side));
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermToolbeltToolSideDidChangeNotification
+                                                        object:name];
+}
+
++ (NSDictionary *)savedProportionsForSide:(iTermToolbeltSide)side {
+    NSString *key = (side == iTermToolbeltSideLeft) ? iTermLeftToolbeltProportionsUserDefaultsKey : iTermToolbeltProportionsUserDefaultsKey;
+    return [[iTermUserDefaults userDefaults] objectForKey:key];
+}
+
 #pragma mark - Private class methods
 
 + (NSArray *)defaultTools {
@@ -305,9 +349,16 @@ static NSString *const kDynamicToolURL = @"URL";
 #pragma mark - NSObject
 
 - (instancetype)initWithFrame:(NSRect)frame delegate:(id<iTermToolbeltViewDelegate>)delegate {
+    return [self initWithFrame:frame delegate:delegate side:iTermToolbeltSideRight];
+}
+
+- (instancetype)initWithFrame:(NSRect)frame
+                     delegate:(id<iTermToolbeltViewDelegate>)delegate
+                         side:(iTermToolbeltSide)side {
     self = [super initWithFrame:frame];
     if (self) {
         _delegate = delegate;
+        _side = side;
         _vev = [[iTermToolbeltVibrantVisualEffectView alloc] init];
         _vev.blendingMode = NSVisualEffectBlendingModeBehindWindow;
         _vev.material = NSVisualEffectMaterialSidebar;
@@ -347,20 +398,22 @@ static NSString *const kDynamicToolURL = @"URL";
 
         _tools = [[NSMutableDictionary alloc] init];
 
-        for (NSString *theName in items) {
-            if ([iTermToolbeltView shouldShowTool:theName profileType:profileType]) {
-                [self addToolWithName:theName];
-            }
+        for (NSString *theName in [self toolNamesForThisSide]) {
+            [self addToolWithName:theName];
         }
         _dragHandle = [[iTermDragHandleView alloc] initWithFrame:NSMakeRect(0, 0, 3, frame.size.height)];
         _dragHandle.delegate = self;
         _dragHandle.autoresizingMask = (NSViewHeightSizable | NSViewMaxXMargin);
+        // The left toolbelt's width follows the tab bar, which has its own drag handle.
+        _dragHandle.hidden = (side == iTermToolbeltSideLeft);
         [self addSubview:_dragHandle];
 
+        __weak __typeof(self) weakSelf = self;
         _menuButton = [[iTermHamburgerButton alloc] initWithMenuProvider:^NSMenu * _Nonnull {
             // Localization unneeded
             NSMenu *menu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
             [iTermToolbeltView addToolsToMenu:menu];
+            [weakSelf addMoveItemsToMenu:menu];
             return menu;
         }];
         [_menuButton setButtonType:NSButtonTypeMomentaryPushIn];
@@ -460,7 +513,7 @@ static NSString *const kDynamicToolURL = @"URL";
     iTermToolWrapper *wrapper = [_tools objectForKey:theName];
     if (wrapper) {
         [self removeToolWithName:theName];
-    } else {
+    } else if ([iTermToolbeltView effectiveSideForToolNamed:theName] == _side) {
         [self addToolWithName:theName];
     }
     [self forceSplitterSubviewsToRespectSizeConstraints];
@@ -640,20 +693,91 @@ static NSString *const kDynamicToolURL = @"URL";
 }
 
 - (void)updateForProfileType {
+    [self syncToolsWithConfiguration];
+}
+
+- (iTermToolbeltSide)side {
+    return _side;
+}
+
+- (NSInteger)numberOfTools {
+    return _tools.count;
+}
+
+// Configured tools that apply to this window's profile type and belong on this side, in order.
+- (NSArray<NSString *> *)toolNamesForThisSide {
+    return [[iTermToolbeltView availableConfiguredToolsForProfileType:self.profileType] filteredArrayUsingBlock:^BOOL(NSString *name) {
+        return [iTermToolbeltView effectiveSideForToolNamed:name] == self->_side;
+    }];
+}
+
+- (void)addMoveItemsToMenu:(NSMenu *)menu {
+    if (![iTermToolbeltView leftToolbeltIsAvailable]) {
+        return;
+    }
+    NSArray<NSString *> *names = [self toolNamesForThisSide];
+    if (names.count == 0) {
+        return;
+    }
+    [menu addItem:[NSMenuItem separatorItem]];
+    for (NSString *name in names) {
+        NSString *format = (_side == iTermToolbeltSideLeft)
+            ? NSLocalizedStringWithDefaultValue(@"Toolbelt.MoveToolToRight", nil, [NSBundle mainBundle], @"Move “%@” to the Right Side", @"Toolbelt menu item that moves a tool to the right toolbelt. %@ is the tool name.")
+            : NSLocalizedStringWithDefaultValue(@"Toolbelt.MoveToolToLeft", nil, [NSBundle mainBundle], @"Move “%@” Below the Tabs", @"Toolbelt menu item that moves a tool to the left toolbelt, below the left tab bar. %@ is the tool name.");
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:format, [iTermToolbeltView localizedToolNameForToolName:name]]
+                                                      action:@selector(moveToolToOtherSide:)
+                                               keyEquivalent:@""];
+        item.target = self;
+        item.representedObject = name;
+        [menu addItem:item];
+    }
+}
+
+#pragma mark - ToolWrapperDelegate (sides)
+
+- (BOOL)toolWrapperIsOnLeftSide {
+    return _side == iTermToolbeltSideLeft;
+}
+
+- (void)toolWrapperMoveToOtherSide:(iTermToolWrapper *)wrapper {
+    NSString *name = [wrapper.name copy];
+    const iTermToolbeltSide otherSide = (_side == iTermToolbeltSideLeft) ? iTermToolbeltSideRight : iTermToolbeltSideLeft;
+    // Defer: the move removes this wrapper, and its button is mid-action.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [iTermToolbeltView setSide:otherSide forToolNamed:name];
+    });
+}
+
+- (void)moveToolToOtherSide:(NSMenuItem *)sender {
+    NSString *name = [NSString castFrom:sender.representedObject];
+    if (!name) {
+        return;
+    }
+    const iTermToolbeltSide otherSide = (_side == iTermToolbeltSideLeft) ? iTermToolbeltSideRight : iTermToolbeltSideLeft;
+    [iTermToolbeltView setSide:otherSide forToolNamed:name];
+}
+
+- (void)syncToolsWithConfiguration {
     const ProfileType profileType = self.profileType;
+    NSArray<NSString *> *wanted = [self toolNamesForThisSide];
 
     NSArray<NSString *> *keysToRemove = [_tools.allKeys filteredArrayUsingBlock:^BOOL(NSString *key) {
         iTermToolWrapper *wrapper = _tools[key];
-        return (([[wrapper.tool class] supportedProfileTypes] & profileType) == 0);
+        return (([[wrapper.tool class] supportedProfileTypes] & profileType) == 0 ||
+                ![wanted containsObject:key]);
     }];
     for (NSString *key in keysToRemove) {
         [self removeToolWithName:key];
     }
-    [[iTermToolbeltView availableConfiguredToolsForProfileType:profileType] enumerateObjectsUsingBlock:^(NSString *key, NSUInteger idx, BOOL * _Nonnull stop) {
+    [wanted enumerateObjectsUsingBlock:^(NSString *key, NSUInteger idx, BOOL * _Nonnull stop) {
         if (_tools[key] == nil) {
             [self addToolWithName:key index:idx];
         }
     }];
+    // Move buttons show only when there is a left toolbelt, which may have just changed.
+    for (iTermToolWrapper *wrapper in _tools.allValues) {
+        [wrapper relayout];
+    }
 }
 
 - (void)relayoutAllTools {
@@ -847,7 +971,7 @@ static NSString *const kDynamicToolURL = @"URL";
 }
 
 - (NSDictionary *)proportions {
-    NSArray<NSString *> *names = [iTermToolbeltView availableConfiguredToolsForProfileType:self.profileType];
+    NSArray<NSString *> *names = [self toolNamesForThisSide];
     NSArray<NSNumber *> *heights = [names mapWithBlock:^id(NSString *name) {
         return @(_tools[name].frame.size.height);
     }];
@@ -875,7 +999,7 @@ static NSString *const kDynamicToolURL = @"URL";
         return;
     }
 
-    NSArray<NSString *> *names = [iTermToolbeltView availableConfiguredToolsForProfileType:self.profileType];
+    NSArray<NSString *> *names = [self toolNamesForThisSide];
     NSArray<NSNumber *> *currentHeights = [names mapWithBlock:^id(NSString *name) {
         return @(_tools[name].frame.size.height);
     }];
@@ -956,7 +1080,9 @@ draggingDidEndOfSplit:(int)clickedOnSplitterIndex
            pixels:(NSSize)changePx {
     _proportions = [self proportions];
     [[iTermUserDefaults userDefaults] setObject:_proportions
-                                              forKey:iTermToolbeltProportionsUserDefaultsKey];
+                                              forKey:(_side == iTermToolbeltSideLeft
+                                                      ? iTermLeftToolbeltProportionsUserDefaultsKey
+                                                      : iTermToolbeltProportionsUserDefaultsKey)];
 }
 
 - (void)splitView:(PTYSplitView *)splitView draggingWillBeginOfSplit:(int)splitterIndex {

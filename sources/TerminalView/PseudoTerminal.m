@@ -1415,6 +1415,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)showToolbeltNotFullScreen {
     BOOL didResizeWindow = NO;
+    if (![_contentView rightToolbeltIsVisible]) {
+        // All tools are in the left toolbelt, below the tabs, so the window needn't grow.
+        hidingToolbeltShouldResizeWindow_ = NO;
+        return NO;
+    }
     // Tweak the window's frame to avoid shrinking content, if possible.
     NSRect windowFrame = self.window.frame;
     windowFrame.size.width += _contentView.toolbeltWidth;
@@ -5209,6 +5214,7 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     [_contentView constrainToolbeltWidth];
     [_contentView setToolbeltProportions:arrangement[TERMINAL_ARRANGEMENT_TOOLBELT_PROPORTIONS]];
     [_contentView.toolbelt restoreFromState:arrangement[TERMINAL_ARRANGEMENT_TOOLBELT]];
+    [_contentView.leftToolbelt restoreFromState:arrangement[TERMINAL_ARRANGEMENT_TOOLBELT]];
 
     hidingToolbeltShouldResizeWindow_ = [arrangement[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] boolValue];
     hidingToolbeltShouldResizeWindowInitialized_ = YES;
@@ -5560,7 +5566,7 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
                                    useTransparency:useTransparency_
                                 shouldShowToolbelt:_contentView.shouldShowToolbelt
                                toolbeltProportions:_contentView.toolbelt.proportions
-                           toolbeltRestorableState:_contentView.toolbelt.restorableState
+                           toolbeltRestorableState:[self toolbeltRestorableState]
                          windowTitleOverrideFormat:self.scope.windowTitleOverrideFormat
                   hidingToolbeltShouldResizeWindow:hidingToolbeltShouldResizeWindow_
                                      anyFullScreen:[self anyFullScreen]
@@ -5801,13 +5807,28 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     return _contentView.toolbelt;
 }
 
+- (iTermToolbeltView *)leftToolbelt {
+    return _contentView.leftToolbelt;
+}
+
+// Tool state from both toolbelts. Keys are tool names, which are unique across sides.
+- (NSDictionary *)toolbeltRestorableState {
+    NSMutableDictionary *state = [NSMutableDictionary dictionary];
+    [state addEntriesFromDictionary:_contentView.toolbelt.restorableState ?: @{}];
+    [state addEntriesFromDictionary:_contentView.leftToolbelt.restorableState ?: @{}];
+    return state;
+}
+
 - (void)refreshTools {
     [_contentView.toolbelt refreshTools];
+    [_contentView.leftToolbelt refreshTools];
+    [_contentView toolbeltToolsDidChange];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSnippetsTagsDidChange object:nil];
 }
 
 - (void)refreshNamedMarks {
     [[_contentView.toolbelt namedMarksView] setNamedMarks:self.currentSession.namedMarks];
+    [[_contentView.leftToolbelt namedMarksView] setNamedMarks:self.currentSession.namedMarks];
 }
 
 - (int)numRunningSessions
@@ -7398,8 +7419,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                                       userInfo:nil];
     [self invalidateRestorableState];
 
-    // If the toolbelt changed size by autoresizing, keep things in sync.
-    _contentView.toolbeltWidth = _contentView.toolbelt.frame.size.width;
+    // If the toolbelt changed size by autoresizing, keep things in sync. When it
+    // is docked below the left tab bar its width is the tab bar's, not its own.
+    if ([_contentView rightToolbeltIsVisible]) {
+        _contentView.toolbeltWidth = _contentView.toolbelt.frame.size.width;
+    }
     [_contentView updateToolbeltProportionsIfNeeded];
     [self updateVariables];
     [_contentView windowDidResize];
@@ -12982,6 +13006,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)tabDidClearScrollbackBufferInSession:(PTYSession *)session {
     [[_contentView.toolbelt capturedOutputView] removeSelection];
     [[_contentView.toolbelt commandHistoryView] removeSelection];
+    [[_contentView.leftToolbelt capturedOutputView] removeSelection];
+    [[_contentView.leftToolbelt commandHistoryView] removeSelection];
     [self refreshTools];
 }
 
@@ -14698,6 +14724,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [self hideAutoCommandHistory];
     }
     [_contentView.toolbelt refreshTools];
+    [_contentView.leftToolbelt refreshTools];
+    [_contentView toolbeltToolsDidChange];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSnippetsTagsDidChange object:nil];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
@@ -14883,7 +14911,7 @@ typedef struct {
     result.frame = [[self window] frame];
     RLog(@"Original frame: %@ maxy=%@", NSStringFromRect(result.frame), @(NSMaxY(result.frame)));
 
-    if (_contentView.shouldShowToolbelt) {
+    if ([_contentView rightToolbeltIsVisible]) {
         winSize.width += floor(_contentView.toolbeltWidth);
     }
 
@@ -18304,6 +18332,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     [self reloadTabContentConfiguration];
     [self updateTouchBarIfNeeded:NO];
     [[_contentView.toolbelt snippetsView] currentSessionDidChange];
+    [[_contentView.leftToolbelt snippetsView] currentSessionDidChange];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSnippetsTagsDidChange object:nil];
 }
 
@@ -19353,6 +19382,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                 appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
             }
             _contentView.toolbelt.appearance = appearance;
+            _contentView.leftToolbelt.appearance = appearance;
             if (!self.useSeparateStatusbarsPerPane) {
                 self.contentView.statusBarViewController.view.appearance = appearance;
             }
@@ -19366,6 +19396,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         case TAB_STYLE_DARK_HIGH_CONTRAST:
         case TAB_STYLE_COMPACT:
             _contentView.toolbelt.appearance = nil;
+            _contentView.leftToolbelt.appearance = nil;
             if (!self.useSeparateStatusbarsPerPane) {
                 self.contentView.statusBarViewController.view.appearance = nil;
             }

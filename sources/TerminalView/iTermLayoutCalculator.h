@@ -29,6 +29,12 @@ typedef struct {
     CGFloat toolbeltWidth;
     BOOL shouldShowToolbelt;
 
+    /// The left toolbelt holds the tools assigned to the left side. It shares
+    /// the left column with the tab bar, below the tabs.
+    BOOL shouldShowLeftToolbelt;
+    /// Fraction (0.1-0.9) of the left column's height given to the left toolbelt.
+    CGFloat leftToolbeltFraction;
+
     /// Status bar
     CGFloat statusBarHeight;
     BOOL hasStatusBar;
@@ -101,6 +107,15 @@ typedef struct {
 
 /// Calculate the toolbelt frame.
 + (CGRect)toolbeltFrameWithInputs:(iTermLayoutInputs)inputs;
+
+/// Whether the left toolbelt is visible below the left tab bar.
++ (BOOL)leftToolbeltIsVisibleWithInputs:(iTermLayoutInputs)inputs;
+
+/// Frame of the left toolbelt, or CGRectZero when it is not visible.
++ (CGRect)leftToolbeltFrameWithInputs:(iTermLayoutInputs)inputs;
+
+/// Height of the column shared by the left tab bar and the left toolbelt.
++ (CGFloat)leftColumnHeightWithInputs:(iTermLayoutInputs)inputs;
 
 /// Calculate layout for hidden tab bar case.
 + (iTermLayoutOutputs)calculateLayoutWithHiddenTabBarInputs:(iTermLayoutInputs)inputs;

@@ -61,6 +61,12 @@ New Features:
   Right-click one of the selected tabs and choose
   Add Tabs to Group to put them all in a new or
   existing tab group.
+- With tabs on the left, Toolbelt tools can sit
+  below the tabs instead of at the right edge of
+  the window. Click the arrow in a tool’s title
+  bar, or use the Toolbelt menu (☰), to move it.
+  Drag the line between the tabs and the tools
+  to resize them.
 
 Improvements:
 - Saving a window arrangement can remember

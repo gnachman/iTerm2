@@ -693,9 +693,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 - (void)didExitTraditionalFullScreenMode {
     NSSize contentSize = self.window.frame.size;
     NSSize decorationSize = self.windowDecorationSize;
-    if (self.contentView.shouldShowToolbelt) {
-        decorationSize.width += self.contentView.toolbelt.frame.size.width;
-    }
+    decorationSize.width += [self.contentView toolbeltWidthAtRightEdge];
     contentSize.width -= decorationSize.width;
     contentSize.height -= decorationSize.height;
 

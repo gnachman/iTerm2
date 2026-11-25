@@ -638,4 +638,60 @@ final class iTermLayoutCalculatorTest: XCTestCase {
         // Full height available
         XCTAssertEqual(outputs.tabViewFrame.size.height, CGFloat(inputs.contentViewHeight))
     }
+
+    // MARK: - Left Toolbelt
+
+    func testLeftToolbelt_SharesLeftColumnWithTabBar() {
+        var inputs = makeDefaultInputs()
+        inputs.tabPosition = kLayoutTabPositionLeft
+        inputs.shouldShowLeftToolbelt = true
+        inputs.leftToolbeltFraction = 0.25
+
+        let outputs = iTermLayoutCalculator.calculateLayout(with: inputs)
+
+        XCTAssertEqual(iTermLayoutCalculator.leftToolbeltFrame(with: inputs), CGRect(x: 0, y: 0, width: 200, height: 150))
+        XCTAssertEqual(outputs.tabBarFrame, CGRect(x: 0, y: 150, width: 200, height: 450))
+        // No right toolbelt, so the terminal gets everything right of the left column.
+        XCTAssertEqual(outputs.tabViewFrame, CGRect(x: 200, y: 0, width: 600, height: 600))
+    }
+
+    func testLeftAndRightToolbelts() {
+        var inputs = makeDefaultInputs()
+        inputs.tabPosition = kLayoutTabPositionLeft
+        inputs.shouldShowLeftToolbelt = true
+        inputs.leftToolbeltFraction = 0.5
+        inputs.shouldShowToolbelt = true
+
+        let outputs = iTermLayoutCalculator.calculateLayout(with: inputs)
+
+        XCTAssertEqual(outputs.toolbeltFrame.minX, 600)
+        XCTAssertEqual(outputs.tabViewFrame, CGRect(x: 200, y: 0, width: 400, height: 600))
+    }
+
+    func testLeftToolbelt_HiddenForTopTabs() {
+        var inputs = makeDefaultInputs()
+        inputs.tabPosition = kLayoutTabPositionTop
+        inputs.shouldShowLeftToolbelt = true
+
+        XCTAssertFalse(iTermLayoutCalculator.leftToolbeltIsVisible(with: inputs))
+        XCTAssertEqual(iTermLayoutCalculator.leftToolbeltFrame(with: inputs), .zero)
+    }
+
+    func testLeftToolbelt_HiddenWhenTabBarHidden() {
+        var inputs = makeDefaultInputs()
+        inputs.tabPosition = kLayoutTabPositionLeft
+        inputs.tabBarVisible = false
+        inputs.shouldShowLeftToolbelt = true
+
+        XCTAssertFalse(iTermLayoutCalculator.leftToolbeltIsVisible(with: inputs))
+    }
+
+    func testLeftToolbelt_FractionIsClamped() {
+        var inputs = makeDefaultInputs()
+        inputs.tabPosition = kLayoutTabPositionLeft
+        inputs.shouldShowLeftToolbelt = true
+        inputs.leftToolbeltFraction = 5
+
+        XCTAssertEqual(iTermLayoutCalculator.leftToolbeltFrame(with: inputs).height, 540)
+    }
 }
