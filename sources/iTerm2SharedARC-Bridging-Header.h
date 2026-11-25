@@ -185,6 +185,7 @@
 #import "iTermTextExtractor.h"
 #import "iTermTextViewContextMenuHelper.h"
 #import "iTermThroughputEstimator.h"
+#import "iTermTmuxJobManager.h"
 #import "iTermTuple.h"
 #import "iTermURLActionFactory+Testing.h"
 #import "iTermURLStore.h"

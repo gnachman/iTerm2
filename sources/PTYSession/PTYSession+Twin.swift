@@ -3,7 +3,7 @@
 //  iTerm2SharedARC
 //
 //  A twin session shows what a live session shows. It starts from a copy of the live
-//  session's screen and then parses a copy of every byte the live session reads.
+//  session's screen. Then its task reads a copy of every byte the live session's task reads.
 //
 
 import Foundation
@@ -32,7 +32,7 @@ extension PTYSession {
         let retry = { [weak self] (holdingLock: Bool) in
             guard let self, attemptsLeft > 0 else {
                 if holdingLock {
-                    self?.twinFeedLock.unlock()
+                    self?.shell.twinFeedLock.unlock()
                 }
                 completion(false)
                 return
@@ -47,14 +47,14 @@ extension PTYSession {
         if twinStartCancelled || twin.twinStartCancelled {
             // One of the two sessions closed while the twin was starting.
             if holdingLock {
-                twinFeedLock.unlock()
+                shell.twinFeedLock.unlock()
             }
             completion(false)
             return
         }
         // The reader thread holds the lock while it parses, and it can wait there for room in
         // the token queue. Never block the main queue on it.
-        guard holdingLock || twinFeedLock.try() else {
+        guard holdingLock || shell.twinFeedLock.try() else {
             retry(false)
             return
         }
@@ -72,13 +72,25 @@ extension PTYSession {
             retry(true)
             return
         }
+        guard let feed = TwinFeed.feed(readBy: twin.shell) else {
+            shell.twinFeedLock.unlock()
+            completion(false)
+            return
+        }
         copyTerminalState(toTwin: twin)
         if let previous = self.twin, previous !== twin, previous.twinSource === self {
             previous.twinSource = nil
         }
+        feed.fellBehind = { [weak self, weak twin] in
+            if let self, let twin {
+                self.twinDidFallBehind(twin)
+            }
+        }
+        shell.twinFeed?.close()
+        shell.twinFeed = feed
         twin.twinSource = self
         self.twin = twin
-        twinFeedLock.unlock()
+        shell.twinFeedLock.unlock()
         updateTwinTab()
         completion(true)
     }

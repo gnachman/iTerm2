@@ -1443,8 +1443,6 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 @property(atomic, retain, nullable) PTYSession *twin;
 // The session a twin copies. Not retained; the source clears it when it terminates.
 @property(nonatomic, assign, nullable) PTYSession *twinSource;
-// Held while bytes are parsed for this session and its twin, so a twin can start between reads.
-@property(nonatomic, readonly) NSLock *twinFeedLock;
 // Side effects a twin did not perform, by name.
 @property(nonatomic, readonly) NSCountedSet<NSString *> *twinSuppressedSideEffects;
 // Whether this session is a twin, which must not perform the named side effect.
@@ -1462,6 +1460,8 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 @property(nonatomic, readonly) BOOL twinStartCancelled;
 // Bytes read by this session that its twin has not parsed yet.
 @property(nonatomic, readonly) long long twinPendingByteCount;
+// Main queue. The twin fell too far behind and gets no more bytes.
+- (void)twinDidFallBehind:(PTYSession *)twin;
 
 // Call this when a session moves to a different tab or window to update the session ID.
 - (void)didMoveSession;

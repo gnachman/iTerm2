@@ -4751,6 +4751,7 @@
 		BD4D313E427B806663EB3D47 /* AILiveAttachmentFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11BE1CE0F1EF4E86C53D1E0 /* AILiveAttachmentFixtures.swift */; };
 		BEEFCAFEDEADC0DE00000001 /* iTermSwiftPackages.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */; };
 		BEEFCAFEDEADC0DE00000002 /* librailroad_dsl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = A68BE93E2DE3BA3D002DD513 /* librailroad_dsl.dylib */; };
+		BF93BCBD4BF87FBA702779F5 /* TwinFeed.swift in Sources */ = {isa = PBXBuildFile; fileRef = 536068F3F36A345EC2A2663B /* TwinFeed.swift */; };
 		BEEFCAFEDEADC0DE00000004 /* iTermSwiftPackages.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */; };
 		C0A1E5CE0000000000000001 /* iTermSwiftPackages.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */; };
 		BEEFCAFEDEADC0DE00000005 /* librailroad_dsl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = A68BE93E2DE3BA3D002DD513 /* librailroad_dsl.dylib */; };
@@ -5946,6 +5947,7 @@
 		535EA4FF20D0F15400FC81E0 /* iTermQuotedRecognizer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermQuotedRecognizer.m; sourceTree = "<group>"; };
 		535EA50220D1869800FC81E0 /* iTermSwiftyStringParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSwiftyStringParser.h; sourceTree = "<group>"; };
 		535EA50320D1869800FC81E0 /* iTermSwiftyStringParser.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSwiftyStringParser.m; sourceTree = "<group>"; };
+		536068F3F36A345EC2A2663B /* TwinFeed.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TwinFeed.swift; sourceTree = "<group>"; };
 		5365206F21433ED2003C58FD /* iTermGitState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGitState.h; sourceTree = "<group>"; };
 		5365207021433ED2003C58FD /* iTermGitState.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGitState.m; sourceTree = "<group>"; };
 		5365207321433F00003C58FD /* iTermGitPollWorker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGitPollWorker.h; sourceTree = "<group>"; };
@@ -14036,6 +14038,7 @@
 				600E88BA7D49CF011CD3A82A /* TaskInputQueue.swift */,
 				D5AD29C6F07CBACB4EE55E3A /* ByteBudget.swift */,
 				C5F182B076DB5F51E8F48065 /* TaskReadCapacity.swift */,
+				536068F3F36A345EC2A2663B /* TwinFeed.swift */,
 			);
 			path = Tasks;
 			sourceTree = "<group>";
@@ -20840,6 +20843,7 @@
 				7D53CECA4762A951EA9733EB /* iTermWebPageDialogs.swift in Sources */,
 				F20BEA4B851996F296C8187B /* iTermQuickLookSettingsWindowController.swift in Sources */,
 				F9947EE33F06E267C9C825E8 /* PTYSession+Twin.swift in Sources */,
+				BF93BCBD4BF87FBA702779F5 /* TwinFeed.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -325,6 +325,8 @@ typedef NS_ENUM(NSInteger, iTermHiddenFloatingPanesActivity) {
 - (void)updateFlexibleViewColors;
 - (NSDictionary *)arrangement;
 - (NSDictionary *)arrangementForDuplication;
+// This tab's split panes for a twin tab, without floating panes or a tab group.
+- (NSDictionary *)arrangementForTwin;
 
 - (void)notifyWindowChanged;
 // NOTE: Do not call this directly. It doesn't handle tmux correctly.

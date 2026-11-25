@@ -86,6 +86,7 @@ static void HandleSigChld(int n) {
         _winSizeController.delegate = self;
         writeBuffer = [[NSMutableData alloc] init];
         writeLock = [[NSLock alloc] init];
+        _twinFeedLock = [[NSLock alloc] init];
         if ([iTermAdvancedSettingsModel runJobsInServers]) {
             if ([iTermMultiServerJobManager available]) {
                 self.jobManager = [[iTermMultiServerJobManager alloc] initWithQueue:_jobManagerQueue];
@@ -371,6 +372,24 @@ static void HandleSigChld(int n) {
     iTermTmuxJobManager *jobManager = [[iTermTmuxJobManager alloc] initWithQueue:self->_jobManagerQueue];
     jobManager.inputQueue = inputQueue;
     RLog(@"Configure %@ as tmux task reading %@", self, inputQueue);
+    _jobManager = jobManager;
+    [[TaskNotifier sharedInstance] registerTask:self];
+}
+
+- (void)readTwinOutputFromFileDescriptor:(iTermOwnedFileDescriptor *)readEnd {
+    ITAssertWithMessage(readEnd != nil, @"A twin job manager needs a file descriptor");
+    iTermTwinJobManager *jobManager = [[iTermTwinJobManager alloc] initWithQueue:_jobManagerQueue];
+    jobManager.ownedFileDescriptor = readEnd;
+    RLog(@"Configure %@ as twin task", self);
+    _jobManager = jobManager;
+    [[TaskNotifier sharedInstance] registerTask:self];
+}
+
+- (void)readTwinOutputFromQueue:(iTermTaskInputQueue *)inputQueue {
+    ITAssertWithMessage([TaskNotifier usesTaskIOMonitors], @"Only task I/O monitors read input queues");
+    iTermTwinJobManager *jobManager = [[iTermTwinJobManager alloc] initWithQueue:_jobManagerQueue];
+    jobManager.inputQueue = inputQueue;
+    RLog(@"Configure %@ as twin task reading %@", self, inputQueue);
     _jobManager = jobManager;
     [[TaskNotifier sharedInstance] registerTask:self];
 }
@@ -1059,7 +1078,14 @@ static void HandleSigChld(int n) {
 
     // The delegate is responsible for parsing VT100 tokens here and sending them off to the
     // main thread for execution. If its queues get too large, it can block.
+    [_twinFeedLock lock];
     [self.delegate threadedReadTask:buffer length:length];
+    iTermTwinFeed *twinFeed = self.twinFeed;
+    if (twinFeed && ![twinFeed appendBytes:buffer length:length]) {
+        self.twinFeed = nil;
+    }
+    [_twinFeedLock unlock];
+    [self.readingTwinFeed twinDidRead:length];
 
     @synchronized (self) {
         if (coprocess_ && !self.sshIntegrationActive) {

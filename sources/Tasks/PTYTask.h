@@ -16,6 +16,7 @@
 @class iTermOwnedFileDescriptor;
 @class iTermProcessInfo;
 @class iTermTaskInputQueue;
+@class iTermTwinFeed;
 @protocol iTermTask;
 @class iTermWinSizeController;
 @class PTYTab;
@@ -192,6 +193,18 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 // Like readTmuxPaneOutputFrom:, but the session appends the pane's %output to `inputQueue`. Only
 // for use with task I/O monitors, since TaskNotifier's select loop can't watch a queue.
 - (void)readTmuxPaneOutputFromQueue:(iTermTaskInputQueue *)inputQueue;
+// Makes this a twin session's task, reading what a live session's task read. Registers the task.
+- (void)readTwinOutputFromFileDescriptor:(iTermOwnedFileDescriptor *)readEnd;
+- (void)readTwinOutputFromQueue:(iTermTaskInputQueue *)inputQueue;
+// Gets a copy of every byte this task reads.
+@property(atomic, strong) iTermTwinFeed *twinFeed;
+// For a twin session's task: the feed it reads from.
+@property(atomic, weak) iTermTwinFeed *readingTwinFeed;
+// The task notifier's thread. The bytes in buffer were just read.
+- (void)readTask:(char *)buffer length:(int)length;
+// Held while this task's bytes are parsed and copied to the twin feed, so a twin can start
+// between two reads.
+@property(nonatomic, readonly) NSLock *twinFeedLock;
 // Any thread. Runs `block` with the task's file descriptor, which stays open until it returns.
 // Returns NO without running it when there is no descriptor or it has been closed.
 - (BOOL)withFileDescriptor:(void (NS_NOESCAPE ^)(int fd))block;

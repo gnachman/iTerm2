@@ -11,8 +11,8 @@ New Features:
   on one of its links.
 - Twin Window shows one window on two displays.
   Window > Twin > Open Twin of Current Window
-  opens a second window with the same tabs and
-  the same contents. You can type in either
+  opens a second window with the same tabs,
+  split panes and contents. You can type in either
   one, and each can have its own size. Turn on
   Window > Twin > Read Only to make the twin
   view-only.

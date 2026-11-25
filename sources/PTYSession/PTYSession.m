@@ -1,7 +1,6 @@
 #import "PTYSession+ARC.h"
 #import "PTYSession+Private.h"
 #import "PTYSession.h"
-#import <stdatomic.h>
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
 
@@ -653,9 +652,6 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     // Synthetic sessions are used for "zoom in" and DVR, and their closing cannot be undone.
     BOOL _synthetic;
-    // Bytes handed to the twin's feed queue that the twin has not parsed yet.
-    _Atomic(long long) _twinPendingBytes;
-    dispatch_queue_t _twinFeedQueue;
 
     // Cached advanced setting
     NSTimeInterval _idleTime;
@@ -979,8 +975,6 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     if (self) {
         DLog(@"Begin initialization of new PTYsession %p", self);
         _autoLogId = arc4random();
-        _twinFeedLock = [[NSLock alloc] init];
-        _twinFeedQueue = dispatch_queue_create("com.iterm2.twin-feed", DISPATCH_QUEUE_SERIAL);
         _twinSuppressedSideEffects = [[NSCountedSet alloc] init];
         _useAdaptiveFrameRate = [iTermAdvancedSettingsModel useAdaptiveFrameRate];
         _adaptiveFrameRateThroughputThreshold = [iTermAdvancedSettingsModel adaptiveFrameRateThroughputThreshold];
@@ -1304,8 +1298,6 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)dealloc {
     _twin.twinSource = nil;
     [_twin release];
-    [_twinFeedLock release];
-    dispatch_release(_twinFeedQueue);
     [_twinSuppressedSideEffects release];
     [_flowLedger release];
     [_restoreSavedForegroundJobAncestors release];
@@ -4396,9 +4388,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_delegate removeSession:self];
 
     // Stop copying bytes in either direction of the twin relationship.
+    [_shell.twinFeed close];
+    _shell.twinFeed = nil;
     self.twin.twinSource = nil;
     self.twin = nil;
     if (_twinSource.twin == self) {
+        [_twinSource.shell.twinFeed close];
+        _twinSource.shell.twinFeed = nil;
         _twinSource.twin = nil;
     }
     _twinSource = nil;
@@ -4937,41 +4933,20 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // This is run in PTYTask's thread. It parses the input here and then queues an async task to run
 // in the main thread to execute the parsed tokens. This blocks when the queue of tokens gets too large.
 - (void)threadedReadTask:(char *)buffer length:(int)length {
-    [_twinFeedLock lock];
     [_screen threadedReadTask:buffer length:length];
-    PTYSession *twin = [self.twin retain];
-    if (twin) {
-        // The twin parses on its own queue. This thread reads for the live session, and on
-        // some configurations for other sessions too, so it must never wait for a twin.
-        static const long long maximumPendingBytes = 32 * 1024 * 1024;
-        const long long pending = atomic_fetch_add(&_twinPendingBytes, length) + length;
-        if (pending > maximumPendingBytes) {
-            atomic_fetch_sub(&_twinPendingBytes, length);
-            self.twin = nil;
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self twinDidFallBehind:twin];
-            });
-        } else {
-            NSData *data = [[NSData alloc] initWithBytes:buffer length:length];
-            dispatch_async(_twinFeedQueue, ^{
-                [twin.screen threadedReadTask:(char *)data.bytes length:(int)data.length];
-                atomic_fetch_sub(&self->_twinPendingBytes, (long long)data.length);
-            });
-            [data release];
-        }
-    }
-    [twin release];
-    [_twinFeedLock unlock];
 }
 
 - (long long)twinPendingByteCount {
-    return atomic_load(&_twinPendingBytes);
+    return self.shell.twinFeed.pendingByteCount;
 }
 
 // Main queue. The twin stopped parsing and too much output is waiting for it. It is no longer
 // a copy of this session, so its window replaces it with a new one.
 - (void)twinDidFallBehind:(PTYSession *)twin {
     RLog(@"Twin %@ of %@ fell behind. Drop it.", twin, self);
+    if (self.twin == twin) {
+        self.twin = nil;
+    }
     if (twin.twinSource == self) {
         twin.twinSource = nil;
     }
@@ -5345,6 +5320,11 @@ NSString *const PTYSessionTwinsAreReadOnlyUserDefaultsKey = @"NoSyncTwinSessions
     RLog(@"  brokenPipe %@ task=%@ message=%@\n%@", self, self.shell, message, [NSThread callStackSymbols]);
     if (_exited) {
         RLog(@"  brokenPipe: Already exited");
+        return;
+    }
+    if ([self twinSuppresses:@"brokenPipe"]) {
+        // The twin's input ended because its live session ended or it fell behind. Its window
+        // replaces or closes it.
         return;
     }
     // Ensure we don't leak the monoserver unix domain socket file descriptor.

@@ -11793,8 +11793,8 @@ static BOOL gSyncingTwinWindow;
         return;
     }
     PTYSession *liveSession = self.currentSession;
-    if (![self canMakeTwinOfSession:liveSession]) {
-        DLog(@"Cannot make a twin of %@", liveSession);
+    if (![self canMakeTwinOfTab:self.currentTab]) {
+        DLog(@"Cannot make a twin of %@", self.currentTab);
         NSBeep();
         return;
     }
@@ -11818,8 +11818,39 @@ static BOOL gSyncingTwinWindow;
     [term.window makeKeyAndOrderFront:nil];
 }
 
-// Adds a tab to this twin window with a twin of `liveSession`.
-- (PTYSession *)addTwinOfSession:(PTYSession *)liveSession atIndex:(NSInteger)index {
+// Whether every pane of `tab` can have a twin. Floating panes get none.
+- (BOOL)canMakeTwinOfTab:(PTYTab *)tab {
+    if (tab.isTmuxTab) {
+        return NO;
+    }
+    NSArray<PTYSession *> *floats = tab.floatingSessions;
+    NSArray<PTYSession *> *panes = [tab.sessions filteredArrayUsingBlock:^BOOL(PTYSession *session) {
+        return ![floats containsObject:session];
+    }];
+    return panes.count > 0 && [panes allWithBlock:^BOOL(PTYSession *session) {
+        return [self canMakeTwinOfSession:session];
+    }];
+}
+
+// The twin tab in this twin window that shows every pane of `liveTab`, or nil.
+- (PTYTab *)twinTabShowingLiveTab:(PTYTab *)liveTab {
+    NSArray<PTYSession *> *floats = liveTab.floatingSessions;
+    NSSet<PTYSession *> *livePanes = [NSSet setWithArray:[liveTab.sessions filteredArrayUsingBlock:^BOOL(PTYSession *session) {
+        return ![floats containsObject:session];
+    }]];
+    for (PTYTab *tab in self.tabs) {
+        NSArray<PTYSession *> *sources = [tab.sessions mapWithBlock:^id(PTYSession *twin) {
+            return twin.twinSource;
+        }];
+        if (sources.count == tab.sessions.count && [[NSSet setWithArray:sources] isEqualToSet:livePanes]) {
+            return tab;
+        }
+    }
+    return nil;
+}
+
+// A session with no program for a pane of a twin tab.
+- (PTYSession *)newTwinSessionOf:(PTYSession *)liveSession {
     Profile *profile = liveSession.profile;
     if (liveSession.isDivorced) {
         // Two sessions must not share a divorced profile's GUID.
@@ -11831,25 +11862,70 @@ static BOOL gSyncingTwinWindow;
     }
     PTYSession *twin = [[[PTYSession alloc] initSynthetic:YES] autorelease];
     twin.profile = profile;
-    [self addSession:twin inTabAtIndex:@(index)];
+    twin.isTwin = YES;
+    [self setupSession:twin withSize:nil];
+    if (!twin.screen) {
+        return nil;
+    }
     // A twin has no use for triggers: the live session already ran them.
     [twin setSessionSpecificProfileValues:@{ KEY_TRIGGERS: @[] }];
     [twin setSize:liveSession.screen.size];
-    RLog(@"Start twin %@ of %@", twin, liveSession);
-    __weak __typeof(self) weakSelf = self;
-    [liveSession startTwin:twin completion:^(BOOL ok) {
-        RLog(@"Twin started=%@", @(ok));
-        PTYTab *tab = [weakSelf tabForSession:twin];
-        if (!ok) {
-            // A tab that shows nothing is worse than no tab. The next sync tries again.
-            if (tab) {
-                [weakSelf closeTab:tab soft:YES];
-            }
-            return;
-        }
-        [tab fitSessionToCurrentViewSize:twin];
-    }];
     return twin;
+}
+
+// Adds a tab to this twin window with the split panes of `liveTab`, each a twin of its pane.
+- (PTYTab *)addTwinOfTab:(PTYTab *)liveTab atIndex:(NSInteger)index {
+    NSDictionary *arrangement = [liveTab arrangementForTwin];
+    NSDictionary<NSString *, PTYSession *> *liveMap = [PTYTab sessionMapWithArrangement:arrangement
+                                                                               sessions:liveTab.sessions];
+    if (liveMap.count == 0) {
+        return nil;
+    }
+    const BOOL unmappedPane = [PTYTab arrangement:arrangement passesTest:^BOOL(NSDictionary *candidate) {
+        NSString *guid = [PTYSession guidInArrangement:candidate];
+        return guid == nil || liveMap[guid] == nil;
+    }];
+    if (unmappedPane) {
+        // A pane without a twin would start a program.
+        DLog(@"Cannot map every pane of %@", liveTab);
+        return nil;
+    }
+    NSMutableDictionary<NSString *, PTYSession *> *twinMap = [NSMutableDictionary dictionary];
+    for (NSString *guid in liveMap) {
+        PTYSession *twin = [self newTwinSessionOf:liveMap[guid]];
+        if (!twin) {
+            return nil;
+        }
+        twinMap[guid] = twin;
+    }
+    PTYTab *twinTab = [self openTabWithArrangement:arrangement
+                                             named:nil
+                                   hasFlexibleView:NO
+                                           viewMap:nil
+                                        sessionMap:twinMap
+                                partialAttachments:nil
+                                           options:@{ iTermOpenTabArrangementInsertionIndexKey: @(index) }];
+    if (!twinTab) {
+        return nil;
+    }
+    __weak __typeof(self) weakSelf = self;
+    for (NSString *guid in liveMap) {
+        PTYSession *twin = twinMap[guid];
+        RLog(@"Start twin %@ of %@", twin, liveMap[guid]);
+        [liveMap[guid] startTwin:twin completion:^(BOOL ok) {
+            RLog(@"Twin started=%@", @(ok));
+            PTYTab *tab = [weakSelf tabForSession:twin];
+            if (!ok) {
+                // A tab that shows nothing is worse than no tab. The next sync tries again.
+                if (tab) {
+                    [weakSelf closeTab:tab soft:YES];
+                }
+                return;
+            }
+            [tab fitSessionToCurrentViewSize:twin];
+        }];
+    }
+    return twinTab;
 }
 
 // Call when this window's tabs or its selected tab changed.
@@ -11894,7 +11970,10 @@ static BOOL gSyncingTwinWindow;
     NSArray<PTYTab *> *tabs = [[self.tabs copy] autorelease];
     for (NSInteger i = 0; i < tabs.count; i++) {
         PTYTab *tab = tabs[i];
-        if (tab.activeSession.isTwin || tabs.count < 2) {
+        const BOOL hasTwin = [tab.sessions anyWithBlock:^BOOL(PTYSession *session) {
+            return session.isTwin;
+        }];
+        if (hasTwin || tabs.count < 2) {
             continue;
         }
         // A real session was opened in the twin window. It belongs in the live window.
@@ -11947,7 +12026,7 @@ static BOOL gSyncingTwinWindow;
 }
 
 // Makes the twin window have one tab per tab of this window, in the same order, with the same
-// tab selected. A twin tab shows the active session of its tab.
+// tab selected. A twin tab has the split panes of its tab.
 - (void)syncTwinWindow {
     PseudoTerminal *twinWindow = self.twinWindow;
     if (!twinWindow || gSyncingTwinWindow) {
@@ -11957,16 +12036,11 @@ static BOOL gSyncingTwinWindow;
     NSMutableArray<PTYTab *> *wanted = [NSMutableArray array];
     PTYTab *wantedSelection = nil;
     for (PTYTab *tab in self.tabs) {
-        PTYSession *liveSession = tab.activeSession;
-        if (![self canMakeTwinOfSession:liveSession]) {
+        if (![self canMakeTwinOfTab:tab]) {
             continue;
         }
-        PTYSession *twin = liveSession.twin;
-        PTYTab *twinTab = twin ? [twinWindow tabForSession:twin] : nil;
-        if (!twinTab) {
-            twin = [twinWindow addTwinOfSession:liveSession atIndex:wanted.count];
-            twinTab = twin ? [twinWindow tabForSession:twin] : nil;
-        }
+        // A twin tab whose panes no longer match is replaced.
+        PTYTab *twinTab = [twinWindow twinTabShowingLiveTab:tab] ?: [twinWindow addTwinOfTab:tab atIndex:wanted.count];
         if (!twinTab) {
             continue;
         }

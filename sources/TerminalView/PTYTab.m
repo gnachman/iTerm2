@@ -47,6 +47,7 @@
 #import "PTYNoteViewController.h"
 #import "PTYScrollView.h"
 #import "PTYSession.h"
+#import "PseudoTerminal.h"
 #import "PTYSession+ARC.h"
 #import "PTYTab+Scripting.h"
 #import "SessionView.h"
@@ -782,6 +783,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)numberOfSessionsDidChange {
+    [[PseudoTerminal castFrom:realParentWindow_] twinWindowsNeedSync];
     [self updatePaneTitlesRenegotiatingTmuxSizeIfNeeded:@"numberOfSessionsDidChange"];
     [self updateSessionOrdinals];
     [realParentWindow_ invalidateRestorableState];
@@ -4703,6 +4705,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                     TAB_ARRANGEMENT_GROUP_PARENT_COLOR,
                                     TAB_ARRANGEMENT_GROUP_PARENT_COLLAPSED ]];
     return result;
+}
+
+- (NSDictionary *)arrangementForTwin {
+    NSMutableDictionary *result = [[self arrangement] mutableCopy];
+    // A float would get a real session, and the twin window has groups of its own.
+    [result removeObjectsForKeys:@[ TAB_ARRANGEMENT_FLOATING_PANES,
+                                    TAB_ARRANGEMENT_GROUP_ID,
+                                    TAB_ARRANGEMENT_GROUP_NAME,
+                                    TAB_ARRANGEMENT_GROUP_COLOR,
+                                    TAB_ARRANGEMENT_GROUP_COLLAPSED ]];
+    return [PTYTab arrangementRemovingTabGroupParent:result];
 }
 
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement

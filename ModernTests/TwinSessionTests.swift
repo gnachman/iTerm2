@@ -62,8 +62,9 @@ final class TwinSessionTests: XCTestCase {
             "\u{1b}]1337;RequestAttention=yes\u{7}" +
             "\u{1b}]1337;StealFocus\u{7}" +
             "done"
-        // Straight into the twin, so that nothing in this test performs them for real.
-        read(Data(bytes.utf8), into: twin, chunkSeed: nil)
+        // Straight into the twin, so that nothing in this test performs them for real. Not through
+        // its task, which counts what it reads against the live session's feed.
+        read(Data(bytes.utf8), into: twin, chunkSeed: nil, throughTask: false)
         settle(live, twin)
 
         let suppressed = twin.twinSuppressedSideEffects
@@ -287,8 +288,8 @@ final class TwinSessionTests: XCTestCase {
     }
 
     // Gives the session the bytes the way a program's output arrives: off the main queue, through
-    // the session's read entry point, in pieces. With a seed the pieces are 1 to 64 bytes long.
-    private func read(_ bytes: Data, into session: PTYSession, chunkSeed: UInt64?) {
+    // its task's read entry point, in pieces. With a seed the pieces are 1 to 64 bytes long.
+    private func read(_ bytes: Data, into session: PTYSession, chunkSeed: UInt64?, throughTask: Bool = true) {
         guard !bytes.isEmpty else {
             return
         }
@@ -301,7 +302,11 @@ final class TwinSessionTests: XCTestCase {
                 let wanted = generator?.next(upTo: 64) ?? buffer.count
                 let length = min(wanted + 1, buffer.count - offset)
                 var piece = buffer[offset..<(offset + length)].map { CChar(bitPattern: $0) }
-                session.threadedReadTask(&piece, length: Int32(length))
+                if throughTask {
+                    session.shell.read(&piece, length: Int32(length))
+                } else {
+                    session.threadedReadTask(&piece, length: Int32(length))
+                }
                 offset += length
             }
             finished.fulfill()
