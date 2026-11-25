@@ -15,7 +15,6 @@
 #import "iTermShellIntegrationSecondPageViewController.h"
 #import "iTermShellIntegrationDownloadAndRunViewController.h"
 #import "iTermShellIntegrationPasteShellCommandsViewController.h"
-#import "iTermShellIntegrationFinishedViewController.h"
 
 NSString *iTermShellIntegrationShellString(iTermShellIntegrationShell shell) {
     switch (shell) {

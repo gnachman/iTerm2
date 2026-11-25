@@ -1649,8 +1649,7 @@
 		A629F5AB23AFF5EC00C2F16B /* iTermShellIntegrationDownloadAndRunViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A629F5A823AFF5EC00C2F16B /* iTermShellIntegrationDownloadAndRunViewController.m */; };
 		A629F5AE23AFF65600C2F16B /* iTermShellIntegrationPasteShellCommandsViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A629F5AC23AFF65600C2F16B /* iTermShellIntegrationPasteShellCommandsViewController.h */; };
 		A629F5AF23AFF65600C2F16B /* iTermShellIntegrationPasteShellCommandsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A629F5AD23AFF65600C2F16B /* iTermShellIntegrationPasteShellCommandsViewController.m */; };
-		A629F5B223AFF70B00C2F16B /* iTermShellIntegrationFinishedViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A629F5B023AFF70B00C2F16B /* iTermShellIntegrationFinishedViewController.h */; };
-		A629F5B323AFF70B00C2F16B /* iTermShellIntegrationFinishedViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A629F5B123AFF70B00C2F16B /* iTermShellIntegrationFinishedViewController.m */; };
+		D181F6E98F2371BD80122588 /* iTermShellIntegrationFinishedViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABDA90DDC2F255C0A30D2F64 /* iTermShellIntegrationFinishedViewController.swift */; };
 		A629F5B623B081DD00C2F16B /* MouseReportingCursorOverlay@1x.png in Resources */ = {isa = PBXBuildFile; fileRef = A629F5B423B081DC00C2F16B /* MouseReportingCursorOverlay@1x.png */; };
 		A629F5B823B081DD00C2F16B /* MouseReportingCursorOverlay@1x.png in Resources */ = {isa = PBXBuildFile; fileRef = A629F5B423B081DC00C2F16B /* MouseReportingCursorOverlay@1x.png */; };
 		A629F5B923B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A629F5B523B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png */; };
@@ -6667,8 +6666,7 @@
 		A629F5A823AFF5EC00C2F16B /* iTermShellIntegrationDownloadAndRunViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermShellIntegrationDownloadAndRunViewController.m; sourceTree = "<group>"; };
 		A629F5AC23AFF65600C2F16B /* iTermShellIntegrationPasteShellCommandsViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermShellIntegrationPasteShellCommandsViewController.h; sourceTree = "<group>"; };
 		A629F5AD23AFF65600C2F16B /* iTermShellIntegrationPasteShellCommandsViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermShellIntegrationPasteShellCommandsViewController.m; sourceTree = "<group>"; };
-		A629F5B023AFF70B00C2F16B /* iTermShellIntegrationFinishedViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermShellIntegrationFinishedViewController.h; sourceTree = "<group>"; };
-		A629F5B123AFF70B00C2F16B /* iTermShellIntegrationFinishedViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermShellIntegrationFinishedViewController.m; sourceTree = "<group>"; };
+		ABDA90DDC2F255C0A30D2F64 /* iTermShellIntegrationFinishedViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermShellIntegrationFinishedViewController.swift; sourceTree = "<group>"; };
 		A629F5B423B081DC00C2F16B /* MouseReportingCursorOverlay@1x.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "MouseReportingCursorOverlay@1x.png"; path = "images/MouseReportingCursorOverlay@1x.png"; sourceTree = "<group>"; };
 		A629F5B523B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "MouseReportingCursorOverlay@2x.png"; path = "images/MouseReportingCursorOverlay@2x.png"; sourceTree = "<group>"; };
 		A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTextDrawingHelper.h; sourceTree = "<group>"; };
@@ -12106,8 +12104,7 @@
 				38AC4167EF7F48F0B8AF1D55 /* iTermShellIntegrationWindowController.xib */,
 				A629F5A723AFF5EC00C2F16B /* iTermShellIntegrationDownloadAndRunViewController.h */,
 				A629F5A823AFF5EC00C2F16B /* iTermShellIntegrationDownloadAndRunViewController.m */,
-				A629F5B023AFF70B00C2F16B /* iTermShellIntegrationFinishedViewController.h */,
-				A629F5B123AFF70B00C2F16B /* iTermShellIntegrationFinishedViewController.m */,
+				ABDA90DDC2F255C0A30D2F64 /* iTermShellIntegrationFinishedViewController.swift */,
 				A629F59F23AFF53F00C2F16B /* iTermShellIntegrationFirstPageViewController.h */,
 				A629F5A023AFF53F00C2F16B /* iTermShellIntegrationFirstPageViewController.m */,
 				A629F59D23AFF4F200C2F16B /* iTermShellIntegrationInstaller.h */,
@@ -16865,7 +16862,6 @@
 				A653F6A024D00CE30062377E /* iTermGraphDeltaEncoder.h in Headers */,
 				A6D1784521BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.h in Headers */,
 				A6AFD69024496F88007D0660 /* iTermFileDescriptorMultiClientPendingLaunch.h in Headers */,
-				A629F5B223AFF70B00C2F16B /* iTermShellIntegrationFinishedViewController.h in Headers */,
 				A6905554241D48080020EA6A /* iTermSearchResultsMinimapView.h in Headers */,
 				A6F718D7226704920053488E /* PTYSession+ARC.h in Headers */,
 				A67D19792238D50800BD0D4D /* iTermSetFindStringNotification.h in Headers */,
@@ -20358,7 +20354,7 @@
 				535EA4FD20D0EBD300FC81E0 /* iTermSwiftyStringRecognizer.m in Sources */,
 				534B6C6823DC165D0031FED2 /* PasteContext.m in Sources */,
 				A6069F062DF21DA000EE6CC7 /* LocalhostEndpoint.swift in Sources */,
-				A629F5B323AFF70B00C2F16B /* iTermShellIntegrationFinishedViewController.m in Sources */,
+				D181F6E98F2371BD80122588 /* iTermShellIntegrationFinishedViewController.swift in Sources */,
 				A6B50EBA29BE42B1000D243D /* FontTable.swift in Sources */,
 				A6CDC329263D244600616155 /* NSScreen+iTerm.m in Sources */,
 				53E9DFEA220D55E40070C9C0 /* iTermUserNotificationTrigger.m in Sources */,
