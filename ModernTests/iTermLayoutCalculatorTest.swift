@@ -694,4 +694,34 @@ final class iTermLayoutCalculatorTest: XCTestCase {
 
         XCTAssertEqual(iTermLayoutCalculator.leftToolbeltFrame(with: inputs).height, 540)
     }
+
+    // A tool assigned to the left toolbelt is shown on the right whenever tabs
+    // aren't on the left, so it never ends up in a toolbelt that can't appear.
+    func testLeftToolbelt_ToolsFallBackToRightWithoutLeftTabs() {
+        let defaults = iTermUserDefaults.userDefaults()
+        let leftToolsKey = "ToolbeltLeftTools"
+        let savedLeftTools = defaults.object(forKey: leftToolsKey)
+        let savedTabPosition = iTermPreferences.int(forKey: kPreferenceKeyTabPosition)
+        defer {
+            defaults.set(savedLeftTools, forKey: leftToolsKey)
+            iTermPreferences.setInt(savedTabPosition, forKey: kPreferenceKeyTabPosition)
+        }
+        let tool = "Notes"
+        iTermToolbeltView.setSide(.left, forToolNamed: tool)
+        XCTAssertEqual(iTermToolbeltView.side(forToolNamed: tool), .left)
+
+        iTermPreferences.setInt(2 /* PSMTab_LeftTab */, forKey: kPreferenceKeyTabPosition)
+        XCTAssertTrue(iTermToolbeltView.leftToolbeltIsAvailable())
+        XCTAssertEqual(iTermToolbeltView.effectiveSide(forToolNamed: tool), .left)
+
+        iTermPreferences.setInt(0 /* PSMTab_TopTab */, forKey: kPreferenceKeyTabPosition)
+        XCTAssertFalse(iTermToolbeltView.leftToolbeltIsAvailable())
+        XCTAssertEqual(iTermToolbeltView.effectiveSide(forToolNamed: tool), .right)
+        // The assignment itself is kept for when tabs return to the left.
+        XCTAssertEqual(iTermToolbeltView.side(forToolNamed: tool), .left)
+
+        iTermToolbeltView.setSide(.right, forToolNamed: tool)
+        iTermPreferences.setInt(2 /* PSMTab_LeftTab */, forKey: kPreferenceKeyTabPosition)
+        XCTAssertEqual(iTermToolbeltView.effectiveSide(forToolNamed: tool), .right)
+    }
 }
