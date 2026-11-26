@@ -21,6 +21,13 @@ final class RichTabContentTabBar: PSMTabBarControl {
     }
 }
 
+// The dark style as it draws in the key window of the active app, where a
+// selected tab has its full glassy edge.
+@available(macOS 26, *)
+private final class ActiveWindowTahoeDarkTabStyle: PSMTahoeDarkTabStyle {
+    override var windowIsMainAndAppIsActive: Bool { true }
+}
+
 final class PSMTahoeTallTabShapeTests: XCTestCase {
     // A style's tab bar is weak.
     private var bars = [PSMTabBarControl]()
@@ -77,6 +84,20 @@ final class PSMTahoeTallTabShapeTests: XCTestCase {
         guard #available(macOS 26, *) else {
             throw XCTSkip("Tahoe styles need macOS 26")
         }
+        if #available(macOS 27, *) {
+            // On macOS 27 only a standard-height tab draws its edge from the
+            // measured image; this tall tab draws a thin edge in code. It
+            // must run down the rounded rectangle's straight left side, which
+            // a stadium doesn't have, and stay off the rounded corner.
+            let style = ActiveWindowTahoeDarkTabStyle()
+            attach(style, richContent: true)
+            let rep = render {
+                style.drawCellOutline(path: NSBezierPath(rect: pill), rect: pill)
+            }
+            XCTAssertGreaterThan(alpha(rep, x: 0, y: 27), 0.3, "the straight left edge")
+            XCTAssertEqual(alpha(rep, x: 0, y: 2), 0, "the corner itself stays rounded")
+            return
+        }
         let style = PSMTahoeDarkTabStyle()
         attach(style, richContent: true)
         let rep = render {
@@ -120,7 +141,13 @@ final class PSMTahoeTallTabShapeTests: XCTestCase {
                                              horizontal: false,
                                              isHighlighted: false)
         }
-        XCTAssertEqual(alpha(rep, x: cornerX, y: cornerY), 0)
+        if #available(macOS 27, *) {
+            // A macOS 27 stadium's ends are fuller than semicircles, so its
+            // edge just reaches this pixel. A rounded rectangle would cover it.
+            XCTAssertLessThan(alpha(rep, x: cornerX, y: cornerY), 0.5)
+        } else {
+            XCTAssertEqual(alpha(rep, x: cornerX, y: cornerY), 0)
+        }
         let dark = PSMTahoeDarkTabStyle()
         attach(dark, richContent: false)
         let darkRep = render {
@@ -128,6 +155,44 @@ final class PSMTahoeTallTabShapeTests: XCTestCase {
         }
         XCTAssertEqual(alpha(darkRep, x: cornerX, y: cornerY), 0)
     }
+    // The measured edge of a standard-height selected tab ships as an image.
+    func testSelectedTabEdgeImageIsBundled() throws {
+        guard #available(macOS 26, *) else {
+            throw XCTSkip("Tahoe styles need macOS 26")
+        }
+        XCTAssertNotNil(Bundle(for: PSMTahoeTabStyle.self).image(forResource: "TahoeSelectedTabEdges"))
+    }
+
+    // On macOS 27 a standard-height selected tab in an active dark window
+    // gets the measured bright line along its top, over a plain fill.
+    func testStandardDarkSelectedTabDrawsMeasuredTopLine() throws {
+        guard #available(macOS 27, *) else {
+            throw XCTSkip("The measured edge is for macOS 27")
+        }
+        let style = ActiveWindowTahoeDarkTabStyle()
+        attach(style, richContent: false)
+        // backgroundRect insets a cell 2pt at the top and 1pt at the bottom,
+        // so this cell's pill is the standard 24pt: y 2 through 26.
+        let rep = render {
+            style.drawCellBackgroundSelected(true,
+                                             inRect: NSRect(x: 0, y: 0, width: 200, height: 27),
+                                             withTabColor: nil,
+                                             highlightAmount: 0,
+                                             horizontal: true,
+                                             isHighlighted: false)
+        }
+        // In drawing coordinates, like alpha(_:x:y:). The line runs along both
+        // straight edges, so it doesn't matter which one this context puts on
+        // top.
+        func brightness(x: Int, y: Int) -> CGFloat {
+            let color = rep.colorAt(x: x, y: Int(size.height) - 1 - y)?.usingColorSpace(.deviceRGB)
+            return color?.brightnessComponent ?? 0
+        }
+        let middle = brightness(x: 100, y: 14)
+        XCTAssertGreaterThan(brightness(x: 100, y: 2), middle + 0.1, "a bright line along one edge")
+        XCTAssertGreaterThan(brightness(x: 100, y: 25), middle + 0.1, "a bright line along the other edge")
+    }
+
     // The selected tab's side shadows run the full height of a tall tab
     // rather than stopping where a standard tab would end.
     func testDropShadowCoversATallTab() throws {

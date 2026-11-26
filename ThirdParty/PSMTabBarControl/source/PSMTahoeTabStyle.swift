@@ -191,14 +191,36 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     // MARK: - Control Specific
     
     @objc func leftMarginForTabBarControl() -> Float {
+        if let margin = marginInsideContainer {
+            return margin
+        }
         return Float(tabBar?.insets.left ?? 0) + 2.0
     }
     
     @objc func rightMarginForTabBarControl(withOverflow: Bool, addTabButton: Bool) -> Float {
+        let accessoryWidth: Float = (withOverflow || addTabButton) ? 32.0 : 0
+        if let margin = marginInsideContainer {
+            return accessoryWidth + margin
+        }
         if withOverflow || addTabButton {
-            return 32.0 + Float(tabBar?.insets.right ?? 0) + 2.0
+            return accessoryWidth + Float(tabBar?.insets.right ?? 0) + 2.0
         }
         return 2.0
+    }
+
+    @objc func leftMarginFollowsInsets() -> Bool {
+        return marginInsideContainer == nil
+    }
+
+    // On macOS 27 the first and last tabs sit 2pt inside the ends of the bar's
+    // rounded container, the same inset they have from its top and bottom. The
+    // container's ends don't move with the tab bar's insets (see
+    // clippingPath(rect:)), so neither does this.
+    private var marginInsideContainer: Float? {
+        if #available(macOS 27, *), _orientation == .horizontalOrientation {
+            return Float(containerSideInset - 0.5 + 2)
+        }
+        return nil
     }
     
     @objc func topMarginForTabBarControl() -> Float {
@@ -576,7 +598,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         // Trace the pill just inside its edge, leaving the outside for the progress ring.
         let rect = backgroundRect(for: cell.frame).insetBy(dx: lineWidth / 2, dy: lineWidth / 2)
         let radius = pillCornerRadius(for: rect)
-        return NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
+        return roundedPath(rect, radius: radius)
     }
 
     @objc func progressBarRect(forTabCell cell: PSMTabBarCell) -> NSRect {
@@ -591,12 +613,12 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         let pillRadius = pillCornerRadius(for: pillRect)
         let outerRect = pillRect.insetBy(dx: -progressRingWidth, dy: -progressRingWidth)
         let outerRadius = pillRadius + progressRingWidth
-        // Two nested rounded rects with even-odd winding form a ring: the outer
-        // rect is filled and the pill-shaped inner rect is punched out so the
+        // Two nested pill shapes with even-odd winding form a ring: the outer
+        // one is filled and the inner one, the tab's own shape, is punched out so the
         // tab shows through. PSMTabBarControl applies this as an even-odd layer
         // mask (the winding rule set here is not carried by iterm_CGPath).
-        let path = NSBezierPath(roundedRect: outerRect, xRadius: outerRadius, yRadius: outerRadius)
-        path.append(NSBezierPath(roundedRect: pillRect, xRadius: pillRadius, yRadius: pillRadius))
+        let path = roundedPath(outerRect, radius: outerRadius)
+        path.append(roundedPath(pillRect, radius: pillRadius))
         path.windingRule = .evenOdd
         return path
     }
@@ -639,7 +661,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         let isFirst = (cell == tabBar?.cells().firstObject as? PSMTabBarCell)
         let isLast = (cell == tabBar?.cells().lastObject as? PSMTabBarCell)
         
-        if tabBar?.window?.isKeyWindow == true {
+        if tabBar?.window?.isKeyWindow == true && Self.drawsDropShadow {
             if cell.state == .on {
                 drawDropShadow(cell: cell)
             }
@@ -694,6 +716,15 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         }
     }
     
+    /// macOS 27 casts no shadow around the selected tab; its outline darkens
+    /// along the bottom edge instead (see drawCellOutline).
+    static var drawsDropShadow: Bool {
+        if #available(macOS 27, *) {
+            return false
+        }
+        return true
+    }
+
     func drawDropShadow(cell: PSMTabBarCell) {
         let scale = cell.controlView?.window?.backingScaleFactor ?? 2.0
         
@@ -826,6 +857,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                                    width: rect.width - containerSideInset * 2 + 1,
                                    height: height).insetBy(dx: insetX, dy: insetY)
             let radius = max(0, min(container.height / 2.0, maximumCornerRadius))
+            if #available(macOS 27, *), radius >= container.height / 2 - 0.001 {
+                return PSMTahoeStadiumEnd.bar.path(in: container)
+            }
             return NSBezierPath(roundedRect: container, xRadius: radius, yRadius: radius)
         } else {
             return NSBezierPath(rect: rect.insetBy(dx: 0, dy: insetY))
@@ -845,11 +879,41 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         color?.set()
 
         clippingPath(rect: rect).fill()
+        if #available(macOS 27, *), horizontal, let trackRimColor {
+            // macOS 27 rims the bar with a 0.5pt line just inside its edge,
+            // a little dimmer around the rounded ends.
+            let outline = clippingPath(rect: rect)
+            let ring = clippingPath(rect: rect)
+            ring.append(clippingPath(rect: rect, insetX: 0.5, insetY: 0.5))
+            ring.windingRule = .evenOdd
+            NSGraphicsContext.saveGraphicsState()
+            ring.addClip()
+            (trackRimEndColor ?? trackRimColor).set()
+            outline.bounds.fill()
+            let endLength = PSMTahoeStadiumEnd.bar.length * outline.bounds.height / 2
+            trackRimColor.set()
+            outline.bounds.insetBy(dx: endLength, dy: 0).fill()
+            NSGraphicsContext.restoreGraphicsState()
+        }
         NSGraphicsContext.restoreGraphicsState()
+    }
+
+    /// The color of the rim around the bar's rounded ends on macOS 27, when it
+    /// differs from trackRimColor.
+    var trackRimEndColor: NSColor? {
+        return nil
+    }
+
+    /// The color of the 0.5pt rim around the bar on macOS 27, or nil for none.
+    var trackRimColor: NSColor? {
+        return NSColor(displayP3Red: 220.0 / 255.0, green: 220.0 / 255.0, blue: 220.0 / 255.0, alpha: 1.0)
     }
     
     class var backgroundColor: NSColor {
-        NSColor(white: 0.9, alpha: 1.0)
+        if #available(macOS 27, *) {
+            return NSColor(displayP3Red: 232.0 / 255.0, green: 232.0 / 255.0, blue: 232.0 / 255.0, alpha: 1.0)
+        }
+        return NSColor(white: 0.9, alpha: 1.0)
     }
     
     @objc func drawTabBar(_ bar: PSMTabBarControl, in rect: NSRect, clipRect: NSRect, horizontal: Bool, withOverflow: Bool) {
@@ -1195,11 +1259,11 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
 
         // Group-color pill body.
         groupColor.set()
-        NSBezierPath(roundedRect: pill.insetBy(dx: 0.5, dy: 0.5), xRadius: radius, yRadius: radius).fill()
+        roundedPath(pill.insetBy(dx: 0.5, dy: 0.5), radius: radius).fill()
 
         let capsuleRadius = pillCornerRadius(for: capsule)
         bgColor.set()
-        NSBezierPath(roundedRect: capsule, xRadius: capsuleRadius, yRadius: capsuleRadius).fill()
+        roundedPath(capsule, radius: capsuleRadius).fill()
 
         // Label: "Name  N" (or just "N" when unnamed), left-aligned, leaving room
         // for the chevron at the right.
@@ -1259,8 +1323,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         // pill.insetBy(0.5); this stroke, centered there, carries the group color
         // back out to the pill edge to match.
         groupColor.set()
-        let outline = NSBezierPath(roundedRect: pill.insetBy(dx: 0.5, dy: 0.5),
-                                   xRadius: radius, yRadius: radius)
+        let outline = roundedPath(pill.insetBy(dx: 0.5, dy: 0.5), radius: radius)
         outline.lineWidth = 1
         outline.stroke()
 
@@ -1268,8 +1331,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         // collapsed group, ring the pill in the accent color so the user sees the
         // drop lands INSIDE the group (no member cells open a slot to show it).
         if isDropTarget {
-            let ring = NSBezierPath(roundedRect: pill.insetBy(dx: -1.0, dy: -1.0),
-                                    xRadius: radius + 1.0, yRadius: radius + 1.0)
+            let ring = roundedPath(pill.insetBy(dx: -1.0, dy: -1.0), radius: radius + 1.0)
             ring.lineWidth = 2
             NSColor.controlAccentColor.setStroke()
             ring.stroke()
@@ -1338,14 +1400,12 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             NSGraphicsContext.saveGraphicsState()
             NSRect(x: pill.minX, y: pill.minY,
                    width: clipRight - pill.minX, height: pill.height).clip()
-            let region = NSBezierPath(roundedRect: NSRect(x: pill.minX,
-                                                          y: pill.minY,
-                                                          width: (clipRight - pill.minX) + radius,
-                                                          height: pill.height),
-                                      xRadius: radius, yRadius: radius)
-            region.append(NSBezierPath(roundedRect: firstVis.insetBy(dx: -bGap, dy: -bGap),
-                                       xRadius: tabRadius + bGap,
-                                       yRadius: tabRadius + bGap))
+            let region = roundedPath(NSRect(x: pill.minX,
+                                            y: pill.minY,
+                                            width: (clipRight - pill.minX) + radius,
+                                            height: pill.height),
+                                     radius: radius)
+            region.append(roundedPath(firstVis.insetBy(dx: -bGap, dy: -bGap), radius: tabRadius + bGap))
             region.windingRule = .evenOdd
             groupColor.set()
             region.fill()
@@ -1366,7 +1426,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                              width: capsuleWidth,
                              height: capsuleHeight)
         bgColor.set()
-        NSBezierPath(roundedRect: capsule, xRadius: capsuleRadius, yRadius: capsuleRadius).fill()
+        roundedPath(capsule, radius: capsuleRadius).fill()
 
         if !name.isEmpty {
             let para = NSMutableParagraphStyle()
@@ -1386,9 +1446,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
 
         // Enclosing pill outline (1pt), inset a half point so the stroke is crisp.
         groupColor.set()
-        let outline = NSBezierPath(roundedRect: pill.insetBy(dx: 0.5, dy: 0.5),
-                                   xRadius: radius,
-                                   yRadius: radius)
+        let outline = roundedPath(pill.insetBy(dx: 0.5, dy: 0.5), radius: radius)
         outline.lineWidth = 1
         outline.stroke()
     }
@@ -1468,14 +1526,12 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             NSGraphicsContext.saveGraphicsState()
             NSRect(x: pill.minX, y: pill.minY,
                    width: pill.width, height: clipBottom - pill.minY).clip()
-            let region = NSBezierPath(roundedRect: NSRect(x: pill.minX,
-                                                          y: pill.minY,
-                                                          width: pill.width,
-                                                          height: (clipBottom - pill.minY) + effCorner),
-                                      xRadius: effCorner, yRadius: effCorner)
-            region.append(NSBezierPath(roundedRect: firstVis.insetBy(dx: -bGap, dy: -bGap),
-                                       xRadius: tabRadius + bGap,
-                                       yRadius: tabRadius + bGap))
+            let region = roundedPath(NSRect(x: pill.minX,
+                                            y: pill.minY,
+                                            width: pill.width,
+                                            height: (clipBottom - pill.minY) + effCorner),
+                                     radius: effCorner)
+            region.append(roundedPath(firstVis.insetBy(dx: -bGap, dy: -bGap), radius: tabRadius + bGap))
             region.windingRule = .evenOdd
             groupColor.set()
             region.fill()
@@ -1494,7 +1550,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                              height: capsuleHeight)
         let capsuleRadius = pillCornerRadius(for: capsule)
         bgColor.set()
-        NSBezierPath(roundedRect: capsule, xRadius: capsuleRadius, yRadius: capsuleRadius).fill()
+        roundedPath(capsule, radius: capsuleRadius).fill()
 
         if !name.isEmpty {
             let para = NSMutableParagraphStyle()
@@ -1514,15 +1570,16 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
 
         // Enclosing pill outline (1pt), inset a half point so the stroke is crisp.
         groupColor.set()
-        let outline = NSBezierPath(roundedRect: pill.insetBy(dx: 0.5, dy: 0.5),
-                                   xRadius: effCorner,
-                                   yRadius: effCorner)
+        let outline = roundedPath(pill.insetBy(dx: 0.5, dy: 0.5), radius: effCorner)
         outline.lineWidth = 1
         outline.stroke()
     }
 
     var dividerColor: NSColor {
-        NSColor(displayP3Red: 205.0 / 255.0, green: 205.0 / 255.0, blue: 205.0 / 255.0, alpha: 1.0)
+        if #available(macOS 27, *) {
+            return NSColor(displayP3Red: 204.0 / 255.0, green: 204.0 / 255.0, blue: 204.0 / 255.0, alpha: 1.0)
+        }
+        return NSColor(displayP3Red: 205.0 / 255.0, green: 205.0 / 255.0, blue: 205.0 / 255.0, alpha: 1.0)
     }
 
     func drawDivider(betweenCell leftCell: PSMTabBarCell, andCell rightCell: PSMTabBarCell) {
@@ -1547,10 +1604,19 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             return
         }
         dividerColor.set()
-        let rect = NSRect(x: leftCell.frame.maxX,
+        let rect: NSRect
+        if #available(macOS 27, *) {
+            // Centered in the bar, 16pt tall in a standard one.
+            rect = NSRect(x: leftCell.frame.maxX,
+                          y: leftCell.frame.minY + 6,
+                          width: 1.0,
+                          height: leftCell.frame.height - 11)
+        } else {
+            rect = NSRect(x: leftCell.frame.maxX,
                           y: leftCell.frame.minY + 5,
                           width: 1.0,
                           height: leftCell.frame.height - 10)
+        }
         reallyDrawDivider(rect: rect)
     }
 
@@ -1670,9 +1736,18 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         backgroundColorSelected(selected, highlightAmount: isHighlighted ? 1.0 : 0.0).set()
         
         let rect = backgroundRect(for: cellFrame)
-        let radius = pillCornerRadius(for: rect)
-        let path = NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
-        path.fill()
+        let path = pillPath(for: rect)
+        // On macOS 27 an unselected tab that isn't under the mouse is just the
+        // bar, so leave the bar (and its rim) showing.
+        let drawsFill: Bool
+        if #available(macOS 27, *) {
+            drawsFill = selected || isHighlighted
+        } else {
+            drawsFill = true
+        }
+        if drawsFill {
+            path.fill()
+        }
         if selected {
             drawCellOutline(path: path, rect: rect)
         }
@@ -1700,14 +1775,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             
             // Tint the inside.
             if selected {
-                let path2 = NSBezierPath(roundedRect: rect.insetBy(dx: 1.0, dy: 1.0),
-                                         xRadius: radius - 1.0,
-                                         yRadius: radius - 1.0)
-                path2.fill()
+                pillPath(for: rect, inset: 1.0).fill()
             } else {
-                let path2 = NSBezierPath(roundedRect: rect,
-                                         xRadius: radius,
-                                         yRadius: radius)
+                let path2 = pillPath(for: rect)
                 NSGraphicsContext.current?.saveGraphicsState()
                 defer {
                     NSGraphicsContext.current?.restoreGraphicsState()
@@ -1720,13 +1790,258 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                 path2.fill()
             }
         }
+
+        // The measured edge brightens or darkens whatever is under it, so it
+        // goes over the tab color's tint rather than under it.
+        if selected, usesSelectedTabEdgeImage(rect: rect) {
+            drawSelectedTabEdgeImage(rect: rect)
+        }
     }
     
     func drawCellOutline(path: NSBezierPath, rect: NSRect) {
+        if #available(macOS 27, *) {
+            if !usesSelectedTabEdgeImage(rect: rect) {
+                drawModernEdge(modernEdge, rect: rect)
+            }
+            return
+        }
         Self.outlineColor.set()
         path.stroke()
     }
-    
+
+    /// Which part of TahoeSelectedTabEdges this style's selected tab uses, or
+    /// nil to draw its edge in code from modernEdge.
+    var selectedTabEdgeImageStrip: PSMTahoeSelectedTabEdgeStrip? {
+        return windowIsMainAndAppIsActive ? .lightActive : .lightInactive
+    }
+
+    // On macOS 27 a selected tab of the standard height draws its edge from
+    // an image measured from the system's own tab bar (see
+    // drawSelectedTabEdgeImage). Other shapes draw it in code.
+    private func usesSelectedTabEdgeImage(rect: NSRect) -> Bool {
+        guard #available(macOS 27, *),
+              selectedTabEdgeImageStrip != nil,
+              Self.selectedTabEdgeImage != nil,
+              abs(rect.height - PSMTahoeSelectedTabEdgeStrip.pillHeight) < 0.01,
+              pillCornerRadius(for: rect) >= rect.height / 2 - 0.001 else {
+            return false
+        }
+        return true
+    }
+
+    private static let selectedTabEdgeImage = Bundle(for: PSMTahoeTabStyle.self).image(forResource: "TahoeSelectedTabEdges")
+
+    /// Draws the selected tab's edge over its fill from TahoeSelectedTabEdges.
+    /// The image holds, for each state, how much macOS 27 brightens (white
+    /// pixels) or darkens (black pixels) each pixel of the tab relative to its
+    /// fill, measured from Terminal's tab bar. It is a left end, a 1pt middle
+    /// that stretches, and a right end, with a 1pt margin all around.
+    private func drawSelectedTabEdgeImage(rect: NSRect) {
+        guard let image = Self.selectedTabEdgeImage, let strip = selectedTabEdgeImageStrip else {
+            return
+        }
+        let frame = rect.insetBy(dx: -1, dy: -1)
+        let height = frame.height
+        let imageWidth = image.size.width
+        let endWidth = min((imageWidth - 1) / 2, frame.width / 2)
+        // Image coordinates start at the bottom.
+        let sourceY = image.size.height - height * CGFloat(strip.rawValue + 1)
+        var pieces = [(NSRect(x: 0, y: sourceY, width: endWidth, height: height),
+                       NSRect(x: frame.minX, y: frame.minY, width: endWidth, height: height)),
+                      (NSRect(x: imageWidth - endWidth, y: sourceY, width: endWidth, height: height),
+                       NSRect(x: frame.maxX - endWidth, y: frame.minY, width: endWidth, height: height))]
+        if frame.width > endWidth * 2 {
+            pieces.append((NSRect(x: (imageWidth - 1) / 2, y: sourceY, width: 1, height: height),
+                           NSRect(x: frame.minX + endWidth, y: frame.minY,
+                                  width: frame.width - endWidth * 2, height: height)))
+        }
+        let hints: [NSImageRep.HintKey: Any] = [.interpolation: NSImageInterpolation.none.rawValue]
+        // Adding white leaves black pixels alone, and multiplying by black
+        // leaves white pixels alone.
+        for operation in [NSCompositingOperation.plusLighter, .multiply] {
+            for (source, destination) in pieces {
+                image.draw(in: destination, from: source, operation: operation,
+                           fraction: 1, respectFlipped: true, hints: hints)
+            }
+        }
+    }
+
+    /// The shape of a pill drawn in `rect`, shrunk by `inset` on every side.
+    /// Pills are stadiums, or rounded rectangles when rich tab content makes
+    /// them tall. On macOS 27 a stadium's ends have the shape of the system's
+    /// own window tab bar (see PSMTahoeStadiumEnd) rather than semicircles.
+    func pillPath(for rect: NSRect, inset: CGFloat = 0) -> NSBezierPath {
+        return roundedPath(rect.insetBy(dx: inset, dy: inset),
+                           radius: max(0, pillCornerRadius(for: rect) - inset))
+    }
+
+    /// A rounded rectangle, except that on macOS 27 one round enough to be a
+    /// stadium gets the system's stadium ends, so shapes drawn around or
+    /// inside a tab follow its curve.
+    func roundedPath(_ rect: NSRect, radius: CGFloat) -> NSBezierPath {
+        guard #available(macOS 27, *),
+              rect.width > 0,
+              rect.height > 0,
+              radius >= rect.height / 2 - 0.001 else {
+            return NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
+        }
+        return PSMTahoeStadiumEnd.selectedTab.path(in: rect)
+    }
+
+    /// How far a pill's rounded end reaches in from its side.
+    func pillEndLength(for rect: NSRect, inset: CGFloat = 0) -> CGFloat {
+        let shrunk = rect.insetBy(dx: inset, dy: inset)
+        let radius = max(0, pillCornerRadius(for: rect) - inset)
+        if #available(macOS 27, *), radius >= shrunk.height / 2 - 0.001 {
+            return min(shrunk.height / 2 * PSMTahoeStadiumEnd.selectedTab.length, shrunk.width / 2)
+        }
+        return radius
+    }
+
+    // How far along a straight edge its color eases in from where a rounded
+    // end meets it.
+    private static let straightEdgeRampLength = CGFloat(2.25)
+
+    /// How macOS 27 draws the edge of the selected tab, measured from the
+    /// system's own window tab bars. The edge is lit from above and below, so
+    /// its color depends on which way each part of it faces. On the rounded
+    /// ends that direction varies with height alone, so vertical gradients
+    /// reproduce it.
+    struct ModernEdge {
+        /// Values along the top half of the edge, keyed by how much that part
+        /// faces up: 1 is the straight top edge and 0 is the vertical end of a
+        /// rounded cap. The bottom half mirrors these except at the straight
+        /// bottom edge, which has its own value.
+        struct Profile {
+            var points: [(facing: CGFloat, value: CGFloat)]
+            var bottom: CGFloat
+            /// Values along the straight top and bottom edges between the
+            /// rounded ends, when they differ from where the ends meet them.
+            var straightTop: CGFloat?
+            var straightBottom: CGFloat?
+        }
+
+        /// The outermost 0.5pt as gray levels (0-255) drawn opaque, or nil
+        /// for no outline.
+        var outer: Profile?
+        /// The next 0.5pt in, as opacities (0-1) of white over the fill.
+        var innerHighlight: Profile?
+        /// Opacities of a white glow inside the tab, keyed by distance from
+        /// the top edge as a fraction of the tab's height. The bottom mirrors
+        /// it.
+        var glow: [(location: CGFloat, alpha: CGFloat)]?
+    }
+
+    var modernEdge: ModernEdge {
+        // A faint shadow, darkest partway around each rounded end, that
+        // nearly vanishes along the top, bottom, and vertical ends.
+        if windowIsMainAndAppIsActive {
+            return ModernEdge(outer: .init(points: [(1, 236), (0.91, 228), (0.74, 227), (0.57, 224),
+                                                    (0.39, 222), (0.22, 220), (0, 247)],
+                                           bottom: 240))
+        }
+        return ModernEdge(outer: .init(points: [(1, 228), (0.83, 223), (0.57, 222), (0.39, 221),
+                                                (0.22, 220), (0.1, 232), (0, 243)],
+                                       bottom: 230))
+    }
+
+    private func drawModernEdge(_ edge: ModernEdge, rect: NSRect) {
+        if let glow = edge.glow, let first = glow.first, let last = glow.last {
+            let white = { (alpha: CGFloat) in NSColor(white: 1, alpha: alpha) }
+            // Hold the first value out to the edge, and mirror for the bottom.
+            let top = [(location: CGFloat(0), alpha: first.alpha)] + glow
+            let bottom = top.reversed().map { (location: 1 - $0.location, alpha: $0.alpha) }
+            let stops = top + (last.location < 0.5 ? [(location: CGFloat(0.5), alpha: last.alpha)] : []) + bottom
+            if let gradient = NSGradient(colors: stops.map { white($0.alpha) },
+                                         atLocations: stops.map(\.location),
+                                         colorSpace: .genericGray) {
+                NSGraphicsContext.saveGraphicsState()
+                pillPath(for: rect).addClip()
+                // The tab bar is flipped, so 90 degrees runs from top to bottom.
+                gradient.draw(in: rect, angle: 90)
+                NSGraphicsContext.restoreGraphicsState()
+            }
+        }
+        if let inner = edge.innerHighlight {
+            drawEdgeRing(rect: rect, inset: 0.5, profile: inner) { NSColor(white: 1, alpha: $0) }
+        }
+        if let outer = edge.outer {
+            drawEdgeRing(rect: rect, inset: 0, profile: outer) {
+                NSColor(displayP3Red: $0 / 255.0, green: $0 / 255.0, blue: $0 / 255.0, alpha: 1)
+            }
+        }
+    }
+
+    /// Fills the 0.5pt ring starting `inset` points inside `rect` with a
+    /// vertical gradient following `profile`.
+    private func drawEdgeRing(rect: NSRect,
+                              inset: CGFloat,
+                              profile: ModernEdge.Profile,
+                              color: (CGFloat) -> NSColor) {
+        let width = CGFloat(0.5)
+        let outerRect = rect.insetBy(dx: inset, dy: inset)
+        let ring = pillPath(for: rect, inset: inset)
+        ring.append(pillPath(for: rect, inset: inset + width))
+        ring.windingRule = .evenOdd
+
+        // On a rounded end, the part of the edge whose facing is f sits at
+        // (1 - f) / 2 of the way down from the top.
+        let top = profile.points.map { (location: (1 - $0.facing) / 2, value: $0.value) }
+        var bottom = top.reversed().map { (location: 1 - $0.location, value: $0.value) }
+        if bottom.last?.location == 1 {
+            bottom[bottom.count - 1].value = profile.bottom
+        }
+        let stops = top + bottom.filter { $0.location > 0.5 }
+        guard let gradient = NSGradient(colors: stops.map { color($0.value) },
+                                        atLocations: stops.map(\.location),
+                                        colorSpace: .displayP3) else {
+            return
+        }
+        NSGraphicsContext.saveGraphicsState()
+        defer {
+            NSGraphicsContext.restoreGraphicsState()
+        }
+        ring.addClip()
+        // The straight edges between the rounded ends can have their own
+        // values. Where they do, the gradient covers only the ends.
+        let endLength = pillEndLength(for: rect, inset: inset)
+        let straightTop = NSRect(x: outerRect.minX + endLength,
+                                 y: outerRect.minY,
+                                 width: max(0, outerRect.width - endLength * 2),
+                                 height: outerRect.height / 2)
+        let straightBottom = straightTop.offsetBy(dx: 0, dy: outerRect.height / 2)
+        if profile.straightTop != nil || profile.straightBottom != nil {
+            let ends = NSBezierPath(rect: NSRect(x: outerRect.minX, y: outerRect.minY,
+                                                 width: endLength, height: outerRect.height))
+            ends.append(NSBezierPath(rect: NSRect(x: outerRect.maxX - endLength, y: outerRect.minY,
+                                                  width: endLength, height: outerRect.height)))
+            NSGraphicsContext.saveGraphicsState()
+            ends.addClip()
+            // The tab bar is flipped, so 90 degrees runs from top to bottom.
+            gradient.draw(in: outerRect, angle: 90)
+            NSGraphicsContext.restoreGraphicsState()
+            // Ease from where the ends meet the straight edges to the straight
+            // edges' own values over a short distance, as the system does.
+            func fill(_ band: NSRect, from endValue: CGFloat, to value: CGFloat) {
+                let ramp = min(Self.straightEdgeRampLength, band.width / 2)
+                guard band.width > 0, ramp > 0,
+                      let gradient = NSGradient(colors: [color(endValue), color(value), color(value), color(endValue)],
+                                                atLocations: [0, ramp / band.width, 1 - ramp / band.width, 1],
+                                                colorSpace: .displayP3) else {
+                    color(value).set()
+                    band.fill(using: .sourceOver)
+                    return
+                }
+                gradient.draw(in: band, angle: 0)
+            }
+            let topEnd = profile.points.first?.value ?? 0
+            fill(straightTop, from: topEnd, to: profile.straightTop ?? topEnd)
+            fill(straightBottom, from: profile.bottom, to: profile.straightBottom ?? profile.bottom)
+        } else {
+            gradient.draw(in: outerRect, angle: 90)
+        }
+    }
+
     func drawSubtitle(cell: PSMTabBarCell,
                       orientation: PSMTabBarOrientation,
                       xOrigin: CGFloat,
@@ -1851,6 +2166,17 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     class func textColorDefaultSelected(_ selected: Bool,
                                         backgroundColor: NSColor?,
                                         windowIsMainAndAppIsActive mainAndActive: Bool) -> NSColor {
+        if #available(macOS 27, *) {
+            // Measured from macOS 27 system window tabs: only the selected
+            // title is dark in an active window.
+            let value: CGFloat = switch (mainAndActive, selected) {
+            case (true, true): 75
+            case (true, false): 181
+            case (false, true): 182
+            case (false, false): 171
+            }
+            return NSColor(displayP3Red: value / 255.0, green: value / 255.0, blue: value / 255.0, alpha: 1)
+        }
         let value: CGFloat
         if mainAndActive {
             value = 70
@@ -1916,8 +2242,18 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
 
     @objc func backgroundColorSelected(_ selected: Bool, highlightAmount: CGFloat) -> NSColor {
         if selected {
+            if #available(macOS 27, *) {
+                // Measured from macOS 27 system tab bars: nearly white when
+                // active and a touch darker when inactive. Hovering over the
+                // selected tab doesn't change it.
+                let level: CGFloat = windowIsMainAndAppIsActive ? 254 : 246
+                return NSColor(displayP3Red: level / 255.0, green: level / 255.0, blue: level / 255.0, alpha: 1.0)
+            }
             return NSColor(white: 0.97, alpha: 1.0)
         } else {
+            if #available(macOS 27, *), highlightAmount > 0 {
+                return NSColor(displayP3Red: 220.0 / 255.0, green: 220.0 / 255.0, blue: 220.0 / 255.0, alpha: 1.0)
+            }
             if highlightAmount > 0 {
                 return NSColor(displayP3Red: 0.86, green: 0.86, blue: 0.86, alpha: 1.0)
             } else {
@@ -2708,6 +3044,9 @@ class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
     }
     
     override class var backgroundColor: NSColor {
+        if #available(macOS 27, *) {
+            return NSColor(displayP3Red: 64.0 / 255.0, green: 64.0 / 255.0, blue: 64.0 / 255.0, alpha: 1.0)
+        }
         return NSColor(displayP3Red: 0.17,
                        green:        0.18,
                        blue:         0.19,
@@ -2724,6 +3063,13 @@ class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
 
     override func backgroundColorSelected(_ selected: Bool, highlightAmount: CGFloat) -> NSColor {
         if selected {
+            if #available(macOS 27, *) {
+                // Measured from macOS 27 system tab bars, where the selected
+                // tab is darker than the bar behind it and darker still when
+                // the window is inactive. Hovering over it doesn't change it.
+                let level: CGFloat = windowIsMainAndAppIsActive ? 50 : 45
+                return NSColor(displayP3Red: level / 255.0, green: level / 255.0, blue: level / 255.0, alpha: 1.0)
+            }
             if tabBar?.window?.isMainWindow == true && NSApp.isActive {
                 return NSColor(displayP3Red:  98.0 / 255.0,
                                green:        100.0 / 255.0,
@@ -2735,6 +3081,9 @@ class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
                            blue:         87.0 / 255.0,
                            alpha:        1.0)
         } else {
+            if #available(macOS 27, *), highlightAmount > 0 {
+                return NSColor(displayP3Red: 75.0 / 255.0, green: 75.0 / 255.0, blue: 75.0 / 255.0, alpha: 1.0)
+            }
             if highlightAmount > 0 {
                 return NSColor(displayP3Red: 0.21,
                                green:        0.21,
@@ -2749,6 +3098,17 @@ class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
     override class func textColorDefaultSelected(_ selected: Bool,
                                                  backgroundColor: NSColor?,
                                                  windowIsMainAndAppIsActive mainAndActive: Bool) -> NSColor {
+        if #available(macOS 27, *) {
+            // Measured from macOS 27 system window tabs: only the selected
+            // title is bright in an active window.
+            let value: CGFloat = switch (mainAndActive, selected) {
+            case (true, true): 235
+            case (true, false): 105
+            case (false, true): 98
+            case (false, false): 113
+            }
+            return NSColor(displayP3Red: value / 255.0, green: value / 255.0, blue: value / 255.0, alpha: 1)
+        }
         if mainAndActive {
             if selected {
                 return NSColor(displayP3Red: 239.0 / 255.0,
@@ -2777,6 +3137,13 @@ class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
     }
     
     override func drawCellOutline(path: NSBezierPath, rect: NSRect) {
+        if #available(macOS 27, *) {
+            // These cap images are opaque and would hide the darker fill, so
+            // macOS 27 uses the base class's edge instead: the measured image
+            // for a standard-height tab, or modernEdge in code otherwise.
+            super.drawCellOutline(path: path, rect: rect)
+            return
+        }
         // Cap images must scale to the pill height so chrome matches the cell
         // when Default tab bar height changes (left/right tabs). A pill whose
         // corners are capped (see maximumCornerRadius) is a rounded rectangle:
@@ -2817,6 +3184,34 @@ class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
                   scaledHeight: scaledHeight)
     }
 
+    override var selectedTabEdgeImageStrip: PSMTahoeSelectedTabEdgeStrip? {
+        return windowIsMainAndAppIsActive ? .darkActive : .darkInactive
+    }
+
+    override var modernEdge: ModernEdge {
+        if windowIsMainAndAppIsActive {
+            // Glass: a bright line along the top and bottom. Around each
+            // rounded end it becomes a dark line, with a highlight just inside
+            // it that fades toward the vertical end. A glow fades in from both
+            // edges.
+            return ModernEdge(outer: .init(points: [(1, 76), (0.96, 85), (0.93, 62), (0.8, 60), (0.6, 58),
+                                                    (0.4, 57), (0.2, 56), (0, 56)],
+                                           bottom: 76,
+                                           straightTop: 113,
+                                           straightBottom: 112),
+                              innerHighlight: .init(points: [(1, 0.16), (0.96, 0.25), (0.9, 0.12), (0.85, 0.13), (0.77, 0.13), (0.68, 0.12),
+                                                             (0.6, 0.09), (0.51, 0.075), (0.43, 0.065), (0.3, 0.05),
+                                                             (0.17, 0.025), (0, 0.01)],
+                                                    bottom: 0.16,
+                                                    straightTop: 0.124,
+                                                    straightBottom: 0.114),
+                              glow: [(0.04, 0.059), (0.06, 0.044), (0.08, 0.034), (0.1, 0.025), (0.125, 0.02),
+                                     (0.15, 0.015), (0.19, 0.01), (0.23, 0.005), (0.29, 0)])
+        }
+        // An inactive window's tab has no outline at all.
+        return ModernEdge()
+    }
+
     private static let leftTabCap: NSImage = {
         Bundle(for: PSMTahoeTabStyle.self).image(forResource: "TahoeDarkLeftTab")!
     }()
@@ -2830,11 +3225,22 @@ class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
     }()
     
     override var dividerColor: NSColor {
-        NSColor(displayP3Red: 38.0 / 255.0, green: 38.0 / 255.0, blue: 38.0 / 255.0, alpha: 1.0)
+        if #available(macOS 27, *) {
+            return NSColor(displayP3Red: 87.0 / 255.0, green: 87.0 / 255.0, blue: 87.0 / 255.0, alpha: 1.0)
+        }
+        return NSColor(displayP3Red: 38.0 / 255.0, green: 38.0 / 255.0, blue: 38.0 / 255.0, alpha: 1.0)
     }
 
     override func useLightControls() -> Bool {
         return true
+    }
+
+    override var trackRimColor: NSColor? {
+        return NSColor(displayP3Red: 79.0 / 255.0, green: 79.0 / 255.0, blue: 79.0 / 255.0, alpha: 1.0)
+    }
+
+    override var trackRimEndColor: NSColor? {
+        return NSColor(displayP3Red: 75.0 / 255.0, green: 75.0 / 255.0, blue: 75.0 / 255.0, alpha: 1.0)
     }
 }
 
@@ -2899,6 +3305,18 @@ class PSMTahoeDarkHighContrastTabStyle: PSMTahoeDarkTabStyle {
     
     override func backgroundColorSelected(_ selected: Bool, highlightAmount: CGFloat) -> NSColor {
         if selected {
+            if #available(macOS 27, *) {
+                // macOS 27 draws the selected tab darker than the bar behind
+                // it. This bar is nearly black already, so the tab is black
+                // and lightens a little on hover.
+                if highlightAmount > 0 {
+                    return NSColor(displayP3Red: 10.0 / 255.0,
+                                   green:        12.0 / 255.0,
+                                   blue:         13.0 / 255.0,
+                                   alpha:        1.0)
+                }
+                return NSColor.black
+            }
             if tabBar?.window?.isMainWindow == true && NSApp.isActive {
                 return NSColor(displayP3Red: 198.0 / 255.0,
                                green:        200.0 / 255.0,
@@ -2954,7 +3372,26 @@ class PSMTahoeDarkHighContrastTabStyle: PSMTahoeDarkTabStyle {
     override func useLightControls() -> Bool {
         return true
     }
-    
+
+    // A dark edge would vanish against the black tab, so this edge is light
+    // all the way around, keeping the brighter top and bottom of the glass.
+    // High contrast wasn't measured, so it keeps the outline drawn in code.
+    override var selectedTabEdgeImageStrip: PSMTahoeSelectedTabEdgeStrip? {
+        return nil
+    }
+
+    override var modernEdge: ModernEdge {
+        if windowIsMainAndAppIsActive {
+            return ModernEdge(outer: .init(points: [(1, 180), (0.87, 140), (0.71, 125), (0.5, 110), (0, 90)],
+                                           bottom: 175),
+                              innerHighlight: .init(points: [(1, 0.3), (0.87, 0.22), (0.71, 0.16), (0.5, 0.09), (0, 0)],
+                                                    bottom: 0.27),
+                              glow: [(0.04, 0.09), (0.29, 0)])
+        }
+        return ModernEdge(outer: .init(points: [(1, 120), (0.87, 105), (0.71, 100), (0.5, 90), (0, 75)],
+                                       bottom: 120))
+    }
+
     override func textColor(for cell: PSMTabBarCell) -> NSColor {
         if anyTabHasColor() {
             return super.textColor(for: cell)
@@ -2982,6 +3419,20 @@ class PSMTahoeLightHighContrastTabStyle: PSMTahoeTabStyle {
     override func accessoryStrokeColor() -> NSColor {
         return NSColor.black
     }
+
+    // High contrast wasn't measured, so it keeps the outline drawn in code.
+    override var selectedTabEdgeImageStrip: PSMTahoeSelectedTabEdgeStrip? {
+        return nil
+    }
+
+    override var modernEdge: ModernEdge {
+        if windowIsMainAndAppIsActive {
+            return ModernEdge(outer: .init(points: [(1, 150), (0.87, 155), (0.71, 150), (0.5, 140), (0, 110)],
+                                           bottom: 145))
+        }
+        return ModernEdge(outer: .init(points: [(1, 140), (0.87, 148), (0.71, 150), (0.5, 142), (0, 120)],
+                                       bottom: 140))
+    }
     
     override class func textColorDefaultSelected(_ selected: Bool,
                                                  backgroundColor: NSColor?,
@@ -3005,6 +3456,119 @@ class PSMTahoeLightHighContrastTabStyle: PSMTahoeTabStyle {
             return CGFloat(override.doubleValue)
         }
         return 13.0
+    }
+}
+
+/// The parts of TahoeSelectedTabEdges, top to bottom, one per look of a
+/// selected tab.
+@available(macOS 26, *)
+enum PSMTahoeSelectedTabEdgeStrip: Int {
+    case darkActive
+    case darkInactive
+    case lightActive
+    case lightInactive
+
+    /// The height of the tab each part was measured from.
+    static let pillHeight = CGFloat(24)
+}
+
+/// The shape of one rounded end of a macOS 27 stadium (the tab bar's container
+/// or a selected tab), fitted to the system's own window tab bar. Neither is a
+/// semicircle: each runs close to the straight edge for a long way before
+/// meeting it.
+@available(macOS 26, *)
+struct PSMTahoeStadiumEnd {
+    /// Each knot is (height, inset): at `height` (0 at the end's middle, 1 at
+    /// the straight top or bottom edge) the edge is `inset` in from the end's
+    /// outermost point. Both are in units of half the stadium's height.
+    let knots: [(height: CGFloat, inset: CGFloat)]
+    private let tangents: [CGFloat]
+
+    static let selectedTab = PSMTahoeStadiumEnd(knots: [
+        (0, 0.0000), (0.2, 0.0223), (0.35, 0.0690), (0.5, 0.1371), (0.62, 0.2211),
+        (0.72, 0.3093), (0.8, 0.4101), (0.87, 0.5188), (0.895, 0.5754), (0.92, 0.6337),
+        (0.94, 0.7163), (0.96, 0.7862), (0.98, 0.9853), (1.0, 1.2876)
+    ])
+
+    static let bar = PSMTahoeStadiumEnd(knots: [
+        (0, 0.0000), (0.2, 0.0252), (0.35, 0.0683), (0.5, 0.1390), (0.62, 0.2254),
+        (0.72, 0.3060), (0.8, 0.4100), (0.87, 0.5169), (0.92, 0.6381), (0.96, 0.8000),
+        (0.985, 0.9124), (0.992, 0.9138), (0.997, 0.9626), (1.0, 1.2600)
+    ])
+
+    init(knots: [(height: CGFloat, inset: CGFloat)]) {
+        self.knots = knots
+        // Tangents for a monotone cubic through the knots (Fritsch-Carlson),
+        // so the end never bulges past them.
+        let count = knots.count
+        let slopes = (0..<(count - 1)).map { i in
+            (knots[i + 1].inset - knots[i].inset) / (knots[i + 1].height - knots[i].height)
+        }
+        var tangents = [CGFloat](repeating: 0, count: count)
+        tangents[0] = slopes[0]
+        tangents[count - 1] = slopes[count - 2]
+        for i in 1..<(count - 1) {
+            tangents[i] = slopes[i - 1] * slopes[i] <= 0 ? 0 : (slopes[i - 1] + slopes[i]) / 2
+        }
+        for i in 0..<(count - 1) where slopes[i] != 0 {
+            let a = tangents[i] / slopes[i]
+            let b = tangents[i + 1] / slopes[i]
+            let sum = a * a + b * b
+            if sum > 9 {
+                let scale = 3 / sum.squareRoot()
+                tangents[i] = scale * a * slopes[i]
+                tangents[i + 1] = scale * b * slopes[i]
+            }
+        }
+        self.tangents = tangents
+    }
+
+    /// How far the end reaches in from its outermost point, in units of half
+    /// the stadium's height.
+    var length: CGFloat { knots.last!.inset }
+
+    /// The end's inset at `height`, interpolated between the knots.
+    func inset(at height: CGFloat) -> CGFloat {
+        let h = min(max(height, 0), 1)
+        var i = 0
+        while i < knots.count - 2 && h > knots[i + 1].height {
+            i += 1
+        }
+        let span = knots[i + 1].height - knots[i].height
+        let u = (h - knots[i].height) / span
+        let u2 = u * u
+        let u3 = u2 * u
+        return (2 * u3 - 3 * u2 + 1) * knots[i].inset
+            + (u3 - 2 * u2 + u) * span * tangents[i]
+            + (-2 * u3 + 3 * u2) * knots[i + 1].inset
+            + (u3 - u2) * span * tangents[i + 1]
+    }
+
+    /// A stadium with these ends filling `rect`. A rect too narrow for both
+    /// full ends gets proportionally smaller ones.
+    func path(in rect: NSRect) -> NSBezierPath {
+        let halfHeight = rect.height / 2
+        let scale = min(halfHeight, rect.width / 2 / length)
+        let endLength = length * scale
+        let steps = 96
+        let path = NSBezierPath()
+        path.move(to: NSPoint(x: rect.minX + endLength, y: rect.minY))
+        path.line(to: NSPoint(x: rect.maxX - endLength, y: rect.minY))
+        // Down the right end, from the top edge to the bottom edge.
+        for i in 0...steps {
+            let y = -1 + 2 * CGFloat(i) / CGFloat(steps)
+            path.line(to: NSPoint(x: rect.maxX - inset(at: abs(y)) * scale,
+                                  y: rect.midY + y * halfHeight))
+        }
+        path.line(to: NSPoint(x: rect.minX + endLength, y: rect.maxY))
+        // Up the left end.
+        for i in 0...steps {
+            let y = 1 - 2 * CGFloat(i) / CGFloat(steps)
+            path.line(to: NSPoint(x: rect.minX + inset(at: abs(y)) * scale,
+                                  y: rect.midY + y * halfHeight))
+        }
+        path.close()
+        return path
     }
 }
 

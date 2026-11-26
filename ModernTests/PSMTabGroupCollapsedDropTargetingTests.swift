@@ -18,6 +18,21 @@
 import XCTest
 @testable import iTerm2SharedARC
 
+// The Tahoe style's leading margin before macOS 27: 2pt past the bar's left
+// inset. On macOS 27 tabs line up with the bar's rounded track, which ignores
+// the insets. Tests that lay out cells by hand from x = 0, or that move the
+// tabs with the left inset, use this.
+@available(macOS 26, *)
+final class InsetFollowingTahoeTabStyle: PSMTahoeTabStyle {
+    override func leftMarginForTabBarControl() -> Float {
+        return Float(tabBar?.insets.left ?? 0) + 2
+    }
+
+    override func leftMarginFollowsInsets() -> Bool {
+        return true
+    }
+}
+
 final class PSMTabGroupCollapsedDropTargetingTests: XCTestCase {
     private var window: NSWindow!
     private var control: PSMTabBarControl!
@@ -30,6 +45,11 @@ final class PSMTabGroupCollapsedDropTargetingTests: XCTestCase {
                           styleMask: [.titled], backing: .buffered, defer: false)
         window.contentView?.wantsLayer = true
         control = PSMTabBarControl(frame: NSRect(x: 0, y: 376, width: 800, height: 24))
+        if #available(macOS 26, *) {
+            let style = InsetFollowingTahoeTabStyle()
+            control.style = style
+            style.tabBar = control
+        }
         window.contentView?.addSubview(control)
         assistant = PSMTabDragAssistant.shared()
     }

@@ -31,6 +31,13 @@ final class PSMTabBarMinimumCellAreaTests: XCTestCase {
         // reach the width calculation at all, and every assertion below passes
         // vacuously against a bar that thinks it has the whole 900pt.
         control.style.tabBar = control
+        if #available(macOS 26, *) {
+            // These tests move the tabs with the left inset, and on macOS 27
+            // the default Tahoe style lines tabs up with its track instead.
+            let style = InsetFollowingTahoeTabStyle()
+            control.style = style
+            style.tabBar = control
+        }
         control.cellMinWidth = 60
         // Uneven and optimum sizing are deliberately unrepresented in the
         // minimum, because neither can overflow a bar that fits minimally.
@@ -132,6 +139,26 @@ final class PSMTabBarMinimumCellAreaTests: XCTestCase {
         let narrowest = widths.min() ?? 0
         XCTAssertLessThan(narrowest, CGFloat(control.cellMinWidth),
                           "every tab still got its minimum past the predicted limit, so the prediction is too conservative")
+    }
+
+    // On macOS 27 the default Tahoe style lines tabs up with its track, so the
+    // left inset never moves them. Only the margin before the first tab is free
+    // for something else, however much room the cells have.
+    func testInsetIgnoringStyleOffersOnlyItsLeftMargin() throws {
+        guard #available(macOS 27, *) else {
+            throw XCTSkip("Tahoe ignores the left inset only on macOS 27")
+        }
+        let style = PSMTahoeTabStyle()
+        control.style = style
+        style.tabBar = control
+        addTabCells(2)
+        XCTAssertFalse(style.leftMarginFollowsInsets())
+        let margin = CGFloat(style.leftMarginForTabBarControl())
+        XCTAssertEqual(control.maximumLeftInsetFittingAllCellsMinimally(forWidth: barWidth), margin)
+        XCTAssertEqual(control.maximumLeftInsetLeavingTabsUsable(forWidth: barWidth), margin)
+        // The answer doesn't depend on whatever inset the bar has now.
+        control.insets = NSEdgeInsets(top: 0, left: 40, bottom: 0, right: 0)
+        XCTAssertEqual(control.maximumLeftInsetFittingAllCellsMinimally(forWidth: barWidth), margin)
     }
 
     // Intercell spacing is charged per gap, not per cell; a prediction that got

@@ -43,6 +43,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSRect)indicatorRectForTabCell:(PSMTabBarCell *)cell;
 - (NSRect)progressBarRectForTabCell:(PSMTabBarCell *)cell;
 @optional
+// NO if -leftMarginForTabBarControl ignores the bar's left inset, so changing
+// the inset never moves the tabs. Without it the margin is assumed to grow with
+// the inset.
+- (BOOL)leftMarginFollowsInsets;
 - (nullable NSBezierPath *)progressBarClipPathForTabCell:(PSMTabBarCell *)cell;
 // The path to stroke, `lineWidth` wide, to mark the tab a tab switcher has highlighted. It should
 // follow the shape this style gives tabs and stay inside the cell. Without it the bar strokes the

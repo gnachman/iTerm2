@@ -3690,20 +3690,32 @@ typedef struct {
 }
 
 - (CGFloat)maximumLeftInsetFittingAllCellsMinimallyForWidth:(CGFloat)width {
+    return [self maximumLeftInsetLeavingCellArea:[self minimumCellAreaWidth] forWidth:width];
+}
+
+// The largest insets.left that leaves `cellArea` for the cells.
+- (CGFloat)maximumLeftInsetLeavingCellArea:(CGFloat)cellArea forWidth:(CGFloat)width {
+    const CGFloat leftMargin = [_style leftMarginForTabBarControl];
+    if ([_style respondsToSelector:@selector(leftMarginFollowsInsets)] && ![_style leftMarginFollowsInsets]) {
+        // The inset doesn't move the tabs (Tahoe on macOS 27 lines them up with
+        // its track instead), so the only room that never overlaps them is the
+        // margin before the first one.
+        return leftMargin;
+    }
     // -availableCellWidthWithOverflow: is frame width less both margins, so the
     // largest inset that still fits is whatever remains once the margins and the
-    // cells' own minimum are taken out. Asking for the no-overflow right margin
-    // is the point: this answers whether the bar fits *without* degrading.
+    // cells' area are taken out. Asking for the no-overflow right margin is the
+    // point: this answers whether the bar fits *without* degrading.
     //
     // The left margin is not simply insets.left: Yosemite returns it unchanged
-    // but Tahoe returns it plus 2. Subtracting self.insets.left leaves only that
-    // per-style constant, which is what a caller about to choose a new inset
-    // needs. Do not simplify either half away -- alone, one reads a stale inset
-    // and the other silently drops the style's own padding.
-    const CGFloat stylePadding = [_style leftMarginForTabBarControl] - self.insets.left;
+    // but Tahoe before macOS 27 returns it plus 2. Subtracting self.insets.left
+    // leaves only that per-style constant, which is what a caller about to
+    // choose a new inset needs. Do not simplify either half away -- alone, one
+    // reads a stale inset and the other silently drops the style's own padding.
+    const CGFloat stylePadding = leftMargin - self.insets.left;
     const CGFloat rightMargin = [_style rightMarginForTabBarControlWithOverflow:NO
                                                                    addTabButton:self.showAddTabButton];
-    return width - stylePadding - rightMargin - [self minimumCellAreaWidth];
+    return width - stylePadding - rightMargin - cellArea;
 }
 
 // What the bar must keep of its cell area to stay usable. A scrollable bar does
@@ -3723,10 +3735,7 @@ typedef struct {
 }
 
 - (CGFloat)maximumLeftInsetLeavingTabsUsableForWidth:(CGFloat)width {
-    const CGFloat stylePadding = [_style leftMarginForTabBarControl] - self.insets.left;
-    const CGFloat rightMargin = [_style rightMarginForTabBarControlWithOverflow:NO
-                                                                   addTabButton:self.showAddTabButton];
-    return width - stylePadding - rightMargin - [self minimumUsableCellAreaWidth];
+    return [self maximumLeftInsetLeavingCellArea:[self minimumUsableCellAreaWidth] forWidth:width];
 }
 
 - (NSArray<NSNumber *> *)cellWidthsForHorizontalArrangementWithOverflow:(BOOL)withOverflow {

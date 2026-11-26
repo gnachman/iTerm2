@@ -132,6 +132,12 @@ Improvements:
   5.2. GPT-6.2 Astra is now the recommended
   OpenAI model and Gemini 4 Neon the
   recommended Gemini model.
+- On macOS 27 the tab bar matches the system’s
+  own window tabs, as in Terminal: the selected
+  tab is darker than the bar in dark mode and
+  lighter in light mode, with the same glassy
+  edge and rounded ends, and the first and last
+  tabs sit evenly inside the bar.
 
 Bug Fixes:
 - With tabs on the left or right, clicking a
