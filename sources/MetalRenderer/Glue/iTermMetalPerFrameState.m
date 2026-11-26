@@ -1441,6 +1441,14 @@ NS_INLINE void iTermGlyphKeyEmitImage(const screen_char_t *const line,
             imageRuns.lastObject.length = imageRuns.lastObject.length + 1;
             previousImageCoordPtr->x++;
         } else {
+            DLog(@"Metal: new image run at logicalIndex=%d row=%d: code=%d pos=(%d,%d); previous run code=%d expected next pos=(%d,%d)",
+                 logicalIndex, row,
+                 (int)line[logicalIndex].code,
+                 (int)line[logicalIndex].foregroundColor,
+                 (int)line[logicalIndex].backgroundColor,
+                 *previousImageCodePtr,
+                 (previousImageCoordPtr->x + 1) & 0xff,
+                 previousImageCoordPtr->y);
             *previousImageCodePtr = line[logicalIndex].code;
             iTermMetalImageRun *run = [[iTermMetalImageRun alloc] init];
             *previousImageCoordPtr = GetPositionOfImageInChar(line[logicalIndex]);
@@ -1739,7 +1747,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     BOOL haveEmittedAttributedString = NO;
     NSCharacterSet *blockCharacterSet = [iTermBoxDrawingBezierCurveFactory blockDrawingCharacters];
     int previousImageCode = -1;
-    VT100GridCoord previousImageCoord;
+    VT100GridCoord previousImageCoord = VT100GridCoordMake(-1, -1);
     int lastDrawableGlyph = -1;
 
     iTermKittyUnicodePlaceholderState kittyPlaceholderState;

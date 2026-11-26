@@ -13,7 +13,10 @@
 #import "NSArray+iTerm.h"
 #import "NSImage+iTerm.h"
 
+// The image info exists but its image isn't decoded yet (gray placeholder).
 static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTermImageRendererTextureMetadataKeyImageMissing";
+// The code had no image info (brown placeholder).
+static NSString *const iTermImageRendererTextureMetadataKeyImageInfoMissing = @"iTermImageRendererTextureMetadataKeyImageInfoMissing";
 
 @implementation iTermMetalImageRun
 
@@ -97,10 +100,29 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
     [_runs addObject:imageRun];
     id key = [self keyForRun:imageRun colorSpace:self.configuration.colorSpace];
     id<MTLTexture> texture = _textures[key];
+    NSDictionary *metadata = [iTermTexture metadataForTexture:texture];
+    DLog(@"addRun code=%@ screen=%@ absLine=%@ inImage=%@ length=%@ imageInfo=%@ cachedTexture=%@ cachedIsMissingPlaceholder=%@ cachedIsNoInfoPlaceholder=%@",
+         @(imageRun.code),
+         VT100GridCoordDescription(imageRun.startingCoordOnScreen),
+         @(imageRun.startingCoordOnScreen.y + _firstVisibleAbsoluteLineNumber),
+         VT100GridCoordDescription(imageRun.startingCoordInImage),
+         @(imageRun.length),
+         imageRun.imageInfo,
+         texture,
+         metadata[iTermImageRendererTextureMetadataKeyImageMissing],
+         metadata[iTermImageRendererTextureMetadataKeyImageInfoMissing]);
 
     // Check if the image got loaded asynchronously. This happens when decoding an image takes a while.
-    if ([iTermTexture metadataForTexture:texture][iTermImageRendererTextureMetadataKeyImageMissing] &&
+    if (metadata[iTermImageRendererTextureMetadataKeyImageMissing] &&
         imageRun.imageInfo.ready) {
+        [_textures removeObjectForKey:key];
+    }
+    // The texture was made while the code had no image info, and now it has one. The texture
+    // stays cached for as long as the code is on screen, so without this the image would never
+    // replace the placeholder.
+    if (metadata[iTermImageRendererTextureMetadataKeyImageInfoMissing] &&
+        imageRun.imageInfo) {
+        DLog(@"Replace no-info placeholder for code %@ now that it has image info", @(imageRun.code));
         [_textures removeObjectForKey:key];
     }
 
@@ -127,10 +149,13 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
     cellSize.height /= scale;
     NSImage *image = [run.imageInfo imageWithCellSize:cellSize timestamp:_timestamp scale:scale];
     BOOL missing = NO;
+    BOOL infoMissing = NO;
     if (!image) {
-        DLog(@"Failed to get image. Use placeholder");
+        DLog(@"Failed to get image for code %@ (imageInfo=%@). Use %@ placeholder",
+             @(run.code), run.imageInfo, run.imageInfo ? @"gray" : @"brown");
         if (!run.imageInfo) {
             image = [NSImage imageOfSize:CGSizeMake(1, 1) color:[NSColor brownColor]];
+            infoMissing = YES;
         } else {
             image = [NSImage imageOfSize:CGSizeMake(1, 1) color:[NSColor grayColor]];
             missing = YES;
@@ -152,6 +177,9 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
                                                   colorSpace:self.configuration.colorSpace];
     if (missing) {
         [iTermTexture setMetadataObject:@YES forKey:iTermImageRendererTextureMetadataKeyImageMissing onTexture:texture];
+    }
+    if (infoMissing) {
+        [iTermTexture setMetadataObject:@YES forKey:iTermImageRendererTextureMetadataKeyImageInfoMissing onTexture:texture];
     }
     return texture;
 }

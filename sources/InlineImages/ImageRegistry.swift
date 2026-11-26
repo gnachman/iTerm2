@@ -101,6 +101,11 @@ class ImageRegistry: NSObject {
     @objc(assignCode:toImageInfo:)
     func assign(code: Int, imageInfo: iTermImageInfo) {
         mutex.sync {
+            if let existing = codeToImage[code] {
+                DLog("ImageRegistry: code \(code) reassigned from \(existing) to \(imageInfo)")
+            } else {
+                DLog("ImageRegistry: assign code \(code) to \(imageInfo)")
+            }
             codeToImage[code] = imageInfo
             ScreenCharGeneration.counter.advance()
         }

@@ -278,3 +278,8 @@ Bug Fixes:
   they got the column the mouse was in, so
   selecting Persian text selected something
   else. Thanks to Nimanou (nuved) for the fix.
+- With the GPU renderer, part of an inline
+  image, such as the blue line in the
+  “Session Restarted” banner, could stay a
+  brown block after the image became
+  available.
