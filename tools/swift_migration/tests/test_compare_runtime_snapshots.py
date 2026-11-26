@@ -264,5 +264,162 @@ class FailingPairTest(unittest.TestCase):
         self.assertIn('NO VERDICT for these classes:\n  class RuntimeSnapshotPortObjCFixture changed language from swift to objc', report)
 
 
+SYSTEM_DUPLICATES = os.path.join(HERE, 'fixtures', 'runtime_snapshot_system_duplicates')
+IGNORED_HEADING = 'Duplicates present in both snapshots, not from this app: ignored'
+ENCODE_SYSTEM = '  instance-method -encodeWithCoder: types=v24@0:8@16 image=Foundation\n'
+ENCODE_OWN = '  instance-method -encodeWithCoder: types=v24@0:8@16\n'
+ENCODE_DUP = '  DUPLICATE instance-method -encodeWithCoder: count=2\n'
+HEADER = ('# Objective-C runtime snapshot, format 3\narchitecture arm64\n'
+          'build-configuration Development\nbuild-variant ASan\n')
+
+
+def minimal_section(name, image, *members):
+    body = ['language objc', 'superclass NSObject', 'image ' + image, 'ivar-arc-flag unknown',
+            'strong-ivar-layout', 'weak-ivar-layout'] + list(members)
+    return 'class %s\n' % name + ''.join('  %s\n' % line for line in body) + 'end class %s\n' % name
+
+
+class SystemDuplicatesTest(unittest.TestCase):
+    """A duplicate fails only when it is new or changed between the snapshots
+    or has an entry from the app's own image (the owner, 2026-11-25:
+    “Yes, of course”). The real pair is NSLocale's snapshot from a parked
+    port, whose method list holds -initWithCoder: and -encodeWithCoder:
+    twice (once image=Foundation, once in the class's own image,
+    CoreFoundation), byte-identical before and after."""
+
+    def setUp(self):
+        self.scratch = tempfile.TemporaryDirectory()
+        with open(os.path.join(SYSTEM_DUPLICATES, 'before.txt')) as f:
+            self.real = f.read()
+
+    def tearDown(self):
+        self.scratch.cleanup()
+
+    def run_pair(self, before, after):
+        paths = []
+        for label, text in (('before', before), ('after', after)):
+            path = os.path.join(self.scratch.name, label + '.txt')
+            with open(path, 'w') as f:
+                f.write(text)
+            paths.append(path)
+        return compare(None, before=paths[0], after=paths[1])
+
+    def test_real_pair_passes_and_reports_the_ignored_duplicates(self):
+        status, report, error = compare(None, before=os.path.join(SYSTEM_DUPLICATES, 'before.txt'),
+                                        after=os.path.join(SYSTEM_DUPLICATES, 'after.txt'))
+        self.assertEqual(status, 0, report + error)
+        self.assertIn('PASS: the snapshots match.', report)
+        self.assertNotIn('DUPLICATES (', report)
+        ignored = section(report, IGNORED_HEADING)
+        self.assertIn('class NSLocale: DUPLICATE instance-method -encodeWithCoder: count=2', ignored)
+        self.assertIn('class NSLocale: DUPLICATE instance-method -initWithCoder: count=2', ignored)
+        self.assertIn('images CoreFoundation, Foundation', ignored)
+
+    def test_self_comparison_passes(self):
+        status, report, _ = self.run_pair(self.real, self.real)
+        self.assertEqual(status, 0, report)
+
+    def test_duplicate_only_in_after_fails(self):
+        before = self.real.replace(ENCODE_DUP, '').replace(ENCODE_OWN, '')
+        status, report, _ = self.run_pair(before, self.real)
+        self.assertEqual(status, 1, report)
+        self.assertIn('after: class NSLocale: DUPLICATE instance-method -encodeWithCoder: count=2',
+                      section(report, 'DUPLICATES ('))
+        self.assertNotIn('before: class NSLocale: DUPLICATE instance-method -encodeWithCoder:', report)
+        # The other, unchanged duplicate is still only reported.
+        self.assertIn('-initWithCoder:', section(report, IGNORED_HEADING))
+
+    def test_duplicate_only_in_before_fails(self):
+        after = self.real.replace(ENCODE_DUP, '').replace(ENCODE_OWN, '')
+        status, report, _ = self.run_pair(self.real, after)
+        self.assertEqual(status, 1, report)
+        self.assertIn('before: class NSLocale: DUPLICATE instance-method -encodeWithCoder: count=2',
+                      section(report, 'DUPLICATES ('))
+
+    def test_count_change_fails(self):
+        after = self.real.replace(ENCODE_DUP, ENCODE_DUP.replace('count=2', 'count=3')).replace(
+            ENCODE_OWN, ENCODE_OWN + '  instance-method -encodeWithCoder: types=v24@0:8@16 image=Translation\n')
+        status, report, _ = self.run_pair(self.real, after)
+        self.assertEqual(status, 1, report)
+        duplicates = section(report, 'DUPLICATES (')
+        self.assertIn('before: class NSLocale: DUPLICATE instance-method -encodeWithCoder: count=2', duplicates)
+        self.assertIn('after: class NSLocale: DUPLICATE instance-method -encodeWithCoder: count=3', duplicates)
+
+    def test_changed_image_fails(self):
+        after = self.real.replace(ENCODE_SYSTEM, ENCODE_SYSTEM.replace('Foundation', 'Translation'))
+        status, report, _ = self.run_pair(self.real, after)
+        self.assertEqual(status, 1, report)
+        self.assertIn('DUPLICATE instance-method -encodeWithCoder: count=2', section(report, 'DUPLICATES ('))
+
+    def test_app_image_entry_identical_in_both_still_fails(self):
+        # A category of the app colliding with a system method: identical in
+        # both snapshots, but one entry is the app's own code.
+        own = self.real.replace(ENCODE_SYSTEM, ENCODE_SYSTEM.replace('image=Foundation', 'image=iTerm2.debug.dylib'))
+        status, report, _ = self.run_pair(own, own)
+        self.assertEqual(status, 1, report)
+        duplicates = section(report, 'DUPLICATES (')
+        self.assertIn('before: class NSLocale: DUPLICATE instance-method -encodeWithCoder: count=2', duplicates)
+        self.assertIn('after: class NSLocale: DUPLICATE instance-method -encodeWithCoder: count=2', duplicates)
+        self.assertNotIn('-encodeWithCoder:', section(report, IGNORED_HEADING))
+
+    def test_app_class_duplicate_identical_in_both_still_fails(self):
+        # A port that defines a method twice: the entries carry no image=, so
+        # they are in the class's own image, the app's.
+        for image in ['iTerm2.debug.dylib', 'iTerm2', 'ModernTests', 'BetterFontPicker']:
+            text = HEADER + minimal_section('C', image, 'DUPLICATE instance-method -foo count=2',
+                                            'instance-method -foo types=v16@0:8',
+                                            'instance-method -foo types=v16@0:8')
+            status, report, _ = self.run_pair(text, text)
+            self.assertEqual(status, 1, image + '\n' + report)
+            self.assertIn('before: class C: DUPLICATE instance-method -foo count=2', section(report, 'DUPLICATES ('))
+
+    def test_entry_in_no_binary_is_treated_as_the_apps(self):
+        text = HEADER + minimal_section('C', 'Foundation', 'DUPLICATE instance-method -foo count=2',
+                                        'instance-method -foo types=v16@0:8',
+                                        'instance-method -foo types=v16@0:8 image=')
+        status, report, _ = self.run_pair(text, text)
+        self.assertEqual(status, 1, report)
+
+    def test_system_class_duplicate_identical_in_both_passes(self):
+        text = HEADER + minimal_section('C', 'Foundation', 'DUPLICATE class-method +foo count=2',
+                                        'class-method +foo types=v16@0:8',
+                                        'class-method +foo types=v16@0:8 image=AppKit')
+        status, report, _ = self.run_pair(text, text)
+        self.assertEqual(status, 0, report)
+        self.assertIn('class C: DUPLICATE class-method +foo count=2', section(report, IGNORED_HEADING))
+
+    def test_undeclared_repeat_still_fails(self):
+        # A repeated method with no DUPLICATE line is a malformed snapshot.
+        text = HEADER + minimal_section('C', 'Foundation', 'instance-method -foo types=v16@0:8',
+                                        'instance-method -foo types=v16@0:8 image=AppKit')
+        status, report, _ = self.run_pair(text, text)
+        self.assertEqual(status, 1, report)
+        self.assertIn('appears 2 times with no DUPLICATE line', section(report, 'DUPLICATES ('))
+
+    PROPERTY_A = 'instance-property p type=@"NSString" ownership=copy nonatomic ivar= raw=T@"NSString",C,N'
+    PROPERTY_B = 'instance-property p type=@"NSString" ownership=strong nonatomic ivar= raw=T@"NSString",&,N'
+
+    def test_property_duplicate_in_system_class_identical_in_both_passes(self):
+        text = HEADER + minimal_section('C', 'Foundation', 'DUPLICATE instance-property p count=2',
+                                        self.PROPERTY_A, self.PROPERTY_B)
+        status, report, _ = self.run_pair(text, text)
+        self.assertEqual(status, 0, report)
+        self.assertIn('class C: DUPLICATE instance-property p count=2', section(report, IGNORED_HEADING))
+
+    def test_property_duplicate_only_in_after_fails(self):
+        before = HEADER + minimal_section('C', 'Foundation', self.PROPERTY_A)
+        after = HEADER + minimal_section('C', 'Foundation', 'DUPLICATE instance-property p count=2',
+                                         self.PROPERTY_A, self.PROPERTY_B)
+        status, report, _ = self.run_pair(before, after)
+        self.assertEqual(status, 1, report)
+        self.assertIn('after: class C: DUPLICATE instance-property p count=2', section(report, 'DUPLICATES ('))
+
+    def test_property_duplicate_in_app_class_identical_in_both_fails(self):
+        text = HEADER + minimal_section('C', 'iTerm2.debug.dylib', 'DUPLICATE instance-property p count=2',
+                                        self.PROPERTY_A, self.PROPERTY_B)
+        status, report, _ = self.run_pair(text, text)
+        self.assertEqual(status, 1, report)
+
+
 if __name__ == '__main__':
     unittest.main()

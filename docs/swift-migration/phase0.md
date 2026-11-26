@@ -479,7 +479,14 @@ legitimately appear more than once in a class's property list: the compiler
 emits the `NSObject` protocol's properties once for each category or
 extension that adopts a protocol derived from it. Repeated properties are
 duplicates only when their attributes differ. A snapshot marks each
-duplicate, and a comparison involving it fails.
+duplicate, and a comparison involving it fails if the duplicate is new or
+changed between the snapshots (count, encodings or images) or has an entry
+in the app's own image (the app, the test bundle, an embedded framework, or
+no binary); one identical in both snapshots with every entry in a system
+image is listed under “Duplicates present in both snapshots, not from this
+app: ignored” and does not fail. The owner, 2026-11-25, asked “may the
+comparison ignore a duplicate that is present identically in both
+snapshots and isn't in the unit's own code?”, answered “Yes, of course”.
 
 **What a snapshot reflects.** A snapshot records the process as it is when
 the snapshot is taken, including methods and classes that system frameworks
@@ -496,8 +503,8 @@ otherwise.
 <after>` compares two snapshots. Its report has these sections, each only
 when it has entries: NO VERDICT (classes it gives no verdict for, with the
 reason), ERRORS, DUPLICATES, DIFFERENCES, UNCLASSIFIED DIFFERENCES
-(differences in the classes that get no verdict, for a person to check), and
-allowed differences. A last line says PASS, FAIL, or ERROR, and a pass also
+(differences in the classes that get no verdict, for a person to check),
+allowed differences, and the duplicates ignored as above. A last line says PASS, FAIL, or ERROR, and a pass also
 lists what the comparison does not cover. Exit status:
 
 - 0: the snapshots match, apart from the expected differences allow-listed

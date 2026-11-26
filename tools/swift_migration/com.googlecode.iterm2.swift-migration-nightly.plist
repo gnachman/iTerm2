@@ -25,7 +25,7 @@
   always exists; NIGHTLY_LAUNCHD_LOG repeats its path so that the script
   can print it. __ONE_UNIT_DATE__ is NIGHTLY_ONE_UNIT_DATE: replace it with
   nothing for an ordinary schedule, or with a local date YYYY-MM-DD to make
-  that one night a one-unit night (see step 7 in the script's header); it
+  that one night an "at least one unit" night (see step 7 in the script's header); it
   has no effect on any other night. Left unreplaced it is refused.
 -->
 <plist version="1.0">

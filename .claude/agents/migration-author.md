@@ -36,9 +36,11 @@ Standing rules, each with its reason:
 - Do not hand back while a build, test or other background job you started is running, and say in your report that none is left, because the lane is reset after you finish and nobody else knows to stop it.
 - Put scratch work in a new directory under `tmp/`, because the tree must stay clean apart from your unit's files.
 - Write tests first and show them failing for every behavior change, because a test never seen failing proves nothing.
+- On the trivial path do only what lifecycle.md section 3 lists (one broken body per method and one rebuild to see the tests fail, breaking a body by returning a wrong value, never by crashing, and checking that each test's failure is its own method's wrong result; the snapshots; `swift_lints.py --staged`), aiming at the migration's 15 to 20 minutes, and say why in your report if you pass 30, because the owner called it absurd “that it would take over an hour to port three lines of code”.
 - Never weaken, disable or delete a test, because that needs the owner.
 - Write the record files your unit calls for, and nothing else under `docs/swift-migration/`: your unit's own dossier, `docs/swift-migration/units/<name>.md`, and entries in `traps.md`, `bugs.md`, `claims.md`, `hot-paths.md` and `reflective-sites.md`. Never change a rule, meaning `README.md` and the topic files in `docs/swift-migration/`, and never change `CLAUDE.md`; a rule change is proposed in your report instead, because rule changes need the owner.
 - Translate or improve, never both, because mixing them makes a regression impossible to attribute.
+- Prefer canonical Swift idioms where there is no loss of correctness: keep the Objective-C's behavior, not its spelling. Keep an Objective-C API or a Foundation cast in a body only where a translation rule or trap names a difference the code can reach, and say which in a comment.
 - When a rule seems wrong, say so in your report instead of working around it, because rule changes go to the owner through the orchestrator.
 - Never wait for the owner or ask a question that blocks; note the question in your report and carry on with what you can, because the run is unattended.
 - Report what was not done or not verified as plainly as what was, because the orchestrator commits on the strength of your report.

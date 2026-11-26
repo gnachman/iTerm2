@@ -1385,6 +1385,8 @@ patch is.
 A rule in the process files that an agent believes is wrong or missing, with
 the evidence. Nothing changes until the owner agrees.
 
+None.
+
 ## Hot paths
 
 Requests to start work on a deferred hot path, each with its plan and
@@ -1401,6 +1403,43 @@ ports.
 None.
 
 ## Answered
+
+### R7. Duplicate selectors that belong to Apple, not to the unit
+
+- **Added:** 2026-11-25, by the nightly orchestrator, with unit
+  `NSLocale(iTerm)` (trivial path).
+- **What:** phase0.md section 9 (“A snapshot marks each duplicate, and a
+  comparison involving it fails”) and lifecycle.md section 3 (the trivial
+  path: “`compare_runtime_snapshots.sh` passes”) make every category on a
+  system class whose own method list has a duplicate unportable.
+  `NSLocale`'s method list holds `-initWithCoder:` and `-encodeWithCoder:`
+  twice: once with `image=Foundation` and once with no image recorded. The
+  duplicates are Apple's, in every snapshot of the class, whatever iTerm2
+  does: comparing the before snapshot with itself fails the same way.
+  The `NSLocale(iTerm)` port left the snapshot byte-identical (`diff`
+  exit 0). Its only method, `-commasAndPeriodsGoInsideQuotationMarks`, has
+  `image=iTerm2.debug.dylib` in both.
+- **Proposed:** a duplicate stops failing the comparison when two things
+  hold: no implementation of the selector is in an iTerm2 image, and the
+  same duplicate line is in both snapshots. Such a duplicate is listed as
+  information. A duplicate with an implementation in an iTerm2 image, or
+  one that appears or changes across the port, still fails. That is a
+  change to phase0.md section 9, `compare_runtime_snapshots.sh` and
+  `ModernTests/RuntimeSnapshotComparison.swift`, made in a `tool` commit
+  through the loop.
+- **Meanwhile:** the `NSLocale(iTerm)` port is parked. Its saved patch and
+  its state are in claims.md. Apart from this comparison, it is done. Its
+  one review had no blocking findings, and its one non-blocking finding was
+  fixed. It passed the trivial path's gate: the build, and 164 targeted
+  tests with 0 failures. If you agree, run the comparison again under the
+  new rule, then commit the patch as it stands. Other categories on system
+  classes with such duplicates will hit the same failure.
+- **Answer:** 2026-11-25, to “may the comparison ignore a duplicate that is
+  present identically in both snapshots and isn't in the unit's own
+  code?”: “Yes, of course. It is absurd to stop on something like this,
+  and it is absurd that it would take over an hour to port three lines of
+  code.” Done in the `tool` commit `tool-defects-2026-11-25`
+  (phase0.md section 9); the real `NSLocale` pair now passes.
 
 ### Q14. vm1 does not accept this Mac's ssh key
 - **Added:** 2026-11-19.

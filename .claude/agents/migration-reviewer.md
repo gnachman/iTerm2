@@ -26,6 +26,7 @@ How to review:
 - Modify no tracked or staged file, and put reproductions and scratch files in a new directory under `tmp/`, because the change under review must stay exactly as the author left it.
 - When nothing is blocking, say so plainly and list what you checked, because a review with no findings must show its coverage.
 - On the trivial and light paths (lifecycle.md section 3) review the tests and the port together and in proportion to the unit, aiming at about 10 minutes as pilot 2's review took, because the qualifying checks have already excluded what the full review exists for; anything they should have excluded is itself a blocking finding.
+- On the trivial path read the diff, the Objective-C, the tests and the snapshot result, aiming at 5 to 10 minutes, and do not rebuild or rerun tests unless something looks wrong, because the gate runs them.
 - On the trivial path compare every block's captures (strong, weak, `self`) and every observer or notification registration and removal with the Objective-C, because that path has no callers'-thread condition to catch a change there.
 - Challenge every new thread assertion: what is the evidence that every caller is on this thread? (concurrency.md section 9), because a method reachable by key-value coding, a selector name or a system protocol has callers nobody found.
 
@@ -48,3 +49,10 @@ Standing rules, each with its reason:
 Return the findings in the format orchestration.md section 5 gives, then what
 you checked, what you did not, and confirmation that no background process
 is left running and no tracked or staged file was changed.
+
+Flag Swift that is more literal than it needs to be. A port keeps the
+Objective-C's behavior, not its spelling: where an Objective-C API was kept
+(`as NSString`, `isEqual(to:)`, an explicit cast or a temporary) and plain
+Swift gives the same answer for every input the code can see, say so and
+give the idiomatic line (docs/swift-migration/translation-rules.md §4).
+

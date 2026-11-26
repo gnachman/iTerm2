@@ -20,9 +20,14 @@ Do these every time a session begins, before anything else.
    not parse, write the report (section 8) and stop.
    `python3 tools/swift_migration/usage_check.py --run` does this reading
    and computation; its exit status is 0 when work may start, 1 at or above
-   the cap, and 2 when usage is unknown. On a one-unit night
-   ([workflow.md §4](workflow.md)) the prompt says so, and exit status 1 is
-   not a reason to stop; exit status 2 still is.
+   the cap, and 2 when usage is unknown. On an "at least one
+   unit" night ([workflow.md §4](workflow.md)) the prompt says so: started
+   at or over the cap, it does exactly one unit and exit status 1 is not a
+   reason to stop; started under it, exit status 1 is not a reason to stop
+   until one unit has landed: with no unit started yet, take one; with
+   units in progress, start none, carry the one nearest to landing to its
+   commits (not parking it for the cap) and save the others; then stop.
+   Exit status 2 still stops.
 3. Look at the working tree: `git status`. It should be clean apart from
    files the owner leaves untracked. If there are uncommitted migration
    changes, an earlier run stopped badly: read `claims.md`, save the changes
@@ -56,8 +61,26 @@ Do these every time a session begins, before anything else.
      fetched (the build may fail).
 
    If upstream commits were taken, or a rebase or reset happened, new code
-   arrived. Before starting any unit, bring what is derived from the code
-   up to date, in this order. Everything named here lives inside the
+   arrived. Bring what is derived from the code up to date, in this
+   order, in the background: none of it delays the first unit (on the
+   owner's words of 2026-11-25, [workflow.md §2](workflow.md)). Start
+   steps 1 to 3 and the baseline (step 6), then start the first trivial
+   units at once, unless units are landed, closing checks pending: their
+   closing checks come first. Take them from
+   `tmp/classify.txt`, the `qualify_unit.py --classify` output the last
+   closing checks saved ([lifecycle.md §5](lifecycle.md), step 6; `tmp/`
+   is ignored by git and stays in the clone from night to night). If that
+   file is missing, classify after step 2 as before. A stale database can
+   print a wrong trivial (T8 does not see a subclass in a file the
+   database lacks), so until steps 1 to 3 have finished nothing is
+   collected into the clone, and no unit is committed until
+   `qualify_unit.py UNIT`, run after them, prints trivial; one that no
+   longer does moves to its heavier path ([lifecycle.md §3](lifecycle.md)).
+   A light or full unit starts only after steps 1 to 4 have finished,
+   since its census and dossier read the database and the run-time method
+   list. Reviewers of trivial units read the author's lane meanwhile. With
+   steps 1 and 6 running, at most one author builds until one of them
+   ends (three builds at once). Everything named here lives inside the
    clone and is ignored by git: the code database and its inputs in
    `<clone>/tmp/codedb/` (the compile command fragments in
    `cdb-fragments/`, `compile_commands.jsonl`, the database
@@ -71,9 +94,8 @@ Do these every time a session begins, before anything else.
       database no longer matches the project. It builds in, and writes the
       database inputs of, the checkout it is run from, so it is run in the
       clone (the database belongs to the clone; a lane has none). It counts
-      as one of the three builds that may run at once, so run it before
-      starting agents. A whole clean build takes as long as any clean build
-      of the app.
+      as one of the three builds that may run at once. A whole clean build
+      takes as long as any clean build of the app.
    2. **`codedb.py update`**. Incremental: it extracts every Objective-C
       unit that is not current and reads again every Swift module that is
       not current; a schema change, or a changed compiler, extractor or SDK,
@@ -107,7 +129,11 @@ Do these every time a session begins, before anything else.
       runs `tools/run_tests.expect -parallel` under the whole-suite lock,
       section 3) in the full-suite lane (`lane_clone.py acquire --full-suite`) on the new
       `HEAD`, so that a failure that arrived with the new code is recorded
-      as such and not blamed on the night's first unit. Units an earlier
+      as such and not blamed on the night's first unit. It runs in the
+      background; its result is needed only before the session's first
+      light or full commit's own whole suite is judged and before the
+      closing checks are judged, to tell a failure the session caused
+      from one it inherited. Units an earlier
       session left *landed, closing checks pending* (`claims.md`) get the
       closing checks ([lifecycle.md §5](lifecycle.md)) before any new
       unit starts.
@@ -160,7 +186,9 @@ Work out which stage the migration is in, in this order:
    trivial and light units with no dependency on each other may be
    authored at once, each in its own lane, at most three (trivial units:
    the owner, 2026-11-24, “allow it”; light units were already allowed;
-   three is the migration's number, since each author builds). Commits land one at a time, each gated on the tree it
+   three is the migration's number, since each author builds). Do not wait
+   idle on one author: launch authors up to the limit, gate and commit
+   each unit as it comes back, and launch the next. Commits land one at a time, each gated on the tree it
    lands on; whole suites serialize through their lock. When a later
    unit's project-file change no longer applies, run `pbxproj_swap.py`
    again in your checkout ([lifecycle.md §3](lifecycle.md), "The project
@@ -685,8 +713,9 @@ After the pilot:
 | The gate fails on a commit that passed review | Treat the failure as a blocking finding and continue the loop. Never loosen the gate |
 | A test is flaky | Do not retry until it passes. Decide whether it is flaky by the definition in [test-speed.md §3](test-speed.md). If it is, disable it, record it in `bugs.md` with how it failed and when, and queue it for the owner, who has another agent debug it. If it is not, it is a failure: treat it as a blocking finding |
 | `xcodebuild` hangs before printing anything, and a sample shows it waiting in CoreDevice | Run `killall CoreDeviceService`; the system restarts it on demand. Then retry |
+| A lint, comparison or other gate tool (not the build, not a test) fails for a reason shown not to be the unit's (the same failure on the unmodified tree or on the before state compared with itself) | First record it in `bugs.md` with the evidence, then say so in the commit message and the report, and commit the unit; never park it for that ([workflow.md §2](workflow.md)) |
 | A tool from Phase 0 gives a wrong answer | Stop relying on it, fix the tool in a `tool` commit through the loop, and recheck the units that used it since it broke |
-| A rule in these files seems wrong | Do not work around it. Queue it under "Rule changes proposed" with the evidence, park what depends on it, and continue elsewhere |
+| A rule in these files seems wrong | Do not work around it. Queue it under "Rule changes proposed" with the evidence, park what depends on it, and continue elsewhere; a check that is merely defective is the row above |
 | A unit turns out to be a hot path | Add it to `hot-paths.md` with the reason, drop the claim, and move on |
 | The clone's commits could not be rebased onto `origin/master` (a conflict, a merge commit, a submodule pointer change), or the upstream was force-pushed | The refresh refuses before the night starts (exit 9), leaves the clone as it was, keeps its old tip under `refs/nightly/pre-rebase/`, and says in the log which commit and which files; nothing runs. The owner rebases the clone by hand or sets its commits aside with `nightly_clone.sh reset`; after a force-push, `nightly_clone.sh reset --accept-rewritten-upstream` |
 | A crash report is attributed to a port | Log it in `bugs.md`, stop porting that unit's dependents, and queue it for the owner with the attribution |

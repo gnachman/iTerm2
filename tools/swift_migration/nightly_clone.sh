@@ -86,7 +86,9 @@
 #   init writes, remote.origin.url/fetch/pushurl, branch.*.remote/merge,
 #   submodule.*.url/active, receive.denyNonFastForwards/denyDeletes in the
 #   mirror, and a submodule's core.worktree, which must point inside the
-#   clone). This refuses every setting that makes git run a program
+#   clone, or, for a submodule upstream removed (see "Submodules removed
+#   upstream" below), the path it was at). This refuses every setting that
+#   makes git run a program
 #   (core.fsmonitor, core.sshCommand, core.pager, alias.*, filter.*,
 #   diff.external, credential.helper, url.*.insteadOf, remote.*.uploadpack,
 #   submodule.*.update, include.path, core.hooksPath, ...).
@@ -307,6 +309,22 @@
 # name or path with a .. component, a leading /, or a character outside
 # [A-Za-z0-9._/-] is refused, and a submodule's .git file must point at
 # its git directory inside the clone's .git/modules.
+#
+# Submodules removed upstream. When the clone's master moves to a tip that
+# no longer records a submodule, refresh (and reset) remove, in the clone
+# only, its working directory, its .git/modules/<name> and its
+# submodule.<name> section of the clone's .git/config, and say
+# "nightly_clone: submodule-removed: <path>: ..."; a submodule added
+# upstream is initialized as the others are. A submodule counts as removed
+# when its git directory's core.worktree names a path at which the clone's
+# HEAD has nothing and its .gitmodules names nothing, and an earlier commit
+# of HEAD's history recorded a gitlink there. Before the move, an untracked
+# directory that is exactly what git leaves of such a submodule (a .git
+# file pointing at that git directory, git status there clean) does not
+# make refresh refuse, nor does such a git directory whose core.worktree is
+# gone; it must still pass every other check of the layout. A leftover
+# holding work still refuses (exit 8). The owner's checkout and the mirror
+# are never touched by this.
 #
 # Untracked files. setup copies, once, the two things under the source's
 # tmp/ that the orchestrator needs and the tools cannot make again:
@@ -774,6 +792,155 @@ module_name() {
     done
 }
 
+# Submodules upstream removed. When the clone's master moves to a tip that
+# no longer records a submodule, git leaves its working directory behind
+# (it holds a .git file), and its git directory under .git/modules and its
+# submodule.<name> configuration section stay. Those are what the
+# functions below recognize, in the clone only, so that refresh neither
+# refuses on them nor keeps them.
+
+# Lexically normalizes absolute path $1: . and .. are removed, no link is
+# followed (the directory it names may be gone).
+normalize_path() {
+  local part out='' IFS=/
+  set -f
+  for part in $1; do
+    case "$part" in
+      ''|.) ;;
+      ..) out=${out%/*} ;;
+      *) out="$out/$part" ;;
+    esac
+  done
+  set +f
+  echo "${out:-/}"
+}
+
+# The path, relative to the clone, that submodule git directory $1 names
+# in its core.worktree, normalized lexically; nothing when it names none,
+# or a path outside the clone's working tree.
+module_worktree_path() {
+  local dir=$1 wt p
+  wt=$(g config -f "$dir/config" --get core.worktree 2>/dev/null) || return 0
+  case "$wt" in /*) p=$wt ;; *) p="$dir/$wt" ;; esac
+  p=$(normalize_path "$p")
+  if [ "$p" = "$CLONE" ] || ! inside "$p" "$CLONE" || inside "$p" "$CLONE/.git"; then
+    return 0
+  fi
+  echo "${p#"$CLONE"/}"
+}
+
+# True when path $1 (relative to the clone) is a submodule the clone's HEAD
+# no longer has: HEAD has nothing at that path, its .gitmodules names no
+# submodule at that path and none named $2 (when given), and an earlier
+# commit of HEAD's history recorded a gitlink there.
+removed_submodule_path() {
+  local path=$1 name=${2:-} last c
+  plain_relative_path "$path" || return 1
+  [ -z "$(gc ls-tree HEAD -- "$path" 2>/dev/null)" ] || return 1
+  if gc config --blob HEAD:.gitmodules --get-regexp '^submodule\..*\.path$' 2>/dev/null |
+       ( while IFS= read -r line; do [ "${line#* }" = "$path" ] && exit 0; done; exit 1 ); then
+    return 1
+  fi
+  if [ -n "$name" ] && gc config --blob HEAD:.gitmodules --get "submodule.$name.path" >/dev/null 2>&1; then
+    return 1
+  fi
+  last=$(gc rev-list -1 HEAD -- "$path" 2>/dev/null)
+  [ -n "$last" ] || return 1
+  for c in "$last^" "$last"; do
+    if gc ls-tree "$c" -- "$path" 2>/dev/null | grep -q '^160000 '; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+# True when git directory $1 under the clone's .git/modules is left by a
+# submodule upstream removed: its core.worktree is a removed submodule's
+# path (removed_submodule_path). A nested module directory
+# (<name>/modules/...) is explained by its top-level one. This says only
+# that the directory is explained; the git directory and configuration
+# checks still apply to it.
+removed_module() {
+  local dir=$1 name path
+  name=${dir#"$CLONE/.git/modules/"}
+  [ "$name" != "$dir" ] || return 1
+  case "$name" in
+    */modules/*) removed_module "$CLONE/.git/modules/${name%%/modules/*}"; return ;;
+  esac
+  plain_relative_path "$name" || return 1
+  path=$(module_worktree_path "$dir")
+  [ -n "$path" ] || return 1
+  removed_submodule_path "$path" "$name"
+}
+
+# True when untracked directory $1 (relative to the clone) is the leftover
+# of a submodule upstream removed and holds no work: its .git is a regular
+# file pointing at a git directory under the clone's .git/modules that
+# passes module_problem with this directory as its core.worktree and that
+# removed_module explains, and git status there shows nothing.
+former_submodule_leftover() {
+  local path=${1%/} gitfile target dir out
+  plain_relative_path "$path" || return 1
+  gitfile="$CLONE/$path/.git"
+  { [ -f "$gitfile" ] && [ ! -L "$gitfile" ]; } || return 1
+  target=$(sed -n 's/^gitdir: //p' "$gitfile" | head -1)
+  case "$target" in /*) ;; *) target="$CLONE/$path/$target" ;; esac
+  dir=$(cd "$target" 2>/dev/null && pwd -P) || return 1
+  inside "$dir" "$CLONE/.git/modules" || return 1
+  [ -z "$(module_problem "$dir" "$CLONE/$path")" ] || return 1
+  removed_module "$dir" || return 1
+  out=$(g --git-dir="$dir" --work-tree="$CLONE/$path" status --porcelain --ignore-submodules=all 2>&1) &&
+    [ -z "$out" ]
+}
+
+# After the clone's master moved: removes, in the clone only, every
+# submodule upstream removed (removed_module): its leftover working
+# directory, which must be a plain leftover holding no work, its
+# .git/modules/<name> and its submodule.<name> configuration section; and
+# a submodule.<name> section left with neither a module directory nor an
+# entry in .gitmodules. Says "submodule-removed: <path>: ..." for each.
+prune_removed_submodules() {
+  local dir name path
+  if [ -d "$CLONE/.git/modules" ]; then
+    while IFS= read -r dir; do
+      name=${dir#"$CLONE/.git/modules/"}
+      case "$name" in */modules/*) continue ;; esac
+      [ -d "$dir" ] || continue
+      removed_module "$dir" || continue
+      path=$(module_worktree_path "$dir")
+      if [ -e "$CLONE/$path" ] || [ -L "$CLONE/$path" ]; then
+        if ! former_submodule_leftover "$path"; then
+          say "submodule $path was removed upstream, but $CLONE/$path holds work or is not what git leaves of a submodule; left as it is"
+          return 1
+        fi
+      fi
+      # Commits or stashes made in it would be lost with it.
+      if [ -n "$(g --git-dir="$dir" --work-tree=/var/empty for-each-ref refs/stash 2>&1)" ] ||
+         [ -n "$(g --git-dir="$dir" --work-tree=/var/empty log --branches --not --remotes --oneline -1 2>&1)" ]; then
+        say "submodule $path was removed upstream, but its repository .git/modules/$name holds a stash or a local commit no remote has; left as it is"
+        return 1
+      fi
+      if [ -e "$CLONE/$path" ] || [ -L "$CLONE/$path" ]; then
+        rm -rf "${CLONE:?}/$path" || return 1
+      fi
+      rm -rf "$dir" || return 1
+      g config -f "$CLONE/.git/config" --remove-section "submodule.$name" 2>/dev/null
+      say "submodule-removed: $path: removed upstream; removed its working directory, .git/modules/$name and its configuration"
+    done < <(find "$CLONE/.git/modules" -name HEAD ! -path '*/logs/*' ! -path '*/refs/*' ! -path '*/objects/*' \
+               -exec dirname {} \; 2>/dev/null | sort -u)
+  fi
+  while IFS= read -r name; do
+    { [ -n "$name" ] && plain_relative_path "$name"; } || continue
+    [ -d "$CLONE/.git/modules/$name" ] && continue
+    gc config --blob HEAD:.gitmodules --get "submodule.$name.path" >/dev/null 2>&1 && continue
+    if g config -f "$CLONE/.git/config" --remove-section "submodule.$name" 2>/dev/null; then
+      say "submodule-removed: $name: removed its configuration section"
+    fi
+  done < <(g config -f "$CLONE/.git/config" --get-regexp '^submodule\..*\.url$' 2>/dev/null |
+             sed -E 's/^submodule\.(.*)\.url .*$/\1/')
+  return 0
+}
+
 # Every gitlink in the index of repository $1 (git directory $2): its .git
 # must be absent (not initialized) or a regular file pointing exactly at
 # $2/modules/<name> for the name .gitmodules gives, a validated submodule
@@ -884,7 +1051,14 @@ layout_problem() {
   if [ -d "$CLONE/.git/modules" ]; then
     local dir
     while IFS= read -r dir; do
-      p=$(module_problem "$dir"); [ -z "$p" ] || { echo "$p"; return; }
+      p=$(module_problem "$dir")
+      # A module directory left by a submodule upstream removed may have
+      # lost its working tree; every other check still applies to it.
+      if [ -n "$p" ] && removed_module "$dir"; then
+        p=$(gitdir_problem "$dir" "a submodule's git directory")
+        [ -n "$p" ] || p=$(config_problem "$dir/config" "$dir/config" "$MODULE_KEYS")
+      fi
+      [ -z "$p" ] || { echo "$p"; return; }
     done < <(find "$CLONE/.git/modules" \( -name HEAD -o -name commondir -o -name gitdir -o -name config \) \
                ! -path '*/logs/*' ! -path '*/refs/*' ! -path '*/objects/*' ! -path '*/hooks/*' \
                -exec dirname {} \; 2>/dev/null | sort -u)
@@ -1061,6 +1235,17 @@ clone_state_problem() {
   local branch out
   if ! out=$(gc status --porcelain --ignore-submodules=all 2>&1); then
     echo "git status failed in $CLONE: $out"; return
+  fi
+  if [ -n "$out" ]; then
+    # What git leaves of a submodule upstream removed is not a reason to
+    # refuse: the refresh removes it.
+    if ! out=$(gc status --porcelain --ignore-submodules=all --untracked-files=all 2>&1); then
+      echo "git status failed in $CLONE: $out"; return
+    fi
+    out=$(printf '%s\n' "$out" | while IFS= read -r line; do
+            case "$line" in ('?? '*/) former_submodule_leftover "${line#?? }" && continue ;; esac
+            [ -z "$line" ] || printf '%s\n' "$line"
+          done)
   fi
   if [ -n "$out" ]; then
     echo "the clone has uncommitted changes or untracked files: $(echo "$out" | head -3 | tr '\n' ';')"; return
@@ -1349,6 +1534,7 @@ do_refresh() {
       *) die 7 "unexpected comparison result: $rel" ;;
     esac
   fi
+  prune_removed_submodules || die 7 "removing a submodule upstream removed failed"
   init_submodules "$CLONE" "$CLONE/.git" "$SOURCE_GITDIR" || die 7 "submodule update failed"
   say "clone $CLONE at $(short "$(gc rev-parse HEAD)"); in the morning take its commits with:"
   morning_command

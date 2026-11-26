@@ -1088,6 +1088,50 @@ class TmuxRunTest(RunBase):
             self.assertTrue(gone(pid), '%s %d survived' % (name, pid))
         self.assertIsNone(control.poll())
 
+    # The done file (2026-11-25): a session that finished its work at 01:40
+    # sat at its prompt until the time limit at 05:54. With --done-file, the
+    # file appearing after the start makes the supervisor run its stop
+    # sequence at once and exit EXIT_DONE (120), not 124.
+
+    def test_tmux_done_file_stops_the_session_at_once_and_sweeps(self):
+        control = self.start_control()
+        done = os.path.join(self.tmp, 'session.done')
+        fake = os.path.join(self.tmp, 'fake')
+        # Background jobs still running, then the stand-in for Claude Code;
+        # once its terminal is raw, the session writes the done file.
+        pane = self.pane_script(
+            self.spawn_grandchildren_body()
+            + 'mkdir -p %s\n' % fake
+            + '( while [ ! -e %s/ready ]; do sleep 0.05; done; echo done > %s ) &\n' % (fake, done)
+            + 'exec %s -B %s %s\n' % (sys.executable, FAKE_CLAUDE, fake))
+        # The deadline is minutes away, past the harness's 180 second bound.
+        proc = self.run_tmux(pane, '--done-file', done, '--night-id', night('test-night-done'),
+                             '--grace', '60')
+        self.assertEqual(proc.returncode, 120, proc.stderr)
+        self.assertIn('session reported done', proc.stderr)
+        self.assertIn('session over (reported done)', proc.stderr)
+        self.assertNotIn('session over (deadline)', proc.stderr)
+        self.assertNotIn('the stop sequence starts (deadline)', proc.stderr)
+        # The normal stop sequence ended it: Escape, Ctrl-C, /exit.
+        self.assertTrue(os.path.exists(os.path.join(fake, 'got_exit')), proc.stderr)
+        self.assertIn('typing /exit', proc.stderr)
+        for name in ('newsession', 'doublefork'):
+            pid = self.read_pid(name)
+            self.assertTrue(gone(pid), '%s %d survived' % (name, pid))
+        self.assertIsNone(control.poll())
+        self.assertFalse(self.server_running())
+
+    def test_tmux_done_file_present_before_the_start_is_ignored(self):
+        done = os.path.join(self.tmp, 'session.done')
+        with open(done, 'w') as fh:
+            fh.write('an earlier run\n')
+        past = time.time() - 3600
+        os.utime(done, (past, past))
+        proc = self.run_tmux(self.pane_script('sleep 3\nexit 7\n'), '--done-file', done)
+        self.assertEqual(proc.returncode, 7, proc.stderr)
+        self.assertNotIn('session reported done', proc.stderr)
+        self.assertIn('ignored', proc.stderr)
+
     def test_spawn_root_passes_the_status_and_records_itself(self):
         child = self.script('c', 'exit 5\n')
         proc = self.run_tool(['--spawn-root', self.root_file, '--', child])

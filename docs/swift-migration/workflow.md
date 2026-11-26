@@ -81,6 +81,21 @@ Rules for the loop:
   tree is returned to the last commit, the unit's entry in `claims.md` says
   it is parked and why, and an entry is added to `owner-queue.md` with the
   outstanding findings and the author's position on each.
+- **Never park on a tool defect** (the owner, 2026-11-25: “It is absurd to
+  stop on something like this”). When a lint, comparison or other gate
+  tool (not the build and not a test) fails for a reason shown not to be
+  the unit's, by the same failure on the unmodified tree or on the before
+  state compared with itself, the orchestrator first records it in
+  `bugs.md` with the command and its output on that tree or state, then
+  says so in the commit message and the night's report, and commits the
+  unit. A build failure or a failing test is never a tool defect: one that
+  also fails on the unmodified tree is the baseline's (lifecycle.md §5,
+  “A failure”; orchestration.md §1, step 4), and a flaky one is README.md
+  §5's. In that case, a rule only the owner may change stays as it is:
+  the orchestrator proceeds past the defective check for this unit and
+  puts the proposed rule change in `owner-queue.md`. It parks, as above,
+  when the failure may be the unit's, when that evidence is missing, or
+  when the question is a behavior change for users.
 - **The orchestrator then moves on to another unit.** It parks and continues;
   it never blocks on the owner. There is enough other work to keep it busy
   for a long time. It does not need the owner's permission to move to the
@@ -150,16 +165,30 @@ by seven. If the reset time changes, the table follows it.
 - The owner's own use during the day counts toward the same number. If usage
   is already at or above the night's cap at midnight, no work is done that
   night.
-- The exception is a one-unit night, which the owner orders for a given
-  date (first for the night beginning 2026-11-23, ordered 2026-11-22). The
-  plist sets `NIGHTLY_ONE_UNIT_DATE=YYYY-MM-DD`. On that local date only,
-  `nightly_start.sh` starts even when usage is at or over the cap, and the
-  prompt tells the orchestrator to do exactly one unit (resume the unparked
-  claimed unit, else take the next eligible one), start no second, stop
-  cleanly and write the report; usage at or over the cap is not a reason to
-  stop that night, but unknown usage still is, before the start and during
-  the night. On any other date the setting does nothing, so it expires by
-  itself; an empty value means unset and a malformed one refuses the night
+- The exception is an "at least one unit" night, which the owner orders
+  for a given date. It began as a one-unit night for the night beginning
+  2026-11-23 (2026-11-22: “Have tonight's midnight run just do one unit. We
+  can move to the regular 1/7 rule for the next night.”); on 2026-11-24 the
+  owner made it at least one: “Ensure the agent does at least one unit
+  tonight even if it goes over quota”. The plist sets
+  `NIGHTLY_ONE_UNIT_DATE=YYYY-MM-DD` (the name is kept). On that local date
+  only, `nightly_start.sh` starts even when usage is at or over the cap.
+  If usage at the start is under the cap, the night is ordinary, except
+  that until one unit has landed (committed), reaching the cap is not a
+  reason to stop: if no unit has started yet, the orchestrator takes one
+  (the unparked claimed unit, else the next eligible one); if units are in
+  progress, it starts no new one, carries the one nearest to landing to
+  its commits and saves the others as "Stopping cleanly" says. It does not
+  park that unit because of the cap; if the documents require parking it
+  for another reason, it takes the next eligible unit the same way, unless
+  the closing-checks start time has passed. Once a unit has landed, the
+  cap stops the night as on any other night. If usage at the start is at
+  or over the cap, the prompt tells the orchestrator to do exactly one
+  unit (resume the unparked claimed unit, else take the next eligible
+  one), start no second, stop cleanly and write the report; usage at or
+  over the cap is not a reason to stop that night. Unknown usage still
+  is, before the start and during the night. On any other date the
+  setting does nothing, so it expires by itself; an empty value means unset and a malformed one refuses the night
   (exit 64). The script's header has the details.
 - Usage is checked before each subagent is started and before each gate run.
   A subagent that is already running is allowed to finish, so the overshoot
@@ -188,6 +217,12 @@ stop time, the orchestrator:
 4. Returns the working tree to the last commit, so that in the morning the
    tree is clean and builds.
 5. Writes the night's report.
+6. In a nightly session, releases its lanes and, as its last action, runs
+   `tools/swift_migration/nightly_done.sh`, also when the work is done
+   before the clean stop. It writes `session.done` in the run directory,
+   and the supervisor then logs “session reported done” and ends the
+   session at once instead of at the hard limit (2026-11-25: a night done
+   at 01:40 sat at its prompt until 05:54).
 
 The orchestrator never waits on a background job without a bound: it
 waits with `python3 tools/swift_migration/suite_guard.py wait --pid PID

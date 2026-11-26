@@ -49,7 +49,21 @@ lane as a repository of its own (an embedded .git directory) that borrows
 the repository's submodule objects through objects/info/alternates, then is
 checked out at the commit the lane's tree records. No transport is used, so
 this works offline. The repository's submodule working trees, its submodule
-repositories and its configuration are only read.
+repositories and its configuration are only read. A submodule added upstream
+is made the same way once the repository has initialized it.
+
+Submodules also go away. When a lane is acquired, reset or released, what
+is left of a removed submodule is cleared from the lane if it holds no work
+(an embedded .git directory with no objects of its own, no changed tracked
+file, no untracked file that is not ignored): a submodule the lane's commit
+still records whose borrowed objects are gone (the repository deleted its
+copy) is emptied, as an uninitialized submodule is, and a nested repository
+the lane's commit records neither as a gitlink nor in .gitmodules, that was
+a gitlink in an earlier commit or is named by the repository's submodule
+configuration or modules/ directory, is removed. One holding work is left
+for the usual saving, which saves it or refuses and leaves the lane as it
+was. status only reads: it judges such a submodule without asking git to
+look inside it, and lists it as stale.
 
 Commands:
   create [N...] [--count C]  make lanes (default: every lane not yet made)
@@ -404,12 +418,15 @@ class Lanes(object):
 
     def reset(self, n, sha):
         path = self.path(n)
+        self.remove_former_submodules(n)
         git(path, 'checkout', '-q', '--detach', '--force', sha)
         git(path, 'reset', '-q', '--hard', sha)
         # Without -x: ignored files (Build/, tmp/, products) stay, so builds
         # stay incremental. -ff also removes an untracked nested repository,
-        # such as a submodule the new commit no longer has.
+        # such as a submodule the new commit no longer has; an ignored one
+        # is removed by remove_former_submodules.
         git(path, 'clean', '-ffdq')
+        self.remove_former_submodules(n)
         sync_submodules(path, self.common, sha)
         write_json_atomically(self.state_path(n), {'base': sha})
 
@@ -468,6 +485,11 @@ class Lanes(object):
                 dst = os.path.join(work, path)
                 if not os.path.isdir(os.path.join(dst, '.git')):
                     continue
+                if alternates_missing(dst):
+                    # Its objects are gone, so git cannot inspect it.
+                    if not disposable_nested_repo(dst):
+                        found.append((prefix + path, sha))
+                    continue
                 head = sub_git(dst, 'rev-parse', '-q', '--verify', 'HEAD',
                                check=False).stdout.strip()
                 if not head:
@@ -482,8 +504,37 @@ class Lanes(object):
 
     def is_dirty(self, n):
         path = self.path(n)
-        status = git(path, 'status', '--porcelain', '--ignore-submodules=none').stdout
+        stale = stale_submodules(path)
+        # A submodule whose borrowed objects are gone makes git status fail,
+        # so it is left out and judged by stale_submodule_is_disposable.
+        excludes = [':(exclude,literal)' + p for p in stale]
+        status = git(path, 'status', '--porcelain', '--ignore-submodules=none',
+                     *(['--', '.'] + excludes if excludes else [])).stdout
+        if any(not disposable_nested_repo(os.path.join(path, p)) for p in stale):
+            return True
         return bool(status.strip()) or out(path, 'rev-parse', 'HEAD') != self.base(n)
+
+    def remove_former_submodules(self, n):
+        """Removes from lane n what is left of submodules that are gone, when
+        it holds no work (see disposable_nested_repo): a submodule the lane's
+        HEAD records whose borrowed objects no longer exist (emptied, as an
+        uninitialized submodule is), and a nested repository the lane's HEAD
+        does not record that was a submodule (removed). Anything holding
+        work is left for save_work, which saves it or refuses."""
+        path = self.path(n)
+        for sub in stale_submodules(path):
+            dst = os.path.join(path, sub)
+            if disposable_nested_repo(dst):
+                shutil.rmtree(dst)
+                os.makedirs(dst)
+                say('lane %d: emptied submodule %s, whose objects in the repository are gone'
+                    % (n, sub))
+        for sub in former_submodule_leftovers(path, self.common):
+            dst = os.path.join(path, sub)
+            if disposable_nested_repo(dst):
+                shutil.rmtree(dst)
+                say('lane %d: removed %s, left over from a submodule the lane\'s commit no '
+                    'longer has' % (n, sub))
 
     def _patch_with_untracked(self, work, base, sub=False):
         """A binary patch of everything in work that differs from base,
@@ -524,7 +575,10 @@ class Lanes(object):
         [(saved path, submodule path or None)]. Raises Fail when something
         cannot be saved."""
         path = self.path(n)
-        if not self.exists(n) or not self.is_dirty(n):
+        if not self.exists(n):
+            return []
+        self.remove_former_submodules(n)
+        if not self.is_dirty(n):
             return []
         saved = []
         patch = self._patch_with_untracked(path, self.base(n))
@@ -584,6 +638,9 @@ class Lanes(object):
             entry['commit'] = out(path, 'rev-parse', 'HEAD')
             entry['dirty'] = self.is_dirty(n)
             entry['dirty_submodules'] = self.dirty_submodules(n) if entry['dirty'] else []
+            # Read only: the next acquire or release removes them.
+            entry['stale_submodules'] = sorted(set(stale_submodules(path)) |
+                                               set(former_submodule_leftovers(path, self.common)))
         return entry
 
 
@@ -614,6 +671,90 @@ def submodule_names(work, commit):
         key, value = record.split('\n', 1)
         names[value] = key[len('submodule.'):-len('.path')]
     return names
+
+
+def alternates_missing(dst):
+    """Whether the repository embedded at dst borrows objects from a
+    directory that no longer exists."""
+    try:
+        with open(os.path.join(dst, '.git', 'objects', 'info', 'alternates')) as f:
+            lines = [line.strip() for line in f]
+    except OSError:
+        return False
+    return any(line and not line.startswith('#') and not os.path.isdir(line) for line in lines)
+
+
+def stale_submodules(work):
+    """Paths of the submodules work's HEAD records whose embedded repository
+    borrows from a submodule repository that is gone (upstream removed the
+    submodule and the repository's copy was deleted)."""
+    return [p for p, _ in gitlinks(work, 'HEAD') if alternates_missing(os.path.join(work, p))]
+
+
+def former_submodule_leftovers(work, common):
+    """Untracked or ignored directories in work holding a repository of their
+    own (.git) that work's HEAD records neither as a gitlink nor in
+    .gitmodules, and that were a submodule: a gitlink in an earlier commit of
+    HEAD's history, or named by the repository's submodule configuration or
+    its modules/ directory."""
+    listing = git(work, 'ls-files', '--others', '--directory', '-z').stdout
+    candidates = [p.rstrip('/') for p in listing.split('\0')
+                  if p.endswith('/') and os.path.lexists(os.path.join(work, p, '.git'))]
+    if not candidates:
+        return []
+    recorded = set(p for p, _ in gitlinks(work, 'HEAD')) | set(submodule_names(work, 'HEAD'))
+    found = []
+    for path in candidates:
+        if path in recorded:
+            continue
+        last = git(work, 'rev-list', '-1', 'HEAD', '--', path, check=False).stdout.strip()
+        was_gitlink = False
+        if last:
+            for commit in (last, last + '^'):
+                if any(p == path for p, _ in gitlinks_at(work, commit, path)):
+                    was_gitlink = True
+        configured = git(work, 'config', '--get-regexp', r'^submodule\..*\.(path|url)$',
+                         check=False).stdout
+        named = ('submodule.%s.' % path) in configured or \
+            os.path.isdir(os.path.join(common, 'modules', path))
+        if was_gitlink or named:
+            found.append(path)
+    return found
+
+
+def gitlinks_at(work, commit, path):
+    """gitlinks(work, commit) limited to path; empty when commit does not exist."""
+    proc = git(work, 'ls-tree', '-z', commit, '--', path, check=False)
+    found = []
+    for record in proc.stdout.split('\0'):
+        if record and '\t' in record:
+            meta, name = record.split('\t', 1)
+            if meta.split(' ')[0] == '160000':
+                found.append((name, meta.split(' ')[2]))
+    return found
+
+
+def disposable_nested_repo(dst):
+    """Whether the repository embedded at dst holds nothing the lane tool
+    would save: an embedded .git directory with no objects of its own (so no
+    commit and nothing staged; a lane's submodule borrows every object), no
+    tracked file changed, and no untracked file that is not ignored (ignored
+    files are never saved). Answered from the index and the working tree
+    only, so it works when the borrowed objects are gone; anything git
+    cannot answer counts as work."""
+    dotgit = os.path.join(dst, '.git')
+    if not os.path.isdir(dotgit) or os.path.islink(dotgit):
+        return False
+    objects = os.path.join(dotgit, 'objects')
+    for root, dirs, files in os.walk(objects):
+        if root == objects and 'info' in dirs:
+            dirs.remove('info')
+        if files:
+            return False
+    if sub_git(dst, 'diff-files', '--quiet', check=False).returncode != 0:
+        return False
+    others = sub_git(dst, 'ls-files', '--others', '--exclude-standard', '-z', check=False)
+    return others.returncode == 0 and not others.stdout
 
 
 def sub_git(path, *args, **kwargs):

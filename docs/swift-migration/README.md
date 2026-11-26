@@ -259,6 +259,20 @@ in its own commit with a failing test first. Mixing the two makes a
 regression impossible to attribute. The one allowed addition, a thread
 assertion, is in [concurrency.md §9](concurrency.md).
 
+**Prefer canonical Swift idioms where there is no loss of correctness.** A
+port keeps the Objective-C's behavior, not its spelling. Inside a method,
+write what a Swift programmer would write (`==`, optional binding, `guard`,
+`for ... in`, string interpolation, Swift collections' own methods) wherever
+it gives the same result for every input the code can see. Keep an
+Objective-C API, a cast to a Foundation class, or an awkward construction
+only where a rule in [translation-rules.md](translation-rules.md) or
+[traps.md](traps.md) names a real difference in behavior that the code can
+reach, and say which in a comment. The interface stays as stage one
+requires (below): this is about bodies, not about selectors, class names
+or types seen from Objective-C. The owner, 2026-11-25: “We should update
+the rules to prefer canonical swift idioms where there's no loss of
+correctness”.
+
 **Make risky semantic changes in Objective-C, before the port.** Nullability,
 the move to ARC, and replacing dynamic dispatch with direct calls each change
 behavior on their own. Doing them in Objective-C gives a small diff against
@@ -380,8 +394,10 @@ Live harnesses named in `CLAUDE.md` (AI chat, attachments, Python runtime)
 still apply when a unit touches those areas.
 
 A commit that cannot pass the gate is not committed. Do not disable a test,
-loosen a lint, or weaken an assertion to get through. Ask the owner. The one
-exception is a test that is flaky by the definition in
+loosen a lint, or weaken an assertion to get through. Ask the owner,
+unless a lint, comparison or other gate tool (not the build, not a test)
+is defective ([workflow.md §2](workflow.md)). The one exception for a
+failing test is a test that is flaky by the definition in
 [test-speed.md §3](test-speed.md): it is disabled, recorded in `bugs.md`,
 and reported to the owner.
 

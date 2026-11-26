@@ -23,7 +23,11 @@
 #   1  They differ, or some class gets no verdict: one that changed language
 #      from Swift to Objective-C, or whose language is unknown in either
 #      snapshot. A duplicate selector or an ivar ownership conflict in either
-#      snapshot is always a difference.
+#      snapshot is a difference, except a duplicate that is identical in
+#      both snapshots with every entry in a system image (not the app's,
+#      the test bundle's or an embedded framework's), which is listed under
+#      "Duplicates present in both snapshots, not from this app: ignored"
+#      (the owner, 2026-11-25).
 #   2  They cannot be compared: bad arguments, an unreadable file, input that is
 #      not a well-formed snapshot, snapshots from different architectures,
 #      build configurations, or variants, a failure to build this tool, or

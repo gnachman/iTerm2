@@ -235,8 +235,9 @@ confirmed by the owner on 2026-11-24 (“keep them as is”).
 **Which path.** `tools/swift_migration/qualify_unit.py UNIT` prints the
 path ([phase0.md §12](phase0.md)); UNIT is a class, or `Class(Category)`
 for a category file. It needs only the repository and a current code
-database; the nightly clone brings its database up to date first
-(orchestration.md §1, step 4). Each condition prints PASS, FAIL or MANUAL
+database; a trivial unit picked while the database is refreshed is
+qualified again before it is committed, and light and full units start
+only after the refresh (orchestration.md §1, step 4). Each condition prints PASS, FAIL or MANUAL
 with its evidence; a MANUAL is one the tool cannot decide.
 
 - **Trivial** when the trivial conditions T1 to T8 all PASS. Only the tool
@@ -331,23 +332,38 @@ sent 16 commands and got identical answers before and after.
    writes the characterization tests (§1, step 3), one per reflective
    entry going through the door the system uses (key-value coding, a
    selector built from a string, an object specifier), runs them against
-   the Objective-C and sees them pass, then sees each fail once against a
-   deliberately broken Objective-C body (one hand edit per method,
-   reverted; no mutation script is required). It takes the runtime
+   the Objective-C and sees them pass, then breaks each method's body
+   once by hand, rebuilds once and sees every test fail in that one run,
+   and reverts (one broken body per method, not one rebuild per test or
+   per kind of breakage; methods that call each other may need a run
+   each; no mutation script). A body is broken by returning a wrong
+   value, never by crashing, and each test's failure is checked to be its
+   own method's wrong result. It takes the runtime
    snapshot of each class (`runtime_snapshot.sh`), ports, runs the same
    tests, and takes the snapshot again: `compare_runtime_snapshots.sh`
-   passes, a class that stays in Objective-C (a category's class) has
+   passes (a system class's own duplicates, identical in both snapshots,
+   are listed as ignored and do not stop it: “Yes, of course”, the owner,
+   2026-11-25, to “may the comparison ignore a duplicate that is present
+   identically in both snapshots and isn't in the unit's own code?”; see
+   [phase0.md §9](phase0.md)), a class that stays in Objective-C (a category's class) has
    identical snapshots, and each CHECK AGAINST THE SOURCE line is answered
    in the unit notes. The bridging-header line the tests need against the
    Objective-C is added in the lane and removed by the port, so the commit
-   has none. The project file is swapped as below.
-4. **One review** by a fresh reviewer given the diff, the deleted
+   has none. The project file is swapped as below. It may run
+   `swift_lints.py --staged` (seconds); nothing else. The migration
+   expects (its own figures, not a hard rule, after an author took 38
+   minutes for a three-line method on 2026-11-25) about 15 to 20 minutes of authoring
+   and 5 to 10 of review for a trivial unit, mostly builds; an author past
+   30 minutes says why in its report.
+4. **One review** by a fresh reviewer, reading the author's lane, given the diff, the deleted
    Objective-C, the new Swift, the qualifying output, the snapshot
    comparison, `traps.md` and `translation-rules.md`. Since the trivial
    path has no callers'-thread condition, the reviewer compares every
    block's captures (strong, weak, `self`) and every observer or
-   notification registration and removal with the Objective-C. Another
-   round, with another fresh reviewer, only if a blocking finding stood.
+   notification registration and removal with the Objective-C. It does not
+   rebuild or rerun tests unless something looks wrong; the gate runs
+   them. Another round, with another fresh reviewer, only if a blocking
+   finding stood.
 5. **The gate** per unit: the build and the unit's targeted tests
    ([README.md §5](README.md)). No whole suite (the owner, 2026-11-24,
    brought it back for light and full only), sanitizer run, `x86_64`
@@ -458,7 +474,9 @@ brackets; about an hour in all.
 6. The lints and the code database: `capture_compile_commands.sh`,
    `codedb.py update --accept-removals`, then the lints of
    [phase0.md §6](phase0.md), "Where they run", over the session's port
-   commits [about 10 min].
+   commits, then `qualify_unit.py --classify > tmp/classify.txt`, where
+   the next session takes its first units from (orchestration.md §1, step
+   4) [about 10 min].
 
 A fix commit after a failed check re-runs that check and every check after
 it in this order. If the closing checks' start time has already passed when

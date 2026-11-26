@@ -147,3 +147,22 @@ Each entry says:
   `iTerm2SharedARC` with `pbxproj_swap.py --m <path>.m --from-target
   iTerm2Shared --to-target iTerm2SharedARC`, then the port's swap.
 - **Found in:** iTermApplication+Scripting, dossier E13.
+
+### Casting a nonnull Objective-C string getter straight to `NSString` traps on nil
+
+- **Pattern:** Objective-C that messages the result of a getter the SDK
+  declares nonnull, such as `[[self localeIdentifier] isEqualToString:@"x"]`,
+  where an unusual receiver (a subclass or a broken object) may still return
+  nil. Messaging nil gives NO.
+- **Naive port:** `(localeIdentifier as NSString).isEqual(to: "x")`. A probe
+  with a receiver whose getter returns nil trapped with “Unexpectedly found
+  nil while implicitly unwrapping” at `-Onone` and at `-O` (exit 133).
+- **Write instead:** bind the value to a `String` first
+  (`let identifier: String = localeIdentifier`): a nil then bridges to an
+  empty string at both optimization levels, which gives the Objective-C's
+  NO. Pin it with a test whose receiver returns nil (a private subclass
+  with the getter replaced through `class_replaceMethod`, since a Swift
+  override cannot return nil). This matters only where reaching nil is
+  plausible; nullability.md section 6 measured only the bound forms.
+- **Found in:** NSLocale(iTerm), the author's bridging probe (2026-11-25;
+  the port is parked, owner-queue.md R7).

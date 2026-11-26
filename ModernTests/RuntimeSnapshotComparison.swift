@@ -5,9 +5,13 @@
 //  Compares two Objective-C runtime snapshots produced by RuntimeSnapshot.swift
 //  (docs/swift-migration/phase0.md section 9). A port must leave the runtime
 //  surface of a class unchanged, so any difference that is not on the
-//  allow-list below fails the comparison, and so does any duplicate selector in
-//  either snapshot (counted from the method lines themselves, not only from
-//  DUPLICATE lines).
+//  allow-list below fails the comparison, and so does a duplicate selector or
+//  property that is new or changed between the snapshots, or that has an
+//  entry in the app's own image (counted from the method lines themselves, not
+//  only from DUPLICATE lines; a repeat with no DUPLICATE line always fails).
+//  A duplicate identical in both snapshots with every entry in a system image
+//  is reported and does not fail: see resolveDuplicates (the owner,
+//  2026-11-25).
 //
 //  The comparison gives a verdict only for a class whose language is objc in
 //  both snapshots or swift in both. A class that changed language, or whose
@@ -210,9 +214,13 @@ struct RuntimeSnapshotAllowedDifference: Equatable {
 }
 
 struct RuntimeSnapshotComparisonResult {
-    // Duplicate-selector lines found in either snapshot. Any entry fails the
-    // comparison.
+    // Duplicate-selector lines found in either snapshot that are new or
+    // changed between them or have an entry in the app's own image, and
+    // repeats with no DUPLICATE line. Any entry fails the comparison.
     var duplicates: [String] = []
+    // Duplicates identical in both snapshots with every entry in a system
+    // image. Reported but not a failure.
+    var ignoredDuplicates: [String] = []
     // OWNERSHIP-CONFLICT lines found in either snapshot. Any entry fails the
     // comparison.
     var ownershipConflicts: [String] = []
@@ -309,6 +317,10 @@ struct RuntimeSnapshotComparisonResult {
             lines.append("Allowed differences:")
             lines.append(contentsOf: allowed.map { "  " + $0 })
         }
+        if !ignoredDuplicates.isEmpty {
+            lines.append("Duplicates present in both snapshots, not from this app: ignored (identical before and after, every entry in a system image; the owner, 2026-11-25):")
+            lines.append(contentsOf: ignoredDuplicates.map { "  " + $0 })
+        }
         if !noVerdict.isEmpty {
             lines.append("NO VERDICT for some classes, so the comparison does not pass.")
         }
@@ -343,8 +355,13 @@ enum RuntimeSnapshotComparison {
         // Everything is parsed as UTF-8 bytes and compared as bytes: two
         // strings that Swift considers equal because they are equal under
         // Unicode normalization are different selectors to the runtime.
-        let (beforeHeader, beforeClasses) = parse(before, label: "before", result: &result)
-        let (afterHeader, afterClasses) = parse(after, label: "after", result: &result)
+        let (beforeHeader, beforeClasses, beforeDuplicates) = parse(before, label: "before", result: &result)
+        let (afterHeader, afterClasses, afterDuplicates) = parse(after, label: "after", result: &result)
+        resolveDuplicates(before: beforeDuplicates,
+                          beforeClasses: beforeClasses,
+                          after: afterDuplicates,
+                          afterClasses: afterClasses,
+                          result: &result)
 
         let reasons = [
             RuntimeSnapshotFormat.architectureKeyword: "Type encodings differ between architectures",
@@ -459,6 +476,108 @@ enum RuntimeSnapshotComparison {
     // For each key, the rest of the line, once per occurrence.
     private typealias ParsedClass = [Key: [Bytes]]
 
+    // A duplicate found in one snapshot: a DUPLICATE line, or a repeat that
+    // has none (declared false), which always fails.
+    private struct DuplicateRecord {
+        var className: Bytes
+        var key: Key
+        var text: String
+        var declared: Bool
+    }
+
+    private struct ClassMember: Hashable {
+        var className: Bytes
+        var key: Key
+    }
+
+    // File names of the app's own images, besides any whose name begins with
+    // iterm or ModernTests (in any case): the frameworks embedded in the app
+    // and its other binaries. A snapshot records only an image's file name,
+    // so a framework the app starts embedding must be added here; until it
+    // is, a duplicate in it identical in both snapshots is ignored.
+    static let appImageNames: Set<String> = ["__preview.dylib", "BetterFontPicker", "ColorPicker", "CoreParse",
+                                             "Highlightr", "NMSSH", "PSMTabBarControl", "SearchableComboListView",
+                                             "ShellLauncher", "Sparkle", "SwiftyMarkdown", "pidinfo"]
+
+    // Whether an image is the app's own: one of appImageNames, a name
+    // beginning with iterm or moderntests ignoring case, or a sanitizer
+    // runtime the app bundle carries (libclang_rt.).
+    static func isAppImage(_ name: String) -> Bool {
+        let lowered = name.lowercased()
+        return appImageNames.contains(name) || lowered.hasPrefix("iterm") || lowered.hasPrefix("moderntests") ||
+            lowered.hasPrefix("libclang_rt.")
+    }
+
+    // The sorted distinct images of a duplicate's entries, or nil when any
+    // entry is in the app's own image or in no binary. An entry with no
+    // image= is in the class's own image (the writer omits image= then); an
+    // empty image=, or a class image line with no value, means no binary,
+    // which is treated as the app's, the safe direction. Property lines have
+    // no image=, so a property's entries are in the class's image.
+    private static func systemImages(of details: [Bytes], in section: ParsedClass?) -> [String]? {
+        let classImages = section?[Key(kind: RuntimeSnapshotFormat.imageKeyword, name: "")] ?? []
+        let classImage: String? = classImages.count == 1 && !classImages[0].isEmpty ? classImages[0].description : nil
+        var images = Set<String>()
+        for detail in details {
+            let field = detail.description.split(separator: " ").first { $0.hasPrefix("image=") }
+            let image: String?
+            if let field {
+                let value = String(field.dropFirst("image=".count))
+                image = value.isEmpty ? nil : value
+            } else {
+                image = classImage
+            }
+            guard let image, !isAppImage(image) else {
+                return nil
+            }
+            images.insert(image)
+        }
+        return images.sorted(by: utf8Less)
+    }
+
+    // Decides which duplicates fail. A duplicate is ignored, and listed under
+    // ignoredDuplicates, only when both snapshots have the same DUPLICATE
+    // line for it, its entries are identical in both (so the count, the
+    // encodings and the images match), and none of them is in the app's own
+    // image. Every other duplicate fails, as does every repeat with no
+    // DUPLICATE line. The owner, 2026-11-25, asked “may the comparison
+    // ignore a duplicate that is present identically in both snapshots and
+    // isn't in the unit's own code?”, answered “Yes, of course”.
+    private static func resolveDuplicates(before: [DuplicateRecord],
+                                          beforeClasses: [Bytes: ParsedClass],
+                                          after: [DuplicateRecord],
+                                          afterClasses: [Bytes: ParsedClass],
+                                          result: inout RuntimeSnapshotComparisonResult) {
+        var afterByMember = [ClassMember: DuplicateRecord]()
+        for record in after where record.declared {
+            afterByMember[ClassMember(className: record.className, key: record.key)] = record
+        }
+        var ignored = Set<ClassMember>()
+        var ignoredLines = [String]()
+        for record in before where record.declared {
+            let member = ClassMember(className: record.className, key: record.key)
+            guard let other = afterByMember[member], other.text == record.text else {
+                continue
+            }
+            let beforeDetails = (beforeClasses[record.className]?[record.key] ?? []).sorted()
+            let afterDetails = (afterClasses[record.className]?[record.key] ?? []).sorted()
+            guard beforeDetails.count >= 2, beforeDetails == afterDetails,
+                  let beforeImages = systemImages(of: beforeDetails, in: beforeClasses[record.className]),
+                  let afterImages = systemImages(of: afterDetails, in: afterClasses[record.className]),
+                  beforeImages == afterImages else {
+                continue
+            }
+            ignored.insert(member)
+            ignoredLines.append("class \(record.className): \(record.text) (images \(beforeImages.joined(separator: ", ")))")
+        }
+        result.ignoredDuplicates.append(contentsOf: ignoredLines.sorted(by: utf8Less))
+        for (label, records) in [("before", before), ("after", after)] {
+            for record in records where !ignored.contains(ClassMember(className: record.className, key: record.key)) || !record.declared {
+                result.duplicates.append("\(label): class \(record.className): \(record.text)")
+            }
+        }
+    }
+
     private static func utf8Less(_ lhs: String, _ rhs: String) -> Bool {
         return lhs.utf8.lexicographicallyPrecedes(rhs.utf8)
     }
@@ -550,8 +669,8 @@ enum RuntimeSnapshotComparison {
     // to write DUPLICATE lines, so a snapshot whose DUPLICATE line is missing
     // or was removed still fails: any repeated method except +load, and any
     // repeated property whose attributes differ.
-    private static func undeclaredDuplicates(in parsed: ParsedClass, declared: Set<Key>) -> [String] {
-        var result = [String]()
+    private static func undeclaredDuplicates(in parsed: ParsedClass, declared: Set<Key>) -> [(key: Key, text: String)] {
+        var result = [(key: Key, text: String)]()
         for (key, details) in parsed where details.count > 1 && !declared.contains(key) {
             let flagged: Bool
             if key.kind == Bytes("class-method") {
@@ -564,10 +683,10 @@ enum RuntimeSnapshotComparison {
                 flagged = false
             }
             if flagged {
-                result.append("\(key.kind) \(key.name) appears \(details.count) times with no DUPLICATE line")
+                result.append((key, "\(key.kind) \(key.name) appears \(details.count) times with no DUPLICATE line"))
             }
         }
-        return result.sorted(by: utf8Less)
+        return result.sorted { utf8Less($0.text, $1.text) }
     }
 
     private static func describe(_ key: Key) -> String {
@@ -592,7 +711,7 @@ enum RuntimeSnapshotComparison {
     // RuntimeSnapshot.swift writes is added to result.errors.
     private static func parse(_ text: String,
                               label: String,
-                              result: inout RuntimeSnapshotComparisonResult) -> (header: [Bytes: Bytes], classes: [Bytes: ParsedClass]) {
+                              result: inout RuntimeSnapshotComparisonResult) -> (header: [Bytes: Bytes], classes: [Bytes: ParsedClass], duplicates: [DuplicateRecord]) {
         let space = UInt8(ascii: " ")
         var lines = Array(text.utf8).split(separator: UInt8(ascii: "\n"), omittingEmptySubsequences: false)
         // Every line, the last included, ends with a line feed, so splitting
@@ -603,12 +722,12 @@ enum RuntimeSnapshotComparison {
             } else {
                 result.errors.append("\(label): the last line has no line terminator, so the snapshot is truncated")
             }
-            return ([:], [:])
+            return ([:], [:], [])
         }
         lines.removeLast()
         guard Bytes(lines[0]) == Bytes(RuntimeSnapshotFormat.headerLine) else {
             result.errors.append("\(label): the first line is not “\(RuntimeSnapshotFormat.headerLine)”, so this is not a runtime snapshot in a known format")
-            return ([:], [:])
+            return ([:], [:], [])
         }
 
         var header = [Bytes: Bytes]()
@@ -617,6 +736,7 @@ enum RuntimeSnapshotComparison {
         var current = ParsedClass()
         // Keys named by the open class's DUPLICATE lines.
         var declaredDuplicates = Set<Key>()
+        var duplicates = [DuplicateRecord]()
 
         for (index, raw) in lines.enumerated().dropFirst() {
             let lineNumber = index + 1
@@ -662,8 +782,8 @@ enum RuntimeSnapshotComparison {
                     }
                     result.errors.append(contentsOf: problems(inSection: current).map { "\(label): class \(name): \($0)" })
                     classes[name] = current
-                    result.duplicates.append(contentsOf: undeclaredDuplicates(in: current, declared: declaredDuplicates).map {
-                        "\(label): class \(name): \($0)"
+                    duplicates.append(contentsOf: undeclaredDuplicates(in: current, declared: declaredDuplicates).map {
+                        DuplicateRecord(className: name, key: $0.key, text: $0.text, declared: false)
                     })
                     currentClassName = nil
                     current = ParsedClass()
@@ -697,7 +817,8 @@ enum RuntimeSnapshotComparison {
             }
             let kind = fields[0].description
             if kind == RuntimeSnapshotFormat.duplicateKeyword {
-                result.duplicates.append("\(label): class \(className): \(Bytes(content))")
+                duplicates.append(DuplicateRecord(className: className, key: Key(kind: fields[1], name: fields[2]),
+                                                  text: Bytes(content).description, declared: true))
                 declaredDuplicates.insert(Key(kind: fields[1], name: fields[2]))
                 continue
             }
@@ -724,7 +845,7 @@ enum RuntimeSnapshotComparison {
         } else if classes.isEmpty {
             result.errors.append("\(label): the snapshot contains no classes")
         }
-        return (header, classes)
+        return (header, classes, duplicates)
     }
 
     // Checks the fields of a line inside a class section against the grammar

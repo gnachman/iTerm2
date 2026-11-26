@@ -696,5 +696,105 @@ class ReviewTests(LaneBase):
         self.assertNotIn(other, proc.stderr)
 
 
+class SubmodulesComeAndGoTests(LaneBase):
+    """Upstream removes a submodule and adds another (2026-11-25: the nightly
+    clone's lanes still held submodules/railroad_dsl, whose borrowed objects
+    were gone, and `status` failed). The orchestrator's checkout loses the
+    module's repository and configuration as nightly_clone.sh refresh now
+    removes them."""
+
+    def setUp(self):
+        LaneBase.setUp(self)
+        self.run_tool('create', '--count', '2')
+
+    def remove_sub(self, drop_module=True):
+        git(self.repo, 'rm', '-q', 'sub')
+        git(self.repo, 'commit', '-q', '-m', 'remove sub')
+        if drop_module:
+            shutil.rmtree(os.path.join(self.repo, '.git', 'modules', 'sub'))
+            git(self.repo, 'config', '--remove-section', 'submodule.sub')
+
+    def add_sub2(self):
+        up = os.path.join(self.tmp, 'sub2-up')
+        git(self.tmp, 'init', '-q', '-b', 'main', up)
+        write(os.path.join(up, 'two.c'), 'int two;\n')
+        git(up, 'add', 'two.c')
+        git(up, 'commit', '-q', '-m', 'sub2 1')
+        git(self.repo, '-c', 'protocol.file.allow=always', 'submodule', 'add', '-q', up, 'sub2')
+        git(self.repo, 'commit', '-q', '-m', 'add sub2')
+
+    def assert_clean_at_head(self, lane):
+        self.assertEqual(self.head(lane), self.head(self.repo))
+        self.assertFalse(os.path.lexists(os.path.join(lane, 'sub')))
+        self.assertEqual(read(os.path.join(lane, 'sub2', 'two.c')), 'int two;\n')
+        self.assertEqual(git(lane, 'status', '--porcelain', '--ignore-submodules=none').stdout, '')
+
+    def test_status_acquire_release_survive_a_removed_and_an_added_submodule(self):
+        self.remove_sub()
+        self.add_sub2()
+        proc = self.run_tool('status')
+        self.assertIn('lane-1  free', proc.stdout)
+        lane = self.acquire()
+        self.assert_clean_at_head(lane)
+        self.assertEqual(self.saved_files(), [])
+        self.run_tool('release', '1')
+        self.assertEqual(self.lane_entry(1)['dirty'], False)
+        self.assertEqual(self.saved_files(), [])
+
+    def test_release_of_a_lane_held_across_the_removal(self):
+        self.acquire()
+        self.remove_sub()
+        self.add_sub2()
+        self.assertEqual(self.lane_entry(1)['state'], 'held')
+        self.run_tool('release', '1')
+        self.assertEqual(self.saved_files(), [])
+        lane = self.acquire()
+        self.assert_clean_at_head(lane)
+
+    def test_untracked_leftover_of_a_former_submodule_is_removed(self):
+        # `git checkout` in a lane leaves the old submodule's directory
+        # behind ("unable to rmdir ... Directory not empty").
+        lane = os.path.join(self.lanes, 'lane-1')
+        self.remove_sub()
+        self.add_sub2()
+        git(lane, '-c', 'submodule.recurse=false', 'checkout', '-q', '--detach', self.head(self.repo))
+        self.assertTrue(os.path.isdir(os.path.join(lane, 'sub', '.git')))
+        self.run_tool('status')
+        # The lane's HEAD moved since its base, so that change is saved as
+        # usual; the leftover is not, and does not stop the acquire.
+        self.assertEqual(self.acquire(), lane)
+        self.assert_clean_at_head(lane)
+
+    def test_ignored_leftover_with_the_module_still_present_is_removed(self):
+        # The orchestrator kept .git/modules/sub, and the new tip ignores the
+        # path, so `git clean` without -x would leave it.
+        lane = os.path.join(self.lanes, 'lane-1')
+        git(self.repo, 'rm', '-q', 'sub')
+        write(os.path.join(self.repo, '.gitignore'), 'Build/\ntmp/\nsub/\n')
+        git(self.repo, 'add', '.gitignore')
+        git(self.repo, 'commit', '-q', '-m', 'remove sub, ignore it')
+        self.assertEqual(self.acquire(), lane)
+        self.assertFalse(os.path.lexists(os.path.join(lane, 'sub')))
+        self.assertEqual(self.saved_files(), [])
+
+    def test_leftover_with_uncommitted_work_is_kept(self):
+        lane = os.path.join(self.lanes, 'lane-1')
+        write(os.path.join(lane, 'sub', 'lib.c'), 'precious, longer\n')
+        self.remove_sub()
+        self.assertTrue(self.lane_entry(1)['dirty'])
+        proc = self.run_tool('acquire', '--holder-pid', str(os.getpid()), expect=1)
+        self.assertNotIn('Traceback', proc.stderr)
+        self.assertIn('not reset', proc.stderr)
+        self.assertEqual(read(os.path.join(lane, 'sub', 'lib.c')), 'precious, longer\n')
+
+    def test_untracked_nested_repository_that_was_never_a_submodule_is_kept(self):
+        lane = os.path.join(self.lanes, 'lane-1')
+        self.remove_sub()
+        git(lane, 'init', '-q', os.path.join(lane, 'nested'))
+        proc = self.run_tool('acquire', '--holder-pid', str(os.getpid()), expect=1)
+        self.assertIn('not reset', proc.stderr)
+        self.assertTrue(os.path.isdir(os.path.join(lane, 'nested', '.git')))
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -1427,5 +1427,133 @@ class SetupGuardTest(CloneBase):
         self.assertEqual(self.head(self.owner, 'master'), master)
 
 
+class SubmoduleRemovedUpstreamTest(CloneBase):
+    """Upstream removes a submodule (2026-11-25: submodules/railroad_dsl).
+    refresh removes its working directory, its .git/modules/<name> and its
+    configuration in the clone, whether the leftover appeared before the
+    move or appears with it, and initializes a submodule added at the same
+    time; the lanes made from the clone keep working."""
+
+    def setUp(self):
+        super().setUp()
+        self.setup_clone()
+        self.lanes = self.clone + '.lanes'
+        self.leftover = os.path.join(self.clone, 'submodules', 'sub')
+        self.module = os.path.join(self.clone, '.git', 'modules', 'submodules', 'sub')
+
+    def lane_tool(self, *args):
+        proc = subprocess.run([sys.executable, '-B', LANE_TOOL, '--repo', self.clone] + list(args),
+                              env=base_env(), cwd=self.tmp, stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE, universal_newlines=True, timeout=300)
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        return proc
+
+    def remove_sub_upstream(self):
+        git(self.owner, 'rm', '-q', 'submodules/sub')
+        git(self.owner, 'commit', '-q', '-m', 'remove sub')
+        self.push_owner()
+
+    def add_sub2_upstream(self):
+        up = os.path.join(self.tmp, 'sub2-up.git')
+        git(self.tmp, 'init', '-q', '--bare', '-b', 'main', up)
+        seed = os.path.join(self.tmp, 'sub2-seed')
+        git(self.tmp, 'init', '-q', '-b', 'main', seed)
+        self.write(seed, 'two.txt', 'two\n')
+        git(seed, 'add', 'two.txt')
+        git(seed, 'commit', '-q', '-m', 'sub2 one')
+        git(seed, 'push', '-q', up, 'main')
+        git(self.owner, '-c', 'protocol.file.allow=always', 'submodule', 'add', '-q', up, 'submodules/sub2')
+        git(self.owner, 'config', '-f', '.gitmodules', 'submodule.submodules/sub2.url',
+            'https://nightly-test.invalid/sub2.git')
+        git(self.owner, 'add', '.gitmodules')
+        git(self.owner, 'commit', '-q', '-m', 'add sub2')
+        self.push_owner()
+
+    def move_clone_by_hand(self):
+        """What an older refresh did: the clone's master moved past the
+        removal, and git left the submodule's directory behind."""
+        git(self.clone, '-c', 'protocol.file.allow=always', 'fetch', '-q', 'file://' + self.up, 'master')
+        git(self.clone, '-c', 'submodule.recurse=false', 'merge', '-q', '--ff-only', 'FETCH_HEAD')
+        self.assertTrue(os.path.isfile(os.path.join(self.leftover, '.git')))
+        self.assertIn('?? submodules/', git(self.clone, 'status', '--porcelain').stdout)
+
+    def assert_gone(self, proc):
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        self.assertFalse(os.path.lexists(self.leftover), proc.stdout)
+        self.assertFalse(os.path.lexists(self.module), proc.stdout)
+        config = git(self.clone, 'config', '--list', '--name-only').stdout
+        self.assertNotIn('submodule.submodules/sub.', config)
+        self.assertEqual(git(self.clone, 'status', '--porcelain').stdout, '')
+        self.assertIn('submodule-removed: submodules/sub', proc.stdout)
+        self.assertEqual(self.run_tool('check', '--source', self.owner, '--clone', self.clone).returncode, 0)
+
+    def test_removal_and_addition_with_lanes(self):
+        self.lane_tool('create', '--count', '2')
+        self.lane_tool('release', '1')
+        self.remove_sub_upstream()
+        self.add_sub2_upstream()
+        self.assert_gone(self.refresh())
+        self.assertTrue(os.path.exists(os.path.join(self.clone, 'submodules', 'sub2', 'two.txt')))
+        self.assertEqual(self.refresh().returncode, 0)
+        self.lane_tool('status')
+        lane = self.lane_tool('acquire', '--purpose', 'test').stdout.strip()
+        self.assertFalse(os.path.lexists(os.path.join(lane, 'submodules', 'sub')))
+        self.assertTrue(os.path.exists(os.path.join(lane, 'submodules', 'sub2', 'two.txt')))
+        self.assertEqual(git(lane, 'status', '--porcelain', '--ignore-submodules=none').stdout, '')
+        self.lane_tool('release', '1')
+        self.lane_tool('status')
+
+    def test_leftover_from_before_the_move_is_removed(self):
+        self.remove_sub_upstream()
+        self.move_clone_by_hand()
+        self.assert_gone(self.refresh())
+
+    def test_module_whose_working_directory_was_removed_by_hand(self):
+        self.remove_sub_upstream()
+        self.move_clone_by_hand()
+        shutil.rmtree(self.leftover)
+        self.assert_gone(self.refresh())
+
+    def test_leftover_holding_work_is_refused(self):
+        self.remove_sub_upstream()
+        self.move_clone_by_hand()
+        self.write(self.leftover, 'lib.txt', 'precious\n')
+        proc = self.refresh()
+        self.assertEqual(proc.returncode, 8, proc.stdout)
+        with open(os.path.join(self.leftover, 'lib.txt')) as fh:
+            self.assertEqual(fh.read(), 'precious\n')
+
+    def test_local_commit_in_the_removed_submodule_is_refused(self):
+        sub = os.path.join(self.clone, 'submodules', 'sub')
+        self.commit(sub, 'local.txt')
+        git(self.clone, 'add', 'submodules/sub')
+        git(self.clone, 'commit', '-q', '-m', 'night moves sub')
+        git(self.clone, 'reset', '-q', '--hard', 'HEAD~1')
+        git(sub, 'checkout', '-q', '--detach', 'HEAD~1')
+        git(sub, 'branch', 'keep', 'HEAD@{1}')
+        self.remove_sub_upstream()
+        proc = self.refresh()
+        self.assertEqual(proc.returncode, 7, proc.stdout)
+        self.assertIn('local commit', proc.stdout)
+        self.assertTrue(os.path.isdir(self.module))
+
+    def test_untracked_directory_that_is_not_a_former_submodule_is_refused(self):
+        self.remove_sub_upstream()
+        os.makedirs(os.path.join(self.clone, 'stray'))
+        self.write(os.path.join(self.clone, 'stray'), 'f.txt', 'x\n')
+        proc = self.refresh()
+        self.assertEqual(proc.returncode, 8, proc.stdout)
+        self.assertIn('stray', proc.stdout)
+
+    def test_module_not_explained_by_a_removed_submodule_is_refused(self):
+        bogus = os.path.join(self.clone, '.git', 'modules', 'bogus')
+        git(self.tmp, 'init', '-q', '--bare', bogus)
+        git(bogus, 'config', 'core.bare', 'false')
+        git(bogus, 'config', 'core.worktree', '../../../bogus')
+        proc = self.refresh()
+        self.assertEqual(proc.returncode, 10, proc.stdout)
+        self.assertIn('core.worktree', proc.stdout)
+
+
 if __name__ == '__main__':
     unittest.main()

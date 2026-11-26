@@ -1467,3 +1467,20 @@ or a crash from program output.
   owner (owner-queue.md).
 - **Found:** 2026-11-24, the nightly orchestrator's gate for
   `pbxproj-move-target`.
+
+## An image dropped on the mutation thread may live until that thread's pool drains (unconfirmed)
+
+- **Where:** objects autoreleased during a joined block or on the mutation
+  queue (`VT100ScreenMutableState`), which can hold an inline image's mark.
+- **What:** found while fixing six `InlineImageReleaseTests` that failed
+  under the nullability and thread sanitizer builds: an object autoreleased
+  inside a joined-block read held an image mark until the enclosing pool
+  drained. On the main thread a pool drains every pass of the run loop. A
+  dispatch queue's pool drains when its thread goes idle unless the queue
+  was created to drain per work item; how the mutation queue is created was
+  not checked. In a busy session a dead image could then live somewhat
+  longer than expected, never for good.
+- **Meanwhile:** nothing changed in the app; the tests give their reads
+  their own pools.
+- **Found:** 2026-11-25, in review of unit `inline-image-nullability`.
+

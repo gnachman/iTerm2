@@ -189,6 +189,12 @@ tui() {
   "$STUB_PYTHON" -B "$STUB_FAKE_TUI" "$STUB_DIR/tui" "$@"
 }
 if [ -n "${STUB_HANG:-}" ]; then
+  if [ -n "${STUB_DONE:-}" ]; then
+    # The session's last action: once its input line is up, it reports
+    # that its work is done.
+    ( while [ ! -e "$STUB_DIR/tui/ready" ]; do sleep 0.05; done
+      "$STUB_DONE" > "$STUB_DIR/done_out" 2>&1 ) &
+  fi
   tui
   if [ -e "$STUB_DIR/tui/got_exit" ]; then echo exit > "$STUB_DIR/session_exit"; fi
   exit 0
@@ -712,6 +718,27 @@ class NightlyStartTest(NightlyBase):
         self.assertIn('the trivial path runs none', prompt)
         self.assertIn('whole suites serialize through the whole-suite lock', prompt)
         self.assertIn('at most three at once', prompt)
+
+    def test_prompt_starts_at_once_and_never_parks_on_a_tool_defect(self):
+        # The owner, 2026-11-25: "It is absurd to stop on something like
+        # this, and it is absurd that it would take over an hour to port
+        # three lines of code."
+        proc = self.run_script()
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        prompt = self.session_args()[-1]
+        self.assertNotIn('bring derived data up to date before starting any unit', prompt)
+        self.assertIn('in the background and start the first trivial unit at once', prompt)
+        self.assertIn('tmp/classify.txt', prompt)
+        self.assertIn('Do not wait idle on one author', prompt)
+        self.assertIn('Never park a unit on a tool defect', prompt)
+        self.assertIn('record it in bugs.md with the evidence', prompt)
+        self.assertIn('park only when the failure may be the unit', prompt)
+        self.assertIn('never a build failure or a failing test', prompt)
+        self.assertNotIn('in code the unit does not touch', prompt)
+        self.assertIn('light and full units start only after the refresh', prompt)
+        self.assertIn('closing checks pending: their closing checks come first', prompt)
+        self.assertIn('if tmp/classify.txt is missing, classify after the database update', prompt)
+        self.assertIn('at most one author builds', prompt)
 
     NUDGE = ('It is the clean stop time. Stop now as docs/swift-migration/workflow.md section 4 says: '
              'start nothing new, stop or abandon background jobs that have not finished, commit what '
@@ -1366,6 +1393,51 @@ class NightlyStartTest(NightlyBase):
 
     # The session itself.
 
+    # The session's end (2026-11-25): a night that finished at 01:40 sat at
+    # its prompt until the time limit at 05:54.
+
+    def test_prompt_names_the_done_command_and_the_supervisor_watches_for_it(self):
+        proc = self.run_script()
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        prompt = self.session_args()[-1]
+        self.assertIn(os.path.join(TOOL_DIR, 'nightly_done.sh'), prompt)
+        self.assertIn('your last action', prompt)
+        night_dir = self.night_dir_of(proc)
+        with open(os.path.join(night_dir, 'command.txt')) as fh:
+            command = fh.read()
+        self.assertIn('--done-file %s' % os.path.join(night_dir, 'session.done'), command)
+
+    def test_session_that_reports_done_is_stopped_at_once_and_swept(self):
+        control = subprocess.Popen(['/bin/sleep', '600'])
+        self.holders.append(control)
+        # A limit far past the harness's 300 second bound: only the done
+        # report can end this run in time.
+        proc = self.run_script(STUB_HANG='1', STUB_ESCAPE='1',
+                               STUB_DONE=os.path.join(TOOL_DIR, 'nightly_done.sh'),
+                               NIGHTLY_MAX_SECONDS='3600', NIGHTLY_GRACE_SECONDS='5')
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        self.assertIn('session reported done', proc.stdout)
+        self.assertNotIn('session stopped at the time limit', proc.stdout)
+        self.assertIn('nightly_done: wrote', self.read_stub('done_out'))
+        # The normal stop sequence: /exit typed, and the session ended on it.
+        self.assertTrue(os.path.exists(self.stub_file('session_exit')), proc.stdout)
+        self.assertIn('typing /exit', proc.stdout)
+        for name in ('newsession', 'doublefork', 'plainchild'):
+            pid = int(self.read_stub(name))
+            self.assertTrue(wait_until(lambda: not alive(pid)),
+                            '%s %d survived\n%s' % (name, pid, proc.stdout))
+        self.assertIsNone(control.poll())
+        self.assertFalse(os.path.exists(self.lock_dir()))
+
+    def test_done_command_outside_a_nightly_session_refuses(self):
+        env = dict(os.environ)
+        env.pop('SWIFT_MIGRATION_NIGHTLY', None)
+        env.pop('SWIFT_MIGRATION_NIGHT_DIR', None)
+        proc = subprocess.run(['/bin/bash', os.path.join(TOOL_DIR, 'nightly_done.sh')], env=env,
+                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                              universal_newlines=True, timeout=60)
+        self.assertEqual(proc.returncode, 2, proc.stdout)
+
     def test_session_fails(self):
         proc = self.run_script(STUB_EXIT='9')
         self.assertEqual(proc.returncode, 4, proc.stdout)
@@ -1473,12 +1545,16 @@ class NightlyStartTest(NightlyBase):
         proc = self.run_script(['--bogus'])
         self.assertEqual(proc.returncode, 64, proc.stdout)
 
-    # A one-unit night (NIGHTLY_ONE_UNIT_DATE): on that local date only, the
-    # weekly ceiling does not stop the start and the prompt asks for exactly
-    # one unit. Sunday 2026-11-15 at 01:00 has a ceiling of 1/7 (14.3%) and
-    # 54% is used, so without the option the night refuses with exit 1.
+    # An "at least one unit" night (NIGHTLY_ONE_UNIT_DATE): on that local
+    # date only, the weekly ceiling does not stop the start; at or over the
+    # ceiling the prompt asks for exactly one unit, under it the night is
+    # ordinary except that a first unit not yet landed is finished when the
+    # ceiling is reached. Sunday 2026-11-15 at 01:00 has a ceiling of 1/7
+    # (14.3%) and 54% is used, so without the option the night refuses with
+    # exit 1.
 
     ONE_UNIT_MARK = 'this night does exactly one unit'
+    FIRST_UNIT_MARK = 'Until one unit has landed'
     SUNDAY = '2026-11-15T01:00'
 
     def prompt_of(self, proc):
@@ -1502,11 +1578,25 @@ class NightlyStartTest(NightlyBase):
         self.assertIn('docs/swift-migration/orchestration.md from the top', prompt)
         self.assertIn('Stopping cleanly', prompt)
 
-    def test_one_unit_night_under_the_ceiling_still_asks_for_one_unit(self):
+    def test_one_unit_night_under_the_ceiling_is_ordinary_but_finishes_the_first_unit(self):
         proc = self.run_script(NIGHTLY_ONE_UNIT_DATE='2026-11-19')
         self.assertEqual(proc.returncode, 0, proc.stdout)
         self.assertIn('one-unit night applies', proc.stdout)
-        self.assertIn(self.ONE_UNIT_MARK, self.session_args()[-1])
+        self.assertIn('under the ceiling', proc.stdout)
+        self.assertIn('an ordinary night', proc.stdout)
+        prompt = self.session_args()[-1]
+        self.assertNotIn(self.ONE_UNIT_MARK, prompt)
+        self.assertNotIn('start no second unit', prompt)
+        self.assertIn(self.FIRST_UNIT_MARK, prompt)
+        self.assertIn('this night does at least one unit', prompt)
+        self.assertIn('docs/swift-migration/orchestration.md from the top', prompt)
+
+    def test_one_unit_night_over_the_ceiling_does_not_carry_the_first_unit_sentence(self):
+        proc = self.run_script(now=self.SUNDAY,
+                               NIGHTLY_ONE_UNIT_DATE='2026-11-15')
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        self.assertIn('exactly one unit', proc.stdout)
+        self.assertNotIn(self.FIRST_UNIT_MARK, self.session_args()[-1])
 
     def test_one_unit_night_dry_run_over_the_ceiling(self):
         proc = self.run_script(['--dry-run'], now=self.SUNDAY,
@@ -1566,12 +1656,14 @@ class NightlyStartTest(NightlyBase):
         self.assertEqual(proc.returncode, 0, proc.stdout)
         self.assertIn('does not apply tonight', proc.stdout)
         self.assertNotIn(self.ONE_UNIT_MARK, self.session_args()[-1])
+        self.assertNotIn(self.FIRST_UNIT_MARK, self.session_args()[-1])
 
     def test_no_one_unit_date_leaves_the_prompt_alone(self):
         proc = self.run_script()
         self.assertEqual(proc.returncode, 0, proc.stdout)
         self.assertNotIn('NIGHTLY_ONE_UNIT_DATE', proc.stdout)
         self.assertNotIn(self.ONE_UNIT_MARK, self.session_args()[-1])
+        self.assertNotIn(self.FIRST_UNIT_MARK, self.session_args()[-1])
 
     def test_empty_one_unit_date_is_unset(self):
         # The plist template's placeholder installed empty.

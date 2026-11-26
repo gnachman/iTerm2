@@ -1,0 +1,376 @@
+# Objective-C runtime snapshot, format 3
+architecture arm64
+build-configuration Development
+build-variant ASan
+class NSLocale
+  DUPLICATE instance-method -encodeWithCoder: count=2
+  DUPLICATE instance-method -initWithCoder: count=2
+  language objc
+  superclass NSObject
+  image CoreFoundation
+  ivar-arc-flag unknown
+  strong-ivar-layout
+  weak-ivar-layout
+  protocol NSCopying
+  protocol NSSecureCoding
+  class-method +ISOCountryCodes types=@16@0:8
+  class-method +ISOCurrencyCodes types=@16@0:8
+  class-method +ISOLanguageCodes types=@16@0:8
+  class-method +ITUCountryCodeForISOCountryCode: types=q24@0:8@16 image=PhoneNumbers
+  class-method +_ICUdisplayNameForLanguage:capitalization: types=@32@0:8@16^{ULocaleDisplayNames=}24 image=InternationalSupport
+  class-method +_IS_currentLanguageDirection types=Q16@0:8 image=IconServices
+  class-method +__effectiveLanguageForBundle: types=@24@0:8@16 image=Foundation
+  class-method +_addLikelySubtagsForLocaleIdentifier: types=@24@0:8@16 image=InternationalSupport
+  class-method +_archivedPreferencesWithOverridingLanguages:targetPlatform:hash: types=@40@0:8@16Q24o^@32 image=IntlPreferences
+  class-method +_autoupdatingCurrent types=@16@0:8 image=Foundation
+  class-method +_availableLocaleIdentifiers types=@16@0:8 image=Foundation
+  class-method +_availableRegionsOfType: types=@20@0:8i16 image=InternationalSupport
+  class-method +_canonicalLanguageIdentifierFromString: types=@24@0:8@16 image=Foundation
+  class-method +_canonicalLocaleIdentifierFromString: types=@24@0:8@16 image=Foundation
+  class-method +_characterDirectionForLanguage: types=Q24@0:8@16 image=Foundation
+  class-method +_commonISOCurrencyCodes types=@16@0:8 image=Foundation
+  class-method +_componentsFromLocaleIdentifier: types=@24@0:8@16 image=Foundation
+  class-method +_containingRegionOfType:forRegion: types=@28@0:8i16@20 image=InternationalSupport
+  class-method +_current types=@16@0:8 image=Foundation
+  class-method +_currentLocaleWithBundleLocalizations:disableBundleMatching: types=@28@0:8@16B24 image=Foundation
+  class-method +_defaultUses12HourClockForLocaleIdentifier: types=B24@0:8@16 image=LoginUIKit
+  class-method +_defaultUsesTwelveHourClockForLocaleIdentifier: types=B24@0:8@16 image=IntlPreferences
+  class-method +_deviceLanguage types=@16@0:8 image=Foundation
+  class-method +_deviceLanguages types=@16@0:8 image=InternationalSupport
+  class-method +_displayNameForLanguage:displayLanguage:context:length: types=@48@0:8@16@24q32Q40 image=InternationalSupport
+  class-method +_displayNameForNormalizedLanguage:context:displayLanguage:length: types=@48@0:8@16q24@32Q40 image=InternationalSupport
+  class-method +_displayNameForNormalizedLanguage:context:displayLanguage:length:isCalcium: types=@52@0:8@16q24@32Q40B48 image=InternationalSupport
+  class-method +_displayNameForRegion:displayLanguage:context:short: types=@44@0:8@16@24q32B40 image=InternationalSupport
+  class-method +_enumerateLanguageFallbackGraphForLocaleIdentifier:usingBlock: types=v32@0:8@16@?24 image=EmojiFoundation
+  class-method +_globalPreferredLanguages types=@16@0:8 image=InternationalSupport
+  class-method +_hashesFromAppPreferences: types=@24@0:8@16 image=IntlPreferences
+  class-method +_inputModesToEnableForLocale: types=@24@0:8@16 image=IntlPreferences
+  class-method +_insertFallbackLanguageIfNecessaryForRegion: types=v24@0:8@16 image=IntlPreferences
+  class-method +_isoCountryCodes types=@16@0:8 image=Foundation
+  class-method +_isoCurrencyCodes types=@16@0:8 image=Foundation
+  class-method +_isoLanguageCodes types=@16@0:8 image=Foundation
+  class-method +_language:usesSameLocalizationAs: types=B32@0:8@16@24 image=IntlPreferences
+  class-method +_languageIdentifiersForLanguage:region: types=@32@0:8@16@24 image=IntlPreferences
+  class-method +_languagesForRegion:subdivision:withThreshold: types=@40@0:8@16@24q32 image=InternationalSupport
+  class-method +_languagesToExemplarStrings types=@16@0:8 image=InternationalSupport
+  class-method +_likelyLanguagesForKeyboardIDs: types=@24@0:8@16 image=IntlPreferences
+  class-method +_lineDirectionForLanguage: types=Q24@0:8@16 image=Foundation
+  class-method +_locale:hasCommonParentWith: types=B32@0:8@16@24 image=InternationalSupport
+  class-method +_localeIdentifierByAddingLikelySubtags: types=@24@0:8@16 image=Foundation
+  class-method +_localeIdentifierByReplacingLanguageCodeAndScriptCodeForLangCode:desiredComponents: types=@32@0:8@16@24 image=Foundation
+  class-method +_localeIdentifierForLanguage:region: types=@32@0:8@16@24 image=IntlPreferences
+  class-method +_localeIdentifierForRegionChangeFrom:to: types=@32@0:8@16@24 image=IntlPreferences
+  class-method +_localeIdentifierFromComponents: types=@24@0:8@16 image=Foundation
+  class-method +_localeIdentifierFromWindowsLocaleCode: types=@20@0:8I16 image=Foundation
+  class-method +_localeOverridesForLocaleWithCountryCode: types=@24@0:8@16 image=Navigation
+  class-method +_minimizeSubtagsForLocaleIdentifier: types=@24@0:8@16 image=InternationalSupport
+  class-method +_navigation_overrideDistanceUnit: types=v24@0:8q16 image=Navigation
+  class-method +_newLocaleAsIfCurrent:overrides:disableBundleMatching: types=@36@0:8@16r^{__CFDictionary=}24B32 image=Foundation
+  class-method +_newLocaleWithIdentifier: types=@24@0:8@16 image=Foundation
+  class-method +_nonRomanLanguages types=@16@0:8 image=ScreenReaderCore
+  class-method +_normalizedLanguageIdentifierFromString: types=@24@0:8@16 image=InternationalSupport
+  class-method +_numberingSystemForLocaleIdentifier: types=@24@0:8@16 image=Foundation
+  class-method +_parentLocaleIdentifierForIdentifier: types=@24@0:8@16 image=InternationalSupport
+  class-method +_parentLocaleIdentifiersForIdentifier: types=@24@0:8@16 image=InternationalSupport
+  class-method +_preferencesForSetLanguageAndRegion: types=@24@0:8@16 image=IntlPreferences
+  class-method +_preferredLanguages types=@16@0:8 image=Foundation
+  class-method +_preferredLanguagesForCurrentUser: types=@20@0:8B16 image=Foundation
+  class-method +_preferredMeasurementSystem types=@16@0:8 image=Foundation
+  class-method +_preferredTemperatureUnit types=@16@0:8 image=Foundation
+  class-method +_regionLanguageData types=@16@0:8 image=InternationalSupport
+  class-method +_regionLanguageDataForRegionCode:subdivisionCode: types=@32@0:8@16@24 image=InternationalSupport
+  class-method +_resetCurrent types=v16@0:8 image=Foundation
+  class-method +_sanitizedLanguageIdentifierFromKeyboardLanguage: types=@24@0:8@16 image=IntlPreferences
+  class-method +_sanitizedLanguageIdentifierFromKeyboardLanguage:currentLocale: types=@32@0:8@16@24 image=IntlPreferences
+  class-method +_scriptCodeFromIdentifier: types=i24@0:8@16 image=TextInput
+  class-method +_scriptCodeFromLanguageIdentifier: types=i24@0:8@16 image=TextInput
+  class-method +_scriptIdentifierFromCode: types=@20@0:8i16 image=TextInput
+  class-method +_scriptIdentifierFromLanguageIdentifier: types=@24@0:8@16 image=TextInput
+  class-method +_setPreferredMeasurementSystem: types=v24@0:8@16 image=Foundation
+  class-method +_setPreferredTemperatureUnit: types=v24@0:8@16 image=Foundation
+  class-method +_setUsesTwelveHourClock: types=v20@0:8B16 image=IntlPreferences
+  class-method +_setUsesTwelveHourClockForLoginWindow: types=v20@0:8B16 image=IntlPreferences
+  class-method +_subdivisionCodeFromSubdivisionTag:restrictedToRegionCode: types=@32@0:8@16@24 image=IntlPreferences
+  class-method +_supportedKeyboardLanguages types=@16@0:8 image=InternationalSupport
+  class-method +_system types=@16@0:8 image=Foundation
+  class-method +_usesTwelveHourClock types=B16@0:8 image=IntlPreferences
+  class-method +_usesTwelveHourClockForLoginWindow types=B16@0:8 image=IntlPreferences
+  class-method +_validNumberingSystemsForLocaleIdentifier: types=@24@0:8@16 image=Foundation
+  class-method +_vk_indexForLocale: types=q24@0:8@16 image=VectorKit
+  class-method +_windowsLocaleCodeFromLocaleIdentifier: types=I24@0:8@16 image=Foundation
+  class-method +abbreviationsForLanguages:minimizeVariants: types=@28@0:8@16B24 image=InternationalSupport
+  class-method +addLikelySubtagsForLocaleIdentifier: types=@24@0:8@16 image=IntlPreferences
+  class-method +addLikelySubtagsToLocaleIdentifier: types=@24@0:8@16 image=IntlPreferences
+  class-method +af_setAceTemperatureUnit: types=v24@0:8@16 image=AssistantServices
+  class-method +af_temperatureUnitForAceTemperatureUnit: types=@24@0:8@16 image=AssistantServices
+  class-method +allocWithZone: types=@24@0:8^{_NSZone=}16 also-implemented-by=+NSObject
+  class-method +archivedPreferences types=@16@0:8 image=IntlPreferences
+  class-method +archivedPreferencesForTargetPlatform: types=@24@0:8Q16 image=IntlPreferences
+  class-method +archivedPreferencesWithHash: types=@24@0:8o^@16 image=IntlPreferences
+  class-method +archivedPreferencesWithHashesForBundleIDs: types=@24@0:8@16 image=IntlPreferences
+  class-method +archivedPreferencesWithHashesForBundleIDs:reply: types=v32@0:8@16@?24 image=IntlPreferences
+  class-method +autoupdatingCurrentLocale types=@16@0:8 image=Foundation
+  class-method +availableContinents types=@16@0:8 image=InternationalSupport
+  class-method +availableLocaleIdentifiers types=@16@0:8
+  class-method +availableSpokenLanguages types=@16@0:8 image=InternationalSupport
+  class-method +baseLanguageFromLanguage: types=@24@0:8@16 image=InternationalSupport
+  class-method +baseSystemLanguages types=@16@0:8 image=InternationalSupport
+  class-method +canonicalLanguageAndScriptCodeIdentifierForIdentifier: types=@24@0:8@16 image=IntlPreferences
+  class-method +canonicalLanguageIdentifierFromString: types=@24@0:8@16
+  class-method +canonicalLocaleIdentifier:withNewLanguageIdentifier: types=@32@0:8@16@24 image=IntlPreferences
+  class-method +canonicalLocaleIdentifierFromComponents: types=@24@0:8@16 image=IntlPreferences
+  class-method +canonicalLocaleIdentifierFromString: types=@24@0:8@16
+  class-method +characterDirectionForLanguage: types=Q24@0:8@16
+  class-method +commonISOCurrencyCodes types=@16@0:8
+  class-method +componentsFromLocaleIdentifier: types=@24@0:8@16
+  class-method +containingContinentOfRegion: types=@24@0:8@16 image=InternationalSupport
+  class-method +containingRegionOfRegion: types=@24@0:8@16 image=InternationalSupport
+  class-method +currentLocale types=@16@0:8
+  class-method +deviceLanguage types=@16@0:8 image=InternationalSupport
+  class-method +deviceLanguageIdentifier types=@16@0:8 image=IntlPreferences
+  class-method +deviceLanguageLocale types=@16@0:8 image=IntlPreferences
+  class-method +displayNameForLanguage:context:displayLanguage:truncationStyle: types=@48@0:8@16q24@32Q40 image=IntlPreferences
+  class-method +displayNameForLanguage:displayLanguage:context: types=@40@0:8@16@24q32 image=InternationalSupport
+  class-method +displayNameForRegion:displayLanguage:context:short: types=@44@0:8@16@24q32B40 image=InternationalSupport
+  class-method +displayNameForSelectableScriptCode: types=@24@0:8@16 image=IntlPreferences
+  class-method +dmc_languageStringWithLanguageCode:scriptCode:countryCode: types=@40@0:8@16@24@32 image=DMCUtilities
+  class-method +ef_directionalMarkForCurrentLocale types=@16@0:8 image=EmailFoundation
+  class-method +ef_isCurrentLocaleRTL types=B16@0:8 image=EmailFoundation
+  class-method +ef_localesFromLanguages: types=@24@0:8@16 image=EmailFoundation
+  class-method +ef_posixLocale types=@16@0:8 image=EmailFoundation
+  class-method +ef_quotePairsForLanguages: types=@24@0:8@16 image=EmailFoundation
+  class-method +ef_quotePairsForLocales: types=@24@0:8@16 image=EmailFoundation
+  class-method +enableDefaultInputModesForCurrentLocale types=v16@0:8 image=IntlPreferences
+  class-method +enableInputModesForLocale:addToFront: types=v28@0:8@16B24 image=IntlPreferences
+  class-method +exemplarForLanguage: types=@24@0:8@16 image=InternationalSupport
+  class-method +exemplarRegionForLanguage: types=@24@0:8@16 image=InternationalSupport
+  class-method +fc_preferredLanguageCodes types=@16@0:8 image=NewsCore
+  class-method +internetServicesRegion types=@16@0:8
+  class-method +isOnCalciumDevice types=B16@0:8 image=InternationalSupport
+  class-method +languageAndScriptFromLocaleIdentifier: types=@24@0:8@16 image=IntlPreferences
+  class-method +languageArrayAfterSettingLanguage:fallback:toLanguageArray: types=@40@0:8@16@24@32 image=IntlPreferences
+  class-method +languageFromLanguage:byReplacingRegion: types=@32@0:8@16@24 image=InternationalSupport
+  class-method +languageIdentifierForRegisteringPreferredLanguageFromAddedKeyboardLanguage:forPreferredLanguages: types=@32@0:8@16@24 image=IntlPreferences
+  class-method +languageIdentifierFromLocaleIdentifier: types=@24@0:8@16 image=IntlPreferences
+  class-method +languagesByAddingRelatedLanguagesToLanguages: types=@24@0:8@16 image=InternationalSupport
+  class-method +languagesForRegion:subdivision:withThreshold:filter: types=@48@0:8@16@24q32q40 image=InternationalSupport
+  class-method +likelyLanguagesForAttachedKeyboards types=@16@0:8 image=IntlPreferences
+  class-method +lineDirectionForLanguage: types=Q24@0:8@16
+  class-method +localeForBundleLanguage: types=@24@0:8@16 image=TextInput
+  class-method +localeIdentifierForRegionChange: types=@24@0:8@16 image=IntlPreferences
+  class-method +localeIdentifierFromComponents: types=@24@0:8@16
+  class-method +localeIdentifierFromLanguageIdentifier:countryCode: types=@32@0:8@16@24 image=IntlPreferences
+  class-method +localeIdentifierFromWindowsLocaleCode: types=@20@0:8I16
+  class-method +localeWithLocaleIdentifier: types=@24@0:8@16
+  class-method +localizedCountryCodeNameMap types=@16@0:8 image=AOSUI
+  class-method +lt_bestMatchForPreferredLocales:fromSupportedLocales: types=@32@0:8@16@24 image=Translation
+  class-method +lt_bestMatchesForPreferredLocales:fromSupportedLocales: types=@32@0:8@16@24 image=Translation
+  class-method +lt_defaultTargetForSource:systemLocale:availableLocales:targetMap: types=@48@0:8@16@24@32@40 image=Translation
+  class-method +lt_fallbackForLocale: types=@24@0:8@16 image=Translation
+  class-method +lt_localeWithLTIdentifier: types=@24@0:8@16 image=Translation
+  class-method +lt_preferredLocales types=@16@0:8 image=Translation
+  class-method +lui_isSupportedNumberingSystem: types=B24@0:8@16 image=LoginUIKit
+  class-method +lui_numberingSystem types=@16@0:8 image=LoginUIKit
+  class-method +lui_supportedNumberingSystems types=@16@0:8 image=LoginUIKit
+  class-method +lui_uses12HourClock types=B16@0:8 image=LoginUIKit
+  class-method +matchedLanguagesFromAvailableLanguages:forPreferredLanguages: types=@32@0:8@16@24 image=InternationalSupport
+  class-method +minimizedLanguagesFromLanguages: types=@24@0:8@16 image=InternationalSupport
+  class-method +mostPreferredLanguageOf:forUsage:options: types=@40@0:8@16Q24Q32 image=Foundation
+  class-method +mostPreferredLanguageOf:withPreferredLanguages:forUsage:options: types=@48@0:8@16@24Q32Q40 image=Foundation
+  class-method +nationalDirectDialingPrefixForISOCountryCode: types=@24@0:8@16 image=PhoneNumbers
+  class-method +normalizeLanguageIdentifier: types=@24@0:8@16 image=IntlPreferences
+  class-method +pk_deviceLanguage types=@16@0:8 image=PassKitCore
+  class-method +pk_preferredLocale types=@16@0:8 image=PassKitCore
+  class-method +preferredLanguages types=@16@0:8
+  class-method +preferredLocale types=@16@0:8 image=Foundation
+  class-method +rc_preferredLanguageCodes types=@16@0:8 image=RemoteConfiguration
+  class-method +regionsForLanguage:withThreshold: types=@32@0:8@16q24 image=InternationalSupport
+  class-method +registerPreferredLanguage:usage:confidence: types=v36@0:8@16Q24f32 image=Foundation
+  class-method +registerPreferredLanguageForAddedKeyboardLanguage: types=v24@0:8@16 image=IntlPreferences
+  class-method +relatedLanguagesForLanguage: types=@24@0:8@16 image=InternationalSupport
+  class-method +renderableLanguagesFromList: types=@24@0:8@16 image=IntlPreferences
+  class-method +renderableLocaleLanguages types=@16@0:8 image=IntlPreferences
+  class-method +renderableUILanguages types=@16@0:8 image=IntlPreferences
+  class-method +resetCustomFormats types=v16@0:8 image=IntlPreferences
+  class-method +resetTimeFormat types=v16@0:8 image=IntlPreferences
+  class-method +safari_countryCodeForCountrySetInMacBuddy types=@16@0:8 image=SafariCore
+  class-method +safari_countrySetInMacBuddyIsChina types=B16@0:8 image=SafariCore
+  class-method +safari_countrySetInMacBuddyIsRussia types=B16@0:8 image=SafariCore
+  class-method +safari_localeIdentifiersForMostWidelyUsedLanguages types=@16@0:8 image=SafariCore
+  class-method +scriptCodeFromLanguage: types=@24@0:8@16 image=InternationalSupport
+  class-method +setArchivedPreferences: types=v24@0:8@16 image=IntlPreferences
+  class-method +setLanguageAndRegion: types=v24@0:8@16 image=IntlPreferences
+  class-method +setLanguageToPreferredLanguages:fallback: types=v32@0:8@16@24 image=IntlPreferences
+  class-method +setLocaleAfterLanguageChange: types=v24@0:8@16 image=IntlPreferences
+  class-method +setLocaleAfterRegionChange: types=v24@0:8@16 image=IntlPreferences
+  class-method +setLocaleAndResetCustomFormat: types=v24@0:8@16 image=IntlPreferences
+  class-method +setLocaleAndResetTimeFormat: types=v24@0:8@16 image=IntlPreferences
+  class-method +setLocaleOnly: types=v24@0:8@16 image=IntlPreferences
+  class-method +setPreferredLanguageAndUpdateLocale: types=v24@0:8@16 image=IntlPreferences
+  class-method +setPreferredLanguages: types=v24@0:8@16 image=Foundation
+  class-method +spokenLanguagesForLanguage: types=@24@0:8@16 image=InternationalSupport
+  class-method +spokenLanguagesForLanguages:includeLanguagesForRegion: types=@28@0:8@16B24 image=InternationalSupport
+  class-method +supportedCJLanguageIdentifiers types=@16@0:8 image=IntlPreferences
+  class-method +supportedLanguages types=@16@0:8 image=InternationalSupport
+  class-method +supportedRegions types=@16@0:8 image=InternationalSupport
+  class-method +supportsSecureCoding types=B16@0:8
+  class-method +systemLanguages types=@16@0:8 image=Foundation
+  class-method +systemLocale types=@16@0:8
+  class-method +unregisterPreferredLanguageForKeyboardLanguage: types=v24@0:8@16 image=IntlPreferences
+  class-method +validateLocale: types=@24@0:8@16 image=IntlPreferences
+  class-method +windowsLocaleCodeFromLocaleIdentifier: types=I24@0:8@16
+  instance-method -CalLanguageIsSimplifiedChinese types=B16@0:8 image=CalendarFoundation
+  instance-method -CalPrefersFullMonthDisplayNames types=B16@0:8 image=CalendarFoundation
+  instance-method -CalRegionIsChina types=B16@0:8 image=CalendarFoundation
+  instance-method -CalShouldUseAbbreviatedDayNames types=B16@0:8 image=CalendarFoundation
+  instance-method -CalUnableToAbbreviateMonthNames types=B16@0:8 image=CalendarFoundation
+  instance-method -CalUsesCelsius types=B16@0:8 image=CalendarFoundation
+  instance-method -ITUCountryCode types=q16@0:8 image=PhoneNumbers
+  instance-method -_calendarDirection types=q16@0:8 image=Foundation
+  instance-method -_calendarIsIslamic types=B16@0:8 image=CalendarFoundation
+  instance-method -_cfTypeID types=Q16@0:8 also-implemented-by=-NSObject
+  instance-method -_copyDisplayNameForKey:value: types=@32@0:8@16@24
+  instance-method -_doesNotRequireSpecialCaseHandling types=B16@0:8 image=Foundation
+  instance-method -_geo_languageAndLocale types=@16@0:8 image=GeoServices
+  instance-method -_identifierCapturingPreferences types=@16@0:8 image=Foundation
+  instance-method -_inputSourceIDsForKeyboardID:fallbackToLanguageBasedLookup: types=@28@0:8@16B24 image=IntlPreferences
+  instance-method -_inputSourceIDsForKeyboardIDs:fallbackToLanguageBasedLookup: types=@28@0:8@16B24 image=IntlPreferences
+  instance-method -_inputSourcesForKeyboardIDs: types=@24@0:8@16 image=IntlPreferences
+  instance-method -_languageIsArabic types=B16@0:8 image=CalendarFoundation
+  instance-method -_languagesForMultilingualSetupWithKeyboardsIDs: types=@24@0:8@16 image=IntlPreferences
+  instance-method -_localeWithNewCalendarIdentifier: types=@24@0:8@16 image=Foundation
+  instance-method -_ltCsLocaleIdentifier types=@16@0:8 image=Translation
+  instance-method -_ltEqual: types=B24@0:8@16 image=Translation
+  instance-method -_ltLocaleIdentifier types=@16@0:8 image=Translation
+  instance-method -_lt_displayNameForContext:inTargetLocale:alongsideLocales: types=@40@0:8q16@24@32 image=Translation
+  instance-method -_lt_displayNameForContext:inTargetLocale:alongsideLocales:languagesNeedingRegionInList: types=@48@0:8q16@24@32@40 image=Translation
+  instance-method -_lt_displaySubnameForContext:inTargetLocale:alongsideLocales:languagesNeedingRegionInList: types=@48@0:8q16@24@32@40 image=Translation
+  instance-method -_lt_isChinese types=B16@0:8 image=Translation
+  instance-method -_lt_isSimplifiedChinese types=B16@0:8 image=Translation
+  instance-method -_lt_isTraditionalCantonese types=B16@0:8 image=Translation
+  instance-method -_lt_isTraditionalChinese types=B16@0:8 image=Translation
+  instance-method -_lt_shouldCapitalizeDisplayNameForContext:inTargetLocale: types=B32@0:8q16@24 image=Translation
+  instance-method -_navigation_distanceUsesMetricSystem types=B16@0:8 image=Navigation
+  instance-method -_navigation_distanceUsesMetricSystemIgnoringUserPreference: types=B20@0:8B16 image=Navigation
+  instance-method -_navigation_objectForKey: types=@24@0:8@16 image=Navigation
+  instance-method -_navigation_useYardsForShortDistances types=B16@0:8 image=Navigation
+  instance-method -_numberingSystem types=@16@0:8 image=Foundation
+  instance-method -_prefForKey: types=@24@0:8@16
+  instance-method -_requiresInputSourceSelectionForKeyboardIDs: types=B24@0:8@16 image=IntlPreferences
+  instance-method -_requiresMultilingualSetupWithKeyboardIDs: types=B24@0:8@16 image=IntlPreferences
+  instance-method -_vsLocaleIdentifier types=@16@0:8 image=Translation
+  instance-method -af_aceTemperatureUnit types=@16@0:8 image=AssistantServices
+  instance-method -alternateQuotationBeginDelimiter types=@16@0:8
+  instance-method -alternateQuotationEndDelimiter types=@16@0:8
+  instance-method -availableNumberingSystems types=@16@0:8 image=InternationalSupport
+  instance-method -calendarIdentifier types=@16@0:8
+  instance-method -classForCoder types=#16@0:8 also-implemented-by=-NSObject image=Foundation
+  instance-method -collationIdentifier types=@16@0:8
+  instance-method -collatorIdentifier types=@16@0:8
+  instance-method -commasAndPeriodsGoInsideQuotationMarks types=B16@0:8 image=iTerm2.debug.dylib
+  instance-method -copyWithZone: types=@24@0:8^{_NSZone=}16
+  instance-method -countryCode types=@16@0:8
+  instance-method -countryCodeTopLevelDomainsUsingPunycode: types=@20@0:8B16 image=InternationalSupport
+  instance-method -currencyCode types=@16@0:8
+  instance-method -currencySymbol types=@16@0:8
+  instance-method -debugDescription types=@16@0:8 also-implemented-by=-NSObject image=Foundation
+  instance-method -decimalSeparator types=@16@0:8
+  instance-method -defaultLanguagesForMultilingualSetup types=@16@0:8 image=IntlPreferences
+  instance-method -displayNameForKey:value: types=@32@0:8@16@24
+  instance-method -displayNameForLanguage:displayLanguage:context: types=@40@0:8@16@24q32 image=InternationalSupport
+  instance-method -displayNameForRegion:displayLanguage:context:short: types=@44@0:8@16@24q32B40 image=InternationalSupport
+  instance-method -encodeWithCoder: types=v24@0:8@16 image=Foundation
+  instance-method -encodeWithCoder: types=v24@0:8@16
+  instance-method -exemplarCharacterSet types=@16@0:8
+  instance-method -explanationTextForSelectableScripts types=@16@0:8 image=IntlPreferences
+  instance-method -groupingSeparator types=@16@0:8
+  instance-method -hash types=Q16@0:8 also-implemented-by=-NSObject
+  instance-method -identifier types=@16@0:8
+  instance-method -init types=@16@0:8 also-implemented-by=-NSObject
+  instance-method -initWithCoder: types=@24@0:8@16 image=Foundation
+  instance-method -initWithCoder: types=@24@0:8@16
+  instance-method -initWithLocaleIdentifier: types=@24@0:8@16
+  instance-method -inputSourcesForAttachedKeyboards types=@16@0:8 image=IntlPreferences
+  instance-method -isEqual: types=B24@0:8@16 also-implemented-by=-NSObject
+  instance-method -isEquivalentTo: types=B24@0:8@16 image=InternationalSupport
+  instance-method -languageCode types=@16@0:8
+  instance-method -languageIdentifier types=@16@0:8
+  instance-method -languagesForMultilingualSetup types=@16@0:8 image=IntlPreferences
+  instance-method -localeByChangingLanguageTo: types=@24@0:8@16 image=IntlPreferences
+  instance-method -localeIdentifier types=@16@0:8
+  instance-method -localizedStringForAlternateQuotationBeginDelimiter: types=@24@0:8@16
+  instance-method -localizedStringForAlternateQuotationEndDelimiter: types=@24@0:8@16
+  instance-method -localizedStringForCalendarIdentifier: types=@24@0:8@16
+  instance-method -localizedStringForCollationIdentifier: types=@24@0:8@16
+  instance-method -localizedStringForCollatorIdentifier: types=@24@0:8@16
+  instance-method -localizedStringForCountryCode: types=@24@0:8@16
+  instance-method -localizedStringForCurrencyCode: types=@24@0:8@16
+  instance-method -localizedStringForCurrencySymbol: types=@24@0:8@16
+  instance-method -localizedStringForDecimalSeparator: types=@24@0:8@16
+  instance-method -localizedStringForGroupingSeparator: types=@24@0:8@16
+  instance-method -localizedStringForLanguage:context: types=@32@0:8@16q24 image=InternationalSupport
+  instance-method -localizedStringForLanguage:context:length: types=@40@0:8@16q24Q32 image=InternationalSupport
+  instance-method -localizedStringForLanguageCode: types=@24@0:8@16
+  instance-method -localizedStringForLocaleIdentifier: types=@24@0:8@16
+  instance-method -localizedStringForNumberingSystem:short: types=@28@0:8@16B24 image=InternationalSupport
+  instance-method -localizedStringForQuotationBeginDelimiter: types=@24@0:8@16
+  instance-method -localizedStringForQuotationEndDelimiter: types=@24@0:8@16
+  instance-method -localizedStringForRegion:context:short: types=@36@0:8@16q24B32 image=InternationalSupport
+  instance-method -localizedStringForScriptCode: types=@24@0:8@16
+  instance-method -localizedStringForVariantCode: types=@24@0:8@16
+  instance-method -lt_displayNameForContext:inTargetLocale: types=@32@0:8q16@24 image=Translation
+  instance-method -lt_displaySubnameForContext:inTargetLocale: types=@32@0:8q16@24 image=Translation
+  instance-method -lt_nlLanguageCode types=@16@0:8 image=Translation
+  instance-method -nationalDirectDialingPrefix types=@16@0:8 image=PhoneNumbers
+  instance-method -numberingSystem types=@16@0:8 image=InternationalSupport
+  instance-method -objectForKey: types=@24@0:8@16
+  instance-method -optionNameForSelectableScripts types=@16@0:8 image=IntlPreferences
+  instance-method -optionNameWithColonForSelectableScripts types=@16@0:8 image=IntlPreferences
+  instance-method -positionOfDayPeriodInFormattedTime types=q16@0:8 image=InternationalSupport
+  instance-method -preferenceKeysForSelectableScripts types=@16@0:8 image=IntlPreferences
+  instance-method -quotationBeginDelimiter types=@16@0:8
+  instance-method -quotationEndDelimiter types=@16@0:8
+  instance-method -regionCode types=@16@0:8
+  instance-method -requiresInputSourceSelectionForAttachedKeyboards types=B16@0:8 image=IntlPreferences
+  instance-method -requiresMultilingualSetup types=B16@0:8 image=IntlPreferences
+  instance-method -safari_localeStringInOfflineSearchModelFormat types=@16@0:8 image=SafariCore
+  instance-method -scriptCode types=@16@0:8
+  instance-method -selectableScriptCodes types=@16@0:8 image=IntlPreferences
+  instance-method -selectedScript types=@16@0:8 image=IntlPreferences
+  instance-method -setSelectedScript: types=v24@0:8@16 image=IntlPreferences
+  instance-method -sf_languageRegionIdentifier types=@16@0:8 image=Speech
+  instance-method -sf_languageRegionLocale types=@16@0:8 image=Speech
+  instance-method -usesMetricSystem types=B16@0:8
+  instance-method -usesRomanTextProcessing types=B16@0:8 image=ScreenReaderCore
+  instance-method -usesWhitespace types=B16@0:8 image=Calculate
+  instance-method -variantCode types=@16@0:8
+  class-property _autoupdatingCurrent type=@"NSLocale" ownership=unrecorded nonatomic readonly ivar= raw=T@"NSLocale",N,R
+  class-property _availableLocaleIdentifiers type=@"NSArray" ownership=unrecorded nonatomic readonly ivar= raw=T@"NSArray",N,R
+  class-property _commonISOCurrencyCodes type=@"NSArray" ownership=unrecorded nonatomic readonly ivar= raw=T@"NSArray",N,R
+  class-property _current type=@"NSLocale" ownership=unrecorded nonatomic readonly ivar= raw=T@"NSLocale",N,R
+  class-property _isoCountryCodes type=@"NSArray" ownership=unrecorded nonatomic readonly ivar= raw=T@"NSArray",N,R
+  class-property _isoCurrencyCodes type=@"NSArray" ownership=unrecorded nonatomic readonly ivar= raw=T@"NSArray",N,R
+  class-property _isoLanguageCodes type=@"NSArray" ownership=unrecorded nonatomic readonly ivar= raw=T@"NSArray",N,R
+  class-property _preferredLanguages type=@"NSArray" ownership=unrecorded nonatomic readonly ivar= raw=T@"NSArray",N,R
+  class-property _system type=@"NSLocale" ownership=unrecorded nonatomic readonly ivar= raw=T@"NSLocale",N,R
+  class-property ef_directionalMarkForCurrentLocale type=@"NSString" ownership=unrecorded atomic readonly ivar= raw=T@"NSString",R
+  class-property ef_isCurrentLocaleRTL type=B ownership=assign atomic readonly ivar= raw=TB,R
+  class-property ef_posixLocale type=@"NSLocale" ownership=unrecorded atomic readonly ivar= raw=T@"NSLocale",R
+  class-property safari_countryCodeForCountrySetInMacBuddy type=@"NSString" ownership=copy nonatomic readonly ivar= raw=T@"NSString",R,C,N
+  class-property safari_countrySetInMacBuddyIsChina type=B ownership=assign nonatomic readonly ivar= raw=TB,R,N
+  class-property safari_countrySetInMacBuddyIsRussia type=B ownership=assign nonatomic readonly ivar= raw=TB,R,N
+  class-property safari_localeIdentifiersForMostWidelyUsedLanguages type=@"NSSet" ownership=unrecorded nonatomic readonly ivar= raw=T@"NSSet",R,N
+  class-property supportsSecureCoding type=B ownership=assign atomic readonly ivar= raw=TB,R
+  instance-property ITUCountryCode type=q ownership=assign atomic readonly ivar= raw=Tq,R
+  instance-property _calendarDirection type=q ownership=assign atomic readonly ivar= raw=Tq,R
+  instance-property availableNumberingSystems type=@"NSArray" ownership=copy atomic readonly ivar= raw=T@"NSArray",R,C
+  instance-property explanationTextForSelectableScripts type=@"NSString" ownership=copy atomic readonly ivar= raw=T@"NSString",R,C
+  instance-property nationalDirectDialingPrefix type=@"NSString" ownership=copy atomic readonly ivar= raw=T@"NSString",R,C
+  instance-property numberingSystem type=@"NSString" ownership=copy atomic readonly ivar= raw=T@"NSString",R,C
+  instance-property optionNameForSelectableScripts type=@"NSString" ownership=copy atomic readonly ivar= raw=T@"NSString",R,C
+  instance-property optionNameWithColonForSelectableScripts type=@"NSString" ownership=copy atomic readonly ivar= raw=T@"NSString",R,C
+  instance-property preferenceKeysForSelectableScripts type=@"NSDictionary" ownership=copy atomic readonly ivar= raw=T@"NSDictionary",R,C
+  instance-property safari_localeStringInOfflineSearchModelFormat type=@"NSString" ownership=copy nonatomic readonly ivar= raw=T@"NSString",R,C,N
+  instance-property selectableScriptCodes type=@"NSArray" ownership=copy atomic readonly ivar= raw=T@"NSArray",R,C
+  instance-property selectedScript type=@"NSString" ownership=copy atomic ivar= raw=T@"NSString",C
+end class NSLocale

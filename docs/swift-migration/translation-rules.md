@@ -3,8 +3,15 @@
 Part of the Objective-C to Swift migration process. Read
 [README.md](README.md) first.
 
-The port reproduces behavior. Each rule below names a place where a
-straightforward translation changes behavior, and says what to write instead.
+The port reproduces behavior, in canonical Swift wherever that loses no
+correctness ([README.md §4](README.md); the owner, 2026-11-25). Each rule
+below names a place where a straightforward translation changes behavior,
+and says what to write instead. A rule applies only where the code can reach
+the difference it guards: where no input can show it, write the idiomatic
+Swift, not the guarded form. Example: `isEqualToString:` against an ASCII
+literal is `identifier == "en_US"`, not
+`(identifier as NSString).isEqual(to: "en_US")`, because no other string is
+canonically equivalent to that literal (section 4).
 The trap catalogue (`docs/swift-migration/traps.md`) extends this section as
 new cases are found.
 
@@ -241,7 +248,11 @@ Switching to the Swift type is a stage-two change with its own tests.
   and decomposed forms of the same text compare equal in Swift and unequal in
   Objective-C. This changes dictionary keys, set membership, and comparisons
   of file paths. Where the data can be non-ASCII and the distinction matters,
-  compare as `NSString`.
+  compare as `NSString`. Where it cannot matter, as in a comparison with an
+  ASCII literal, use `==` (the owner, 2026-11-25, of
+  `(identifier as NSString).isEqual(to: "en_US")` in the `NSLocale(iTerm)`
+  port: “The idiomatic port would be identifier == "en_US". Is there a good
+  reason to call isEqual(to:)?” There was none).
 - **Ordering.** `compare:` and Swift `<` do not sort the same way.
 - **`NSURL`.** Keep `NSURL` in stage one. `URL` differs in parsing, in what it
   rejects, in bridging of file reference URLs, and in which properties are

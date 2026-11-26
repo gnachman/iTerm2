@@ -98,20 +98,25 @@
 #   7. runs usage_check.py, which reads `claude /usage` and compares the
 #      weekly figure with tonight's ceiling; anything but "may start" stops
 #      here, and an unreadable reading is never taken as permission. The
-#      one exception is a one-unit night (NIGHTLY_ONE_UNIT_DATE equal to
-#      tonight's local date, the date of NIGHTLY_NOW when that is set): then
-#      "at or over the ceiling" (exit 1) is logged and the start goes on,
-#      and the prompt tells the orchestrator to do exactly one unit and that
-#      the ceiling does not apply tonight; unknown usage (exit 2 or anything
-#      else) still stops, and so does an exit 1 that does not come with
-#      the line "verdict: at or over the ceiling (exit 1)" (usage_check.py
-#      failing, which Python also reports as 1). A dry run logs that a real
-#      run would start anyway.
+#      one exception is an "at least one unit" night (NIGHTLY_ONE_UNIT_DATE
+#      equal to tonight's local date, the date of NIGHTLY_NOW when that is
+#      set; the owner, 2026-11-24: "Ensure the agent does at least one unit
+#      tonight even if it goes over quota"). Under the ceiling (exit 0) it is
+#      an ordinary night, except that the prompt says that if a usage check
+#      reaches the ceiling before the night's first unit has landed, that
+#      unit is still finished (committed or parked) and then the night
+#      stops. At or over the ceiling (exit 1) is logged and the start goes
+#      on, and the prompt tells the orchestrator to do exactly one unit and
+#      that the ceiling does not apply tonight. Unknown usage (exit 2 or
+#      anything else) still stops, and so does an exit 1 that does not come
+#      with the line "verdict: at or over the ceiling (exit 1)"
+#      (usage_check.py failing, which Python also reports as 1). A dry run
+#      logs which case applies and that a real run would start anyway.
 #      The option expires by itself: on any other date it does nothing but
 #      log that it is set and does not apply. It is validated before step 1:
 #      a value that is not a real date YYYY-MM-DD is a bad option (exit 64,
 #      also under --dry-run); empty means unset. NIGHTLY_PROMPT, when set,
-#      replaces the whole prompt, one-unit instruction included;
+#      replaces the whole prompt, the at-least-one-unit instruction included;
 #   8. refreshes the clone with `nightly_clone.sh refresh`, under a time
 #      bound (NIGHTLY_REFRESH_SECONDS, default 20 minutes, through
 #      deadline_run.py, which kills it and everything it started; exit 7
@@ -179,6 +184,8 @@
 #   supervisor.log      deadline_run.py's log
 #   session.sh, session-settings.json, prompt.txt, command.txt
 #   session.status      claude's exit status, written by session.sh
+#   session.done        written by nightly_done.sh, the session's last
+#                       action when its work is done (see "The end")
 #   session.root        claude's pid and start time (deadline_run.py --spawn-root)
 # The conversation transcript is where Claude Code keeps it for the clone
 # (code.claude.com/docs/en/claude-directory, "Application data"):
@@ -369,6 +376,16 @@
 # screen nor its transcript changes in its first NIGHTLY_STALL_SECONDS
 # (a failed start, exit 14), and when this script gets SIGTERM (for example
 # from launchctl kill).
+# The end. An interactive session that has finished its work stays at its
+# prompt (2026-11-25: done at 01:40, stopped at the time limit at 05:54),
+# so the prompt tells the session to run tools/swift_migration/
+# nightly_done.sh as its last action, once the night's report is written
+# and the lanes are released. That writes session.done in the run
+# directory (from SWIFT_MIGRATION_NIGHT_DIR), which deadline_run.py
+# --done-file watches: the supervisor logs "session reported done", runs
+# the stop sequence above at once and sweeps as at the deadline, and this
+# script logs that and exits 0, not 5. A session.done from before the
+# supervisor started is ignored.
 # The session counts as ended when session.status appears, or when tmux
 # itself answers repeatedly that the session or its server is gone: over a
 # few seconds once the session's processes have died, over a minute while
@@ -394,9 +411,11 @@
 #              not exist, say so and print the command that makes it.
 #
 # Exit status:
-#   0  the session ran and exited 0 (or --dry-run finished)
-#   1  usage is at or over tonight's ceiling; nothing started (never on a
-#      one-unit night, NIGHTLY_ONE_UNIT_DATE, which starts anyway)
+#   0  the session ran and exited 0, or reported done with nightly_done.sh
+#      and was stopped at once (logged "session reported done"), or
+#      --dry-run finished
+#   1  usage is at or over tonight's ceiling; nothing started (never on an
+#      at-least-one-unit night, NIGHTLY_ONE_UNIT_DATE, which starts anyway)
 #   2  usage could not be determined, or a signal arrived before the
 #      session started; nothing started
 #   3  another orchestrator holds the lock; nothing started
@@ -443,7 +462,7 @@
 #   NIGHTLY_CLONE_TOOL          replaces nightly_clone.sh, for tests only
 #   NIGHTLY_MODEL               the session's model (default opus)
 #   NIGHTLY_PROMPT              replaces the orchestrator prompt (for a test)
-#   NIGHTLY_ONE_UNIT_DATE       YYYY-MM-DD: on that local date only, a one-unit night
+#   NIGHTLY_ONE_UNIT_DATE       YYYY-MM-DD: on that local date only, an "at least one unit" night
 #                               (step 7); empty or unset: none; malformed: exit 64
 #   NIGHTLY_REQUIRED_PROGRAMS   programs that must resolve, besides claude and tmux
 #   NIGHTLY_CAFFEINATE          0 to skip caffeinate (default 1)
@@ -463,8 +482,9 @@
 #       -e "s|__ONE_UNIT_DATE__||g" \
 #     tools/swift_migration/com.googlecode.iterm2.swift-migration-nightly.plist \
 #     > ~/Library/LaunchAgents/com.googlecode.iterm2.swift-migration-nightly.plist
-# (__ONE_UNIT_DATE__ empty: no one-unit night. To make one night a one-unit
-# night, put its local date there instead, -e "s|__ONE_UNIT_DATE__|2026-11-23|g";
+# (__ONE_UNIT_DATE__ empty: no at-least-one-unit night. To make one night an
+# at-least-one-unit night (step 7), put its local date there instead,
+# -e "s|__ONE_UNIT_DATE__|2026-11-23|g";
 # it does nothing on other nights, so it need not be undone, though a later
 # install replaces it. Every placeholder must be replaced: a literal
 # __ONE_UNIT_DATE__ left in is malformed and refused, exit 64. Reinstalling
@@ -704,7 +724,7 @@ stop_if_signalled() {
 log "started (dry run: $DRY_RUN), clone $CLONE, owner's checkout $SOURCE, logs in ${RUN_DIR:-(stdout only: no clone)}"
 [ -z "${NIGHTLY_LAUNCHD_LOG:-}" ] || log "launchd log: $NIGHTLY_LAUNCHD_LOG"
 
-# A one-unit night (NIGHTLY_ONE_UNIT_DATE; see the header). Empty or unset
+# An "at least one unit" night (NIGHTLY_ONE_UNIT_DATE; see the header). Empty or unset
 # means none. A value that is not a real date YYYY-MM-DD is a bad option
 # (exit 64), checked before anything else so that a mistyped install never
 # runs as an ordinary night; a dry run refuses it too.
@@ -718,7 +738,7 @@ if [ -n "$ONE_UNIT_DATE" ]; then
   fi
   if [ "$ONE_UNIT_DATE" = "$NOW_DATE" ]; then
     ONE_UNIT=1
-    log "one-unit night applies: NIGHTLY_ONE_UNIT_DATE=$ONE_UNIT_DATE is tonight's local date; the weekly ceiling (usage_check.py exit 1) does not stop the start, unknown usage still does, and the prompt asks for exactly one unit"
+    log "at-least-one-unit night applies: NIGHTLY_ONE_UNIT_DATE=$ONE_UNIT_DATE is tonight's local date; the weekly ceiling (usage_check.py exit 1) does not stop the start, unknown usage still does; which case applies (under the ceiling, or at or over it) follows the usage check"
   else
     log "NIGHTLY_ONE_UNIT_DATE=$ONE_UNIT_DATE is set and does not apply tonight ($NOW_DATE): an ordinary night"
   fi
@@ -1106,7 +1126,7 @@ fi
 CHILD_PID=
 while IFS= read -r line; do log "usage: $line"; done < "$USAGE_OUT"
 stop_if_signalled "during the usage check, which exited $USAGE_RC"
-# On a one-unit night exit 1 lets the night start, so it must be the
+# On an at-least-one-unit night exit 1 lets the night start, so it must be the
 # ceiling verdict itself: Python also exits 1 when usage_check.py dies of an
 # uncaught exception, and that is usage unknown.
 if [ "$ONE_UNIT" = 1 ] && [ "$USAGE_RC" = 1 ] &&
@@ -1114,14 +1134,20 @@ if [ "$ONE_UNIT" = 1 ] && [ "$USAGE_RC" = 1 ] &&
   log "usage: usage_check exited 1 without its ceiling verdict (it failed); taken as unknown"
   USAGE_RC=2
 fi
+# ONE_UNIT_OVER: on an at-least-one-unit night, usage was at or over the
+# ceiling at the start, so the night does exactly one unit.
+ONE_UNIT_OVER=0
 case "$USAGE_RC" in
-  0) ;;
+  0)
+    [ "$ONE_UNIT" = 0 ] ||
+      log "usage: under tonight's ceiling on the at-least-one-unit night (NIGHTLY_ONE_UNIT_DATE): an ordinary night, except that until one unit has landed the ceiling does not stop it: it takes or finishes one unit, then stops" ;;
   1)
     if [ "$ONE_UNIT" = 1 ]; then
+      ONE_UNIT_OVER=1
       if [ "$DRY_RUN" = 1 ]; then
-        log "usage: at or over tonight's ceiling, but this is a one-unit night (NIGHTLY_ONE_UNIT_DATE): a real run would start anyway"
+        log "usage: at or over tonight's ceiling, but this is an at-least-one-unit night (NIGHTLY_ONE_UNIT_DATE): a real run would start anyway and do exactly one unit"
       else
-        log "usage: at or over tonight's ceiling; starting anyway: this is a one-unit night (NIGHTLY_ONE_UNIT_DATE)"
+        log "usage: at or over tonight's ceiling; starting anyway: this is an at-least-one-unit night (NIGHTLY_ONE_UNIT_DATE), and it does exactly one unit"
       fi
     elif [ "$DRY_RUN" = 1 ]; then
       log "would not start: at or over the ceiling (a real run would exit 1)"
@@ -1331,19 +1357,22 @@ if grep -q '^nightly_clone: upstream: NOT REFRESHED' "$REFRESH_STATUS" 2>/dev/nu
   UPSTREAM_NOTE=" origin/master could not be fetched tonight (see $REFRESH_STATUS), so it is as old as the last fetch that worked: say so in the night's report."
 fi
 ONE_UNIT_NOTE=
-if [ "$ONE_UNIT" = 1 ]; then
+if [ "$ONE_UNIT" = 1 ] && [ "$ONE_UNIT_OVER" = 0 ]; then
+  ONE_UNIT_NOTE=" By the owner's order, set for tonight ($NOW_DATE) through NIGHTLY_ONE_UNIT_DATE, this night does at least one unit. Until one unit has landed (committed), an exit status 1 from usage_check.py --run whose output has the line 'verdict: at or over the ceiling (exit 1)' is not a reason to stop: if no unit is in progress yet, take one (the unparked claimed unit in claims.md if there is one, else the next eligible unit); if units are in progress, start no new unit, carry the one nearest to landing through to its commits, and save the others as \"Stopping cleanly\" in docs/swift-migration/workflow.md section 4 says. Do not park that unit because of the ceiling; if it must be parked for a reason the documents give, take the next eligible unit the same way, unless that is past the closing-checks start time. Once a unit has landed, exit status 1 stops the night as on any other night: do the end-of-session steps, write the night's report and stop. An exit status 1 without that verdict line, or exit status 2, means usage is unknown: stop at any time."
+elif [ "$ONE_UNIT" = 1 ]; then
   ONE_UNIT_NOTE=" By the owner's order, set for tonight ($NOW_DATE) through NIGHTLY_ONE_UNIT_DATE, this night does exactly one unit: resume the unparked claimed unit in claims.md if there is one, else take the next eligible unit; carry it through to its commits, or park it as the documents say; start no second unit; then do the end-of-session steps (\"Stopping cleanly\" in docs/swift-migration/workflow.md section 4), write the night's report and stop. Tonight the weekly usage ceiling does not apply: an exit status 1 from usage_check.py --run is not a reason to stop tonight, but exit status 2 (usage unknown) still is. An exit status 1 whose output lacks the line 'verdict: at or over the ceiling (exit 1)' means the check itself failed, which is unknown: stop. This order is also the owner's word that units may start (docs/swift-migration/lifecycle.md section 3)."
 fi
 if [ -n "${NIGHTLY_PROMPT:-}" ]; then
   PROMPT=$NIGHTLY_PROMPT
   log "prompt replaced by NIGHTLY_PROMPT"
-  [ "$ONE_UNIT" = 0 ] || log "NIGHTLY_PROMPT replaces the prompt, so it does not carry the one-unit instruction"
+  [ "$ONE_UNIT" = 0 ] || log "NIGHTLY_PROMPT replaces the prompt, so it does not carry the at-least-one-unit instruction"
 else
-  PROMPT="You are the Swift migration orchestrator, started unattended at $NOW_ISO by tools/swift_migration/nightly_start.sh (SWIFT_MIGRATION_NIGHTLY=1) in an interactive session inside tmux; nobody is watching, though the owner may attach. Follow docs/swift-migration/orchestration.md from the top. Never wait for the owner: permission prompts are denied automatically, so if something is denied, find another way or record it for the owner. This is the separate nightly clone, not the owner's checkout: its origin is a read-only mirror of the project's origin/master, which was fetched from GitHub and onto which the clone's commits were rebased before you started, so there is nothing to fetch or rebase; master may hold earlier nights' commits that are not upstream yet, which is normal. What the refresh did is in $REFRESH_STATUS: if it shows upstream-commits: taken, rebased: or already-upstream:, new code arrived, so bring derived data up to date before starting any unit (orchestration.md section 1, step 4); a submodule-stale: line names a submodule left behind, so the build may fail.$UPSTREAM_NOTE Never push and never add or change remotes: pushing, gh, osascript, launchctl, sudo, open, ssh, it2 and tmux are denied, and git is set up so that a push fails. Write each commit message to a file and commit with git commit -F, so that a message that mentions pushing is not taken for a push. Check usage with \`python3 tools/swift_migration/usage_check.py --run\` (exit 0 may start another agent, 1 at or over the ceiling, 2 unknown, which means stop) before each subagent and each gate run.$ONE_UNIT_NOTE Use the migration-author agent for authors and a new migration-reviewer agent for every review. Each unit takes the trivial, light or full path that tools/swift_migration/qualify_unit.py prints (docs/swift-migration/lifecycle.md section 3); when eligible trivial units exist, prefer a batch of them, each its own commit with its own review (orchestration.md section 2). Trivial or light units with no dependency on each other may be authored in parallel, at most three at once (the owner allowed it for trivial units on 2026-11-24, light units were already allowed; three is the migration's number), each in its own lane, their commits landing one at a time; if a later unit's project-file change no longer applies, run pbxproj_swap.py again in this clone (lifecycle.md section 3, \"The project file\"). Light and full code commits pass the plain whole suite through tools/swift_migration/whole_suite.sh before they are committed (docs/swift-migration/README.md section 5, step 3); the trivial path runs none, and whole suites serialize through the whole-suite lock. No unit runs a sanitizer suite, the x86_64 build or the lints: those, and the plain whole suite once more, are the closing checks, run once over everything that landed. Start the closing checks (docs/swift-migration/lifecycle.md section 5) by $CLOSING_BY: start no new unit after that, or earlier if a unit cannot be committed by then, and if they cannot all finish by the clean stop, say in the night's report which did not run and that the units they cover are landed, closing checks pending. osascript stays denied tonight, so a unit named in iTerm2.sdef stays landed, closing checks pending with the note \"AppleScript comparison owed\" (docs/swift-migration/lifecycle.md section 3) for a day session. Agents that build or test work in build lanes from tools/swift_migration/lane_clone.py (orchestration.md section 3); this clone's lanes are in $LANES, outside the clone, where this session may edit. Never wait on a background job without a bound. Run whole suites one at a time and only through the migration's scripts (tools/swift_migration/whole_suite.sh for the plain whole suite, fast_tests.sh, sanitizer_tests.sh, coverage_tests.sh). All of them take the machine-wide whole-suite lock and exit 124 when their stall watchdog stops a run; fast_tests.sh, sanitizer_tests.sh and coverage_tests.sh also give every test XCTest's time allowance, and a test over it fails the run (exit 65); whole_suite.sh cannot pass the allowance, and its watchdog is run_tests.expect's own (300 seconds with no output; it writes tmp/test-stall-<time>.txt). Never run sanitizer_tests.sh thread with --parallel. Such a script prints its pid first; when you run it in the background, wait for it only with a foreground command that returns when it ends or a bound passes, \`python3 tools/swift_migration/suite_guard.py wait --pid PID --seconds 540\` (exit 0: it ended; 3: still running) with a Bash timeout of 600000 ms, and after each return compare the time with the clean stop below before waiting again; do not end your turn to wait for a background job's notification, since an idle session gets no turn until something arrives. At $CLEAN_STOP the line \"$NUDGE_TEXT\" is typed into this session; when you see it, do what it says. You must have stopped cleanly, following \"Stopping cleanly\" in docs/swift-migration/workflow.md section 4, by $CLEAN_STOP local time: start nothing new after that, let running subagents finish, commit what passed the loop and the gate, save other work as a patch recorded in claims.md, restore the tree, and write the night's report to $REPORT. Then type nothing more: the session is ended for you. At $HARD the hard limit kills the session and everything it started, finished or not. This run's logs are in $RUN_DIR."
+  PROMPT="You are the Swift migration orchestrator, started unattended at $NOW_ISO by tools/swift_migration/nightly_start.sh (SWIFT_MIGRATION_NIGHTLY=1) in an interactive session inside tmux; nobody is watching, though the owner may attach. Follow docs/swift-migration/orchestration.md from the top. Never wait for the owner: permission prompts are denied automatically, so if something is denied, find another way or record it for the owner. This is the separate nightly clone, not the owner's checkout: its origin is a read-only mirror of the project's origin/master, which was fetched from GitHub and onto which the clone's commits were rebased before you started, so there is nothing to fetch or rebase; master may hold earlier nights' commits that are not upstream yet, which is normal. What the refresh did is in $REFRESH_STATUS: if it shows upstream-commits: taken, rebased: or already-upstream:, new code arrived, so bring derived data up to date in the background and start the first trivial unit at once (unless units are landed, closing checks pending: their closing checks come first), taking it from tmp/classify.txt and committing no unit before that refresh has finished and the unit has qualified trivial again; light and full units start only after the refresh; if tmp/classify.txt is missing, classify after the database update; while the capture and the baseline run, at most one author builds (orchestration.md section 1, step 4); a submodule-stale: line names a submodule left behind, so the build may fail.$UPSTREAM_NOTE Never push and never add or change remotes: pushing, gh, osascript, launchctl, sudo, open, ssh, it2 and tmux are denied, and git is set up so that a push fails. Write each commit message to a file and commit with git commit -F, so that a message that mentions pushing is not taken for a push. Check usage with \`python3 tools/swift_migration/usage_check.py --run\` (exit 0 may start another agent, 1 at or over the ceiling, 2 unknown, which means stop) before each subagent and each gate run.$ONE_UNIT_NOTE Use the migration-author agent for authors and a new migration-reviewer agent for every review. Each unit takes the trivial, light or full path that tools/swift_migration/qualify_unit.py prints (docs/swift-migration/lifecycle.md section 3); when eligible trivial units exist, prefer a batch of them, each its own commit with its own review (orchestration.md section 2). Trivial or light units with no dependency on each other may be authored in parallel, at most three at once (the owner allowed it for trivial units on 2026-11-24, light units were already allowed; three is the migration's number), each in its own lane, their commits landing one at a time; if a later unit's project-file change no longer applies, run pbxproj_swap.py again in this clone (lifecycle.md section 3, \"The project file\"). Do not wait idle on one author: launch authors up to that limit, gate and commit each unit as it comes back, and launch the next. Never park a unit on a tool defect: when a lint, comparison or other gate tool fails for a reason shown not to be the unit's (the same failure on the unmodified tree or on the before state compared with itself; never a build failure or a failing test), record it in bugs.md with the evidence first, say so in the commit message and the night's report, and commit the unit; park only when the failure may be the unit's, the evidence is missing, or the question is a behavior change for users (docs/swift-migration/workflow.md section 2). Light and full code commits pass the plain whole suite through tools/swift_migration/whole_suite.sh before they are committed (docs/swift-migration/README.md section 5, step 3); the trivial path runs none, and whole suites serialize through the whole-suite lock. No unit runs a sanitizer suite, the x86_64 build or the lints: those, and the plain whole suite once more, are the closing checks, run once over everything that landed. Start the closing checks (docs/swift-migration/lifecycle.md section 5) by $CLOSING_BY: start no new unit after that, or earlier if a unit cannot be committed by then, and if they cannot all finish by the clean stop, say in the night's report which did not run and that the units they cover are landed, closing checks pending. osascript stays denied tonight, so a unit named in iTerm2.sdef stays landed, closing checks pending with the note \"AppleScript comparison owed\" (docs/swift-migration/lifecycle.md section 3) for a day session. Agents that build or test work in build lanes from tools/swift_migration/lane_clone.py (orchestration.md section 3); this clone's lanes are in $LANES, outside the clone, where this session may edit. Never wait on a background job without a bound. Run whole suites one at a time and only through the migration's scripts (tools/swift_migration/whole_suite.sh for the plain whole suite, fast_tests.sh, sanitizer_tests.sh, coverage_tests.sh). All of them take the machine-wide whole-suite lock and exit 124 when their stall watchdog stops a run; fast_tests.sh, sanitizer_tests.sh and coverage_tests.sh also give every test XCTest's time allowance, and a test over it fails the run (exit 65); whole_suite.sh cannot pass the allowance, and its watchdog is run_tests.expect's own (300 seconds with no output; it writes tmp/test-stall-<time>.txt). Never run sanitizer_tests.sh thread with --parallel. Such a script prints its pid first; when you run it in the background, wait for it only with a foreground command that returns when it ends or a bound passes, \`python3 tools/swift_migration/suite_guard.py wait --pid PID --seconds 540\` (exit 0: it ended; 3: still running) with a Bash timeout of 600000 ms, and after each return compare the time with the clean stop below before waiting again; do not end your turn to wait for a background job's notification, since an idle session gets no turn until something arrives. At $CLEAN_STOP the line \"$NUDGE_TEXT\" is typed into this session; when you see it, do what it says. You must have stopped cleanly, following \"Stopping cleanly\" in docs/swift-migration/workflow.md section 4, by $CLEAN_STOP local time: start nothing new after that, let running subagents finish, commit what passed the loop and the gate, save other work as a patch recorded in claims.md, restore the tree, and write the night's report to $REPORT. When the night's work is done, at the clean stop or earlier (the night's report written, the lanes released), your last action is to run $SCRIPT_DIR/nightly_done.sh: it tells the supervisor that the work is done, and the supervisor then ends this session at once (an idle session otherwise sits at its prompt until the hard limit). Type nothing after it. At $HARD the hard limit kills the session and everything it started, finished or not. This run's logs are in $RUN_DIR."
 fi
 printf '%s' "$PROMPT" > "$RUN_DIR/prompt.txt"
 
 STATUS_FILE="$RUN_DIR/session.status"
+DONE_FILE="$RUN_DIR/session.done"
 ROOT_FILE="$RUN_DIR/session.root"
 CLAUDE_ARGS=(--model "$MODEL"
              --permission-mode auto
@@ -1404,6 +1433,7 @@ CMD=("$PYTHON" -B "$SCRIPT_DIR/deadline_run.py"
      --blocked-pattern "$BLOCKED_PATTERN" --blocked-seconds 120
      --stall-seconds "$STALL_SECONDS" --transcript "$TRANSCRIPT"
      --clean-stop-margin "$CLEAN_STOP_MARGIN" --nudge-text "$NUDGE_TEXT"
+     --done-file "$DONE_FILE"
      --
      "${TMUX_COMMAND[@]}")
 
@@ -1506,6 +1536,7 @@ fi
 where_things_are
 case "$RC" in
   0) log "session finished"; exit 0 ;;
+  120) log "session reported done (nightly_done.sh) and was stopped at once, not at the time limit"; exit 0 ;;
   124) log "session stopped at the time limit"; exit 5 ;;
   122) log "session stopped: it was waiting at Claude Code's workspace trust dialog; accept it once by hand: cd $(shell_quote "$CLONE") && claude (then /exit)"; exit 11 ;;
   121) log "session stopped: no progress in its first ${STALL_SECONDS}s (a startup dialog other than the trust dialog?); see the screen above and $RUN_DIR/pane.log"; exit 14 ;;

@@ -24,10 +24,13 @@ You are the orchestrator. This skill is the order of work; the rules are in
 1. Unit given: use it. None given: resume an unparked entry in `claims.md`,
    else take the next eligible unit (`orchestration.md` §2, step 4),
    preferring a batch of eligible trivial units from
-   `qualify_unit.py --classify`, smallest first. At night up to three
+   `qualify_unit.py --classify` (at the start, `tmp/classify.txt`, while
+   derived data refreshes in the background: `orchestration.md` §1, step
+   4), smallest first. At night up to three
    trivial or light units with no dependency on each other may be
    authored at once, each in its own lane, commits landing one at a time;
-   by day one at a time (`orchestration.md` §2, step 4). Start no unit
+   never wait idle on one author: gate and commit each as it returns and
+   launch the next; by day one at a time (`orchestration.md` §2, step 4). Start no unit
    that cannot be committed before the closing checks must start.
 2. Assign the path that
    `tools/swift_migration/qualify_unit.py UNIT --callers-thread "<answer>"`
@@ -52,16 +55,23 @@ Check the budget before each subagent and each gate run, on every path
    `assertions.md`; `concurrency.md` §9; `nullability.md` §6; `phase0.md`
    §9; `traps.md`; `bugs.md`; the `qualify_unit.py` output; the lane instructions. No
    dossier. It writes the tests (one per reflective entry, through the
-   system's door), sees them pass against the Objective-C and each fail
-   once against a broken body, snapshots, ports, runs `pbxproj_swap.py`,
-   snapshots again, and returns one change with the unit notes for the
-   commit message.
-3. **Collect** as on the light path (step 3 below), without a `test` patch.
-4. **One reviewer** (new), given the diff, the deleted Objective-C, the new
-   Swift, the qualifying output, the snapshot comparison, `traps.md` and
-   `translation-rules.md`; it compares block captures and observer or
-   notification registrations with the Objective-C. Another round only for
-   a blocking finding that stood.
+   system's door), sees them pass against the Objective-C, breaks each
+   method's body once and sees every test fail in one rebuild (break a
+   body by returning a wrong value, never by crashing, and check that each
+   test's failure is its own method's wrong result), snapshots,
+   ports, runs `pbxproj_swap.py`, snapshots again, and returns one change
+   with the unit notes for the commit message; nothing more (about 15 to
+   20 minutes; `lifecycle.md` §3).
+3. **One reviewer** (new), reading the author's lane, given the diff, the
+   deleted Objective-C, the new Swift, the qualifying output, the snapshot
+   comparison, `traps.md` and `translation-rules.md`; it compares block
+   captures and observer or notification registrations with the
+   Objective-C, and does not rebuild or rerun tests unless something looks
+   wrong. Another round only for a blocking finding that stood.
+4. **Collect** as on the light path (step 3 below), without a `test`
+   patch, and only once the start-of-session refresh has finished and
+   `qualify_unit.py UNIT` again prints trivial (`orchestration.md` §1,
+   step 4).
 5. **Gate**: `README.md` §5 (the build and the targeted tests; no whole
    suite on the trivial path). If the project-file change no longer
    applies because another unit landed, run `pbxproj_swap.py` in your
@@ -157,6 +167,7 @@ deleting the dossier; the claim becomes *landed, closing checks pending*).
   says.
 - Blocking findings still standing at the round cap: split or park
   (`workflow.md` §2), then take another unit.
+- A defective lint, comparison or other gate tool: `workflow.md` §2.
 - Anything the owner must decide (`workflow.md` §3): add it to
   `owner-queue.md`, park what depends on it, continue elsewhere. Never wait.
 - Usage at the night's cap, usage unknown, or the owner at the checkout:
@@ -169,7 +180,8 @@ closing checks of `lifecycle.md` §5 over everything that landed, in order,
 one at a time, each under the lock with its stall watchdog:
 `whole_suite.sh`; `sanitizer_tests.sh nullability`, `integer`, then
 `thread` (never `--parallel`); the `x86_64` build; the capture,
-`codedb.py update --accept-removals` and the lints. Wait for one in the
+`codedb.py update --accept-removals`, the lints and
+`qualify_unit.py --classify > tmp/classify.txt`. Wait for one in the
 background only with `suite_guard.py wait --pid PID --seconds 540` in the
 foreground, never by ending the turn. Fix a failure by a new commit of the
 unit or `git revert`, never a reset. Units the checks passed over leave

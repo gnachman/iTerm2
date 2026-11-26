@@ -154,8 +154,18 @@ and is delivered when the turn ends. On 2026-11-24 a session idle waiting
 for background jobs got no turn and missed its clean stop. No nudge when
 the clean stop is already past at the start or is not before the stop
 sequence (both logged).
-To stop the session (at the deadline, when blocked, or when this runner
-gets SIGTERM, SIGINT or SIGHUP): Escape is sent to the pane (interactive
+The done file (--done-file FILE; absent, none): the session's own word that
+its work is done, written by tools/swift_migration/nightly_done.sh as its
+last action. An interactive session that has finished stays at its prompt,
+so on 2026-11-25 a night whose work ended at 01:40 ran to the time limit
+at 05:54. When FILE appears with a modification time at or after the
+run's start, "session reported done" is logged and the stop sequence below
+runs at once; the cleanup and the sweep are the same as at the deadline,
+so background jobs the session left are killed as then. A file already
+there at the start is logged and ignored, so a marker left by an earlier
+run cannot end a new one.
+To stop the session (at the deadline, when blocked, when the session
+reported done, or when this runner gets SIGTERM, SIGINT or SIGHUP): Escape is sent to the pane (interactive
 Claude Code stops the current turn on Esc), then after --interrupt-wait
 seconds Ctrl-C clears the input line (text left in it would otherwise have
 /exit appended and go as a message; Ctrl-C on an empty line only shows a
@@ -176,7 +186,7 @@ it with responsibility disclaimed (in the same process group, keeping the
 terminal) and writes its pid and start time to FILE. Exit status: the number in --status-file if the session
 ended by itself; 125 if it ended without one (killed from outside, or
 tmux's server died; the log says what was observed); 124 at
-the deadline; 122 if blocked; 121 if stalled at the start; 128 + the signal number if this runner was
+the deadline; 120 if the session reported done (--done-file); 122 if blocked; 121 if stalled at the start; 128 + the signal number if this runner was
 signalled; 127 if it could not start.
 
 Usage:
@@ -190,7 +200,8 @@ Usage:
                     [--transcript FILE] [--root-file FILE]
                     [--tmux-confirm-seconds S] [--tmux-doubt-seconds S]
                     [--tmux-timeout S] [--nudge-text TEXT]
-                    [--clean-stop-margin S] -- TMUX-CLIENT-COMMAND...
+                    [--clean-stop-margin S] [--done-file FILE]
+                    -- TMUX-CLIENT-COMMAND...
     deadline_run.py --spawn-root FILE -- COMMAND [ARG...]
     deadline_run.py --show-deadline --seconds N [--until HH:MM]
                     [--clean-stop-margin S] [--now ISO] [--tz ZONE]
@@ -224,6 +235,7 @@ EXIT_USAGE = 64
 EXIT_NO_STATUS = 125
 EXIT_BLOCKED = 122
 EXIT_STALLED = 121
+EXIT_DONE = 120
 
 # Added to the stop sequence's waits when computing when it must start:
 # up to 10 seconds of the sweep's wait after SIGKILL, and 10 of slack for
@@ -1434,11 +1446,33 @@ def run_tmux(args, command, env, limit, night_id, started):
             return False
         return time.monotonic() - stall['changed'] >= args.stall_seconds
 
+    # The done file: the session's word that its work is done. Only a file
+    # written after the run started counts, so one left from an earlier run
+    # (the run directory is new each night, so this is a second guard)
+    # cannot end this one.
+    done_from = started
+    if args.done_file and os.path.exists(args.done_file):
+        log('the done file %s is already there at the start; ignored: only one '
+            'written after the start ends the session' % args.done_file)
+
+    def reported_done():
+        if not args.done_file:
+            return False
+        try:
+            return os.stat(args.done_file).st_mtime >= done_from
+        except OSError:
+            return False
+
     reason = None
     while True:
         adopt_root()
         if stop['signal'] is not None:
             reason = 'signal'
+            break
+        if reported_done():
+            log('session reported done (%s appeared); stopping it now, not at '
+                'the deadline' % args.done_file)
+            reason = 'done'
             break
         if ended():
             break
@@ -1511,7 +1545,8 @@ def run_tmux(args, command, env, limit, night_id, started):
             % {'deadline': 'the stop sequence starts (deadline)',
                'signal': 'stopping on a signal',
                'blocked': 'blocked at startup',
-               'stalled': 'failed start'}[reason])
+               'stalled': 'failed start',
+               'done': 'the session reported done'}[reason])
         # Each step's tmux calls come out of its own wait, so a hung tmux
         # cannot push the SIGTERM and the SIGKILL later.
         step_end = time.monotonic() + args.interrupt_wait
@@ -1555,6 +1590,8 @@ def run_tmux(args, command, env, limit, night_id, started):
         result = EXIT_STALLED
     elif reason == 'signal':
         result = 128 + stop['signal']
+    elif reason == 'done':
+        result = EXIT_DONE
     elif status is not None:
         result = status
     elif args.status_file:
@@ -1564,7 +1601,7 @@ def run_tmux(args, command, env, limit, night_id, started):
     else:
         result = 0
     log('session over (%s); exit status of the session %s'
-        % (reason or 'ended by itself', status))
+        % ({'done': 'reported done'}.get(reason, reason) or 'ended by itself', status))
     return finish(result)
 
 
@@ -1662,6 +1699,11 @@ def main(argv=None):
     parser.add_argument('--transcript',
                         help='tmux mode: the session\'s transcript file, '
                         'whose growth shows that it has started')
+    parser.add_argument('--done-file',
+                        help='tmux mode: a file the session writes when its '
+                        'work is done (nightly_done.sh); once it appears, '
+                        'written after the start, the stop sequence runs at '
+                        'once and the exit status is %d' % EXIT_DONE)
     parser.add_argument('--nudge-text',
                         help='tmux mode: a line typed into the session, '
                         'once, at the clean stop (the hard limit minus '
