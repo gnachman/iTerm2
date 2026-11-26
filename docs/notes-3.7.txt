@@ -36,9 +36,7 @@ New Features:
   its status. Turn on “Show rich tab content” in
   Settings > Profiles > Window, then click Rich
   Tab Content… to choose the lines. It applies
-  to windows created with that profile. A
-  collapsed tab group shows its tabs’ lines
-  combined.
+  to windows created with that profile.
 - A new built-in function,
   iterm2.escape_html(string:), makes text safe
   to use in HTML, such as an HTML tab title.

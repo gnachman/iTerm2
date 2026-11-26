@@ -998,7 +998,6 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     private static let subgroupRunOutset: CGFloat = 0
     private static let collapsedChipChevronWidth: CGFloat = 12  // room for the collapse chevron on a collapsed chip
     private static let collapsedChipAttentionWidth: CGFloat = 20  // room for the attention icon on a collapsed chip
-    private static let collapsedChipLinesBottomPad: CGFloat = 4  // below rich content lines on a collapsed chip
     private static let collapsedChipAttentionIconSize: CGFloat = 16  // side of the attention icon (drawn at the size tabs use)
 
     // The one font used for every group name/chip label; the measuring and drawing
@@ -1046,28 +1045,11 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         return Self.groupNameCapsuleMargin * 2 + textWidth + Self.groupNameCapsulePad * 2 + Self.groupBAreaWidth
     }
 
-    // Width a collapsed chip needs to show these lines in its capsule.
-    @objc(tabGroupCollapsedChipWidthForRichLines:)
-    func tabGroupCollapsedChipWidth(for lines: [PSMTabRichLine]) -> CGFloat {
-        let textWidth = PSMTabRichContentRenderer.preferredWidth(lines: lines,
-                                                                 baseFont: NSFont.systemFont(ofSize: fontSize))
-        return Self.groupNameCapsuleMargin * 2 + Self.groupNameCapsulePad * 2 + textWidth
-    }
-
-    // The capsule holds the name band, which matches an expanded group's
-    // capsule, and the lines. This allows for the frame being 1pt shorter
-    // than the slot (see adjustedCellRect), the background rect 3pt shorter
-    // than the frame, and the capsule's margins, less the pill's outsets, so
-    // it errs a little generous. headerHeight isn't needed: this style puts
-    // an expanded group's name in a fixed band at the top of its header, not
-    // centered in it, so the name stays put whatever the header's height.
-    @objc(tabGroupCollapsedChipHeightForRichLines:headerHeight:)
-    func tabGroupCollapsedChipHeight(for lines: [PSMTabRichLine], headerHeight: CGFloat) -> CGFloat {
-        let textHeight = ceil(Self.groupNameFont.ascender - Self.groupNameFont.descender)
-        let band = textHeight + Self.groupNameCapsuleVPad * 2
-        let content = PSMTabRichContentRenderer.contentHeight(lines: lines,
-                                                              baseFont: NSFont.systemFont(ofSize: fontSize))
-        return 1 + 1 + Self.groupNameCapsuleMargin * 2 + band + content + Self.collapsedChipLinesBottomPad
+    // A collapsed group is a short capsule with its name, count, and chevron.
+    // Its lines would be the members' combined content less the title and
+    // subtitle, which is mostly empty, in a chip sized like a whole tab row.
+    @objc func showsRichContentOnCollapsedTabGroupChips() -> Bool {
+        return false
     }
 
     @objc func tabGroupChipCellHeight(forName name: String) -> CGFloat {
@@ -1173,36 +1155,15 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         // missing its capsule, label, chevron, and outline.
         let capsuleMargin = Self.groupNameCapsuleMargin
         let textHeight = ceil(font.ascender - font.descender)
-        // With rich content, the capsule fills the pill and holds the
-        // members' combined lines below a band with the name, which sits
-        // where a vertical bar's capsule would otherwise be.
-        let richLines = bar.richLines(forTabGroupIdentifier: groupID)
         let capsule: NSRect
-        let nameBand: NSRect
-        if let richLines {
+        if bar.orientation == .horizontalOrientation {
             capsule = pill.insetBy(dx: capsuleMargin, dy: capsuleMargin)
-            // Give up some of the name's padding before dropping a line.
-            let bandHeight = PSMTabRichContentRenderer.nameBandHeight(
-                preferred: textHeight + Self.groupNameCapsuleVPad * 2,
-                minimum: textHeight,
-                available: capsule.height,
-                lines: richLines,
-                baseFont: NSFont.systemFont(ofSize: fontSize),
-                bottomPadding: Self.collapsedChipLinesBottomPad)
-            nameBand = NSRect(x: capsule.minX,
-                              y: capsule.minY,
-                              width: capsule.width,
-                              height: min(capsule.height, bandHeight))
-        } else if bar.orientation == .horizontalOrientation {
-            capsule = pill.insetBy(dx: capsuleMargin, dy: capsuleMargin)
-            nameBand = capsule
         } else {
             let capsuleHeight = textHeight + Self.groupNameCapsuleVPad * 2
             capsule = NSRect(x: pill.minX + capsuleMargin,
                              y: pill.minY + capsuleMargin,
                              width: pill.width - capsuleMargin * 2,
                              height: capsuleHeight)
-            nameBand = capsule
         }
         guard capsule.width > 0, capsule.height > 0 else {
             return
@@ -1229,26 +1190,12 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         let pad = Self.groupNameCapsulePad
         let chevronW = Self.collapsedChipChevronWidth
         let attentionW = Self.collapsedChipAttentionWidth
-        let textRect = NSRect(x: nameBand.minX + pad,
-                              y: nameBand.midY - textHeight / 2.0,
-                              width: max(0, nameBand.width - pad * 2 - attentionW - chevronW),
+        let textRect = NSRect(x: capsule.minX + pad,
+                              y: capsule.midY - textHeight / 2.0,
+                              width: max(0, capsule.width - pad * 2 - attentionW - chevronW),
                               height: textHeight)
         PSMTabSearchHighlight.highlighting(NSAttributedString(string: label, attributes: attrs),
                                            query: tabBar?.searchHighlightQuery).draw(in: textRect)
-
-        if let richLines {
-            let linesRect = NSRect(x: capsule.minX + pad,
-                                   y: nameBand.maxY,
-                                   width: max(0, capsule.width - pad * 2),
-                                   height: max(0, capsule.maxY - nameBand.maxY - Self.collapsedChipLinesBottomPad))
-            PSMTabRichContentRenderer.draw(lines: richLines,
-                                           in: linesRect,
-                                           baseFont: NSFont.systemFont(ofSize: fontSize),
-                                           textColor: textCol,
-                                           secondaryColor: textCol.withAlphaComponent(textCol.alphaComponent * 0.7),
-                                           alignment: .left,
-                                           colorAppearance: accessoryAppearance)
-        }
 
         // Attention icon for the hidden members, in a slot reserved between the
         // label and the chevron whether or not there is an icon to show.
@@ -1256,8 +1203,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             let side = Self.collapsedChipAttentionIconSize
             // Center what's drawn, not the canvas: some icons (new output,
             // bell) sit off center in theirs.
-            let slotCenter = NSPoint(x: nameBand.maxX - pad - chevronW - attentionW / 2.0,
-                                     y: nameBand.midY)
+            let slotCenter = NSPoint(x: capsule.maxX - pad - chevronW - attentionW / 2.0,
+                                     y: capsule.midY)
             let iconRect = PSMIconContentBounds.rect(centeringVisibleContentOf: attention,
                                                      at: slotCenter,
                                                      size: side)
@@ -1270,8 +1217,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         }
 
         // Downward chevron at the capsule's right edge: the collapse affordance.
-        let cx = nameBand.maxX - pad - chevronW / 2.0
-        let cy = nameBand.midY
+        let cx = capsule.maxX - pad - chevronW / 2.0
+        let cy = capsule.midY
         let half: CGFloat = 3
         let chevron = NSBezierPath()
         chevron.move(to: NSPoint(x: cx - half, y: cy + half / 2.0))

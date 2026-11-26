@@ -92,6 +92,8 @@ final class PSMTabGroupRichContentTests: XCTestCase {
     }
 
     func testLinesComeFromTheDataSourceOnlyWhenShown() {
+        // A style that shows lines on collapsed chips.
+        bar.style = PSMYosemiteTabStyle()
         XCTAssertEqual(bar.richLines(forTabGroupIdentifier: "A")?.map(\.text), ["~/project"])
         XCTAssertNil(bar.richLines(forTabGroupIdentifier: ""))
         dataSource.showsRichContent = false
@@ -126,6 +128,22 @@ final class PSMTabGroupRichContentTests: XCTestCase {
         let header = bar.height(ofTabGroupChipCell: chip, collapsed: false)
         XCTAssertLessThan(header, verticalCellHeight, "precondition: the header is shorter than a row")
         XCTAssertEqual(bar.height(ofTabGroupChipCell: chip, collapsed: true), header)
+    }
+
+    // Tahoe, like Minimal, draws a collapsed group as a short capsule with no
+    // lines.
+    func testTahoeCollapsedChipIsAsShortAsAHeader() throws {
+        guard #available(macOS 26, *) else {
+            throw XCTSkip("Tahoe styles need macOS 26")
+        }
+        bar.style = PSMTahoeTabStyle()
+        bar.orientation = .verticalOrientation
+        bar.height = 57
+        let chip = makeChip()
+        let header = bar.height(ofTabGroupChipCell: chip, collapsed: false)
+        XCTAssertLessThan(header, verticalCellHeight, "precondition: the header is shorter than a row")
+        XCTAssertEqual(bar.height(ofTabGroupChipCell: chip, collapsed: true), header)
+        XCTAssertNil(bar.richLines(forTabGroupIdentifier: "A"))
     }
 
     // A chip's height depends only on the layout, so it comes from lines
