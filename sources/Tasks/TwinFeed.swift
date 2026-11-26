@@ -100,12 +100,7 @@ final class TwinFeed: NSObject {
         }
         guard accepted else {
             RLog("Twin fell behind. Stop feeding it.")
-            close()
-            // The live task lets go of the feed now, so keep it until the callback ran.
-            DispatchQueue.main.async {
-                self.fellBehind?()
-                self.fellBehind = nil
-            }
+            giveUp()
             return false
         }
         let data = Data(bytes: bytes, count: count)
@@ -123,11 +118,27 @@ final class TwinFeed: NSObject {
             do {
                 try self.writeHandle?.write(contentsOf: data)
             } catch {
-                DLog("Writing to the twin failed: \(error)")
-                self.state.mutableAccess { $0.stopped = true }
+                let first = self.state.mutableAccess { state -> Bool in
+                    defer { state.stopped = true }
+                    return !state.stopped
+                }
+                if first {
+                    RLog("Writing to the twin failed: \(error)")
+                    self.giveUp()
+                }
             }
         }
         return true
+    }
+
+    /// The twin no longer gets every byte, so it stops and its window replaces it.
+    private func giveUp() {
+        close()
+        // The live task may let go of the feed now, so keep it until the callback ran.
+        DispatchQueue.main.async {
+            self.fellBehind?()
+            self.fellBehind = nil
+        }
     }
 
     /// Any thread. Ends the twin's input, so its task reads the end of the file.

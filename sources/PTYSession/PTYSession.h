@@ -1443,6 +1443,8 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 @property(atomic, retain, nullable) PTYSession *twin;
 // The session a twin copies. Not retained; the source clears it when it terminates.
 @property(nonatomic, assign, nullable) PTYSession *twinSource;
+// A twin of a session it cannot show. It gets none of the source's output.
+@property(nonatomic) BOOL twinIsBlank;
 // Side effects a twin did not perform, by name.
 @property(nonatomic, readonly) NSCountedSet<NSString *> *twinSuppressedSideEffects;
 // Whether this session is a twin, which must not perform the named side effect.
@@ -1460,6 +1462,8 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 @property(nonatomic, readonly) BOOL twinStartCancelled;
 // Bytes read by this session that its twin has not parsed yet.
 @property(nonatomic, readonly) long long twinPendingByteCount;
+// Makes `twin` a blank twin of this session. It shows none of this session's output.
+- (void)showBlankTwin:(PTYSession *)twin;
 // Main queue. The twin fell too far behind and gets no more bytes.
 - (void)twinDidFallBehind:(PTYSession *)twin;
 

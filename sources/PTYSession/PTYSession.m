@@ -4942,6 +4942,29 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
 // Main queue. The twin stopped parsing and too much output is waiting for it. It is no longer
 // a copy of this session, so its window replaces it with a new one.
+- (void)showBlankTwin:(PTYSession *)twin {
+    [_shell.twinFeedLock lock];
+    [_shell.twinFeed close];
+    _shell.twinFeed = nil;
+    [_shell.twinFeedLock unlock];
+    PTYSession *previous = self.twin;
+    if (previous && previous != twin && previous.twinSource == self) {
+        previous.twinSource = nil;
+    }
+    twin.twinIsBlank = YES;
+    twin.twinSource = self;
+    self.twin = twin;
+    [self updateTwinTab];
+    NSString *message = NSLocalizedStringWithDefaultValue(@"PTYSession.TwinCannotShowSSH", nil, [NSBundle mainBundle],
+                                                          @"This pane uses SSH integration, which a twin window can’t show. Use it in the original window.",
+                                                          @"Shown in a twin window in place of a pane that uses SSH integration. A twin window is a second window that copies what another window shows.");
+    [twin.screen mutateAsynchronously:^(VT100Terminal *terminal,
+                                        VT100ScreenMutableState *mutableState,
+                                        id<VT100ScreenDelegate> delegate) {
+        [mutableState appendBannerMessage:message];
+    }];
+}
+
 - (void)twinDidFallBehind:(PTYSession *)twin {
     RLog(@"Twin %@ of %@ fell behind. Drop it.", twin, self);
     if (self.twin == twin) {
@@ -21696,6 +21719,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     NSString *identifier = @"NoSyncSuppressDownloadConfirmation";
     *promptIfBig = YES;
     const BOOL wasSilenced = [iTermWarning identifierIsSilenced:identifier];
+    if ((!displayInline || !wasSilenced) && [self twinSuppresses:@"download prompt"]) {
+        // The live session asks. A twin shows a file inline only if the answer is remembered.
+        return NO;
+    }
     // imgcat sends a full path. Only the file's own name is useful here.
     NSString *const displayName = name.lastPathComponent;
     NSString *title;
@@ -21719,7 +21746,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                 window:_view.window];
     const BOOL allow = (selection == kiTermWarningSelection0);
     DLog(@"allow=%@", @(allow));
-    if (allow && wasSilenced) {
+    if (allow && wasSilenced && !_isTwin) {
         if (size > VT100ScreenBigFileDownloadThreshold) {
             *promptIfBig = NO;
             return [self screenConfirmDownloadNamed:name canExceedSize:VT100ScreenBigFileDownloadThreshold];
@@ -22158,6 +22185,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                  shouldInjectShellIntegration:shouldInjectShellIntegration
                                        parent:previousConductor];
     _shell.sshIntegrationActive = YES;
+    // A twin cannot show SSH integration, so this session's twin becomes blank.
+    [[PseudoTerminal castFrom:[_delegate realParentWindow]] twinWindowsNeedSync];
     _conductor.terminalConfiguration = savedState;
     if (localOrigin) {
         for (iTermTuple<NSString *, NSString *> *tuple in config.filesToCopy) {
@@ -22232,6 +22261,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self updateVariablesFromConductor];
     [self updateInferredTmuxHostOfPanes];
     _shell.sshIntegrationActive = _conductor != nil;
+    if (!_conductor) {
+        // This session's twin can show it again.
+        [[PseudoTerminal castFrom:[_delegate realParentWindow]] twinWindowsNeedSync];
+    }
 }
 
 - (void)screenDidBeginSSHConductorCommandWithIdentifier:(NSString *)identifier

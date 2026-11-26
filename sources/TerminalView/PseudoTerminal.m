@@ -338,6 +338,8 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
     // This prevents recursive resizing.
     BOOL _resizeInProgressFlag;
+    // A twin sync or twin change is waiting to run, so another request needs no new one.
+    BOOL _twinSyncPending;
 
     PasteboardHistoryWindowController* pbHistoryView;
     CommandHistoryPopupWindowController *commandHistoryPopup;
@@ -11780,6 +11782,12 @@ static BOOL gSyncingTwinWindow;
             !session.isTmuxGateway);
 }
 
+// Whether a twin can show what `session` shows. Its twin is blank otherwise.
+- (BOOL)canShowSessionInTwin:(PTYSession *)session {
+    // The bytes of an SSH integration session are framed for the conductor.
+    return !session.shell.sshIntegrationActive;
+}
+
 // Opens a window that shows what this window shows. Its sessions run no program.
 - (IBAction)openTwinOfCurrentWindow:(id)sender {
     if (self.twinWindowSource) {
@@ -11842,7 +11850,10 @@ static BOOL gSyncingTwinWindow;
         NSArray<PTYSession *> *sources = [tab.sessions mapWithBlock:^id(PTYSession *twin) {
             return twin.twinSource;
         }];
-        if (sources.count == tab.sessions.count && [[NSSet setWithArray:sources] isEqualToSet:livePanes]) {
+        const BOOL blanksMatch = [tab.sessions allWithBlock:^BOOL(PTYSession *twin) {
+            return twin.twinIsBlank == ![self canShowSessionInTwin:twin.twinSource];
+        }];
+        if (sources.count == tab.sessions.count && blanksMatch && [[NSSet setWithArray:sources] isEqualToSet:livePanes]) {
             return tab;
         }
     }
@@ -11911,6 +11922,12 @@ static BOOL gSyncingTwinWindow;
     __weak __typeof(self) weakSelf = self;
     for (NSString *guid in liveMap) {
         PTYSession *twin = twinMap[guid];
+        if (![self canShowSessionInTwin:liveMap[guid]]) {
+            RLog(@"Blank twin %@ of %@", twin, liveMap[guid]);
+            [liveMap[guid] showBlankTwin:twin];
+            [twinTab fitSessionToCurrentViewSize:twin];
+            continue;
+        }
         RLog(@"Start twin %@ of %@", twin, liveMap[guid]);
         [liveMap[guid] startTwin:twin completion:^(BOOL ok) {
             RLog(@"Twin started=%@", @(ok));
@@ -11933,21 +11950,28 @@ static BOOL gSyncingTwinWindow;
     if (gSyncingTwinWindow || gTwinWindows.count == 0) {
         return;
     }
-    if (self.twinWindowSource) {
-        // The user changed the twin window. Not now: the tab view may be in the middle of it.
-        __weak __typeof(self) weakSelf = self;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [weakSelf applyTwinWindowChangesToLiveWindow];
-        });
+    if (!self.twinWindowSource && !self.twinWindow) {
         return;
     }
-    if (!self.twinWindow) {
+    if (_twinSyncPending) {
+        // One run sees every change. Two could act on what the first already changed.
         return;
     }
+    _twinSyncPending = YES;
     // Not now: the tab view may be in the middle of the change.
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
-        [weakSelf syncTwinWindow];
+        PseudoTerminal *strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        strongSelf->_twinSyncPending = NO;
+        if (strongSelf.twinWindowSource) {
+            // The user changed the twin window.
+            [strongSelf applyTwinWindowChangesToLiveWindow];
+        } else {
+            [strongSelf syncTwinWindow];
+        }
     });
 }
 
@@ -11967,6 +11991,7 @@ static BOOL gSyncingTwinWindow;
         return;
     }
     BOOL movedTab = NO;
+    const BOOL wasKey = self.window.isKeyWindow;
     NSArray<PTYTab *> *tabs = [[self.tabs copy] autorelease];
     for (NSInteger i = 0; i < tabs.count; i++) {
         PTYTab *tab = tabs[i];
@@ -11992,6 +12017,10 @@ static BOOL gSyncingTwinWindow;
         movedTab = YES;
     }
     if (movedTab) {
+        if (wasKey) {
+            // Inserting the tab made the live window key. The user is still at this one.
+            [self.window makeKeyAndOrderFront:nil];
+        }
         // The live window got a tab, so it syncs this window.
         return;
     }
@@ -12069,6 +12098,27 @@ static BOOL gSyncingTwinWindow;
         [twinWindow selectTabIfPresent:wantedSelection];
     }
     gSyncingTwinWindow = NO;
+    // A new twin tab can be selected before its views are in the window, and then selecting it
+    // does not move the keyboard focus to it.
+    __weak PseudoTerminal *weakTwinWindow = twinWindow;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakTwinWindow focusCurrentSessionIfKey];
+    });
+}
+
+- (void)focusCurrentSessionIfKey {
+    NSView *responder = self.currentSession.mainResponder;
+    if (!self.window.isKeyWindow || responder.window != self.window) {
+        return;
+    }
+    NSResponder *firstResponder = self.window.firstResponder;
+    NSArray<PTYSession *> *currentSessions = self.currentTab.sessions;
+    const BOOL focusIsInAnotherTab = [self.allSessions anyWithBlock:^BOOL(PTYSession *session) {
+        return session.mainResponder == firstResponder && ![currentSessions containsObject:session];
+    }];
+    if (focusIsInAnotherTab) {
+        [self.window makeFirstResponder:responder];
+    }
 }
 
 - (void)replaySession:(PTYSession *)oldSession {
@@ -12631,6 +12681,11 @@ static BOOL gSyncingTwinWindow;
 }
 
 - (BOOL)canSplitPaneVertically:(BOOL)isVertical withBookmark:(Profile *)theBookmark {
+    if (self.isTwinWindow) {
+        // A twin tab holds only twins of its live tab's panes.
+        DLog(@"No splits in a twin window");
+        return NO;
+    }
     if ([self inInstantReplay]) {
         // Things get very complicated in this case. Just disallow it.
         RLog(@"In instant replay");
@@ -13215,6 +13270,7 @@ static BOOL gSyncingTwinWindow;
 - (BOOL)canCreateFloatingPane {
     PTYTab *tab = [self currentTab];
     return (tab != nil &&
+            !self.isTwinWindow &&
             !_layoutLocked &&
             (![tab isTmuxTab] || tab.tmuxController.supportsFloatingPanes) &&
             ![self inInstantReplay] &&

@@ -832623,6 +832623,18 @@
         }
       }
     },
+    "PTYSession.TwinCannotShowSSH" : {
+      "comment" : "Shown in a twin window in place of a pane that uses SSH integration. A twin window is a second window that copies what another window shows.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This pane uses SSH integration, which a twin window can’t show. Use it in the original window."
+          }
+        }
+      }
+    },
     "PTYSession.TwoCoprocesses" : {
       "comment" : "Warning that two coprocesses cannot run at once; placeholder is the trigger name",
       "extractionState" : "extracted_with_value",
