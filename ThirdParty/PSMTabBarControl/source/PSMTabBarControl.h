@@ -33,6 +33,8 @@ extern const CGFloat kPSMTabBarCellIconPadding;
 extern const CGFloat kPSMMinimumTitleWidth;
 extern const CGFloat kPSMTabBarIndicatorWidth;
 extern const CGFloat kPSMTabBarIconWidth;
+// How long after the pointer last moved over the bar it stops holding tabs.
+extern const NSTimeInterval PSMTabBarPointerHoldInterval;
 extern const CGFloat kPSMHideAnimationSteps;
 extern const CGSize PSMTabBarGraphicSize;
 extern const CGFloat PSMTabBarGraphicMargin;
@@ -116,9 +118,10 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
     draggingEnteredTabBarForSender:(id<NSDraggingInfo>)tabView;
 - (BOOL)tabView:(NSTabView *)tabView shouldAcceptDragFromSender:(id<NSDraggingInfo>)sender;
 
-// The pointer left the tab bar. A search may hold back changes to what the
-// bar shows while the pointer is over it, so nothing moves under it.
-- (void)tabViewPointerDidLeaveTabBar:(NSTabView *)tabView;
+// The pointer stopped holding the tab bar (see pointerIsHoldingTabs): it left
+// the bar or stopped moving over it. A search or sort may hold back changes
+// to what the bar shows while the pointer holds it, so nothing moves under it.
+- (void)tabViewPointerDidReleaseTabBar:(NSTabView *)tabView;
 
 // Return NO to hide every tab's activity indicator, whether it would show
 // the busy state or progress. Defaults to YES. Call
@@ -387,10 +390,26 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // be refused while it is set, since a drop position means a tab view index.
 @property(nonatomic, copy, nullable) NSArray<NSTabViewItem *> *displayOrder;
 
-// Whether the pointer is over the bar, in a window that's frontmost there.
-@property(nonatomic, readonly) BOOL pointerIsInside;
-// For tests: overrides pointerIsInside when not nil.
+// Whether the pointer is over the bar, in a window that's frontmost there,
+// and either a mouse button is down or it has moved (or clicked, dragged, or
+// scrolled) within the last PSMTabBarPointerHoldInterval seconds. A
+// pointer resting over the bar doesn't hold tabs in place, or the bar could
+// go on showing stale state indefinitely.
+@property(nonatomic, readonly) BOOL pointerIsHoldingTabs;
+// For tests: overrides pointerIsHoldingTabs when not nil.
+@property(nonatomic, retain, nullable) NSNumber *pointerIsHoldingTabsForTesting;
+// For tests of the hold logic itself. Each replaces one input when set: the
+// hit test for whether the pointer is over the bar, NSEvent's pressed mouse
+// buttons, the clock (seconds, like systemUptime), and scheduling the idle
+// check (the block gets the delay; the test calls pointerIdleTimerDidFire).
 @property(nonatomic, retain, nullable) NSNumber *pointerIsInsideForTesting;
+@property(nonatomic, retain, nullable) NSNumber *pressedMouseButtonsForTesting;
+@property(nonatomic, copy, nullable) NSTimeInterval (^pointerClockForTesting)(void);
+@property(nonatomic, copy, nullable) void (^pointerIdleTimerSchedulerForTesting)(NSTimeInterval delay);
+// The pointer entered, moved, clicked, dragged, or scrolled over the bar.
+- (void)pointerDidMove;
+// The idle check. Public for tests.
+- (void)pointerIdleTimerDidFire;
 
 - (void)setTabColor:(nullable NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem;
 - (nullable NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;

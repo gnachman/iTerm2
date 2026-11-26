@@ -30,7 +30,7 @@ final class TabBarOrderWindowTests: XCTestCase {
         })
         fixture = TerminalWindowTestFixture()
         if let bar = try? tabBar {
-            bar.pointerIsInsideForTesting = NSNumber(value: false)
+            bar.pointerIsHoldingTabsForTesting = NSNumber(value: false)
         }
     }
 
@@ -225,7 +225,7 @@ final class TabBarOrderWindowTests: XCTestCase {
         let tabs = try makeTabs(4)
         try pick(.status)
         let bar = try tabBar
-        bar.pointerIsInsideForTesting = NSNumber(value: true)
+        bar.pointerIsHoldingTabsForTesting = NSNumber(value: true)
         setStatus("Waiting", on: tabs[2])
         XCTAssertEqual(try shown(tabs), ["[No Status]", "0", "1", "2", "3"], "waits for the pointer")
         // Anything else refreshing the bar keeps the places too.
@@ -237,8 +237,37 @@ final class TabBarOrderWindowTests: XCTestCase {
         fixture.terminal.nextTab(nil)
         XCTAssertTrue(fixture.terminal.currentTab() === tabs[2])
 
-        bar.pointerIsInsideForTesting = NSNumber(value: false)
-        bar.delegate?.tabViewPointerDidLeaveTabBar?(fixture.terminal.tabView())
+        bar.pointerIsHoldingTabsForTesting = NSNumber(value: false)
+        bar.delegate?.tabViewPointerDidReleaseTabBar?(fixture.terminal.tabView())
+        XCTAssertEqual(try shown(tabs), ["[Waiting]", "2", "[No Status]", "0", "1", "3"])
+    }
+
+    // A pointer resting over the bar stops holding tabs, and what waited for
+    // it is applied without the pointer leaving.
+    func testChangesApplyWhenThePointerRestsOverTheBar() throws {
+        let tabs = try makeTabs(4)
+        try pick(.status)
+        let bar = try tabBar
+        var now: TimeInterval = 1000
+        bar.pointerIsHoldingTabsForTesting = nil
+        bar.pointerIsInsideForTesting = NSNumber(value: true)
+        bar.pressedMouseButtonsForTesting = NSNumber(value: 0)
+        bar.pointerClockForTesting = { now }
+        bar.pointerIdleTimerSchedulerForTesting = { _ in }
+        defer {
+            bar.pointerIsInsideForTesting = nil
+            bar.pressedMouseButtonsForTesting = nil
+            bar.pointerClockForTesting = nil
+            bar.pointerIdleTimerSchedulerForTesting = nil
+            bar.pointerIsHoldingTabsForTesting = NSNumber(value: false)
+        }
+
+        bar.pointerDidMove()
+        setStatus("Waiting", on: tabs[2])
+        XCTAssertEqual(try shown(tabs), ["[No Status]", "0", "1", "2", "3"], "waits while the pointer moves")
+
+        now += PSMTabBarPointerHoldInterval
+        bar.pointerIdleTimerDidFire()
         XCTAssertEqual(try shown(tabs), ["[Waiting]", "2", "[No Status]", "0", "1", "3"])
     }
 

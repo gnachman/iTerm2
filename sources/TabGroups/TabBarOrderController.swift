@@ -5,12 +5,14 @@
 //  A window's tab bar order (see TabBarOrder) and what it needs to keep it
 //  current and steady:
 //
-//  - While the pointer is over the bar, tabs keep the places they were last
-//    shown in, so nothing moves under it. The window asks with useSnapshot.
+//  - While the pointer holds the bar (it's over the bar and moved recently;
+//    see PSMTabBarControl.pointerIsHoldingTabs), tabs keep the places they
+//    were last shown in, so nothing moves under it. The window asks with
+//    useSnapshot.
 //  - Directories change without telling anyone, so while ordering by
 //    directory a timer checks for changes.
 //  - The bar may not hear the pointer leave, so while changes wait for it a
-//    timer checks whether it's gone.
+//    timer checks whether it's gone or stopped moving.
 //
 
 import Foundation
@@ -57,8 +59,8 @@ final class TabBarOrderController: NSObject {
     @objc var needsUpdate: (() -> Void)?
     /// Gives the window's tabs as they are now, in manual order.
     @objc var liveTabs: (() -> [TabBarOrderLiveTab])?
-    /// Whether the pointer is over the bar.
-    @objc var pointerIsInside: (() -> Bool)?
+    /// Whether the pointer is over the bar and moved recently.
+    @objc var pointerIsHolding: (() -> Bool)?
     /// Whether the bar shows the order now. Polling is skipped otherwise.
     @objc var isActive: (() -> Bool)?
 
@@ -151,8 +153,8 @@ final class TabBarOrderController: NSObject {
         guard mode != .manual else {
             return
         }
-        if pointerIsInside?() ?? false {
-            DLog("Tab order inputs changed with the pointer over the bar; wait for it to leave")
+        if pointerIsHolding?() ?? false {
+            DLog("Tab order inputs changed with the pointer holding the bar; wait for it to leave or rest")
             heldBackByPointer = true
             return
         }
@@ -175,9 +177,10 @@ final class TabBarOrderController: NSObject {
         needsUpdate?()
     }
 
-    /// The pointer left the bar, or may have without saying so.
+    /// The pointer left the bar or stopped moving over it, or may have
+    /// without saying so.
     @objc func applyChangesHeldBackByPointer() {
-        guard heldBackByPointer, !(pointerIsInside?() ?? false) else {
+        guard heldBackByPointer, !(pointerIsHolding?() ?? false) else {
             return
         }
         DLog("Apply tab order changes that waited for the pointer")

@@ -29,7 +29,7 @@ final class TabBarSearchWindowTests: XCTestCase {
         // Wherever the real pointer is, tests start with it off the bar, so
         // text changes apply. Tests about the pointer set it themselves.
         if let bar = findTabBar(in: fixture.window.contentView?.superview ?? NSView()) {
-            bar.pointerIsInsideForTesting = NSNumber(value: false)
+            bar.pointerIsHoldingTabsForTesting = NSNumber(value: false)
         }
     }
 
@@ -130,7 +130,7 @@ final class TabBarSearchWindowTests: XCTestCase {
         iTermPreferences.setInt(5 /* TAB_STYLE_MINIMAL */, forKey: kPreferenceKeyTabStyle)
         fixture.close()
         fixture = TerminalWindowTestFixture()
-        try tabBar.pointerIsInsideForTesting = NSNumber(value: false)
+        try tabBar.pointerIsHoldingTabsForTesting = NSNumber(value: false)
         XCTAssertNotNil(try tabBar.style.accessoryAppearance, "precondition: the Minimal style")
     }
 
@@ -790,8 +790,8 @@ final class TabBarSearchWindowTests: XCTestCase {
         fixture.terminal.tabView().selectTabViewItem(tabs[0].tabViewItem)
         try type("alpha")
         let bar = try tabBar
-        bar.pointerIsInsideForTesting = NSNumber(value: true)
-        defer { bar.pointerIsInsideForTesting = NSNumber(value: false) }
+        bar.pointerIsHoldingTabsForTesting = NSNumber(value: true)
+        defer { bar.pointerIsHoldingTabsForTesting = NSNumber(value: false) }
         tabs[1].titleOverride = "alpha beta"
         tabs[2].titleOverride = "zzz"
         waitUntil("titles shown") {
@@ -803,8 +803,8 @@ final class TabBarSearchWindowTests: XCTestCase {
         fixture.terminal.nextTab(nil)
         XCTAssertTrue(fixture.terminal.currentTab() === tabs[2], "as shown, not as matched now")
         XCTAssertEqual(try searchField().stringValue, "alpha", "selecting a shown tab keeps the search")
-        bar.pointerIsInsideForTesting = NSNumber(value: false)
-        fixture.terminal.tabViewPointerDidLeaveTabBar(fixture.terminal.tabView())
+        bar.pointerIsHoldingTabsForTesting = NSNumber(value: false)
+        fixture.terminal.tabViewPointerDidReleaseTabBar(fixture.terminal.tabView())
         XCTAssertEqual(try hidden(tabs), [false, false, true])
     }
 
@@ -815,8 +815,8 @@ final class TabBarSearchWindowTests: XCTestCase {
         fixture.terminal.tabView().selectTabViewItem(tabs[0].tabViewItem)
         try type("alpha")
         let bar = try tabBar
-        bar.pointerIsInsideForTesting = NSNumber(value: true)
-        defer { bar.pointerIsInsideForTesting = NSNumber(value: false) }
+        bar.pointerIsHoldingTabsForTesting = NSNumber(value: true)
+        defer { bar.pointerIsHoldingTabsForTesting = NSNumber(value: false) }
         _ = fixture.terminal.perform(NSSelectorFromString("setCurrentTabTitle:"), with: "alpha two")
         waitUntil("title shown") { tabs[0].tabViewItem?.label.contains("alpha two") == true }
         XCTAssertEqual(try searchField().stringValue, "alpha", "still matches")
@@ -835,8 +835,8 @@ final class TabBarSearchWindowTests: XCTestCase {
         fixture.terminal.tabView().selectTabViewItem(tabs[0].tabViewItem)
         try type("alpha")
         let bar = try tabBar
-        bar.pointerIsInsideForTesting = NSNumber(value: true)
-        defer { bar.pointerIsInsideForTesting = NSNumber(value: false) }
+        bar.pointerIsHoldingTabsForTesting = NSNumber(value: true)
+        defer { bar.pointerIsHoldingTabsForTesting = NSNumber(value: false) }
         tabs[1].titleOverride = "zzz"
         waitUntil("title shown") { tabs[1].tabViewItem?.label.contains("zzz") == true }
         drainMainQueue()

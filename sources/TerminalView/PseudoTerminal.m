@@ -2042,8 +2042,8 @@ ITERM_WEAKLY_REFERENCEABLE
         _tabBarOrder.liveTabs = ^NSArray<iTermTabBarOrderLiveTab *> *{
             return [weakSelf tabBarOrderLiveTabsForTabs:[weakSelf tabsInTabBar]] ?: @[];
         };
-        _tabBarOrder.pointerIsInside = ^BOOL{
-            return weakSelf.contentView.tabBarControl.pointerIsInside;
+        _tabBarOrder.pointerIsHolding = ^BOOL{
+            return weakSelf.contentView.tabBarControl.pointerIsHoldingTabs;
         };
         _tabBarOrder.isActive = ^BOOL{
             return [weakSelf tabBarIsSorted] && !weakSelf.window.isMiniaturized;
@@ -2117,7 +2117,7 @@ ITERM_WEAKLY_REFERENCEABLE
 // this becomes what the bar shows.
 - (iTermTabBarOrderResult *)tabBarOrderResultForTabs:(NSArray<PTYTab *> *)tabs store:(BOOL)store {
     iTermTabBarOrderController *controller = [self tabBarOrderController];
-    const BOOL useSnapshot = controller.isHoldingBack || _contentView.tabBarControl.pointerIsInside;
+    const BOOL useSnapshot = controller.isHoldingBack || _contentView.tabBarControl.pointerIsHoldingTabs;
     return [controller resultForTabs:[self tabBarOrderLiveTabsForTabs:tabs]
                          useSnapshot:useSnapshot
                                store:store];
@@ -2313,7 +2313,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // Go by what the bar shows: the snapshot while the pointer holds changes
     // back, or while changes it held back haven't been applied yet.
     const BOOL useSnapshot = searching && (_tabBarSearchTextsChangedUnderPointer ||
-                                           _contentView.tabBarControl.pointerIsInside);
+                                           _contentView.tabBarControl.pointerIsHoldingTabs);
     NSArray<iTermTabBarSearchTab *> *searchTabs = [tabs mapWithBlock:^id(PTYTab *aTab) {
         return [self tabBarSearchTabForTab:aTab includingTexts:searching useSnapshot:useSnapshot store:NO];
     }];
@@ -2455,23 +2455,23 @@ ITERM_WEAKLY_REFERENCEABLE
     if (![self isSearchingTabBar]) {
         return;
     }
-    if (_contentView.tabBarControl.pointerIsInside) {
-        DLog(@"Tab text changed with the pointer over the tab bar; wait for it to leave");
+    if (_contentView.tabBarControl.pointerIsHoldingTabs) {
+        DLog(@"Tab text changed with the pointer holding the tab bar; wait for it to leave or rest");
         _tabBarSearchTextsChangedUnderPointer = YES;
         return;
     }
     [self updateTabGroupsForSearch];
 }
 
-// Apply text changes that waited for the pointer to leave the bar, if it
-// has. Called when it leaves, and as a fallback when the window stops being
+// Apply text changes that waited for the pointer to leave the bar or stop
+// moving over it, if it has. Called when it does, and as a fallback when the window stops being
 // key or a drag ends, in case no exit arrives.
 - (void)applyTabBarSearchTextChangesHeldBackByPointer {
-    if (!_tabBarSearchTextsChangedUnderPointer || _contentView.tabBarControl.pointerIsInside) {
+    if (!_tabBarSearchTextsChangedUnderPointer || _contentView.tabBarControl.pointerIsHoldingTabs) {
         return;
     }
     if ([self isSearchingTabBar]) {
-        DLog(@"The pointer left the tab bar; apply the text changes that waited");
+        DLog(@"The pointer released the tab bar; apply the text changes that waited");
         // Clears the flag.
         [self updateTabGroupsForSearch];
     } else {
@@ -2480,7 +2480,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 // PSMTabBarControlDelegate
-- (void)tabViewPointerDidLeaveTabBar:(NSTabView *)tabView {
+- (void)tabViewPointerDidReleaseTabBar:(NSTabView *)tabView {
     [self applyTabBarSearchTextChangesHeldBackByPointer];
     [_tabBarOrder applyChangesHeldBackByPointer];
 }
@@ -10419,7 +10419,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     // With the pointer over the bar, keep what it shows (see
     // -tabBarSearchTextsForTab:...). Otherwise apply what tabs show now,
     // including any changes that waited for the pointer.
-    const BOOL useSnapshot = searching && _contentView.tabBarControl.pointerIsInside;
+    const BOOL useSnapshot = searching && _contentView.tabBarControl.pointerIsHoldingTabs;
     if (!useSnapshot) {
         _tabBarSearchTextsChangedUnderPointer = NO;
     }

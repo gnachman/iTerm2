@@ -12,14 +12,14 @@ import XCTest
 final class TabBarOrderControllerTests: XCTestCase {
     private var controller: TabBarOrderController!
     private var tabs = [TabBarOrderLiveTab]()
-    private var pointerInside = false
+    private var pointerHolding = false
     private var updates = 0
 
     override func setUp() {
         super.setUp()
         controller = TabBarOrderController()
         controller.liveTabs = { [unowned self] in self.tabs }
-        controller.pointerIsInside = { [unowned self] in self.pointerInside }
+        controller.pointerIsHolding = { [unowned self] in self.pointerHolding }
         controller.needsUpdate = { [unowned self] in self.updates += 1 }
     }
 
@@ -66,7 +66,7 @@ final class TabBarOrderControllerTests: XCTestCase {
         tabs = [live(1, priority: 3), live(2, priority: 5)]
         XCTAssertEqual(apply().order, [0, 1])
 
-        pointerInside = true
+        pointerHolding = true
         tabs = [live(1, priority: 3), live(2, priority: 0)]
         controller.inputsDidChange()
         XCTAssertEqual(updates, 0, "waits for the pointer")
@@ -75,7 +75,7 @@ final class TabBarOrderControllerTests: XCTestCase {
 
         controller.applyChangesHeldBackByPointer()
         XCTAssertEqual(updates, 0, "the pointer is still there")
-        pointerInside = false
+        pointerHolding = false
         controller.applyChangesHeldBackByPointer()
         XCTAssertEqual(updates, 1)
         XCTAssertEqual(apply().order, [1, 0])
@@ -88,12 +88,12 @@ final class TabBarOrderControllerTests: XCTestCase {
         controller.mode = .status
         tabs = [live(1, priority: 3), live(2, priority: 5)]
         apply()
-        pointerInside = true
+        pointerHolding = true
         tabs = [live(1, priority: 3), live(2, priority: 0)]
         controller.inputsDidChange()
         XCTAssertTrue(controller.isHoldingBack, "precondition")
 
-        pointerInside = false
+        pointerHolding = false
         controller.inputsDidChange()
         XCTAssertEqual(updates, 1)
         XCTAssertFalse(controller.isHoldingBack, "readers go by what tabs are now")
@@ -154,7 +154,7 @@ final class TabBarOrderControllerTests: XCTestCase {
         controller.mode = .status
         tabs = [live(1, priority: 3), live(2, priority: 5)]
         apply()
-        pointerInside = true
+        pointerHolding = true
         tabs = [live(1, priority: 3), live(2, priority: 0)]
         controller.inputsDidChange()
         XCTAssertTrue(controller.isHoldingBack, "precondition")
@@ -164,7 +164,7 @@ final class TabBarOrderControllerTests: XCTestCase {
             self.updates += 1
             applied.fulfill()
         }
-        pointerInside = false
+        pointerHolding = false
         wait(for: [applied], timeout: 5)
         XCTAssertEqual(updates, 1)
         XCTAssertFalse(controller.isHoldingBack)
@@ -208,7 +208,7 @@ final class TabBarOrderControllerTests: XCTestCase {
         controller.mode = .status
         tabs = [live(1, priority: 3), live(2, priority: 5)]
         apply()
-        pointerInside = true
+        pointerHolding = true
         tabs = [live(1, priority: 3), live(2, priority: 0)]
         controller.inputsDidChange()
         XCTAssertTrue(controller.isHoldingBack)

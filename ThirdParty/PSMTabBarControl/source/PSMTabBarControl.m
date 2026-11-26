@@ -51,6 +51,7 @@ const CGFloat kPSMTabBarCellIconPadding = 4;
 const CGFloat kPSMMinimumTitleWidth = 30;
 const CGFloat kPSMTabBarIndicatorWidth = 16.0;
 const CGFloat kPSMTabBarIconWidth = 16.0;
+const NSTimeInterval PSMTabBarPointerHoldInterval = 2.0;
 const CGFloat kPSMHideAnimationSteps = 2.0;
 const CGSize PSMTabBarGraphicSize = { 16.0, 16.0 };
 const CGFloat PSMTabBarGraphicMargin = 2;
@@ -273,8 +274,14 @@ static const NSTimeInterval PSMTabBarSpringLoadingDelay = 0.6;
     // A drag that began on a group chip was refused; swallow the rest of it.
     BOOL _chipDragRefused;
     BOOL _closeClicked;
-    // Covers the whole bar, to learn when the pointer leaves it.
+    // Covers the whole bar, to learn when the pointer leaves it or moves
+    // over it.
     NSTrackingArea *_pointerTrackingArea;
+    // systemUptime when the pointer last entered or moved over the bar, or 0.
+    NSTimeInterval _lastPointerMoveTime;
+    // Whether pointerIdleTimerDidFire is scheduled. Moves, clicks, drags, and
+    // scrolls over the bar all count as the pointer moving.
+    BOOL _pointerIdleTimerScheduled;
 
     // iTerm2 additions
     NSUInteger _modifier;
@@ -485,7 +492,11 @@ static const NSTimeInterval PSMTabBarSpringLoadingDelay = 0.6;
     [_topAccessoryView release];
     [_searchHighlightQuery release];
     [_displayOrder release];
+    [_pointerIsHoldingTabsForTesting release];
     [_pointerIsInsideForTesting release];
+    [_pressedMouseButtonsForTesting release];
+    [_pointerClockForTesting release];
+    [_pointerIdleTimerSchedulerForTesting release];
     if (_pointerTrackingArea) {
         [self removeTrackingArea:_pointerTrackingArea];
         [_pointerTrackingArea release];
@@ -541,6 +552,9 @@ static const NSTimeInterval PSMTabBarSpringLoadingDelay = 0.6;
             [_animationTimer invalidate];
             _animationTimer = nil;
         }
+        // The pending idle check retains self too, and a pointer in a
+        // closed window isn't holding anything.
+        [self cancelPointerIdleTimer];
     }
 }
 
@@ -2186,6 +2200,7 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
 }
 
 - (void)scrollWheel:(NSEvent *)event {
+    [self pointerDidMove];
     if (![self tabBarIsScrollable] || [self maximumScrollOffset] <= 0) {
         // Not scrollable, or everything fits: let the event go on to whatever is behind us.
         [super scrollWheel:event];
@@ -4298,12 +4313,14 @@ typedef struct {
 }
 
 - (void)otherMouseDown:(NSEvent *)theEvent {
+    [self pointerDidMove];
     if ([theEvent buttonNumber] == 2) {
         [self setLastMiddleMouseDownEvent:theEvent];
     }
 }
 
 - (void)mouseDown:(NSEvent *)theEvent {
+    [self pointerDidMove];
     _didDrag = NO;
     _chipDragRefused = NO;
 
@@ -4359,6 +4376,7 @@ typedef struct {
 }
 
 - (void)mouseDragged:(NSEvent *)theEvent {
+    [self pointerDidMove];
     if (_chipDragRefused) {
         return;
     }
@@ -4531,6 +4549,7 @@ typedef struct {
 
 - (void)otherMouseUp:(NSEvent *)theEvent
 {
+    [self pointerDidMove];
     // Middle click closes a tab, even if the click is not on the close button.
     if ([theEvent buttonNumber] == 2 && !_resizing) {
         NSPoint mousePt = [self convertPoint:[theEvent locationInWindow] fromView:nil];
@@ -4546,6 +4565,7 @@ typedef struct {
 }
 
 - (void)mouseUp:(NSEvent *)theEvent {
+    [self pointerDidMove];
     // A refused chip drag ends here. Reset before any early return so a later
     // drag that doesn't start with this bar's mouse-down isn't swallowed.
     _chipDragRefused = NO;
@@ -5269,6 +5289,7 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
         // In the visible rect, so it follows the bar's size by itself.
         _pointerTrackingArea = [[NSTrackingArea alloc] initWithRect:NSZeroRect
                                                             options:(NSTrackingMouseEnteredAndExited |
+                                                                     NSTrackingMouseMoved |
                                                                      NSTrackingActiveAlways |
                                                                      NSTrackingInVisibleRect)
                                                               owner:self
@@ -5327,6 +5348,47 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     [self setNeedsDisplay:YES];
 }
 
+- (BOOL)pointerIsHoldingTabs {
+    if (_pointerIsHoldingTabsForTesting) {
+        return _pointerIsHoldingTabsForTesting.boolValue;
+    }
+    if ([self pressedMouseButtons] != 0) {
+        // A click or drag in progress holds the bar however long it takes,
+        // since mouse-up finds its target by position. A button held down
+        // sends mouseDragged: rather than mouseMoved:, if anything.
+        const BOOL inside = [self pointerIsInside];
+        if (inside) {
+            // A drag that began outside the bar (such as a selection in the
+            // terminal) sends the bar no events at all, not even mouseUp:.
+            // Count this as a move so the idle timer is armed and the
+            // delegate hears of the release once the pointer rests.
+            [self pointerDidMove];
+        }
+        return inside;
+    }
+    const NSTimeInterval idle = [self pointerClock] - _lastPointerMoveTime;
+    if (_lastPointerMoveTime == 0 || idle >= PSMTabBarPointerHoldInterval) {
+        DLog(@"Pointer last moved over the bar %@ seconds ago, so it isn't holding tabs",
+             _lastPointerMoveTime == 0 ? @"never" : @(idle));
+        return NO;
+    }
+    return [self pointerIsInside];
+}
+
+- (NSTimeInterval)pointerClock {
+    if (_pointerClockForTesting) {
+        return _pointerClockForTesting();
+    }
+    return [[NSProcessInfo processInfo] systemUptime];
+}
+
+- (NSUInteger)pressedMouseButtons {
+    if (_pressedMouseButtonsForTesting) {
+        return _pressedMouseButtonsForTesting.unsignedIntegerValue;
+    }
+    return [NSEvent pressedMouseButtons];
+}
+
 - (BOOL)pointerIsInside {
     if (_pointerIsInsideForTesting) {
         return _pointerIsInsideForTesting.boolValue;
@@ -5357,6 +5419,7 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 
 - (void)mouseEntered:(NSEvent *)event {
     if (event.trackingArea == _pointerTrackingArea) {
+        [self pointerDidMove];
         return;
     }
     [super mouseEntered:event];
@@ -5364,13 +5427,79 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 
 - (void)mouseExited:(NSEvent *)event {
     if (event.trackingArea == _pointerTrackingArea) {
-        id delegate = self.delegate;
-        if ([delegate respondsToSelector:@selector(tabViewPointerDidLeaveTabBar:)]) {
-            [delegate tabViewPointerDidLeaveTabBar:_tabView];
-        }
+        _lastPointerMoveTime = 0;
+        [self notifyDelegatePointerDidRelease];
         return;
     }
     [super mouseExited:event];
+}
+
+// Sent by _pointerTrackingArea. Not passed up the responder chain: the bar
+// didn't get these before it tracked them, so nothing above expects them.
+- (void)mouseMoved:(NSEvent *)event {
+    [self pointerDidMove];
+}
+
+- (void)pointerDidMove {
+    _lastPointerMoveTime = [self pointerClock];
+    if (!_pointerIdleTimerScheduled) {
+        [self schedulePointerIdleTimerAfter:PSMTabBarPointerHoldInterval];
+    }
+}
+
+// The pending request retains self until it fires or is canceled.
+- (void)schedulePointerIdleTimerAfter:(NSTimeInterval)delay {
+    _pointerIdleTimerScheduled = YES;
+    if (_pointerIdleTimerSchedulerForTesting) {
+        _pointerIdleTimerSchedulerForTesting(delay);
+        return;
+    }
+    [self performSelector:@selector(pointerIdleTimerDidFire)
+               withObject:nil
+               afterDelay:delay];
+}
+
+- (void)cancelPointerIdleTimer {
+    _pointerIdleTimerScheduled = NO;
+    _lastPointerMoveTime = 0;
+    [NSObject cancelPreviousPerformRequestsWithTarget:self
+                                             selector:@selector(pointerIdleTimerDidFire)
+                                               object:nil];
+}
+
+// Rather than rescheduling on every move, check when the earliest possible
+// idle moment arrives and wait out the rest if the pointer moved since.
+- (void)pointerIdleTimerDidFire {
+    _pointerIdleTimerScheduled = NO;
+    if (_lastPointerMoveTime == 0) {
+        // It left, and the delegate already heard.
+        return;
+    }
+    if ([self pressedMouseButtons] != 0 && [self pointerIsInside]) {
+        // Still holding the bar. Mouse-up counts as a move, so the idle
+        // period starts over when the button is released. A button held
+        // down somewhere else doesn't count: the pointer may have left
+        // without an exit (onto the window's buttons, or under another
+        // window), and the bar shouldn't be kept waiting for it.
+        DLog(@"Pointer is idle over the tab bar but a mouse button is down; keep holding");
+        [self schedulePointerIdleTimerAfter:PSMTabBarPointerHoldInterval];
+        return;
+    }
+    const NSTimeInterval remaining = _lastPointerMoveTime + PSMTabBarPointerHoldInterval - [self pointerClock];
+    if (remaining > 0 && [self pressedMouseButtons] == 0) {
+        [self schedulePointerIdleTimerAfter:remaining];
+        return;
+    }
+    DLog(@"Pointer stopped holding the tab bar");
+    _lastPointerMoveTime = 0;
+    [self notifyDelegatePointerDidRelease];
+}
+
+- (void)notifyDelegatePointerDidRelease {
+    id delegate = self.delegate;
+    if ([delegate respondsToSelector:@selector(tabViewPointerDidReleaseTabBar:)]) {
+        [delegate tabViewPointerDidReleaseTabBar:_tabView];
+    }
 }
 
 - (void)windowDidMove:(NSNotification *)aNotification {
