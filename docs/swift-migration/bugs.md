@@ -1484,3 +1484,19 @@ or a crash from program output.
   their own pools.
 - **Found:** 2026-11-25, in review of unit `inline-image-nullability`.
 
+## Two timing tests failed once each in whole-suite runs with swap nearly full
+
+- **Where:** `KeePassXCAccountNameTests.testOtherAdaptersReceiveAccountNameVerbatim`
+  (a 30-second wait ran out, in the integer sanitizer whole suite) and
+  `FramerFlowLedgerTests.testABackgroundSessionCountsWhatItRunsWhileAnotherIsBusy`
+  (a 5-second wait ran out, in a plain whole suite), both 2026-11-26.
+- **What:** each failed once and passed in the other whole-suite runs of
+  the same hour. Run alone three times in the same build, each passed
+  every time (the second in 0.016 s). When they failed, `sysctl
+  vm.swapusage` showed 21.2 to 21.9 GB of 22.5 GB of swap in use, and test
+  jobs from other checkouts were running.
+- **Meanwhile:** both stay enabled. The whole suite was run again and
+  passed. If either fails again with swap free, treat it as flaky by
+  test-speed.md section 3.
+- **Found:** 2026-11-26, closing checks and a gate.
+

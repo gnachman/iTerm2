@@ -394,9 +394,13 @@ usage cannot spend the week's quota.
   already upstream as equivalent patches and those that become empty,
   keeping authors and author dates, never making a merge commit. The
   rebase is all or nothing: on a conflict, a merge commit or a commit that
-  moves a submodule pointer, the clone is left exactly as it was, its old
-  master is kept under `refs/nightly/pre-rebase/`, the log names the
-  commit and the files, and the night does not start (exit 9). Submodule
+  moves a submodule pointer, if the owner's checkout holds the clone's
+  commits (its refs or reflogs reach the clone's tip), the clone resets to
+  `origin/master`, saving its old master under `refs/nightly-saved/`
+  (`taken-by-owner`); otherwise the clone is left exactly as it was, its
+  old master is kept under `refs/nightly/pre-rebase/`, the log names the
+  commit and the files, and the night does not start (exit 9). Taken
+  commits that replay cleanly are rebased like any others. Submodule
   commits the new code records and no local repository has are fetched
   from the submodule's https URL in `.gitmodules`; one that cannot be is
   left at its old commit, loudly. The orchestrator never fetches, rebases
@@ -410,13 +414,20 @@ usage cannot spend the week's quota.
   fetch: it replays his own commits on top of the night's work and drops
   those already in it as equivalent patches. A cherry-pick of
   `master..FETCH_HEAD` would be wrong, since that range also holds
-  upstream commits his master lacks.
+  upstream commits his master lacks. Nothing needs to be remembered after
+  taking them, squashing, rewording or amending: when replaying the
+  clone's commits conflicts and the night's tip is in the owner's checkout
+  (on a branch, or in a reflog after the fast-forward), the next refresh
+  resets the clone to `origin/master` itself; otherwise its unpushed
+  commits are kept or rebased as before. `nightly_clone.sh reset` remains
+  for other cases, such as a conflict in commits nobody took.
 - **If the owner does not push on some day**, the clone keeps its commits
   and rebases them onto the new `origin/master` the next night. Nothing
   waits for him.
-- **If a rebase fails**, the night is skipped; the log says which commit
-  conflicted, in which files, and how to rebase the clone by hand or set
-  its commits aside with `nightly_clone.sh reset`.
+- **If a rebase fails** and the owner's checkout does not hold the clone's
+  commits, the night is skipped; the log says which commit conflicted, in
+  which files, and how to rebase the clone by hand or set its commits
+  aside with `nightly_clone.sh reset`.
 - **Before the first night** the owner's own unpushed commits must be on
   GitHub, or the clone carries them as its own and rebases them every
   night until they are. `setup` names any of them that change a rule file

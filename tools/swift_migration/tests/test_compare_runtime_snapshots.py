@@ -264,6 +264,99 @@ class FailingPairTest(unittest.TestCase):
         self.assertIn('NO VERDICT for these classes:\n  class RuntimeSnapshotPortObjCFixture changed language from swift to objc', report)
 
 
+OVERRIDE_PAIR = os.path.join(HERE, 'fixtures', 'runtime_snapshot_compare_handwritten', 'swift-override-property')
+PANEL = 'class iTermFocusablePanel: '
+OVERRIDE_HEADING = 'readonly property listed over an existing getter'
+KEY_PROPERTY = ('  instance-property canBecomeKeyWindow type=B ownership=assign nonatomic readonly ivar= '
+                'raw=TB,N,R\n')
+KEY_GETTER = '  instance-method -canBecomeKeyWindow types=B16@0:8\n'
+
+
+class SwiftOverridePropertyTest(unittest.TestCase):
+    """A Swift class that overrides inherited getters, which the SDK imports
+    as properties, with `override var` lists readonly property entries the
+    Objective-C class did not (the port of iTermFocusablePanel). Such an
+    entry is expected when the getter is the same method in both snapshots;
+    the orchestrator's decision of 2026-11-26, open to the owner. The pair
+    is written by hand in the shape of that port's snapshots."""
+
+    def setUp(self):
+        os.makedirs(os.path.join(ROOT, 'tmp'), exist_ok=True)
+        self.scratch = tempfile.TemporaryDirectory(dir=os.path.join(ROOT, 'tmp'))
+        with open(os.path.join(OVERRIDE_PAIR, 'before.txt')) as f:
+            self.before = f.read()
+        with open(os.path.join(OVERRIDE_PAIR, 'after.txt')) as f:
+            self.after = f.read()
+
+    def tearDown(self):
+        self.scratch.cleanup()
+
+    def run_pair(self, before, after):
+        paths = []
+        for label, text in (('before', before), ('after', after)):
+            path = os.path.join(self.scratch.name, label + '.txt')
+            with open(path, 'w') as f:
+                f.write(text)
+            paths.append(path)
+        return compare(None, before=paths[0], after=paths[1])
+
+    def assert_key_property_fails(self, before, after):
+        self.assertNotEqual(before + after, self.before + self.after)
+        status, report, error = self.run_pair(before, after)
+        self.assertEqual(status, 1, report + error)
+        self.assertIn(PANEL + 'added instance-property canBecomeKeyWindow', section(report, 'DIFFERENCES:'))
+        return report
+
+    def test_real_shape_passes_with_the_properties_expected(self):
+        status, report, error = self.run_pair(self.before, self.after)
+        self.assertEqual(status, 0, report + error)
+        self.assertNotIn('DIFFERENCES:', report)
+        expected = section(report, 'Expected differences of a move to Swift')
+        for name in ['acceptsFirstResponder', 'canBecomeKeyWindow', 'canBecomeMainWindow']:
+            self.assertIn(PANEL + 'added instance-property %s type=B ' % name, expected)
+        self.assertEqual(expected.count(OVERRIDE_HEADING), 3, expected)
+
+    def test_already_swift_passes(self):
+        before = self.before.replace('language objc', 'language swift')
+        status, report, error = self.run_pair(before, self.after)
+        self.assertEqual(status, 0, report + error)
+        self.assertEqual(report.count(OVERRIDE_HEADING), 3, report)
+
+    def test_readwrite_property_fails(self):
+        after = self.after.replace(KEY_PROPERTY, KEY_PROPERTY.replace(' readonly', '').replace(',R', ''))
+        self.assert_key_property_fails(self.before, after)
+
+    def test_custom_setter_fails(self):
+        after = self.after.replace(KEY_PROPERTY, KEY_PROPERTY.replace(' ivar=', ' setter=setKey: ivar='))
+        self.assert_key_property_fails(self.before, after)
+
+    def test_getter_new_in_after_fails(self):
+        report = self.assert_key_property_fails(self.before.replace(KEY_GETTER, ''), self.after)
+        self.assertIn(PANEL + 'added instance-method -canBecomeKeyWindow', section(report, 'DIFFERENCES:'))
+
+    def test_getter_with_another_encoding_before_fails(self):
+        before = self.before.replace(KEY_GETTER, KEY_GETTER.replace('B16', 'c16'))
+        report = self.assert_key_property_fails(before, self.after)
+        self.assertIn(PANEL + 'changed instance-method -canBecomeKeyWindow', section(report, 'DIFFERENCES:'))
+
+    def test_type_that_is_not_the_getters_return_fails(self):
+        after = self.after.replace(KEY_PROPERTY, KEY_PROPERTY.replace('type=B', 'type=q').replace('TB', 'Tq'))
+        self.assert_key_property_fails(self.before, after)
+
+    def test_class_still_objc_fails(self):
+        after = self.after.replace('language swift', 'language objc')
+        report = self.assert_key_property_fails(self.before, after)
+        self.assertNotIn(OVERRIDE_HEADING, report)
+
+    def test_removed_property_fails(self):
+        before = self.after.replace('language swift', 'language objc')
+        after = self.after.replace(KEY_PROPERTY, '')
+        self.assertNotEqual(after, self.after)
+        status, report, error = self.run_pair(before, after)
+        self.assertEqual(status, 1, report + error)
+        self.assertIn(PANEL + 'removed instance-property canBecomeKeyWindow', section(report, 'DIFFERENCES:'))
+
+
 SYSTEM_DUPLICATES = os.path.join(HERE, 'fixtures', 'runtime_snapshot_system_duplicates')
 IGNORED_HEADING = 'Duplicates present in both snapshots, not from this app: ignored'
 ENCODE_SYSTEM = '  instance-method -encodeWithCoder: types=v24@0:8@16 image=Foundation\n'

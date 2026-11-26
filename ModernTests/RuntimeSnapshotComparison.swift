@@ -656,6 +656,12 @@ enum RuntimeSnapshotComparison {
                 (afterDetails.isEmpty && beforeDetails.count == 1)
             if noVerdict {
                 result.unclassified.append(description)
+            } else if beforeDetails.isEmpty, afterDetails.count == 1,
+                      key.kind == Bytes("instance-property") || key.kind == Bytes("class-property"),
+                      let reason = swiftOverridePropertyReason(key: key, detail: afterDetails[0], before: before, after: after) {
+                // A class already in Swift whose override of an inherited
+                // getter became `override var`.
+                result.classified.append(description + "\n      expected because: " + reason)
             } else if appearedOrDisappeared,
                       let allowance = allowedDifferences.first(where: { Bytes($0.kind) == key.kind && Bytes($0.name) == key.name }) {
                 result.allowed.append(description + "\n      allowed because: " + allowance.reason)
@@ -1143,7 +1149,10 @@ enum RuntimeSnapshotComparison {
 //                                              @optional protocol properties,
 //                                              which clang copies into the
 //                                              class's list and Swift does not
-//                                              (classified)
+//                                              (classified), and an added
+//                                              readonly property whose getter
+//                                              is unchanged (classified; see
+//                                              swiftOverridePropertyReason)
 //   protocols, superclass, image               must match; a protocol listed a
 //                                              different number of times is
 //                                              classified (clang lists it once
@@ -1212,6 +1221,11 @@ extension RuntimeSnapshotComparison {
             case "class-method", "instance-method":
                 compareMethodAcrossLanguages(name: name, kind: kind, before: b, after: a, fail: fail, classify: classify, check: check)
             case "class-property", "instance-property":
+                if b.isEmpty, a.count == 1,
+                   let reason = swiftOverridePropertyReason(key: key, detail: a[0], before: before, after: after) {
+                    classify("added \(what) \(a[0])", reason)
+                    continue
+                }
                 let methods = kind == "class-property" ? afterClassMethods : afterInstanceMethods
                 let sign = kind == "class-property" ? "+" : "-"
                 compareProperty(name: name, kind: kind, before: b, after: a,
@@ -1235,6 +1249,85 @@ extension RuntimeSnapshotComparison {
             check("initializer \(describe(key)) is in the Swift class",
                   "it may be a stub that Swift synthesizes for an inherited designated initializer the class does not override, which traps (“Use of unimplemented initializer”) when called, so Objective-C code that calls it (for -init, also +new and [[X alloc] init]) crashes; check that the Swift class declares this initializer or inherits it (Swift inherits its superclass's designated initializers only when the class declares none of its own and every stored property has a default)")
         }
+    }
+
+    // Why a property listed on a Swift class only in the after snapshot is
+    // expected, or nil when it is not. Swift can override an inherited getter
+    // that the SDK imports as a property (-[NSWindow canBecomeKeyWindow])
+    // only with `override var`, and then lists a property on the class that
+    // the Objective-C override, a method, did not. It is expected when the
+    // property is readonly with no custom setter and its getter is an
+    // existing method of the class, with the same encoding before and after,
+    // that returns the property's type. Whether a superclass declares the
+    // property is not checked (the snapshot may not hold the superclass),
+    // nor is atomicity (the SDK's declaration is atomic, Swift's is not).
+    // The orchestrator's decision of 2026-11-26, after review of the
+    // iTermFocusablePanel port; open to the owner.
+    private static func swiftOverridePropertyReason(key: Key,
+                                                    detail: Bytes,
+                                                    before: ParsedClass,
+                                                    after: ParsedClass) -> String? {
+        let languageKey = Key(kind: RuntimeSnapshotFormat.languageKeyword, name: "")
+        guard after[languageKey] == [Bytes(RuntimeSnapshotFormat.swiftLanguage)] else {
+            return nil
+        }
+        let attributes = fields(of: detail)
+        guard attributes["readonly"] != nil, attributes["setter"] == nil, let type = attributes["type"] else {
+            return nil
+        }
+        let getter = attributes["getter"].flatMap { $0.isEmpty ? nil : $0 } ?? key.name.description
+        let methodKind: String
+        let sign: String
+        switch key.kind.description {
+        case "instance-property":
+            methodKind = "instance-method"
+            sign = "-"
+        case "class-property":
+            methodKind = "class-method"
+            sign = "+"
+        default:
+            return nil
+        }
+        let methodKey = Key(kind: methodKind, name: sign + getter)
+        guard let beforeMethods = before[methodKey], beforeMethods.count == 1,
+              let afterMethods = after[methodKey], afterMethods.count == 1,
+              let beforeTypes = fields(of: beforeMethods[0])["types"],
+              let afterTypes = fields(of: afterMethods[0])["types"],
+              beforeTypes == afterTypes,
+              returnEncoding(afterTypes) == propertyTypeAsReturnEncoding(type) else {
+            return nil
+        }
+        return "a readonly property listed over an existing getter (for example a Swift override var of a getter the SDK imports as a property): Swift overrides a getter that the SDK imports as a property only with `override var`, which lists a readonly property on the class; the getter \(sign)\(getter) is the same method, with the same encoding, before and after; key-value coding finds the getter by name, there is no setter for key-value observing to hook, and atomicity is not compared because nothing is synthesized (the orchestrator's decision of 2026-11-26, open to the owner)"
+    }
+
+    // The return type at the start of a method's type encoding: everything
+    // before the first digit outside a struct, union, array or quoted name.
+    private static func returnEncoding(_ types: String) -> String {
+        var depth = 0
+        var quoted = false
+        var end = types.endIndex
+        for index in types.indices {
+            let c = types[index]
+            if c == "\"" {
+                quoted.toggle()
+            } else if quoted {
+                continue
+            } else if c == "{" || c == "(" || c == "[" {
+                depth += 1
+            } else if c == "}" || c == ")" || c == "]" {
+                depth -= 1
+            } else if depth == 0 && c.isASCII && c.isNumber {
+                end = index
+                break
+            }
+        }
+        return String(types[..<end])
+    }
+
+    // A property's type as a method's return would encode it: a method
+    // encoding writes an object as plain @, without the class name.
+    private static func propertyTypeAsReturnEncoding(_ type: String) -> String {
+        return type.hasPrefix("@\"") ? "@" : type
     }
 
     private static func compareMethodAcrossLanguages(name: String,

@@ -11,7 +11,13 @@
 # reason; what the runtime cannot judge (a vanished ivar that code may reach
 # by name, weak versus unowned, an added -init, an atomic property that Swift
 # makes nonatomic) is listed under CHECK AGAINST THE SOURCE for the reviewer;
-# everything else fails. The rules, and the
+# everything else fails. A property listed only after on a class that is
+# Swift after (ported or already Swift) is expected when it is readonly with
+# no custom setter and its getter is a method of the class with the same
+# encoding before and after, returning the property's type: Swift overrides
+# an inherited getter the SDK imports as a property only with `override
+# var` (the orchestrator's decision of 2026-11-26, open to the owner).
+# The rules, and the
 # experiment they come from, are described in
 # ModernTests/RuntimeSnapshotComparison.swift.
 #

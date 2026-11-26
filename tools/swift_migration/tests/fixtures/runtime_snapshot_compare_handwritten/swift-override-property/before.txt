@@ -1,0 +1,15 @@
+# Objective-C runtime snapshot, format 3
+architecture arm64
+build-configuration Development
+build-variant ASan
+class iTermFocusablePanel
+  language objc
+  superclass NSPanel
+  image iTerm2.debug.dylib
+  ivar-arc-flag set
+  strong-ivar-layout
+  weak-ivar-layout
+  instance-method -acceptsFirstResponder types=B16@0:8
+  instance-method -canBecomeKeyWindow types=B16@0:8
+  instance-method -canBecomeMainWindow types=B16@0:8
+end class iTermFocusablePanel

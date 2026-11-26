@@ -702,6 +702,142 @@ class RefreshTest(CloneBase):
         saved = self.saved_refs('refs/nightly-saved/') + self.saved_refs('refs/nightly/')
         self.assertIn(night, saved)
 
+    def night_of_two_document_commits(self):
+        """Two night commits editing the same lines of a document."""
+        self.commit(self.clone, 'queue.md', 'one\n')
+        return self.commit(self.clone, 'queue.md', 'one\ntwo\n')
+
+    def assertTakenByOwner(self, proc, night, upstream):
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        self.assertIn('nightly_clone: taken-by-owner: reset to %s' % upstream, proc.stdout)
+        self.assertNotIn('rebase-failed', proc.stdout)
+        self.assertEqual(self.head(self.clone), upstream)
+        self.assertIn(night, self.saved_refs('refs/nightly-saved/'))
+        self.assertEqual(git(self.clone, 'status', '--porcelain').stdout, '')
+
+    def test_owner_took_squashed_and_edited_the_night_resets_to_the_upstream(self):
+        # The real case: the orchestrator fetches the night into the owner's
+        # master, squashes it with a later edit of the same lines, and that
+        # is pushed. Replaying the night conflicts; the owner holds the work.
+        base = self.head(self.clone)
+        night = self.night_of_two_document_commits()
+        git(self.owner, 'fetch', '-q', self.clone, 'master')
+        git(self.owner, 'merge', '-q', '--ff-only', 'FETCH_HEAD')
+        git(self.owner, 'reset', '-q', '--soft', base)
+        self.write(self.owner, 'queue.md', 'one, edited by day\ntwo, edited by day\n')
+        git(self.owner, 'add', 'queue.md')
+        git(self.owner, 'commit', '-q', '-m', 'the night, squashed and edited')
+        upstream = self.upstream_commit('day.txt')
+        proc = self.refresh()
+        self.assertTakenByOwner(proc, night, upstream)
+        self.assertIn('nightly_clone: upstream-commits: taken', proc.stdout)
+
+    def test_owner_took_the_night_without_pushing_is_kept(self):
+        # Taken but not pushed: the next night builds on it, or it would
+        # run without it and might port the same units again.
+        night = self.night_of_two_document_commits()
+        git(self.owner, 'fetch', '-q', self.clone, 'master')
+        git(self.owner, 'merge', '-q', '--ff-only', 'FETCH_HEAD')
+        proc = self.refresh()
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        self.assertIn('continuing from %s' % night[:12], proc.stdout)
+        self.assertNotIn('taken-by-owner', proc.stdout)
+        self.assertEqual(self.head(self.clone), night)
+        self.assertEqual(self.saved_refs('refs/nightly-saved/'), [])
+
+    def another_checkout_pushes(self, name, text=None):
+        """Upstream moves without the night: another checkout pushes."""
+        other = os.path.join(self.tmp, 'other')
+        git(self.tmp, '-c', 'protocol.file.allow=always', 'clone', '-q',
+            'file://' + self.up, other)
+        self.commit(other, name, text)
+        git(other, '-c', 'protocol.file.allow=always', 'push', '-q', 'origin', 'master')
+        return self.head(other)
+
+    def test_taken_night_whose_rebase_applies_is_rebased(self):
+        self.night_of_two_document_commits()
+        git(self.owner, 'fetch', '-q', self.clone, 'master')
+        git(self.owner, 'merge', '-q', '--ff-only', 'FETCH_HEAD')
+        upstream = self.another_checkout_pushes('day.txt')
+        proc = self.refresh()
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        self.assertNotIn('taken-by-owner', proc.stdout)
+        self.assertIn('nightly_clone: rebased: 2 commits onto %s' % upstream, proc.stdout)
+        self.assertEqual(git(self.clone, 'show', 'HEAD:queue.md').stdout, 'one\ntwo\n')
+
+    def test_night_not_in_the_owners_checkout_that_conflicts_is_refused(self):
+        night = self.night_of_two_document_commits()
+        self.upstream_commit('queue.md', 'day version\n')
+        before = (self.head(self.clone), self.tree_digest(self.clone),
+                  git(self.clone, 'for-each-ref', 'refs/heads', 'refs/nightly-saved').stdout)
+        proc = self.refresh()
+        self.assertEqual(proc.returncode, 9, proc.stdout)
+        self.assertIn('nightly_clone: rebase-failed:', proc.stdout)
+        self.assertNotIn('taken-by-owner', proc.stdout)
+        self.assertEqual(before, (self.head(self.clone), self.tree_digest(self.clone),
+                                  git(self.clone, 'for-each-ref', 'refs/heads',
+                                      'refs/nightly-saved').stdout))
+        self.assertEqual(before[0], night)
+
+    def test_owner_took_only_the_first_commit_is_not_taken(self):
+        first = self.commit(self.clone, 'n1.txt')
+        night = self.commit(self.clone, 'n2.txt')
+        git(self.owner, 'fetch', '-q', self.clone, 'master')
+        git(self.owner, 'merge', '-q', '--ff-only', first)
+        proc = self.refresh()
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        self.assertNotIn('taken-by-owner', proc.stdout)
+        self.assertEqual(self.head(self.clone), night)
+        # And when the owner pushes the first with a commit of his own, the
+        # second is rebased as before.
+        upstream = self.upstream_commit('day.txt')
+        proc = self.refresh()
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        self.assertNotIn('taken-by-owner', proc.stdout)
+        self.assertIn('nightly_clone: rebased: 1 commits onto %s' % upstream, proc.stdout)
+        self.assertEqual(git(self.clone, 'log', '--format=%s', upstream + '..HEAD').stdout,
+                         'add n2.txt\n')
+
+    def test_night_objects_in_the_owners_checkout_without_a_ref_are_not_taken(self):
+        night = self.night_of_two_document_commits()
+        self.upstream_commit('queue.md', 'day version\n')
+        # Fetched into a ref that was then deleted (its reflog goes with
+        # it), and fetched once more into FETCH_HEAD only: the objects are
+        # there, no ref or reflog reaches them.
+        git(self.owner, 'fetch', '-q', self.clone, 'master:refs/scratch/night')
+        git(self.owner, 'update-ref', '-d', 'refs/scratch/night')
+        git(self.owner, 'fetch', '-q', self.clone, 'master')
+        self.assertEqual(git(self.owner, 'cat-file', '-t', night).stdout.strip(), 'commit')
+        proc = self.refresh()
+        self.assertEqual(proc.returncode, 9, proc.stdout)
+        self.assertNotIn('taken-by-owner', proc.stdout)
+        self.assertIn('nightly_clone: rebase-failed:', proc.stdout)
+        self.assertEqual(self.head(self.clone), night)
+
+    def test_status_says_a_taken_night_would_be_reset(self):
+        base = self.head(self.clone)
+        night = self.night_of_two_document_commits()
+        git(self.owner, 'fetch', '-q', self.clone, 'master')
+        git(self.owner, 'merge', '-q', '--ff-only', 'FETCH_HEAD')
+        proc = self.run_tool('status', '--clone', self.clone)
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        # Ahead: kept, whether taken or not.
+        self.assertIn('refresh would continue from the clone', proc.stdout)
+        self.assertNotIn('taken-by-owner', proc.stdout)
+        # Diverged: the reset is the fallback for a conflicting rebase. A
+        # refresh while the owner does not hold the night brings the
+        # conflicting upstream into the mirror (and refuses); then he takes
+        # the night again and status is asked.
+        self.another_checkout_pushes('queue.md', 'day version\n')
+        git(self.owner, 'reset', '-q', '--hard', base)
+        git(self.owner, 'reflog', 'expire', '--expire=now', '--all')
+        self.assertEqual(self.refresh().returncode, 9)
+        git(self.owner, 'merge', '-q', '--ff-only', night)
+        proc = self.run_tool('status', '--clone', self.clone)
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        self.assertIn('if the rebase conflicts, refresh would reset the clone to '
+                      'origin/master (taken-by-owner:', proc.stdout)
+
     def test_failing_git_command_is_an_error_not_already_upstream(self):
         night = self.commit(self.clone, 'night.txt')
         self.upstream_commit('day.txt')

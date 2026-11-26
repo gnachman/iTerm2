@@ -213,7 +213,8 @@
 #          C is an ancestor of O   fast-forward the clone to O;
 #          O is an ancestor of C   keep C: the clone's commits are not
 #                                  pushed yet; the session continues on top
-#                                  of them;
+#                                  of them, even when the owner has taken
+#                                  them (he has not pushed them yet);
 #          otherwise, if C's tree is O's, or merging C into O leaves O's
 #          tree as it is (`git merge-tree --write-tree O C`: everything the
 #          clone's commits change is upstream, even if the owner squashed,
@@ -246,10 +247,29 @@
 #                                  refuses (exit 9: "nightly_clone:
 #                                  rebase-failed: ..." with the commit and
 #                                  the files), and the clone is exactly as
-#                                  it was. The owner rebases by hand, or
-#                                  runs `nightly_clone.sh reset`, which
-#                                  saves C under refs/nightly-saved/ and
-#                                  resets the clone's master to O.
+#                                  it was, unless the owner took the
+#                                  clone's commits (below). The owner
+#                                  rebases by hand, or runs
+#                                  `nightly_clone.sh reset`, which saves C
+#                                  under refs/nightly-saved/ and resets the
+#                                  clone's master to O.
+#          if that rebase refuses and the owner took the clone's commits:
+#          C is a commit in the owner's checkout (SOURCE, read only)
+#          reachable from one of its refs or from an entry of one of its
+#          reflogs (a fast-forward of his master to the night that he then
+#          squashed, reworded or amended; FETCH_HEAD alone does not count).
+#          C's being reached covers every commit of O..C; when only earlier
+#          ones are (the tip is not), or SOURCE cannot be read, they are not
+#          taken. His side holds that work and decides what reaches the
+#          upstream, so instead of refusing:
+#                                  save C as refs/nightly-saved/<stamp>
+#                                  (besides the pre-rebase ref), reset the
+#                                  clone's master to O, and print
+#                                  "nightly_clone: taken-by-owner: reset to
+#                                  <O> (the clone's <n> commits are in
+#                                  <SOURCE> under <ref>; saved as ...)".
+#                                  Taken commits that rebase cleanly are
+#                                  rebased like any others.
 #        A git command that fails while comparing or rebasing is an error
 #        (exit 7), never taken as "already upstream". Nothing is ever
 #        merged, so history stays linear and no night's work is lost.
@@ -284,7 +304,10 @@
 #
 # Known limits, not handled:
 #   an owner amend of a night commit's code before he pushes it makes the
-#   next night's rebase conflict (the night is refused with a clear message);
+#   next night's rebase conflict; the night is refused with a clear message
+#   when no ref or reflog of his checkout reaches the night's tip (he did
+#   not take the night with the morning command, or his reflog expired),
+#   and the clone resets to origin/master otherwise;
 #   a night commit that is empty on purpose is dropped by the rebase;
 #   a file under an ignored path is overwritten if the upstream starts
 #   tracking that path;
@@ -356,14 +379,16 @@
 # ..." or "... upstream: NOT REFRESHED: ..." (or "upstream: REWRITTEN" with
 # exit 9); "nightly_clone: upstream-commits: none" or "... upstream-commits:
 # taken <base>..<new> (<n> commits)"; "nightly_clone: rebased: <n> commits
-# onto <sha> ...", "... already-upstream: reset to <sha> ..." or
-# "... rebase-failed: ..."; and "nightly_clone: submodule-stale: <path>:
-# ..." for each submodule left behind.
+# onto <sha> ...", "... already-upstream: reset to <sha> ...", "...
+# taken-by-owner: reset to <sha> ..." or "... rebase-failed: ..."; and
+# "nightly_clone: submodule-stale: <path>: ..." for each submodule left
+# behind.
 #
 # Exit status: 0 done; 7 failed (nothing half-done is left writable);
 # 8 the clone is missing or not in a state to refresh (dirty, not on
 # master); 9 refused: the clone's commits could not be rebased onto
-# origin/master, or the upstream was force-pushed; 10 refused: the clone's layout or
+# origin/master and the owner's checkout does not hold them, or the
+# upstream was force-pushed; 10 refused: the clone's layout or
 # configuration is not what setup made (see above); 64 bad usage.
 
 set -u
@@ -1261,6 +1286,7 @@ save_clone_head() {
   local head=$1 ref
   ref="refs/nightly-saved/$(date +%Y%m%d-%H%M%S)-$(short "$head")"
   gc update-ref "$ref" "$head" || return 1
+  SAVED_REF=$ref
   say "saved the clone's previous master $(short "$head") as $ref"
 }
 
@@ -1459,6 +1485,36 @@ upstream_commits_line() {
   fi
 }
 
+# Whether the owner took the clone's commits (asked only when their rebase
+# refuses): the clone's tip $1 is a
+# commit in the owner's repository (read only, through g as everywhere
+# else) and is reachable from one of its refs or from an entry of one of
+# its reflogs (HEAD's and the branches': a fast-forward to the night that
+# was then squashed away is still there). FETCH_HEAD alone does not count.
+# The tip's being reached covers every commit of O..C, since each is its
+# ancestor; a tip that is not reached (only earlier commits taken) is not
+# taken. Prints a description of what reaches it and returns 0, or returns
+# 1; anything that fails or cannot be read is "not taken".
+taken_by_owner() {
+  local c=$1 ref n
+  g -C "$SOURCE" cat-file -e "$c^{commit}" 2>/dev/null || return 1
+  ref=$(g -C "$SOURCE" for-each-ref --contains "$c" --count=1 --format='%(refname)' 2>/dev/null)
+  if [ -n "$ref" ]; then echo "$ref"; return 0; fi
+  n=$(g -C "$SOURCE" rev-list --count "$c" --not --all --reflog 2>/dev/null) || return 1
+  [ "$n" = 0 ] || return 1
+  echo "a reflog entry"
+}
+
+# Saves the clone's master $1 and resets it to $2 because the owner's
+# checkout holds its commits (what $3 says reaches them).
+reset_taken_by_owner() {
+  local c=$1 o=$2 where=$3 n
+  n=$(gc rev-list --count "$o..$c") || die 7 "git rev-list failed; nothing changed"
+  save_clone_head "$c" || die 7 "could not save the clone's master"
+  gc reset -q --hard "$o" || { gc reset -q --hard "$c"; die 7 "reset failed; the clone is back at $(short "$c")"; }
+  say "taken-by-owner: reset to $o (the clone's $n commits are in $SOURCE under $where; saved as $SAVED_REF)"
+}
+
 save_pre_rebase() {
   local head=$1 ref
   ref="refs/nightly/pre-rebase/$(date +%Y%m%d-%H%M%S)-$(short "$head")"
@@ -1475,7 +1531,7 @@ do_refresh() {
   if [ -n "$problem" ]; then
     die 8 "not refreshing: $problem"
   fi
-  local c o rel base rc fetched up
+  local c o rel base rc fetched up where
   fetch_upstream; rc=$?
   case "$rc" in
     0) ;;
@@ -1514,15 +1570,23 @@ do_refresh() {
           rebase_clone "$c" "$o"; rc=$?
           case "$rc" in
             0) ;;
-            1) report_rebase_failed "$c" "$o" "$REBASE_WHY"; exit 9 ;;
+            # Refused: if the owner's checkout holds the commits, he took
+            # them (and perhaps edited them); reset instead of refusing.
+            1) if where=$(taken_by_owner "$c"); then
+                 up=taken
+               else
+                 report_rebase_failed "$c" "$o" "$REBASE_WHY"; exit 9
+               fi ;;
             *) die 7 "rebase-failed: $REBASE_WHY; nothing changed" ;;
           esac
-          [ "$REBASE_COUNT" = 0 ] && up=yes
+          [ "$up" = no ] && [ "$REBASE_COUNT" = 0 ] && up=yes
         fi
         if [ "$up" = yes ]; then
           save_clone_head "$c" || die 7 "could not save the clone's master"
           gc reset -q --hard "$o" || { gc reset -q --hard "$c"; die 7 "reset failed; the clone is back at $(short "$c")"; }
           say "already-upstream: reset to $o (everything the clone's commits change is in origin/$BRANCH)"
+        elif [ "$up" = taken ]; then
+          reset_taken_by_owner "$c" "$o" "$where"
         else
           if ! gc reset -q --hard "$REBASE_TIP"; then
             gc reset -q --hard "$c"
@@ -1543,7 +1607,7 @@ do_refresh() {
 do_status() {
   load_clone
   resolve_upstream
-  local c o u rel=unknown out
+  local c o u rel=unknown out where
   c=$(gc rev-parse "refs/heads/$BRANCH")
   o=$(gm rev-parse -q --verify "refs/heads/$BRANCH")
   say "clone $CLONE: $BRANCH at $(short "$c")"
@@ -1566,7 +1630,11 @@ do_status() {
       same) say "refresh would find it up to date" ;;
       behind) say "refresh would fast-forward the clone to origin/$BRANCH" ;;
       ahead) say "refresh would continue from the clone, which is ahead (commits not pushed yet)" ;;
-      diverged) say "refresh would rebase the clone's commits onto origin/$BRANCH (or reset to it if they are already upstream; on a conflict it refuses and changes nothing)" ;;
+      diverged) if where=$(taken_by_owner "$c"); then
+          say "refresh would rebase the clone's commits onto origin/$BRANCH (or reset to it if they are already upstream); if the rebase conflicts, refresh would reset the clone to origin/$BRANCH (taken-by-owner: its commits are in $SOURCE under $where)"
+        else
+          say "refresh would rebase the clone's commits onto origin/$BRANCH (or reset to it if they are already upstream; on a conflict it refuses and changes nothing)"
+        fi ;;
       *) say "refresh would fail: $rel" ;;
     esac
   fi

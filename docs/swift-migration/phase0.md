@@ -541,7 +541,16 @@ commit.
   `CFString`; any other change of pointee fails), and the `NSObject`
   protocol's and
   `@optional` protocol properties that clang copies into the class's
-  property list and Swift does not. Anything the runtime cannot verify is
+  property list and Swift does not. Also expected, for a class that is
+  Swift after (ported or already Swift), is a property listed only after
+  that is readonly with no custom setter and whose getter is a method of
+  the class with the same encoding before and after, returning the
+  property's type: Swift can override an inherited getter that the SDK
+  imports as a property (`-canBecomeKeyWindow`) only with `override var`,
+  which lists the property; neither a superclass declaration nor
+  atomicity is checked. This is the orchestrator's decision of 2026-11-26
+  after review of the `iTermFocusablePanel` port, open to the owner.
+  Anything the runtime cannot verify is
   listed under CHECK AGAINST THE SOURCE: every Objective-C ivar that
   vanished (code that reaches it by name breaks), weak versus unowned,
   ownership that one side does not record, every initializer of the Swift

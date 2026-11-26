@@ -1,0 +1,18 @@
+# Objective-C runtime snapshot, format 3
+architecture arm64
+build-configuration Development
+build-variant ASan
+class iTermFocusablePanel
+  language swift
+  superclass NSPanel
+  image iTerm2.debug.dylib
+  ivar-arc-flag set
+  strong-ivar-layout
+  weak-ivar-layout
+  instance-method -acceptsFirstResponder types=B16@0:8
+  instance-method -canBecomeKeyWindow types=B16@0:8
+  instance-method -canBecomeMainWindow types=B16@0:8
+  instance-property acceptsFirstResponder type=B ownership=assign nonatomic readonly ivar= raw=TB,N,R
+  instance-property canBecomeKeyWindow type=B ownership=assign nonatomic readonly ivar= raw=TB,N,R
+  instance-property canBecomeMainWindow type=B ownership=assign nonatomic readonly ivar= raw=TB,N,R
+end class iTermFocusablePanel
