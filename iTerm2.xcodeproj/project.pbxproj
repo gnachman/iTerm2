@@ -4412,8 +4412,7 @@
 		A6F1B3B1268FD0F300546767 /* StatusBarIconTriggers.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F1B3AD268FD0F300546767 /* StatusBarIconTriggers.png */; };
 		A6F1B3B3268FD0F300546767 /* StatusBarIconTriggers.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F1B3AD268FD0F300546767 /* StatusBarIconTriggers.png */; };
 		A6F1B3B52690DC3600546767 /* SetUserVariableTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F1B3B42690DC3600546767 /* SetUserVariableTrigger.swift */; };
-		A6F1B3B82690EA9700546767 /* iTermOptionallyBordered.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F1B3B62690EA9700546767 /* iTermOptionallyBordered.h */; };
-		A6F1B3B92690EA9700546767 /* iTermOptionallyBordered.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F1B3B72690EA9700546767 /* iTermOptionallyBordered.m */; };
+		F4F06357E9F63E1D90813D21 /* iTermOptionallyBordered.swift in Sources */ = {isa = PBXBuildFile; fileRef = 982FE0A60FEED3B949F04708 /* iTermOptionallyBordered.swift */; };
 		A6F1B3BF2693B82C00546767 /* DebugLogging@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F1B3BD2693B82B00546767 /* DebugLogging@2x.png */; };
 		A6F1B3C12693B82C00546767 /* DebugLogging@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F1B3BD2693B82B00546767 /* DebugLogging@2x.png */; };
 		A6F1B3C22693B82C00546767 /* DebugLogging.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F1B3BE2693B82B00546767 /* DebugLogging.png */; };
@@ -8808,8 +8807,7 @@
 		A6F1B3AC268FD0F300546767 /* StatusBarIconTriggers@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "StatusBarIconTriggers@2x.png"; path = "images/StatusBarIcons/StatusBarIconTriggers@2x.png"; sourceTree = "<group>"; };
 		A6F1B3AD268FD0F300546767 /* StatusBarIconTriggers.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = StatusBarIconTriggers.png; path = images/StatusBarIcons/StatusBarIconTriggers.png; sourceTree = "<group>"; };
 		A6F1B3B42690DC3600546767 /* SetUserVariableTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetUserVariableTrigger.swift; sourceTree = "<group>"; };
-		A6F1B3B62690EA9700546767 /* iTermOptionallyBordered.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermOptionallyBordered.h; sourceTree = "<group>"; };
-		A6F1B3B72690EA9700546767 /* iTermOptionallyBordered.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermOptionallyBordered.m; sourceTree = "<group>"; };
+		982FE0A60FEED3B949F04708 /* iTermOptionallyBordered.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermOptionallyBordered.swift; sourceTree = "<group>"; };
 		A6F1B3BA269379D000546767 /* iTermClickSideEffects.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermClickSideEffects.h; sourceTree = "<group>"; };
 		A6F1B3BD2693B82B00546767 /* DebugLogging@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "DebugLogging@2x.png"; path = "images/DebugLogging@2x.png"; sourceTree = "<group>"; };
 		A6F1B3BE2693B82B00546767 /* DebugLogging.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = DebugLogging.png; path = images/DebugLogging.png; sourceTree = "<group>"; };
@@ -12566,8 +12564,7 @@
 				A6E112D525C615B400875D27 /* iTermHighlightLineTrigger.m */,
 				7581C4DD20A38DF900699F99 /* iTermHyperlinkTrigger.h */,
 				7581C4DE20A38DF900699F99 /* iTermHyperlinkTrigger.m */,
-				A6F1B3B62690EA9700546767 /* iTermOptionallyBordered.h */,
-				A6F1B3B72690EA9700546767 /* iTermOptionallyBordered.m */,
+				982FE0A60FEED3B949F04708 /* iTermOptionallyBordered.swift */,
 				530AB8BE20B4E1DD00D2AA08 /* iTermRPCTrigger.h */,
 				530AB8BF20B4E1DE00D2AA08 /* iTermRPCTrigger.m */,
 				A673BFEA1E1A13E600FA2386 /* iTermSetTitleTrigger.h */,
@@ -16890,7 +16887,6 @@
 				A6A4B2A1240B67A400184EAC /* PTYMouseHandler.h in Headers */,
 				A6B60CAB245E33C200DBD6A7 /* PSMCachedTitle.h in Headers */,
 				A621F10126F2AFAF001DD3A6 /* iTermMetadata.h in Headers */,
-				A6F1B3B82690EA9700546767 /* iTermOptionallyBordered.h in Headers */,
 				A631FC9120EDDBC600EB824F /* iTermFindDriver.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -20034,7 +20030,7 @@
 				A6F7D4DB2E03DBEA0065D09C /* iTermBrowserSourceHandler.swift in Sources */,
 				A6F3EB4F2D32EC5B00612173 /* TailFindController.swift in Sources */,
 				A6069F122DF25D0C00EE6CC7 /* Data+iTerm.swift in Sources */,
-				A6F1B3B92690EA9700546767 /* iTermOptionallyBordered.m in Sources */,
+				F4F06357E9F63E1D90813D21 /* iTermOptionallyBordered.swift in Sources */,
 				A6CBB8BF2E0A695D00B2CCCB /* iTermBrowserReaderModeManager.swift in Sources */,
 				A6069EB82DEF596D00EE6CC7 /* ChatInputView.swift in Sources */,
 				A6EC937F24E85CEF00EEADEF /* PasteboardHistory.m in Sources */,

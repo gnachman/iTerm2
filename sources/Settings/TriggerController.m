@@ -23,7 +23,6 @@
 #import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermHighlightLineTrigger.h"
 #import "iTermNoColorAccessoryButton.h"
-#import "iTermOptionallyBordered.h"
 #import "iTermProfilePreferences.h"
 #import "iTermRPCTrigger.h"
 #import "iTerm2SharedARC-Swift.h"

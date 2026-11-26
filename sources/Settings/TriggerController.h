@@ -8,7 +8,6 @@
 #import <Cocoa/Cocoa.h>
 #import "FutureMethods.h"
 #import "iTermFocusReportingTextField.h"
-#import "iTermOptionallyBordered.h"
 
 @class CPKColorWell;
 @class ProfileModel;

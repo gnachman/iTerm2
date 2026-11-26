@@ -11,7 +11,6 @@
 #import "ITAddressBookMgr.h"
 #import "iTermFocusablePanel.h"
 #import "iTermHighlightLineTrigger.h"
-#import "iTermOptionallyBordered.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermTuple.h"
 #import "iTermUserDefaults.h"
