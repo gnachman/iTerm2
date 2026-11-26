@@ -4105,7 +4105,7 @@
 		A6E312622E386342008222DE /* NSObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E312612E38633F008222DE /* NSObject.swift */; };
 		A6E312862E388A9B008222DE /* iTermModernSavePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E312852E388A95008222DE /* iTermModernSavePanel.swift */; };
 		A6E312B22E397DF4008222DE /* iTermBaseWKWebView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E312B12E397DF2008222DE /* iTermBaseWKWebView.h */; };
-		A6E312B42E397EC0008222DE /* iTermBaseWKWebView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E312B32E397EBD008222DE /* iTermBaseWKWebView.m */; };
+		E39D618A04219EC8DFAC1322 /* iTermBaseWKWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5099518C7A4339354B07C430 /* iTermBaseWKWebView.swift */; };
 		A6E312B82E399ABB008222DE /* copy-mode.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E312B62E399ABB008222DE /* copy-mode.js */; };
 		A6E312B92E399ABB008222DE /* copy-mode.js in Resources */ = {isa = PBXBuildFile; fileRef = A6E312B62E399ABB008222DE /* copy-mode.js */; };
 		A6E312BE2E399CAC008222DE /* iTermBrowserCopyModeState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E312BA2E399C64008222DE /* iTermBrowserCopyModeState.swift */; };
@@ -8478,7 +8478,7 @@
 		A6E312612E38633F008222DE /* NSObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSObject.swift; sourceTree = "<group>"; };
 		A6E312852E388A95008222DE /* iTermModernSavePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermModernSavePanel.swift; sourceTree = "<group>"; };
 		A6E312B12E397DF2008222DE /* iTermBaseWKWebView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBaseWKWebView.h; sourceTree = "<group>"; };
-		A6E312B32E397EBD008222DE /* iTermBaseWKWebView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBaseWKWebView.m; sourceTree = "<group>"; };
+		5099518C7A4339354B07C430 /* iTermBaseWKWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBaseWKWebView.swift; sourceTree = "<group>"; };
 		A6E312B62E399ABB008222DE /* copy-mode.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "copy-mode.js"; sourceTree = "<group>"; };
 		A6E312BA2E399C64008222DE /* iTermBrowserCopyModeState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermBrowserCopyModeState.swift; sourceTree = "<group>"; };
 		A6E312BF2E3C11BC008222DE /* copy-mode-cursor.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "copy-mode-cursor.js"; sourceTree = "<group>"; };
@@ -13773,7 +13773,7 @@
 				A6BBBFD22CC876E2000A697C /* IndexSet+iTerm.swift */,
 				A6D1A3EE2C7E9A3A00FECDF2 /* Int+iTerm.swift */,
 				A6E312B12E397DF2008222DE /* iTermBaseWKWebView.h */,
-				A6E312B32E397EBD008222DE /* iTermBaseWKWebView.m */,
+				5099518C7A4339354B07C430 /* iTermBaseWKWebView.swift */,
 				A6EC47A52D84BD680079845B /* JSONSerialization+iTerm.swift */,
 				A6A723692DBD8DBC00A8115D /* NotificationCenter+iTerm.swift */,
 				53BBA0F3214205200074D061 /* NSAlert+iTerm.h */,
@@ -19513,7 +19513,7 @@
 				A6A4866A20B6793E00493302 /* iTermKeyMappingViewController.m in Sources */,
 				A6D693F92E419823005E9AFE /* iTermBrowserIndicatorsView.swift in Sources */,
 				A6F18B762AEA18F5006C08EE /* iTermToolWrapper.m in Sources */,
-				A6E312B42E397EC0008222DE /* iTermBaseWKWebView.m in Sources */,
+				E39D618A04219EC8DFAC1322 /* iTermBaseWKWebView.swift in Sources */,
 				A663196A22FE5D3D00C502BD /* iTermFileDescriptorMultiClient.m in Sources */,
 				A6F7D4C52E037E520065D09C /* iTermBrowserTemplateLoader.swift in Sources */,
 				A643B7F42DA88F1600EF918E /* PathExtractor.swift in Sources */,
