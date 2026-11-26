@@ -632,8 +632,6 @@
 		1DB40A401B1FDC75005B83C7 /* NoColor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB40A3E1B1FDC75005B83C7 /* NoColor.png */; };
 		1DB40A411B1FDC75005B83C7 /* NoColor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB40A3F1B1FDC75005B83C7 /* NoColor@2x.png */; };
 		1DB40A431B1FDC80005B83C7 /* NoColor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB40A3F1B1FDC75005B83C7 /* NoColor@2x.png */; };
-		1DB40AA11B221028005B83C7 /* iTermNoColorAccessoryButton.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB40A9F1B221028005B83C7 /* iTermNoColorAccessoryButton.h */; };
-		1DB40AA21B221028005B83C7 /* iTermNoColorAccessoryButton.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB40A9F1B221028005B83C7 /* iTermNoColorAccessoryButton.h */; };
 		1DB40AB51B27B577005B83C7 /* PTYTabDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB40AB41B27B577005B83C7 /* PTYTabDelegate.h */; };
 		1DB40AB61B27B577005B83C7 /* PTYTabDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB40AB41B27B577005B83C7 /* PTYTabDelegate.h */; };
 		1DB67CED14850D53005849A1 /* TmuxWindowOpener.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB67CEB14850D53005849A1 /* TmuxWindowOpener.h */; };
@@ -3580,7 +3578,7 @@
 		A6C763411B45C52B00E3C992 /* iTermFindCursorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30C0186D0DC1007F550F /* iTermFindCursorView.m */; };
 		A6C763421B45C52B00E3C992 /* iTermFontPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2F3B3C1516BA460044C337 /* iTermFontPanel.m */; };
 		A6C763441B45C52B00E3C992 /* iTermKeyboardNavigatableTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D468BB81B0543E300226083 /* iTermKeyboardNavigatableTableView.m */; };
-		A6C763451B45C52B00E3C992 /* iTermNoColorAccessoryButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB40AA01B221028005B83C7 /* iTermNoColorAccessoryButton.m */; };
+		655B589A864CD5E85BACF2AA /* iTermNoColorAccessoryButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2984F63CF2701467707E15 /* iTermNoColorAccessoryButton.swift */; };
 		A6C763461B45C52B00E3C992 /* iTermProgressIndicator.m in Sources */ = {isa = PBXBuildFile; fileRef = A682DE95190C5E7000BE8758 /* iTermProgressIndicator.m */; };
 		A6C763471B45C52B00E3C992 /* iTermSearchField.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DAED99112EDF923005E49ED /* iTermSearchField.m */; };
 		A6C763491B45C52B00E3C992 /* iTermTabBarControlView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C537BD1938374600A08C18 /* iTermTabBarControlView.m */; };
@@ -5627,8 +5625,7 @@
 		1DAED99112EDF923005E49ED /* iTermSearchField.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSearchField.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DB40A3E1B1FDC75005B83C7 /* NoColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = NoColor.png; path = images/NoColor.png; sourceTree = "<group>"; };
 		1DB40A3F1B1FDC75005B83C7 /* NoColor@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "NoColor@2x.png"; path = "images/NoColor@2x.png"; sourceTree = "<group>"; };
-		1DB40A9F1B221028005B83C7 /* iTermNoColorAccessoryButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermNoColorAccessoryButton.h; sourceTree = "<group>"; };
-		1DB40AA01B221028005B83C7 /* iTermNoColorAccessoryButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNoColorAccessoryButton.m; sourceTree = "<group>"; };
+		AC2984F63CF2701467707E15 /* iTermNoColorAccessoryButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = iTermNoColorAccessoryButton.swift; sourceTree = "<group>"; };
 		1DB40AB41B27B577005B83C7 /* PTYTabDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYTabDelegate.h; sourceTree = "<group>"; };
 		1DB67CEB14850D53005849A1 /* TmuxWindowOpener.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TmuxWindowOpener.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DB67CEC14850D53005849A1 /* TmuxWindowOpener.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxWindowOpener.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -11708,8 +11705,7 @@
 				1D468BB71B0543E300226083 /* iTermKeyboardNavigatableTableView.h */,
 				1D468BB81B0543E300226083 /* iTermKeyboardNavigatableTableView.m */,
 				A6C156F92E6FFAE300815BC1 /* iTermLayoutReportingView.swift */,
-				1DB40A9F1B221028005B83C7 /* iTermNoColorAccessoryButton.h */,
-				1DB40AA01B221028005B83C7 /* iTermNoColorAccessoryButton.m */,
+				AC2984F63CF2701467707E15 /* iTermNoColorAccessoryButton.swift */,
 				A682DE94190C5E7000BE8758 /* iTermProgressIndicator.h */,
 				A682DE95190C5E7000BE8758 /* iTermProgressIndicator.m */,
 				1DDC093D1B4DB97500B1A910 /* iTermRoundedCornerScrollView.h */,
@@ -15715,7 +15711,6 @@
 				A67F57B81B01A01800B4F135 /* iTermImageInfo.h in Headers */,
 				1D6ED88E19AEA20D005A7799 /* NSView+RecursiveDescription.h in Headers */,
 				1D6ED88F19AEA20D005A7799 /* CGSDebug.h in Headers */,
-				1DB40AA21B221028005B83C7 /* iTermNoColorAccessoryButton.h in Headers */,
 				1D6ED89019AEA20D005A7799 /* iTermOpenQuicklyTableView.h in Headers */,
 				1D6ED89119AEA20D005A7799 /* CGSDisplays.h in Headers */,
 				1D6ED89219AEA20D005A7799 /* TransferrableFileMenuItemView.h in Headers */,
@@ -16089,7 +16084,6 @@
 				1D93D35312697529007F741B /* DVREncoder.h in Headers */,
 				1D173859126C820A004622DC /* FakeWindow.h in Headers */,
 				1DCBC811126DD98200D5B961 /* WindowControllerInterface.h in Headers */,
-				1DB40AA11B221028005B83C7 /* iTermNoColorAccessoryButton.h in Headers */,
 				1DA76A061B30892900CB272A /* iTermTipWindowController.h in Headers */,
 				1DF8006F18F34CAB00722B35 /* NSPopUpButton+iTerm.h in Headers */,
 				A69B4585196F8EA100F5444D /* iTermOpenQuicklyWindowController.h in Headers */,
@@ -20969,6 +20963,7 @@
 				E1AACECC4A5DF35DA9D75110 /* PseudoTerminal+TabNumbers.swift in Sources */,
 				6793A809E9AED0090B74F00A /* QLPreviewPanel+iTerm.swift in Sources */,
 				3CA62CDADB9AAAAB81B0E5C8 /* iTermSpacesRestorationNotice.swift in Sources */,
+				655B589A864CD5E85BACF2AA /* iTermNoColorAccessoryButton.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -21124,7 +21119,6 @@
 				A6C763111B45C52B00E3C992 /* iTermFlippedView.m in Sources */,
 				A66DB83B1C9142C900233E88 /* iTermAltScreenMouseScrollInferrer.m in Sources */,
 				A6C763B61B45C52B00E3C992 /* StopTrigger.m in Sources */,
-				A6C763451B45C52B00E3C992 /* iTermNoColorAccessoryButton.m in Sources */,
 				A6FEA2751CF2C9D400376F28 /* iTermAppHotKey.m in Sources */,
 				A6C763151B45C52B00E3C992 /* iTermLogoGenerator.m in Sources */,
 				A6C762FF1B45C52B00E3C992 /* TransferrableFile.m in Sources */,
