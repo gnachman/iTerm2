@@ -165,6 +165,12 @@ final class AILiveHarness: XCTestCase {
         "gpt-6.1-terra",
         "gemini-4-argon",
         "claude-haiku-5-5",
+        "gpt-6.2-astra",
+        "gpt-6.2-sol",
+        "gemini-4-neon",
+        "gemini-4-carbon",
+        "gemini-4-hydrogen",
+        "claude-fable-5-2",
     ]
 
     private static func models(forVendor vendor: String) -> [String] {

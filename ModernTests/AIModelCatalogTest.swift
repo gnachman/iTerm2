@@ -28,19 +28,19 @@ final class AIModelCatalogTest: XCTestCase {
         let models = try bundledModels()
         XCTAssertFalse(models.isEmpty,
                        "AI model catalog decoded to zero models")
-        XCTAssertEqual(models.count, 56,
+        XCTAssertEqual(models.count, 62,
                        "Unexpected catalog size; update this test if you intentionally changed ai-models.json")
     }
 
     func testDefaultIsFirstEntry() throws {
         let models = try bundledModels()
-        XCTAssertEqual(models.first?.name, "gpt-6-astra")
+        XCTAssertEqual(models.first?.name, "gpt-6.2-astra")
     }
 
     func testRecommendedModelPerVendor() throws {
         let models = try bundledModels()
-        XCTAssertEqual(AIModelCatalog.recommendedModel(for: .openAI, in: models)?.name, "gpt-6-astra")
-        XCTAssertEqual(AIModelCatalog.recommendedModel(for: .gemini, in: models)?.name, "gemini-4-argon")
+        XCTAssertEqual(AIModelCatalog.recommendedModel(for: .openAI, in: models)?.name, "gpt-6.2-astra")
+        XCTAssertEqual(AIModelCatalog.recommendedModel(for: .gemini, in: models)?.name, "gemini-4-neon")
         XCTAssertEqual(AIModelCatalog.recommendedModel(for: .deepSeek, in: models)?.name, "deepseek-flash")
         XCTAssertEqual(AIModelCatalog.recommendedModel(for: .anthropic, in: models)?.name, "claude-opus-5-5")
         // Ollama models are discovered from the local server, not the catalog.
@@ -52,7 +52,7 @@ final class AIModelCatalogTest: XCTestCase {
     func testAlternateModelsFilterByVendor() throws {
         let models = try bundledModels()
         let anthropic = models.filter { $0.vendor == .anthropic }
-        XCTAssertEqual(anthropic.count, 13)
+        XCTAssertEqual(anthropic.count, 14)
         XCTAssertTrue(anthropic.allSatisfy { $0.vendor == .anthropic })
         XCTAssertTrue(models.filter { $0.vendor == .gemini }.allSatisfy { $0.vendor == .gemini })
         XCTAssertTrue(models.filter { $0.vendor == .openAI }.allSatisfy { $0.vendor == .openAI })

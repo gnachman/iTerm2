@@ -1,6 +1,67 @@
 {
-  "version": 6,
+  "version": 7,
   "models": [
+    {
+      "name": "gpt-6.2-astra",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 1050000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "fixtureExempt": true,
+      "economyModel": "gpt-6-luna",
+      "thinkingOffEffort": "low",
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "priority"
+      ],
+      "recommended": true
+    },
+    {
+      "name": "gpt-6.2-sol",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 1050000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "fixtureExempt": true,
+      "economyModel": "gpt-6-luna",
+      "thinkingOffEffort": "low",
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "priority"
+      ]
+    },
     {
       "name": "gpt-6-astra",
       "vendor": "openAI",
@@ -30,8 +91,7 @@
         "default",
         "priority",
         "flex"
-      ],
-      "recommended": true
+      ]
     },
     {
       "name": "gpt-6.1-sol",
@@ -694,6 +754,49 @@
       ]
     },
     {
+      "name": "gemini-4-neon",
+      "vendor": "gemini",
+      "api": "gemini",
+      "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+      "fixtureExempt": true,
+      "contextWindowTokens": 1048576,
+      "maxResponseTokens": 65536,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "economyModel": "gemini-3.5-flash-lite",
+      "recommended": true
+    },
+    {
+      "name": "gemini-4-carbon",
+      "vendor": "gemini",
+      "api": "gemini",
+      "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+      "fixtureExempt": true,
+      "contextWindowTokens": 1048576,
+      "maxResponseTokens": 65536,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "economyModel": "gemini-3.5-flash-lite"
+    },
+    {
+      "name": "gemini-4-hydrogen",
+      "vendor": "gemini",
+      "api": "gemini",
+      "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+      "fixtureExempt": true,
+      "contextWindowTokens": 1048576,
+      "maxResponseTokens": 65536,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "economyModel": "gemini-3.5-flash-lite"
+    },
+    {
       "name": "gemini-4-argon",
       "vendor": "gemini",
       "api": "gemini",
@@ -705,7 +808,6 @@
         "functionCalling",
         "streaming"
       ],
-      "recommended": true,
       "economyModel": "gemini-3.5-flash-lite"
     },
     {
@@ -891,6 +993,21 @@
       "supportsTemperature": false,
       "economyModel": "claude-haiku-5-5",
       "recommended": true
+    },
+    {
+      "name": "claude-fable-5-2",
+      "vendor": "anthropic",
+      "api": "anthropic",
+      "url": "https://api.anthropic.com/v1/messages",
+      "fixtureExempt": true,
+      "contextWindowTokens": 1000000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "supportsTemperature": false,
+      "economyModel": "claude-haiku-5-5"
     },
     {
       "name": "claude-fable-5-1",

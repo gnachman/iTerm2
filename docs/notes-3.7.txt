@@ -124,6 +124,12 @@ Improvements:
   when the agent’s turn ends, and every 30
   seconds. This cuts CPU use in large
   repositories. Issue 13243.
+- The built-in AI model list adds GPT-6.2
+  Astra, GPT-6.2 Sol, Gemini 4 Neon, Gemini 4
+  Carbon, Gemini 4 Hydrogen, and Claude Fable
+  5.2. GPT-6.2 Astra is now the recommended
+  OpenAI model and Gemini 4 Neon the
+  recommended Gemini model.
 
 Bug Fixes:
 - With tabs on the left or right, clicking a
