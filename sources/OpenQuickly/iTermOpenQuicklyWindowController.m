@@ -11,7 +11,6 @@
 #import "iTermOpenQuicklyItem.h"
 #import "iTermOpenQuicklyModel.h"
 #import "iTermOpenQuicklyTableCellView.h"
-#import "iTermOpenQuicklyTableRowView.h"
 #import "iTermOpenQuicklyTextField.h"
 #import "iTermScriptsMenuController.h"
 #import "iTermSessionLauncher.h"
