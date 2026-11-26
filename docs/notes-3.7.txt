@@ -307,3 +307,6 @@ Bug Fixes:
   that matches an event such as Job Started (the
   Claude Code Integration adds some). Issue
   13245.
+- The Help button in the offer to turn off slow
+  triggers closed the offer instead of opening
+  the help page.

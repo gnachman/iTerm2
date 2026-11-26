@@ -826,7 +826,7 @@ static NSString *const iTermNaggingControllerRestoreIconAndWindowNameChoiceAlway
                 break;
             }
 
-            case 4: // Help
+            case 3: // Help
                 [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/slow_triggers"]
                                                    target:nil
                                                     style:iTermOpenStyleTab
