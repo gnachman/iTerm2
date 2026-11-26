@@ -14,7 +14,6 @@
 #import "iTermPopupWindowController.h"
 #import "iTermSessionNameController.h"
 
-#import "GPBEnumArray+iTerm.h"
 #import "LineBuffer.h"
 #import "PTYTask.h"
 #import "PTYTextView.h"

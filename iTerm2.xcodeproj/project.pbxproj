@@ -1483,8 +1483,7 @@
 		A615829E2E5E78DD0094B718 /* TabularFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A615829D2E5E78D80094B718 /* TabularFormatter.swift */; };
 		A61582A02E5E7BA80094B718 /* iTermHistogram.swift in Sources */ = {isa = PBXBuildFile; fileRef = A615829F2E5E7BA40094B718 /* iTermHistogram.swift */; };
 		A61582A22E5FC37E0094B718 /* iTermHistogramVisualizationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61582A12E5FC3760094B718 /* iTermHistogramVisualizationView.swift */; };
-		A616839922F94AEE00661F71 /* GPBEnumArray+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A616839722F94AEE00661F71 /* GPBEnumArray+iTerm.h */; };
-		A616839A22F94AEE00661F71 /* GPBEnumArray+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A616839822F94AEE00661F71 /* GPBEnumArray+iTerm.m */; };
+		50E7F428A88F69D302ADB035 /* GPBEnumArray+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 755F9A361CDFE7C53F888FF3 /* GPBEnumArray+iTerm.swift */; };
 		A616CF0D284143A300EF82D0 /* ConductorRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616CF0C284143A300EF82D0 /* ConductorRecovery.swift */; };
 		A616CF112841AA1600EF82D0 /* WinSizeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616CF102841AA1600EF82D0 /* WinSizeController.swift */; };
 		A616D78B2EA7F167000C0C18 /* CyclicLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616D78A2EA7F167000C0C18 /* CyclicLog.swift */; };
@@ -6542,8 +6541,7 @@
 		A615829D2E5E78D80094B718 /* TabularFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabularFormatter.swift; sourceTree = "<group>"; };
 		A615829F2E5E7BA40094B718 /* iTermHistogram.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermHistogram.swift; sourceTree = "<group>"; };
 		A61582A12E5FC3760094B718 /* iTermHistogramVisualizationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermHistogramVisualizationView.swift; sourceTree = "<group>"; };
-		A616839722F94AEE00661F71 /* GPBEnumArray+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "GPBEnumArray+iTerm.h"; sourceTree = "<group>"; };
-		A616839822F94AEE00661F71 /* GPBEnumArray+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "GPBEnumArray+iTerm.m"; sourceTree = "<group>"; };
+		755F9A361CDFE7C53F888FF3 /* GPBEnumArray+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GPBEnumArray+iTerm.swift"; sourceTree = "<group>"; };
 		A616CF0C284143A300EF82D0 /* ConductorRecovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConductorRecovery.swift; sourceTree = "<group>"; };
 		A616CF102841AA1600EF82D0 /* WinSizeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WinSizeController.swift; sourceTree = "<group>"; };
 		A616D78A2EA7F167000C0C18 /* CyclicLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CyclicLog.swift; sourceTree = "<group>"; };
@@ -13778,8 +13776,7 @@
 				A60EF16B2DE6564D002837B9 /* DateFormatter+iTerm.swift */,
 				A61940062DF88E71002ABD3C /* Dictionary+iTerm.swift */,
 				1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */,
-				A616839722F94AEE00661F71 /* GPBEnumArray+iTerm.h */,
-				A616839822F94AEE00661F71 /* GPBEnumArray+iTerm.m */,
+				755F9A361CDFE7C53F888FF3 /* GPBEnumArray+iTerm.swift */,
 				A6BBBFD22CC876E2000A697C /* IndexSet+iTerm.swift */,
 				A6D1A3EE2C7E9A3A00FECDF2 /* Int+iTerm.swift */,
 				A6E312B12E397DF2008222DE /* iTermBaseWKWebView.h */,
@@ -16494,7 +16491,6 @@
 				A6A73D3827C7F96C002E4CCA /* NSArray+CommonAdditions.h in Headers */,
 				A6F22AC5239638B500C5D1A9 /* iTermSyntheticConfParser+Private.h in Headers */,
 				A64AE5172084128500D02F06 /* NSThread+iTerm.h in Headers */,
-				A616839922F94AEE00661F71 /* GPBEnumArray+iTerm.h in Headers */,
 				A673DEBE22624A90004EBF4D /* iTermCopyModeHandler.h in Headers */,
 				A6153D5821F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.h in Headers */,
 				A6A4B2BB2426C02800184EAC /* iTermPresetKeyMappings.h in Headers */,
@@ -19431,7 +19427,7 @@
 				A6D8CC3220CE417000E79512 /* URLAction.m in Sources */,
 				A65429BA20CE3C9400CE71B1 /* iTermFocusReportingTextField.m in Sources */,
 				A6854FEA2D8B82A60019E96C /* SGRTrigger.swift in Sources */,
-				A616839A22F94AEE00661F71 /* GPBEnumArray+iTerm.m in Sources */,
+				50E7F428A88F69D302ADB035 /* GPBEnumArray+iTerm.swift in Sources */,
 				A63935962103FD8B00A16D1C /* iTermMemoryUtilization.m in Sources */,
 				A6D16EB92E087A4F0099139D /* BrowserPermissions.swift in Sources */,
 				A63B9D5B234EE4ED002EEF30 /* ToolProfiles.m in Sources */,
