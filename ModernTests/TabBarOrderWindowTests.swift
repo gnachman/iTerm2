@@ -523,6 +523,59 @@ final class TabBarOrderWindowTests: XCTestCase {
         XCTAssertTrue(fixture.terminal.currentTab() === tabs[2])
     }
 
+    // Each tab's number, by its index in `tabs`.
+    private func numbers(_ tabs: [PTYTab]) -> [Int32] {
+        return tabs.map { $0.tabNumber() }
+    }
+
+    // The tabs the modifier+digit shortcuts select, in digit order, by their
+    // index in `tabs`.
+    private func shortcutOrder(_ tabs: [PTYTab]) throws -> [Int] {
+        return try fixture.terminal.tabsInShortcutOrder().map { tab in
+            try XCTUnwrap(tabs.firstIndex { $0 === tab })
+        }
+    }
+
+    func testTabNumbersFollowTheOrderTheBarShows() throws {
+        let tabs = try makeTabs(3)
+        setDirectory("/tmp/one", on: tabs[0])
+        setDirectory("/tmp/two", on: tabs[1])
+        setDirectory("/tmp/one", on: tabs[2])
+        try pick(.workingDirectory)
+        XCTAssertEqual(try shown(tabs), ["[one]", "0", "2", "[two]", "1"])
+        XCTAssertEqual(numbers(tabs), [1, 3, 2])
+        XCTAssertEqual(try shortcutOrder(tabs), [0, 2, 1])
+        XCTAssertEqual(try windowOrder(tabs), [0, 1, 2], "the window's order is unchanged")
+
+        try pick(.manual)
+        XCTAssertEqual(numbers(tabs), [1, 2, 3])
+        XCTAssertEqual(try shortcutOrder(tabs), [0, 1, 2])
+    }
+
+    // A directory change shows when a poll notices it. Until then, numbers
+    // and shortcuts go by what the bar shows, not by the new directories.
+    func testTabNumbersFollowTheBarUntilItResorts() throws {
+        let tabs = try makeTabs(3)
+        setDirectory("/tmp/a", on: tabs[0])
+        setDirectory("/tmp/b", on: tabs[1])
+        setDirectory("/tmp/a", on: tabs[2])
+        try pick(.workingDirectory)
+        XCTAssertEqual(try shown(tabs), ["[a]", "0", "2", "[b]", "1"])
+
+        setDirectory("/tmp/b", on: tabs[2])
+        XCTAssertEqual(try shown(tabs), ["[a]", "0", "2", "[b]", "1"], "not re-sorted until a poll")
+        // As a coalesced renumbering might, before the poll.
+        fixture.terminal.assignTabObjectCounts()
+        XCTAssertEqual(numbers(tabs), [1, 3, 2])
+        XCTAssertEqual(try shortcutOrder(tabs), [0, 2, 1])
+
+        waitUntil("re-sorted by the poll") {
+            ((try? self.shown(tabs)) ?? []) == ["[a]", "0", "[b]", "1", "2"]
+        }
+        XCTAssertEqual(numbers(tabs), [1, 2, 3])
+        XCTAssertEqual(try shortcutOrder(tabs), [0, 1, 2])
+    }
+
     // A swipe goes in the order the bar shows, like Next Tab.
     func testSwipingGoesInTheOrderTheBarShows() throws {
         let tabs = try makeTabs(3)

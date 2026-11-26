@@ -8921,10 +8921,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return;
     }
     [self setNeedsUpdateTabObjectCounts:NO];
-    [self.tabs enumerateObjectsUsingBlock:^(PTYTab * _Nonnull tab, NSUInteger i, BOOL * _Nonnull stop) {
-        [tab setObjectCount:i + 1];
+    [self assignTabObjectCounts];
+    for (PTYTab *tab in self.tabs) {
         [_contentView.tabBarControl setIsProcessing:tab.isProcessing forTabWithIdentifier:tab];
-    }];
+    }
 }
 
 - (void)tabView:(NSTabView*)aTabView
@@ -10499,6 +10499,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         // So polling sees a change when the order shows again.
         [_tabBarOrder forgetApplied];
     }
+    // Number the tabs as the bar now shows them, so the numbers and shortcuts
+    // stay consecutive while it's sorted and go back to the window's order after.
+    [self assignTabObjectCounts];
     [control setTabGroupIdentifiers:identifiers parentIdentifiers:parentIdentifiers forTabViewItems:items];
     [control setTabGroupCollapsedFlags:collapsedFlags parentCollapsedFlags:parentCollapsedFlags forTabViewItems:items];
     // What the search shows is what Ctrl-Tab's switcher may list.
@@ -15917,12 +15920,12 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     // called an objectCount. When the "compact tab" pref is toggled, this makes
     // formerly countless tabs show their counts.
     BOOL needResize = NO;
+    [self assignTabObjectCounts];
     for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
         PTYTab *aTab = [[_contentView.tabView tabViewItemAtIndex:i] identifier];
         if ([aTab updatePaneTitles]) {
             needResize = YES;
         }
-        [aTab setObjectCount:i+1];
 
         // Update activity indicator.
         [aTab setIsProcessing:[aTab realIsProcessing]];

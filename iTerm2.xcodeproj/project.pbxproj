@@ -4889,6 +4889,7 @@
 		DFD374B25802C2E7C25B95F0 /* AILiveOllamaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EC03AC4196A9AA446D5A176 /* AILiveOllamaTests.swift */; };
 		E0674A4A31C8440A9DF370CD /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = E85C9259B4BF4E83BBC22D64 /* InfoPlist.xcstrings */; };
 		E150F42CDFEA057CC83BD2B6 /* OwnedFileDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6A75C3A685499244178687 /* OwnedFileDescriptor.swift */; };
+		E1AACECC4A5DF35DA9D75110 /* PseudoTerminal+TabNumbers.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7CFC81B75B6A1A52B6F59BF /* PseudoTerminal+TabNumbers.swift */; };
 		E23AD13BC2AF859FAC3A4570 /* WindowSpaceRestorer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB22AD43668A143EC6C2F9A2 /* WindowSpaceRestorer.swift */; };
 		E2DFAD8D76A3655948CB3F37 /* iTermModalSheetRunner.m in Sources */ = {isa = PBXBuildFile; fileRef = E9B6267AF6FAE7F906B1DBF9 /* iTermModalSheetRunner.m */; };
 		E3F691502939DF2E874D7DD1 /* IT2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92FC80BA122066E3610BEA16 /* IT2.swift */; };
@@ -9150,6 +9151,7 @@
 		D74E3B9CA959897D7EFF8DF2 /* VT100Terminal+Testing.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "VT100Terminal+Testing.h"; sourceTree = "<group>"; };
 		D778C4947277F4FAE9FF4DF6 /* AdapterSession.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AdapterSession.swift; sourceTree = "<group>"; };
 		D7B735D5C742418D83DF5844 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/iTermPasteSpecialViewController.xcstrings; sourceTree = "<group>"; };
+		D7CFC81B75B6A1A52B6F59BF /* PseudoTerminal+TabNumbers.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "PseudoTerminal+TabNumbers.swift"; sourceTree = "<group>"; };
 		D7D0842E4D84F3FC90A568B0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermSnippetsEditingViewController.xib; sourceTree = "<group>"; };
 		D804697F718C1872A30F3515 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermAdvancedGPUSettingsWindowController.xib; sourceTree = "<group>"; };
 		D843F8FE6068C7202DF163D5 /* iTermKeychainTestSupport.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermKeychainTestSupport.swift; sourceTree = "<group>"; };
@@ -13657,6 +13659,7 @@
 				E78090FD1BE3DF0CA32A1E5A /* TabContentEvaluator.swift */,
 				00531426DCDEA978FC98C55A /* iTermWindowSpace.swift */,
 				AB22AD43668A143EC6C2F9A2 /* WindowSpaceRestorer.swift */,
+				D7CFC81B75B6A1A52B6F59BF /* PseudoTerminal+TabNumbers.swift */,
 			);
 			path = TerminalView;
 			sourceTree = "<group>";
@@ -20970,6 +20973,7 @@
 				AB061A2C75912744EA3A1338 /* iTermMetalResourceRecorder.swift in Sources */,
 				5BCCFE2ADF5067E61406A961 /* WorkgroupGitPollPolicy.swift in Sources */,
 				A3BEC2DF5975A63551882C07 /* WorkgroupGitStateFreshness.swift in Sources */,
+				E1AACECC4A5DF35DA9D75110 /* PseudoTerminal+TabNumbers.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

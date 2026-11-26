@@ -48,8 +48,10 @@ New Features:
 - A button beside that search field shows a
   vertical tab bar’s tabs in your order, in a
   section for each status, or in a section for
-  each working directory. The window’s own tab order doesn’t
-  change.
+  each working directory. Tab numbers, the
+  shortcuts to select a tab by number, and Next
+  and Previous Tab follow the order shown. The
+  window’s own tab order doesn’t change.
 - On an HDR display, text in the focused pane
   can glow brighter than normal white so it
   stands out, even in bright light. Turn on

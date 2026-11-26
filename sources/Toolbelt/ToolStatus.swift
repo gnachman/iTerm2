@@ -1252,8 +1252,12 @@ private extension ToolStatus {
             }
         }
         // Session is in a different tab — show tab shortcut
-        let tabIndex = Int(terminal.index(of: sessionTab)) + 1  // 0-based to 1-based
-        if tabIndex < 1 || tabIndex > 9 {
+        // Numbered as the tab bar shows them, which may be sorted.
+        guard let position = terminal.tabsInShortcutOrder().firstIndex(of: sessionTab) else {
+            return nil
+        }
+        let tabIndex = position + 1  // 0-based to 1-based
+        if tabIndex > 9 {
             return nil
         }
         guard let tabTag = iTermPreferencesModifierTag(

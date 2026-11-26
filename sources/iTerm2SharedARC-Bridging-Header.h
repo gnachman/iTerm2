@@ -251,6 +251,8 @@
 #import "iTermStatusIndicatingTextFieldCell.h"
 #import "PSMTabBarCell.h"
 #import "PSMTabBarControl.h"
+#import "iTermTabBarControlView.h"
+#import "iTermRootTerminalView.h"
 #import "PSMTabDragAssistant.h"
 #import "PSMTabStyle.h"
 #import "PSMYosemiteTabStyle.h"

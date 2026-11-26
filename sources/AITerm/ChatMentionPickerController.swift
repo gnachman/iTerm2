@@ -303,7 +303,9 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
         let windowGlyphs = modifierGlyphs(forTag: Int(iTermPreferences.int(forKey: kPreferenceKeySwitchWindowModifier)))
         var windowNodes: [Node] = []
         for term in controller.terminals() {
-            let tabs = term.tabs() ?? []
+            // In the order the tab shortcuts follow, which is the tab bar's
+            // when it is sorted.
+            let tabs = term.tabsInShortcutOrder()
             var tabNodes: [Node] = []
             for (index, tab) in tabs.enumerated() {
                 let paneNodes = paneNodes(for: tab, matches: matches)
@@ -346,7 +348,7 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
         }
     }
 
-    // Mirrors iTermApplication.switchToTabInTabView: digits 1-8 select tabs by
+    // Mirrors iTermApplication.switchToTabInWindowController: digits 1-8 select tabs by
     // position; digit 9 always selects the last tab.
     private static func tabShortcut(index: Int, count: Int, glyphs: String?) -> String? {
         guard let glyphs else { return nil }

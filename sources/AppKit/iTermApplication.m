@@ -522,20 +522,23 @@ static void iTermInstallCrashOnExceptionHook(void) {
     return NO;
 }
 
-- (BOOL)switchToTabInTabView:(PTYTabView *)tabView byNumber:(NSEvent *)event {
+- (BOOL)switchToTabInWindowController:(PseudoTerminal *)windowController byNumber:(NSEvent *)event {
     const int mask = NSEventModifierFlagShift | NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagCommand;
     if (([event it_modifierFlags] & mask) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]]) {
         int digit = [self digitKeyForEvent:event];
-        if (digit == 9 && [tabView numberOfTabViewItems] > 0) {
+        // Numbered as the tab bar shows them, which differs from the window's
+        // order while the bar is sorted.
+        NSArray<PTYTab *> *tabs = [windowController tabsInShortcutOrder];
+        if (digit == 9 && tabs.count > 0) {
             // Command (or selected modifier)+9: Switch to last tab if there are fewer than 9.
             RLog(@"Switching to last tab");
-            [tabView selectTabViewItemAtIndex:[tabView numberOfTabViewItems]-1];
+            [windowController.tabView selectTabViewItem:tabs.lastObject.tabViewItem];
             return YES;
         }
-        if (digit >= 1 && digit <= [tabView numberOfTabViewItems]) {
+        if (digit >= 1 && digit <= (int)tabs.count) {
             // Command (or selected modifier)+number: Switch to tab by number.
             RLog(@"Switching tabs");
-            [tabView selectTabViewItemAtIndex:digit-1];
+            [windowController.tabView selectTabViewItem:tabs[digit - 1].tabViewItem];
             return YES;
         }
         if (digit >= 1 && digit <= 9) {
@@ -650,7 +653,7 @@ static void iTermInstallCrashOnExceptionHook(void) {
         if ([self switchToPaneInWindowController:currentTerminal byNumber:event]) {
             return YES;
         }
-        if ([self switchToTabInTabView:[currentTerminal tabView] byNumber:event]) {
+        if ([self switchToTabInWindowController:currentTerminal byNumber:event]) {
             return YES;
         }
         if ([self remapEvent:event inResponder:responder currentSession:[currentTerminal currentSession]]) {
