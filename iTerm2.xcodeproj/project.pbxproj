@@ -1530,8 +1530,7 @@
 		A61A85A224F1A70500B03880 /* iTermGlobalSearchWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A61A859F24F1A70500B03880 /* iTermGlobalSearchWindowController.m */; };
 		A61A85A324F1CCB900B03880 /* iTermGlobalSearch.xib in Resources */ = {isa = PBXBuildFile; fileRef = 00376B498C0E4F7AA2A3028D /* iTermGlobalSearch.xib */; };
 		A61A85A524F1CCBA00B03880 /* iTermGlobalSearch.xib in Resources */ = {isa = PBXBuildFile; fileRef = 00376B498C0E4F7AA2A3028D /* iTermGlobalSearch.xib */; };
-		A61A85A924F23C9B00B03880 /* iTermGlobalSearchOutlineView.h in Headers */ = {isa = PBXBuildFile; fileRef = A61A85A724F23C9B00B03880 /* iTermGlobalSearchOutlineView.h */; };
-		A61A85AA24F23C9B00B03880 /* iTermGlobalSearchOutlineView.m in Sources */ = {isa = PBXBuildFile; fileRef = A61A85A824F23C9B00B03880 /* iTermGlobalSearchOutlineView.m */; };
+		08B2CF27B4CFE3068DB63E1B /* iTermGlobalSearchOutlineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91B3DC35F9873DF3F0D642C3 /* iTermGlobalSearchOutlineView.swift */; };
 		A61A85AD24F23CBD00B03880 /* iTermGlobalSearchResult.h in Headers */ = {isa = PBXBuildFile; fileRef = A61A85AB24F23CBD00B03880 /* iTermGlobalSearchResult.h */; };
 		A61A85AE24F23CBD00B03880 /* iTermGlobalSearchResult.m in Sources */ = {isa = PBXBuildFile; fileRef = A61A85AC24F23CBD00B03880 /* iTermGlobalSearchResult.m */; };
 		A61A85B124F23CDE00B03880 /* iTermGlobalSearchEngineCursor.h in Headers */ = {isa = PBXBuildFile; fileRef = A61A85AF24F23CDE00B03880 /* iTermGlobalSearchEngineCursor.h */; };
@@ -6581,8 +6580,7 @@
 		A61A859B24F0F2CC00B03880 /* PseudoTerminal+WindowStyle.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "PseudoTerminal+WindowStyle.m"; sourceTree = "<group>"; };
 		A61A859E24F1A70500B03880 /* iTermGlobalSearchWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGlobalSearchWindowController.h; sourceTree = "<group>"; };
 		A61A859F24F1A70500B03880 /* iTermGlobalSearchWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGlobalSearchWindowController.m; sourceTree = "<group>"; };
-		A61A85A724F23C9B00B03880 /* iTermGlobalSearchOutlineView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGlobalSearchOutlineView.h; sourceTree = "<group>"; };
-		A61A85A824F23C9B00B03880 /* iTermGlobalSearchOutlineView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGlobalSearchOutlineView.m; sourceTree = "<group>"; };
+		91B3DC35F9873DF3F0D642C3 /* iTermGlobalSearchOutlineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermGlobalSearchOutlineView.swift; sourceTree = "<group>"; };
 		A61A85AB24F23CBD00B03880 /* iTermGlobalSearchResult.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGlobalSearchResult.h; sourceTree = "<group>"; };
 		A61A85AC24F23CBD00B03880 /* iTermGlobalSearchResult.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGlobalSearchResult.m; sourceTree = "<group>"; };
 		A61A85AF24F23CDE00B03880 /* iTermGlobalSearchEngineCursor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGlobalSearchEngineCursor.h; sourceTree = "<group>"; };
@@ -11365,8 +11363,7 @@
 				A61A85B424F23D0700B03880 /* iTermGlobalSearchEngine.m */,
 				A61A85AF24F23CDE00B03880 /* iTermGlobalSearchEngineCursor.h */,
 				A61A85B024F23CDE00B03880 /* iTermGlobalSearchEngineCursor.m */,
-				A61A85A724F23C9B00B03880 /* iTermGlobalSearchOutlineView.h */,
-				A61A85A824F23C9B00B03880 /* iTermGlobalSearchOutlineView.m */,
+				91B3DC35F9873DF3F0D642C3 /* iTermGlobalSearchOutlineView.swift */,
 				A61A85AB24F23CBD00B03880 /* iTermGlobalSearchResult.h */,
 				A61A85AC24F23CBD00B03880 /* iTermGlobalSearchResult.m */,
 				A61A859E24F1A70500B03880 /* iTermGlobalSearchWindowController.h */,
@@ -16639,7 +16636,6 @@
 				A666D5F0221A1EF100D6184A /* iTermVariableScope+Window.h in Headers */,
 				A6047134213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h in Headers */,
 				A66719341DCE36C3000CE608 /* iTermQuickLookController.h in Headers */,
-				A61A85A924F23C9B00B03880 /* iTermGlobalSearchOutlineView.h in Headers */,
 				A65429AF20C492F000CE71B1 /* iTermParameterPanelWindowController.h in Headers */,
 				A667C26B277B8DE2006B4DEF /* VT100ScreenMutableState.h in Headers */,
 				535EA50420D1869800FC81E0 /* iTermSwiftyStringParser.h in Headers */,
@@ -19641,7 +19637,7 @@
 				A640487529C147A10063C34A /* CRUD.swift in Sources */,
 				A648DAC72427E8E900C2FF02 /* iTermSearchQueryDidChangeNotification.m in Sources */,
 				A667C23B276BD931006B4DEF /* VT100StateTransition.m in Sources */,
-				A61A85AA24F23C9B00B03880 /* iTermGlobalSearchOutlineView.m in Sources */,
+				08B2CF27B4CFE3068DB63E1B /* iTermGlobalSearchOutlineView.swift in Sources */,
 				A6CBB7B62E0899A600B2CCCB /* iTermBrowserGeolocationHandler.swift in Sources */,
 				A6B836132D38802400B5993C /* NonDefaultIndicator.swift in Sources */,
 				A662B2472D937C6D00C3D79A /* NSTableView+iTerm.swift in Sources */,

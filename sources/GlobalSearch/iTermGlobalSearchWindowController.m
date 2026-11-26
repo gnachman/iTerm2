@@ -13,7 +13,6 @@
 #import "NSAppearance+iTerm.h"
 #import "iTermFocusReportingTextField.h"
 #import "iTermGlobalSearchEngine.h"
-#import "iTermGlobalSearchOutlineView.h"
 #import "iTermGlobalSearchResult.h"
 #import "iTermSearchFieldCell.h"
 #import "iTermUserDefaults.h"
