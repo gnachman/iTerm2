@@ -127,6 +127,8 @@ extern void iTermMetalFrameDataStatsBundleAdd(iTermPreciseTimerStats *dest, iTer
 @class MTLRenderPassDescriptor;
 @protocol CAMetalDrawable;
 
+@class iTermMetalResourceRecorder;
+
 @interface iTermMetalFrameData : NSObject
 @property (atomic, readonly) iTermTexturePool *fullSizeTexturePool;
 @property (atomic, strong, nullable) id<iTermMetalDriverDataSourcePerFrameState> perFrameState;
@@ -161,6 +163,9 @@ extern void iTermMetalFrameDataStatsBundleAdd(iTermPreciseTimerStats *dest, iTer
 @property (nonatomic, strong, nullable) MTLRenderPassDescriptor *debugRealRenderPassDescriptor;
 @property (nonatomic, readonly, nullable) iTermMetalBufferPoolContext *framePoolContext;
 @property (nonatomic, strong, nullable) iTermMetalDebugInfo *debugInfo;
+// Nonnil when the keep-warm advanced setting is on. Transient states added with
+// -setTransientState:forRenderer: record the resources they bind into it.
+@property (nonatomic, strong, nullable) iTermMetalResourceRecorder *resourceRecorder;
 @property (nonatomic, readonly) iTermCellRenderConfiguration *cellConfiguration;
 @property (nonatomic, strong, nullable) id<MTLCommandBuffer> commandBuffer;
 @property (nonatomic, strong, nullable) id<MTLRenderCommandEncoder> renderEncoder;

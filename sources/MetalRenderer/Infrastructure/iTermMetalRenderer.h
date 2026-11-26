@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 extern const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight;
 
 @class iTermImageWrapper;
+@class iTermMetalResourceRecorder;
 @class iTermMetalRendererTransientState;
 
 @interface iTermRenderConfiguration : NSObject
@@ -70,6 +71,8 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
 @property (nonatomic, readonly) iTermMetalBufferPoolContext *poolContext;
 @property (nonatomic, weak) iTermMetalDebugInfo *debugInfo;
 @property (nonatomic, strong) NSImage *renderedOutputForDebugging;
+// When nonnil, every buffer and texture bound by -drawWithTransientState:... is recorded here.
+@property (nonatomic, strong, nullable) iTermMetalResourceRecorder *resourceRecorder;
 @property (nonatomic) NSUInteger sequenceNumber;
 
 // These values are in points. Scissor rect will be used to prevent drawing in these regions.

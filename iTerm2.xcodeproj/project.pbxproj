@@ -16,6 +16,7 @@
 		B5C19C3302091F3CF6ABC709 /* railroad-light.css in Resources */ = {isa = PBXBuildFile; fileRef = F74868B36DCC2642B626B0C3 /* railroad-light.css */; };
 		6B3B7708928E9E966FDB4E1A /* railroad-dark.css in Resources */ = {isa = PBXBuildFile; fileRef = B49846056A396AAA1FEFE4F8 /* railroad-dark.css */; };
 		AAA8E803E9EEC9513290E2CB /* railroad-dark.css in Resources */ = {isa = PBXBuildFile; fileRef = B49846056A396AAA1FEFE4F8 /* railroad-dark.css */; };
+		AB061A2C75912744EA3A1338 /* iTermMetalResourceRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E651028DE5B029841170FD /* iTermMetalResourceRecorder.swift */; };
 		CB2B34A7A3BC41210DCB5B0F /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624232519CF70DF00182C08 /* NMSSH.framework */; };
 		CBC96459BD6FC8896785A3D9 /* TmuxWorkgroupPeerCreation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FA61C02D50EE6E66768FE0C /* TmuxWorkgroupPeerCreation.swift */; };
 		3EF33423CA26E1A5D858D1C9 /* TmuxWorkgroupAdoption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CD54BF2A45695A8C76271D5 /* TmuxWorkgroupAdoption.swift */; };
@@ -5761,6 +5762,7 @@
 		25308DD4E67A2804961C3F3E /* Chat+Database.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "Chat+Database.swift"; sourceTree = "<group>"; };
 		257048DB7F3343FA9AA49966 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/iTermStatusBarSetupViewController.xcstrings; sourceTree = "<group>"; };
 		2592CCDF993CD33E0DE3E6A3 /* AITabTitleCorpus.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AITabTitleCorpus.swift; sourceTree = "<group>"; };
+		25E651028DE5B029841170FD /* iTermMetalResourceRecorder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermMetalResourceRecorder.swift; sourceTree = "<group>"; };
 		25EC5E50C69463E890DD26BE /* CompanionToast.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionToast.swift; sourceTree = "<group>"; };
 		25F400887FD7A5B23D916AD9 /* iTermRecordingProfileSanitizer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermRecordingProfileSanitizer.swift; sourceTree = "<group>"; };
 		264660071C2DC297B2CF9A22 /* claude_usage.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = claude_usage.sh; path = sources/Workgroups/UsageProviders/claude_usage.sh; sourceTree = "<group>"; };
@@ -11799,6 +11801,7 @@
 				A62A79482F988328007CAA0B /* iTermTextureArray.m */,
 				A62A79492F988328007CAA0B /* iTermTexturePool.h */,
 				A62A794A2F988328007CAA0B /* iTermTexturePool.m */,
+				25E651028DE5B029841170FD /* iTermMetalResourceRecorder.swift */,
 			);
 			path = Infrastructure;
 			sourceTree = "<group>";
@@ -20958,6 +20961,7 @@
 				3B8B6BC97238C89BF17B474B /* iTermWindowSpace.swift in Sources */,
 				FAB4A6AEB117201B8881A49B /* WindowArrangementNamePrompt.swift in Sources */,
 				E23AD13BC2AF859FAC3A4570 /* WindowSpaceRestorer.swift in Sources */,
+				AB061A2C75912744EA3A1338 /* iTermMetalResourceRecorder.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

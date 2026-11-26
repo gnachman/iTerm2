@@ -193,6 +193,12 @@ typedef struct {
 
     // The command Queue from which we'll obtain command buffers
     id<MTLCommandQueue> _commandQueue;
+
+    // Resources bound by the most recently committed frame. Guarded by @synchronized(self).
+    // Written on the private queue, read on the main thread by -keepResourcesWarmInMetalView:.
+    NSArray<id<MTLResource>> *_keepWarmResources;
+    // A 1x1 render target for keep-warm passes. Main thread only.
+    id<MTLTexture> _keepWarmTexture;
     iTermMetalDriverMainThreadState _mainThreadState;
 
 #if ENABLE_PRIVATE_QUEUE
@@ -406,6 +412,57 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
 }
 
 #pragma mark - iTermMetalViewDelegate
+
+// Main thread. Submits a command buffer that declares use of every resource the last frame bound
+// but draws nothing, so macOS doesn't unwire them while idle. Returns NO if there is nothing to keep
+// warm yet, in which case the caller should fall back to a real redraw.
+- (BOOL)keepResourcesWarmInMetalView:(nonnull iTermMetalView *)view {
+    NSArray<id<MTLResource>> *resources;
+    @synchronized(self) {
+        resources = _keepWarmResources;
+    }
+    if (resources.count == 0) {
+        DLog(@"No resources to keep warm");
+        return NO;
+    }
+    if (!_keepWarmTexture) {
+        MTLTextureDescriptor *descriptor =
+            [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
+                                                               width:1
+                                                              height:1
+                                                           mipmapped:NO];
+        descriptor.usage = MTLTextureUsageRenderTarget;
+        descriptor.storageMode = MTLStorageModePrivate;
+        _keepWarmTexture = [_commandQueue.device newTextureWithDescriptor:descriptor];
+        _keepWarmTexture.label = @"Keep-warm target";
+        if (!_keepWarmTexture) {
+            DLog(@"Failed to allocate keep-warm texture");
+            return NO;
+        }
+    }
+    MTLRenderPassDescriptor *passDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
+    passDescriptor.colorAttachments[0].texture = _keepWarmTexture;
+    passDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
+    passDescriptor.colorAttachments[0].storeAction = MTLStoreActionDontCare;
+
+    id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
+    commandBuffer.label = @"Keep resources warm";
+    id<MTLRenderCommandEncoder> encoder = [commandBuffer renderCommandEncoderWithDescriptor:passDescriptor];
+    if (!encoder) {
+        DLog(@"Failed to create keep-warm encoder");
+        return NO;
+    }
+    encoder.label = @"Keep resources warm";
+    for (id<MTLResource> resource in resources) {
+        [encoder useResource:resource
+                       usage:MTLResourceUsageRead
+                      stages:MTLRenderStageVertex | MTLRenderStageFragment];
+    }
+    [encoder endEncoding];
+    [commandBuffer commit];
+    DLog(@"Kept %@ resources warm for %@", @(resources.count), view);
+    return YES;
+}
 
 - (void)metalView:(nullable iTermMetalView *)view drawableSizeWillChange:(CGSize)size {
     self.mainThreadState->viewportSize.x = size.width;
@@ -684,6 +741,9 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
 
         // This is the slow part
         frameData.perFrameState = [self->_dataSource metalDriverWillBeginDrawingFrame];
+        if ([iTermAdvancedSettingsModel metalKeepWarmWithoutRedrawing]) {
+            frameData.resourceRecorder = [[iTermMetalResourceRecorder alloc] init];
+        }
         frameData.colorSpace = frameData.perFrameState.colorSpace;
 
         frameData.rows = [NSMutableArray array];
@@ -2282,6 +2342,7 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
                                                        commandBuffer:frameData.commandBuffer];
     tState.sourceTexture = sourceTexture;
     tState.debugInfo = frameData.debugInfo;
+    tState.resourceRecorder = frameData.resourceRecorder;
     [_copyOffscreenRenderer drawWithFrameData:frameData transientState:tState];
     [frameData.renderEncoder endEncoding];
 }
@@ -2708,6 +2769,25 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
             }];
         }
 
+        iTermMetalResourceRecorder *recorder = frameData.resourceRecorder;
+        if (recorder) {
+            // Never hold on to a drawable's texture: that would keep the drawable out of the
+            // layer's pool.
+            id<MTLTexture> drawableTexture = frameData.destinationDrawable.texture;
+            if (drawableTexture) {
+                [recorder removeResource:drawableTexture];
+            }
+            NSArray<id<MTLResource>> *resources = recorder.allResources;
+            @synchronized(self) {
+                self->_keepWarmResources = resources;
+            }
+        } else {
+            // The setting is off. Drop any resources recorded while it was on so they (e.g., the
+            // textures of since-deleted inline images) aren't kept alive indefinitely.
+            @synchronized(self) {
+                self->_keepWarmResources = nil;
+            }
+        }
         DLog(@"  commit %@", frameData);
         [commandBuffer commit];
     }];

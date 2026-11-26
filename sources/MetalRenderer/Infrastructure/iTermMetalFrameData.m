@@ -458,6 +458,7 @@ static NSInteger gNextFrameDataNumber;
 }
 
 - (void)setTransientState:(iTermMetalRendererTransientState *)tState forRenderer:(NSObject *)renderer {
+    tState.resourceRecorder = self.resourceRecorder;
     self.transientStates[NSStringFromClass([renderer class])] = tState;
 }
 

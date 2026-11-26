@@ -9,6 +9,7 @@
 public class iTermMTKView: iTermMetalView {
     private var _timer: Timer?
     private var _lastSetNeedsDisplay: TimeInterval = 0
+    private var _lastKeepWarm: TimeInterval = 0
 
     // How often to keep an ordered-out or fully occluded window's Metal pipeline warm. Matches the
     // 1 Hz background update cadence (kBackgroundUpdateCadence) that hidden sessions already tick at.
@@ -83,10 +84,36 @@ public class iTermMTKView: iTermMetalView {
         let occluded = window?.occlusionState.contains(.visible) != true
         let minInterval = occluded ? max(Self.occludedRedrawPeriod, iTermAdvancedSettingsModel.metalRedrawPeriod())
                                    : timer.timeInterval
-        if (NSDate.it_timeSinceBoot() - _lastSetNeedsDisplay < minInterval) {
+        let now = NSDate.it_timeSinceBoot()
+        if (now - _lastSetNeedsDisplay < minInterval) {
             DLog("Redrew recently");
             return;
         }
+        if iTermAdvancedSettingsModel.metalKeepWarmWithoutRedrawing() {
+            // Timer fire times jitter, so allow some slack. Without it, a tick that lands a hair
+            // early would be skipped and the gap would double, which is long enough for macOS to
+            // start unwiring GPU memory.
+            if now - _lastKeepWarm < minInterval * 0.9 {
+                DLog("Kept warm recently")
+                return
+            }
+            if delegate?.keepResourcesWarm?(in: self) == true {
+                _lastKeepWarm = now
+                return
+            }
+            DLog("Keep-warm unavailable; redrawing instead")
+        }
+        needsDisplay = true
+    }
+
+    // When keeping warm without redrawing, an occluded window no longer gets a periodic full
+    // redraw, so refresh its content the moment it becomes visible.
+    @objc private func windowDidChangeOcclusionState(_ notification: Notification) {
+        guard iTermAdvancedSettingsModel.metalKeepWarmWithoutRedrawing(),
+              window?.occlusionState.contains(.visible) == true else {
+            return
+        }
+        DLog("Window became visible; redraw \(self)")
         needsDisplay = true
     }
 
@@ -146,6 +173,21 @@ public class iTermMTKView: iTermMetalView {
     private func refreshHDRLayerState() {
         colorspace = preferredColorspace
         wantsExtendedDynamicRangeContent = wantsEDR
+    }
+
+    override public func viewWillMove(toWindow newWindow: NSWindow?) {
+        super.viewWillMove(toWindow: newWindow)
+        if let window {
+            NotificationCenter.default.removeObserver(self,
+                                                      name: NSWindow.didChangeOcclusionStateNotification,
+                                                      object: window)
+        }
+        if let newWindow {
+            NotificationCenter.default.addObserver(self,
+                                                   selector: #selector(windowDidChangeOcclusionState(_:)),
+                                                   name: NSWindow.didChangeOcclusionStateNotification,
+                                                   object: newWindow)
+        }
     }
 
     override public func viewDidMoveToWindow() {

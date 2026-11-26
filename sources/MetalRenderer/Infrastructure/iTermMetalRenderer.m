@@ -5,6 +5,7 @@
 #import "iTermMalloc.h"
 #import "iTermMetalBufferPool.h"
 #import "iTermMetalDebugInfo.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermSharedImageStore.h"
 #import "iTermShaderTypes.h"
 #import "iTermTexture.h"
@@ -633,7 +634,9 @@ MTLPixelFormat iTermMetalFramebufferPixelFormat(BOOL hdrCursorEnabled) {
         [clientVertexBuffers dictionaryBySettingObject:[self vertexBufferForViewportSize:tState.configuration.viewportSize]
                                                 forKey:@(iTermVertexInputIndexViewportSize)];
 
+    iTermMetalResourceRecorder *recorder = tState.resourceRecorder;
     [vertexBuffers enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<MTLBuffer>  _Nonnull obj, BOOL * _Nonnull stop) {
+        [recorder recordResource:obj];
         [debugDrawInfo setVertexBuffer:obj atIndex:key.unsignedIntegerValue];
         [renderEncoder setVertexBuffer:obj
                                 offset:0
@@ -641,6 +644,7 @@ MTLPixelFormat iTermMetalFramebufferPixelFormat(BOOL hdrCursorEnabled) {
     }];
 
     [fragmentBuffers enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<MTLBuffer>  _Nonnull obj, BOOL * _Nonnull stop) {
+        [recorder recordResource:obj];
         [debugDrawInfo setFragmentBuffer:obj atIndex:key.unsignedIntegerValue];
         [renderEncoder setFragmentBuffer:obj
                                   offset:0
@@ -648,6 +652,7 @@ MTLPixelFormat iTermMetalFramebufferPixelFormat(BOOL hdrCursorEnabled) {
     }];
 
     [textures enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<MTLTexture>  _Nonnull obj, BOOL * _Nonnull stop) {
+        [recorder recordResource:obj];
         [debugDrawInfo setFragmentTexture:obj atIndex:key.unsignedIntegerValue];
         [renderEncoder setFragmentTexture:obj atIndex:[key unsignedIntegerValue]];
     }];

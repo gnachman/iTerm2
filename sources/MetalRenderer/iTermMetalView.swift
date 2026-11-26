@@ -15,6 +15,11 @@ import Metal
 
     @objc(drawInMetalView:)
     func draw(in view: iTermMetalView)
+
+    // Submit cheap GPU work that keeps the last frame's resources resident without drawing.
+    // Returns false if it could not, in which case the caller should redraw instead.
+    @objc(keepResourcesWarmInMetalView:)
+    optional func keepResourcesWarm(in view: iTermMetalView) -> Bool
 }
 
 /// Custom MetalKit-like view for rendering Metal content. This is a stripped-down version of `iTermMetalView_full` containing

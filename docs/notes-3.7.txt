@@ -109,6 +109,8 @@ Improvements:
   Session Status tool can snooze a session: its
   status dims and it stops asking for attention
   until the status changes.
+- The GPU renderer uses much less CPU while a
+  session sits idle. Issue 8640.
 
 Bug Fixes:
 - Paths and URLs no longer absorb the
