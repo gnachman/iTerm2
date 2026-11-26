@@ -13,7 +13,6 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermShellHistoryController.h"
 #import "iTermCommandHistoryEntryMO+Additions.h"
-#import "iTermCompetentTableRowView.h"
 #import "iTermSearchField.h"
 #import "NSDateFormatterExtras.h"
 #import "NSDate+iTerm.h"

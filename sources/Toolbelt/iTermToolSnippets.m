@@ -17,7 +17,6 @@
 #import "iTermSearchField.h"
 #import "iTermSnippetsModel.h"
 #import "iTermTuple.h"
-#import "iTermCompetentTableRowView.h"
 
 #import "NSArray+iTerm.h"
 #import "NSFont+iTerm.h"

@@ -11,7 +11,6 @@
 
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermApplication.h"
-#import "iTermCompetentTableRowView.h"
 #import "iTermRecentDirectoryMO.h"
 #import "iTermRecentDirectoryMO+Additions.h"
 #import "iTermSearchField.h"

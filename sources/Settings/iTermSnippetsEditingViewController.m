@@ -8,7 +8,6 @@
 #import "iTermSnippetsEditingViewController.h"
 
 #import "iTerm2SharedARC-Swift.h"
-#import "iTermCompetentTableRowView.h"
 #import "iTermEditSnippetWindowController.h"
 #import "iTermPreferencesBaseViewController.h"
 #import "iTermSnippetsModel.h"

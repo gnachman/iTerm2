@@ -9,7 +9,6 @@
 
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermActionsModel.h"
-#import "iTermCompetentTableRowView.h"
 #import "iTermEditKeyActionWindowController.h"
 #import "iTermPreferencesBaseViewController.h"
 #import "iTermWarning.h"

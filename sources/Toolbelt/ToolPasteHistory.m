@@ -10,7 +10,6 @@
 
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
-#import "iTermCompetentTableRowView.h"
 #import "iTermController.h"
 #import "iTermSecureKeyboardEntryController.h"
 #import "iTermToolWrapper.h"

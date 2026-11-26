@@ -10,7 +10,6 @@
 
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
-#import "iTermCompetentTableRowView.h"
 #import "iTermJobTreeViewController.h"
 #import "iTermProcessCache.h"
 #import "iTermToolWrapper.h"
