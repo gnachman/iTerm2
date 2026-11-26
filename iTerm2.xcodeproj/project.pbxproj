@@ -781,6 +781,7 @@
 		3B7DA5807C8D054592F05EEC /* iTermInstanceLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3488E4BB13CB8F7C32CCB1AF /* iTermInstanceLock.swift */; };
 		3B8B6BC97238C89BF17B474B /* iTermWindowSpace.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00531426DCDEA978FC98C55A /* iTermWindowSpace.swift */; };
 		3C8FED766F941C2CB0A070E4 /* iTermCharacterSets.h in Sources */ = {isa = PBXBuildFile; fileRef = 46019892B59C674931043643 /* iTermCharacterSets.h */; };
+		3CA62CDADB9AAAAB81B0E5C8 /* iTermSpacesRestorationNotice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7943DEA54488776107201E41 /* iTermSpacesRestorationNotice.swift */; };
 		3DCAF403F69805DD1E24FA18 /* CompanionParkSupervisor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 137DB49C4B426A987FAB687D /* CompanionParkSupervisor.swift */; };
 		3DD6A45D19B84289CD37A82F /* TmuxDividerMover.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6286876164FDF4B2B76D5079 /* TmuxDividerMover.swift */; };
 		3DF240AC0E869D3C0A076902 /* iTermModalSheetRunner.h in Sources */ = {isa = PBXBuildFile; fileRef = 4F0681FBE76FD9A1D5715D52 /* iTermModalSheetRunner.h */; };
@@ -9201,6 +9202,7 @@
 		1CD710558183DACF49C94D06 /* repl_banner-ca.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-ca.txt"; path = "sources/repl_banner-ca.txt"; sourceTree = "<group>"; };
 		8CF951896F58CEA3AE5817AB /* repl_banner-th.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-th.txt"; path = "sources/repl_banner-th.txt"; sourceTree = "<group>"; };
 		78EB42A745FD22101B9BA08F /* repl_banner-hi.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-hi.txt"; path = "sources/repl_banner-hi.txt"; sourceTree = "<group>"; };
+		7943DEA54488776107201E41 /* iTermSpacesRestorationNotice.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermSpacesRestorationNotice.swift; sourceTree = "<group>"; };
 		6ED76F647C086AF3103F8ABA /* repl_banner-ms.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-ms.txt"; path = "sources/repl_banner-ms.txt"; sourceTree = "<group>"; };
 		3856C03C6B5AD84F350FD03D /* repl_banner-id.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-id.txt"; path = "sources/repl_banner-id.txt"; sourceTree = "<group>"; };
 		23A8D195D3EC87B949C6128D /* repl_banner-uk.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-uk.txt"; path = "sources/repl_banner-uk.txt"; sourceTree = "<group>"; };
@@ -12221,6 +12223,7 @@
 				A653F6A724D00FFE0062377E /* iTermRestorableStateSQLite.m */,
 				23801BB71B313CB5C88F9AB1 /* iTermGeneration.h */,
 				D61CFC9930E7DF364342817E /* iTermGeneration.m */,
+				7943DEA54488776107201E41 /* iTermSpacesRestorationNotice.swift */,
 			);
 			path = StateRestoration;
 			sourceTree = "<group>";
@@ -20965,6 +20968,7 @@
 				A3BEC2DF5975A63551882C07 /* WorkgroupGitStateFreshness.swift in Sources */,
 				E1AACECC4A5DF35DA9D75110 /* PseudoTerminal+TabNumbers.swift in Sources */,
 				6793A809E9AED0090B74F00A /* QLPreviewPanel+iTerm.swift in Sources */,
+				3CA62CDADB9AAAAB81B0E5C8 /* iTermSpacesRestorationNotice.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

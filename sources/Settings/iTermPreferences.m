@@ -735,7 +735,7 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
         dict = @{ kPreferenceKeyOpenBookmark: @NO,
                   kPreferenceKeyOpenArrangementAtStartup: @NO,
                   kPreferenceKeyAlwaysOpenWindowAtStartup: @NO,
-                  kPreferenceKeyRestoreWindowsToSameSpaces: @NO,
+                  kPreferenceKeyRestoreWindowsToSameSpaces: @YES,
                   kPreferenceKeyOpenNoWindowsAtStartup: @NO,
                   kPreferenceKeyQuitWhenAllWindowsClosed: @NO,
                   kPreferenceKeyConfirmClosingMultipleTabs: @YES,

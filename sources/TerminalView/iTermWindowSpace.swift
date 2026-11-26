@@ -203,6 +203,108 @@ class iTermWindowSpace: NSObject {
         }?.localizedName
     }
 
+    /// Whether the window server has put the window on at least one Space. Right
+    /// after state restoration AppKit may not have yet, and then the window has
+    /// none. Nil if the private functions are missing.
+    static func isOnAnySpace(_ window: NSWindow) -> Bool? {
+        guard let ids = spaceIDs(of: window) else {
+            return nil
+        }
+        return !ids.isEmpty
+    }
+
+    /// What CGSCopyManagedDisplaySpaces says is showing on a window's display.
+    private enum CurrentSpace {
+        /// An ordinary desktop, with its ID.
+        case desktop(UInt64)
+        /// Something a window must not be moved into, such as a full screen
+        /// app's Space, or a display that can't be matched up.
+        case notADesktop
+        /// The private functions are missing or returned something unexpected.
+        case unavailable
+    }
+
+    /// The Space currently shown on the display holding the window's frame.
+    /// When displays share Spaces there is one current Space for all.
+    private static func currentSpace(forDisplayOf window: NSWindow) -> CurrentSpace {
+        guard let mainConnection, let copyManagedDisplaySpaces else {
+            return .unavailable
+        }
+        guard let displays = copyManagedDisplaySpaces(mainConnection())?.takeRetainedValue() as? [[String: Any]] else {
+            DLog("CGSCopyManagedDisplaySpaces returned something unexpected")
+            return .unavailable
+        }
+        let screenIdentifier = window.screen.flatMap { displayIdentifier(of: $0) }
+        let display = displays.first { display in
+            guard let identifier = display["Display Identifier"] as? String else {
+                return false
+            }
+            if identifier == sharedDisplayIdentifier {
+                return true
+            }
+            guard let screenIdentifier else {
+                return false
+            }
+            return identifier.caseInsensitiveCompare(screenIdentifier) == .orderedSame
+        }
+        guard let display,
+              let current = display["Current Space"] as? [String: Any],
+              let spaceID = (current["ManagedSpaceID"] as? NSNumber)?.uint64Value else {
+            DLog("No current Space found for the display of window \(window)")
+            return .notADesktop
+        }
+        // A display showing a full screen app has that app's Space as its current one. Never put
+        // a window there; full screen Spaces are left to macOS.
+        guard (current["type"] as? NSNumber)?.intValue == desktopType else {
+            DLog("Current Space \(spaceID) for the display of window \(window) is not an ordinary desktop")
+            return .notADesktop
+        }
+        return .desktop(spaceID)
+    }
+
+    enum MoveToCurrentSpaceResult {
+        /// The window is on its display's current Space.
+        case moved
+        /// The private functions are missing, or the window server ignored the
+        /// move. Some other way of moving the window may still work.
+        case unavailable
+        /// The window must not be moved: its display's current Space is not an
+        /// ordinary desktop (as when it is showing a full screen app), or the
+        /// display couldn't be matched up. Don't try another way.
+        case refused
+    }
+
+    /// Moves the window to the Space currently shown on the display its frame is
+    /// on. It never moves a window to another display's Space, for the same
+    /// reason move(_:toSpaceFromArrangementValue:) refuses to.
+    static func moveToCurrentSpace(_ window: NSWindow) -> MoveToCurrentSpaceResult {
+        guard let mainConnection, let moveWindowsToManagedSpace, window.windowNumber > 0 else {
+            DLog("Can't move window \(window): function or window number unavailable")
+            return .unavailable
+        }
+        let spaceID: UInt64
+        switch currentSpace(forDisplayOf: window) {
+        case .desktop(let id):
+            spaceID = id
+        case .notADesktop:
+            return .refused
+        case .unavailable:
+            return .unavailable
+        }
+        if spaceIDs(of: window) == [spaceID] {
+            DLog("Window \(window) is already on current Space \(spaceID)")
+            return .moved
+        }
+        DLog("Move window \(window) to current Space \(spaceID)")
+        moveWindowsToManagedSpace(mainConnection(), [window.windowNumber] as CFArray, spaceID)
+        let after = spaceIDs(of: window)
+        if after != [spaceID] {
+            DLog("Window \(window) is on Spaces \(String(describing: after)) after the move, not \(spaceID). The window server may have ignored it.")
+            return .unavailable
+        }
+        return .moved
+    }
+
     // MARK: - API
 
     /// Whether this macOS has the functions needed to save and restore Spaces.

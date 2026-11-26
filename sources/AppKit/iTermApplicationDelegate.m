@@ -1517,8 +1517,10 @@ void TurnOnDebugLoggingAutomatically(void) {
 
     // Enable restoring windows to their original Spaces if needed.
     // This has to happen after -initializeUserDefaults and before this method returns.
-    const BOOL restoreWorkspace = ([[iTermUserDefaults userDefaults] boolForKey:@"NoSyncWindowRestoresWorkspaceAtLaunch"] ||
+    const BOOL restoreWorkspaceForUpdate = [[iTermUserDefaults userDefaults] boolForKey:@"NoSyncWindowRestoresWorkspaceAtLaunch"];
+    const BOOL restoreWorkspace = (restoreWorkspaceForUpdate ||
                                    [iTermPreferences boolForKey:kPreferenceKeyRestoreWindowsToSameSpaces]);
+    [iTermSpacesRestorationNotice applicationWillRestoreWindowsForcedByUpdate:restoreWorkspaceForUpdate];
     if (restoreWorkspace) {
         DLog(@"Set NSWindowRestoresWorkspaceAtLaunch=YES");
         // Based on https://chromium.googlesource.com/chromium/src/+/refs/heads/main/chrome/browser/chrome_browser_main_mac.mm#128:
@@ -1650,6 +1652,9 @@ void TurnOnDebugLoggingAutomatically(void) {
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+    // First, while the launch's open-application Apple event is current and before anything
+    // here can run a modal loop.
+    [iTermSpacesRestorationNotice applicationDidFinishLaunching];
     [iTermMacOS13RequirementNotice maybeShow];
     DLog(@"didFinishLaunching");
 
@@ -2154,6 +2159,7 @@ static iTermKeyEventReplayer *gReplayer;
         return;
     }
     _sessionRestorationReported = YES;
+    [iTermSpacesRestorationNotice windowsDidFinishRestoring:[self restorableStateWindows]];
     [iTermChatTimerLaunch sessionsDidFinishRestoring];
     [[iTermAgentConversationResumeOffers shared] sessionsDidFinishRestoring];
 }

@@ -26,10 +26,20 @@ class WindowSpaceRestorer {
     private var pending = [Request]()
     private var flushScheduled = false
     private var showingAlert = false
+    /// Every window an arrangement asked to put on a saved Space, held weakly.
+    private let arrangementWindows = NSHashTable<NSWindow>.weakObjects()
 
     func enqueue(_ window: NSWindow, value: [String: Any]) {
+        arrangementWindows.add(window)
         pending.append(Request(window: window, value: value))
         scheduleFlush()
+    }
+
+    /// Whether an arrangement asked to put this window on a saved Space, so a
+    /// Space other than the current one may be the arrangement’s doing rather
+    /// than session restoration’s.
+    func wasAskedToMove(_ window: NSWindow) -> Bool {
+        return arrangementWindows.contains(window)
     }
 
     private func scheduleFlush() {

@@ -138,6 +138,14 @@ Improvements:
   lighter in light mode, with the same glassy
   edge and rounded ends, and the first and last
   tabs sit evenly inside the bar.
+- Restored windows now go back to the Spaces
+  they were on when iTerm2 quit, instead of all
+  opening on the current Space. The first time
+  this moves a window to another Space, iTerm2
+  explains and offers to switch back. To change
+  it later, use “Restore windows to same
+  Spaces” in Settings > General > Startup.
+  Issue 13240.
 
 Bug Fixes:
 - With tabs on the left or right, clicking a

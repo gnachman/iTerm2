@@ -1,0 +1,117 @@
+Manual test plan: “Restore windows to same Spaces” default and its one-time notice
+(sources/StateRestoration/iTermSpacesRestorationNotice.swift, issue 13240)
+
+Setup for every case
+- Use a build run with -suite (make run). Turn on debug logging if you want to
+  see the DLog lines, which print forcedByUpdate, relaunchedByLoginWindow,
+  opensArrangementOrNothing, eligible, and how many windows are off-Space.
+- Reset to “never touched the setting, never saw the notice”:
+    defaults delete <suite> RestoreWindowsToSameSpaces
+    defaults delete <suite> NoSyncRestoreWindowsToSameSpacesNoticeShown
+- Have at least three desktops in Mission Control. System Settings >
+  Desktop & Dock > “When switching to an application, switch to a Space with
+  open windows” is on by default; note its value, since it can change what is
+  on the current Space when iTerm2 activates.
+- Settings > General > Startup > Window restoration policy: “Use System
+  Window Restoration Setting”, and macOS “Close windows when quitting an
+  application” off.
+
+1. Manual relaunch shows the notice once
+   - Put one window on Desktop 2 and one on Desktop 3. Switch to Desktop 1.
+   - Quit with ⌘Q. Relaunch by hand from Desktop 1.
+   - Expect: windows return to Desktops 2 and 3, and the notice appears.
+   - Click “Keep Windows on Their Spaces”. Quit and relaunch the same way.
+   - Expect: windows return to their Spaces, and no notice.
+
+2. Revert button moves windows now
+   - Reset. Repeat case 1 up to the notice.
+   - Click “Restore Windows to Current Space”.
+   - Expect: both windows come to Desktop 1 right away, and the Settings
+     checkbox is now off. Quit and relaunch: windows open on the current
+     Space, and no notice.
+
+3. Revert after switching Spaces while the notice is up
+   - Reset. Repeat case 1 up to the notice. Switch to Desktop 3 (where one
+     window is) before clicking the button, then click it.
+   - Expect: the Desktop 2 window comes to Desktop 3; the Desktop 3 window
+     stays. Closing a window before clicking must not crash.
+
+4. Full screen app on the window's display (multiple displays, “Displays have
+   separate Spaces” on)
+   - Reset. Put a window on Desktop 2 of display B. Quit. Make display B show
+     a full screen app. Relaunch from display A.
+   - At the notice, click “Restore Windows to Current Space”.
+   - Expect: the terminal window stays on Desktop 2 of display B. It does not
+     end up inside the full screen app's Space, display B keeps showing the
+     full screen app, and the window is not pulled onto display A. The log
+     says “its display's current Space is not a desktop”.
+
+5. Reboot with “Reopen windows when logging back in” checked: no notice
+   - Reset. Put windows on Desktops 2 and 3. Restart the Mac, keeping the
+     reopen checkbox checked.
+   - Expect: windows return to their Spaces (macOS always did this), no
+     notice, and relaunchedByLoginWindow=true. The “Launch Apple event” line
+     just before it should show an oapp event with ~'rsto':'yes ' (seen on
+     macOS 27). If it shows something else, the login-window check is wrong
+     and the notice will fire here.
+   - On a manual launch, the same log line should show an oapp event with no
+     parameters, and relaunchedByLoginWindow=false.
+   - Then quit and relaunch by hand: the notice appears (case 1 still works).
+
+5b. Login item with “Reopen windows” off: notice shown
+   - Reset. Add iTerm2 to System Settings > General > Login Items. Put
+     windows on Desktops 2 and 3. Log out with “Reopen windows when logging
+     back in” unchecked, and log back in.
+   - Expect: iTerm2 launches as a login item, its windows return to Desktops
+     2 and 3 (the new default), and the notice appears. The log shows an
+     oapp event with 'prdt':'lgit' and no 'rsto', and
+     relaunchedByLoginWindow=false.
+   - Afterward, remove the login item and delete TALLogoutSavesState if it
+     was unset before.
+
+6. Update restart: no notice
+   - Reset. Install an update through Sparkle (or post
+     SUUpdaterWillRestartNotificationName and quit).
+   - Expect: windows return to their Spaces, no notice, forcedByUpdate=true.
+
+7. Startup arrangement plus session restoration: no notice
+   - Reset. Save an arrangement with “Reopen windows on the desktops they’re
+     on now” checked while its windows are on Desktops 2 and 3. Make it the
+     default arrangement, and set Window restoration policy to “Open Default
+     Window Arrangement”.
+   - Quit from Desktop 1 and relaunch by hand.
+   - Expect: the arrangement's windows go to Desktops 2 and 3, no notice,
+     opensArrangementOrNothing=true, and the Settings checkbox stays on.
+
+8. Arrangement restored by an AutoLaunch script during session restoration
+   - Reset. Window restoration policy back to “Use System Window
+     Restoration Setting”. Put an AutoLaunch
+     script in place that restores the arrangement from case 7 (for example
+     iterm2.Arrangement.async_restore(connection, name)).
+   - Quit from Desktop 1 with no other windows open, and relaunch by hand.
+   - Expect: the arrangement's windows go to their saved Spaces and no
+     notice is shown for them. If a session-restored window is also on
+     another Space, the notice may appear, but only because of that window.
+
+9. Explicit setting: no notice
+   - Reset, then check and uncheck (or check) the Settings checkbox so the
+     value is stored. Repeat case 1.
+   - Expect: windows follow the setting, and no notice either way.
+
+10. All windows already on the current Space: no notice, and still eligible
+   - Reset. Put every window on Desktop 1. Quit and relaunch from Desktop 1.
+   - Expect: no notice. Then repeat case 1: the notice appears.
+
+11. Revert fallback when the private Space functions are unavailable
+   - Temporarily make iTermWindowSpace.moveToCurrentSpace(_:) return
+     .unavailable at its top, and build. (Not .refused, which skips the
+     fallback.)
+   - Reset. Repeat case 1 up to the notice, with the notice on Desktop 1, and
+     click “Restore Windows to Current Space”.
+   - Expect: both windows come to Desktop 1 and you stay on Desktop 1 (the
+     Space must not switch to a window's desktop). The log shows “Falling
+     back to moveToActiveSpace” for each, and no “Fallback did not bring”
+     line. Afterward the windows behave normally (moving to another Space
+     and back doesn't drag them along), since the old collection behavior is
+     put back.
+   - Remove the temporary change.
