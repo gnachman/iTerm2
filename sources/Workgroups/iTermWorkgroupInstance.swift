@@ -373,6 +373,19 @@ final class iTermWorkgroupInstance: NSObject {
     // the poller productive whenever it exists.
     private var gitDirectoryTracker: iTermAutoGitString?
 
+    // What WorkgroupGitPollPolicy remembers between ticks: the members on
+    // screen at the last tick, the leader's status at the last tick and
+    // when it last changed to idle or waiting, and what the last poll was
+    // for.
+    private var gitPollVisibleMembers = Set<ObjectIdentifier>()
+    private var gitPollLeaderState: SessionState?
+    private var gitPollLeaderQuietSince: Date?
+    private var gitPollLastContext: String?
+    // Set by requestFreshGitState so the policy doesn't decline the poll.
+    private var gitPollRequested = false
+    // Whether the poller's state is current enough to launch a diff.
+    private var gitStateFreshness = WorkgroupGitStateFreshness()
+
     // Workgroup-wide git base ref. Single source of truth — every
     // peer port mirrors this via applyGitBase, and every
     // resolvedCommand / resolvedPerFileCommand caller reads it
@@ -1772,7 +1785,19 @@ final class iTermWorkgroupInstance: NSObject {
     // permanently empty dropdown even though the poller is firing.
     func gitPollerDidUpdate() {
         guard let poller = gitPoller else { return }
-        let statuses = poller.state.fileStatuses ?? []
+        // The update block also runs with no poll behind it (disabling,
+        // changing workers, retrying after a timeout). Only a delivery
+        // says anything about how current the state is.
+        let context = Self.gitPollContext(poller)
+        gitStateFreshness.pollerDidUpdate(deliveryCount: poller.deliveryCount,
+                                          deliveredPollNumber: poller.deliveredPollNumber,
+                                          timedOut: poller.lastPollTimedOut,
+                                          context: context,
+                                          now: NSDate.it_timeSinceBoot())
+        let fromLatestPoll = gitStateIsFromLatestPoll
+        let superseded = gitStateFreshness.isSuperseded(deliveredPollNumber: poller.deliveredPollNumber,
+                                                        context: context)
+        let statuses = poller.state?.fileStatuses ?? []
         var allViews: [SessionToolbarGenericView] = []
         allViews.append(contentsOf: peerPort.allToolbarItemViews)
         for port in nestedPeerPorts {
@@ -1788,10 +1813,19 @@ final class iTermWorkgroupInstance: NSObject {
                 selector.set(fileStatuses: statuses)
             }
         }
-        if statuses.containsDiffableChange {
+        if superseded {
+            // A requested poll is coming that reads the tree after this one
+            // did. Let it decide whether to launch or show the overlay.
+            return
+        }
+        // No age limit here: a poll in a large repository can take
+        // seconds, and what it just delivered is the newest state there is.
+        if statuses.containsDiffableChange && fromLatestPoll {
             fireDeferredDiffLaunches()
         } else {
-            // Empty state under the current gitBase. For any .diff
+            // Empty state under the current gitBase, or stale state (a
+            // poll timed out and the worker replayed its cache), which
+            // must not launch a diff either. For any .diff
             // session that has a pendingDiffLaunch (i.e., the gitBase-
             // change fan-out queued a restart that's still waiting
             // for diffable state) and isn't already showing an
@@ -1830,9 +1864,72 @@ final class iTermWorkgroupInstance: NSObject {
     // difftool ignores untracked files, so firing the launch would just
     // dump "No changes" and immediately exit, which is exactly the
     // situation the deferred-launch path exists to avoid.
+    //
+    // Stale state doesn't count: the tree may have changed since (a
+    // commit made in another window, say), and launching would run
+    // difftool on nothing. A caller that finds the state stale should
+    // call requestFreshGitState and let gitPollerDidUpdate launch.
     @objc var diffLaunchReady: Bool {
-        guard let statuses = gitPoller?.state.fileStatuses else { return false }
+        guard gitStateIsFresh,
+              let statuses = gitPoller?.state?.fileStatuses else {
+            return false
+        }
         return statuses.containsDiffableChange
+    }
+
+    // See WorkgroupGitStateFreshness.
+    private var gitStateIsFromLatestPoll: Bool {
+        guard let poller = gitPoller else {
+            return false
+        }
+        return gitStateFreshness.isFromLatestPoll(deliveredPollNumber: poller.deliveredPollNumber,
+                                                  hasState: poller.state != nil,
+                                                  context: Self.gitPollContext(poller))
+    }
+
+    @objc var gitStateIsFresh: Bool {
+        guard let poller = gitPoller else {
+            return false
+        }
+        return gitStateFreshness.isFresh(deliveredPollNumber: poller.deliveredPollNumber,
+                                         hasState: poller.state != nil,
+                                         context: Self.gitPollContext(poller),
+                                         now: NSDate.it_timeSinceBoot())
+    }
+
+    // What a poll is for: a different directory, base, or worker gives
+    // different state.
+    fileprivate static func gitPollContext(_ poller: iTermGitPoller) -> String {
+        let workerID = (poller.worker as AnyObject?).map { String(describing: ObjectIdentifier($0)) } ?? ""
+        return [poller.currentDirectory, poller.gitBase ?? "", workerID].joined(separator: "\u{0}")
+    }
+
+    // Polls now, even if WorkgroupGitPollPolicy would decline. The result
+    // goes through gitPollerDidUpdate, which launches pending diffs or
+    // shows their waiting overlay, and may arrive before this returns.
+    // Returns false when the poller can't poll (there is none, it's
+    // disabled, or the directory is unknown), so no result will come.
+    @discardableResult
+    @objc func requestFreshGitState() -> Bool {
+        guard let poller = gitPoller,
+              poller.enabled,
+              !poller.currentDirectory.isEmpty else {
+            return false
+        }
+        let pollInFlight = poller.hasPollInFlight
+        gitStateFreshness.freshStateRequested(startedPollCount: poller.startedPollCount,
+                                              context: Self.gitPollContext(poller))
+        RLog("iTermWorkgroupInstance: requesting fresh git state for \(instanceUniqueIdentifier) pollInFlight=\(pollInFlight)")
+        if !pollInFlight {
+            // The worker would answer from a cache entry that may predate
+            // whatever prompted this request. (A bump during a poll polls
+            // again without the cache already.)
+            let worker: iTermGitPollWorkerProtocol = poller.worker ?? iTermGitPollWorker.sharedInstance()
+            worker.invalidateCache(forPath: poller.currentDirectory)
+        }
+        gitPollRequested = true
+        poller.bump()
+        return true
     }
 
     // Public entry point to drain any pending diff launches if the
@@ -1845,8 +1942,11 @@ final class iTermWorkgroupInstance: NSObject {
     // close that gap. Safe to call when not ready (gated below).
     @objc
     func fireDeferredDiffLaunchesIfReady() {
-        guard diffLaunchReady else { return }
-        fireDeferredDiffLaunches()
+        if diffLaunchReady {
+            fireDeferredDiffLaunches()
+        } else if !gitStateIsFresh {
+            requestFreshGitState()
+        }
     }
 
     // Walk every session we own and fire any deferred .diff-mode
@@ -1879,8 +1979,66 @@ final class iTermWorkgroupInstance: NSObject {
 extension iTermWorkgroupInstance: iTermGitPollerDelegate {
     func gitPollerShouldPoll(_ poller: iTermGitPoller,
                              after lastPoll: Date?) -> Bool {
-        // Instance exists => workgroup is active => poll.
-        return true
+        let now = Date()
+        let members = liveMemberSessions
+
+        let visibleMembers = members.filter { Self.isOnScreen($0) }
+        let visible = Set(visibleMembers.map { ObjectIdentifier($0) })
+        let visibleMemberAwaitsChanges = visibleMembers.contains {
+            $0.workgroupSessionMode == .diff && $0.hasPendingDiffLaunch
+        }
+        let memberBecameVisible = !visible.subtracting(gitPollVisibleMembers).isEmpty
+        gitPollVisibleMembers = visible
+
+        // The poller's timer runs on the main thread.
+        let leaderState: SessionState = MainActor.assumeIsolated {
+            mainSession?.tabStatus.map {
+                WorkgroupIntrospection.reportedState(forTabStatus: $0)
+            } ?? .unknown
+        }
+        if leaderState == .idle || leaderState == .waiting,
+           let previous = gitPollLeaderState,
+           previous != leaderState {
+            gitPollLeaderQuietSince = now
+        }
+        gitPollLeaderState = leaderState
+
+        let context = Self.gitPollContext(poller)
+
+        let inputs = WorkgroupGitPollPolicy.Inputs(
+            lastPoll: lastPoll,
+            now: now,
+            contextChanged: gitPollLastContext != nil && gitPollLastContext != context,
+            pollRequested: gitPollRequested,
+            anyMemberVisible: !visible.isEmpty,
+            memberBecameVisible: memberBecameVisible,
+            visibleMemberAwaitsChanges: visibleMemberAwaitsChanges,
+            leaderState: leaderState,
+            leaderQuietSince: gitPollLeaderQuietSince,
+            lastNewline: members.map { $0.activityInfo.lastNewline }.max().map {
+                NSDate.it_dateWithTime(sinceBoot: $0)
+            },
+            lastPollTimedOut: poller.lastPollTimedOut)
+        let result = WorkgroupGitPollPolicy.shouldPoll(inputs)
+        DLog("Workgroup git poll for \(instanceUniqueIdentifier): \(result) leader=\(leaderState) visible=\(visible.count) becameVisible=\(memberBecameVisible) awaitsChanges=\(visibleMemberAwaitsChanges) lastPoll=\(lastPoll.d)")
+        if result {
+            gitPollLastContext = context
+            gitPollRequested = false
+        }
+        return result
+    }
+
+    // Whether the session's pane is in the selected tab of a window
+    // that is at least partly on screen.
+    private static func isOnScreen(_ session: PTYSession) -> Bool {
+        guard session.isVisibleForDeferredDiff,
+              let view = session.view,
+              !view.isHiddenOrHasHiddenAncestor,
+              let window = view.window,
+              window.isVisible else {
+            return false
+        }
+        return window.occlusionState.contains(.visible)
     }
 }
 

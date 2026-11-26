@@ -114,6 +114,16 @@ Improvements:
   until the status changes.
 - The GPU renderer uses much less CPU while a
   session sits idle. Issue 8640.
+- Workgroups no longer check git status every
+  two seconds no matter what. A workgroup that
+  isn’t on screen doesn’t check at all until it
+  comes back. On screen, it checks every two
+  seconds while the agent is working, every
+  five seconds while a Diff session waits for
+  changes, and otherwise when you press Return,
+  when the agent’s turn ends, and every 30
+  seconds. This cuts CPU use in large
+  repositories. Issue 13243.
 
 Bug Fixes:
 - With tabs on the left or right, clicking a

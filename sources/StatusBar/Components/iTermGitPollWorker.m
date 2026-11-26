@@ -25,6 +25,7 @@ typedef void (^iTermGitPollWorkerCompletionBlock)(iTermGitState * _Nullable, BOO
 @implementation iTermGitPollWorker {
     NSMutableDictionary<NSString *, iTermGitState *> *_cache;
     NSMutableDictionary<NSString *, NSMutableArray<iTermGitPollWorkerCompletionBlock> *> *_pending;
+    iTermGitPollWorkerRequester _requester;
 }
 
 + (instancetype)sharedInstance {
@@ -37,15 +38,28 @@ typedef void (^iTermGitPollWorkerCompletionBlock)(iTermGitState * _Nullable, BOO
 }
 
 - (instancetype)init {
+    return [self initWithRequester:^(NSString *path,
+                                     NSString * _Nullable gitBase,
+                                     BOOL includeDiffStats,
+                                     void (^completion)(iTermGitState * _Nullable, BOOL)) {
+        [[iTermSlowOperationGateway sharedInstance] requestGitStateForPath:path
+                                                                   gitBase:gitBase
+                                                          includeDiffStats:includeDiffStats
+                                                                completion:completion];
+    }];
+}
+
+- (instancetype)initWithRequester:(iTermGitPollWorkerRequester)requester {
     self = [super init];
     if (self) {
         _cache = [NSMutableDictionary dictionary];
         _pending = [NSMutableDictionary dictionary];
+        _requester = [requester copy];
     }
     return self;
 }
 
-- (NSString *)cachedBranchForPath:(NSString *)path {
+- (nullable NSString *)cachedBranchForPath:(NSString *)path {
     // Branch is the same regardless of gitBase or includeDiffStats
     // — scan every key that could belong to this path. Three key
     // shapes exist: bare `path` (basic, HEAD), `path\x01stats`
@@ -128,16 +142,24 @@ typedef void (^iTermGitPollWorkerCompletionBlock)(iTermGitState * _Nullable, BOO
         return;
     }
 
-    _pending[cacheKey] = [@[ [completion copy] ] mutableCopy];
+    NSMutableArray<iTermGitPollWorkerCompletionBlock> *waiters = [@[ [completion copy] ] mutableCopy];
+    _pending[cacheKey] = waiters;
     DLog(@"Create pending request for %@ with a single waiter", cacheKey);
     DLog(@"Send through gateway with the following pending requests:\n%@", _pending);
-    [[iTermSlowOperationGateway sharedInstance] requestGitStateForPath:path
-                                                               gitBase:gitBase
-                                                      includeDiffStats:includeDiffStats
-                                                            completion:^(iTermGitState * _Nullable state, BOOL timedOut) {
+    _requester(path, gitBase, includeDiffStats, ^(iTermGitState * _Nullable state, BOOL timedOut) {
         DLog(@"Got response for %@ with state %@ timedOut=%@", cacheKey, state, @(timedOut));
+        if (self->_pending[cacheKey] != waiters) {
+            // The path was invalidated while this request was in flight. Its
+            // waiters still need an answer (a poller waits for one before it
+            // polls again), but the reply mustn't go back in the cache.
+            DLog(@"Request for %@ was invalidated. Answer its %@ waiters without caching.", cacheKey, @(waiters.count));
+            for (iTermGitPollWorkerCompletionBlock block in waiters) {
+                block(state, timedOut);
+            }
+            return;
+        }
         [self didFetchState:state timedOut:timedOut cacheKey:cacheKey];
-    }];
+    });
 }
 
 - (void)didFetchState:(nullable iTermGitState *)state timedOut:(BOOL)timedOut cacheKey:(NSString *)cacheKey {
@@ -168,7 +190,10 @@ typedef void (^iTermGitPollWorkerCompletionBlock)(iTermGitState * _Nullable, BOO
 
 - (void)invalidateCacheForPath:(NSString *)path {
     // Wipe both the cache and the pending dict for every key that
-    // belongs to this path. Three key shapes:
+    // belongs to this path, so the next request starts a new fetch
+    // instead of joining one already under way. A removed pending
+    // request's waiters still get its reply; see requestPath. Three key
+    // shapes:
     //   `path`                       — basic, HEAD
     //   `path\x01stats[\x02<base>]`  — rich, HEAD or non-HEAD base
     //   `path\x02<base>`             — basic, non-HEAD base

@@ -25496,8 +25496,12 @@ resolveSymlinksInDirectory:(NSString *)directory
     return YES;
 }
 
-- (iTermActivityInfo)statusBarActivityInfo {
+- (iTermActivityInfo)activityInfo {
     return _activityInfo;
+}
+
+- (iTermActivityInfo)statusBarActivityInfo {
+    return self.activityInfo;
 }
 
 - (void)statusBarSetFilter:(NSString *)query {

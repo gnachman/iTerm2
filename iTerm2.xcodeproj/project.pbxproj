@@ -1058,6 +1058,7 @@
 		5A68344851B7CEE773FF8607 /* AICassette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59B1126B05955C92900D7A85 /* AICassette.swift */; };
 		5A70B4826716B6F27711CADF /* WorkgroupToolbarBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F7C79A0745E993B91C40235 /* WorkgroupToolbarBuilder.swift */; };
 		5A9B38999DE20ABF75B37873 /* WorkgroupNavigationToolbarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18CB4B106AA1AA4EFB180EB7 /* WorkgroupNavigationToolbarItem.swift */; };
+		5BCCFE2ADF5067E61406A961 /* WorkgroupGitPollPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 925092FFA998F9A282DA2234 /* WorkgroupGitPollPolicy.swift */; };
 		5DAE3C891517F3EA4E28183E /* ChatTitleStyling.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39113C8B0BCDC7700DE18F8F /* ChatTitleStyling.swift */; };
 		5DF2A2CA4FCF770F809772A9 /* HandleAgentHookCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 618C4DEE2422C91AD54236D8 /* HandleAgentHookCommand.swift */; };
 		5E289834DF953168C3404A78 /* iTermAttributedStringBuilderBenchmark.m in Sources */ = {isa = PBXBuildFile; fileRef = CB761DEB4DEEACD76A01D701 /* iTermAttributedStringBuilderBenchmark.m */; };
@@ -1287,6 +1288,7 @@
 		A3275920513B30BC4D53A3C3 /* iTermQuickLookHoverController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDD8386174BE2C15575D8060 /* iTermQuickLookHoverController.swift */; };
 		A2E47E71AC5617617C055729 /* TabContentModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE4C421E9F87AA21017D4A8B /* TabContentModel.swift */; };
 		A39EE4DF4278D752D3E9CA21 /* iTermJobInfoPopoverViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34C838CC7F84A22E7B7E3385 /* iTermJobInfoPopoverViewController.swift */; };
+		A3BEC2DF5975A63551882C07 /* WorkgroupGitStateFreshness.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DD6BDC7CB95E277857E5BB /* WorkgroupGitStateFreshness.swift */; };
 		A445EEDC85D346B39596FDC3 /* iTermLayoutCalculator.h in Headers */ = {isa = PBXBuildFile; fileRef = 93EDFB853885460AA504C6B9 /* iTermLayoutCalculator.h */; };
 		A4DA57992DB5D9D843661F94 /* it2-remote in Resources */ = {isa = PBXBuildFile; fileRef = E7CD7C850CA3B436FB0CF26C /* it2-remote */; };
 		A517C8FDABEE95F675923264 /* AppleIntelligenceRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD61537B8518CF9B95B983D9 /* AppleIntelligenceRunner.swift */; };
@@ -6295,6 +6297,7 @@
 		9079FD5CC4CD8874C1EB3A56 /* iTermTabSwitcher.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermTabSwitcher.swift; sourceTree = "<group>"; };
 		915FC56D082AE9C9EF31D4D5 /* CompanionAlert+Database.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "CompanionAlert+Database.swift"; sourceTree = "<group>"; };
 		91FA576A88BCF13676249576 /* iterm2-test-adapter */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = "iterm2-test-adapter"; path = "../pwmplugin/binaries/iterm2-test-adapter"; sourceTree = "<group>"; };
+		925092FFA998F9A282DA2234 /* WorkgroupGitPollPolicy.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupGitPollPolicy.swift; sourceTree = "<group>"; };
 		927F7B73B30C4AC9B984312A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermHelpMessageViewController.xib; sourceTree = "<group>"; };
 		92FC80BA122066E3610BEA16 /* IT2.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IT2.swift; path = it2cli/Sources/it2core/IT2.swift; sourceTree = "<group>"; };
 		93785A2DB0D580671E2E97F0 /* WorkgroupBrowserURLBinding.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupBrowserURLBinding.swift; sourceTree = "<group>"; };
@@ -9330,6 +9333,7 @@
 		F6441F710E748404000EC682 /* CGSWorkspace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSWorkspace.h; sourceTree = "<group>"; };
 		F69E788C0AB7AC6D001EC0FF /* iTermNotificationController.m */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = iTermNotificationController.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		F69E78910AB7AC85001EC0FF /* iTermNotificationController.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermNotificationController.h; sourceTree = "<group>"; tabWidth = 4; };
+		F6DD6BDC7CB95E277857E5BB /* WorkgroupGitStateFreshness.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupGitStateFreshness.swift; sourceTree = "<group>"; };
 		F6E2DED70AE2F67200D20B3B /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Sparkle.framework; sourceTree = "<group>"; };
 		F6E708B70A9D0EA400D0C4EF /* PSMTabDragAssistant.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMTabDragAssistant.h; sourceTree = "<group>"; };
 		F6E708B80A9D0EA400D0C4EF /* PSMTabDragAssistant.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMTabDragAssistant.m; sourceTree = "<group>"; };
@@ -10678,6 +10682,8 @@
 				10C2418096398A20F49D528D /* WorkgroupBrowserNavigation.swift */,
 				74C00C471BDDD84B47B672EA /* WorkgroupBrowserNavigationSheetController.swift */,
 				8439F1F863561F493A67E3B0 /* WorkgroupBrowserMemory.swift */,
+				925092FFA998F9A282DA2234 /* WorkgroupGitPollPolicy.swift */,
+				F6DD6BDC7CB95E277857E5BB /* WorkgroupGitStateFreshness.swift */,
 			);
 			path = Workgroups;
 			sourceTree = "<group>";
@@ -20962,6 +20968,8 @@
 				FAB4A6AEB117201B8881A49B /* WindowArrangementNamePrompt.swift in Sources */,
 				E23AD13BC2AF859FAC3A4570 /* WindowSpaceRestorer.swift in Sources */,
 				AB061A2C75912744EA3A1338 /* iTermMetalResourceRecorder.swift in Sources */,
+				5BCCFE2ADF5067E61406A961 /* WorkgroupGitPollPolicy.swift in Sources */,
+				A3BEC2DF5975A63551882C07 /* WorkgroupGitStateFreshness.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

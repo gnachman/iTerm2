@@ -185,6 +185,46 @@ final class RemoteGitPollWorkerTests: XCTestCase {
         XCTAssertEqual(runner.commands.count, 2)
     }
 
+    func testInvalidatedRequestStillAnswersItsWaitersWithoutCaching() {
+        let runner = FakeRunner()
+        let worker = iTermRemoteGitPollWorker(runner: runner)
+        var answers = [String?]()
+        worker.requestPath("/r", gitBase: nil, includeDiffStats: true) { state, _ in
+            answers.append(state?.branch)
+        }
+        XCTAssertEqual(runner.commands.count, 1)
+
+        worker.invalidateCache(forPath: "/r")
+        // A request after the invalidation runs the script again rather
+        // than joining the run already under way.
+        worker.requestPath("/r", gitBase: nil, includeDiffStats: true) { state, _ in
+            answers.append(state?.branch)
+        }
+        XCTAssertEqual(runner.commands.count, 2)
+
+        let first = runner.pending.removeFirst()
+        first(Self.scriptOutput(branch: "old"))
+        XCTAssertEqual(answers, ["old"], "The invalidated request answers only its own waiter")
+
+        // The newer request's waiter is still waiting, and the old answer
+        // wasn't cached: a third request joins the newer run.
+        worker.requestPath("/r", gitBase: nil, includeDiffStats: true) { state, _ in
+            answers.append(state?.branch)
+        }
+        XCTAssertEqual(runner.commands.count, 2)
+
+        let second = runner.pending.removeFirst()
+        second(Self.scriptOutput(branch: "new"))
+        XCTAssertEqual(answers, ["old", "new", "new"])
+    }
+
+    private static func scriptOutput(branch: String) -> String {
+        let json: [String: Any] = ["branch": branch, "ahead": "", "behind": "", "dirty": false,
+                                   "adds": 0, "deletes": 0, "repoState": "none"]
+        let data = try! JSONSerialization.data(withJSONObject: json)
+        return "it2-git-state:" + data.base64EncodedString() + "\r\n"
+    }
+
     func testPythonIsLookedUpOnce() {
         let runner = FakeRunner()
         let worker = iTermRemoteGitPollWorker(runner: runner)

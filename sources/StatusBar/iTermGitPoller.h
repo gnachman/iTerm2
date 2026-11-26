@@ -34,21 +34,42 @@ NS_ASSUME_NONNULL_BEGIN
 // Setting a new value invalidates the per-path cache and bumps so
 // the picker repopulates without waiting for the next poll tick.
 @property (nonatomic, copy, nullable) NSString *gitBase;
-@property (nonatomic, readonly) iTermGitState *state;
+// nil until the first poll, and after the worker changes.
+@property (nonatomic, readonly, nullable) iTermGitState *state;
 @property (nonatomic, weak) id<iTermGitPollerDelegate> delegate;
 // Where git state comes from. nil (the default) reads repositories on this Mac. A remote worker
 // reads them on a host reached through SSH Integration. Changing it forgets the current state.
 @property (nonatomic, strong, nullable) id<iTermGitPollWorkerProtocol> worker;
-@property (nonatomic, readonly) NSDate *lastPollTime;
+// When the latest poll started. nil until the first poll.
+@property (nonatomic, readonly, nullable) NSDate *lastPollTime;
 @property (nonatomic, readonly) BOOL hasSuccessfullyFetched;
 @property (nonatomic, readonly) BOOL lastPollTimedOut;
+// Counts poll results delivered to the update block. The update block
+// also runs with no poll behind it (disabling, changing workers,
+// retrying after a timeout), so a caller that needs to know whether
+// `state` just arrived can compare this with the value it last saw.
+@property (nonatomic, readonly) NSUInteger deliveryCount;
+// Polls are numbered from 1 in the order they start. startedPollCount is
+// the number of the latest to start, and deliveredPollNumber is the
+// number of the poll whose result was delivered last (0 before any).
+// A poll that is superseded or abandoned never delivers, so a caller
+// that wants a result from a poll started after some moment should wait
+// for deliveredPollNumber to exceed startedPollCount as of that moment.
+@property (nonatomic, readonly) NSUInteger startedPollCount;
+@property (nonatomic, readonly) NSUInteger deliveredPollNumber;
+// A poll is under way. It is always for the current directory, base, and
+// worker: changing any of them supersedes it. lastPollTime is when it
+// started.
+@property (nonatomic, readonly) BOOL hasPollInFlight;
 
 - (instancetype)initWithCadence:(NSTimeInterval)cadence
                          update:(void (^)(void))update NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
 
-// Poll immediately if possible.
+// Poll immediately if possible. Only one poll runs at a time: a bump
+// while one is in flight polls again once it finishes, because the tree
+// may have changed after the in-flight poll read it.
 - (void)bump;
 
 // Clear the "last poll timed out" flag and repoll immediately. Use this after changing something

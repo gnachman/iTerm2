@@ -2409,13 +2409,19 @@ extension PTYSession {
     // restoration) that have no selector selection to resolve.
     func reloadDiffWithDeferralIfNeeded(resolveCommand: (() -> String?)? = nil) {
         let ready = workgroupInstance?.diffLaunchReady ?? false
-        RLog("PTYSession[\(guid)]: reloadDiffWithDeferralIfNeeded ready=\(ready) hasPendingDiffLaunch=\(hasPendingDiffLaunch) restartable=\(isRestartable())")
+        // diffLaunchReady is false for stale state. In that case, poll
+        // and let the result launch the diff or show the waiting overlay.
+        let stale = !(workgroupInstance?.gitStateIsFresh ?? true)
+        RLog("PTYSession[\(guid)]: reloadDiffWithDeferralIfNeeded ready=\(ready) stale=\(stale) hasPendingDiffLaunch=\(hasPendingDiffLaunch) restartable=\(isRestartable())")
         if hasPendingDiffLaunch {
             if ready {
                 RLog("PTYSession[\(guid)]: reloadDiffWithDeferralIfNeeded firing pending diff launch (State A)")
                 firePendingDiffLaunch()
             } else {
                 RLog("PTYSession[\(guid)]: reloadDiffWithDeferralIfNeeded waiting, launch not ready (State A)")
+                if stale {
+                    workgroupInstance?.requestFreshGitState()
+                }
             }
             return
         }
@@ -2458,8 +2464,15 @@ extension PTYSession {
             restartWithCurrentSelection()
             return
         }
-        RLog("PTYSession[\(guid)]: reloadDiffWithDeferralIfNeeded queuing restart and showing waiting overlay (State B, not ready)")
         pendingDiffLaunch = restartWithCurrentSelection
+        // Assigned before polling: the poll can answer from cache before
+        // requestFreshGitState returns. Its result fires the restart, or
+        // shows the queued-reload overlay if there's nothing to diff.
+        if stale, workgroupInstance?.requestFreshGitState() == true {
+            RLog("PTYSession[\(guid)]: reloadDiffWithDeferralIfNeeded queuing restart until fresh git state arrives (State B, stale)")
+            return
+        }
+        RLog("PTYSession[\(guid)]: reloadDiffWithDeferralIfNeeded queuing restart and showing waiting overlay (State B, not ready)")
         // Queued-reload variant of the overlay: the previous diff
         // output is still on screen behind the panel. Cancel clears
         // pendingDiffLaunch without firing it, so an accidental
@@ -2501,10 +2514,15 @@ extension PTYSession {
         guard workgroupSessionMode == .diff,
               hasPendingDiffLaunch,
               isVisibleForDeferredDiff,
-              workgroupInstance?.diffLaunchReady == true else {
+              let instance = workgroupInstance else {
             return
         }
-        firePendingDiffLaunch()
+        if instance.diffLaunchReady {
+            firePendingDiffLaunch()
+        } else if !instance.gitStateIsFresh {
+            // The poll's result launches the diff if there's something to show.
+            instance.requestFreshGitState()
+        }
     }
 
     // Build a peer session for a workgroup's configured peer, driven

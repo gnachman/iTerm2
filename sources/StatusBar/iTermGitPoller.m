@@ -8,6 +8,7 @@
 #import "iTermGitPoller.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermGitPollWorker.h"
 #import "iTermGitState.h"
 #import "iTermRateLimitedUpdate.h"
@@ -15,10 +16,22 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+// A poll whose completion hasn't come in this long is presumed lost, so
+// it can't stop polling for good. Comfortably longer than the git
+// timeout, which is an advanced setting with no upper limit.
+static NSTimeInterval iTermGitPollerAbandonInFlightPollAfter(void) {
+    return MAX(60, [iTermAdvancedSettingsModel gitTimeout] * 2 + 15);
+}
+
 @implementation iTermGitPoller {
     iTermRateLimitedUpdate *_rateLimit;
     NSTimer *_timer;
     void (^_update)(void);
+    // Identifies the latest poll. A completion for any other is ignored.
+    NSUInteger _pollGeneration;
+    BOOL _pollInFlight;
+    // A bump came in while a poll was in flight.
+    BOOL _pollAgainWhenDone;
 }
 
 - (instancetype)initWithCadence:(NSTimeInterval)cadence update:(void (^)(void))update {
@@ -67,6 +80,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)bump {
     DLog(@"%@: Bump", self);
+    if ([self hasPollInFlight]) {
+        DLog(@"%@: Poll in flight. Poll again when it finishes.", self);
+        _pollAgainWhenDone = YES;
+        return;
+    }
     [self poll];
     // Restart the timer to avoid a double-tap
     if (_timer) {
@@ -93,6 +111,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
     RLog(@"%@: worker changes from %@ to %@", self, _worker, worker);
     _worker = worker;
+    [self forgetInFlightPoll];
     // The state described a repository the new worker cannot see (another host, or this Mac).
     _hasSuccessfullyFetched = NO;
     _lastPollTimedOut = NO;
@@ -105,8 +124,34 @@ NS_ASSUME_NONNULL_BEGIN
     return -[_lastPollTime timeIntervalSinceNow];
 }
 
+- (BOOL)hasPollInFlight {
+    if (!_pollInFlight) {
+        return NO;
+    }
+    if (self.timeSinceLastPoll > iTermGitPollerAbandonInFlightPollAfter()) {
+        RLog(@"%@: Abandoning a poll that never finished", self);
+        [self forgetInFlightPoll];
+        return NO;
+    }
+    return YES;
+}
+
+// What the in-flight poll is for has changed, so its result will be
+// discarded. Let the next poll start right away instead of waiting.
+- (void)forgetInFlightPoll {
+    _pollGeneration += 1;
+    _pollInFlight = NO;
+    _pollAgainWhenDone = NO;
+}
+
 - (void)poll {
     DLog(@"%@: poller running", self);
+    if ([self hasPollInFlight]) {
+        // Polls that overlap would join the same request, and the
+        // result would belong to neither one in particular.
+        DLog(@"%@: don't poll: a poll is in flight", self);
+        return;
+    }
     if (!self.enabled) {
         DLog(@"%@: don't poll: not enabled", self);
         return;
@@ -120,6 +165,11 @@ NS_ASSUME_NONNULL_BEGIN
         return;
     }
     _lastPollTime = [NSDate date];
+    _pollGeneration += 1;
+    const NSUInteger generation = _pollGeneration;
+    _startedPollCount += 1;
+    const NSUInteger pollNumber = _startedPollCount;
+    _pollInFlight = YES;
     __weak __typeof(self) weakSelf = self;
     NSString *polledPath = self.currentDirectory;
     DLog(@"%@: POLL: request path %@", self, polledPath);
@@ -133,6 +183,11 @@ NS_ASSUME_NONNULL_BEGIN
         if (!strongSelf) {
             return;
         }
+        if (generation != strongSelf->_pollGeneration) {
+            RLog(@"%@: Discarding the result of a poll that was superseded", strongSelf);
+            return;
+        }
+        strongSelf->_pollInFlight = NO;
         if ([strongSelf effectiveWorker] != worker) {
             RLog(@"%@: Discarding a poll result from a worker no longer in use", strongSelf);
             return;
@@ -144,7 +199,16 @@ NS_ASSUME_NONNULL_BEGIN
                  strongSelf, polledPath, strongSelf.currentDirectory);
             return;
         }
+        strongSelf->_deliveredPollNumber = pollNumber;
         [strongSelf didPollWithUpdatedState:state timedOut:timedOut];
+        if (strongSelf->_pollAgainWhenDone) {
+            strongSelf->_pollAgainWhenDone = NO;
+            // The worker just cached this result, and would answer the
+            // follow-up from that cache. The point of the follow-up is that
+            // the tree may have changed after this poll read it.
+            [[strongSelf effectiveWorker] invalidateCacheForPath:polledPath];
+            [strongSelf poll];
+        }
     }];
 }
 
@@ -156,10 +220,11 @@ NS_ASSUME_NONNULL_BEGIN
         _hasSuccessfullyFetched = YES;
     }
     _lastPollTimedOut = timedOut;
+    _deliveryCount += 1;
     self.state = state;
 }
 
-- (void)setState:(iTermGitState *)state {
+- (void)setState:(iTermGitState * _Nullable)state {
     DLog(@"%@: Update state of git poller to %@", self, state);
     _state = state;
     _update();
@@ -174,6 +239,7 @@ NS_ASSUME_NONNULL_BEGIN
         return;
     }
     _gitBase = [gitBase copy];
+    [self forgetInFlightPoll];
     // Invalidate any in-flight pending requests against the old
     // base so a stale reply doesn't land back in the cache. Cached
     // entries are keyed by base, so they simply stop being read.
@@ -208,6 +274,7 @@ NS_ASSUME_NONNULL_BEGIN
         }];
     }
     _currentDirectory = [currentDirectory copy];
+    [self forgetInFlightPoll];
     // These flags are per-directory: a fast repo that polls cleanly shouldn't mask a subsequent
     // slow repo that only times out.
     _hasSuccessfullyFetched = NO;

@@ -158,7 +158,14 @@ final class iTermRemoteGitPollWorker: NSObject, @preconcurrency iTermGitPollWork
 
     private weak var runner: RemoteGitCommandRunning?
     private var cache = [String: iTermGitState]()
-    private var pending = [String: [Completion]]()
+    // One run of the script and the completions waiting on it.
+    private final class Request {
+        var completions: [Completion]
+        init(_ completion: @escaping Completion) {
+            completions = [completion]
+        }
+    }
+    private var pending = [String: Request]()
     // Bumped by invalidateCache(forPath:) so an answer already in flight is not cached.
     private var generation = 0
     private var python: String?
@@ -190,26 +197,32 @@ final class iTermRemoteGitPollWorker: NSObject, @preconcurrency iTermGitPollWork
             completion(cached, false)
             return
         }
-        if pending[key] != nil {
-            pending[key]?.append(completion)
+        if let request = pending[key] {
+            request.completions.append(completion)
             return
         }
-        pending[key] = [completion]
+        let request = Request(completion)
+        pending[key] = request
         withPython { [weak self] python in
             guard let self else {
                 return
             }
             guard let python else {
-                self.finish(key: key, generation: self.generation, state: nil, timedOut: false, cacheable: false)
+                self.finish(key: key, request: request, generation: self.generation, state: nil, timedOut: false, cacheable: false)
                 return
             }
-            self.run(python: python, key: key, path: path, gitBase: gitBase, includeDiffStats: includeDiffStats)
+            self.run(python: python, key: key, request: request, path: path, gitBase: gitBase, includeDiffStats: includeDiffStats)
         }
     }
 
-    private func run(python: String, key: String, path: String, gitBase: String?, includeDiffStats: Bool) {
+    private func run(python: String,
+                     key: String,
+                     request: Request,
+                     path: String,
+                     gitBase: String?,
+                     includeDiffStats: Bool) {
         guard let runner else {
-            finish(key: key, generation: generation, state: nil, timedOut: false, cacheable: false)
+            finish(key: key, request: request, generation: generation, state: nil, timedOut: false, cacheable: false)
             return
         }
         let timeout = gitTimeoutOverride ?? max(1, iTermAdvancedSettingsModel.gitTimeout())
@@ -226,7 +239,7 @@ final class iTermRemoteGitPollWorker: NSObject, @preconcurrency iTermGitPollWork
             }
             answered = true
             DLog("Remote git state for \(path): no answer in time")
-            self?.finish(key: key, generation: generation, state: nil, timedOut: true, cacheable: false)
+            self?.finish(key: key, request: request, generation: generation, state: nil, timedOut: true, cacheable: false)
         }
         runner.runRemoteGitCommand(command) { [weak self] output in
             guard !answered else {
@@ -236,6 +249,7 @@ final class iTermRemoteGitPollWorker: NSObject, @preconcurrency iTermGitPollWork
             var timedOut = ObjCBool(false)
             let state = output.flatMap { iTermRemoteGitState.state(fromScriptOutput: $0, timedOut: &timedOut) }
             self?.finish(key: key,
+                         request: request,
                          generation: generation,
                          state: state,
                          timedOut: timedOut.boolValue,
@@ -243,12 +257,21 @@ final class iTermRemoteGitPollWorker: NSObject, @preconcurrency iTermGitPollWork
         }
     }
 
-    private func finish(key: String, generation: Int, state: iTermGitState?, timedOut: Bool, cacheable: Bool) {
+    private func finish(key: String,
+                        request: Request,
+                        generation: Int,
+                        state: iTermGitState?,
+                        timedOut: Bool,
+                        cacheable: Bool) {
         if cacheable && generation == self.generation, let state {
             cache[key] = state
         }
-        let completions = pending.removeValue(forKey: key) ?? []
-        for completion in completions {
+        // An invalidation may have replaced this request with a newer one,
+        // whose waiters it must leave alone.
+        if pending[key] === request {
+            pending.removeValue(forKey: key)
+        }
+        for completion in request.completions {
             completion(state, timedOut)
         }
     }
@@ -291,9 +314,14 @@ final class iTermRemoteGitPollWorker: NSObject, @preconcurrency iTermGitPollWork
         }
     }
 
+    // Also forgets the path's requests in flight, so the next request runs
+    // the script again instead of joining a run that may have read the
+    // tree too early. A forgotten request still answers its waiters.
     func invalidateCache(forPath path: String) {
         generation += 1
-        cache = cache.filter { !$0.key.hasPrefix(path + "\u{0}") }
+        let prefix = path + "\u{0}"
+        cache = cache.filter { !$0.key.hasPrefix(prefix) }
+        pending = pending.filter { !$0.key.hasPrefix(prefix) }
     }
 }
 

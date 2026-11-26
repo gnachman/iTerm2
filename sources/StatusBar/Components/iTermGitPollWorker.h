@@ -23,9 +23,18 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)invalidateCacheForPath:(NSString *)path;
 @end
 
+// Fetches git state for a path. The default sends the request through
+// iTermSlowOperationGateway. Tests substitute their own.
+typedef void (^iTermGitPollWorkerRequester)(NSString *path,
+                                            NSString * _Nullable gitBase,
+                                            BOOL includeDiffStats,
+                                            void (^completion)(iTermGitState * _Nullable state, BOOL timedOut));
+
 @interface iTermGitPollWorker : NSObject<iTermGitPollWorkerProtocol>
 + (instancetype)sharedInstance;
-- (NSString *)cachedBranchForPath:(NSString *)path;
+- (instancetype)init;
+- (instancetype)initWithRequester:(iTermGitPollWorkerRequester)requester NS_DESIGNATED_INITIALIZER;
+- (nullable NSString *)cachedBranchForPath:(NSString *)path;
 - (NSString *)debugInfoForDirectory:(NSString *)path;
 
 @end

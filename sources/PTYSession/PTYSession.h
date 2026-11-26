@@ -7,6 +7,7 @@
 #import "iTermEncoderAdapter.h"
 #import "iTermFindDriver.h"
 #import "iTermFileDescriptorClient.h"
+#import "iTermActivityInfo.h"
 #import "iTermMetalUnavailableReason.h"
 #import "iTermWeakReference.h"
 #import "ITAddressBookMgr.h"
@@ -440,6 +441,9 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // update the tab and window titles, stop "tail find" (searching the live session repeatedly
 // because the find window is open), and evaluating partial-line triggers.
 @property(nonatomic, assign) BOOL active;
+
+// When this session last sent a newline and last had activity, as time since boot.
+@property(nonatomic, readonly) iTermActivityInfo activityInfo;
 
 @property(nonatomic, assign) BOOL alertOnNextMark;
 // Prevents the pane from being dragged or detached.
