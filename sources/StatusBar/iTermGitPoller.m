@@ -234,8 +234,9 @@ static NSTimeInterval iTermGitPollerAbandonInFlightPollAfter(void) {
     RLog(@"%@: Set gitBase to %@", self, gitBase);
     NSString *normalizedNew = gitBase.length > 0 ? gitBase : nil;
     NSString *normalizedOld = _gitBase.length > 0 ? _gitBase : nil;
+    // -isEqualToString: is declared nonnull. Exactly one nil base means the base changed.
     if (normalizedNew == normalizedOld ||
-        [normalizedNew isEqualToString:normalizedOld]) {
+        (normalizedNew && normalizedOld && [normalizedNew isEqualToString:normalizedOld])) {
         return;
     }
     _gitBase = [gitBase copy];

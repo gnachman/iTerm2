@@ -38,11 +38,11 @@ iTermSRGBColor iTermHDRTextBoostedColor(iTermSRGBColor encoded, CGFloat gain, CG
 // `headroom` is the screen's
 // maximumPotentialExtendedDynamicRangeColorComponentValue, as for the HDR
 // cursor. Each renderer also skips the boost per cell over a light cell
-// background.
+// background. A nil `backgroundColor` (no color map yet) counts as light: no boost.
 CGFloat iTermHDRTextGain(CGFloat requested,
                          BOOL profileEnabled,
                          BOOL focused,
-                         NSColor *backgroundColor,
+                         NSColor * _Nullable backgroundColor,
                          CGFloat headroom);
 
 NS_ASSUME_NONNULL_END

@@ -27,6 +27,11 @@ const char *iTermTextureMetadataKey = "iTermTextureMetadataKey";
 }
 
 + (NSDictionary *)metadataForTexture:(id<MTLTexture>)texture {
+    // A cache miss in -[iTermImageRendererTransientState addRun:] passes nil. The runtime
+    // function's object is declared nonnull; it returns nil for nil, so do that here.
+    if (!texture) {
+        return nil;
+    }
     return objc_getAssociatedObject(texture, iTermTextureMetadataKey);
 }
 
