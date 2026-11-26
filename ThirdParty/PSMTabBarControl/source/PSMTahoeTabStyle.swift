@@ -291,6 +291,29 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         return lines
     }
 
+    // The rich lines this tab draws. A pinned tab in a horizontal bar is too
+    // narrow for them and shows only its title's first character, but in a
+    // vertical bar it is as wide as any other tab, so it draws them.
+    private func drawnRichLines(cell: PSMTabBarCell) -> [PSMTabRichLine]? {
+        if isCompactPinned(cell) {
+            return nil
+        }
+        return richLines(cell: cell)
+    }
+
+    // A pinned tab in a horizontal bar is narrow, so it shows little more than
+    // its pin. In a vertical bar it is as wide as any other tab.
+    private func isCompactPinned(_ cell: PSMTabBarCell) -> Bool {
+        return cell.isPinned && orientation == .horizontalOrientation
+    }
+
+    // Whether a pinned tab draws its pin. A compact one has room for only one
+    // of its pin and graphic, and prefers the graphic. In a vertical bar the
+    // pin goes before the graphic.
+    private func showsPinIndicator(cell: PSMTabBarCell) -> Bool {
+        return cell.isPinned && (!isCompactPinned(cell) || cell.cachedTitle?.inputs.graphic == nil)
+    }
+
     // How far text is drawn below vertically centered, to match the OS's
     // rendering.
     private var textShift: CGFloat {
@@ -302,7 +325,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     // lines. Returns the minY that does that for an accessory of the given
     // height, or nil for other tabs, which keep their centered layout.
     private func richAccessoryMinY(cell: PSMTabBarCell, height: CGFloat) -> CGFloat? {
-        guard !cell.isPinned, let lines = richLines(cell: cell) else {
+        guard let lines = drawnRichLines(cell: cell) else {
             return nil
         }
         let midY = PSMTabRichContentRenderer.firstLineMidY(lines: lines,
@@ -1931,7 +1954,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     
     private func widthOfLeftMatterInCell(_ cell: PSMTabBarCell) -> CGFloat {
         var resultWidth: CGFloat = 0.0
-        let rich = richLines(cell: cell) != nil && !cell.isPinned
+        let rich = drawnRichLines(cell: cell) != nil
 
         // left margin
         resultWidth = rich ? Self.richHorizontalInset : kSPMTabBarCellInternalXMargin
@@ -1959,7 +1982,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     
     private func widthOfRightMatterInCell(_ cell: PSMTabBarCell) -> CGFloat {
         var resultWidth: CGFloat = 0
-        let rich = richLines(cell: cell) != nil && !cell.isPinned
+        let rich = drawnRichLines(cell: cell) != nil
 
         // object counter? A classic tab without one keeps room to balance the
         // close button, since it centers its title. A rich tab doesn't, and
@@ -2335,7 +2358,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         // tab's leading edge, with the icon, counter, and activity indicator
         // at its trailing edge. A classic horizontal tab centers its title
         // and the icons beside it.
-        let richLines = cell.isPinned ? nil : self.richLines(cell: cell)
+        let richLines = drawnRichLines(cell: cell)
         let contentGravity: Gravity = (richLines == nil && orientation == .horizontalOrientation) ? .center : .left
         
         let orientationShift = if orientation == .verticalOrientation {
@@ -2364,8 +2387,11 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                     }
                 },
             ]))
-        } else if cell.isPinned, let pinImage = _pinImage, cell.cachedTitle?.inputs.graphic == nil {
-            objects.append(FixedSpacerLO(name: "Leading Spacer", width: edgePadding, priority: Priority.required.rawValue, gravity: .left))
+        } else if cell.isPinned, let pinImage = _pinImage, showsPinIndicator(cell: cell) {
+            objects.append(FixedSpacerLO(name: "Leading Spacer",
+                                         width: richLines == nil ? edgePadding : Self.richHorizontalInset,
+                                         priority: Priority.required.rawValue,
+                                         gravity: .left))
 
             let tintColor: NSColor
             let colorKey: UnsafeRawPointer
@@ -2383,7 +2409,17 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                 ImageLO(name: "Pin Icon", image: pinImage, priority: Priority.required.rawValue, gravity: .left) { resolved in
                     var pinRect = resolved.frame
                     pinRect.size = pinImage.size
-                    pinRect.origin.y = cell.frame.minY + floor((cell.frame.height - pinRect.height) / 2.0) + orientationShift + 2.0
+                    // A rich tab puts it on its first line, like its other accessories,
+                    // a point lower so the glyph looks centered beside the title.
+                    if let minY = self.richAccessoryMinY(cell: cell, height: pinRect.height) {
+                        pinRect.origin.y = minY + 1
+                    } else {
+                        // In a vertical bar the pin is followed by the graphic, so it
+                        // is centered like the graphic. A horizontal pinned tab shows
+                        // it alone, beside the title's first character.
+                        let pinNudge = orientation == .verticalOrientation ? 0.0 : 2.0
+                        pinRect.origin.y = cell.frame.minY + floor((cell.frame.height - pinRect.height) / 2.0) + orientationShift + pinNudge
+                    }
                     tintedPin.draw(in: pinRect,
                                    from: NSZeroRect,
                                    operation: .sourceOver,
@@ -2407,11 +2443,12 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             // graphic floating away from the edge, so the close button takes
             // the graphic's place when it shows, as in the Minimal style.
             let graphic = cell.cachedTitle?.inputs.graphic
-            let closeButtonImage = cell.hasCloseButton ? _closeButton : nil
+            // A pinned tab has no close button.
+            let closeButtonImage = (cell.hasCloseButton && !cell.isPinned) ? _closeButton : nil
             if let slotImage = graphic ?? closeButtonImage {
                 let width = max(graphic == nil ? 0 : kPSMTabBarIconWidth, closeButtonImage?.size.width ?? 0)
                 let closeButton = tintedCloseButtonImage(cell: cell)
-                let closeButtonAlpha = self.closeButtonAlpha(cell: cell, highlightAmount: highlightAmount)
+                let closeButtonAlpha = closeButtonImage == nil ? 0 : self.closeButtonAlpha(cell: cell, highlightAmount: highlightAmount)
                 // Without a graphic, the slot holds only the close button, which
                 // goes first when the tab is too narrow, as it does classically.
                 let slotPriority = graphic == nil ? Priority.closeButton : Priority.graphic
@@ -2462,8 +2499,12 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         
         
         // Label and subtitle
-        // For pinned tabs: skip title if a graphic icon is present.
-        let skipLabel = cell.isPinned && cell.cachedTitle?.inputs.graphic != nil
+        // A pinned tab in a horizontal bar is compact: it skips its title if
+        // a graphic icon is present, shows only the title's first character
+        // otherwise, and never shows its subtitle. In a vertical bar it is as
+        // wide as any other tab, so it shows all of them.
+        let compactPinned = isCompactPinned(cell)
+        let skipLabel = compactPinned && cell.cachedTitle?.inputs.graphic != nil
         let subtitleWidth = subtitleWidth(cell: cell, orientation: orientation)
         let labelWidth = max(widthOfAttributedStringInCell(cell), subtitleWidth)
         let supportsMultiLineLabels = self.supportsMultiLineLabels
@@ -2502,7 +2543,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                 if let cachedTitle = cell.cachedTitle,
                    !cachedTitle.isEmpty {
                     let drawString: NSAttributedString
-                    if cell.isPinned && orientation == .horizontalOrientation {
+                    if compactPinned {
                         // For pinned tabs, show only the first character.
                         let title = cachedTitle.inputs.title
                         let firstChar = title.isEmpty ? "" : String(title.prefix(1))
@@ -2528,8 +2569,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                     mainLabelHeight = 0
                 }
 
-                // Draw subtitle (never for pinned tabs).
-                if supportsMultiLineLabels && !cell.isPinned {
+                // Draw subtitle (never for compact pinned tabs).
+                if supportsMultiLineLabels && !compactPinned {
                     self.drawSubtitle(cell: cell,
                                       orientation: orientation,
                                       xOrigin: resolved.frame.minX,

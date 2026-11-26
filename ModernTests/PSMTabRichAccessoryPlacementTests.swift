@@ -239,24 +239,45 @@ final class PSMTabRichAccessoryPlacementTests: XCTestCase {
         }
     }
 
-    // A pinned tab doesn't draw its rich content, so its accessories stay
-    // centered.
-    func testYosemitePinnedTabsKeepAccessoriesCentered() {
+    // A pinned tab in a horizontal bar is too narrow to draw its rich content,
+    // so its accessories stay centered.
+    func testYosemitePinnedHorizontalTabsKeepAccessoriesCentered() {
         let yosemite = PSMYosemiteTabStyle()
-        let yosemiteCell = makeCell(style: yosemite, orientation: .verticalOrientation, rich: true, statusIcon: solidImage(.blue))
+        let yosemiteCell = makeCell(style: yosemite, orientation: .horizontalOrientation, rich: true, statusIcon: solidImage(.blue))
         yosemiteCell.isPinned = true
         assertCentered(yosemite.iconRect(forTabCell: yosemiteCell), "Yosemite icon")
         assertCentered(yosemite.indicatorRect(forTabCell: yosemiteCell), "Yosemite indicator")
     }
 
-    func testTahoePinnedTabsKeepAccessoriesCentered() throws {
+    func testTahoePinnedHorizontalTabsKeepAccessoriesCentered() throws {
+        guard #available(macOS 26, *) else {
+            throw XCTSkip("Tahoe style needs macOS 26")
+        }
+        let tahoe = PSMTahoeTabStyle()
+        let tahoeCell = makeCell(style: tahoe, orientation: .horizontalOrientation, rich: true)
+        tahoeCell.isPinned = true
+        assertCentered(tahoe.indicatorRect(forTabCell: tahoeCell), "Tahoe indicator")
+    }
+
+    // A pinned tab in a vertical bar is as wide as any other, so it draws its
+    // rich content and its accessories follow the title line.
+    func testYosemitePinnedVerticalTabsFollowTheTitleLine() {
+        let yosemite = PSMYosemiteTabStyle()
+        let yosemiteCell = makeCell(style: yosemite, orientation: .verticalOrientation, rich: true, statusIcon: solidImage(.blue))
+        yosemiteCell.isPinned = true
+        assertOnTitleLine(yosemite.iconRect(forTabCell: yosemiteCell), "Yosemite icon")
+        assertOnTitleLine(yosemite.indicatorRect(forTabCell: yosemiteCell), "Yosemite indicator")
+    }
+
+    func testTahoePinnedVerticalTabsFollowTheTitleLine() throws {
         guard #available(macOS 26, *) else {
             throw XCTSkip("Tahoe style needs macOS 26")
         }
         let tahoe = PSMTahoeTabStyle()
         let tahoeCell = makeCell(style: tahoe, orientation: .verticalOrientation, rich: true)
         tahoeCell.isPinned = true
-        assertCentered(tahoe.indicatorRect(forTabCell: tahoeCell), "Tahoe indicator")
+        assertOnTitleLine(tahoe.indicatorRect(forTabCell: tahoeCell), expected: tahoeTitleLineMidY(.verticalOrientation),
+                          "Tahoe indicator")
     }
 
     func testTahoeIndicatorRectStaysCenteredWithoutRichContent() throws {
@@ -647,6 +668,51 @@ final class PSMTabRichAccessoryPlacementTests: XCTestCase {
             throw XCTSkip("Tahoe style needs macOS 26")
         }
         try checkDrawing(style: { PSMTahoeTabStyle() }, titleLineMidY: tahoeTitleLineMidY, tolerance: 1)
+    }
+
+    // A pinned tab in a vertical bar is as wide as any other tab, so it keeps
+    // its graphic and title, and shows its pin before them so it still looks
+    // pinned.
+    private func checkPinnedVerticalTab(style: () -> PSMTabStyle) throws {
+        func pinnedCell(title: String, graphic: NSImage?) -> PSMTabBarCell {
+            let cell = makeCell(style: style(), orientation: .verticalOrientation, rich: false, graphic: graphic)
+            cell.isPinned = true
+            cell.stringValue = title
+            return cell
+        }
+        let untitled = pinnedCell(title: "", graphic: solidImage(.red))
+        let graphic = try XCTUnwrap(drawnBounds(of: untitled, matching: isRed), "graphic")
+
+        // With no graphic or title, only the background is drawn, and a pin
+        // would show up as a difference before the graphic.
+        let bare = makeCell(style: style(), orientation: .verticalOrientation, rich: false)
+        bare.stringValue = ""
+        let pinAndGraphic = try XCTUnwrap(differingBounds(render(untitled), render(bare)))
+        XCTAssertLessThan(pinAndGraphic.minX, graphic.minX - 4, "a pin is drawn before the graphic")
+
+        let titled = pinnedCell(title: "title", graphic: solidImage(.red))
+        let title = try XCTUnwrap(differingBounds(render(titled), render(untitled)), "the title is drawn")
+        XCTAssertGreaterThan(title.minX, graphic.maxX, "the title follows the graphic")
+    }
+
+    func testYosemitePinnedVerticalTabKeepsItsContentAndShowsAPin() throws {
+        try checkPinnedVerticalTab(style: { PSMYosemiteTabStyle() })
+    }
+
+    func testTahoePinnedVerticalTabKeepsItsContentAndShowsAPin() throws {
+        guard #available(macOS 26, *) else {
+            throw XCTSkip("Tahoe style needs macOS 26")
+        }
+        try checkPinnedVerticalTab(style: { PSMTahoeTabStyle() })
+    }
+
+    // A pinned tab in a horizontal bar is too narrow for both its pin and its
+    // graphic, so it shows only the graphic, at its leading edge.
+    func testYosemitePinnedHorizontalTabShowsOnlyItsGraphic() throws {
+        let cell = makeCell(style: PSMYosemiteTabStyle(), orientation: .horizontalOrientation, rich: false, graphic: solidImage(.red))
+        cell.isPinned = true
+        let graphic = try XCTUnwrap(drawnBounds(of: cell, matching: isRed))
+        XCTAssertEqual(graphic.minX, cellFrame.minX + 6, accuracy: 1)
     }
 
     // A classic Yosemite tab with no subtitle draws the same during a tab bar

@@ -1763,11 +1763,11 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
 
 // The tab titles' size: a tab with rich content draws its title as its first
 // line, scaled. Lines' sizes are the same for every tab, so the first tab
-// with lines tells. Pinned tabs don't draw them.
+// with lines tells.
 - (CGFloat)sectionHeadingFontSize {
     NSFont *baseFont = [NSFont systemFontOfSize:_style.fontSize];
     for (PSMTabBarCell *cell in _cells) {
-        if ([cell isTabGroupChip] || cell.isPinned) {
+        if ([cell isTabGroupChip]) {
             continue;
         }
         id identifier = [(NSTabViewItem *)[cell representedObject] identifier];

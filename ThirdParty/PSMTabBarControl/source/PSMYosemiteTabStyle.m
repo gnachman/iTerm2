@@ -284,7 +284,7 @@
 - (CGFloat)minYForAccessoryOfHeight:(CGFloat)height
                              inCell:(PSMTabBarCell *)cell
                        centeredMinY:(CGFloat)centeredMinY {
-    NSArray<PSMTabRichLine *> *richLines = cell.isPinned ? nil : [self richLinesForCell:cell];
+    NSArray<PSMTabRichLine *> *richLines = [self drawnRichLinesForCell:cell];
     if (!richLines) {
         return centeredMinY;
     }
@@ -951,15 +951,22 @@ const void *PSMTabStyleDarkColorKey = "dark";
                         fraction:closeButtonAlpha];
 
     }
-    // Draw pin indicator for pinned tabs (skip when graphic icon is present to avoid overlap).
-    if (cell.isPinned && _pinImage && !cachedTitle.inputs.graphic) {
+    // Draw pin indicator for pinned tabs. A compact one has room for only one
+    // of its pin and graphic, and prefers the graphic. In a vertical bar the
+    // pin goes before the graphic.
+    const BOOL compactPinned = [self isCompactPinnedCell:cell];
+    const BOOL showsPin = cell.isPinned && _pinImage && (!compactPinned || !cachedTitle.inputs.graphic);
+    if (showsPin) {
         NSImage *pinIcon = [_pinImage it_cachingImageWithTintColor:closeButtonTintColor
                                                                key:colorKey];
         NSSize pinSize = [pinIcon size];
         NSRect pinRect;
         pinRect.size = pinSize;
         pinRect.origin.x = cellFrame.origin.x + kSPMTabBarCellInternalXMargin;
-        pinRect.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - pinSize.height) / 2.0);
+        // A rich tab puts it on its first line, like its other accessories.
+        pinRect.origin.y = [self minYForAccessoryOfHeight:pinSize.height
+                                                   inCell:cell
+                                             centeredMinY:cellFrame.origin.y + floor((cellFrame.size.height - pinSize.height) / 2.0)];
         CGFloat pinAlpha = self.windowIsMainAndAppIsActive ? 0.6 : 0.3;
         [pinIcon drawInRect:pinRect
                    fromRect:NSZeroRect
@@ -970,10 +977,16 @@ const void *PSMTabStyleDarkColorKey = "dark";
     }
     // Draw graphic icon (i.e., the app icon, not new-output indicator icon) over close button.
     if (cachedTitle.inputs.graphic) {
+        // Normally the graphic takes the close button's place. A pinned tab
+        // that shows its pin puts the graphic after the pin instead.
+        const CGFloat graphicX = showsPin ? labelPosition : NSMinX(cellFrame) + 6;
         const CGFloat width = [self drawGraphicForCell:cell
                                                  image:cachedTitle.inputs.graphic
+                                                     x:graphicX
                                                  alpha:1 - closeButtonAlpha];
-        if (_orientation == PSMTabBarHorizontalOrientation) {
+        if (showsPin) {
+            labelPosition = graphicX + width;
+        } else if (_orientation == PSMTabBarHorizontalOrientation) {
             reservedSpace = MAX(reservedSpace, width);
         } else {
             labelPosition = MAX(labelPosition, width + kPSMTabBarCellPadding);
@@ -1032,8 +1045,8 @@ const void *PSMTabStyleDarkColorKey = "dark";
     }
 
     // Rich content replaces the title and subtitle.
-    NSArray<PSMTabRichLine *> *richLines = [self richLinesForCell:cell];
-    if (richLines && !cell.isPinned) {
+    NSArray<PSMTabRichLine *> *richLines = [self drawnRichLinesForCell:cell];
+    if (richLines) {
         const NSRect richRect = [self richContentRectForCell:cell
                                                labelPosition:labelPosition
                                                      hasIcon:drewIcon
@@ -1055,8 +1068,10 @@ const void *PSMTabStyleDarkColorKey = "dark";
     CGFloat mainLabelHeight = 0;
     PSMCachedTitle *cachedSubtitle = cell.cachedSubtitle;
     const CGFloat labelOffset = [self willDrawSubtitle:cachedSubtitle] ? [self verticalOffsetForTitleWhenSubtitlePresent] : 0;
-    // For pinned tabs: skip title if a graphic icon is present, otherwise show first character only.
-    BOOL skipLabel = cell.isPinned && cachedTitle.inputs.graphic != nil;
+    // A compact pinned tab skips its title if a graphic icon is present, shows
+    // only the title's first character otherwise, and never shows its
+    // subtitle. In a vertical bar a pinned tab shows all of them.
+    BOOL skipLabel = compactPinned && cachedTitle.inputs.graphic != nil;
     if (!cachedTitle.isEmpty && !skipLabel) {
         NSRect labelRect;
         labelRect.origin.x = labelPosition;
@@ -1074,8 +1089,8 @@ const void *PSMTabStyleDarkColorKey = "dark";
         labelRect.size.height = boundingSize.height;
 
         NSAttributedString *attributedString;
-        if (cell.isPinned && _orientation == PSMTabBarHorizontalOrientation) {
-            // For pinned tabs, show only the first character to keep the tab compact.
+        if (compactPinned) {
+            // Show only the first character to keep the tab compact.
             NSString *title = cachedTitle.inputs.title;
             NSString *firstChar = @"";
             if (title.length > 0) {
@@ -1102,7 +1117,7 @@ const void *PSMTabStyleDarkColorKey = "dark";
         mainLabelHeight = NSHeight(labelRect);
     }
 
-    if ([self supportsMultiLineLabels] && !skipLabel && !cell.isPinned) {
+    if ([self supportsMultiLineLabels] && !skipLabel && !compactPinned) {
         [self drawSubtitle:cachedSubtitle
                          x:labelPosition
                       cell:cell
@@ -1137,6 +1152,22 @@ const void *PSMTabStyleDarkColorKey = "dark";
                       NSMinY(cellFrame),
                       MAX(0, width - reservedSpace),
                       NSHeight(cellFrame));
+}
+
+// The rich lines this tab draws. A pinned tab in a horizontal bar is too narrow
+// for them and shows only its title's first character, but in a vertical bar
+// it is as wide as any other tab, so it draws them.
+- (NSArray<PSMTabRichLine *> *)drawnRichLinesForCell:(PSMTabBarCell *)cell {
+    if ([self isCompactPinnedCell:cell]) {
+        return nil;
+    }
+    return [self richLinesForCell:cell];
+}
+
+// A pinned tab in a horizontal bar is narrow, so it shows little more than its
+// pin. In a vertical bar it is as wide as any other tab.
+- (BOOL)isCompactPinnedCell:(PSMTabBarCell *)cell {
+    return cell.isPinned && _orientation == PSMTabBarHorizontalOrientation;
 }
 
 - (NSArray<PSMTabRichLine *> *)richLinesForCell:(PSMTabBarCell *)cell {
@@ -1208,9 +1239,10 @@ const void *PSMTabStyleDarkColorKey = "dark";
 
 - (CGFloat)drawGraphicForCell:(PSMTabBarCell *)cell
                         image:(NSImage *)image
+                            x:(CGFloat)x
                         alpha:(CGFloat)alpha {
     const NSRect cellFrame = cell.frame;
-    NSRect rect = NSMakeRect(NSMinX(cellFrame) + 6,
+    NSRect rect = NSMakeRect(x,
                              [self minYForAccessoryOfHeight:kPSMTabBarIconWidth
                                                      inCell:cell
                                                centeredMinY:NSMinY(cellFrame) + (NSHeight(cellFrame) - kPSMTabBarIconWidth) / 2.0],
