@@ -2595,6 +2595,9 @@ typedef struct {
     [self updateMinimapFrameAnimated:NO];
     [_rightGutterController layoutPanels];
     [_delegate sessionViewScrollViewDidResize];
+    if (_centersScrollView) {
+        [self updateActivePaneBorder];
+    }
     DLog(@"Returning");
 }
 
@@ -2699,7 +2702,8 @@ typedef NS_OPTIONS(NSUInteger, iTermCornerFlags) {
 
 - (void)updateActivePaneBorder {
     const BOOL isActiveSession = [_delegate sessionViewIsActiveSession];
-    const BOOL shouldShow = ([_delegate sessionViewUseActivePaneBorder] && isActiveSession);
+    // A twin's border shows the part of its view that the live session's grid uses.
+    const BOOL shouldShow = _centersScrollView || ([_delegate sessionViewUseActivePaneBorder] && isActiveSession);
 
     DLog(@"updateActivePaneBorder: isActiveSession=%d shouldShow=%d window=%d", isActiveSession, shouldShow, (int)self.window.windowNumber);
 
