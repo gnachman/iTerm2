@@ -57,7 +57,6 @@
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "PseudoTerminalRestorer.h"
-#import "QLPreviewPanel+iTerm.h"
 #import "TmuxController.h"
 #import "TmuxControllerRegistry.h"
 #import "TmuxDashboardController.h"

@@ -7,7 +7,8 @@
 //
 
 #import "iTermQuickLookController.h"
-#import "QLPreviewPanel+iTerm.h"
+#import "iTerm2SharedARC-Swift.h"
+#import <Quartz/Quartz.h>
 
 @interface iTermQuickLookController() <QLPreviewPanelDataSource, QLPreviewPanelDelegate>
 @property(nonatomic, retain) NSMutableArray<NSURL *> *files;
