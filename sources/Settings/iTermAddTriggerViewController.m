@@ -9,7 +9,6 @@
 #import "SFSymbolEnum/SFSymbolEnum.h"
 
 #import "ITAddressBookMgr.h"
-#import "iTermFocusablePanel.h"
 #import "iTermHighlightLineTrigger.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermTuple.h"

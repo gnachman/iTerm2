@@ -2148,8 +2148,7 @@
 		A6339DD71D232CEE000BAD78 /* StatusItem.png in Resources */ = {isa = PBXBuildFile; fileRef = A6339DD51D232CEE000BAD78 /* StatusItem.png */; };
 		A6339DD81D232CEE000BAD78 /* StatusItem@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6339DD61D232CEE000BAD78 /* StatusItem@2x.png */; };
 		A634479F2A1D381C00805478 /* TransferrableFileMenuItemViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30D9186D1429007F550F /* TransferrableFileMenuItemViewController.m */; };
-		A634817924AFC4AF0003C11B /* iTermFocusablePanel.h in Headers */ = {isa = PBXBuildFile; fileRef = A634817724AFC4AF0003C11B /* iTermFocusablePanel.h */; };
-		A634817A24AFC4AF0003C11B /* iTermFocusablePanel.m in Sources */ = {isa = PBXBuildFile; fileRef = A634817824AFC4AF0003C11B /* iTermFocusablePanel.m */; };
+		5AA34D7AD394C40EDA811DDC /* iTermFocusablePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C1A4D93418020DB6EAB8956 /* iTermFocusablePanel.swift */; };
 		A63493E423E7AC160047C31B /* iTermStatusBarAutoRainbowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A63493E223E7AC160047C31B /* iTermStatusBarAutoRainbowController.h */; };
 		A63493E523E7AC160047C31B /* iTermStatusBarAutoRainbowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A63493E323E7AC160047C31B /* iTermStatusBarAutoRainbowController.m */; };
 		A63493E823E945BA0047C31B /* iTermGlobalScopeController.h in Headers */ = {isa = PBXBuildFile; fileRef = A63493E623E945BA0047C31B /* iTermGlobalScopeController.h */; };
@@ -7042,8 +7041,7 @@
 		A6339DD61D232CEE000BAD78 /* StatusItem@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "StatusItem@2x.png"; path = "images/StatusItem@2x.png"; sourceTree = "<group>"; };
 		A6339DE51D23433A000BAD78 /* iTermWindowImpl.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermWindowImpl.m; sourceTree = "<group>"; };
 		A6339DE61D235AA2000BAD78 /* iTermWindowScriptingImpl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWindowScriptingImpl.m; sourceTree = "<group>"; };
-		A634817724AFC4AF0003C11B /* iTermFocusablePanel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermFocusablePanel.h; sourceTree = "<group>"; };
-		A634817824AFC4AF0003C11B /* iTermFocusablePanel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermFocusablePanel.m; sourceTree = "<group>"; };
+		2C1A4D93418020DB6EAB8956 /* iTermFocusablePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermFocusablePanel.swift; sourceTree = "<group>"; };
 		A63493E223E7AC160047C31B /* iTermStatusBarAutoRainbowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarAutoRainbowController.h; sourceTree = "<group>"; };
 		A63493E323E7AC160047C31B /* iTermStatusBarAutoRainbowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarAutoRainbowController.m; sourceTree = "<group>"; };
 		A63493E623E945BA0047C31B /* iTermGlobalScopeController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGlobalScopeController.h; sourceTree = "<group>"; };
@@ -11320,8 +11318,7 @@
 			children = (
 				A68A30EA186D150A007F550F /* FileTransferManager.h */,
 				A68A30CC186D1414007F550F /* FileTransferManager.m */,
-				A634817724AFC4AF0003C11B /* iTermFocusablePanel.h */,
-				A634817824AFC4AF0003C11B /* iTermFocusablePanel.m */,
+				2C1A4D93418020DB6EAB8956 /* iTermFocusablePanel.swift */,
 				A63F0A5C2BF436850096633F /* iTermHostnameFinder.swift */,
 				A63F0A582BF435200096633F /* iTermSSHHelpers.h */,
 				A63F0A592BF435200096633F /* iTermSSHHelpers.m */,
@@ -16532,7 +16529,6 @@
 				A61A85B124F23CDE00B03880 /* iTermGlobalSearchEngineCursor.h in Headers */,
 				A653F66B24CE7CE30062377E /* iTermGraphEncoder.h in Headers */,
 				A6B6A4FD23CEE6E80016B1AE /* iTermOrderEnforcer.h in Headers */,
-				A634817924AFC4AF0003C11B /* iTermFocusablePanel.h in Headers */,
 				A6257C18217707BB00A8C5BD /* iTermAdjustFontSizeHelper.h in Headers */,
 				A6DCDD202560B410004EA8A1 /* NSAttributedString+PSM.h in Headers */,
 				A629F58A23AF38CA00C2F16B /* iTermClickableTextField.h in Headers */,
@@ -20015,7 +20011,7 @@
 				A69941C82331F7C400C76EF2 /* ToolPasteHistory.m in Sources */,
 				A6631A1B2D6E4C8F006C603B /* AutoSizingTextView.swift in Sources */,
 				A6F718D42266FDEB0053488E /* iTermSemanticHistoryController.m in Sources */,
-				A634817A24AFC4AF0003C11B /* iTermFocusablePanel.m in Sources */,
+				5AA34D7AD394C40EDA811DDC /* iTermFocusablePanel.swift in Sources */,
 				A6153D4E21F30A9C002976FC /* iTermJobTreeViewController.m in Sources */,
 				A6F7D4DB2E03DBEA0065D09C /* iTermBrowserSourceHandler.swift in Sources */,
 				A6F3EB4F2D32EC5B00612173 /* TailFindController.swift in Sources */,

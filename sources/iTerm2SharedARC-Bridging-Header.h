@@ -288,7 +288,6 @@
 #import "CapturedOutput.h"
 #import "TriggerController.h"
 #import "iTermDynamicProfileManager.h"
-#import "iTermFocusablePanel.h"
 #import "ITAddressBookMgr.h"
 #import "ProfileModelWrapper.h"
 #import "VT100Terminal+Testing.h"
