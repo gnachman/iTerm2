@@ -758,6 +758,19 @@ static const NSTimeInterval PSMTabBarSpringLoadingDelay = 0.6;
     return NO;
 }
 
+// The last cell that occupies space in the bar. A member of a collapsed group
+// is hidden and gets a zero-size frame at its chip's origin, so when the group
+// ends the bar, measuring from it would put the end of the bar at the start of
+// the chip, and a click on the chip would drag the window instead.
+- (PSMTabBarCell *)lastCellTakingUpSpace {
+    for (PSMTabBarCell *cell in [_cells reverseObjectEnumerator]) {
+        if (!cell.isCollapsedHidden) {
+            return cell;
+        }
+    }
+    return nil;
+}
+
 - (BOOL)wantsMouseDownAtPoint:(NSPoint)point {
     if ([self orientation] == PSMTabBarHorizontalOrientation) {
         if ([self pointIsInEdgeDragArea:point]) {
@@ -766,7 +779,7 @@ static const NSTimeInterval PSMTabBarSpringLoadingDelay = 0.6;
         if (point.x < self.insets.left) {
             return NO;
         }
-        PSMTabBarCell *lastCell = _cells.lastObject;
+        PSMTabBarCell *lastCell = [self lastCellTakingUpSpace];
         if (!lastCell) {
             return NO;
         }
@@ -779,7 +792,7 @@ static const NSTimeInterval PSMTabBarSpringLoadingDelay = 0.6;
         if (point.y < self.insets.top) {
             return NO;
         }
-        PSMTabBarCell *lastCell = _cells.lastObject;
+        PSMTabBarCell *lastCell = [self lastCellTakingUpSpace];
         if (!lastCell) {
             return NO;
         }

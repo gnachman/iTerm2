@@ -113,6 +113,10 @@ Improvements:
   session sits idle. Issue 8640.
 
 Bug Fixes:
+- With tabs on the left or right, clicking a
+  collapsed tab group at the end of the tab bar
+  moved the window instead of expanding the
+  group. Fixed.
 - Paths and URLs no longer absorb the
   full-width punctuation that follows them in
   Chinese and Japanese text, so ⌘-click opens
