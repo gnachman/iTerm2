@@ -8,9 +8,10 @@
 import AppKit
 
 // A panel that accepts key, main, and first responder. Several xibs name it
-// as a window's customClass by its Objective-C name, so it declares no
-// initializer and no stored property (traps.md, "A window subclass loaded
-// from a nib traps if it declares an initializer").
+// as a window's customClass. It must not gain a designated initializer or a
+// stored property without a default: Swift would then stop inheriting
+// init(contentRect:styleMask:backing:defer:), which nib loading calls, and
+// register a stub that traps in its place.
 @objc(iTermFocusablePanel)
 class iTermFocusablePanel: NSPanel {
     override var canBecomeKey: Bool {

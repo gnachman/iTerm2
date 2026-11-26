@@ -10,7 +10,7 @@ import Foundation
 extension GPBEnumArray {
     // Compares each element's value(at:), which is
     // kGPBUnrecognizedEnumeratorValue for a raw value the array's validation
-    // function rejects, as the Objective-C did.
+    // function rejects.
     @objc(it_contains:)
     func it_contains(_ value: Int32) -> Bool {
         return (0..<count).contains { self.value(at: $0) == value }

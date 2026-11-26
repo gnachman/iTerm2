@@ -17,8 +17,8 @@ protocol iTermOptionallyBordered {
 }
 
 extension NSTextField: iTermOptionallyBordered {
-    // The argument is ignored: the border and the background are turned on
-    // either way, as the Objective-C did.
+    // The argument is ignored: the border and the background are always
+    // turned on.
     @objc(setOptionalBorderEnabled:)
     func setOptionalBorderEnabled(_ enabled: Bool) {
         isBordered = true

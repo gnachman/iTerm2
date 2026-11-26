@@ -10,13 +10,13 @@ import AppKit
 extension NSTableColumn {
     @objc(suggestedRowHeight)
     func suggestedRowHeight() -> CGFloat {
-        // A nil dataCell gives 0, as messaging nil did.
+        // A nil dataCell gives 0.
         guard let cell = dataCell as? NSObject else {
             return 0
         }
         let constrainedBounds = NSRect(x: 0, y: 0, width: width, height: CGFloat.greatestFiniteMagnitude)
-        // dataCell is declared id, so the message goes to whatever object it
-        // is, NSCell or not, as the Objective-C sent it.
+        // dataCell is typed Any, so send the message dynamically to whatever
+        // object it is, whether or not it is an NSCell.
         return (cell as AnyObject).cellSize(forBounds: constrainedBounds).height
     }
 }

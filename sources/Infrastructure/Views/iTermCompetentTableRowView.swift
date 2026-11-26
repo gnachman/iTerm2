@@ -17,7 +17,6 @@ class iTermCompetentTableRowView: NSTableRowView {
     override func drawSelection(in dirtyRect: NSRect) {
         if selectionHighlightStyle != .none && it_dark() {
             NSColor.darkGray.set()
-            // NSRectFill copies.
             dirtyRect.fill(using: .copy)
             return
         }
@@ -25,7 +24,7 @@ class iTermCompetentTableRowView: NSTableRowView {
     }
 }
 
-// Several tables make it by name for their rows.
+// An empty subclass that several tables use for their rows.
 @objc(iTermBigSurTableRowView)
 class iTermBigSurTableRowView: NSTableRowView {
 }

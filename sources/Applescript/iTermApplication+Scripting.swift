@@ -10,9 +10,9 @@ import AppKit
 // Methods exposed through iTerm2.sdef.
 extension iTermApplication {
     // Any key-value lookup on the application whose key nothing answers gets
-    // an empty array instead of NSUnknownKeyException. The key is ignored. A
-    // key that is not a string raises in the bridging to String before this
-    // runs; the Objective-C ignored it. The SDK's String type is forced here.
+    // an empty array instead of NSUnknownKeyException. The key is ignored.
+    // A caller that passes a key that is not a string raises before this
+    // method runs, when the key is bridged to String.
     public override func value(forUndefinedKey key: String) -> Any? {
         return NSArray()
     }

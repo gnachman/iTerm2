@@ -8,8 +8,8 @@
 import Foundation
 
 extension NSNull {
-    // NSNull is already safe in JSON. NSObject (iTerm) declares the same
-    // selector; NSNull keeps its own implementation, as before.
+    // NSNull is already safe in JSON. This overrides the method of the same
+    // name that NSObject (iTerm) declares.
     @objc(it_jsonSafeValue)
     public override func it_jsonSafeValue() -> Any {
         return self

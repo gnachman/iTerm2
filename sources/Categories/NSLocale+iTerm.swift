@@ -11,9 +11,8 @@ extension NSLocale {
     // Is the locale one that writes "foo." instead of "foo".?
     @objc(commasAndPeriodsGoInsideQuotationMarks)
     func commasAndPeriodsGoInsideQuotationMarks() -> Bool {
-        // A receiver whose -localeIdentifier returns nil, against the SDK's
-        // nonnull claim, bridges to an empty string and gives false, as
-        // messaging nil did.
+        // A locale whose localeIdentifier is nil, against the SDK's nonnull
+        // claim, bridges to an empty string and gives false.
         return localeIdentifier == "en_US"
     }
 }
