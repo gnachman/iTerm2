@@ -100,18 +100,28 @@ final class TabBarOrderTests: XCTestCase {
 
     // MARK: - Working Directory
 
-    func testDirectoriesGetSectionsInManualOrderOfTheirFirstTab() {
+    func testDirectoriesGetSectionsSortedByPath() {
         let result = TabBarOrder.apply(mode: .workingDirectory,
-                                       tabs: [tab(directory: "/a/b"),
+                                       tabs: [tab(directory: "/c"),
+                                              tab(directory: "/a/b"),
                                               tab(directory: "/c"),
-                                              tab(directory: "/a/b/"),
-                                              tab(directory: "/c")])
-        XCTAssertEqual(result.order, [0, 2, 1, 3])
+                                              tab(directory: "/a/b/")])
+        XCTAssertEqual(result.order, [1, 3, 0, 2])
         XCTAssertEqual(result.sections.map(\.name), ["b", "c"])
         XCTAssertEqual(result.sections.map(\.toolTip), ["/a/b", "/c"])
         XCTAssertEqual(result.sectionIdentifiers as? [String],
-                       [result.sections[0].identifier, result.sections[1].identifier,
-                        result.sections[0].identifier, result.sections[1].identifier])
+                       [result.sections[1].identifier, result.sections[0].identifier,
+                        result.sections[1].identifier, result.sections[0].identifier])
+    }
+
+    // As Finder sorts: a component at a time, ignoring case, with numbers
+    // by value, so subdirectories follow their parent.
+    func testDirectoriesSortAsFinderDoes() {
+        let paths = ["/Tmp", "/src/b", "/src-old", "/src/a10", "/src/a2", "/src"]
+        let result = TabBarOrder.apply(mode: .workingDirectory,
+                                       tabs: paths.map { tab(directory: $0) })
+        XCTAssertEqual(result.sections.map(\.toolTip),
+                       ["/src", "/src/a2", "/src/a10", "/src/b", "/src-old", "/Tmp"])
     }
 
     // Such as a web browser tab.
@@ -135,9 +145,9 @@ final class TabBarOrderTests: XCTestCase {
                                               tab(directory: "/usr/local"),
                                               tab(directory: home),
                                               tab(directory: "/")])
-        XCTAssertEqual(result.sections.map(\.name), ["iterm2", "local", "Home", "/"])
-        XCTAssertEqual(result.sections.map(\.detail), ["~/git/", "/usr/", nil, nil])
-        XCTAssertEqual(result.sections[0].toolTip, home + "/git/iterm2")
+        XCTAssertEqual(result.sections.map(\.name), ["/", "Home", "iterm2", "local"])
+        XCTAssertEqual(result.sections.map(\.detail), [nil, nil, "~/git/", "/usr/"])
+        XCTAssertEqual(result.sections[2].toolTip, home + "/git/iterm2")
     }
 
     // A shell can report a directory that isn't absolute. It has no parent

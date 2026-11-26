@@ -10,8 +10,8 @@
 //  - Status: by status, ranked by the status priority settings, then in
 //    manual order, with a section for each status priority pattern. Snoozed
 //    tabs go in a last section.
-//  - Working Directory: a section for each directory, in the manual order of
-//    its first tab, with tabs in manual order. Tabs with no directory, such
+//  - Working Directory: a section for each directory, sorted by path, with
+//    tabs in manual order. Tabs with no directory, such
 //    as web browser tabs, go in a last section.
 //
 //  Tab groups don't apply in the Status and Working Directory orders. Pinned
@@ -173,6 +173,9 @@ final class TabBarOrder: NSObject {
                 members[section.identifier, default: []].append(i)
                 identifiers[i] = section.identifier
             }
+            sectionOrder.sort { lhs, rhs in
+                directoryPrecedes(sections[lhs]?.toolTip ?? "", sections[rhs]?.toolTip ?? "")
+            }
             // Last.
             if members[otherSectionIdentifier] != nil {
                 sectionOrder.append(otherSectionIdentifier)
@@ -287,6 +290,27 @@ final class TabBarOrder: NSObject {
                                   name: name,
                                   detail: detail,
                                   toolTip: standardized)
+    }
+
+    /// Compares a component at a time, as Finder does, so a directory's
+    /// subdirectories come right after it.
+    static func directoryPrecedes(_ lhs: String, _ rhs: String) -> Bool {
+        let l = (lhs as NSString).pathComponents
+        let r = (rhs as NSString).pathComponents
+        for (a, b) in zip(l, r) {
+            switch a.localizedStandardCompare(b) {
+            case .orderedAscending:
+                return true
+            case .orderedDescending:
+                return false
+            case .orderedSame:
+                if a != b {
+                    // Different directories it considers equal.
+                    return a < b
+                }
+            }
+        }
+        return l.count < r.count
     }
 
     private static func abbreviatingHome(_ path: String) -> String {

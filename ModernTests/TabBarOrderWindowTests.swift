@@ -302,7 +302,7 @@ final class TabBarOrderWindowTests: XCTestCase {
         try pick(.workingDirectory)
         waitUntil("placed under a directory") {
             let shown = (try? self.shown(tabs)) ?? []
-            return shown == ["[two]", "0", "[one]", "1"]
+            return shown == ["[one]", "1", "[two]", "0"]
         }
     }
 
@@ -328,7 +328,7 @@ final class TabBarOrderWindowTests: XCTestCase {
         XCTAssertEqual(chips.count, 2)
         let groups = try chips.map { try XCTUnwrap(bar.tabGroupDataSource?.tabGroup(withIdentifier: $0.tabGroupIdentifier ?? "")) }
         XCTAssertEqual(groups.map { $0.isSectionHeading }, [true, true])
-        XCTAssertEqual(groups.map { $0.detail }, ["~/git/", "/tmp/"])
+        XCTAssertEqual(groups.map { $0.detail }, ["/tmp/", "~/git/"])
         var decorated = [String]()
         bar.enumerateTabGroupRuns(rectForCell: nil) { _, _, _, gid in
             decorated.append(gid)
