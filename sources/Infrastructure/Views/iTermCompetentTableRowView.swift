@@ -10,8 +10,6 @@ import AppKit
 // Draws its selection dark gray in a window whose appearance is vibrant dark.
 @objc(iTermCompetentTableRowView)
 class iTermCompetentTableRowView: NSTableRowView {
-    // No thread assertion: AppKit draws on the main thread, and these read only
-    // the view and its window.
     @objc private func it_dark() -> Bool {
         return window?.appearance?.name == .vibrantDark
     }

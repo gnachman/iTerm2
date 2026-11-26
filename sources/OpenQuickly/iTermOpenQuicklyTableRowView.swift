@@ -5,7 +5,6 @@ import AppKit
 // makes iTermOpenQuicklyTableRowView_BigSur in -tableView:rowViewForRow:.
 @objc(iTermOpenQuicklyTableRowView)
 class iTermOpenQuicklyTableRowView: NSTableRowView {
-    // No thread assertion: returns a constant or calls super, reads no state.
     override var isEmphasized: Bool {
         get { true }
         set { super.isEmphasized = newValue }
@@ -21,7 +20,6 @@ class iTermOpenQuicklyTableRowView: NSTableRowView {
 
 @objc(iTermOpenQuicklyTableRowView_BigSur)
 class iTermOpenQuicklyTableRowView_BigSur: NSTableRowView {
-    // No thread assertion: returns a constant.
     override var isEmphasized: Bool {
         get { true }
         set { super.isEmphasized = newValue }

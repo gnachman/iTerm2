@@ -11,7 +11,6 @@ import Cocoa
 // instantiates it by its Objective-C name and connects only its view.
 @objc(iTermShellIntegrationFinishedViewController)
 class iTermShellIntegrationFinishedViewController: NSViewController, iTermShellIntegrationInstallerViewController {
-    // No thread assertion: the body is empty.
     @objc(setBusy:)
     func setBusy(_ busy: Bool) {
     }

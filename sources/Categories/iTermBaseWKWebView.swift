@@ -12,7 +12,6 @@ import WebKit
 // call super, so that its Swift subclass can call super on them.
 @objc(iTermBaseWKWebView)
 class iTermBaseWKWebView: WKWebView {
-    // No thread assertion: it only forwards to super.
     override func insertText(_ insertString: Any!, replacementRange: NSRange) {
         super.insertText(insertString, replacementRange: replacementRange)
     }

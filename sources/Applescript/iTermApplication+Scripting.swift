@@ -13,8 +13,6 @@ extension iTermApplication {
     // an empty array instead of NSUnknownKeyException. The key is ignored. A
     // key that is not a string raises in the bridging to String before this
     // runs; the Objective-C ignored it. The SDK's String type is forced here.
-    // No thread assertion: any code may look up any key on the application
-    // object from any thread, and nothing here depends on the thread.
     public override func value(forUndefinedKey key: String) -> Any? {
         return NSArray()
     }

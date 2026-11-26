@@ -8,8 +8,6 @@
 import AppKit
 
 extension NSTableColumn {
-    // No thread assertion: it reads the receiver's width and data cell and
-    // stores nothing.
     @objc(suggestedRowHeight)
     func suggestedRowHeight() -> CGFloat {
         // A nil dataCell gives 0, as messaging nil did.

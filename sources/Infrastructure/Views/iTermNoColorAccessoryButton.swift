@@ -19,7 +19,6 @@ protocol iTermNoColorAccessoryButtonResponder: NSObjectProtocol {
 // NSButton's.
 @objc(iTermNoColorAccessoryButton)
 class iTermNoColorAccessoryButton: NSButton {
-    // No thread assertion: it only configures the new button.
     convenience init() {
         let image = NSImage.it_imageNamed("NoColor", for: iTermNoColorAccessoryButton.self)
         let topBottomMargin = 8.0

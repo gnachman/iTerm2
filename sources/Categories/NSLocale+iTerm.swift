@@ -9,8 +9,6 @@ import Foundation
 
 extension NSLocale {
     // Is the locale one that writes "foo." instead of "foo".?
-    // No thread assertion: it reads only the receiver's identifier, and
-    // NSLocale is immutable.
     @objc(commasAndPeriodsGoInsideQuotationMarks)
     func commasAndPeriodsGoInsideQuotationMarks() -> Bool {
         // A receiver whose -localeIdentifier returns nil, against the SDK's

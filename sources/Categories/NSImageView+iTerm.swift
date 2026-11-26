@@ -9,8 +9,6 @@ import AppKit
 
 extension NSImageView {
     // nil clears the tint, as contentTintColor allows.
-    // No thread assertion: it sets one property of the receiver, as any
-    // AppKit view setter does, and adds no state of its own.
     @objc(it_setTintColor:)
     func it_setTintColor(_ color: NSColor?) {
         contentTintColor = color

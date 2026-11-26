@@ -13,8 +13,6 @@ import AppKit
 // a window's content view can't be both transparent and layer-backed.
 @objc(iTermTipRootView)
 class iTermTipRootView: NSView {
-    // No thread assertion: AppKit calls these on the main thread and they
-    // touch only the view itself.
     override func awakeFromNib() {
         super.awakeFromNib()
         setAccessibilityElement(true)
