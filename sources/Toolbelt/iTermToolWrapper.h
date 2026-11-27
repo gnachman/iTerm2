@@ -74,6 +74,10 @@
 
 - (void)hideToolbelt;
 - (void)toggleShowToolWithName:(NSString *)theName;
+// YES if the wrapper lives in the left toolbelt (below the tabs).
+- (BOOL)toolWrapperIsOnLeftSide;
+// Move the wrapper's tool to the other toolbelt.
+- (void)toolWrapperMoveToOtherSide:(iTermToolWrapper *)wrapper;
 
 @end
 

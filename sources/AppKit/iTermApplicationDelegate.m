@@ -2181,6 +2181,7 @@ static iTermKeyEventReplayer *gReplayer;
     NSString *theName = [notification object];
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
         [[term toolbelt] toggleToolWithName:theName];
+        [[term leftToolbelt] toggleToolWithName:theName];
         [term refreshTools];
     }
     // Look up by identifier ("Toolbelt.<name>", set in +addToolsToMenu:), not title,

@@ -29,6 +29,16 @@ extern NSString *const iTermToolbeltDidRegisterDynamicToolNotification;
 // Notification posted when all windows should hide their toolbelts.
 extern NSString *const kToolbeltShouldHide;
 
+// Posted when a tool moves between the left and right toolbelts. The object is the tool name.
+extern NSString *const iTermToolbeltToolSideDidChangeNotification;
+
+// Each window has a right toolbelt (the classic one) and a left toolbelt that
+// sits below the tab bar when tabs are on the left. Every tool belongs to one side.
+typedef NS_ENUM(NSInteger, iTermToolbeltSide) {
+    iTermToolbeltSideRight = 0,
+    iTermToolbeltSideLeft = 1
+};
+
 @interface iTermToolbeltView : NSView <PTYSplitViewDelegate, ToolWrapperDelegate>
 
 @property(nonatomic, assign) id<iTermToolbeltViewDelegate> delegate;
@@ -36,8 +46,20 @@ extern NSString *const kToolbeltShouldHide;
 @property(nonatomic, readonly) ToolCapturedOutputView *capturedOutputView;
 @property(nonatomic, readonly) ToolJobs *jobsView;
 @property(nonatomic, retain) NSDictionary *proportions;
+@property(nonatomic, readonly) iTermToolbeltSide side;
+// Number of tools currently in this toolbelt.
+@property(nonatomic, readonly) NSInteger numberOfTools;
 
 + (NSDictionary *)savedProportions;
++ (NSDictionary *)savedProportionsForSide:(iTermToolbeltSide)side;
+
+// YES when tabs are on the left, so the left toolbelt has a place below them.
++ (BOOL)leftToolbeltIsAvailable;
+// The side a tool is assigned to.
++ (iTermToolbeltSide)sideForToolNamed:(NSString *)name;
+// The side a tool is shown on: its assigned side, or the right when there is no left toolbelt.
++ (iTermToolbeltSide)effectiveSideForToolNamed:(NSString *)name;
++ (void)setSide:(iTermToolbeltSide)side forToolNamed:(NSString *)name;
 
 // Returns an array of tool keys.
 + (NSArray *)allTools;
@@ -71,6 +93,12 @@ extern NSString *const kToolbeltShouldHide;
 + (void)registerDynamicToolWithIdentifier:(NSString *)identifier name:(NSString *)name URL:(NSString *)url revealIfAlreadyRegistered:(BOOL)revealIfAlreadyRegistered;
 
 - (instancetype)initWithFrame:(NSRect)frame delegate:(id<iTermToolbeltViewDelegate>)delegate;
+- (instancetype)initWithFrame:(NSRect)frame
+                     delegate:(id<iTermToolbeltViewDelegate>)delegate
+                         side:(iTermToolbeltSide)side;
+
+// Add and remove tools so this toolbelt holds exactly the configured tools for its side.
+- (void)syncToolsWithConfiguration;
 
 // Stop timers, etc., releasing any internal references to self.
 - (void)shutdown;

@@ -354,6 +354,7 @@ deferringExpansion:(BOOL)deferExpansion;
 
 // Accessor for toolbelt view.
 - (iTermToolbeltView *)toolbelt;
+- (iTermToolbeltView *)leftToolbelt;
 
 // Tries to grow (or shrink, for negative values) the toolbelt. Returns the amount it was actually
 // grown by, in case it hits a limit.

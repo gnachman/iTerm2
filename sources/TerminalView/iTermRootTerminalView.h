@@ -118,6 +118,8 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 
 // Toolbelt view. Goes on the right side of the terminal window, if visible.
 @property(nonatomic, readonly) iTermToolbeltView *toolbelt;
+// Holds the tools assigned to the left side. Shown below the tab bar when tabs are on the left.
+@property(nonatomic, readonly) iTermToolbeltView *leftToolbelt;
 
 // Should the toolbelt be visible?
 @property(nonatomic) BOOL shouldShowToolbelt;
@@ -172,6 +174,12 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 - (void)setWindowTitleIcon:(NSImage *)icon;
 - (iTermTabBarControlView *)borrowTabBarControl;
 - (void)returnTabBarControlView:(iTermTabBarControlView *)tabBarControl;
+// YES when the right toolbelt is showing. It hides when every tool is in the left toolbelt.
+- (BOOL)rightToolbeltIsVisible;
+// Width the right toolbelt takes from the right edge of the window (0 when hidden).
+- (CGFloat)toolbeltWidthAtRightEdge;
+// Call after tools are added, removed, or moved between sides.
+- (void)toolbeltToolsDidChange;
 - (CGFloat)maximumToolbeltWidthForViewWidth:(CGFloat)viewWidth;
 - (void)updateToolbeltProportionsIfNeeded;
 - (void)setToolbeltProportions:(NSDictionary *)proportions;
