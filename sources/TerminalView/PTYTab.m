@@ -10,7 +10,6 @@
 #import "iTermController.h"
 #import "iTermExpressionEvaluator.h"
 #import "iTermFlexibleView.h"
-#import "iTermMoveTabToWindowBuiltInFunction.h"
 #import "iTermNotificationController.h"
 #import "iTermObject.h"
 #import "iTermOrderedDictionary.h"
