@@ -20,6 +20,7 @@
 - Don't replace curly quotes with straight quotes. Same for apostrophes and single quotes. If you need help typing a curly quote, just ask. Here are some you can copy and paste: ‘’“”
 - In user-visible strings do not use " except as a shorthand for inch. Prefer curly quotes like “ and ”. I know this goes against your nature, but fight hard here.
 - Localizing user-visible strings — how to wrap them, what to leave in English, the complete-sentence-not-injected-fragment rule, format specifiers, and plurals (including the `localizedStringWithFormat:` and single-argument rules): see `docs/localization.md`. Read it before adding or changing localizable strings.
+- If you add, remove, or modify translatable strings, run `make extract-strings` and then add translations for every language in `xcstrings/Localizable.xcstrings` for any new or changed strings.
 - Use iTermWarning, not NSAlert. iTermWarning alerts can be shown and answered from the iTerm2 Buddy mobile client; an NSAlert leaves the phone stuck. Describe accessory fields with remoteInputs, and mark buttons that only work at the Mac (file panels, other windows, web pages) as notOfferedRemotely.
 - Never `git add` submodules without express written permission.
 - Don't include AI-generated markdown files (summaries, plans, etc.) in commits. Only ship code. Exception: files under docs/swift-migration/ are part of the Objective-C to Swift migration process and are committed (see docs/swift-migration/README.md).
