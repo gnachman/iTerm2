@@ -1003,8 +1003,8 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     }
 
     if (lineNumber) {
-        NSString *appBundleId = [self bundleIdForDefaultAppForFile:path];
-        if ([self canOpenFileWithLineNumberUsingEditorWithBundleId:appBundleId]) {
+        NSString *appBundleId = [self lineNumberEditorIdentifierForBundleId:[self bundleIdForDefaultAppForFile:path]];
+        if (appBundleId) {
             DLog(@"A line number is present and I know how to open this file to the line number using %@. Do so.",
                  appBundleId);
             [self openFile:path inEditorWithBundleId:appBundleId lineNumber:lineNumber columnNumber:columnNumber];
@@ -1017,8 +1017,16 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     completion(YES);
 }
 
-- (BOOL)canOpenFileWithLineNumberUsingEditorWithBundleId:(NSString *)appBundleId {
-    return [[self.class bundleIdsThatSupportOpeningToLineNumber] containsObject:appBundleId];
+- (NSString *)lineNumberEditorIdentifierForBundleId:(NSString *)bundleId {
+    if (!bundleId) {
+        return nil;
+    }
+    for (NSString *identifier in [self.class bundleIdsThatSupportOpeningToLineNumber]) {
+        if ([identifier caseInsensitiveCompare:bundleId] == NSOrderedSame) {
+            return identifier;
+        }
+    }
+    return nil;
 }
 
 - (NSString *)bundleIdForDefaultAppForFile:(NSString *)file {

@@ -693,6 +693,19 @@ final class SemanticHistoryControllerTests: XCTestCase, iTermObject, iTermSemant
         XCTAssertEqual(controller.openedEditor, macVimIdentifier)
     }
 
+    func testOpenPathOpensTextFileInDefaultAppWithLineNumberWhenBundleIdCaseDiffers() {
+        controller.prefs = [actionKey: bestEditorAction]
+        controller.fakeFileManager.files.insert(existingFile)
+        controller.defaultAppIsEditor = true
+        controller.bundleIdForDefaultApp = macVimIdentifier.uppercased()
+        let opened = cleanAndOpen(existingFile + ":12",
+                                  substitutions: standardSubstitutions(workingDirectory: "/"))
+        XCTAssertTrue(opened)
+        XCTAssertEqual(controller.openedURL,
+                       editorURL(scheme: "mvim", path: existingFile, lineNumber: "12"))
+        XCTAssertEqual(controller.openedEditor, macVimIdentifier)
+    }
+
     func testOpenPathOpensTextFileInEditorWithLineNumberWhenEditorIsDefaultApp() {
         controller.prefs = [actionKey: editorAction, editorKey: macVimIdentifier]
         controller.fakeFileManager.files.insert(existingFile)
