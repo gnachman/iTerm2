@@ -7985,13 +7985,17 @@ lengthExcludingInBandSignaling:data.length
 
 #pragma mark - Inline Images
 
+static BOOL VT100ScreenCrossesBigFileDownloadThreshold(NSInteger sizeBefore, NSInteger afterSize) {
+    return sizeBefore < VT100ScreenBigFileDownloadThreshold && afterSize >= VT100ScreenBigFileDownloadThreshold;
+}
+
 - (BOOL)confirmBigDownloadWithBeforeSize:(NSInteger)sizeBefore
                                afterSize:(NSInteger)afterSize
                                     name:(NSString *)name
                                 delegate:(id<VT100ScreenDelegate>)delegate
                                    queue:(dispatch_queue_t)queue
                                 unpauser:(iTermTokenExecutorUnpauser *)unpauser {
-    if (sizeBefore < VT100ScreenBigFileDownloadThreshold && afterSize >= VT100ScreenBigFileDownloadThreshold) {
+    if (VT100ScreenCrossesBigFileDownloadThreshold(sizeBefore, afterSize)) {
         if (![delegate screenConfirmDownloadNamed:name
                                     canExceedSize:VT100ScreenBigFileDownloadThreshold]) {
             RLog(@"Aborting big download");
@@ -9036,6 +9040,10 @@ launchCoprocessWithCommand:(NSString *)command
 - (void)inlineImageConfirmBigDownloadWithBeforeSize:(NSInteger)lengthBefore
                                           afterSize:(NSInteger)lengthAfter
                                                name:(NSString *)name {
+    // Called for every chunk; pausing the executor for each one makes large images arrive slowly.
+    if (!VT100ScreenCrossesBigFileDownloadThreshold(lengthBefore, lengthAfter)) {
+        return;
+    }
     dispatch_queue_t queue = _queue;
     __weak __typeof(self) weakSelf = self;
     // Unamanged because this will have a runloop.
