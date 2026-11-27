@@ -20,7 +20,6 @@
 #import "NSDate+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSImage+iTerm.h"
-#import "NSResponder+iTerm.h"
 #import "NSScreen+iTerm.h"
 #import "NSScreen+iTerm.h"
 #import "NSScroller+iTerm.h"

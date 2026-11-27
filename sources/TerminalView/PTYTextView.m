@@ -20,7 +20,6 @@
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSPasteboard+iTerm.h"
-#import "NSResponder+iTerm.h"
 #import "NSSavePanel+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"

@@ -4001,8 +4001,7 @@
 		A6DADEA92E57F5A20068DA14 /* PSMTahoeTabStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DADEA72E57F58C0068DA14 /* PSMTahoeTabStyle.swift */; };
 		A6DB145E2D6CEDF200266394 /* SystemMessageCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DB145D2D6CEDEE00266394 /* SystemMessageCellView.swift */; };
 		A6DB7BAC2CE52BB000EB7973 /* iTermPasteSpecialWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F991A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.m */; };
-		A6DBC05120073CBA00F1466D /* NSResponder+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DBC04F20073CBA00F1466D /* NSResponder+iTerm.h */; };
-		A6DBC05220073CBA00F1466D /* NSResponder+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC05020073CBA00F1466D /* NSResponder+iTerm.m */; };
+		BE1AC991870E414BF7D9C7D9 /* NSResponder+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = F784FACF907FCA0066DD80BB /* NSResponder+iTerm.swift */; };
 		A6DBC2FC2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DBC2FA2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.h */; };
 		A6DBC2FD2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC2FB2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.m */; };
 		A6DBC9DA286399C6002911BE /* ContentNavigationShortcut.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC9D9286399C6002911BE /* ContentNavigationShortcut.swift */; };
@@ -8385,8 +8384,7 @@
 		A6D90D652E2FF7E100BA9F4F /* custom-find.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "custom-find.js"; sourceTree = "<group>"; };
 		A6DADEA72E57F58C0068DA14 /* PSMTahoeTabStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PSMTahoeTabStyle.swift; sourceTree = "<group>"; };
 		A6DB145D2D6CEDEE00266394 /* SystemMessageCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMessageCellView.swift; sourceTree = "<group>"; };
-		A6DBC04F20073CBA00F1466D /* NSResponder+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSResponder+iTerm.h"; sourceTree = "<group>"; };
-		A6DBC05020073CBA00F1466D /* NSResponder+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSResponder+iTerm.m"; sourceTree = "<group>"; };
+		F784FACF907FCA0066DD80BB /* NSResponder+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSResponder+iTerm.swift"; sourceTree = "<group>"; };
 		A6DBC2FA2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VT100ScreenMutableState+TerminalDelegate.h"; sourceTree = "<group>"; };
 		A6DBC2FB2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "VT100ScreenMutableState+TerminalDelegate.m"; sourceTree = "<group>"; };
 		A6DBC9D9286399C6002911BE /* ContentNavigationShortcut.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentNavigationShortcut.swift; sourceTree = "<group>"; };
@@ -13839,8 +13837,7 @@
 				A6CC7F5F274ECFEB0060C3C2 /* NSProcessInfo+iTerm.swift */,
 				A6D1A3E62C7E996400FECDF2 /* NSRect+iTerm.swift */,
 				A6EEAED028306F350039E850 /* NSRegularExpression+iTerm.swift */,
-				A6DBC04F20073CBA00F1466D /* NSResponder+iTerm.h */,
-				A6DBC05020073CBA00F1466D /* NSResponder+iTerm.m */,
+				F784FACF907FCA0066DD80BB /* NSResponder+iTerm.swift */,
 				A655E697207153CB00DC21B9 /* NSSavePanel+iTerm.h */,
 				A655E698207153CB00DC21B9 /* NSSavePanel+iTerm.m */,
 				A69B4575195F668500F5444D /* NSScreen+iTerm.h */,
@@ -16447,7 +16444,6 @@
 				A667191C1DCE36C3000CE608 /* iTermAppHotKey.h in Headers */,
 				A6AFD68C24496F1C007D0660 /* iTermClientServerProtocolMessageBox.h in Headers */,
 				A629C705221016AA00E7D4AE /* iTermMoveTabToWindowBuiltInFunction.h in Headers */,
-				A6DBC05120073CBA00F1466D /* NSResponder+iTerm.h in Headers */,
 				A6153D6021F4EFA1002976FC /* iTermStatusBarStableLayoutAlgorithm.h in Headers */,
 				A68400B81FF97138008D3EE2 /* iTermTimestampDrawHelper.h in Headers */,
 				A63493E823E945BA0047C31B /* iTermGlobalScopeController.h in Headers */,
@@ -19446,7 +19442,7 @@
 				A6DBC9DA286399C6002911BE /* ContentNavigationShortcut.swift in Sources */,
 				A6B152DD29255ED600628436 /* iTermLocaleGuesser.swift in Sources */,
 				A6110C3B2526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.m in Sources */,
-				A6DBC05220073CBA00F1466D /* NSResponder+iTerm.m in Sources */,
+				BE1AC991870E414BF7D9C7D9 /* NSResponder+iTerm.swift in Sources */,
 				A6AE58962E820FFF00762C1D /* AppSignatureValidator.swift in Sources */,
 				A6AE59092E865A7500762C1D /* ChatToolbar.swift in Sources */,
 				A62DBBA820F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.m in Sources */,

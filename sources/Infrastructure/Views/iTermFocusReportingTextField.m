@@ -10,7 +10,6 @@
 #import "iTermApplication.h"
 #import "iTermSearchFieldCell.h"
 #import "NSObject+iTerm.h"
-#import "NSResponder+iTerm.h"
 #import "PTYWindow.h"
 
 @implementation iTermFocusReportingTextField

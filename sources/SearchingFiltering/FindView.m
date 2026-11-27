@@ -28,7 +28,6 @@
 #import "FindView.h"
 #import "PseudoTerminal.h"
 #import "NSBezierPath+iTerm.h"
-#import "NSResponder+iTerm.h"
 #import "iTerm2SharedARC-Swift.h"
 
 @implementation FindView

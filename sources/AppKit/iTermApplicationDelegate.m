@@ -42,7 +42,6 @@
 #import "NSFont+iTerm.h"
 #import "NSMenu+iTerm.h"
 #import "NSObject+iTerm.h"
-#import "NSResponder+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "NSView+iTerm.h"

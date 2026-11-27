@@ -34,7 +34,6 @@
 #import "NSView+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "MovePaneController.h"
-#import "NSResponder+iTerm.h"
 #import "PSMMinimalTabStyle.h"
 #import "PSMTabDragAssistant.h"
 #import "PTYScrollView.h"

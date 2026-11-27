@@ -12,7 +12,6 @@
 #import "NSDate+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSEvent+iTerm.h"
-#import "NSResponder+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSView+iTerm.h"
 #import "PasteboardHistory.h"
