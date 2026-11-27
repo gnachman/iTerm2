@@ -10,7 +10,6 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAlertBuiltInFunction.h"
 #import "iTermReflection.h"
-#import "iTermSetStatusBarComponentUnreadCountBuiltInFunction.h"
 #import "iTermTabGroupBuiltInFunctions.h"
 #import "iTermVariableReference.h"
 #import "NSArray+iTerm.h"

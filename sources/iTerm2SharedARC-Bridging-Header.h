@@ -179,6 +179,7 @@
 #import "iTermStandardKeyMapper.h"
 #import "iTermStatusBarContainerView.h"
 #import "iTermStatusBarTextComponent.h"
+#import "iTermStatusBarUnreadCountController.h"
 #import "iTermStatusBarVariableBaseComponent.h"
 #import "iTermStoplightHotbox.h"
 #import "iTermSwiftHelpers.h"
