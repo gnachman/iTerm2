@@ -235,10 +235,16 @@ confirmed by the owner on 2026-11-24 (“keep them as is”).
 **Which path.** `tools/swift_migration/qualify_unit.py UNIT` prints the
 path ([phase0.md §12](phase0.md)); UNIT is a class, or `Class(Category)`
 for a category file. It needs only the repository and a current code
-database; a trivial unit picked while the database is refreshed is
-qualified again before it is committed, and light and full units start
-only after the refresh (orchestration.md §1, step 4). Each condition prints PASS, FAIL or MANUAL
-with its evidence; a MANUAL is one the tool cannot decide.
+database (`tools/swift_migration/codedb/refresh.sh --status` says
+whether it is current); for when units are qualified and briefed, follow
+orchestration.md §1, step 4: `refresh.sh --status` first. An author never
+refreshes the database; before it runs `qualify_unit.py` or a database
+query, it runs `refresh.sh --root <the checkout holding the database>
+--status` and waits while that says `running`. Each condition prints PASS, FAIL or MANUAL
+with its evidence; a MANUAL is one the tool cannot decide. A unit with a
+file its port would move under a prefix in [reserved.md](reserved.md) is not
+ported on any path: the tool prints `Path: reserved` and exits 15 whatever
+its conditions say.
 
 - **Trivial** when the trivial conditions T1 to T8 all PASS. Only the tool
   decides: a MANUAL is never settled by reading for this path. In short:
@@ -379,6 +385,10 @@ most three (the owner, 2026-11-24: “allow it”; the bound is the
 migration's); by day one at a time. Commits land one at a time, each
 gated on the tree it lands on.
 
+Before a batch is briefed, follow [orchestration.md §1](orchestration.md),
+step 4: `refresh.sh --status` first. The check costs seconds; units
+qualified on a stale database can cost a session.
+
 ### The light path
 
 **What it keeps.**
@@ -494,12 +504,19 @@ run, and said “Yes, please do”.
    its build].
 3. The `x86_64` build, with no warnings ([README.md §5](README.md)) [1 to
    8 min].
-4. The lints and the code database: `capture_compile_commands.sh`,
-   `codedb.py update --accept-removals`, then the lints of
-   [phase0.md §6](phase0.md), "Where they run", over the session's port
-   commits, then `qualify_unit.py --classify > tmp/classify.txt`, where
-   the next session takes its first units from (orchestration.md §1, step
-   4) [about 10 min].
+4. The code database and the lints: `tools/swift_migration/codedb/refresh.sh`
+   (the capture, `codedb.py update --accept-removals` and
+   `qualify_unit.py --classify` into `tmp/classify.txt` and
+   `tmp/classify.json`, where the next session takes its first units
+   from; orchestration.md §1, step 4), then, only if its exit status is
+   0, the lints of [phase0.md §6](phase0.md), "Where they run", over the
+   session's port commits [about 10 min]. Its exit status is read before
+   anything else runs, because a failed or interrupted database refresh leaves the
+   database behind: a nonzero status is a failed check, with the step and
+   its log named in the verdict line (status 3, a file the build or the
+   classification reads changed during the database refresh, means it is
+   run again once nothing else changes such a file). No such file changes
+   while it runs.
 
 In all, about 50 to 60 minutes: the combined run 9 to 13, the thread run
 about 20 plus its build, the `x86_64` build 1 to 8, the lints and the

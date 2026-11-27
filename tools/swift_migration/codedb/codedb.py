@@ -2206,11 +2206,19 @@ class Paths:
 
 # --- Locking and processes ---------------------------------------------------
 
+# The environment every reader and writer of a recorded start time runs ps
+# in (this file, capture_compile_commands.sh and refresh.sh), so that the
+# text of `ps -o lstart=` does not depend on the caller's locale or time
+# zone.
+PS_ENV = {'LC_ALL': 'C', 'TZ': 'UTC0'}
+
+
 def _ps_field(pid, field):
     """A ps field of pid with whitespace collapsed, or None if there is no
-    such process. ps sees every user's processes."""
+    such process. ps sees every user's processes. It runs in PS_ENV."""
     try:
-        out = subprocess.run(['ps', '-o', field + '=', '-p', str(pid)], capture_output=True, text=True).stdout
+        out = subprocess.run(['ps', '-o', field + '=', '-p', str(pid)], capture_output=True, text=True,
+                             env=dict(os.environ, **PS_ENV)).stdout
     except OSError:
         return None
     out = ' '.join(out.split())
@@ -2218,7 +2226,8 @@ def _ps_field(pid, field):
 
 
 def process_start(pid):
-    """The start time of pid as `ps -o lstart=` prints it, or None."""
+    """The start time of pid as `ps -o lstart=` prints it in the C locale
+    and UTC, or None."""
     return _ps_field(pid, 'lstart')
 
 

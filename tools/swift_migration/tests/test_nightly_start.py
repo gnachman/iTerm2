@@ -737,8 +737,19 @@ class NightlyStartTest(NightlyBase):
         self.assertNotIn('in code the unit does not touch', prompt)
         self.assertIn('light and full units start only after the refresh', prompt)
         self.assertIn('closing checks pending: their closing checks come first', prompt)
-        self.assertIn('if tmp/classify.txt is missing, classify after the database update', prompt)
+        self.assertIn('if tmp/classify.txt is missing, wait for the database refresh', prompt)
+        self.assertIn('Rule 1. Run tools/swift_migration/codedb/refresh.sh --status', prompt)
+        self.assertIn('run qualify_unit.py UNIT for the candidate trivial units first, brief those that print trivial',
+                      prompt)
+        self.assertIn("Read the database refresh's exit status before anything depends on it", prompt)
+        self.assertIn('5 a rebase, merge or similar git operation is in progress', prompt)
+        self.assertIn('75 another database refresh is running', prompt)
+        self.assertIn('if orchestration.md section 1 step 4.5 calls for it, the baseline', prompt)
+        self.assertIn('change no file the build or the classification reads in that checkout', prompt)
+        self.assertIn('the x86_64 build, then tools/swift_migration/codedb/refresh.sh', prompt)
+        self.assertNotIn('classify after the database update', prompt)
         self.assertIn('at most one author builds', prompt)
+        self.assertIn('a unit for which it prints reserved (docs/swift-migration/reserved.md) is not ported at all', prompt)
 
     NUDGE = ('It is the clean stop time. Stop now as docs/swift-migration/workflow.md section 4 says: '
              'start nothing new, stop or abandon background jobs that have not finished, commit what '

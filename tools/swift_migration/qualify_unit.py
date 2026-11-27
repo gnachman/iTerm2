@@ -42,7 +42,22 @@ sorted by implementation size, with the conditions that are MANUAL for each
 Options: --json; --root (the repository, default: this tool's); --db, --cdb,
 --fragments, --swift-work, --extractor, --swift-reader (as codedb.py takes
 them); --registry (default docs/swift-migration/reflective-sites.md);
---hot-paths (default docs/swift-migration/hot-paths.md).
+--hot-paths (default docs/swift-migration/hot-paths.md); --reserved (default
+docs/swift-migration/reserved.md, where a missing file reserves nothing; a
+file named with --reserved must exist).
+
+Reserved paths: a unit is not ported on any path when a file its port
+moves lies under a path prefix in the first column of reserved.md's table:
+one of its implementation files, or, for a class unit, a CLASS+Something
+category file of another class its files implement. The table's rules and
+the prefix match (whole path components, so sources/Settings/ does not
+match sources/SettingsExtra/Foo.m) are in reserved_paths.py. A file
+without such a table, or a line that breaks its rules, is an error (exit
+2), never an empty list. For one
+unit every condition is still printed, then "Path: reserved (PREFIX: not to
+be ported; docs/swift-migration/reserved.md)." in place of the path line,
+and the JSON's path is reserved and its reserved key names the prefix (null
+when the unit is not reserved).
 
 The conditions (ids in brackets):
   [1]  the implementation is 500 lines or fewer (lines of its .m/.mm files);
@@ -147,9 +162,28 @@ is part of the class's unit and is also classified alone, marked part_of
 and counted apart (split_counts), since it can move alone. It runs clang
 once on each implementation file that reaches T1 (about 1 to 5 seconds each).
 
+With --json, the lines saying why the answers may be incomplete are under
+database_incomplete (every line), and also split into
+database_rows_incomplete (the database's own rows: the Objective-C units,
+the compile database's coverage, the Swift modules), which refreshing the
+database makes current, and registry_or_resources_incomplete (the
+reflective-site registry and the resource files), which a refresh of the
+database cannot change; codedb/refresh.sh fails only on the first.
+
+--classify gives a reserved unit the path reserved, with its prefix under
+reserved and after the file in the text, runs none of its checks, and
+counts it under reserved in counts and split_counts (units includes it),
+never among trivial, light or full; a file of several classes is one
+reserved row when any of them is reserved. A prefix under which no
+implementation file lies is listed under reserved_unmatched and printed as
+a WARN line in the text. --list leaves reserved classes out of classes
+and gives them under reserved_classes (class, file, reserved), with their
+number under reserved; its text form lists them after the table.
+
 Exit status: 0 when no light condition FAILs (MANUAL ones still need a
-person), 1 when any FAILs, 2 on error; for a category unit 0 when it is
-trivial and 1 otherwise. --list and --classify exit 0.
+person), 1 when any FAILs, 2 on error, 15 when the unit is reserved
+(whatever its conditions say); for a category unit 0 when it is trivial, 1
+otherwise and 15 when it is reserved. --list and --classify exit 0.
 """
 
 import argparse
@@ -167,6 +201,7 @@ if HERE not in sys.path:
 
 import entry_points as ep  # noqa: E402  (puts codedb on the path)
 import inventory  # noqa: E402
+import reserved_paths  # noqa: E402
 import unit_ast  # noqa: E402
 
 codedb = ep.codedb
@@ -203,6 +238,12 @@ _CATEGORY_UNIT = re.compile(r'^([A-Za-z_]\w*)\(([A-Za-z_]\w*)\)$')
 MAX_LINES = 500
 MAX_USERS = 3
 HOT_PATHS = os.path.join('docs', 'swift-migration', 'hot-paths.md')
+RESERVED = reserved_paths.RESERVED
+# The exit status of a single unit under a reserved path prefix, a number no
+# other migration tool gives a meaning.
+EXIT_RESERVED = 15
+# Every path a unit can be given, in the order --classify sorts and counts.
+PATHS = ('trivial', 'light', 'full', 'reserved')
 CONDITIONS = collections.OrderedDict([
     ('1', 'The unit\'s implementation is %d lines or fewer.' % MAX_LINES),
     ('2', 'Three or fewer files outside the unit use it (code database). The bridging header and the unit\'s own '
@@ -330,7 +371,7 @@ class Facts:
     database, resources, registry), indexes of class users, implementations
     and selectors, and the files the database does not parse."""
 
-    def __init__(self, census, hot_paths_path=None, clang=None):
+    def __init__(self, census, hot_paths_path=None, clang=None, reserved_path=None):
         self.census = census
         self.con = census.con
         self.root = census.root
@@ -390,6 +431,8 @@ class Facts:
         self._texts = {}
         self._literals = None
         self.hot_listed = self._hot_paths(hot_paths_path or os.path.join(self.root, HOT_PATHS))
+        self.reserved = read_reserved(reserved_path or os.path.join(self.root, RESERVED),
+                                      required=reserved_path is not None)
 
     # --- Indexes built once.
 
@@ -619,6 +662,19 @@ class Facts:
         return sorted(impl_files), sorted(unit)
 
 
+def read_reserved(path, required=False):
+    """The prefixes of the reserved-path list (reserved_paths.read_reserved),
+    with its errors as QualifyError."""
+    try:
+        return reserved_paths.read_reserved(path, required=required)
+    except reserved_paths.ReservedError as e:
+        raise QualifyError(str(e))
+
+
+reserved_prefix = reserved_paths.reserved_prefix
+unmatched_prefixes = reserved_paths.unmatched_prefixes
+
+
 class Checker:
     """The conditions for one class."""
 
@@ -633,6 +689,17 @@ class Checker:
         self.callers_thread = callers_thread
         self.impl, self.unit = facts.unit(self.cls, self.category)
         self.unit_set = set(self.unit)
+        # A port moves every implementation file of the unit, and with a
+        # file every class it implements, each with its CLASS+Something
+        # category files; one of those under a reserved prefix reserves the
+        # whole unit.
+        moved = set(self.impl)
+        if not self.category:
+            for f in self.impl:
+                for other in facts.file_classes.get(f, ()):
+                    if other != self.cls and other in facts.impls:
+                        moved.update(facts.unit(other)[0])
+        self.reserved = reserved_prefix(sorted(moved), facts.reserved)
         self.impl_lines = sum(facts.lines(f) for f in self.impl if f.endswith(('.m', '.mm')))
         # Units of the implementation files that are not current: rows from
         # them may be missing or wrong, so a database PASS is MANUAL.
@@ -1473,6 +1540,21 @@ def path_of(trivial, light_fails, category):
     return 'full' if category or light_fails else 'light'
 
 
+def path_and_status(trivial, light_fails, category, reserved):
+    """(path, exit status) of a single unit; reserved is its reserved
+    prefix or None, and a reserved unit takes no path whatever its
+    conditions say."""
+    if reserved:
+        return 'reserved', EXIT_RESERVED
+    path = path_of(trivial, light_fails, category)
+    return path, (0 if path == 'trivial' else 1) if category else (1 if light_fails else 0)
+
+
+def path_counts(units):
+    """{path: number of units} for every path in PATHS."""
+    return collections.OrderedDict((p, sum(1 for u in units if u['path'] == p)) for p in PATHS)
+
+
 def qualify(facts, cls, callers_thread=None):
     ch = Checker(facts, cls, callers_thread)
     trivial = ch.trivial()
@@ -1483,23 +1565,35 @@ def qualify(facts, cls, callers_thread=None):
         found = ch.run()
         conditions = [found[cid] for cid in CONDITION_IDS]
     fails = any(c.status == 'FAIL' for c in conditions)
-    path = path_of(trivial, fails, ch.category)
-    status = (0 if path == 'trivial' else 1) if ch.category else (1 if fails else 0)
+    path, status = path_and_status(trivial, fails, ch.category, ch.reserved)
     return collections.OrderedDict([
         ('class', cls), ('unit_files', ch.unit), ('implementation_lines', ch.impl_lines),
-        ('body_lines', ch.body_lines), ('path', path),
-        ('database_incomplete', database_incomplete(facts.census)),
+        ('body_lines', ch.body_lines), ('path', path), ('reserved', ch.reserved),
+    ] + list(incompleteness(facts.census).items()) + [
         ('conditions', condition_dicts(conditions, CONDITIONS)),
         ('trivial_conditions', condition_dicts(trivial, TRIVIAL_CONDITIONS)),
         ('exit_status', status),
     ])
 
 
+def incompleteness(census):
+    """Why the answers may be incomplete (the runtime method lists are not
+    used here), under three keys: database_incomplete, every line;
+    database_rows_incomplete, the lines about the database's own rows (the
+    Objective-C units, the compile database's coverage, the Swift
+    modules), which refreshing the database makes current; and
+    registry_or_resources_incomplete, the lines about the reflective-site
+    registry and the resource files, which a refresh of the database
+    cannot change."""
+    rows = census.objc_incomplete() + census.swift_incomplete()
+    other = census.registry_incomplete() + ['INCOMPLETE: %s: %s' % p for p in census.resources.problems]
+    return collections.OrderedDict([('database_incomplete', rows + other), ('database_rows_incomplete', rows),
+                                    ('registry_or_resources_incomplete', other)])
+
+
 def database_incomplete(census):
-    """Why the database's answers may be incomplete (the runtime method
-    lists are not used here)."""
-    return census.objc_incomplete() + census.swift_incomplete() + census.registry_incomplete() + [
-        'INCOMPLETE: %s: %s' % p for p in census.resources.problems]
+    """Every line of incompleteness(census)."""
+    return incompleteness(census)['database_incomplete']
 
 
 def list_classes(facts):
@@ -1515,10 +1609,14 @@ def list_classes(facts):
     facts.string_literals(classes)
     facts.type_index(classes)
     out = []
+    reserved = []
     for c in classes:
         try:
             ch = Checker(facts, c)
         except QualifyError:
+            continue
+        if ch.reserved:
+            reserved.append(collections.OrderedDict([('class', c), ('file', ch.impl[0]), ('reserved', ch.reserved)]))
             continue
         found = ch.run(stop_on_fail=True)
         if any(x.status == 'FAIL' for x in found.values()):
@@ -1528,8 +1626,9 @@ def list_classes(facts):
                                             ('users', len(ch.counted_users)), ('manual', manual)]))
     out.sort(key=lambda d: (d['lines'], d['class']))
     return collections.OrderedDict([('considered', len(classes)), ('qualifying', len(out)),
-                                    ('database_incomplete', database_incomplete(census)), ('classes', out),
-                                    ('exit_status', 0)])
+                                    ('reserved', len(reserved)),
+                                    ] + list(incompleteness(census).items()) + [('classes', out),
+                                    ('reserved_classes', reserved), ('exit_status', 0)])
 
 
 def classify(facts):
@@ -1566,33 +1665,44 @@ def classify(facts):
             continue
         main = ch.impl[0] if ch.category else min(f for f, _ in facts.impls[ch.cls])
         if main in seen_files:
-            # Another class of a file already classified: one unit per file.
-            seen_files[main]['classes'].append(name)
+            # Another class of a file already classified: one unit per file,
+            # reserved when any of its classes is.
+            row = seen_files[main]
+            row['classes'].append(name)
+            if ch.reserved and not row['reserved']:
+                row.update([('path', 'reserved'), ('reserved', ch.reserved), ('body_lines', None),
+                            ('not_trivial_because', []), ('stop_status', None)])
             continue
-        trivial = ch.trivial(stop=True)
-        blocked = [t for t, c in trivial.items() if c.status != 'PASS']
-        if blocked:
-            fails = bool(ch.category) or any(x.status == 'FAIL' for x in ch.run(stop_on_fail=True).values())
-            path = 'full' if fails else 'light'
+        if ch.reserved:
+            # Not to be ported: none of its checks is run.
+            path, blocked, body_lines, stop_status = 'reserved', [], None, None
         else:
-            path = 'trivial'
+            trivial = ch.trivial(stop=True)
+            blocked = [t for t, c in trivial.items() if c.status != 'PASS']
+            if blocked:
+                fails = bool(ch.category) or any(x.status == 'FAIL' for x in ch.run(stop_on_fail=True).values())
+                path = 'full' if fails else 'light'
+            else:
+                path = 'trivial'
+            body_lines = ch.body_lines
+            stop_status = trivial[blocked[0]].status if blocked else None
         part_of = covered.get(main) if ch.category else None
         out.append(collections.OrderedDict([('unit', name), ('classes', [name]), ('file', main), ('path', path),
-                                            ('part_of', part_of),
-                                            ('body_lines', ch.body_lines), ('implementation_lines', ch.impl_lines),
+                                            ('reserved', ch.reserved), ('part_of', part_of),
+                                            ('body_lines', body_lines), ('implementation_lines', ch.impl_lines),
                                             ('not_trivial_because', blocked[:1]),
-                                            ('stop_status', trivial[blocked[0]].status if blocked else None)]))
+                                            ('stop_status', stop_status)]))
         seen_files[main] = out[-1]
-    def count(units):
-        return collections.OrderedDict((p, sum(1 for u in units if u['path'] == p)) for p in ('trivial', 'light',
-                                                                                              'full'))
-    counts = count([u for u in out if not u['part_of']])
-    split_counts = count([u for u in out if u['part_of']])
-    out.sort(key=lambda u: (('trivial', 'light', 'full').index(u['path']), u['body_lines'] or 0,
-                            u['implementation_lines'], u['unit']))
+    implementation_files = set(f for fl in facts.impls.values() for f, _ in fl)
+    implementation_files.update(f for cl in facts.categories.values() for _, f in cl)
+    unmatched = unmatched_prefixes(sorted(implementation_files), facts.reserved)
+    counts = path_counts([u for u in out if not u['part_of']])
+    split_counts = path_counts([u for u in out if u['part_of']])
+    out.sort(key=lambda u: (PATHS.index(u['path']), u['body_lines'] or 0, u['implementation_lines'], u['unit']))
     return collections.OrderedDict([('units', sum(counts.values())), ('counts', counts),
                                     ('split_counts', split_counts),
-                                    ('database_incomplete', database_incomplete(census)), ('classified', out),
+                                    ] + list(incompleteness(census).items()) + [('reserved_unmatched', unmatched),
+                                    ('classified', out),
                                     ('exit_status', 0)])
 
 
@@ -1602,14 +1712,21 @@ def write_classify(d, out):
     out.write('Categories in files named for their class, which are part of the class\'s unit and may also move '
               'alone: %s\n' % ', '.join('%s %d' % kv for kv in d['split_counts'].items()))
     out.write('(light means no light condition FAILs; each MANUAL is still settled by reading)\n')
+    if 'reserved' in d['counts']:
+        out.write('(reserved means under a path prefix of docs/swift-migration/reserved.md, named after the file: '
+                  'not to be ported on any path)\n')
+    for p in d.get('reserved_unmatched', []):
+        out.write('WARN: the reserved prefix %s in docs/swift-migration/reserved.md matches no implementation file '
+                  '(a typo, the wrong case or a renamed directory?), so it reserves nothing\n' % p)
     for line in d['database_incomplete']:
         out.write(line + '\n')
     out.write('%-8s %5s %5s  %-50s  %-4s  %s\n' % ('path', 'body', 'lines', 'unit', 'stop', 'file'))
     for u in d['classified']:
-        out.write('%-8s %5s %5d  %-50s  %-4s  %s\n' % (
+        out.write('%-8s %5s %5d  %-50s  %-4s  %s%s\n' % (
             u['path'], '-' if u['body_lines'] is None else u['body_lines'], u['implementation_lines'],
             ', '.join(u['classes']) + (' (in %s\'s unit)' % u['part_of'] if u['part_of'] else ''),
-            ','.join(u['not_trivial_because']) or '-', u['file']))
+            ','.join(u['not_trivial_because']) or '-', u['file'],
+            '  (reserved: %s)' % u['reserved'] if u.get('reserved') else ''))
 
 
 def write_conditions(conditions, out):
@@ -1637,7 +1754,11 @@ def write_text(d, out):
     fails = [c['id'] for c in d['conditions'] if c['status'] == 'FAIL']
     manual = [c['id'] for c in d['conditions'] if c['status'] == 'MANUAL']
     not_trivial = [c['id'] for c in d['trivial_conditions'] if c['status'] != 'PASS']
-    out.write('\nPath: %s%s.\n' % (d['path'], ' (not trivial: %s)' % ', '.join(not_trivial) if not_trivial else ''))
+    if d.get('reserved'):
+        out.write('\nPath: reserved (%s: not to be ported; docs/swift-migration/reserved.md).\n' % d['reserved'])
+    else:
+        out.write('\nPath: %s%s.\n' % (d['path'], ' (not trivial: %s)' % ', '.join(not_trivial)
+                                        if not_trivial else ''))
     if d['conditions']:
         verdict = 'FAIL: ' + ', '.join(fails) if fails else 'no condition FAILs'
         out.write('Result: %s; MANUAL: %s. Exit %d.\n' % (verdict, ', '.join(manual) or 'none', d['exit_status']))
@@ -1646,8 +1767,9 @@ def write_text(d, out):
 
 
 def write_list(d, out):
-    out.write('Classes under sources/ that no automatic condition FAILs, by implementation size: %d of %d\n' % (
-        d['qualifying'], d['considered']))
+    out.write('Classes under sources/ that no automatic condition FAILs, by implementation size: %d of %d%s\n' % (
+        d['qualifying'], d['considered'],
+        '; %d reserved, listed after the table' % d['reserved'] if d.get('reserved') else ''))
     out.write('(every one needs 5c, the callers\' thread, answered by a person; "manual" lists the other conditions '
               'a person must still read)\n')
     for line in d['database_incomplete']:
@@ -1656,13 +1778,19 @@ def write_list(d, out):
     for c in d['classes']:
         out.write('%6d  %-5d  %-50s  %-8s  %s\n' % (c['lines'], c['users'], c['class'], ','.join(c['manual']) or '-',
                                                     c['file']))
+    if d.get('reserved_classes'):
+        out.write('\nReserved, not to be ported on any path (docs/swift-migration/reserved.md): %d\n' %
+                  len(d['reserved_classes']))
+        out.write('%-50s  %-20s  %s\n' % ('class', 'prefix', 'file'))
+        for c in d['reserved_classes']:
+            out.write('%-50s  %-20s  %s\n' % (c['class'], c['reserved'], c['file']))
 
 
 def build_parser():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--root', default=os.path.abspath(os.path.join(HERE, '..', '..')))
     for opt in ('--db', '--cdb', '--fragments', '--extractor', '--swift-work', '--swift-reader', '--registry',
-                '--hot-paths'):
+                '--hot-paths', '--reserved'):
         p.add_argument(opt)
     p.add_argument('--json', action='store_true')
     p.add_argument('--clang', help='the clang for the AST checks (default: upstream clang 22, as unit_ast.py finds it)')
@@ -1684,7 +1812,7 @@ def main(argv=None, out=None):
                              swift_reader=args.swift_reader, swift_work=args.swift_work)
         census = ep.Census(paths, registry_path=args.registry)
         try:
-            facts = Facts(census, args.hot_paths, clang=args.clang)
+            facts = Facts(census, args.hot_paths, clang=args.clang, reserved_path=args.reserved)
             if args.list:
                 d = list_classes(facts)
             elif args.classify:

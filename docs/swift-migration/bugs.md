@@ -1432,8 +1432,15 @@ or a crash from program output.
 - **Reproduce:** not reproduced on purpose. The symptom is "N units in the
   database have parse errors" at the end of an `update` that extracted none
   with parse errors.
-- **Meanwhile:** force each such unit by hand (the list is in
-  `crosscheck`'s "not compared" section; strip the trailing colon).
+- **Meanwhile:** `tools/swift_migration/codedb/refresh.sh` does this
+  once per database refresh: when the update fails and the database
+  records units with parse errors, it runs `update --file PATH --force`
+  for each such file, then the update once more, and fails (exit 12,
+  naming the files) only if errors remain. By hand there remains only a
+  file that still fails after that, or a forced file between database
+  refreshes: `codedb.py update --file PATH --force`, while no database
+  refresh is running (the list is in `crosscheck`'s "not compared"
+  section; strip the trailing colon).
 - **Found:** 2026-11-24, the nightly orchestrator's cold start.
 
 ## `TabBarSearchWindowTests` and `TabBarOrderWindowTests` fail on the tree as it stands
@@ -1461,7 +1468,7 @@ or a crash from program output.
 - **Reproduce:** `tools/run_tests.expect ModernTests/TabBarSearchWindowTests`
   on `f1e606764`.
 - **Meanwhile:** the night's gate runs count these two classes as failures
-  that were already in the tree (orchestration.md section 1, step 4.6) and
+  that were already in the tree (orchestration.md section 1, step 4.5) and
   judge each commit by the failures it adds; the list is in
   `tmp/baseline-failures-2026-11-24.txt` of the nightly clone. Queued for the
   owner (owner-queue.md).
@@ -1519,3 +1526,43 @@ or a crash from program output.
   status alone.
 - **Found:** 2026-11-26, review of unit `combined-sanitizer-runs`.
 
+
+## A second notification subscription on one owner cancels the first
+
+- **Where:** `-[iTermBaseNotification internalSubscribe:withBlock:]` in
+  `sources/Notifications/iTermNotificationCenter.m`.
+- **What:** the object that removes the observer when the owner goes away
+  is stored on the owner as an associated object under one static key,
+  shared by every notification class. A second subscription by the same
+  owner, to another notification class or to the same one, replaces it;
+  the first one's remover is released, removes its observer, and the first
+  subscription silently stops. Every owner found in the tree subscribes
+  once, so nothing is known to be affected today; owners whose superclass
+  also subscribes were not checked.
+- **Fix, when wanted:** keep the removers in an array on the owner, or key
+  each by its own token.
+- **Meanwhile:** a test that subscribes twice uses a fresh owner each time.
+- **Found:** 2026-11-27, port of `iTermSetFindStringNotification`.
+
+## “Use Selection for Find” in the notes tool and the AI chat input posts a notification nobody receives
+
+- **Where:** `-[ToolNotes performFindPanelAction:]` and
+  `ChatInputTextFieldContainer`'s `performFindPanelAction(_:)` post
+  `iTermSetFindStringNotification`.
+- **What:** nothing in the tree subscribes to it. The one subscriber was
+  removed by the commit “Improve how the find pasteboard is used” (issue
+  8782). Whether the find string still reaches the find bar another way,
+  for example through the find pasteboard in `super`, was not checked.
+- **Found:** 2026-11-27, port of `iTermSetFindStringNotification`; the
+  port keeps the posts as they are.
+
+## `LocalizationHygieneTests.testNoStrayOKCancelButtonKeys` fails on the tree as it stands
+
+- **Where:** `xcstrings/Localizable.xcstrings` has `TabContentEditor.OK`
+  and `TabContentEditor.Cancel`, added upstream by “Translate new strings
+  into all languages”; the test wants `General.OK` and `General.Cancel`.
+- **What:** the test fails on origin/master with no migration commit, so a
+  whole suite fails by this one test until upstream fixes it. It is not a
+  unit's failure.
+- **Found:** 2026-11-27, the whole suite on the port of
+  `iTermSetFindStringNotification`. The owner was told.

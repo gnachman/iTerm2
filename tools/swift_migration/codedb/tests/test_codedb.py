@@ -2315,8 +2315,11 @@ LOOP = 'import time\nwhile True: time.sleep(0.2)\n'
 
 
 def start_time(pid):
-    """The process's start time as ps prints it, whitespace collapsed, or ''."""
-    out = subprocess.run(['ps', '-o', 'lstart=', '-p', str(pid)], capture_output=True, text=True).stdout
+    """The process's start time as ps prints it in the environment the lock
+    records it in (codedb.PS_ENV: the C locale and UTC), whitespace
+    collapsed, or ''."""
+    out = subprocess.run(['ps', '-o', 'lstart=', '-p', str(pid)], capture_output=True, text=True,
+                         env=dict(os.environ, **codedb.PS_ENV)).stdout
     return ' '.join(out.split())
 
 

@@ -160,10 +160,11 @@ if [ "${CODEDB_LOCK_TOKEN:-}" != "$$" ]; then
 fi
 unset CODEDB_LOCK_TOKEN
 
-# The start time of a process as `ps -o lstart=` prints it, whitespace
-# collapsed (as codedb.py collapses it), or nothing if there is no such process.
+# The start time of a process as `ps -o lstart=` prints it in the C locale
+# and UTC, whitespace collapsed (as codedb.py reads it, in the same
+# environment, PS_ENV), or nothing if there is no such process.
 start_time() {
-    ps -o lstart= -p "$1" 2>/dev/null | awk '{$1 = $1; print}'
+    LC_ALL=C TZ=UTC0 ps -o lstart= -p "$1" 2>/dev/null | awk '{$1 = $1; print}'
 }
 
 MY_START="$(start_time $$)"

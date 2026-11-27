@@ -21,12 +21,15 @@ You are the orchestrator. This skill is the order of work; the rules are in
 
 ## 1. Pick and assign the path
 
-1. Unit given: use it. None given: resume an unparked entry in `claims.md`,
+1. Unit given: use it, unless it prints reserved (`reserved.md`): then
+   it is not ported, unless the owner himself named it after the
+   reservation, in which case ask him. None given: resume an unparked entry in `claims.md`,
    else take the next eligible unit (`orchestration.md` §2, step 4),
    preferring a batch of eligible trivial units from
-   `qualify_unit.py --classify` (at the start, `tmp/classify.txt`, while
-   derived data refreshes in the background: `orchestration.md` §1, step
-   4), smallest first. At night up to three
+   `tmp/classify.txt` (never a row whose path is reserved), which the last successful
+   `tools/swift_migration/codedb/refresh.sh` wrote (`orchestration.md` §1,
+   step 4), smallest first. Before briefing any unit, follow
+   `orchestration.md` §1, step 4: `refresh.sh --status` first. At night up to three
    trivial or light units with no dependency on each other may be
    authored at once, each in its own lane, commits landing one at a time;
    never wait idle on one author: gate and commit each as it returns and
@@ -40,8 +43,10 @@ You are the orchestrator. This skill is the order of work; the rules are in
    settled by an agent's reading, recorded in the dossier (the tool's
    evidence line, what was read, the conclusion) and checked by the
    reviewer; a MANUAL not clearly settled in the unit's favour counts as a
-   FAIL, and a FAIL is never overridden. Otherwise full. Hot path: add it
-   to `hot-paths.md` and pick another.
+   FAIL, and a FAIL is never overridden. Otherwise full. Reserved (the
+   tool prints `Path: reserved`; `reserved.md`): do not port it, claim
+   nothing, and pick another unit. Hot path: add it to `hot-paths.md` and
+   pick another.
 3. Claim it in `claims.md`: unit, path, step, date, round 1.
 
 ## 2. Trivial path (`lifecycle.md` §3, "The trivial path")
@@ -69,9 +74,12 @@ Check the budget before each subagent and each gate run, on every path
    Objective-C, and does not rebuild or rerun tests unless something looks
    wrong. Another round only for a blocking finding that stood.
 4. **Collect** as on the light path (step 3 below), without a `test`
-   patch, and only once the start-of-session refresh has finished and
-   `qualify_unit.py UNIT` again prints trivial (`orchestration.md` §1,
-   step 4).
+   patch, and, for a unit briefed while the database was behind, only
+   after the database refresh has exited 0 and `qualify_unit.py UNIT`
+   again prints trivial (follow `orchestration.md` §1, step 4:
+   `refresh.sh --status` first). Collect nothing that touches a file the
+   build or the classification reads while it says `running`
+   (`orchestration.md` §6, "The code database").
 5. **Gate**: `README.md` §5 (the build and the targeted tests; no whole
    suite on the trivial path). If the project-file change no longer
    applies because another unit landed, run `pbxproj_swap.py` in your
@@ -181,9 +189,10 @@ one at a time, each under the lock with its stall watchdog:
 `sanitizer_tests.sh combined --parallel` (the plain whole suite, with the
 nullability and integer checks compiled in: three verdicts, tests,
 nullability and integer), then `sanitizer_tests.sh thread` (never
-`--parallel`); the `x86_64` build; the capture,
-`codedb.py update --accept-removals`, the lints and
-`qualify_unit.py --classify > tmp/classify.txt`. Wait for one in the
+`--parallel`); the `x86_64` build; `tools/swift_migration/codedb/refresh.sh`
+(the capture, the update and the classification in one command, whose
+exit status you read before anything else: nonzero is a failed check),
+then the lints. Wait for one in the
 background only with `suite_guard.py wait --pid PID --seconds 540` in the
 foreground, never by ending the turn. Fix a failure by a new commit of the
 unit or `git revert`, never a reset. Units the checks passed over leave
@@ -197,6 +206,12 @@ process of yours running.
 ## Standing limits
 
 - Never push, fetch, rebase or merge. Commit on master, by pathspec.
+- Never refresh the database by running the capture, a whole
+  `codedb.py update` or `qualify_unit.py --classify` by hand:
+  `refresh.sh` is the one command (it also forces the files recorded
+  with parse errors once), and no file the build or the classification
+  reads changes in its checkout while it runs. Forcing a single file with `codedb.py update --file PATH
+  --force` by hand stays allowed when no database refresh is running.
 - Never touch a submodule, another checkout, `CLAUDE.md`, a settings file
   or `tools/add_file_to_xcodeproj.rb`. Subagents never commit.
 - One author lane per unit at a time; at most three unit authors at once,

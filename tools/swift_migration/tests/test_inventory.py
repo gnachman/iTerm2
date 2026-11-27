@@ -330,6 +330,32 @@ class RelationTests(unittest.TestCase):
         reaches = [r['reach'] for r in result['candidates']]
         self.assertEqual(reaches, sorted(reaches))
 
+    def test_leaf_defers_files_under_a_reserved_prefix(self):
+        # docs/swift-migration/reserved.md: files under a prefix there are not
+        # ported on any path, so leaf does not offer them.
+        self.assertEqual(MiniRepo.inventory().leaf()['deferred']['reserved (reserved.md)']['files'], [])
+
+        def mutate(root):
+            os.makedirs(os.path.join(root, 'docs', 'swift-migration'), exist_ok=True)
+            with open(os.path.join(root, 'docs', 'swift-migration', 'reserved.md'), 'w') as f:
+                f.write('| Path prefix | Date | Reason | Ends |\n|---|---|---|---|\n'
+                        '| `ThirdParty/PSMTabBarControl/` | 2026-11-27 | a test | never |\n')
+        result = inv.Inventory(make_repo(mutate)).leaf()
+        paths = [r['path'] for r in result['candidates']]
+        self.assertNotIn('ThirdParty/PSMTabBarControl/source/PSMThing.m', paths)
+        self.assertIn('sources/Owner.m', paths)
+        reserved = dict((f['path'], f['details']) for f in result['deferred']['reserved (reserved.md)']['files'])
+        self.assertEqual(reserved, {'ThirdParty/PSMTabBarControl/source/PSMThing.m':
+                                    ['under ThirdParty/PSMTabBarControl/ (docs/swift-migration/reserved.md)']})
+
+    def test_leaf_refuses_a_malformed_reserved_list(self):
+        def mutate(root):
+            os.makedirs(os.path.join(root, 'docs', 'swift-migration'), exist_ok=True)
+            with open(os.path.join(root, 'docs', 'swift-migration', 'reserved.md'), 'w') as f:
+                f.write('# Reserved\n\nNo table.\n')
+        with self.assertRaises(inv.InventoryError):
+            inv.Inventory(make_repo(mutate)).leaf()
+
     def test_leaf_excludes_class_subclassed_outside_scope(self):
         # Bar is subclassed by BarSpy in ModernTests; Objective-C cannot subclass a Swift class.
         result = MiniRepo.inventory().leaf(max_fan_in=10, max_reach=100)

@@ -243,6 +243,137 @@ class SwapTests(unittest.TestCase):
                               r'lastKnownFileType = sourcecode.swift; path = Foo.swift;')
 
 
+FOO_H_BUILD_FILE = ('\t\t111111111111111111111111 /* Foo.h in Headers */ = {isa = PBXBuildFile; '
+                    'fileRef = 222222222222222222222222 /* Foo.h */; };')
+FOO_H_ENTRY = '\t\t\t\t111111111111111111111111 /* Foo.h in Headers */,'
+FOO_H_SOURCES_ENTRY = '\t\t\t\t111111111111111111111111 /* Foo.h in Sources */,'
+
+
+def with_h_in_sources(text=FIXTURE, phase='DDDDDDDDDDDDDDDDDDDDDDDD'):
+    """The fixture with Foo.h's build file listed in the Sources phase called phase
+    instead of the Headers phase, as Xcode does when a header is added to a target's
+    sources by mistake."""
+    text = text.replace(FOO_H_BUILD_FILE, FOO_H_BUILD_FILE.replace('Foo.h in Headers', 'Foo.h in Sources'))
+    text = text.replace(FOO_H_ENTRY + '\n', '')
+    opening = '\t\t%s /* Sources */ = {\n\t\t\tisa = PBXSourcesBuildPhase;\n' \
+              '\t\t\tbuildActionMask = 2147483647;\n\t\t\tfiles = (\n' % phase
+    assert opening in text
+    return text.replace(opening, opening + FOO_H_SOURCES_ENTRY + '\n')
+
+
+class HeaderInSourcesTests(unittest.TestCase):
+    """A header whose build file is listed in a Sources phase compiles nothing there;
+    the swap removes it as it removes a header's build file from a Headers phase."""
+
+    def swap(self, text, notes=None, **kw):
+        if notes is not None:
+            kw['notes'] = notes
+        return pbxproj_swap.swap(text, 'Things/Foo.m', 'Things/Foo.h', 'Things/Foo.swift',
+                                 rng=random.Random(1), **kw)
+
+    def refusal(self, text, **kw):
+        with self.assertRaises(pbxproj_swap.Refusal) as cm:
+            self.swap(text, **kw)
+        return str(cm.exception)
+
+    def test_removes_the_header_and_reports_it(self):
+        text = with_h_in_sources()
+        notes = []
+        new = self.swap(text, notes=notes)
+        for gone in ('Foo.h', 'Foo.m', '111111111111111111111111', '222222222222222222222222',
+                     '333333333333333333333333', '444444444444444444444444'):
+            self.assertNotIn(gone, new)
+        removed, added = changed_lines(text, new)
+        # 4 lines of the .m replaced; the .h's file reference, group child, build file and
+        # Sources phase entry removed.
+        self.assertEqual(len(removed), 8)
+        self.assertEqual(len(added), 4)
+        for line in removed:
+            self.assertTrue('Foo.m' in line or 'Foo.h' in line, line)
+        for line in added:
+            self.assertIn('Foo.swift', line)
+        self.assertRegex(new, r'\t\t\tfiles = \(\n\t\t\t\t555555555555555555555555 /\* Bar.swift in Sources \*/,\n'
+                              r'\t\t\t\t[0-9A-F]{24} /\* Foo.swift in Sources \*/,\n'
+                              r'\t\t\t\t777777777777777777777777 /\* Baz.m in Sources \*/,\n\t\t\t\);')
+        # The Headers phase is left as it was, now with no entry removed from it.
+        self.assertIn('\t\t\tisa = PBXHeadersBuildPhase;\n\t\t\tbuildActionMask = 2147483647;\n'
+                      '\t\t\tfiles = (\n\t\t\t);', new)
+        self.assertEqual(len(notes), 1)
+        self.assertIn('Foo.h', notes[0])
+        self.assertIn('Sources phase', notes[0])
+        self.assertIn('App', notes[0])
+        self.assertIn('this swap removes its build file and phase entry', notes[0])
+
+    def test_notes_are_optional(self):
+        new = self.swap(with_h_in_sources())
+        self.assertNotIn('Foo.h', new)
+
+    def test_header_in_a_headers_phase_gives_no_note(self):
+        notes = []
+        self.swap(FIXTURE, notes=notes)
+        self.assertEqual(notes, [])
+
+    def test_removes_the_header_from_every_target_the_swap_covers(self):
+        # The Other target's files are added first: once Foo.h leaves the Headers phase, its
+        # empty files list looks the same as the Other target's.
+        text = with_h_in_sources(with_other_files(FIXTURE,
+                                                  '\t\t\t\t123412341234123412341234 /* Foo.m in Sources */,',
+                                                  '\t\t\t\t565656565656565656565656 /* Foo.h in Sources */,'))
+        text = with_build_file(text, '\t\t123412341234123412341234 /* Foo.m in Sources */ = {isa = PBXBuildFile; '
+                                     'fileRef = 444444444444444444444444 /* Foo.m */; };')
+        text = with_build_file(text, '\t\t565656565656565656565656 /* Foo.h in Sources */ = {isa = PBXBuildFile; '
+                                     'fileRef = 222222222222222222222222 /* Foo.h */; };')
+        notes = []
+        new = self.swap(text, notes=notes, all_targets=True)
+        self.assertNotIn('Foo.h', new)
+        self.assertNotIn('Foo.m', new)
+        self.assertEqual(len(re.findall(r'/\* Foo.swift in Sources \*/,', new)), 2)
+        self.assertEqual(len(notes), 2)
+        self.assertTrue(any('App' in n for n in notes))
+        self.assertTrue(any('Other' in n for n in notes))
+
+    def test_refuses_header_in_sources_phase_of_a_target_without_the_m(self):
+        message = self.refusal(with_h_in_sources(phase='FFFFFFFFFFFFFFFFFFFFFFFF'))
+        self.assertIn('Foo.h', message)
+        self.assertIn('Other', message)
+
+    def test_refuses_sources_build_file_listed_in_a_headers_phase(self):
+        # The build file says Sources but its entry is in the Headers phase.
+        text = FIXTURE.replace(FOO_H_BUILD_FILE, FOO_H_BUILD_FILE.replace('Foo.h in Headers', 'Foo.h in Sources'))
+        text = text.replace(FOO_H_ENTRY, FOO_H_SOURCES_ENTRY)
+        self.assertIn('PBXHeadersBuildPhase', self.refusal(text))
+
+    def test_refuses_header_in_a_phase_other_than_headers_or_sources(self):
+        text = FIXTURE.replace(FOO_H_BUILD_FILE, FOO_H_BUILD_FILE.replace('Foo.h in Headers', 'Foo.h in Resources'))
+        text = text.replace(FOO_H_ENTRY, '\t\t\t\t111111111111111111111111 /* Foo.h in Resources */,')
+        self.assertIn('expected Headers', self.refusal(text))
+
+    def test_refuses_public_or_private_header(self):
+        for attribute in ('Public', 'Private'):
+            text = FIXTURE.replace(FOO_H_BUILD_FILE, FOO_H_BUILD_FILE.replace(
+                '/* Foo.h */; };', '/* Foo.h */; settings = {ATTRIBUTES = (%s, ); }; };' % attribute))
+            message = self.refusal(text)
+            self.assertIn('Foo.h', message)
+            self.assertIn(attribute, message)
+            self.assertIn('does not remove a header with settings', message)
+
+    def test_refuses_header_in_sources_with_settings(self):
+        text = with_h_in_sources()
+        text = text.replace('fileRef = 222222222222222222222222 /* Foo.h */; };',
+                            'fileRef = 222222222222222222222222 /* Foo.h */; settings = {COMPILER_FLAGS = "-w"; }; };')
+        message = self.refusal(text)
+        self.assertIn('-w', message)
+        self.assertIn('does not remove a header with settings', message)
+
+    def test_refuses_unexplained_header_build_file_reference(self):
+        text = with_h_in_sources().replace('\trootObject', '\tstray = 111111111111111111111111;\n\trootObject')
+        self.assertIn('occurs', self.refusal(text))
+
+    def test_refuses_header_entry_listed_twice(self):
+        text = with_h_in_sources().replace(FOO_H_SOURCES_ENTRY + '\n', (FOO_H_SOURCES_ENTRY + '\n') * 2)
+        self.assertIn('exactly one', self.refusal(text))
+
+
 FOO_M_ENTRY = '\t\t\t\t333333333333333333333333 /* Foo.m in Sources */,'
 FOO_M_BUILD_FILE = ('\t\t333333333333333333333333 /* Foo.m in Sources */ = {isa = PBXBuildFile; '
                     'fileRef = 444444444444444444444444 /* Foo.m */; };')
@@ -464,6 +595,22 @@ class MainTests(unittest.TestCase):
             self.assertIn('refused', err)
             with open(path) as f:
                 self.assertEqual(f.read(), FIXTURE)
+
+    def test_reports_a_header_listed_in_sources(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, 'project.pbxproj')
+            text = with_h_in_sources()
+            with open(path, 'w') as f:
+                f.write(text)
+            status, out, err = self.run_main(['--project', path, '--m', 'Things/Foo.m', '--h', 'Things/Foo.h',
+                                              '--swift', 'Things/Foo.swift', '--check'])
+            self.assertEqual(status, 0)
+            self.assertIn('-' + FOO_H_SOURCES_ENTRY, out)
+            self.assertIn('Foo.h', err)
+            self.assertIn('Sources phase', err)
+            self.assertIn('App', err)
+            with open(path) as f:
+                self.assertEqual(f.read(), text)
 
     def test_move_check_writes_nothing_and_apply_writes(self):
         with tempfile.TemporaryDirectory() as d:

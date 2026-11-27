@@ -298,7 +298,7 @@ Things only the owner can do, noted on 2026-11-20 at his request.
   call a defect), and until then, confirmation that the gate may judge a
   commit by the failures it adds to these.
 - **Meanwhile:** the night's gate runs treated them as failures already in
-  the tree (orchestration.md section 1, step 4.6) and committed only what
+  the tree (orchestration.md section 1, step 4.5) and committed only what
   added no failure. Not disabled: they fail consistently, so they are not
   flaky by test-speed.md section 3.
 - **Update, 2026-11-24, by day:** the cause appears to be the locked screen,

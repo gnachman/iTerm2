@@ -491,6 +491,9 @@ No agent remembers what another did. The repository is the memory.
   attention, so that the orchestrator never waits
   ([workflow.md §3](workflow.md)).
 - `hot-paths.md`: units deferred under [performance.md §2](performance.md), with the reason.
+- [reserved.md](reserved.md): path prefixes whose files are not ported on
+  any path, with the owner's reason and when the reservation ends;
+  `qualify_unit.py` reads it.
 - `reflective-sites.md`: the registry from [hidden-callers.md §2](hidden-callers.md).
 - `units/<name>.md`: the dossier for a unit in progress (none on the
   trivial path). Its changes ride

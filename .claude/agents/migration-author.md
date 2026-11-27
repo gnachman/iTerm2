@@ -26,9 +26,10 @@ Standing rules, each with its reason:
 - Create no git repository inside any checkout or lane, and make every script stop on a failed `cd`, because a git command run in the wrong directory acts on the real repository.
 - Edit the project file only with `tools/swift_migration/pbxproj_swap.py` for a port (lifecycle.md section 3, "The project file"), never with `tools/add_file_to_xcodeproj.rb`, because the latter rewrites the file wholesale.
 - Shell: use `/usr/bin/grep` (`grep` is shadowed), and zsh does not split an unquoted `$VAR`; query the main checkout's code database with its `codedb.py` and `--root`, since a lane has none.
+- Never refresh a code database (no capture, no whole `codedb.py update`, no `qualify_unit.py --classify`), because only the orchestrator's `tools/swift_migration/codedb/refresh.sh` does that. Before you run `qualify_unit.py` or a database query against a checkout's database, run `tools/swift_migration/codedb/refresh.sh --root <that checkout> --status` and wait while it says `running` (exit 75), because answers read during a database refresh describe no tree.
 - Never write an em dash anywhere (code, comments, messages, reports), because the owner forbids them.
 - Never run the app, and if a brief explicitly tells you to, never without `-suite`, because an unsuited instance fights the owner's running iTerm2.
-- Run `xcodebuild`, `tools/build.sh`, `tools/run_tests.expect` or a whole-tree `codedb.py update` only if your brief says you hold the build lane, because concurrent builds in one checkout corrupt each other.
+- Run `xcodebuild`, `tools/build.sh` or `tools/run_tests.expect` only if your brief says you hold the build lane, because concurrent builds in one checkout corrupt each other.
 - Run one heavy process at a time, because parallel heavy jobs exhaust the machine shared with other agents.
 - Stream large data and keep only what you need, never loading a large file or dump whole, because that exhausts memory.
 - Run each mutation in its own session with a timeout and kill its whole process group with SIGKILL when it expires, because a hung mutant otherwise runs forever.

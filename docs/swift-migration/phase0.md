@@ -346,9 +346,9 @@ with the reason. They fail the gate on:
 type-aware lints (`swift_ast_lints.py`), `warning_survey.py` and
 `swift_interface.py` need a compile-command capture, which a lane does not
 have, so the orchestrator runs, in its own checkout,
-`capture_compile_commands.sh` (a clean build, so a heavy job; `--jobs N`
-limits its build tasks), then `codedb.py update` (with
-`--accept-removals` when a port deleted files), then the three tools and
+`codedb/refresh.sh` (the capture, a clean build and so a heavy job, then
+`codedb.py update --accept-removals` and the classification; its exit
+status is read first), then, when it succeeded, the three tools and
 `swift_lints.py REV` on each port commit. A finding goes back to the
 author, and its fix is a new commit of the unit. In a lane the author may
 run `swift_lints.py --staged` early, as a check of its own; it counts every

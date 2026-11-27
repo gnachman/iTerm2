@@ -2823,6 +2823,9 @@ DEFERRED_LISTS = OrderedDict([
                             'the code may not be compiled at all', 'hidden-callers.md section 6, item 8')),
     ('parse incomplete', ('the text parse of the file is incomplete, so the hazards found in it are not established',
                           'phase0.md section 1 (this inventory)')),
+    ('reserved (reserved.md)', ('under a path prefix in docs/swift-migration/reserved.md, whose files are not ported '
+                                'on any path until the owner ends the reservation',
+                                'reserved.md; lifecycle.md section 3')),
     ('probable hot path', ('in a hot-path directory: hot paths are ported last, with the owner',
                            'performance.md section 2; plan.md section 1, step 7; workflow.md section 3')),
     ('giant classes', ('implements part of PTYSession, PseudoTerminal, PTYTab or PTYTextView, which are emptied by '
@@ -3009,6 +3012,7 @@ class Inventory(object):
         self._identifiers = {}
         self._direct_dispatch = {}
         self._stored = {}
+        self._reserved = None
         self._build()
 
     # Files ----------------------------------------------------------------
@@ -4708,6 +4712,26 @@ class Inventory(object):
                 c = self.superclass.get(c)
         return out
 
+    def reserved_prefixes(self):
+        """The prefixes of docs/swift-migration/reserved.md (none when the
+        file is missing), read once; a malformed file is an InventoryError."""
+        if self._reserved is None:
+            # reserved_paths.py, beside this tool, is imported only here, so
+            # that the subcommands that do not defer files run without it.
+            here = os.path.dirname(os.path.abspath(__file__))
+            if here not in sys.path:
+                sys.path.insert(0, here)
+            try:
+                module = importlib.import_module('reserved_paths')
+            except ImportError as e:
+                raise InventoryError('the reserved-path reader reserved_paths.py could not be imported (%s)' % e)
+            try:
+                self._reserved = module.read_reserved(os.path.join(self.root, module.RESERVED))
+            except module.ReservedError as e:
+                raise InventoryError(str(e))
+            self._reserved_module = module
+        return self._reserved
+
     def deferral_reasons(self, r):
         """Maps each deferred list (DEFERRED_LISTS) that file record r belongs in to the details."""
         h = r['hazards']
@@ -4722,6 +4746,10 @@ class Inventory(object):
                 r['wholly_conditional']['condition']))
         for problem in r['parse_problems']:
             add('parse incomplete', problem)
+        prefixes = self.reserved_prefixes()
+        prefix = self._reserved_module.reserved_prefix([r['path']], prefixes) if prefixes else None
+        if prefix:
+            add('reserved (reserved.md)', 'under %s (docs/swift-migration/reserved.md)' % prefix)
         if r['hot_path_dir']:
             add('probable hot path', 'in %s' % os.path.dirname(r['path']))
         for cls in r['classes']:

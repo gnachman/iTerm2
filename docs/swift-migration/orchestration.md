@@ -61,59 +61,93 @@ Do these every time a session begins, before anything else.
      fetched (the build may fail).
 
    If upstream commits were taken, or a rebase or reset happened, new code
-   arrived. Bring what is derived from the code up to date, in this
-   order, in the background: none of it delays the first unit (on the
-   owner's words of 2026-11-25, [workflow.md §2](workflow.md)). Start
-   steps 1 to 3 and the baseline (step 6), then start the first trivial
-   units at once, unless units are landed, closing checks pending: their
-   closing checks come first. Take them from
-   `tmp/classify.txt`, the `qualify_unit.py --classify` output the last
-   closing checks saved ([lifecycle.md §5](lifecycle.md), step 4; `tmp/`
-   is ignored by git and stays in the clone from night to night). If that
-   file is missing, classify after step 2 as before. A stale database can
-   print a wrong trivial (T8 does not see a subclass in a file the
-   database lacks), so until steps 1 to 3 have finished nothing is
-   collected into the clone, and no unit is committed until
-   `qualify_unit.py UNIT`, run after them, prints trivial; one that no
-   longer does moves to its heavier path ([lifecycle.md §3](lifecycle.md)).
-   A light or full unit starts only after steps 1 to 4 have finished,
-   since its census and dossier read the database and the run-time method
-   list. Reviewers of trivial units read the author's lane meanwhile. With
-   steps 1 and 6 running, at most one author builds until one of them
+   arrived and the code database is behind. Whether or not it did, this
+   rule governs every unit, at the start of a session and later; every
+   other place that mentions it points here:
+
+   - **Rule 1.** Run `tools/swift_migration/codedb/refresh.sh --status`
+     in the checkout that holds the database before briefing any unit.
+   - **Rule 2.** Current (exit 0): qualify and brief. Behind (exit 4): run
+     `qualify_unit.py UNIT` for the candidate trivial units first, brief
+     those that print trivial, then start the database refresh (item 1
+     of the list below), and qualify each of them again after it exits 0
+     and before collecting it; light and full units wait for it. Running
+     (exit 75): wait, and act on no answer from the database.
+   - **Rule 3.** Read the database refresh's exit status before anything
+     depends on it, and change no file the build or the classification
+     reads in that checkout while it runs (section 6, "The code
+     database").
+
+   The candidates come from `tmp/classify.txt`, which the last successful
+   database refresh wrote (`tmp/` is ignored by git and stays in the
+   clone from night to night); if it is missing, no unit is briefed before
+   a database refresh has exited 0. Authors briefed while the database is
+   behind are told not to run `qualify_unit.py` or a database query until
+   the database refresh has ended. Qualifying again matters because a
+   stale database can print a wrong trivial (T8 does not see a subclass in
+   a file the database lacks); a unit that no longer prints trivial moves
+   to its heavier path ([lifecycle.md §3](lifecycle.md)). The derived data
+   below runs in the background and does not delay the first trivial
+   units (on the owner's words of 2026-11-25,
+   [workflow.md §2](workflow.md)): start item 1 and, when item 5 calls
+   for it, the baseline. A light or full unit starts only after
+   items 1 to 3 have finished, since its census and dossier read the
+   database and the run-time method list. Units landed, closing checks
+   pending, get their closing checks first.
+
+   Reviewers of trivial units read the author's lane meanwhile. With
+   items 1 and 5 running, at most one author builds until one of them
    ends (three builds at once). Everything named here lives inside the
    clone and is ignored by git: the code database and its inputs in
    `<clone>/tmp/codedb/` (the compile command fragments in
    `cdb-fragments/`, `compile_commands.jsonl`, the database
-   `codedb.sqlite`), and build products in `<clone>/Build/`.
-   1. **Compile commands**, if the capture is stale.
-      `tools/swift_migration/codedb/capture_compile_commands.sh` runs one
-      clean Development build of the ModernTests scheme with clang writing a
-      compile command fragment for every file it compiles; its header says
-      to run it again whenever source files are added or removed or compile
-      flags change, and `codedb.py update` reports when the compile
-      database no longer matches the project. It builds in, and writes the
-      database inputs of, the checkout it is run from, so it is run in the
-      clone (the database belongs to the clone; a lane has none). It counts
-      as one of the three builds that may run at once. A whole clean build
-      takes as long as any clean build of the app.
-   2. **`codedb.py update`**. Incremental: it extracts every Objective-C
-      unit that is not current and reads again every Swift module that is
-      not current; a schema change, or a changed compiler, extractor or SDK,
-      makes every unit stale. After a port that deleted files, run it with
-      `--accept-removals`. Until the database is current, a query
-      answers but exits 3 ("incomplete": some unit is not current) instead
-      of 0 or 1 (`codedb.py --help`, "Exit status" and "Unit states"). A
-      whole-tree extraction took about 7 minutes on a quiet machine and 20
-      to 30 minutes under load; an incremental update takes time in
-      proportion to the units that changed.
-   3. **`codedb.py macrolint`** (every macro of the kinds in
+   `codedb.sqlite`, the refresh's stamp and logs), and build products in
+   `<clone>/Build/`.
+   1. **The code database and the classification**:
+      `tools/swift_migration/codedb/refresh.sh`, the one command that
+      brings them up to date (its header is the manual). It runs three
+      steps, each only if the one before succeeded: the capture
+      (`capture_compile_commands.sh`, one clean Development build of the
+      ModernTests scheme with clang writing a compile command fragment
+      for every file it compiles; it counts as one of the three builds
+      that may run at once and takes as long as any clean build of the
+      app), `codedb.py update --accept-removals` (incremental: it extracts
+      every Objective-C unit and reads again every Swift module that is
+      not current; a whole-tree extraction took about 7 minutes on a quiet
+      machine and 20 to 30 minutes under load), and `qualify_unit.py
+      --classify`, whose output reaches `tmp/classify.txt` and
+      `tmp/classify.json` only when every step succeeded. It runs in the
+      checkout that holds the database (the clone at night; a lane has
+      none). The three steps are not run by hand, and nothing
+      that depends on the database refresh starts before its exit status
+      has been read, because whatever runs after a failed database
+      refresh works from a half-refreshed database: 0 is success; 3 means
+      a file the build or the classification reads changed while it ran,
+      so nothing it produced is trusted and it is run again; 5 means a rebase, merge or similar git
+      operation is in progress, so it did not start; 11, 12 and 13 name
+      the step that failed (capture, update, classify) and the last line
+      names its log; 75 means another database refresh is running. When
+      the update fails with units recorded with parse errors, the script
+      extracts each of those files again once and updates once more
+      before it calls the step failed (bugs.md, "`codedb.py update` never
+      re-extracts a unit recorded with parse errors"). Classification
+      lines about the reflective-site registry or the resource files are
+      a warning in the verdict, not a failure, since a database refresh
+      cannot change them. A failed database refresh writes no stamp and
+      leaves the previous classification in place, so that `refresh.sh
+      --status` reports the database as behind. Until the database is current, a query answers
+      but exits 3 ("incomplete": some unit is not current) instead of 0 or
+      1 (`codedb.py --help`, "Exit status" and "Unit states"). While a
+      database refresh runs, no file the build or the classification
+      reads changes in that checkout (section 6, "The code database").
+   2. **`codedb.py macrolint`** (every macro of the kinds in
       [hidden-callers.md](hidden-callers.md) §6 has a current row in
       `macro-classification.tsv`) and **`codedb.py crosscheck`** (each
       Objective-C unit against its object file under `Build/`; exit 0
       nothing unexplained, 1 unexplained differences, 3 some units not
       compared, for example because their object is older than their
       sources, 2 error). See `codedb.py --help` for their options.
-   4. **The run-time method list**, if the OS build changed since it was
+   3. **The run-time method list**, if the OS build changed since it was
       written: `tools/swift_migration/sdk_selectors.py --runtime-methods
       OUTPUT` writes it, with a `# os: NAME VERSION (BUILD)` line to compare
       with `sw_vers`. The entry-point census reads it
@@ -121,9 +155,9 @@ Do these every time a session begins, before anything else.
       copies only `tmp/parked/` and `tmp/stored-state-corpus/` into the
       clone, so the clone has no list until one is written under
       `<clone>/tmp/`.
-   5. **`inventory.py summary`**, which recomputes the progress measures
+   4. **`inventory.py summary`**, which recomputes the progress measures
       from the tree; nothing is stored.
-   6. **The whole-suite baseline**, if the new commits touched `sources/`
+   5. **The whole-suite baseline**, if the new commits touched `sources/`
       or `ModernTests/` (`git diff --stat <base>..<new> -- sources
       ModernTests`): run `tools/swift_migration/whole_suite.sh` (which
       runs `tools/run_tests.expect -parallel` under the whole-suite lock,
@@ -137,7 +171,7 @@ Do these every time a session begins, before anything else.
       session left *landed, closing checks pending* (`claims.md`) get the
       closing checks ([lifecycle.md §5](lifecycle.md)) before any new
       unit starts.
-   7. **Lanes.** `nightly_start.sh` released lanes left held by a dead
+   6. **Lanes.** `nightly_start.sh` released lanes left held by a dead
       session after the refresh; a free lane is reset to the new `HEAD`
       when it is next acquired. A lane you still hold from before is
       released and acquired again.
@@ -170,14 +204,18 @@ Work out which stage the migration is in, in this order:
    2026-11-23, then the ordinary usage rule.
 4. **Further units.** Resume anything in `claims.md` that is in progress
    and not parked. Otherwise take the next eligible unit. When
-   `qualify_unit.py --classify` lists eligible trivial units, prefer a
+   `tmp/classify.txt` lists eligible trivial units, prefer a
    batch of them (the owner, 2026-11-24: “Batch trivial units”), smallest
    body first (chosen by the migration and confirmed by the owner on
    2026-11-24: “keep them as is”), each its own commit with its own
    review, under the session's one set of closing checks; otherwise take the inventory
-   script's ordering. A unit is eligible when:
+   script's ordering. Before briefing any unit of a batch, follow
+   section 1, step 4: `refresh.sh --status` first. A unit is eligible when:
    - it is in the current tier, or it is a giant-class extraction;
    - it is not a hot path, and not listed in `hot-paths.md`;
+   - none of its implementation files is under a prefix in
+     [reserved.md](reserved.md) (the classification gives such a unit the
+     path `reserved`, never trivial, light or full);
    - its subclasses and categories are done
      ([interop.md](interop.md));
    - it is not parked.
@@ -454,7 +492,8 @@ script's header is its manual):
   once, on `sanitizer_tests.sh`, `coverage_tests.sh`, `fast_tests.sh`,
   `sanitizer_app.sh`, `perf_baseline.py run` and
   `codedb/capture_compile_commands.sh` (with or without
-  `--other-projects`). A limit makes a build gentler and slower; it is not
+  `--other-projects`), and `codedb/refresh.sh`, which passes it to the
+  capture. A limit makes a build gentler and slower; it is not
   a load threshold, and no script checks the load. The one exception is
   `perf_baseline.py`, which waits for a quiet machine before it measures:
   a baseline taken on a loaded machine measures the load, so that check is
@@ -535,6 +574,22 @@ rejected" section.
 - Follow the owner's rules for commit messages: no em dashes, and no
   co-author line.
 - Commit on master. Do not create a branch. Do not push, ever.
+- **The code database.** While a database refresh runs, no file the
+  build or the classification reads changes in the checkout that holds
+  the database (section 1, step 4, rule 3): no commit, cherry-pick,
+  rebase, checkout or `collect --to-index` that touches such a file, no
+  edit of one, and no new file under `ModernTests/` or `PerformanceTests/`
+  (the project compiles every file there). Those files are everything
+  except `docs/` and `.claude/`, plus `docs/swift-migration/reflective-sites.md`,
+  `hot-paths.md` and `reserved.md`, which `qualify_unit.py` reads. Editing `claims.md`
+  or other documents, and committing a change only to them, are allowed:
+  the database refresh checks the same set and stops with exit 3 only
+  when one of those files changed, and its work is then lost. Before
+  landing a port or rebasing, run `refresh.sh --status`; when it says
+  `running` (exit 75), wait for the database refresh with a bound, read
+  its verdict, and land afterwards. After a rebase onto new upstream
+  commits, and after ports land, the database is behind until it is
+  refreshed.
 - After a `port` commit that lands a feature or fix visible to users, the
   release notes rule in `CLAUDE.md` applies. A faithful port changes no
   behavior and needs no note; a `fix` commit usually does.
@@ -721,6 +776,9 @@ After the pilot:
 | A test is flaky | Do not retry until it passes. Decide whether it is flaky by the definition in [test-speed.md §3](test-speed.md). If it is, disable it, record it in `bugs.md` with how it failed and when, and queue it for the owner, who has another agent debug it. If it is not, it is a failure: treat it as a blocking finding |
 | `xcodebuild` hangs before printing anything, and a sample shows it waiting in CoreDevice | Run `killall CoreDeviceService`; the system restarts it on demand. Then retry |
 | A lint, comparison or other gate tool (not the build, not a test) fails for a reason shown not to be the unit's (the same failure on the unmodified tree or on the before state compared with itself) | First record it in `bugs.md` with the evidence, then say so in the commit message and the report, and commit the unit; never park it for that ([workflow.md §2](workflow.md)) |
+| `refresh.sh` exits 3 (a file the build or the classification reads changed during the database refresh) | Its stamp, database and classification are not trusted. Find what changed that file (section 6, "The code database"; the message lists files committed meanwhile), let it finish, and run the database refresh again; never act on the step error it would otherwise have shown |
+| `refresh.sh` exits 11, 12 or 13 | The step named in its verdict failed; its log is named there. The previous classification and stamp are untouched and `--status` says behind. Fix the cause (a build error in the capture is usually a real build failure on `HEAD`; an update that still names files with parse errors after the script forced each once is recorded in `bugs.md` with those files), run the database refresh again, and start no light or full unit until it succeeds |
+| `refresh.sh` exits 5 | A rebase, merge, cherry-pick, revert or bisect is in progress in that checkout; finish or abort it, then run the database refresh |
 | A tool from Phase 0 gives a wrong answer | Stop relying on it, fix the tool in a `tool` commit through the loop, and recheck the units that used it since it broke |
 | A rule in these files seems wrong | Do not work around it. Queue it under "Rule changes proposed" with the evidence, park what depends on it, and continue elsewhere; a check that is merely defective is the row above |
 | A unit turns out to be a hot path | Add it to `hot-paths.md` with the reason, drop the claim, and move on |

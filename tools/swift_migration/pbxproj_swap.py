@@ -16,7 +16,11 @@ change, and nothing else:
     the .swift, and its entry in that target's Sources phase is replaced in
     place;
   - the .h's PBXFileReference, group child, PBXBuildFile lines and their
-    Headers phase entries are removed.
+    phase entries are removed. A header's build file is normally in a
+    Headers phase. Some headers are listed in a Sources phase instead,
+    where they compile nothing; such a build file and its entry are removed
+    the same way, and the tool prints a note on standard error naming the
+    header and the target.
 
 Fresh 24-hex identifiers are chosen that occur nowhere in the file. Every old
 line must match exactly once where it is expected, and every identifier must
@@ -25,6 +29,13 @@ changes nothing. A .m in more than one target is refused unless
 --all-targets is given. A PBXBuildFile of the .m with settings (compiler
 flags) is refused: they would not apply to Swift. The new file reference's
 attribute set must already be used by some Swift file in the project.
+A PBXBuildFile of the .h is refused when it has settings (such as the
+Public or Private attribute, which make the header part of a framework's
+interface), when it is in a phase other than Headers or Sources, and when it
+is in the Sources phase of a target that does not compile the .m. A .h in
+the Headers phase of any target is removed whichever targets compile the
+.m, since a header without the Public or Private attribute is copied
+nowhere and compiles nothing.
 
 A second mode moves a .m from one native target to another, as an `arc`
 commit does when it moves a file from iTerm2Shared (compiled without ARC) to
@@ -173,7 +184,9 @@ def shape(line):
     return body
 
 
-def swap(text, m_path, h_path, swift_path, all_targets=False, rng=None):
+def swap(text, m_path, h_path, swift_path, all_targets=False, rng=None, notes=None):
+    """The project text with the swap made. When notes is a list, a sentence is appended
+    to it for each change the caller should be told about beyond the usual ones."""
     rng = rng or random.SystemRandom()
     if os.path.dirname(m_path) != os.path.dirname(swift_path):
         raise Refusal('the .swift must be in the same directory as the .m')
@@ -245,10 +258,26 @@ def swap(text, m_path, h_path, swift_path, all_targets=False, rng=None):
                           % (h_ref, h_name, count_id(text, h_ref), 2 + len(h_bfs)))
         changes[hi] = None
         changes[hgi] = None
-        for i, bf, phase, _ in h_bfs:
-            if phase != 'Headers':
-                raise Refusal('%s has a build file in %s, expected Headers' % (h_name, phase))
-            pi, _ = phase_entry(lines, bf, h_name, 'Headers')
+        m_phase_ids = {phase_id for _, _, _, phase_id in phases}
+        for i, bf, phase, settings in h_bfs:
+            if phase not in ('Headers', 'Sources'):
+                raise Refusal('%s has a build file in %s, expected Headers or Sources' % (h_name, phase))
+            if settings:
+                raise Refusal('%s has build settings in a target (%s); this tool does not remove a header with '
+                              'settings, such as the Public or Private attribute, which makes it part of the '
+                              'target\'s interface' % (h_name, settings))
+            pi, phase_id = phase_entry(lines, bf, h_name, phase)
+            if phase == 'Sources':
+                # A header listed in a Sources phase compiles nothing there. The tool removes it only
+                # from a target that compiles the .m being replaced, and refuses otherwise, because
+                # such a listing in an unrelated target suggests a setup this tool does not understand.
+                names = ', '.join(target_names(lines, phase_id))
+                if phase_id not in m_phase_ids:
+                    raise Refusal('%s is listed in the Sources phase of %s, which does not compile %s'
+                                  % (h_name, names, m_name))
+                if notes is not None:
+                    notes.append('%s was listed in the Sources phase of %s; this swap removes its build file '
+                                 'and phase entry' % (h_name, names))
             if count_id(text, bf) != 2:
                 raise Refusal('build file %s of %s occurs %d times, expected 2' % (bf, h_name, count_id(text, bf)))
             changes[i] = None
@@ -401,14 +430,17 @@ def main(argv=None):
     except OSError as e:
         print('cannot read %s: %s' % (project, e), file=sys.stderr)
         return 2
+    notes = []
     try:
         if moving:
             new = move_to_target(text, a.m, a.from_target, a.to_target)
         else:
-            new = swap(text, a.m, a.h, a.swift, all_targets=a.all_targets)
+            new = swap(text, a.m, a.h, a.swift, all_targets=a.all_targets, notes=notes)
     except Refusal as e:
         print('refused: %s' % e, file=sys.stderr)
         return 1
+    for note in notes:
+        print('note: %s' % note, file=sys.stderr)
     diff = difflib.unified_diff(text.splitlines(True), new.splitlines(True), project, project)
     sys.stdout.writelines(diff)
     if not a.check:

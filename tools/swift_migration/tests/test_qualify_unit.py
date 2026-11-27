@@ -11,6 +11,7 @@ the small classes QUALIFY_FILES writes, each made to pass or to fail
 particular conditions. No xcodebuild, nothing written to tmp/codedb.
 """
 
+import collections
 import io
 import json
 import os
@@ -290,6 +291,37 @@ add_class(QUALIFY_FILES, 'iTermQRetainedNew', '\n- (CGImageRef)newQImage;',
 add_class(QUALIFY_FILES, 'iTermQBorrowedCtx', '\n- (void)qborrowedDraw:(CGContextRef)ctx;',
           '- (void)qborrowedDraw:(CGContextRef)ctx {\n    CGContextFillRect(ctx, CGRectMake(0, 0, 1, 1));\n}\n',
           imports=CG)
+# Reserved paths (docs/swift-migration/reserved.md): a class under the
+# reserved directory, one in a directory whose name only starts the same,
+# and a class elsewhere whose CLASS+Something category file is under it.
+QUALIFY_FILES['docs/swift-migration/reserved.md'] = (
+    '# Reserved\n\n| Path prefix | Date | Reason | Ends |\n|---|---|---|---|\n'
+    '| `sources/Settings/` | 2026-11-27 | being reworked | when the owner says so |\n'
+    '| sources/settings/ | 2026-11-27 | the wrong case, which matches nothing | never |\n')
+QUALIFY_FILES['sources/Settings/QReserved.h'] = ('#import <Foundation/Foundation.h>\n@interface iTermQReserved : '
+                                                 'NSObject\n- (int)qreservedValue;\n@end\n')
+QUALIFY_FILES['sources/Settings/QReserved.m'] = ('#import "QReserved.h"\n@implementation iTermQReserved\n' +
+                                                 one_line_method('qreservedValue', 30) + '@end\n')
+QUALIFY_FILES['sources/SettingsExtra/QSettingsExtra.h'] = (
+    '#import <Foundation/Foundation.h>\n@interface iTermQSettingsExtra : NSObject\n- (int)qsettingsExtraValue;\n'
+    '@end\n')
+QUALIFY_FILES['sources/SettingsExtra/QSettingsExtra.m'] = (
+    '#import "QSettingsExtra.h"\n@implementation iTermQSettingsExtra\n' + one_line_method('qsettingsExtraValue', 31) +
+    '@end\n')
+add_class(QUALIFY_FILES, 'iTermQOutside', '\n- (int)qoutsideValue;', one_line_method('qoutsideValue', 32))
+QUALIFY_FILES['sources/Settings/iTermQOutside+Pane.m'] = (
+    '#import "../QOutside.h"\n@implementation iTermQOutside (Pane)\n' + one_line_method('qoutsidePane', 33) +
+    '@end\n')
+# Two classes in one file outside the reserved directory, the second with a
+# CLASS+Something category file under it: a port of either moves the file.
+QUALIFY_FILES['sources/QPairR.h'] = ('#import <Foundation/Foundation.h>\n@interface iTermQPairRA : NSObject\n'
+                                     '- (int)qpairRAValue;\n@end\n@interface iTermQPairRB : NSObject\n'
+                                     '- (int)qpairRBValue;\n@end\n')
+QUALIFY_FILES['sources/QPairR.m'] = ('#import "QPairR.h"\n@implementation iTermQPairRA\n' +
+                                     one_line_method('qpairRAValue', 34) + '@end\n@implementation iTermQPairRB\n' +
+                                     one_line_method('qpairRBValue', 35) + '@end\n')
+QUALIFY_FILES['sources/Settings/iTermQPairRB+Pane.m'] = (
+    '#import "../QPairR.h"\n@implementation iTermQPairRB (Pane)\n' + one_line_method('qpairRBPane', 36) + '@end\n')
 ARC_FILES = ('sources/QBlockArc.m', 'sources/QCFRelease.m', 'sources/QCFCreate.m', 'sources/QBridgeTransfer.m',
              'sources/QRetainedNew.m', 'sources/QBorrowedCtx.m')
 SDEF_CLASS = '    <class name="qscript" code="Qscr" plural="qscripts">\n      <cocoa class="iTermQScript"/>\n    </class>\n'
@@ -419,6 +451,51 @@ class QualifyTest(unittest.TestCase):
         c = self.condition(d, '6')
         self.assertEqual(c['status'], 'FAIL')
         self.assertIn('hot-paths.md lists iTermQListedHot', c['evidence'])
+
+    def test_a_unit_under_a_reserved_prefix_is_reserved(self):
+        status, d = self.run_json('iTermQReserved')
+        self.assertEqual(status, qu.EXIT_RESERVED)
+        self.assertEqual(d['path'], 'reserved')
+        self.assertEqual(d['reserved'], 'sources/Settings/')
+        self.assertEqual([c['id'] for c in d['conditions']], list(qu.CONDITION_IDS), 'every condition is reported')
+        self.assertEqual([c['id'] for c in d['trivial_conditions']], list(qu.TRIVIAL_CONDITIONS))
+        status, text = self.run_text('iTermQReserved')
+        self.assertIn('\nPath: reserved (sources/Settings/: not to be ported; docs/swift-migration/reserved.md).\n',
+                      text)
+
+    def test_a_unit_in_a_directory_that_only_starts_like_a_reserved_one_is_not_reserved(self):
+        status, d = self.run_json('iTermQSettingsExtra')
+        self.assertEqual(d['path'], 'trivial', d)
+        self.assertIsNone(d['reserved'])
+        self.assertEqual(status, 0)
+
+    def test_a_category_file_under_a_reserved_prefix_reserves_the_class_unit_and_the_split_unit(self):
+        status, d = self.run_json('iTermQOutside')
+        self.assertEqual((d['path'], status), ('reserved', qu.EXIT_RESERVED))
+        status, d = self.run_json('iTermQOutside(Pane)')
+        self.assertEqual((d['path'], status), ('reserved', qu.EXIT_RESERVED))
+
+    def test_another_class_of_the_file_with_a_category_file_under_a_reserved_prefix_reserves_the_unit(self):
+        for name in ('iTermQPairRA', 'iTermQPairRB'):
+            status, d = self.run_json(name)
+            self.assertEqual((d['path'], d['reserved'], status), ('reserved', 'sources/Settings/', qu.EXIT_RESERVED),
+                             name)
+
+    def test_reserved_names_another_table(self):
+        other = os.path.join(self.root, 'tmp-other-reserved.md')
+        with open(other, 'w') as f:
+            f.write('| Path prefix | Date | Reason | Ends |\n|---|---|---|---|\n'
+                    '| sources/SettingsExtra/ | 2026-11-27 | a test | never |\n')
+        try:
+            status, d = self.run_json('iTermQSettingsExtra', '--reserved', other)
+            self.assertEqual((d['path'], d['reserved'], status), ('reserved', 'sources/SettingsExtra/',
+                                                                  qu.EXIT_RESERVED))
+            status, d = self.run_json('iTermQReserved', '--reserved', other)
+            self.assertEqual(d['path'], 'trivial', d)
+            status = qu.main(self.args() + ['iTermQReserved', '--reserved', other + '.absent'], out=io.StringIO())
+            self.assertEqual(status, 2)
+        finally:
+            os.remove(other)
 
     def test_interface_builder_and_registry(self):
         status, d = self.run_json('iTermWidget')
@@ -730,7 +807,31 @@ class QualifyTest(unittest.TestCase):
         trivial = [u['body_lines'] for u in d['classified'] if u['path'] == 'trivial']
         self.assertEqual(trivial, sorted(trivial))
         status, text = self.run_text('--classify')
-        self.assertRegex(text, r'trivial \d+, light \d+, full \d+')
+        self.assertRegex(text, r'trivial \d+, light \d+, full \d+, reserved \d+')
+        for name in ('iTermQReserved', 'iTermQOutside', 'iTermQOutside(Pane)'):
+            self.assertEqual((by[name]['path'], by[name]['reserved']), ('reserved', 'sources/Settings/'), by[name])
+        self.assertEqual(by['iTermQOutside(Pane)']['part_of'], 'iTermQOutside')
+        self.assertEqual(by['iTermQSettingsExtra']['path'], 'trivial', by['iTermQSettingsExtra'])
+        self.assertIsNone(by['iTermQSettingsExtra']['reserved'])
+        self.assertEqual(d['counts']['reserved'], sum(1 for u in d['classified']
+                                                      if u['path'] == 'reserved' and not u['part_of']))
+        self.assertEqual(d['split_counts']['reserved'], sum(1 for u in d['classified']
+                                                            if u['path'] == 'reserved' and u['part_of']))
+        self.assertIn('iTermQPairRB(Pane)', [u['unit'] for u in d['classified'] if u['path'] == 'reserved'])
+        pair = next(u for u in d['classified'] if 'iTermQPairRA' in u['classes'])
+        self.assertEqual(pair['classes'], ['iTermQPairRA', 'iTermQPairRB'])
+        self.assertEqual((pair['path'], pair['reserved']), ('reserved', 'sources/Settings/'), pair)
+        self.assertEqual(d['reserved_unmatched'], ['sources/settings/'])
+        self.assertIn('WARN: the reserved prefix sources/settings/', text)
+
+    def test_list_puts_the_reserved_classes_apart(self):
+        status, d = self.run_json('--list')
+        listed = [c['class'] for c in d['classes']]
+        self.assertNotIn('iTermQReserved', listed)
+        self.assertIn('iTermQSettingsExtra', listed)
+        reserved = dict((c['class'], c['reserved']) for c in d['reserved_classes'])
+        self.assertEqual(reserved.get('iTermQReserved'), 'sources/Settings/')
+        self.assertEqual(d['reserved'], len(d['reserved_classes']))
 
     def test_list_agrees_with_the_single_class_answer(self):
         status, d = self.run_json('--list')
@@ -778,6 +879,229 @@ class StaleUnitTest(unittest.TestCase):
         self.assertEqual(c['2']['status'], 'PASS', c['2'])
         self.assertFalse(any('iTermQLeafTests.m names it' in e for e in c['2']['evidence']), c['2'])
         self.assertEqual(status, 0)
+
+
+class IncompletenessTest(unittest.TestCase):
+    """The incomplete lines are given whole (database_incomplete, as before)
+    and split into the database's own rows, which a database refresh makes
+    current, and the registry and resource files, which it cannot."""
+
+    def test_the_database_lines_are_kept_apart_from_the_registry_and_resource_lines(self):
+        class Resources:
+            problems = [('sources/X.xib', 'cannot be read')]
+
+        class Census:
+            resources = Resources()
+
+            def objc_incomplete(self):
+                return ['INCOMPLETE: 3 of 10 units are not current']
+
+            def swift_incomplete(self):
+                return ['INCOMPLETE: 1 of 11 Swift modules are not current']
+
+            def registry_incomplete(self):
+                return ['INCOMPLETE: 2 dynamic reflective call sites are not in the registry']
+
+        d = qu.incompleteness(Census())
+        rows = ['INCOMPLETE: 3 of 10 units are not current', 'INCOMPLETE: 1 of 11 Swift modules are not current']
+        other = ['INCOMPLETE: 2 dynamic reflective call sites are not in the registry',
+                 'INCOMPLETE: sources/X.xib: cannot be read']
+        self.assertEqual(list(d.keys()),
+                         ['database_incomplete', 'database_rows_incomplete', 'registry_or_resources_incomplete'])
+        self.assertEqual(d['database_incomplete'], rows + other)
+        self.assertEqual(d['database_rows_incomplete'], rows)
+        self.assertEqual(d['registry_or_resources_incomplete'], other)
+        self.assertEqual(qu.database_incomplete(Census()), rows + other)
+
+
+RESERVED_DOC = ('# Reserved paths\n\nSome words.\n\n'
+                '| Path prefix | Date | Reason | Ends |\n|---|---|---|---|\n'
+                '| `sources/Settings/` | 2026-11-27 | being reworked | when the owner says so |\n'
+                '| sources/Other | 2026-11-27 | a second row | never |\n\nMore words after the table.\n')
+
+
+class ReservedPathTest(unittest.TestCase):
+    """docs/swift-migration/reserved.md: a unit whose implementation file is
+    under a reserved path prefix takes no path at all. These tests need no
+    code database: they drive the reading of the table, the prefix match,
+    the path and exit status, the counts and the text forms directly."""
+
+    def setUp(self):
+        self.dir = tempfile.mkdtemp(prefix='qualify-reserved-test-')
+
+    def tearDown(self):
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def write(self, text, name='reserved.md'):
+        path = os.path.join(self.dir, name)
+        with open(path, 'w') as f:
+            f.write(text)
+        return path
+
+    def test_the_table_gives_the_prefixes(self):
+        self.assertEqual(qu.read_reserved(self.write(RESERVED_DOC)), ['sources/Settings/', 'sources/Other'])
+
+    def test_a_table_with_no_rows_reserves_nothing(self):
+        path = self.write('# Reserved\n\n| Path prefix | Date | Reason | Ends |\n|---|---|---|---|\n')
+        self.assertEqual(qu.read_reserved(path), [])
+
+    def test_a_missing_default_file_reserves_nothing(self):
+        self.assertEqual(qu.read_reserved(os.path.join(self.dir, 'absent.md')), [])
+
+    def test_a_missing_file_named_on_the_command_line_is_an_error(self):
+        with self.assertRaises(qu.QualifyError):
+            qu.read_reserved(os.path.join(self.dir, 'absent.md'), required=True)
+
+    def test_a_malformed_table_is_an_error(self):
+        header = '| Path prefix | Date | Reason | Ends |\n|---|---|---|---|\n'
+        for bad in ('# Reserved\n\nNo table at all.\n',
+                    header + '| sources/Settings/ | 2026-11-27 | too few cells |\n',
+                    header + '|  | 2026-11-27 | no prefix | never |\n',
+                    header + '| /sources/Settings/ | 2026-11-27 | absolute | never |\n',
+                    header + '| sources/../Settings/ | 2026-11-27 | climbs out | never |\n',
+                    header + '| sources/Settings/ | yesterday | not a date | never |\n',
+                    '| Path prefix | Date | Reason | Ends |\n| sources/Settings/ | 2026-11-27 | no rule | never |\n'):
+            with self.assertRaises(qu.QualifyError, msg=bad):
+                qu.read_reserved(self.write(bad))
+
+    def test_a_row_after_a_blank_line_in_the_table_is_an_error(self):
+        path = self.write('| Path prefix | Date | Reason | Ends |\n|---|---|---|---|\n'
+                          '| sources/Settings/ | 2026-11-27 | first | never |\n\n'
+                          '| sources/Other/ | 2026-11-27 | dropped by the blank line | never |\n')
+        with self.assertRaisesRegex(qu.QualifyError, r'reserved\.md:5:'):
+            qu.read_reserved(path)
+
+    def test_a_prefix_that_matches_no_file_is_reported(self):
+        files = ['sources/Settings/Pane.m', 'sources/Leaf.m']
+        self.assertEqual(qu.unmatched_prefixes(files, ['sources/Settings/', 'sources/settings/', 'sources/Gone']),
+                         ['sources/settings/', 'sources/Gone'])
+        self.assertEqual(qu.unmatched_prefixes(files, []), [])
+
+    def test_the_classify_text_warns_about_a_prefix_that_matches_nothing(self):
+        d = self.classify_doc()
+        d['reserved_unmatched'] = ['sources/settings/']
+        out = io.StringIO()
+        qu.write_classify(d, out)
+        self.assertIn('\nWARN: the reserved prefix sources/settings/ in docs/swift-migration/reserved.md matches no '
+                      'implementation file', out.getvalue())
+        out = io.StringIO()
+        qu.write_classify(self.classify_doc(), out)
+        self.assertNotIn('WARN', out.getvalue())
+
+    def test_the_exit_status_is_documented(self):
+        self.assertIn('%d when the unit is reserved' % qu.EXIT_RESERVED, qu.__doc__)
+
+    def test_a_unit_under_a_reserved_prefix_is_reserved(self):
+        prefixes = ['sources/Settings/']
+        self.assertEqual(qu.reserved_prefix(['sources/Settings/iTermSplitViewAnimation.m'], prefixes),
+                         'sources/Settings/')
+        self.assertEqual(qu.reserved_prefix(['sources/Settings/Deeper/Pane.m'], prefixes), 'sources/Settings/')
+
+    def test_a_unit_elsewhere_is_not_reserved(self):
+        self.assertIsNone(qu.reserved_prefix(['sources/Leaf.m'], ['sources/Settings/']))
+        self.assertIsNone(qu.reserved_prefix(['sources/Leaf.m'], []))
+
+    def test_prefixes_match_whole_path_components(self):
+        for prefix in ('sources/Settings/', 'sources/Settings'):
+            self.assertIsNone(qu.reserved_prefix(['sources/SettingsExtra/Foo.m'], [prefix]), prefix)
+            self.assertIsNone(qu.reserved_prefix(['sources/SettingsFoo.m'], [prefix]), prefix)
+            self.assertEqual(qu.reserved_prefix(['sources/Settings/Foo.m'], [prefix]), prefix)
+
+    def test_any_implementation_file_of_the_unit_reserves_it(self):
+        # A class unit includes its CLASS+Something category files.
+        self.assertEqual(qu.reserved_prefix(['sources/Foo.m', 'sources/Settings/Foo+Pane.m'], ['sources/Settings/']),
+                         'sources/Settings/')
+
+    def test_the_reserved_path_and_its_exit_status(self):
+        passing = [qu.Condition('T1', 'PASS', [], 'how')]
+        failing = [qu.Condition('T1', 'FAIL', [], 'how')]
+        self.assertEqual(qu.path_and_status(passing, False, None, None), ('trivial', 0))
+        self.assertEqual(qu.path_and_status(failing, False, None, None), ('light', 0))
+        self.assertEqual(qu.path_and_status(failing, True, None, None), ('full', 1))
+        self.assertEqual(qu.path_and_status(passing, False, 'Cat', None), ('trivial', 0))
+        self.assertEqual(qu.path_and_status(failing, False, 'Cat', None), ('full', 1))
+        for trivial, fails, category in ((passing, False, None), (failing, True, None), (passing, False, 'Cat')):
+            self.assertEqual(qu.path_and_status(trivial, fails, category, 'sources/Settings/'),
+                             ('reserved', qu.EXIT_RESERVED))
+        self.assertNotIn(qu.EXIT_RESERVED, (0, 1, 2, 3, 4, 5, 6))
+
+    def test_the_classify_counts(self):
+        units = [{'path': 'trivial'}, {'path': 'light'}, {'path': 'reserved'}, {'path': 'reserved'},
+                 {'path': 'full'}]
+        counts = qu.path_counts(units)
+        self.assertEqual(list(counts.items()), [('trivial', 1), ('light', 1), ('full', 1), ('reserved', 2)])
+
+    def single(self, path, reserved):
+        cond = collections.OrderedDict([('id', 'T1'), ('condition', 'c'), ('status', 'PASS'), ('evidence', []),
+                                        ('how', 'h')])
+        return collections.OrderedDict([
+            ('class', 'iTermQReserved'), ('unit_files', ['sources/Settings/QReserved.m']),
+            ('implementation_lines', 5), ('body_lines', 3), ('path', path), ('reserved', reserved),
+            ('database_incomplete', []), ('conditions', []), ('trivial_conditions', [cond]),
+            ('exit_status', qu.EXIT_RESERVED if reserved else 0)])
+
+    def test_the_single_unit_text_names_the_prefix_in_place_of_the_path(self):
+        out = io.StringIO()
+        qu.write_text(self.single('reserved', 'sources/Settings/'), out)
+        text = out.getvalue()
+        self.assertIn('\nPath: reserved (sources/Settings/: not to be ported; docs/swift-migration/reserved.md).\n',
+                      text)
+        self.assertNotIn('Path: trivial', text)
+        self.assertIn('PASS    T1', text, 'every condition is still printed')
+        self.assertIn('Exit %d.' % qu.EXIT_RESERVED, text)
+        out = io.StringIO()
+        qu.write_text(self.single('trivial', None), out)
+        self.assertIn('\nPath: trivial.\n', out.getvalue())
+
+    def classify_doc(self):
+        unit = collections.OrderedDict([('unit', 'iTermQReserved'), ('classes', ['iTermQReserved']),
+                                        ('file', 'sources/Settings/QReserved.m'), ('path', 'reserved'),
+                                        ('reserved', 'sources/Settings/'), ('part_of', None), ('body_lines', None),
+                                        ('implementation_lines', 5), ('not_trivial_because', []),
+                                        ('stop_status', None)])
+        return collections.OrderedDict([
+            ('units', 1), ('counts', qu.path_counts([unit])), ('split_counts', qu.path_counts([])),
+            ('database_incomplete', []), ('reserved_unmatched', []), ('classified', [unit]), ('exit_status', 0)])
+
+    def test_the_classify_text_counts_and_lists_the_reserved_units(self):
+        out = io.StringIO()
+        qu.write_classify(self.classify_doc(), out)
+        text = out.getvalue()
+        self.assertRegex(text, r'trivial 0, light 0, full 0, reserved 1')
+        row = next(line for line in text.split('\n') if line.startswith('reserved '))
+        header = next(line for line in text.split('\n') if line.startswith('path '))
+        self.assertRegex(row, r'^reserved +- +5  iTermQReserved +-     sources/Settings/QReserved.m  '
+                              r'\(reserved: sources/Settings/\)$')
+        self.assertEqual(row.index('sources/Settings/QReserved.m'), header.index('file'), 'columns stay aligned')
+
+    def test_the_classify_text_of_a_document_without_reserved_counts(self):
+        d = self.classify_doc()
+        d['counts'] = collections.OrderedDict([('trivial', 0), ('light', 0), ('full', 0)])
+        d['split_counts'] = collections.OrderedDict([('trivial', 0), ('light', 0), ('full', 0)])
+        for u in d['classified']:
+            u['path'] = 'light'
+            del u['reserved']
+        out = io.StringIO()
+        qu.write_classify(d, out)
+        self.assertIn('trivial 0, light 0, full 0\n', out.getvalue())
+
+    def test_the_list_text_shows_the_reserved_classes_apart(self):
+        d = collections.OrderedDict([
+            ('considered', 2), ('qualifying', 1), ('reserved', 1), ('database_incomplete', []),
+            ('classes', [collections.OrderedDict([('class', 'iTermQLeaf'), ('file', 'sources/Leaf.m'), ('lines', 6),
+                                                  ('users', 1), ('manual', [])])]),
+            ('reserved_classes', [collections.OrderedDict([('class', 'iTermQReserved'),
+                                                           ('file', 'sources/Settings/QReserved.m'),
+                                                           ('reserved', 'sources/Settings/')])]),
+            ('exit_status', 0)])
+        out = io.StringIO()
+        qu.write_list(d, out)
+        text = out.getvalue()
+        table, _, after = text.partition('Reserved')
+        self.assertIn('iTermQLeaf', table)
+        self.assertNotIn('iTermQReserved', table)
+        self.assertIn('iTermQReserved', after)
+        self.assertIn('sources/Settings/', after)
 
 
 if __name__ == '__main__':
