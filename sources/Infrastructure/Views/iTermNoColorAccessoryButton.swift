@@ -20,7 +20,7 @@ protocol iTermNoColorAccessoryButtonResponder: NSObjectProtocol {
 @objc(iTermNoColorAccessoryButton)
 class iTermNoColorAccessoryButton: NSButton {
     convenience init() {
-        let image = NSImage.it_imageNamed("NoColor", for: iTermNoColorAccessoryButton.self)
+        let image = NSImage.it_imageNamed("NoColor", for: Self.self)
         let topBottomMargin = 8.0
         let size = image?.size ?? .zero
         self.init(frame: NSRect(x: 0, y: 0, width: size.width, height: size.height + topBottomMargin * 2))
