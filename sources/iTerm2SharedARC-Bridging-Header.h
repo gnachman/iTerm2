@@ -168,7 +168,6 @@
 #import "iTermSessionFactory.h"
 #import "iTermSessionLauncher.h"
 #import "iTermSessionPicker.h"
-#import "iTermSetFindStringNotification.h"
 #import "iTermSetupCfgParser.h"
 #import "iTermSharedImageStore.h"
 #import "iTermShellHistoryController.h"

@@ -8,7 +8,6 @@
 
 #import "ToolNotes.h"
 
-#import "iTermSetFindStringNotification.h"
 #import "iTermToolWrapper.h"
 #import "NSFileManager+iTerm.h"
 #import "NSFont+iTerm.h"

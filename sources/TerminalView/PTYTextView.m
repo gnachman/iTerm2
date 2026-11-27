@@ -75,7 +75,6 @@
 #import "iTermSecureKeyboardEntryController.h"
 #import "iTermSelection.h"
 #import "iTermSelectionScrollHelper.h"
-#import "iTermSetFindStringNotification.h"
 #import "iTermShellHistoryController.h"
 #import "iTermTextDrawingHelper.h"
 #import "iTermLocatedString.h"

@@ -167,7 +167,6 @@
 #import "iTermSessionLauncher.h"
 #import "iTermSessionNameController.h"
 #import "iTermSessionTitleBuiltInFunction.h"
-#import "iTermSetFindStringNotification.h"
 #import "iTermSharedImageStore.h"
 #import "iTermShellHistoryController.h"
 #import "iTermLSOF.h"
