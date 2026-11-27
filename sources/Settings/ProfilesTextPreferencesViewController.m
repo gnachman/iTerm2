@@ -11,7 +11,6 @@
 #import "DebugLogging.h"
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
-#import "iTermCursorBlinkFadeCurveIcon.h"
 #import "iTermCursorBlinkFadePreset.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermFontPanel.h"

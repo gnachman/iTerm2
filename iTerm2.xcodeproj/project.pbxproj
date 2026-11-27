@@ -780,7 +780,7 @@
 		3DF240AC0E869D3C0A076902 /* iTermModalSheetRunner.h in Sources */ = {isa = PBXBuildFile; fileRef = 4F0681FBE76FD9A1D5715D52 /* iTermModalSheetRunner.h */; };
 		3EB88252C886C05D366D3A5A /* repl_banner-pt-BR.txt in Resources */ = {isa = PBXBuildFile; fileRef = 618643F126AA9B1E7BC5FC39 /* repl_banner-pt-BR.txt */; };
 		40B5A3E6804AF3C70E1FA488 /* CompanionBrowserFrameSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07A8A9A5AE787B6797A610B2 /* CompanionBrowserFrameSource.swift */; };
-		41087F6965EAA157F08289C5 /* iTermCursorBlinkFadeCurveIcon.m in Sources */ = {isa = PBXBuildFile; fileRef = 7057439196C1E9D6AFF58395 /* iTermCursorBlinkFadeCurveIcon.m */; };
+		CB4ECA759648395E9CDA7008 /* iTermCursorBlinkFadeCurveIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26B9980F125055880C6825B3 /* iTermCursorBlinkFadeCurveIcon.swift */; };
 		41492F4D37C01DC1A53345DD /* FramerPaneJobManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC740B139D1CC20555A4AF60 /* FramerPaneJobManager.swift */; };
 		42D424F7D51EB10F0800BB84 /* SessionProvenanceRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = B92F80C10022DEB4FD02A6F7 /* SessionProvenanceRegistry.swift */; };
 		42F2D87F2FE321DC2722C7DA /* iTermTabStatusController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB45F0B45FE4C94EC43DF952 /* iTermTabStatusController.swift */; };
@@ -4877,7 +4877,6 @@
 		E2DFAD8D76A3655948CB3F37 /* iTermModalSheetRunner.m in Sources */ = {isa = PBXBuildFile; fileRef = E9B6267AF6FAE7F906B1DBF9 /* iTermModalSheetRunner.m */; };
 		E3F691502939DF2E874D7DD1 /* IT2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92FC80BA122066E3610BEA16 /* IT2.swift */; };
 		E42AFCD2191DB57A5A504F23 /* AIProviderPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDC183FBA34E8F9843DD6AA6 /* AIProviderPreset.swift */; };
-		E4BE6F9594BF6756F85076DB /* iTermCursorBlinkFadeCurveIcon.h in Sources */ = {isa = PBXBuildFile; fileRef = 11FDA9247035DE0FCCE7D23D /* iTermCursorBlinkFadeCurveIcon.h */; };
 		E4BF4BC18C3054F2AD6145DC /* iTermWorkgroupSessionMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0071478CE7978AC6B38C5DF7 /* iTermWorkgroupSessionMode.swift */; };
 		E4EA4D60601890AC28602616 /* iTermCharacterSets.m in Sources */ = {isa = PBXBuildFile; fileRef = 57EF08786C9D79C55CDAC970 /* iTermCharacterSets.m */; };
 		E507BE8F903FDB93A4E229AB /* CompanionMacIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC8FC88A15978777E09F166 /* CompanionMacIdentity.swift */; };
@@ -5310,7 +5309,6 @@
 		1179CD897A4780286BB29AAC /* iTermDockBadgeController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermDockBadgeController.swift; sourceTree = "<group>"; };
 		1191F8492A220B356000A847 /* TransferrableFileStatusRowLayout.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TransferrableFileStatusRowLayout.swift; sourceTree = "<group>"; };
 		11C735CA9A1AF5E864EC718E /* iTermStreamingPNGWriter.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermStreamingPNGWriter.m; sourceTree = "<group>"; };
-		11FDA9247035DE0FCCE7D23D /* iTermCursorBlinkFadeCurveIcon.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermCursorBlinkFadeCurveIcon.h; sourceTree = "<group>"; };
 		120542241AD4A7DC5FE8ABD5 /* MarkdownImageLoader.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MarkdownImageLoader.swift; sourceTree = "<group>"; };
 		12059C10060BB05CF0292FBC /* iTermTabGroupBuiltInFunctions.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermTabGroupBuiltInFunctions.m; sourceTree = "<group>"; };
 		13657C4D6A90444B8B5132F1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermTipWindowController.xib; sourceTree = "<group>"; };
@@ -6163,7 +6161,7 @@
 		6FDFDAEA7FEC55491C4E62F0 /* ProfileBoolSettingPickerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileBoolSettingPickerView.swift; sourceTree = "<group>"; };
 		702DF249BB094B4A9F5C180D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermStatusBarKnobCheckboxViewController.xib; sourceTree = "<group>"; };
 		704E93B8A70AA0106E558871 /* FramerPaneStrandedFinder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FramerPaneStrandedFinder.swift; sourceTree = "<group>"; };
-		7057439196C1E9D6AFF58395 /* iTermCursorBlinkFadeCurveIcon.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermCursorBlinkFadeCurveIcon.m; sourceTree = "<group>"; };
+		26B9980F125055880C6825B3 /* iTermCursorBlinkFadeCurveIcon.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermCursorBlinkFadeCurveIcon.swift; sourceTree = "<group>"; };
 		70F4EF96D82D4382BF2A2A8D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermPasteSpecialWindow.xib; sourceTree = "<group>"; };
 		7101E0036E99D7815E0E3D37 /* iTermRemoteIt2.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermRemoteIt2.swift; sourceTree = "<group>"; };
 		7133FD0EA06B662C44BD713A /* AILiveAppleIntelligenceTabTitle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AILiveAppleIntelligenceTabTitle.swift; sourceTree = "<group>"; };
@@ -13372,8 +13370,7 @@
 				A6FBEFC02C361BAA00FA73BD /* UserDefaultsUnsavedController.swift */,
 				1DCA5ECD13EE507800B7725E /* WindowArrangements.h */,
 				1DCA5ECE13EE507800B7725E /* WindowArrangements.m */,
-				7057439196C1E9D6AFF58395 /* iTermCursorBlinkFadeCurveIcon.m */,
-				11FDA9247035DE0FCCE7D23D /* iTermCursorBlinkFadeCurveIcon.h */,
+				26B9980F125055880C6825B3 /* iTermCursorBlinkFadeCurveIcon.swift */,
 				698A89FD3A725D31E135A5A6 /* iTermCursorBlinkFadePreset.m */,
 				530EEE3BD040B9AF8FBD0955 /* iTermCursorBlinkFadePreset.h */,
 				4ACD26966C02B9319DD9A9EF /* iTermRemoteDataFileSync.swift */,
@@ -20586,8 +20583,7 @@
 				97AE66776B767B3BB7AC7565 /* CompanionMessageSubstance.swift in Sources */,
 				1881D17778BB7FDB35B6E26A /* iTermCursorBlinkFadeAnimator.m in Sources */,
 				CB10EBA37793C92210F9AF8C /* iTermCursorBlinkFadeAnimator.h in Sources */,
-				41087F6965EAA157F08289C5 /* iTermCursorBlinkFadeCurveIcon.m in Sources */,
-				E4BE6F9594BF6756F85076DB /* iTermCursorBlinkFadeCurveIcon.h in Sources */,
+				CB4ECA759648395E9CDA7008 /* iTermCursorBlinkFadeCurveIcon.swift in Sources */,
 				73696CD1DE6460A41D2A67E0 /* iTermCursorBlinkFadePreset.m in Sources */,
 				9C7078E2AF6B527E9E15B01E /* iTermCursorBlinkFadePreset.h in Sources */,
 				FD34D15329745082B47FF48A /* InlineChatToolbarView.swift in Sources */,
