@@ -17,7 +17,6 @@
 #import "iTermPreferences.h"
 #import "iTermUserDefaults.h"
 #import "iTermVariableScope.h"
-#import "iTermVariableScope+Global.h"
 #import "NSObject+iTerm.h"
 #import "TmuxSessionsTable.h"
 #import "TmuxController.h"

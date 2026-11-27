@@ -6,7 +6,6 @@
 //
 
 #import "iTermVariableScope+Window.h"
-#import "iTermVariableScope+Global.h"
 #import "iTermVariableScope+Tab.h"
 #import "NSDictionary+iTerm.h"
 

@@ -197,3 +197,22 @@ Each entry says:
 - **Found in:** iTermTipRootView (2026-11-26); a test paints the view
   opaque red, draws, and expects transparent.
 
+### A category that adopts a protocol loses clang's property copies in Swift
+
+- **Pattern:** a category on a class that stays in Objective-C adopts a
+  protocol that declares properties and inherits `NSObject`:
+  `@interface iTermVariableScope (Global)<iTermGlobalScope>`, with the
+  accessors written by hand in the category.
+- **Naive port:** a Swift `@objc protocol` and an `extension` that declares
+  the conformance. Clang copies the adopted protocol's properties into the
+  category's property list, and also `NSObject`'s `description`,
+  `debugDescription`, `hash` and `superclass`, once more for each such
+  protocol list. A Swift extension makes none of these copies, so the
+  class's runtime snapshot loses them.
+- **Write instead:** the extension with the conformance declared and every
+  accessor kept as an `@objc` instance method with the same selector and
+  encoding; test that `conformsToProtocol:` still answers YES. The lost
+  property entries are then an expected difference, behavior unchanged
+  (the coordinator, 2026-11-26, accepted it for a class that stays in
+  Objective-C; the comparison is to be taught this case).
+- **Found in:** iTermVariableScope(Global), batch of 2026-11-26.

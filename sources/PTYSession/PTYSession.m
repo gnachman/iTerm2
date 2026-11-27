@@ -198,7 +198,6 @@
 #import "iTermUserDefaults.h"
 #import "iTermUserDefaultsObserver.h"
 #import "iTermVariableReference.h"
-#import "iTermVariableScope+Global.h"
 #import "iTermVariableScope+Session.h"
 #import "iTermVariableScope.h"
 #import "iTermWarning.h"

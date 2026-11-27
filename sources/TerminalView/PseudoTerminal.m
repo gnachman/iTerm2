@@ -134,7 +134,6 @@
 #import "iTermTouchBarButton.h"
 #import "iTermUserDefaults.h"
 #import "iTermVariableReference.h"
-#import "iTermVariableScope+Global.h"
 #import "iTermVariableScope+Session.h"
 #import "iTermVariableScope+Tab.h"
 #import "iTermVariableScope+Window.h"

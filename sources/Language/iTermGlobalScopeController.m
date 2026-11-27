@@ -13,7 +13,7 @@
 #import "iTermObject.h"
 #import "iTermPreferences.h"
 #import "iTermUserDefaults.h"
-#import "iTermVariableScope+Global.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermVariableScope.h"
 
 static char iTermGlobalScopeControllerKVOContext;

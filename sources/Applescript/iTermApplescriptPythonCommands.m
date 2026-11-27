@@ -15,7 +15,6 @@
 #import "iTermExpressionEvaluator.h"
 #import "iTermExpressionParser.h"
 #import "iTermParsedExpression.h"
-#import "iTermVariableScope+Global.h"
 #import "NSFileManager+iTerm.h"
 
 @implementation iTermLaunchAPIScriptCommand

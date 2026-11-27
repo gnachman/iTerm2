@@ -12,7 +12,6 @@
 #import "iTermApplication.h"
 #import "iTermController.h"
 #import "iTermVariables.h"
-#import "iTermVariableScope+Global.h"
 #import "NSData+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSView+RecursiveDescription.h"

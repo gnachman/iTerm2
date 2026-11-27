@@ -57,7 +57,6 @@
 #import "iTermStatusBarViewController.h"
 #import "iTermUserDefaults.h"
 #import "iTermVariableReference.h"
-#import "iTermVariableScope+Global.h"
 #import "iTermWarning.h"
 
 NSString *const iTermRemoveAPIServerSubscriptionsNotification = @"iTermRemoveAPIServerSubscriptionsNotification";

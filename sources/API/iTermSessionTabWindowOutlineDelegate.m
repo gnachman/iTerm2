@@ -10,7 +10,7 @@
 #import "iTermBuriedSessions.h"
 #import "iTermController.h"
 #import "iTermSessionPicker.h"
-#import "iTermVariableScope+Global.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermVariablesOutlineDelegate.h"
 #import "NSArray+iTerm.h"
 #import "NSStringITerm.h"

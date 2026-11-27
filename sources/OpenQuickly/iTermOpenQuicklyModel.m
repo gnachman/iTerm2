@@ -19,7 +19,6 @@
 #import "iTermScriptsMenuController.h"
 #import "iTermSnippetsModel.h"
 #import "iTermVariableScope.h"
-#import "iTermVariableScope+Global.h"
 #import "iTermVariableScope+Session.h"
 #import "iTermVariableScope+Tab.h"
 #import "NSAppearance+iTerm.h"
