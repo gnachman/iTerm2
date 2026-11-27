@@ -101,7 +101,6 @@
 #import "iTermNotificationCenter.h"
 #import "iTermNotificationController.h"
 #import "iTermObject.h"
-#import "iTermOpenQuicklyWindow.h"
 #import "iTermOrderEnforcer.h"
 #import "iTermPasswordManagerWindowController.h"
 #import "iTermPreferences.h"
