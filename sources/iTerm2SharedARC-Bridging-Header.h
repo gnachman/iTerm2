@@ -118,6 +118,7 @@
 #import "iTermMetalDisabling.h"
 #import "iTermMetalRenderer.h"
 #import "iTermMiniSearchFieldViewController.h"
+#import "iTermModalSheetRunner.h"
 #import "iTermNotificationCenter.h"
 #import "iTermNotificationController.h"
 #import "iTermObject.h"
@@ -216,7 +217,6 @@
 #import <NMSSH/NMSSH.h>
 #import <NMSSH/NMSSH-Swift.h>
 #import <NMSSH/NMSSHHostConfig.h>
-#import "NSAlert+iTerm.h"
 #import "NSAppearance+iTerm.h"
 #import "NSBezierPath+iTerm.h"
 #import "NSCharacterSet+iTerm.h"

@@ -9,7 +9,7 @@
 
 #import "iTermController.h"
 #import "iTermWarning.h"
-#import "NSAlert+iTerm.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "NSObject+iTerm.h"
 #import "PTYSession.h"
 #import "PseudoTerminal.h"

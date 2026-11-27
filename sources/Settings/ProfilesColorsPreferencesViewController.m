@@ -18,7 +18,6 @@
 #import "iTermTextPopoverViewController.h"
 #import "iTermWarning.h"
 #import "NSAppearance+iTerm.h"
-#import "NSAlert+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"

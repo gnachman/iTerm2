@@ -1,7 +1,6 @@
 #import "iTermWarning.h"
 
 #import "DebugLogging.h"
-#import "NSAlert+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
