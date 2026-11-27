@@ -50,3 +50,17 @@ tree, the files you staged (exactly), the tests you added, the commands you
 ran with their results, the proposed commit message with its
 `Swift-Port: <unit> kind=<kind>` trailer, anything you were unsure about,
 and confirmation that no background process is left running.
+
+Write comments for a reader who has not seen the Objective-C or this
+conversation: plain, complete sentences that state the fact the reasoning
+depends on and say what the code does and why. No compressed shorthand, no
+bare fragments, no “it” without a clear referent, and no comment about the
+porting process where a comment about the code belongs.
+
+Never put a note about the migration's own process in the code: no comment
+saying that there is no thread assertion or why, that something was kept
+from the Objective-C, which rule was followed, or what a reviewer or the
+snapshot found. Those belong in the commit message, in a line or two, or
+nowhere. A comment in the code is there for someone reading the code a year
+from now who has never heard of the migration.
+

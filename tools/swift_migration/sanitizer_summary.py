@@ -15,7 +15,7 @@ Usage:
                          [--top N] [--root DIR] [--mixed] [--json]
                          [--baseline FILE] [--fail-on-reports [--nullability-baseline FILE]]
                          [--collect] [--write-nullability-baseline FILE]
-                         [--symbolize DIR [--atos CMD]]
+                         [--combined] [--symbolize DIR [--atos CMD]]
 
     PATH      a report file or a directory; a directory is searched
               recursively and every regular file in it is read
@@ -77,6 +77,16 @@ Usage:
               checkout's script, or pass --root
     --collect with --baseline or --fail-on-reports: print the comparison
               or the verdict but do not exit 1
+    --combined
+              the reports of the combined mode of sanitizer_tests.sh, which
+              holds the nullability group's and the integer group's reports
+              together: with --fail-on-reports only nullability reports, and
+              any report of neither group, are judged (the verdict says
+              "nullability report(s)"); the integer group's reports are
+              summarized as informational findings, ending with the line
+              "Integer verdict (informational, never fails the run): ...";
+              with --write-nullability-baseline integer reports are not
+              written. See "The combined mode" below. Needs one of the two
     --symbolize DIR
               before grouping, name the unnamed application frames of the
               thread reports with atos on the binaries of the same name
@@ -117,6 +127,17 @@ Recognized input:
            prints only base names; a base name is looked up among the
            source files under the root, and one that matches several files
            is in scope only if all of them are.
+- ASan:    "==N==ERROR: AddressSanitizer: <kind> ...", every line after it
+           (stack frames, "READ of size ...", "freed by thread ... here:",
+           the shadow byte map) up to "==N==ABORTING", the start of another
+           report, or the end of the file; "SUMMARY: AddressSanitizer:
+           <kind> <file>:<line> in <func>" gives the location. They reach a
+           report file in the combined mode, whose UBSAN_OPTIONS log_path
+           the address sanitizer runtime shares (its UBSan part reads
+           UBSAN_OPTIONS after ASAN_OPTIONS, and log_path is common to
+           both). They are counted apart from the UBSan reports and never
+           judged here: the runtime ends the process at the first one, so
+           the test that was running fails, as in the plain suite.
 - Lines that sanitizer runtimes print between reports: blank lines, the
   "=====" separators, "==N==..." runtime messages, "ThreadSanitizer:
   reported N warnings" and "ThreadSanitizer: ..." notices.
@@ -240,9 +261,21 @@ accepted by it." or "Verdict: FAIL: N report(s) at M location(s) outside
 the baseline; K report(s) accepted by it." (plus the incomplete and
 unparsable counts).
 
+The combined mode (--combined). Which group a UBSan report belongs to is
+decided by its kind, the runtime's check name from the SUMMARY line
+(NULLABILITY_KINDS and INTEGER_KINDS below; a nullability-arg report is
+"invalid-null-argument", nullability-return "invalid-null-return",
+nullability-assign "null-pointer-use"), and for a report with no kind by
+its message. A report of neither group cannot come from the combined
+build's checks as written; it is judged with the nullability reports, the
+safe direction, and flagged. An incomplete report whose message is the
+integer group's is an integer finding, not a failure. The nullability
+baseline and the runtime suppressions apply as in the nullability mode.
+
 Exit status: 0 success, 1 with --baseline (and without --collect) a thread
 report outside the baseline or unmatchable, or with --fail-on-reports (and
-without --collect) a UBSan report outside the nullability baseline, an
+without --collect) a UBSan report (with --combined, one the combined
+verdict judges) outside the nullability baseline, an
 incomplete report or an unparsable report file, 2 usage error, unreadable input
 or a malformed baseline file, 3 --test-log names a log in which no test was
 executed (this outranks 1).
@@ -299,6 +332,54 @@ FRAME_MODULE = re.compile(r"^(?P<func>.*?)(?:\+0x[0-9a-fA-F]+)? \([^()]*\)$")
 FRAME_FILE = re.compile(r"^(?P<func>.*?)(?:\+0x[0-9a-fA-F]+)? (?:\S+:\d+(?::\d+)?|/<compiler-generated>)$")
 BETWEEN_REPORTS = re.compile(
     r"^(\s*|=+|==\d+==.*|ThreadSanitizer: reported \d+ warnings?|ThreadSanitizer: .*)$")
+# An address sanitizer report: "==PID==ERROR: AddressSanitizer: <kind> ...",
+# its body (unindented lines among them: "READ of size 4 ...", "freed by
+# thread T0 here:", the shadow byte map), "SUMMARY: AddressSanitizer: <kind>
+# <file>:<line> in <function>", and "==PID==ABORTING".
+ASAN_ERROR = re.compile(r"^==(?P<pid>\d+)==ERROR: AddressSanitizer: (?P<kind>\S+)")
+ASAN_SUMMARY = re.compile(r"^SUMMARY: AddressSanitizer: (?P<kind>\S+)(?: (?P<loc>\S+))?")
+ASAN_END = re.compile(r"^==\d+==ABORTING")
+
+# Which group of the combined mode a UBSan report belongs to. The kind is
+# the SUMMARY line's (UBSAN_OPTIONS report_error_type=1), the runtime's
+# name for the check: a nullability-arg report is "invalid-null-argument",
+# nullability-return "invalid-null-return", nullability-assign
+# "null-pointer-use" (each shared with a check of the undefined group,
+# nonnull-attribute, returns-nonnull-attribute and null, that no mode of
+# sanitizer_tests.sh compiles), and the integer group's checks have the
+# kinds below (seen on 2026-11-26 in a program built with the combined
+# mode's flags; the shift-* names are the flag names, accepted too). A
+# report with no kind ("undefined-behavior": no SUMMARY line) is classified
+# by its message.
+NULLABILITY_KINDS = frozenset((
+    "invalid-null-argument", "invalid-null-return", "null-pointer-use",
+    "nullability-arg", "nullability-return", "nullability-assign"))
+INTEGER_KINDS = frozenset((
+    "signed-integer-overflow", "implicit-signed-integer-truncation", "implicit-unsigned-integer-truncation",
+    "implicit-integer-sign-change", "implicit-signed-integer-truncation-or-sign-change",
+    "float-cast-overflow", "integer-divide-by-zero", "invalid-shift-base", "invalid-shift-exponent",
+    "shift-base", "shift-exponent", "out-of-bounds-index"))
+NULLABILITY_MESSAGE = re.compile(
+    r"^(?:null pointer passed as argument \d+, which is declared to never be null"
+    r"|null pointer returned from function declared to never return null"
+    r"|_Nonnull binding to null pointer)")
+INTEGER_MESSAGE = re.compile(
+    r"^(?:signed integer overflow:|implicit conversion from type |division by zero|shift exponent "
+    r"|left shift of |index -?\d+ out of bounds |.* is outside the range of representable values of type )")
+
+
+def ubsan_family(kind, message):
+    """"nullability", "integer", or None when a UBSan report of this kind and
+    message belongs to neither group."""
+    if kind in NULLABILITY_KINDS:
+        return "nullability"
+    if kind in INTEGER_KINDS:
+        return "integer"
+    if NULLABILITY_MESSAGE.match(message or ""):
+        return "nullability"
+    if INTEGER_MESSAGE.match(message or ""):
+        return "integer"
+    return None
 
 
 def frame_function(line, pattern=FRAME0):
@@ -407,6 +488,12 @@ class Summary:
         # location). Never matched against or written into a baseline.
         self.incomplete = []
         self.current_path = None
+        # Address sanitizer reports, (kind, location) -> count, from the
+        # report files and from the console logs (counted once as above),
+        # and -> {"pids": set, "tests": set}. They are never UBSan reports.
+        self.address_file = Counter()
+        self.address_console = Counter()
+        self.address_info = {}
 
     @property
     def reports(self):
@@ -452,6 +539,17 @@ class Summary:
     def finish(self, pending, location=None, kind=None, summarized=False):
         if pending is None:
             return
+        if pending[0] == "asan":
+            _, akind, loc, tests, pid = pending
+            key = (akind, loc)
+            (self.address_console if self.current is self.console_reports else self.address_file)[key] += 1
+            info = self.address_info.setdefault(key, {"pids": set(), "tests": set()})
+            info["tests"] |= tests
+            if self.file_test:
+                info["tests"].add(self.file_test)
+            if self.file_pid or pid:
+                info["pids"].add(self.file_pid or pid)
+            return
         if pending[0] == "ubsan":
             _, loc, msg, pkind, function, tests, note = pending
             self.add(kind or pkind, loc, msg, function)
@@ -478,6 +576,23 @@ class Summary:
         self.functions.setdefault(key, function or "<unknown>")
 
     def line(self, path, lineno, line, pending):
+        if pending is not None and pending[0] == "asan":
+            # Every line of an address sanitizer report up to its ABORTING
+            # line belongs to it; the start of another report ends it too.
+            if ASAN_END.match(line):
+                self.finish(pending)
+                return None
+            if not (UBSAN_ERROR.match(line) or TSAN_WARNING.match(line) or ASAN_ERROR.match(line)):
+                m = ASAN_SUMMARY.match(line)
+                if m:
+                    return pending[:2] + (m.group("loc") or "<unknown>",) + pending[3:]
+                if FRAME.match(line):
+                    self.add_test_from_frame(line, pending[3])
+                return pending
+        m = ASAN_ERROR.match(line)
+        if m:
+            self.finish(pending)
+            return ("asan", m.group("kind"), "<unknown>", set(), m.group("pid"))
         m = UBSAN_ERROR.match(line)
         if m:
             self.finish(pending)
@@ -515,12 +630,7 @@ class Summary:
                     return ("tsan", pending[1], HEX.sub("0x...", line.strip()))
                 return pending
             if FRAME.match(line):
-                name = frame_function(line, FRAME_ANY)
-                if name:
-                    for pattern in TEST_FRAME:
-                        t = pattern.match(name)
-                        if t:
-                            pending[5].add("%s.%s" % (t.group(1), t.group(2)))
+                self.add_test_from_frame(line, pending[5])
                 if pending[4] is None:
                     function = frame_function(line)
                     if function is not None or line.lstrip().startswith("#0 "):
@@ -540,6 +650,16 @@ class Summary:
             return pending
         self.count_unparsed(path, lineno, line)
         return pending
+
+    @staticmethod
+    def add_test_from_frame(line, tests):
+        """Adds to tests the test a UBSan or ASan stack frame line names."""
+        name = frame_function(line, FRAME_ANY)
+        if name:
+            for pattern in TEST_FRAME:
+                t = pattern.match(name)
+                if t:
+                    tests.add("%s.%s" % (t.group(1), t.group(2)))
 
     def count_unparsed(self, path, lineno, line):
         self.unparsed += 1
@@ -589,7 +709,33 @@ class Summary:
             "unparsed": self.unparsed,
             "unparsed_shown": [{"file": p, "line": n, "text": t} for p, n, t in self.unparsed_shown],
             "other_text": self.other_text,
+            "address": self.address_result(),
         }
+
+    def address_result(self):
+        counts = self.address_file | self.address_console
+        groups = [{"count": n, "kind": kind, "location": self.locations.display(loc),
+                   "tests": sorted(self.address_info[(kind, loc)]["tests"]),
+                   "pids": sorted(self.address_info[(kind, loc)]["pids"], key=int)}
+                  for (kind, loc), n in counts.items()]
+        groups.sort(key=lambda g: (-g["count"], g["kind"], g["location"]))
+        return {"reports": sum(counts.values()), "locations": len(counts), "groups": groups}
+
+    def integer_result(self, top):
+        """The integer findings of a combined run: every UBSan report of the
+        integer group, informational."""
+        items = [(n, kind, loc) for (kind, loc), n in self.reports.items()
+                 if ubsan_family(kind, self.samples.get((kind, loc))) == "integer"]
+        items.sort(key=lambda r: (-r[0], r[1], r[2]))
+        by_kind = Counter()
+        for n, kind, _ in items:
+            by_kind[kind] += n
+        return {"reports": sum(r[0] for r in items), "locations": len(items),
+                "in_scope": sum(n for n, _, loc in items if self.locations.in_scope(loc)),
+                "by_kind": [{"kind": k, "count": n} for k, n in sorted(by_kind.items(), key=lambda kv: (-kv[1], kv[0]))],
+                "top": [{"count": n, "kind": k, "location": self.locations.display(loc),
+                         "message": self.samples[(k, loc)]} for n, k, loc in items[:top]],
+                "not_shown": max(0, len(items) - top)}
 
 
 ## Thread sanitizer reports by top application frames
@@ -1187,16 +1333,18 @@ def infer_root(paths):
     return roots.pop() if roots else None
 
 
-def write_nullability_baseline(summary, path, drop_unseen=False):
-    """Writes the baseline of every complete UBSan report read to path,
-    keeping the notes of entries already in the file and, unless
+def write_nullability_baseline(summary, path, drop_unseen=False, combined=False):
+    """Writes the baseline of every complete UBSan report read to path (with
+    combined, of every one the combined verdict judges: not the integer
+    group's), keeping the notes of entries already in the file and, unless
     drop_unseen, the entries not seen. Returns the lines to print. Raises
     BaselineError, writing nothing, when an entry would name an absolute
     path under the home directory (a checkout other than --root)."""
     old = {}
     if os.path.exists(path):
         old = {nullability_entry_key(e): e["note"] for e in read_nullability_baseline(path)}
-    seen = {nullability_key(summary, kind, loc) for kind, loc in summary.ubsan_info}
+    seen = {nullability_key(summary, kind, loc) for kind, loc in summary.ubsan_info
+            if judged(summary, kind, loc, combined)}
     home = os.path.expanduser("~").rstrip("/") + "/"
     for k in sorted(seen):
         if os.path.isabs(k[1]) and k[1].startswith(home):
@@ -1228,16 +1376,27 @@ def write_nullability_baseline(summary, path, drop_unseen=False):
     return lines
 
 
-def fail_on_reports(summary, collect, baseline=None):
+def judged(summary, kind, loc, combined):
+    """Whether --fail-on-reports judges the UBSan reports at (kind, loc):
+    every one, except that in a combined run (--combined) the integer
+    group's reports are informational findings. A report of neither group
+    is judged with the nullability reports (the safe direction)."""
+    return not combined or ubsan_family(kind, summary.samples.get((kind, loc))) != "integer"
+
+
+def fail_on_reports(summary, collect, baseline=None, combined=False):
     """The verdict of --fail-on-reports: every UBSan report fails, except,
-    with a nullability baseline, those it accepts; an incomplete report or
-    an unparsable report file fails too. In the nullability mode the
-    runtime suppressions file (empty) is applied before any of this."""
+    with a nullability baseline, those it accepts, and with combined the
+    integer group's reports; an incomplete report or an unparsable report
+    file fails too. In the nullability and combined modes the runtime
+    suppressions file (empty) is applied before any of this."""
     reports = summary.reports
     entries = {nullability_entry_key(e): e for e in baseline} if baseline is not None else None
     groups = []
     accepted = Counter()
     for (kind, loc), info in summary.ubsan_info.items():
+        if not judged(summary, kind, loc, combined):
+            continue
         declared = summary.notes.get((kind, loc)) or NO_DECLARATION
         if entries is not None:
             key = nullability_key(summary, kind, loc)
@@ -1248,34 +1407,40 @@ def fail_on_reports(summary, collect, baseline=None):
                        "reports": reports[(kind, loc)], "message": summary.samples[(kind, loc)],
                        "function": summary.functions[(kind, loc)], "declared": declared,
                        "swift_header": declared.endswith("-Swift.h"),
+                       "unclassified": combined and ubsan_family(kind, summary.samples[(kind, loc)]) is None,
                        "pids": sorted(info["pids"], key=int), "tests": sorted(info["tests"])})
     groups.sort(key=lambda g: (not g["swift_header"], g["location"], g["kind"]))
     not_seen = [] if entries is None else [e for k, e in entries.items() if k not in accepted]
     # A report file with lines that are not a report, or a report cut off
     # before its stack (a hung host killed while writing), may hide a
-    # report, and the verdict rests on parsing, so both fail too.
+    # report, and the verdict rests on parsing, so both fail too. In a
+    # combined run an incomplete report whose message is the integer
+    # group's is an integer finding instead.
     unparsed = [{"file": path, "lines": n} for path, n in sorted(summary.unparsed_report_files.items())]
-    incomplete = [{"file": path, "location": summary.locations.display(loc)} for path, loc in summary.incomplete]
+    incomplete = [{"file": path, "location": summary.locations.display(loc)} for path, loc in summary.incomplete
+                  if judged(summary, "undefined-behavior", loc, combined)]
     n = sum(g["reports"] for g in groups)
     verdict = "FAIL" if (groups or unparsed or incomplete) else "PASS"
+    what = "nullability report" if combined else "report"
     if entries is None:
         outside = "that no suppression hides"
         accepted_text = ""
-        passed = "PASS: no report outside the suppressions."
+        passed = "PASS: no %s outside the suppressions." % what
     else:
         outside = "outside the baseline"
         accepted_text = "; %d report(s) accepted by it" % sum(accepted.values())
-        passed = "PASS: no report outside the baseline%s." % accepted_text
+        passed = "PASS: no %s outside the baseline%s." % (what, accepted_text)
     if verdict == "PASS":
         line = passed
     else:
-        line = "FAIL: %d report(s) at %d location(s) %s%s" % (n, len(groups), outside, accepted_text)
+        line = "FAIL: %d %s(s) at %d location(s) %s%s" % (n, what, len(groups), outside, accepted_text)
         if incomplete:
             line += "; %d incomplete report(s)" % len(incomplete)
         if unparsed:
             line += "; %d report file(s) with lines that are not a report" % len(unparsed)
         line += "."
-    return {"verdict": verdict, "collect": collect, "groups": groups, "unparsed_files": unparsed,
+    return {"verdict": verdict, "collect": collect, "combined": combined, "groups": groups,
+            "unparsed_files": unparsed,
             "incomplete": incomplete, "baseline": entries is not None, "accepted": sum(accepted.values()),
             "not_seen": [{"kind": e["kind"], "file": e["file"], "function": e["function"],
                           "declared": e["declared"], "note": e["note"]} for e in not_seen],
@@ -1283,7 +1448,11 @@ def fail_on_reports(summary, collect, baseline=None):
 
 
 def print_fail_on_reports(v, out):
-    out.write("\nUBSan reports that fail the run (--fail-on-reports): %d location(s)\n" % len(v["groups"]))
+    if v["combined"]:
+        out.write("\nNullability reports that fail the run (--fail-on-reports --combined; integer reports are "
+                  "listed above as findings): %d location(s)\n" % len(v["groups"]))
+    else:
+        out.write("\nUBSan reports that fail the run (--fail-on-reports): %d location(s)\n" % len(v["groups"]))
     swift = sum(1 for g in v["groups"] if g["swift_header"])
     if swift:
         out.write("  Of these, %d location(s) declared in a generated Swift header (port-relevant).\n" % swift)
@@ -1296,6 +1465,9 @@ def print_fail_on_reports(v, out):
             out.write("          declared in %s, a generated Swift header: port-relevant\n" % g["declared"])
         elif g["declared"] != NO_DECLARATION:
             out.write("          declared in %s\n" % g["declared"])
+        if g.get("unclassified"):
+            out.write("          cannot be classified as nullability or integer (kind %s): judged with the\n"
+                      "          nullability reports, the safe direction\n" % g["kind"])
         out.write("          tests:    %s\n" % (", ".join(g["tests"]) or "none identified"))
         if g["pids"]:
             out.write("          pids:     %s\n" % ", ".join(g["pids"]))
@@ -1381,6 +1553,28 @@ def print_text(r, out):
             if group["not_shown"]:
                 out.write("  ... %d more location(s) not shown; run sanitizer_summary.py again with --top %d,\n"
                           "  or with --json for every location\n" % (group["not_shown"], group["locations"]))
+    address = r["address"]
+    if address["reports"] or r.get("combined"):
+        out.write("\nAddress sanitizer reports: %d at %d location(s)\n" % (address["reports"], address["locations"]))
+        for g in address["groups"]:
+            out.write("  %6d  %s  %s\n" % (g["count"], g["kind"], g["location"]))
+            out.write("          tests:    %s\n" % (", ".join(g["tests"]) or "none identified"))
+            if g["pids"]:
+                out.write("          pids:     %s\n" % ", ".join(g["pids"]))
+        if address["reports"]:
+            out.write("  The address sanitizer ends the process at its first report, as in the plain suite, so\n"
+                      "  the test that was running fails: these are judged by the tests' result, not here.\n")
+    integer = r.get("integer")
+    if integer is not None:
+        out.write("\nInteger findings (informational: they never fail the run; integer-findings.md):\n")
+        for row in integer["by_kind"]:
+            out.write("    %6d  %s\n" % (row["count"], row["kind"]))
+        for row in integer["top"]:
+            out.write("    %6d  %s  %s\n      %s\n" % (row["count"], row["kind"], row["location"], row["message"]))
+        if integer["not_shown"]:
+            out.write("  ... %d more location(s) not shown (--top, or --json)\n" % integer["not_shown"])
+        out.write("Integer verdict (informational, never fails the run): %d report(s) at %d location(s), "
+                  "%d in the migration's scope.\n" % (integer["reports"], integer["locations"], integer["in_scope"]))
     if r["other_text"]:
         out.write("\nOther text (not sanitizer output, --mixed): %d line(s)\n" % r["other_text"])
     out.write("\nUnparsed lines: %d\n" % r["unparsed"])
@@ -1418,11 +1612,14 @@ def main(argv=None):
     parser.add_argument("--write-nullability-baseline")
     parser.add_argument("--drop-unseen", action="store_true")
     parser.add_argument("--collect", action="store_true")
+    parser.add_argument("--combined", action="store_true")
     parser.add_argument("--symbolize")
     parser.add_argument("--atos", default="atos")
     args = parser.parse_args(argv)
     if not args.paths and not args.console:
         parser.error("give at least one PATH or --console LOG")
+    if args.combined and not (args.fail_on_reports or args.write_nullability_baseline):
+        parser.error("--combined applies to --fail-on-reports and --write-nullability-baseline")
     if args.collect and not (args.baseline or args.fail_on_reports):
         parser.error("--collect applies to --baseline and --fail-on-reports")
     if args.nullability_baseline and not args.fail_on_reports:
@@ -1458,6 +1655,9 @@ def main(argv=None):
         return 2
     result = summary.result(args.top)
     result["tests"] = tests
+    if args.combined:
+        result["combined"] = True
+        result["integer"] = summary.integer_result(args.top)
     if args.symbolize:
         all_reports = summary.thread.reports[False] + summary.thread.reports[True]
         result["symbolize"] = symbolize(all_reports, args.symbolize, args.atos)
@@ -1467,7 +1667,8 @@ def main(argv=None):
         result["baseline"] = compare_baseline(groups, entries, args.baseline, args.collect)
     if args.write_nullability_baseline:
         try:
-            for line in write_nullability_baseline(summary, args.write_nullability_baseline, args.drop_unseen):
+            for line in write_nullability_baseline(summary, args.write_nullability_baseline, args.drop_unseen,
+                                                   args.combined):
                 print(line)
         except BaselineError as e:
             sys.stderr.write("sanitizer_summary.py: %s\n" % e)
@@ -1483,7 +1684,7 @@ def main(argv=None):
                                              ", ".join(sorted(summary.unparsed_report_files))))
         return 0
     if args.fail_on_reports:
-        result["fail_on_reports"] = fail_on_reports(summary, args.collect, null_entries)
+        result["fail_on_reports"] = fail_on_reports(summary, args.collect, null_entries, args.combined)
     if args.json:
         json.dump(result, sys.stdout, indent=1)
         sys.stdout.write("\n")

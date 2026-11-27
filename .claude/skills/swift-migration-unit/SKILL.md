@@ -178,8 +178,10 @@ deleting the dossier; the claim becomes *landed, closing checks pending*).
 Once, after the last unit and by the time the prompt names, run the
 closing checks of `lifecycle.md` §5 over everything that landed, in order,
 one at a time, each under the lock with its stall watchdog:
-`whole_suite.sh`; `sanitizer_tests.sh nullability`, `integer`, then
-`thread` (never `--parallel`); the `x86_64` build; the capture,
+`sanitizer_tests.sh combined --parallel` (the plain whole suite, with the
+nullability and integer checks compiled in: three verdicts, tests,
+nullability and integer), then `sanitizer_tests.sh thread` (never
+`--parallel`); the `x86_64` build; the capture,
 `codedb.py update --accept-removals`, the lints and
 `qualify_unit.py --classify > tmp/classify.txt`. Wait for one in the
 background only with `suite_guard.py wait --pid PID --seconds 540` in the

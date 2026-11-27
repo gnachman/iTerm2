@@ -212,7 +212,9 @@ These exist as scripts, each documented by its `--help`:
 
 - `tools/swift_migration/sanitizer_tests.sh MODE [TEST ...]` builds and runs
   the tests in its own build directory, with MODE `nullability`, `integer`
-  or `thread`. In `nullability` mode a targeted run (test names given)
+  or `thread` (and `integer-sign`, `plain`, and `combined`: the test plan's
+  address sanitizer with the nullability and integer groups in one build
+  and one run, the closing checks' first run, [lifecycle.md §5](lifecycle.md)). In `nullability` mode a targeted run (test names given)
   writes the first violation that is not suppressed to a file and ends the
   test host, so the test fails. It does this with `halt_on_error=1` on a
   recoverable build, because the app violates a claim while launching, and

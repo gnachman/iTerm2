@@ -20,8 +20,11 @@ written.
   the temporary root, when $FAKE_FIXTURE is set; for TSan, the files named
   by $STUB_REPORTS), prints one passing test in the serial log format, and
   exits with $STUB_TEST_STATUS (default 0).
-- otool: says the binary links both the UBSan and the TSan runtime, so the
+- otool: says the binary links the UBSan, TSan and ASan runtimes, so the
   runtime check of every sanitizer mode passes.
+- nm: lists a nullability and an integer UBSan handler among the binary's
+  undefined symbols (none with $FAKE_NM_EMPTY), for the combined mode's
+  check that both groups were compiled in.
 - pkill: does nothing, so no real process is ever matched.
 - atos: prints each address back, as atos does for an address it cannot
   name.
@@ -110,7 +113,14 @@ EOF
 # The runtime check once read otool through `grep -q` under pipefail, where
 # a write after grep quit failed with SIGPIPE; RuntimeCheckTests covers that.
 FAKE_OTOOL = '''#!/bin/bash
-printf '%s:\n\t@rpath/libclang_rt.ubsan_osx_dynamic.dylib (compatibility version 0.0.0)\n\t@rpath/libclang_rt.tsan_osx_dynamic.dylib (compatibility version 0.0.0)\n' "$2"
+printf '%s:\n\t@rpath/libclang_rt.ubsan_osx_dynamic.dylib (compatibility version 0.0.0)\n\t@rpath/libclang_rt.tsan_osx_dynamic.dylib (compatibility version 0.0.0)\n\t@rpath/libclang_rt.asan_osx_dynamic.dylib (compatibility version 0.0.0)\n' "$2"
+'''
+# nm -u: the UBSan handlers a binary built with both groups calls (the
+# combined mode checks that both groups were compiled in). $FAKE_NM_EMPTY
+# makes it list none.
+FAKE_NM = '''#!/bin/bash
+[ -n "${FAKE_NM_EMPTY:-}" ] && exit 0
+printf '___asan_init\\n___ubsan_handle_nullability_arg_v1\\n___ubsan_handle_nullability_arg\\n___ubsan_handle_implicit_conversion\\n'
 '''
 FAKE_PKILL = "#!/bin/sh\nexit 1\n"
 FAKE_ATOS = ("#!/bin/sh\nskip=0\nfor a in \"$@\"; do\n  if [ $skip = 1 ]; then skip=0; continue; fi\n"
@@ -143,7 +153,7 @@ class ScriptTestCase(unittest.TestCase):
         self.bin = os.path.join(self.tmp, "bin")
         os.makedirs(self.bin)
         for name, text in (("xcodebuild", FAKE_XCODEBUILD), ("otool", FAKE_OTOOL),
-                           ("pkill", FAKE_PKILL), ("atos", FAKE_ATOS)):
+                           ("pkill", FAKE_PKILL), ("atos", FAKE_ATOS), ("nm", FAKE_NM)):
             path = os.path.join(self.bin, name)
             with open(path, "w") as f:
                 f.write(text)
@@ -151,9 +161,10 @@ class ScriptTestCase(unittest.TestCase):
         self.record = os.path.join(self.tmp, "record.jsonl")
         self.script = os.path.join(tools, "sanitizer_tests.sh")
 
-    def run_script(self, *args, fixture=None, reports=(), test_status=0, hang=False):
+    def run_script(self, *args, fixture=None, reports=(), test_status=0, hang=False, extra_env=None):
         """Runs the script; returns (exit status, output, recorded xcodebuild calls)."""
         env = self.script_env(fixture=fixture, reports=reports, test_status=test_status, hang=hang)
+        env.update(extra_env or {})
         p = subprocess.run(["bash", self.script] + list(args), env=env,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                            universal_newlines=True, timeout=120)
@@ -178,6 +189,8 @@ class ScriptTestCase(unittest.TestCase):
         env["STUB_TEST_STATUS"] = str(test_status)
         env.pop("SIGNED", None)
         env.pop("FAKE_HANG", None)
+        env.pop("FAKE_NM_EMPTY", None)
+        env.pop("TEST_RUNNER_ITERM2_SANITIZER_PROBE", None)
         if hang:
             env["FAKE_HANG"] = "1"
         self.lock = os.path.join(self.tmp, "locks", "whole-suite.lock")
@@ -516,6 +529,147 @@ class NullabilityFailureTests(ScriptTestCase):
         status, out, _ = self.run_script("integer-sign", "ModernTests/SignProbeTests", fixture=SIGN_FIXTURE)
         self.assertEqual(status, 0, out)
         self.assertNotIn("Verdict:", out)
+
+
+COMBINED_FIXTURE = os.path.join(HERE, "fixtures", "sanitizer_combined", "ubsan.4101")
+INTEGER_FIXTURE = os.path.join(HERE, "fixtures", "sanitizer_summary", "ubsan.probe-integer")
+COMBINED_GROUPS = "nullability," + INTEGER_GROUP
+
+
+class CombinedModeTests(ScriptTestCase):
+    """The combined mode (the owner, 2026-11-26): the test plan's normal
+    configuration, address sanitizer on, plus the nullability and integer
+    groups, recovering, in one build and one run, with three verdicts."""
+
+    def run_dir(self):
+        runs = os.path.join(self.root, "tmp", "sanitizers", "runs")
+        (run_dir,) = os.listdir(runs)
+        return os.path.join(runs, run_dir)
+
+    def test_build_keeps_the_address_sanitizer_and_adds_both_groups(self):
+        status, out, calls = self.run_script("combined", "--build-only")
+        self.assertEqual(status, 0, out)
+        (call,) = calls
+        args = call["args"]
+        self.assertEqual(args[0], "build-for-testing")
+        # The address sanitizer is on, as the test plan has it for
+        # `xcodebuild test`; build-for-testing does not take it from the
+        # plan (a real build on 2026-11-26 linked no ASan runtime without
+        # these), so it is given on both steps.
+        self.assertEqual(SuiteOptionTests.follows(call, "-enableAddressSanitizer"), ["YES"])
+        self.assertEqual(self.setting(call, "ENABLE_ADDRESS_SANITIZER"), "YES")
+        self.assertEqual(SuiteOptionTests.follows(call, "-enableUndefinedBehaviorSanitizer"), ["NO"])
+        cflags = self.setting(call, "OTHER_CFLAGS")
+        self.assertIn("-fsanitize=%s -fsanitize-recover=%s" % (COMBINED_GROUPS, COMBINED_GROUPS), cflags)
+        self.assertEqual(self.setting(call, "OTHER_LDFLAGS"), "$(inherited) -fsanitize=" + COMBINED_GROUPS)
+        build = os.path.join(self.root, "tmp", "sanitizers", "combined")
+        self.assertEqual(self.setting(call, "SYMROOT"), os.path.join(build, "Build"))
+        self.assertIn("Runtime check: iTerm2.debug.dylib links ", out)
+        self.assertIn("UBSan check: iTerm2.debug.dylib calls ___ubsan_handle_nullability_arg and "
+                      "___ubsan_handle_implicit_conversion", out)
+
+    def test_the_ignore_list_exempts_files_from_the_ubsan_groups_only(self):
+        status, out, calls = self.run_script("combined", "--build-only")
+        self.assertEqual(status, 0, out)
+        cflags = self.setting(calls[0], "OTHER_CFLAGS")
+        generated = os.path.join(self.root, "tmp", "sanitizers", "combined", "sanitizer_ignorelist_ubsan_only.txt")
+        self.assertIn("-fsanitize-ignorelist=" + generated, cflags)
+        with open(generated) as f:
+            lines = [l.rstrip("\n") for l in f]
+        entries = [l for l in lines if l.strip() and not l.startswith("#")]
+        self.assertEqual(entries[0], "[{%s}]" % COMBINED_GROUPS)
+        with open(os.path.join(self.root, "tools", "swift_migration", "sanitizer_ignorelist.txt")) as f:
+            original = [l.rstrip("\n") for l in f if l.strip() and not l.startswith("#")]
+        self.assertEqual(entries[1:], original)
+        # Rewritten only when it would change, so an incremental build
+        # sees the same file.
+        before = os.stat(generated).st_mtime_ns
+        time.sleep(0.01)
+        status, out, _ = self.run_script("combined", "--build-only")
+        self.assertEqual(status, 0, out)
+        self.assertEqual(os.stat(generated).st_mtime_ns, before)
+
+    def test_other_modes_still_turn_the_address_sanitizer_off(self):
+        for mode in ("nullability", "integer", "thread", "plain"):
+            if os.path.exists(self.record):
+                os.remove(self.record)
+            self.run_script(mode, "--build-only")
+            call = self.calls()[0]
+            self.assertEqual(SuiteOptionTests.follows(call, "-enableAddressSanitizer"), ["NO"], mode)
+            self.assertEqual(self.setting(call, "ENABLE_ADDRESS_SANITIZER"), "NO", mode)
+
+    def test_missing_ubsan_handlers_fail_the_build_check(self):
+        status, out, _ = self.run_script("combined", "--build-only", extra_env={"FAKE_NM_EMPTY": "1"})
+        self.assertEqual(status, 1, out)
+        self.assertIn("does not call ___ubsan_handle_nullability_arg", out)
+
+    def test_a_whole_suite_recovers_and_passes(self):
+        status, out, calls = self.run_script("combined", "--parallel", fixture=INTEGER_FIXTURE)
+        self.assertEqual(status, 0, out)
+        test = calls[-1]
+        options = test["ubsan"].split(":")
+        self.assertIn("halt_on_error=0", options)
+        self.assertIn("report_error_type=1", options)
+        self.assertTrue(any(o.startswith("suppressions=") for o in options), options)
+        self.assertTrue(any(o.startswith("log_path=" + os.path.join(self.root, "tmp", "sanitizers", "runs",
+                                                                    "combined-")) for o in options), options)
+        self.assertTrue(test["held"].endswith(":" + self.lock), test)
+        self.assertEqual(SuiteOptionTests.follows(test, "-parallel-testing-worker-count"), ["2"])
+        self.assertEqual(SuiteOptionTests.follows(test, "-default-test-execution-time-allowance"), ["120"])
+        self.assertIn("Verdict: PASS: no nullability report outside the baseline; 0 report(s) accepted by it.", out)
+        self.assertIn("  tests:       PASS (xcodebuild status 0)", out)
+        self.assertIn("  nullability: PASS", out)
+        self.assertIn("  integer:     informational: 2 report(s) at 2 location(s), 0 in the migration's scope", out)
+        self.assertEqual(out.rstrip("\n").splitlines()[-1], "Combined verdict: PASS")
+        with open(os.path.join(self.run_dir(), "verdicts.txt")) as f:
+            self.assertEqual(f.read().splitlines()[:3], ["tests=PASS", "nullability=PASS", "integer=2"])
+        with open(os.path.join(self.run_dir(), "summary.txt")) as f:
+            self.assertIn("Combined verdict: PASS", f.read())
+
+    def test_a_targeted_run_recovers_too(self):
+        status, out, calls = self.run_script("combined", "ModernTests/ProbeTests")
+        self.assertEqual(status, 0, out)
+        self.assertIn("halt_on_error=0", calls[-1]["ubsan"].split(":"))
+        self.assertEqual(calls[-1]["held"], "")
+
+    def test_a_nullability_report_fails_with_status_1(self):
+        status, out, _ = self.run_script("combined", fixture=COMBINED_FIXTURE)
+        self.assertEqual(status, 1, out)
+        self.assertIn("Verdict: FAIL: 3 nullability report(s) at 3 location(s) outside the baseline", out)
+        self.assertIn("  nullability: FAIL", out)
+        self.assertIn("  integer:     informational: 7 report(s) at 7 location(s), 7 in the migration's scope", out)
+        self.assertEqual(out.rstrip("\n").splitlines()[-1], "Combined verdict: FAIL (nullability)")
+
+    def test_a_test_failure_keeps_xcodebuilds_status(self):
+        status, out, _ = self.run_script("combined", fixture=INTEGER_FIXTURE, test_status=65)
+        self.assertEqual(status, 65, out)
+        self.assertIn("  tests:       FAIL (xcodebuild status 65)", out)
+        self.assertEqual(out.rstrip("\n").splitlines()[-1], "Combined verdict: FAIL (tests)")
+
+    def test_both_failing_is_status_4(self):
+        status, out, _ = self.run_script("combined", fixture=COMBINED_FIXTURE, test_status=65)
+        self.assertEqual(status, 4, out)
+        self.assertEqual(out.rstrip("\n").splitlines()[-1], "Combined verdict: FAIL (tests and nullability)")
+        with open(os.path.join(self.run_dir(), "verdicts.txt")) as f:
+            self.assertEqual(f.read().splitlines()[:3], ["tests=FAIL", "nullability=FAIL", "integer=7"])
+
+    def test_collect_makes_the_nullability_verdict_informational(self):
+        status, out, _ = self.run_script("combined", "--collect", fixture=COMBINED_FIXTURE)
+        self.assertEqual(status, 0, out)
+        self.assertIn("Verdict (--collect, does not fail the run): FAIL: 3 nullability report(s)", out)
+        self.assertIn("  nullability: FAIL (--collect: informational)", out)
+        self.assertEqual(out.rstrip("\n").splitlines()[-1], "Combined verdict: PASS (--collect)")
+
+    def test_recover_and_probe_are_refused(self):
+        for args in (("combined", "--recover"), ("combined", "--probe", "ModernTests/SanitizerProbeTests")):
+            status, out, calls = self.run_script(*args)
+            self.assertEqual(status, 2, (args, out))
+            self.assertEqual(calls, [], args)
+
+    def test_the_header_says_how_to_isolate_a_failure(self):
+        status, out, _ = self.run_script("--help")
+        self.assertEqual(status, 0)
+        self.assertIn("rerun that test class under one sanitizer alone", " ".join(out.split()))
 
 
 class StallAndLockTests(ScriptTestCase):

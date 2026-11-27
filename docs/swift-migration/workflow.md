@@ -196,10 +196,10 @@ by seven. If the reset time changes, the table follows it.
 - Work also stops when the owner starts using the checkout in the morning,
   whatever the budget says.
 
-**Closing checks before the stop.** The whole suites (the plain one
-again, after those in the gates of light and full commits), the `x86_64` build and the
-lints run once at the end of the session over everything that landed ([lifecycle.md §5](lifecycle.md)), about an hour by the measurements
-of 2026-11-24. The nightly prompt names the time they must start, 75
+**Closing checks before the stop.** The whole suites (the combined run,
+which is also the plain whole suite again after those in the gates of light
+and full commits, and the thread run), the `x86_64` build and the
+lints run once at the end of the session over everything that landed ([lifecycle.md §5](lifecycle.md)); the durations are there. The nightly prompt names the time they must start, 75
 minutes before the clean stop (`nightly_start.sh`, `CLOSING_RESERVE`); no
 unit starts that cannot be committed by then. A unit committed before the
 closing checks pass is *landed, closing checks pending*.

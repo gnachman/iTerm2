@@ -459,24 +459,52 @@ back for light and full”); it runs here once more over everything,
 covering the trivial units. The orchestrator runs them in the full-suite lane on `HEAD`, in this order, one at a time, each
 under the whole-suite lock with its stall watchdog, waiting on each only
 with `suite_guard.py wait` ([orchestration.md §3](orchestration.md),
-"Heavy jobs and the machine"). Measured durations on 2026-11-24 are in
-brackets; about an hour in all.
+"Heavy jobs and the machine"). Measured durations are in brackets.
 
-1. The plain whole suite: `tools/swift_migration/whole_suite.sh` [9 min].
-2. `sanitizer_tests.sh nullability` with no test names: it does not abort,
-   and fails on a report outside the nullability baseline
-   ([nullability.md §7](nullability.md); owner-queue.md Q26) [7.5 min].
-3. `sanitizer_tests.sh integer` [7 min].
-4. `sanitizer_tests.sh thread`, serially, never `--parallel`
-   ([thread-baseline.md](thread-baseline.md)) [17 min].
-5. The `x86_64` build, with no warnings ([README.md §5](README.md)) [1 to
+Until 2026-11-26 the plain whole suite, the nullability suite and the
+integer suite were three runs, each from its own build. The owner asked
+“Can the sanitizer runs be combined? nullability + integer + tsan in one
+go?”; the nullability and integer checks are both groups of the
+undefined-behavior sanitizer, which also combines with the address
+sanitizer the test plan turns on, and only the thread and address
+sanitizers cannot share a build, so he was offered one run of the normal
+suite that also carries the nullability and integer checks, and one thread
+run, and said “Yes, please do”.
+
+1. The combined run, which is also the plain whole suite:
+   `sanitizer_tests.sh combined --parallel` with no test names. It builds
+   the test plan's normal configuration (the address sanitizer on, as
+   `whole_suite.sh` has it) with both groups compiled in, recovering, and
+   gives three verdicts: the tests, as for the plain suite; nullability,
+   failing on a nullability report outside the nullability baseline
+   ([nullability.md §7](nullability.md); owner-queue.md Q26); and integer,
+   collected and informational ([integer-findings.md](integer-findings.md)).
+   The script's header gives the exit statuses. A test that fails in it is
+   run again alone in the plain suite (`tools/run_tests.expect CLASS`) and
+   under each single sanitizer (`sanitizer_tests.sh nullability CLASS`,
+   `integer CLASS`), since instrumentation changes code generation (on
+   2026-11-25 six tests failed only under the nullability and thread
+   builds); that tells where it fails, and the check has failed either
+   way [on 2026-11-26 in a lane, with swap nearly full and load from other
+   checkouts: a build from nothing 4.5 min, an incremental one under 1;
+   the tests 8.3 min, 14,223 executed, all three verdicts passing, 15
+   integer reports at 13 locations].
+2. `sanitizer_tests.sh thread`, serially, never `--parallel`
+   ([thread-baseline.md](thread-baseline.md)) [17 min on 2026-11-24, plus
+   its build].
+3. The `x86_64` build, with no warnings ([README.md §5](README.md)) [1 to
    8 min].
-6. The lints and the code database: `capture_compile_commands.sh`,
+4. The lints and the code database: `capture_compile_commands.sh`,
    `codedb.py update --accept-removals`, then the lints of
    [phase0.md §6](phase0.md), "Where they run", over the session's port
    commits, then `qualify_unit.py --classify > tmp/classify.txt`, where
    the next session takes its first units from (orchestration.md §1, step
    4) [about 10 min].
+
+In all, about 50 to 60 minutes: the combined run 9 to 13, the thread run
+about 20 plus its build, the `x86_64` build 1 to 8, the lints and the
+database about 10 to 15. The reserve the nightly script keeps for them is
+unchanged (`nightly_start.sh`, `CLOSING_RESERVE`).
 
 A fix commit after a failed check re-runs that check and every check after
 it in this order. If the closing checks' start time has already passed when

@@ -287,7 +287,9 @@ methods:
 
 How a violation is treated depends on the run
 (`tools/swift_migration/sanitizer_tests.sh`, whose header is the manual).
-A whole-suite run, as the closing checks ask for ([lifecycle.md §5](lifecycle.md)),
+A whole-suite run, as the closing checks make in their combined run
+([lifecycle.md §5](lifecycle.md); its nullability verdict judges only the
+nullability reports, the integer ones being informational there),
 never aborts: each report goes to a file, the tests go on, and after the
 run the reports are compared with the nullability baseline,
 `docs/swift-migration/nullability-baseline.tsv`. The run fails on any

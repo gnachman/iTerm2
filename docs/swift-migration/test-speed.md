@@ -76,8 +76,9 @@ measures time.
      author's own checks.
    - *Full suite.* Everything. Run in the gate of light and full code
      commits, and once per session among the closing checks
-     ([lifecycle.md §5](lifecycle.md)), normally and with the sanitizers,
-     and before any push.
+     ([lifecycle.md §5](lifecycle.md)), as the combined run (the test
+     plan's address sanitizer with the nullability and integer checks)
+     and under the thread sanitizer, and before any push.
    The fast tier is defined by the list of excluded tests in
    `tools/swift_migration/slow_tier.txt`, each with its reason, so the list
    is reviewable and a test cannot leave the fast tier unnoticed. It is a

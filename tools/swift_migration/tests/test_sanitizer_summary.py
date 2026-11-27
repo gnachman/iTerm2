@@ -881,5 +881,207 @@ class NullabilityBaselineTests(unittest.TestCase):
         self.assertIsInstance(entries, list)
 
 
+COMBINED = os.path.join(HERE, "fixtures", "sanitizer_combined")
+
+
+def combined_fixture(name):
+    return os.path.join(COMBINED, name)
+
+
+def run_json_status(*args):
+    """Like run_json, whatever the exit status."""
+    _, out, _ = run("--json", *args)
+    return json.loads(out)
+
+
+class CombinedTests(unittest.TestCase):
+    """--combined: the reports of a combined run of sanitizer_tests.sh, one
+    run with the address sanitizer, the nullability group and the integer
+    group. Only nullability reports (and reports that cannot be classified)
+    are judged by --fail-on-reports; integer reports are informational
+    findings; address sanitizer reports, which land in the same report files
+    because the runtimes share log_path, are parsed and listed apart.
+
+    The fixtures in fixtures/sanitizer_combined are the real report files of
+    two stand-alone programs built on 2026-11-26 with the combined mode's
+    flags (-fsanitize=address plus both groups, recovering) and run with its
+    UBSAN_OPTIONS, the source path replaced by
+    /Users/example/iterm2/sources/CombinedProbe.m:
+    - ubsan.4101: one report of each kind the two groups produce: three
+      nullability (invalid-null-argument, invalid-null-return,
+      null-pointer-use) and seven integer (out-of-bounds-index,
+      signed-integer-overflow, invalid-shift-exponent, invalid-shift-base,
+      integer-divide-by-zero, implicit-signed-integer-truncation,
+      float-cast-overflow).
+    - ubsan.4102: a nullability report, an integer report, then an address
+      sanitizer heap-use-after-free report ending in ==N==ABORTING, all in
+      the one file the runtime wrote."""
+
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.dir.cleanup)
+
+    def write(self, name, text):
+        path = os.path.join(self.dir.name, name)
+        with open(path, "w") as f:
+            f.write(text)
+        return path
+
+    def test_kinds_are_classified(self):
+        family = sanitizer_summary.ubsan_family
+        for kind in ("invalid-null-argument", "invalid-null-return", "null-pointer-use",
+                     "nullability-arg", "nullability-return", "nullability-assign"):
+            self.assertEqual(family(kind, "x"), "nullability", kind)
+        for kind in ("signed-integer-overflow", "implicit-signed-integer-truncation",
+                     "implicit-unsigned-integer-truncation", "implicit-integer-sign-change",
+                     "implicit-signed-integer-truncation-or-sign-change", "float-cast-overflow",
+                     "integer-divide-by-zero", "invalid-shift-base", "invalid-shift-exponent",
+                     "shift-base", "shift-exponent", "out-of-bounds-index"):
+            self.assertEqual(family(kind, "x"), "integer", kind)
+        # With no kind from a SUMMARY line, the message decides.
+        for message, expected in (
+                ("null pointer passed as argument 2, which is declared to never be null", "nullability"),
+                ("null pointer returned from function declared to never return null", "nullability"),
+                ("_Nonnull binding to null pointer of type 'id _Nonnull'", "nullability"),
+                ("signed integer overflow: 2147483647 + 1 cannot be represented in type 'int'", "integer"),
+                ("implicit conversion from type 'int' of value 301 (32-bit, signed) to type 'unsigned char' "
+                 "changed the value to 45 (8-bit, unsigned)", "integer"),
+                ("1e+20 is outside the range of representable values of type 'int'", "integer"),
+                ("division by zero", "integer"),
+                ("shift exponent 40 is too large for 32-bit type 'int'", "integer"),
+                ("left shift of negative value -1", "integer"),
+                ("index 4 out of bounds for type 'int[4]'", "integer"),
+                ("load of misaligned address", None)):
+            self.assertEqual(family("undefined-behavior", message), expected, message)
+
+    def test_only_nullability_reports_fail(self):
+        status, out, _ = run("--root", ROOT, "--fail-on-reports", "--combined", combined_fixture("ubsan.4101"))
+        self.assertEqual(status, 1, out)
+        self.assertIn("Verdict: FAIL: 3 nullability report(s) at 3 location(s) that no suppression hides.", out)
+        self.assertIn("Integer verdict (informational, never fails the run): 7 report(s) at 7 location(s), "
+                      "7 in the migration's scope.", out)
+        v = run_json_status("--root", ROOT, "--fail-on-reports", "--combined", combined_fixture("ubsan.4101"))
+        self.assertEqual(sorted(g["kind"] for g in v["fail_on_reports"]["groups"]),
+                         ["invalid-null-argument", "invalid-null-return", "null-pointer-use"])
+        self.assertEqual(v["integer"]["reports"], 7)
+        self.assertEqual(v["integer"]["locations"], 7)
+        self.assertEqual(sorted(k["kind"] for k in v["integer"]["by_kind"]),
+                         ["float-cast-overflow", "implicit-signed-integer-truncation", "integer-divide-by-zero",
+                          "invalid-shift-base", "invalid-shift-exponent", "out-of-bounds-index",
+                          "signed-integer-overflow"])
+
+    def test_integer_reports_alone_pass(self):
+        status, out, _ = run("--root", ROOT, "--fail-on-reports", "--combined", fixture("ubsan.probe-integer"))
+        self.assertEqual(status, 0, out)
+        self.assertIn("Verdict: PASS: no nullability report outside the suppressions.", out)
+        self.assertIn("Integer verdict (informational, never fails the run): 2 report(s) at 2 location(s), "
+                      "0 in the migration's scope.", out)
+
+    def test_a_baseline_judges_only_nullability(self):
+        baseline = self.write("baseline.tsv", "kind\tfile\tfunction\tmessage\tdeclared\tnote\n")
+        status, out, _ = run("--root", ROOT, "--fail-on-reports", "--combined", "--nullability-baseline", baseline,
+                             fixture("ubsan.probe-integer"))
+        self.assertEqual(status, 0, out)
+        self.assertIn("Verdict: PASS: no nullability report outside the baseline; 0 report(s) accepted by it.", out)
+
+    def test_without_combined_every_report_still_fails(self):
+        # The nullability mode is unchanged: every UBSan report fails.
+        status, out, _ = run("--root", ROOT, "--fail-on-reports", fixture("ubsan.probe-integer"))
+        self.assertEqual(status, 1, out)
+        self.assertIn("Verdict: FAIL: 2 report(s) at 2 location(s) that no suppression hides.", out)
+        self.assertNotIn("Integer verdict", out)
+
+    def test_address_reports_are_parsed_and_listed_apart(self):
+        status, out, _ = run("--root", ROOT, "--fail-on-reports", "--combined", combined_fixture("ubsan.4102"))
+        self.assertEqual(status, 1, out)
+        self.assertIn("Verdict: FAIL: 1 nullability report(s) at 1 location(s) that no suppression hides.", out)
+        self.assertIn("Integer verdict (informational, never fails the run): 1 report(s) at 1 location(s)", out)
+        self.assertIn("Address sanitizer reports: 1", out)
+        self.assertIn("heap-use-after-free  sources/CombinedProbe.m:4", out)
+        self.assertIn("Unparsed lines: 0", out)
+        self.assertNotIn("not a report:", out)
+        v = run_json_status("--root", ROOT, "--fail-on-reports", "--combined", combined_fixture("ubsan.4102"))
+        self.assertEqual(v["reports"], 2)
+        self.assertEqual(v["address"]["reports"], 1)
+        self.assertEqual(v["address"]["groups"][0]["kind"], "heap-use-after-free")
+        self.assertEqual(v["address"]["groups"][0]["pids"], ["4102"])
+        self.assertEqual(v["fail_on_reports"]["unparsed_files"], [])
+
+    def test_address_report_in_the_nullability_mode_is_not_unparsed(self):
+        # Without --combined the address report is parsed too (it no longer
+        # makes its report file unparsable); the two UBSan reports fail.
+        status, out, _ = run("--root", ROOT, "--fail-on-reports", combined_fixture("ubsan.4102"))
+        self.assertEqual(status, 1, out)
+        self.assertIn("Verdict: FAIL: 2 report(s) at 2 location(s) that no suppression hides.", out)
+        self.assertIn("Unparsed lines: 0", out)
+
+    def test_address_report_in_a_console_log(self):
+        path = self.write("test.log", (
+            "Test Case '-[FooTests testBar]' started.\n"
+            "==77==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x6020 at pc 0x1 bp 0x2 sp 0x3\n"
+            "READ of size 4 at 0x6020 thread T0\n"
+            "    #0 0x000100000000 in -[FooTests testBar] FooTests.m:9\n"
+            "SUMMARY: AddressSanitizer: heap-buffer-overflow /r/ModernTests/FooTests.m:9 in -[FooTests testBar]\n"
+            "Shadow bytes around the buggy address:\n"
+            "  0x602000000680: fa fa 00 00 fa fa 00 00\n"
+            "==77==ABORTING\n"
+            "Test Case '-[FooTests testBar]' failed (0.1 seconds).\n"))
+        v = run_json_status("--root", "/r", "--mixed", path)
+        self.assertEqual(v["unparsed"], 0)
+        self.assertEqual(v["other_text"], 2)
+        (g,) = v["address"]["groups"]
+        self.assertEqual((g["kind"], g["location"], g["tests"]),
+                         ("heap-buffer-overflow", "ModernTests/FooTests.m:9", ["FooTests.testBar"]))
+
+    def test_a_ubsan_report_ends_an_unfinished_address_report(self):
+        path = self.write("ubsan.5", (
+            "==5==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x1\n"
+            "WRITE of size 1 at 0x1 thread T0\n"
+            "/r/sources/A.m:1:2: runtime error: null pointer passed as argument 1, which is declared to never be null\n"
+            "    #0 0x000100000000 in -[A b] A.m:1\n"
+            "\nSUMMARY: UndefinedBehaviorSanitizer: invalid-null-argument /r/sources/A.m:1:2 \n"))
+        v = run_json_status("--root", "/r", "--fail-on-reports", "--combined", path)
+        self.assertEqual(v["address"]["groups"][0]["location"], "<unknown>")
+        self.assertEqual(len(v["fail_on_reports"]["groups"]), 1)
+
+    def test_unclassified_reports_fail_the_nullability_verdict(self):
+        path = self.write("ubsan.6", (
+            "/r/sources/A.m:1:2: runtime error: load of misaligned address 0x1 for type 'int'\n"
+            "    #0 0x000100000000 in -[A b] A.m:1\n"
+            "/r/sources/B.m:1:2: runtime error: signed integer overflow: 1 + 2147483647 cannot be represented\n"
+            "    #0 0x000100000000 in -[B c] B.m:1\n"))
+        status, out, _ = run("--root", "/r", "--fail-on-reports", "--combined", path)
+        self.assertEqual(status, 1, out)
+        self.assertIn("Verdict: FAIL: 1 nullability report(s) at 1 location(s) that no suppression hides.", out)
+        self.assertIn("cannot be classified as nullability or integer", out)
+        self.assertIn("Integer verdict (informational, never fails the run): 1 report(s)", out)
+
+    def test_incomplete_reports_are_classified_by_their_message(self):
+        integer = self.write("ubsan.7", "/r/sources/A.m:1:2: runtime error: division by zero\n")
+        status, out, _ = run("--root", "/r", "--fail-on-reports", "--combined", integer)
+        self.assertEqual(status, 0, out)
+        self.assertIn("Verdict: PASS", out)
+        nullability = self.write("ubsan.8", "/r/sources/B.m:1:2: runtime error: null pointer passed as argument 1, "
+                                            "which is declared to never be null\n")
+        status, out, _ = run("--root", "/r", "--fail-on-reports", "--combined", nullability)
+        self.assertEqual(status, 1, out)
+        self.assertIn("1 incomplete report(s)", out)
+
+    def test_a_baseline_written_from_a_combined_run_holds_only_nullability(self):
+        baseline = os.path.join(self.dir.name, "written.tsv")
+        status, out, _ = run("--root", ROOT, "--combined", "--write-nullability-baseline", baseline,
+                             combined_fixture("ubsan.4101"))
+        self.assertEqual(status, 0, out)
+        self.assertIn("Wrote 3 entries", out)
+        with open(baseline) as f:
+            rows = [l.split("\t") for l in f if l.strip() and not l.startswith("#")][1:]
+        self.assertEqual(sorted(r[0] for r in rows), ["invalid-null-argument", "invalid-null-return", "null-pointer-use"])
+
+    def test_combined_needs_a_verdict_or_a_baseline_to_write(self):
+        with self.assertRaises(SystemExit) as cm:
+            run("--root", ROOT, "--combined", combined_fixture("ubsan.4101"))
+        self.assertEqual(cm.exception.code, 2)
+
+
 if __name__ == "__main__":
     unittest.main()

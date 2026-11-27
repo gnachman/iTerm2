@@ -160,6 +160,75 @@
 #                  (docs/swift-migration/test-speed.md section 2). The script
 #                  checks that the app links no sanitizer runtime. There are
 #                  no reports; the summary only confirms that tests ran.
+#     combined     One build and one run for three verdicts, the closing
+#                  checks' first run (lifecycle.md section 5). The owner,
+#                  2026-11-26: "Can the sanitizer runs be combined?
+#                  nullability + integer + tsan in one go?", and to one run of
+#                  the normal suite that also carries the nullability and
+#                  integer checks plus one thread run: "Yes, please do". The
+#                  build is the test plan's normal configuration, exactly as
+#                  tools/run_tests.expect and whole_suite.sh build the plain
+#                  whole suite: the plan's address sanitizer is on, given as
+#                  -enableAddressSanitizer YES and ENABLE_ADDRESS_SANITIZER=YES
+#                  on both steps (build-for-testing does not take it from
+#                  the plan: a build on 2026-11-26 without them linked no
+#                  ASan runtime), with the plan's ASAN_OPTIONS and its other
+#                  settings. Added on top, as
+#                  OTHER_CFLAGS and OTHER_LDFLAGS, both UBSan groups,
+#                  -fsanitize=nullability,<the integer group>, with
+#                  -fsanitize-recover for both: nothing aborts on a UBSan
+#                  report, in a whole suite or a targeted run
+#                  (halt_on_error=0, the nullability suppressions file, log
+#                  path in reports/). The address sanitizer still ends its
+#                  process at its first report, as in the plain suite, so
+#                  the running test fails. Its runtime holds the UBSan
+#                  handlers, so the app links libclang_rt.asan_osx_dynamic and
+#                  no UBSan runtime; the script checks that the app links the
+#                  ASan runtime and calls ___ubsan_handle_nullability_arg and
+#                  ___ubsan_handle_implicit_conversion (nm -u), proving both
+#                  groups are compiled in. The ignore list is applied to the
+#                  two groups only (a generated copy under one [section],
+#                  tmp/sanitizers/combined/sanitizer_ignorelist_ubsan_only.txt):
+#                  the checked-in list, with no section, would take the
+#                  address sanitizer away from every exempt file too. The
+#                  address sanitizer's reports go to the same report files
+#                  (its runtime reads UBSAN_OPTIONS after ASAN_OPTIONS and
+#                  log_path is common to both), where the summary lists them
+#                  apart; in the plain suite they go to stderr. The three
+#                  verdicts:
+#                    tests        xcodebuild's result, as for the plain suite
+#                                 (with the per-test allowance, which
+#                                 whole_suite.sh cannot pass).
+#                    nullability  the nullability reports against
+#                                 docs/swift-migration/nullability-baseline.tsv,
+#                                 judged as in the nullability mode
+#                                 (sanitizer_summary.py --fail-on-reports
+#                                 --combined): any outside it fails, as does an
+#                                 incomplete report or an unparsable report
+#                                 file; a report of neither group fails too.
+#                                 --collect makes it informational.
+#                    integer      the integer group's reports, collected and
+#                                 summarized, informational, as in the
+#                                 integer mode, which fails only when the
+#                                 tests fail, no test ran, or the summary
+#                                 cannot be made.
+#                  The summary ends with "Verdicts of the combined run:", a
+#                  line for each, and "Combined verdict: PASS" or "Combined
+#                  verdict: FAIL (tests)", "FAIL (nullability)" or "FAIL
+#                  (tests and nullability)"; <run>/verdicts.txt has
+#                  tests=, nullability=, integer=<reports> and combined=.
+#                  Instrumentation changes code generation (on 2026-11-25
+#                  six tests failed only under the nullability and thread
+#                  builds), so a test that fails in a combined run is
+#                  isolated by running that test class under the plain suite
+#                  and then under each single sanitizer: rerun that test
+#                  class under one sanitizer alone (the nullability and
+#                  integer modes here) to tell which combination it is
+#                  sensitive to. The thread sanitizer cannot share a build
+#                  with the address sanitizer, so the thread mode stays a
+#                  run of its own. --probe is refused (each probe test runs
+#                  only when ITERM2_SANITIZER_PROBE names its one group), as
+#                  is --recover (it always recovers).
 #
 #   TEST is an -only-testing name such as ModernTests/SanitizerProbeTests or
 #   ModernTests/FooTests/testBar. With no TEST the whole suite runs; do that
@@ -173,6 +242,8 @@
 #     --collect     nullability: report without aborting, every report to a
 #                   file, no suppressions, reports do not fail the run (for
 #                   the triage of reports).
+#                   combined: the nullability verdict is printed and fails
+#                   nothing (the suppressions stay in force).
 #                   thread: compare with the baseline but do not fail the run
 #                   on reports (for building or re-judging the baseline).
 #     --recover     nullability, targeted run: do not abort on a report; the
@@ -240,6 +311,7 @@
 #   tools/swift_migration/sanitizer_tests.sh integer-sign --parallel
 #   tools/swift_migration/sanitizer_tests.sh thread
 #   tools/swift_migration/sanitizer_tests.sh plain --parallel
+#   tools/swift_migration/sanitizer_tests.sh combined --parallel
 #   nice -n 15 tools/swift_migration/sanitizer_tests.sh integer --parallel --jobs 4 \
 #       --skip ModernTests/FramerFlowTwoHopSimulationTests
 #
@@ -266,6 +338,9 @@
 #                                               The ignore list and
 #                                               suppressions in force, then
 #                                               sanitizer_summary.py's output.
+#   tmp/sanitizers/runs/combined-<time>/verdicts.txt
+#                                               The combined mode's verdicts,
+#                                               one key=value per line.
 #   The summary reads reports/ and also test.log, where a report lands only
 #   if a runtime could not write its file; a report in both is counted once.
 #   Run directories accumulate, one per run; nothing deletes them. Clean up
@@ -307,8 +382,11 @@
 # -fsanitize=thread. The script checks that the app links the runtime.
 #
 # The address sanitizer, which the ModernTests test plan enables, is off in
-# every mode (it cannot be combined with the thread sanitizer, and the other
-# modes are cheaper and their reports clearer without it).
+# every mode but combined (it cannot be combined with the thread sanitizer,
+# and the single-sanitizer modes are cheaper and their reports clearer
+# without it). For combined, the runtime is the ASan runtime the test plan
+# links, with the UBSan handlers in it; -fsanitize=<groups> is still added
+# to OTHER_LDFLAGS, for the targets the plan's setting may not reach.
 #
 # Reading the results: tools/swift_migration/sanitizer_summary.py groups
 # reports by kind and source location and separates the migration's scope
@@ -379,7 +457,12 @@
 # that neither the suppressions nor the nullability baseline accepts, or a
 # report file that does not parse (a host killed while writing it), and 2 for a usage error or a refused checkout path. So a
 # thread run exits 0 only if the tests passed and every report is in the
-# baseline.
+# baseline. The combined mode (after 124 and 75): 0 when the tests passed
+# and the nullability verdict passed (with --collect, whatever it says);
+# xcodebuild's status (65 for failed tests) when only the tests failed; 1
+# when only the nullability verdict failed, or no test ran, or the summary
+# could not be made; 4 when the tests and the nullability verdict both
+# failed. The integer verdict never changes the status.
 
 set -uo pipefail
 
@@ -448,7 +531,7 @@ while [ $# -gt 0 ]; do
             san_check_count "$1" "$2" || exit 2
             JOBS="$2"
             shift ;;
-        nullability|integer|integer-sign|thread|plain)
+        nullability|integer|integer-sign|thread|plain|combined)
             if [ -n "$MODE" ]; then echo "error: more than one mode" >&2; exit 2; fi
             MODE="$1" ;;
         -*) echo "error: unknown option $1" >&2; exit 2 ;;
@@ -460,8 +543,12 @@ if [ -z "$MODE" ]; then
     usage >&2
     exit 2
 fi
-if [ "$COLLECT" = YES ] && [ "$MODE" != nullability ] && [ "$MODE" != thread ]; then
-    echo "error: --collect applies to the nullability and thread modes; the other modes always collect" >&2
+if [ "$COLLECT" = YES ] && [ "$MODE" != nullability ] && [ "$MODE" != thread ] && [ "$MODE" != combined ]; then
+    echo "error: --collect applies to the nullability and thread modes and to combined; the other modes always collect" >&2
+    exit 2
+fi
+if [ "$MODE" = combined ] && [ "$PROBE" = YES ]; then
+    echo "error: --probe applies to the single-sanitizer modes: each probe test runs only when ITERM2_SANITIZER_PROBE names its one group. Run the probes in the nullability and integer modes." >&2
     exit 2
 fi
 if [ "$RECOVER" = YES ] && { [ "$MODE" != nullability ] || [ "$COLLECT" = YES ]; }; then
@@ -524,9 +611,31 @@ THREAD_BASELINE="$SAN_ROOT/docs/swift-migration/thread-baseline.tsv"
 NULLABILITY_BASELINE="$SAN_ROOT/docs/swift-migration/nullability-baseline.tsv"
 mkdir -p "$BUILD_DIR" "$REPORTS"
 
+# The combined mode's ignore list exempts files from the two UBSan groups
+# only, never from the address sanitizer (san_write_sectioned_ignorelist).
+IGNORELIST="$SAN_IGNORELIST"
+if [ "$MODE" = combined ]; then
+    IGNORELIST="$BUILD_DIR/sanitizer_ignorelist_ubsan_only.txt"
+    san_write_sectioned_ignorelist "$IGNORELIST" "$SAN_COMBINED_GROUPS" || exit 1
+fi
+
 # What is in force, stated on the console and at the top of summary.txt.
-IN_FORCE="Ignore list (C, Objective-C, C++ compiles): $SAN_IGNORELIST ($(san_count_entries "$SAN_IGNORELIST") entries)."
-if [ "$MODE" = nullability ] && [ "$COLLECT" = NO ]; then
+if [ "$MODE" = combined ]; then
+    IN_FORCE="Address sanitizer: on, as the ModernTests test plan has it for tools/run_tests.expect and whole_suite.sh (-enableAddressSanitizer YES, the plan's ASAN_OPTIONS); a report ends its test host and fails its test, as in the plain suite. Its report goes to reports/ (the runtimes share log_path) and is listed apart."
+    IN_FORCE+=$'\n'"Ignore list (C, Objective-C, C++ compiles; the nullability and integer groups only, the address sanitizer instruments every file): $IGNORELIST (the $(san_count_entries "$SAN_IGNORELIST") entries of $SAN_IGNORELIST under one section)."
+    IN_FORCE+=$'\n'"UBSan groups: -fsanitize=$SAN_COMBINED_GROUPS, recovering: nothing aborts on a UBSan report, in a whole suite or a targeted run."
+    IN_FORCE+=$'\n'"Suppressions: $SAN_NULLABILITY_SUPPRESSIONS ($(san_count_entries "$SAN_NULLABILITY_SUPPRESSIONS") entries)."
+    IN_FORCE+=$'\n'"Nullability verdict: nullability reports against $NULLABILITY_BASELINE ($(( $(san_count_entries "$NULLABILITY_BASELINE") - 1 )) entries); a report outside it fails the run."
+    if [ "$COLLECT" = YES ]; then
+        IN_FORCE+=$'\n'"--collect: the nullability verdict is printed and fails nothing."
+    fi
+    IN_FORCE+=$'\n'"Integer verdict: the integer group's reports are collected and summarized; informational, they never fail the run."
+else
+    IN_FORCE="Ignore list (C, Objective-C, C++ compiles): $SAN_IGNORELIST ($(san_count_entries "$SAN_IGNORELIST") entries)."
+fi
+if [ "$MODE" = combined ]; then
+    :
+elif [ "$MODE" = nullability ] && [ "$COLLECT" = NO ]; then
     IN_FORCE+=$'\n'"Suppressions: $SAN_NULLABILITY_SUPPRESSIONS ($(san_count_entries "$SAN_NULLABILITY_SUPPRESSIONS") entries)."
     IN_FORCE+=$'\n'"Reports matching a suppression are hidden: not written anywhere, and they do not abort. Run with --collect to see them."
     IN_FORCE+=$'\n'"Baseline: $NULLABILITY_BASELINE ($(( $(san_count_entries "$NULLABILITY_BASELINE") - 1 )) entries), compared after the run; a report outside it fails the run."
@@ -553,7 +662,7 @@ if [ "$MODE" = thread ]; then
     fi
 fi
 
-CFLAGS="\$(inherited) -fsanitize-ignorelist=$SAN_IGNORELIST"
+CFLAGS="\$(inherited) -fsanitize-ignorelist=$IGNORELIST"
 LDFLAGS="\$(inherited)"
 EXTRA_ARGS=(-enableThreadSanitizer NO ENABLE_THREAD_SANITIZER=NO)
 RUNTIME=ubsan
@@ -594,12 +703,24 @@ case "$MODE" in
     plain)
         RUNTIME=none
         ;;
+    combined)
+        # The address sanitizer comes from the test plan (and links its
+        # runtime, which holds the UBSan handlers too); the groups are added.
+        CFLAGS+=" -fsanitize=$SAN_COMBINED_GROUPS -fsanitize-recover=$SAN_COMBINED_GROUPS"
+        LDFLAGS+=" -fsanitize=$SAN_COMBINED_GROUPS"
+        RUNTIME=asan
+        export TEST_RUNNER_UBSAN_OPTIONS="$SAN_UBSAN_BASE_OPTIONS:halt_on_error=0:log_path=$REPORTS/ubsan:suppressions=$SAN_NULLABILITY_SUPPRESSIONS"
+        ;;
 esac
 if [ "$PROBE" = YES ]; then
     export TEST_RUNNER_ITERM2_SANITIZER_PROBE="$MODE"
 fi
 
-san_common_xcodebuild_args "$BUILD_DIR"
+if [ "$MODE" = combined ]; then
+    san_common_xcodebuild_args "$BUILD_DIR" plan-asan
+else
+    san_common_xcodebuild_args "$BUILD_DIR"
+fi
 ARGS=(
     "${SAN_XCODEBUILD_ARGS[@]}"
     -scheme ModernTests
@@ -703,6 +824,61 @@ test_step() {
         -resultBundlePath "$RUN_DIR/results/test.xcresult"
 }
 
+# The combined mode's three verdicts, on the console, in summary.txt and in
+# verdicts.txt (tests=, nullability=, integer=<reports>, combined=), and its
+# exit status: 0 both pass; xcodebuild's status when only the tests failed;
+# 1 when only the nullability verdict failed (or the summary could not be
+# made, or no test ran); 4 when the tests and the nullability verdict both
+# failed. Reads STATUS and SUMMARY_STATUS; sets STATUS.
+combined_verdicts() {
+    local tests nullability integer_line integer_count combined tests_ok=YES nullability_ok=YES
+    if [ "$SUMMARY_STATUS" -eq 3 ]; then
+        tests="FAIL (no test executed)"
+        tests_ok=NO
+    elif [ "$STATUS" -eq 0 ]; then
+        tests="PASS (xcodebuild status 0)"
+    else
+        tests="FAIL (xcodebuild status $STATUS)"
+        tests_ok=NO
+    fi
+    case "$SUMMARY_STATUS" in
+        0)
+            nullability="PASS"
+            if [ "$COLLECT" = YES ] && grep -q '^Verdict (--collect, does not fail the run): FAIL' "$RUN_DIR/summary.txt"; then
+                nullability="FAIL (--collect: informational)"
+            fi ;;
+        1) nullability="FAIL"; nullability_ok=NO ;;
+        3) nullability="not judged (no test executed)" ;;
+        *) nullability="FAIL (sanitizer_summary.py failed with status $SUMMARY_STATUS)"; nullability_ok=NO ;;
+    esac
+    integer_line=$(grep -m1 '^Integer verdict (informational, never fails the run): ' "$RUN_DIR/summary.txt" \
+                   | sed 's/^Integer verdict (informational, never fails the run): //; s/\.$//')
+    integer_count=$(printf '%s\n' "$integer_line" | sed -n 's/^\([0-9][0-9]*\) report.*/\1/p')
+    if [ "$tests_ok" = YES ] && [ "$nullability_ok" = YES ]; then
+        combined="PASS"
+        [ "$COLLECT" = YES ] && combined="PASS (--collect)"
+    elif [ "$tests_ok" = YES ]; then
+        combined="FAIL (nullability)"
+        STATUS=1
+    elif [ "$nullability_ok" = YES ]; then
+        combined="FAIL (tests)"
+        [ "$STATUS" -eq 0 ] && STATUS=1
+    else
+        combined="FAIL (tests and nullability)"
+        STATUS=4
+    fi
+    {
+        echo
+        echo "Verdicts of the combined run:"
+        echo "  tests:       $tests"
+        echo "  nullability: $nullability"
+        echo "  integer:     informational: ${integer_line:-not summarized}"
+        echo "Combined verdict: $combined"
+    } | tee -a "$RUN_DIR/summary.txt"
+    printf 'tests=%s\nnullability=%s\ninteger=%s\ncombined=%s\n' "${tests%% *}" "${nullability%% *}" \
+        "${integer_count:-?}" "${combined%% *}" > "$RUN_DIR/verdicts.txt"
+}
+
 if [ "$DO_BUILD" = YES ]; then
     san_prepare_catalog
     echo "Building for testing (log: $RUN_DIR/build.log)..."
@@ -725,6 +901,9 @@ if [ "$RUNTIME" = none ]; then
     san_check_no_runtime "$HOST" || exit 1
 else
     san_check_runtime "$HOST" "$RUNTIME" || exit 1
+fi
+if [ "$MODE" = combined ]; then
+    san_check_ubsan_handlers "$HOST" ___ubsan_handle_nullability_arg ___ubsan_handle_implicit_conversion || exit 1
 fi
 
 if [ "$DO_TEST" = NO ]; then
@@ -772,6 +951,13 @@ if [ "$MODE" = thread ]; then
     if [ "$COLLECT" = YES ]; then
         SUMMARY_ARGS+=(--collect)
     fi
+elif [ "$MODE" = combined ]; then
+    # The nullability verdict, as in the nullability mode but over the
+    # nullability reports only; the integer reports are summarized.
+    SUMMARY_ARGS=(--fail-on-reports --combined --nullability-baseline "$NULLABILITY_BASELINE")
+    if [ "$COLLECT" = YES ]; then
+        SUMMARY_ARGS+=(--collect)
+    fi
 elif [ "$MODE" = nullability ]; then
     # A report outside the nullability baseline (after the empty runtime
     # suppressions), an incomplete report or an unparsable report file
@@ -795,10 +981,15 @@ if [ "$SUMMARY_STATUS" -eq 3 ]; then
     echo "error: the run executed no tests; check the TEST names. Its report count proves nothing." >&2
 elif [ "$SUMMARY_STATUS" -eq 1 ] && [ "$MODE" = thread ]; then
     echo "error: the thread sanitizer reported races outside the baseline, or reports that cannot be compared with it (see the verdict above and docs/swift-migration/thread-baseline.md)" >&2
+elif [ "$SUMMARY_STATUS" -eq 1 ] && [ "$MODE" = combined ]; then
+    echo "error: the combined run failed its nullability verdict: nullability reports outside the baseline, unclassifiable or incomplete reports, or report files that do not parse (see the verdict above)" >&2
 elif [ "$SUMMARY_STATUS" -eq 1 ] && [ "$MODE" = nullability ]; then
     echo "error: the nullability run failed its verdict: reports outside the baseline, incomplete reports or report files that do not parse (see the verdict above, with the tests the reports came from; docs/swift-migration/nullability.md section 7)" >&2
 elif [ "$SUMMARY_STATUS" -ne 0 ]; then
     echo "error: sanitizer_summary.py failed with status $SUMMARY_STATUS" >&2
+fi
+if [ "$MODE" = combined ]; then
+    combined_verdicts
 fi
 if [ "$STATUS" -eq 0 ] && [ "$SUMMARY_STATUS" -ne 0 ]; then
     STATUS=1

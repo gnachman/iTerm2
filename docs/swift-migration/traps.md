@@ -157,12 +157,43 @@ Each entry says:
 - **Naive port:** `(localeIdentifier as NSString).isEqual(to: "x")`. A probe
   with a receiver whose getter returns nil trapped with “Unexpectedly found
   nil while implicitly unwrapping” at `-Onone` and at `-O` (exit 133).
-- **Write instead:** bind the value to a `String` first
-  (`let identifier: String = localeIdentifier`): a nil then bridges to an
-  empty string at both optimization levels, which gives the Objective-C's
-  NO. Pin it with a test whose receiver returns nil (a private subclass
+- **Write instead:** use the value as a `String`
+  (`localeIdentifier == "x"`): a nil then bridges to an empty string at
+  both optimization levels, which gives the Objective-C's NO. Pin it with a test whose receiver returns nil (a private subclass
   with the getter replaced through `class_replaceMethod`, since a Swift
   override cannot return nil). This matters only where reaching nil is
   plausible; nullability.md section 6 measured only the bound forms.
-- **Found in:** NSLocale(iTerm), the author's bridging probe (2026-11-25;
-  the port is parked, owner-queue.md R7).
+- **Found in:** NSLocale(iTerm), the author's bridging probe (2026-11-25).
+
+### `self.class` is the receiver's class, not the class the code is written in
+
+- **Pattern:** Objective-C that passes `self.class` or `[self class]`, for
+  example to find a bundle or an image:
+  `[NSImage it_imageNamed:@"NoColor" forClass:self.class]`. In a subclass
+  that is the subclass.
+- **Naive port:** naming the class, `for: iTermNoColorAccessoryButton.self`,
+  often because a convenience initializer may not use `self` before
+  `self.init` and `type(of: self)` is refused there. That gives the same
+  answer today and the wrong one for a subclass, most visibly one in
+  another bundle.
+- **Write instead:** `Self.self`, which is the receiver's class and is
+  allowed before `self.init` in a convenience initializer; elsewhere
+  `type(of: self)`. Name the class only where the Objective-C did.
+- **Found in:** iTermNoColorAccessoryButton (the owner, 2026-11-26: “In
+  practice these are the same but the original code was robust to
+  subclassing while this one is not.”).
+
+### `NSRectFill` replaces pixels; `NSRect.fill()` blends
+
+- **Pattern:** `[color set]; NSRectFill(rect);`. `NSRectFill` uses the copy
+  operation.
+- **Naive port:** `color.set(); rect.fill()`, which uses source-over. With
+  an opaque color the pixels come out the same. With a clear or translucent
+  color they do not: clear blended over anything changes nothing, so a view
+  that erased itself to transparent stops doing so.
+- **Write instead:** `rect.fill(using: .copy)` where the color can be
+  anything but opaque, with a comment that says why in terms of the code
+  as it stands. A plain `fill()` is right where the color is opaque.
+- **Found in:** iTermTipRootView (2026-11-26); a test paints the view
+  opaque red, draws, and expects transparent.
+

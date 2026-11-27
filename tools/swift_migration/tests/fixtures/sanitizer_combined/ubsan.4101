@@ -1,0 +1,53 @@
+/Users/example/iterm2/sources/CombinedProbe.m:7:5: runtime error: null pointer passed as argument 1, which is declared to never be null
+/Users/example/iterm2/sources/CombinedProbe.m:4:14: note: _Nonnull type annotation specified here
+    #0 0x0001044cc880 in main CombinedProbe.m:7
+    #1 0x00018c1ffe7c in start+0x1a1c (dyld:arm64e+0x31e7c)
+
+SUMMARY: UndefinedBehaviorSanitizer: invalid-null-argument /Users/example/iterm2/sources/CombinedProbe.m:7:5 
+/Users/example/iterm2/sources/CombinedProbe.m:3:39: runtime error: null pointer returned from function declared to never return null
+/Users/example/iterm2/sources/CombinedProbe.m:3:7: note: _Nonnull return type annotation specified here
+    #0 0x0001044cc774 in r CombinedProbe.m:3
+    #1 0x0001044cc894 in main CombinedProbe.m:7
+    #2 0x00018c1ffe7c in start+0x1a1c (dyld:arm64e+0x31e7c)
+
+SUMMARY: UndefinedBehaviorSanitizer: invalid-null-return /Users/example/iterm2/sources/CombinedProbe.m:3:39 
+/Users/example/iterm2/sources/CombinedProbe.m:7:34: runtime error: _Nonnull binding to null pointer of type 'int * _Nonnull'
+    #0 0x0001044cc8b4 in main CombinedProbe.m:7
+    #1 0x00018c1ffe7c in start+0x1a1c (dyld:arm64e+0x31e7c)
+
+SUMMARY: UndefinedBehaviorSanitizer: null-pointer-use /Users/example/iterm2/sources/CombinedProbe.m:7:34 
+/Users/example/iterm2/sources/CombinedProbe.m:8:3: runtime error: index 4 out of bounds for type 'int[4]'
+    #0 0x0001044cc8ec in main CombinedProbe.m:8
+    #1 0x00018c1ffe7c in start+0x1a1c (dyld:arm64e+0x31e7c)
+
+SUMMARY: UndefinedBehaviorSanitizer: out-of-bounds-index /Users/example/iterm2/sources/CombinedProbe.m:8:3 
+/Users/example/iterm2/sources/CombinedProbe.m:8:27: runtime error: signed integer overflow: 2147483647 + 1 cannot be represented in type 'int'
+    #0 0x0001044cc998 in main CombinedProbe.m:8
+    #1 0x00018c1ffe7c in start+0x1a1c (dyld:arm64e+0x31e7c)
+
+SUMMARY: UndefinedBehaviorSanitizer: signed-integer-overflow /Users/example/iterm2/sources/CombinedProbe.m:8:27 
+/Users/example/iterm2/sources/CombinedProbe.m:8:45: runtime error: shift exponent 40 is too large for 32-bit type 'int'
+    #0 0x0001044cca64 in main CombinedProbe.m:8
+    #1 0x00018c1ffe7c in start+0x1a1c (dyld:arm64e+0x31e7c)
+
+SUMMARY: UndefinedBehaviorSanitizer: invalid-shift-exponent /Users/example/iterm2/sources/CombinedProbe.m:8:45 
+/Users/example/iterm2/sources/CombinedProbe.m:8:70: runtime error: left shift of negative value -1
+    #0 0x0001044ccac8 in main CombinedProbe.m:8
+    #1 0x00018c1ffe7c in start+0x1a1c (dyld:arm64e+0x31e7c)
+
+SUMMARY: UndefinedBehaviorSanitizer: invalid-shift-base /Users/example/iterm2/sources/CombinedProbe.m:8:70 
+/Users/example/iterm2/sources/CombinedProbe.m:8:86: runtime error: division by zero
+    #0 0x0001044ccb18 in main CombinedProbe.m:8
+    #1 0x00018c1ffe7c in start+0x1a1c (dyld:arm64e+0x31e7c)
+
+SUMMARY: UndefinedBehaviorSanitizer: integer-divide-by-zero /Users/example/iterm2/sources/CombinedProbe.m:8:86 
+/Users/example/iterm2/sources/CombinedProbe.m:8:112: runtime error: implicit conversion from type 'int' of value 2147483647 (32-bit, signed) to type 'unsigned char' changed the value to 255 (8-bit, unsigned)
+    #0 0x0001044ccb58 in main CombinedProbe.m:8
+    #1 0x00018c1ffe7c in start+0x1a1c (dyld:arm64e+0x31e7c)
+
+SUMMARY: UndefinedBehaviorSanitizer: implicit-signed-integer-truncation /Users/example/iterm2/sources/CombinedProbe.m:8:112 
+/Users/example/iterm2/sources/CombinedProbe.m:8:125: runtime error: 1e+20 is outside the range of representable values of type 'int'
+    #0 0x0001044ccbb0 in main CombinedProbe.m:8
+    #1 0x00018c1ffe7c in start+0x1a1c (dyld:arm64e+0x31e7c)
+
+SUMMARY: UndefinedBehaviorSanitizer: float-cast-overflow /Users/example/iterm2/sources/CombinedProbe.m:8:125 

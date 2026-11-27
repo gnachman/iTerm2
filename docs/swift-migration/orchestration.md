@@ -68,7 +68,7 @@ Do these every time a session begins, before anything else.
    units at once, unless units are landed, closing checks pending: their
    closing checks come first. Take them from
    `tmp/classify.txt`, the `qualify_unit.py --classify` output the last
-   closing checks saved ([lifecycle.md §5](lifecycle.md), step 6; `tmp/`
+   closing checks saved ([lifecycle.md §5](lifecycle.md), step 4; `tmp/`
    is ignored by git and stays in the clone from night to night). If that
    file is missing, classify after step 2 as before. A stale database can
    print a wrong trivial (T8 does not see a subclass in a file the
@@ -424,8 +424,15 @@ script's header is its manual):
   ModernTests/Class[/test]` (repeatable) leaves a class or test out, so a
   sanitized whole suite can run without a test the owner has excluded.
   `fast_tests.sh` runs two workers too, `--workers N` to change it.
-- `sanitizer_tests.sh nullability` with no test names (the closing
-  checks' whole suite) does not abort on a violation: the tests go on and the run
+- `sanitizer_tests.sh combined --parallel`, the closing checks' first run
+  ([lifecycle.md §5](lifecycle.md)), is the plain whole suite with the
+  nullability and integer checks compiled in, so its nullability verdict is
+  the one described here; it ends with three verdicts (tests, nullability,
+  integer) and `Combined verdict: ...` (its header gives the exit
+  statuses). A test that fails only in it is isolated by rerunning that
+  class in the plain suite and under each single sanitizer.
+  `sanitizer_tests.sh nullability` with no test names
+  does not abort on a violation: the tests go on and the run
   fails on every report outside the nullability baseline
   (`docs/swift-migration/nullability-baseline.tsv`, [nullability.md
   §7](nullability.md)), listing the tests where the stack shows them.
@@ -677,7 +684,7 @@ Then, in any order that respects dependencies:
       own worker count ([test-tiers.md §1](test-tiers.md)). The gate
       runs the plain whole suite on light and full commits, not the fast
       tier ([README.md §5](README.md), step 3), and once more among the
-      closing checks ([lifecycle.md §5](lifecycle.md)).
+      closing checks, as the combined run ([lifecycle.md §5](lifecycle.md)).
 - [x] Nil-lock assertions added to the existing Objective-C
       ([concurrency.md §2](concurrency.md)).
 - [x] Performance and memory baselines ([phase0.md §8](phase0.md);

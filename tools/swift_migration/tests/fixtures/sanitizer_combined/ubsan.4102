@@ -1,0 +1,57 @@
+/Users/example/iterm2/sources/CombinedProbe.m:4:58: runtime error: null pointer passed as argument 1, which is declared to never be null
+/Users/example/iterm2/sources/CombinedProbe.m:3:14: note: _Nonnull type annotation specified here
+    #0 0x0001001348ac in main CombinedProbe.m:4
+    #1 0x00018c1ffe7c in start+0x1a1c (dyld:arm64e+0x31e7c)
+
+SUMMARY: UndefinedBehaviorSanitizer: invalid-null-argument /Users/example/iterm2/sources/CombinedProbe.m:4:58 
+/Users/example/iterm2/sources/CombinedProbe.m:4:94: runtime error: implicit conversion from type 'int' of value 301 (32-bit, signed) to type 'unsigned char' changed the value to 45 (8-bit, unsigned)
+    #0 0x000100134924 in main CombinedProbe.m:4
+    #1 0x00018c1ffe7c in start+0x1a1c (dyld:arm64e+0x31e7c)
+
+SUMMARY: UndefinedBehaviorSanitizer: implicit-signed-integer-truncation /Users/example/iterm2/sources/CombinedProbe.m:4:94 
+=================================================================
+==62728==ERROR: AddressSanitizer: heap-use-after-free on address 0x602000000974 at pc 0x0001001349c0 bp 0x00016fcca0d0 sp 0x00016fcca0c8
+READ of size 4 at 0x602000000974 thread T0
+    #0 0x0001001349bc in main CombinedProbe.m:4
+    #1 0x00018c1ffe7c in start+0x1a1c (dyld:arm64e+0x31e7c)
+
+0x602000000974 is located 4 bytes inside of 16-byte region [0x602000000970,0x602000000980)
+freed by thread T0 here:
+    #0 0x000100a5d344 in free+0x58 (libclang_rt.asan_osx_dynamic.dylib:arm64e+0x41344)
+
+previously allocated by thread T0 here:
+    #0 0x000100a5d250 in malloc+0x54 (libclang_rt.asan_osx_dynamic.dylib:arm64e+0x41250)
+
+SUMMARY: AddressSanitizer: heap-use-after-free /Users/example/iterm2/sources/CombinedProbe.m:4 in main
+Shadow bytes around the buggy address:
+  0x602000000680: fa fa 00 00 fa fa 00 00 fa fa 00 00 fa fa 00 00
+  0x602000000700: fa fa 00 00 fa fa 00 00 fa fa 00 00 fa fa 00 00
+  0x602000000780: fa fa 00 00 fa fa 00 00 fa fa 00 00 fa fa 00 00
+  0x602000000800: fa fa 00 00 fa fa 00 00 fa fa 00 00 fa fa 00 00
+  0x602000000880: fa fa 00 00 fa fa 00 00 fa fa 00 00 fa fa 00 00
+=>0x602000000900: fa fa 00 fa fa fa 00 04 fa fa 00 00 fa fa[fd]fd
+  0x602000000980: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x602000000a00: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x602000000a80: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x602000000b00: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x602000000b80: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==62728==ABORTING

@@ -1500,3 +1500,22 @@ or a crash from program output.
   test-speed.md section 3.
 - **Found:** 2026-11-26, closing checks and a gate.
 
+## Loose ends in the combined sanitizer run
+
+- **Where:** `tools/swift_migration/sanitizer_tests.sh combined` and
+  `sanitizer_summary.py --combined`.
+- **What:** found in review, none affecting a verdict on what the tree
+  produces today. Exit status 1 means three things (nullability failed, no
+  test ran, the summary failed), and `verdicts.txt` writes `nullability=FAIL`
+  for a summary failure too; a stall (124) with no stall record can be
+  turned into 4 by a nullability failure; a report file holding an
+  `AddressSanitizer:DEADLYSIGNAL` line before its report would be counted
+  as unparsable; it is not verified that the explicit
+  `-enableAddressSanitizer YES` keeps the test plan's
+  `detectStackUseAfterReturn`, nor that the address sanitizer accepts the
+  shared `suppressions=` file once it has entries; `whole_suite.sh`'s
+  header still names the closing checks as a use.
+- **Meanwhile:** read `verdicts.txt` and `summary.txt`, not the exit
+  status alone.
+- **Found:** 2026-11-26, review of unit `combined-sanitizer-runs`.
+

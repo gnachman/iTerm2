@@ -12,9 +12,10 @@ A unit takes one of three paths ([lifecycle.md §3](lifecycle.md)), which
 dossier, one commit holding tests and port, one review), the light path (a
 short dossier, a `test` and a `port` commit, one review), or the full path
 of [lifecycle.md §1](lifecycle.md). Light and full units pass the whole
-suite before their code commits; the sanitizer suites, the `x86_64`
-build, the lints and one more whole suite run once per session, over
-everything that landed ([lifecycle.md §5](lifecycle.md)). The owner allowed further units after
+suite before their code commits; the sanitizer suites (one combined run
+that is also one more plain whole suite, and the thread run), the `x86_64`
+build and the lints run once per session, over everything that landed
+([lifecycle.md §5](lifecycle.md)). The owner allowed further units after
 the two pilot units on 2026-11-22.
 
 If a rule turns out to be wrong, the rule is changed here first, with the
@@ -361,7 +362,10 @@ checks, run once at the end of each session over everything that landed
 ([lifecycle.md §5](lifecycle.md)), and nothing is pushed before they pass
 (the owner, 2026-11-24, for the sanitizer suites, the `x86_64` build and
 the lints; the plain whole suite once more is the migration's, covering
-trivial units). The `x86_64` build matters because several
+trivial units). Since 2026-11-26 the plain whole suite, the nullability
+suite and the integer suite are one combined run, the test plan's address
+sanitizer with both checks compiled in (the owner: “Yes, please do”), and
+the thread suite is the other. The `x86_64` build matters because several
 hazards differ between the Intel and Apple silicon slices
 ([warnings.md](warnings.md)) and the native build alone lets an
 Intel-only error through. Rosetta is not available on the build machine,

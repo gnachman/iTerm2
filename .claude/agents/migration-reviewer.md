@@ -56,3 +56,22 @@ Objective-C's behavior, not its spelling: where an Objective-C API was kept
 Swift gives the same answer for every input the code can see, say so and
 give the idiomatic line (docs/swift-migration/translation-rules.md §4).
 
+Read every comment the change adds or edits as someone who has not seen
+the Objective-C, the review or the commit message. Flag a comment that does
+not make sense by itself: one that leaves out the fact its reasoning depends
+on (for example that a fill color is clear), uses “it” or “this” with no
+clear referent, describes the old code or the porting process instead of
+what the code does and why, or is written in compressed shorthand (clipped
+sentences, bare fragments such as “NSRectFill copies.”, private labels,
+arrows or symbols standing in for words). Give the rewritten comment in
+plain, complete sentences. Also flag a comment that only restates the code.
+The owner, 2026-11-26, of such a comment in the `iTermTipRootView` port:
+“This doesn't make sense”.
+Flag any comment that is a note about the migration's process and not about
+the code (for example “No thread assertion: ...”), and ask for it to be
+removed: such notes belong in the commit message.
+Check that the port is as general as the Objective-C was: `self.class`
+must not become a named class (traps.md), a dynamic send must not become
+a cast to one class, and anything a subclass could have relied on must
+still work for a subclass, even where no subclass exists today.
+
