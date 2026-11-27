@@ -25,6 +25,7 @@
 #import "iTermSemanticHistoryController.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermCachingFileManager.h"
 #import "iTermCommandRunner.h"
@@ -1003,11 +1004,14 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     }
 
     if (lineNumber) {
-        NSString *appBundleId = [self bundleIdForDefaultAppForFile:path];
-        if ([self canOpenFileWithLineNumberUsingEditorWithBundleId:appBundleId]) {
-            DLog(@"A line number is present and I know how to open this file to the line number using %@. Do so.",
-                 appBundleId);
-            [self openFile:path inEditorWithBundleId:appBundleId lineNumber:lineNumber columnNumber:columnNumber];
+        NSString *defaultAppBundleId = [self bundleIdForDefaultAppForFile:path];
+        NSString *editorIdentifier = [iTermSemanticHistoryPrefsController editorIdentifierForBundleId:defaultAppBundleId];
+        DLog(@"A line number is present. The default app for %@ is %@, which matches known editor %@",
+             path, defaultAppBundleId, editorIdentifier);
+        if (editorIdentifier &&
+            [[self.class bundleIdsThatSupportOpeningToLineNumber] containsObject:editorIdentifier]) {
+            DLog(@"I know how to open this file to the line number using %@. Do so.", editorIdentifier);
+            [self openFile:path inEditorWithBundleId:editorIdentifier lineNumber:lineNumber columnNumber:columnNumber];
             completion(YES);
             return;
         }
@@ -1015,10 +1019,6 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 
     [self openFile:path fragment:fragment target:target window:window];
     completion(YES);
-}
-
-- (BOOL)canOpenFileWithLineNumberUsingEditorWithBundleId:(NSString *)appBundleId {
-    return [[self.class bundleIdsThatSupportOpeningToLineNumber] containsObject:appBundleId];
 }
 
 - (NSString *)bundleIdForDefaultAppForFile:(NSString *)file {

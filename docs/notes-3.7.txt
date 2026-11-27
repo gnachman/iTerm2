@@ -335,3 +335,8 @@ Bug Fixes:
   Ended line no longer jump to the bottom of the
   window if you turned off the offer to restart
   the session.
+- Cmd-clicking a file name with a line number
+  now opens Zed at that line when Zed is the
+  file’s default app. Before, Zed opened the
+  file at the top. Thanks to Neel (NeelChotai)
+  for the fix.

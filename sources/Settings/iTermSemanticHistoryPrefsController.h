@@ -57,6 +57,7 @@ extern NSString *kSemanticHistorySendTextAction;
 @property(nonatomic, readonly) NSDictionary *prefs;
 
 + (NSString *)bestEditor;
++ (NSArray<NSString *> *)editorsInPreferenceOrder;
 + (NSString *)schemeForEditor:(NSString *)editor;
 + (BOOL)bundleIdIsEditor:(NSString *)bundleId;
 

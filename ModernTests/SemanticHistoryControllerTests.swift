@@ -80,6 +80,8 @@ private final class RecordingSemanticHistoryController: iTermSemanticHistoryCont
     var launchedAppArg: String?
     var defaultAppIsEditor = false
     var bundleIdForDefaultApp: String?
+    var launchedTaskPath: String?
+    var requestedAppBundleIdentifiers: [String] = []
 
     override var fileManager: FileManager! {
         return fakeFileManager
@@ -88,6 +90,7 @@ private final class RecordingSemanticHistoryController: iTermSemanticHistoryCont
     override func launchTask(withPath path: String!,
                              arguments: [Any]!,
                              completion: (() -> Void)!) {
+        launchedTaskPath = path
         scriptArguments = arguments as? [String]
         completion?()
     }
@@ -119,6 +122,13 @@ private final class RecordingSemanticHistoryController: iTermSemanticHistoryCont
 
     override func absolutePathForAppBundle(withIdentifier bundleId: String!) -> String! {
         return "/Applications/" + (bundleId ?? "")
+    }
+
+    // Never consults NSWorkspace, so the result does not depend on which apps
+    // are installed on the machine running the tests.
+    override func applicationBundle(withIdentifier bundleIdentifier: String!) -> Bundle! {
+        requestedAppBundleIdentifiers.append(bundleIdentifier ?? "")
+        return Bundle.main
     }
 
     // Never consults NSWorkspace, so the result does not depend on which apps
@@ -691,6 +701,59 @@ final class SemanticHistoryControllerTests: XCTestCase, iTermObject, iTermSemant
         XCTAssertEqual(controller.openedURL,
                        editorURL(scheme: "mvim", path: existingFile, lineNumber: "12"))
         XCTAssertEqual(controller.openedEditor, macVimIdentifier)
+    }
+
+    func testOpenPathOpensTextFileInDefaultAppWithLineNumberWhenBundleIdCaseDiffers() {
+        controller.prefs = [actionKey: bestEditorAction]
+        controller.fakeFileManager.files.insert(existingFile)
+        controller.bundleIdForDefaultApp = macVimIdentifier.uppercased()
+        let opened = cleanAndOpen(existingFile + ":12",
+                                  substitutions: standardSubstitutions(workingDirectory: "/"))
+        XCTAssertTrue(opened)
+        XCTAssertEqual(controller.openedURL,
+                       editorURL(scheme: "mvim", path: existingFile, lineNumber: "12"))
+        XCTAssertEqual(controller.openedEditor, macVimIdentifier)
+    }
+
+    // Zed's real bundle ID is dev.zed.Zed, but kZedAppIdentifier is dev.zed.zed.
+    func testOpenPathOpensTextFileInDefaultAppWithLineNumberWhenDefaultAppIsZed() {
+        controller.prefs = [actionKey: bestEditorAction]
+        controller.fakeFileManager.files.insert(existingFile)
+        controller.bundleIdForDefaultApp = "dev.zed.Zed"
+        let opened = cleanAndOpen(existingFile + ":12:3",
+                                  substitutions: standardSubstitutions(workingDirectory: "/"))
+        XCTAssertTrue(opened)
+        XCTAssertEqual(controller.requestedAppBundleIdentifiers, [kZedAppIdentifier])
+        XCTAssertEqual(controller.launchedTaskPath,
+                       Bundle.main.bundleURL.appendingPathComponent("Contents/MacOS/cli").path)
+        XCTAssertEqual(controller.scriptArguments, [existingFile + ":12:3"])
+        XCTAssertNil(controller.openedFile)
+    }
+
+    func testOpenPathFallsBackToPlainOpenWhenDefaultAppIsNotAnEditor() {
+        controller.prefs = [actionKey: bestEditorAction]
+        controller.fakeFileManager.files.insert(existingFile)
+        controller.bundleIdForDefaultApp = "com.apple.Preview"
+        let opened = cleanAndOpen(existingFile + ":12",
+                                  substitutions: standardSubstitutions(workingDirectory: "/"))
+        XCTAssertTrue(opened)
+        XCTAssertEqual(controller.openedFile, existingFile)
+        XCTAssertNil(controller.openedURL)
+        XCTAssertNil(controller.scriptArguments)
+    }
+
+    func testEditorIdentifierForBundleIdIgnoresCase() {
+        XCTAssertEqual(iTermSemanticHistoryPrefsController.editorIdentifier(forBundleId: "dev.zed.Zed"),
+                       kZedAppIdentifier)
+        XCTAssertEqual(iTermSemanticHistoryPrefsController.editorIdentifier(forBundleId: macVimIdentifier),
+                       macVimIdentifier)
+        XCTAssertNil(iTermSemanticHistoryPrefsController.editorIdentifier(forBundleId: "com.apple.Preview"))
+        XCTAssertNil(iTermSemanticHistoryPrefsController.editorIdentifier(forBundleId: nil))
+    }
+
+    func testBundleIdIsEditorIgnoresCase() {
+        XCTAssertTrue(iTermSemanticHistoryPrefsController.bundleIdIsEditor("dev.zed.Zed"))
+        XCTAssertFalse(iTermSemanticHistoryPrefsController.bundleIdIsEditor("com.apple.Preview"))
     }
 
     func testOpenPathOpensTextFileInEditorWithLineNumberWhenEditorIsDefaultApp() {

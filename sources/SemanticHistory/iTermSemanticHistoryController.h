@@ -144,5 +144,6 @@ extern NSString *const kSemanticHistoryColumnNumberKey;
 - (BOOL)defaultAppForFileIsEditor:(NSString *)file;
 - (NSString *)absolutePathForAppBundleWithIdentifier:(NSString *)bundleId;
 - (NSString *)bundleIdForDefaultAppForFile:(NSString *)file;
+- (NSBundle *)applicationBundleWithIdentifier:(NSString *)bundleIdentifier;
 
 @end
