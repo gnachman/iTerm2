@@ -150,7 +150,6 @@ NS_ASSUME_NONNULL_BEGIN
                                                       screen:self.screen
                                                         glue:self
                                                      context:self.delegate.metalGlueContext
-                                         doubleWidthContext:self.delegate.metalGlueContextDoubleWidth
                                      attributedStringBuilder:attributedStringBuilder
                                               rowOutputCache:_rowOutputCache];
 }

@@ -167,7 +167,7 @@ typedef struct {
 
 @implementation iTermMetalPerFrameState {
     CGContextRef _metalContext;
-    CGContextRef _metalContextDoubleWidth;
+    CGContextRef _metalContextDoubleWidth;  // Created on demand. See -doubleWidthContextForGlyphSize:.
     // Nil unless the row-output cache is enabled. Persists across frames (owned by
     // the glue), so on a hit we can skip rebuilding an unchanged row.
     iTermRowOutputCache *_rowOutputCache;
@@ -182,7 +182,6 @@ typedef struct {
                           screen:(VT100Screen *)screen
                             glue:(id<iTermMetalPerFrameStateDelegate>)glue
                          context:(CGContextRef)context
-              doubleWidthContext:(CGContextRef)doubleWidthContext
          attributedStringBuilder:(iTermAttributedStringBuilder *)attributedStringBuilder
                   rowOutputCache:(nullable iTermRowOutputCache *)rowOutputCache {
     assert([NSThread isMainThread]);
@@ -195,9 +194,6 @@ typedef struct {
         _rows = [NSMutableArray array];
         _startTime = [NSDate timeIntervalSinceReferenceDate];
         _metalContext = CGContextRetain(context);
-        if (doubleWidthContext) {
-            _metalContextDoubleWidth = CGContextRetain(doubleWidthContext);
-        }
         _attributedStringBuilder = attributedStringBuilder;
         [textView performBlockWithFlickerFixerGrid:^{
             [self loadAllWithTextView:textView screen:screen glue:glue];
@@ -2469,6 +2465,26 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     }
 }
 
+// For DECDWL and DECDHL glyphs, which use a larger radius for overflow room. It is several times the
+// size of _metalContext and few programs need it, so it lives only as long as a frame that does.
+- (CGContextRef)doubleWidthContextForGlyphSize:(CGSize)glyphSize {
+    if (!_metalContextDoubleWidth) {
+        const int maxParts = iTermTextureMapMaxCharacterParts * 2 + 1;
+        const size_t width = ceil(glyphSize.width) * maxParts;
+        const size_t height = ceil(glyphSize.height) * maxParts;
+        _metalContextDoubleWidth = CGBitmapContextCreate(NULL,
+                                                         width,
+                                                         height,
+                                                         8,
+                                                         width * 4,
+                                                         CGBitmapContextGetColorSpace(_metalContext),
+                                                         CGBitmapContextGetBitmapInfo(_metalContext));
+        memset(CGBitmapContextGetData(_metalContextDoubleWidth), 0,
+               CGBitmapContextGetBytesPerRow(_metalContextDoubleWidth) * height);
+    }
+    return _metalContextDoubleWidth;
+}
+
 - (nullable NSDictionary<NSNumber *, iTermCharacterBitmap *> *)imagesForDecomposedGlyphKey:(iTermMetalGlyphKey *)glyphKey
                                                                                       size:(CGSize)size
                                                                                      scale:(CGFloat)scale
@@ -2494,10 +2510,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     [iTermCharacterSourceAttributes characterSourceAttributesWithThinStrokes:glyphKey->thinStrokes
                                                                         bold:bold
                                                                       italic:italic];
-    CGContextRef ctx = _metalContext;
-    if (isDoubleWidth && _metalContextDoubleWidth) {
-        ctx = _metalContextDoubleWidth;
-    }
+    CGContextRef ctx = isDoubleWidth ? [self doubleWidthContextForGlyphSize:size] : _metalContext;
     iTermCharacterSource *characterSource =
     [[iTermCharacterSource alloc] initWithFontID:glyphKey->payload.decomposed.fontID
                                         fakeBold:glyphKey->payload.decomposed.fakeBold
@@ -2561,10 +2574,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
             string = [string stringByAppendingString:successorString];
         }
     }
-    CGContextRef ctx = _metalContext;
-    if (isDoubleWidth && _metalContextDoubleWidth) {
-        ctx = _metalContextDoubleWidth;
-    }
+    CGContextRef ctx = isDoubleWidth ? [self doubleWidthContextForGlyphSize:size] : _metalContext;
     iTermCharacterSource *characterSource =
     [[iTermCharacterSource alloc] initWithCharacter:string
                                          descriptor:descriptor
