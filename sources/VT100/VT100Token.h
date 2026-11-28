@@ -377,12 +377,13 @@ void iTermAsciiDataFree(AsciiData *asciiData);
 // The mutation thread checks the rendition/config stamps for desync and either
 // uses the buffer as-is (fast path), applies a color fixup (medium path), or
 // re-runs StringToScreenChars (slow path).
-#define kStaticPreconvertedScreenCharsCount 64
+//
+// Every VT100Token has one of these, but only a VT100_STRING token uses it, so the buffer is
+// allocated on demand to keep tokens small.
 typedef struct {
-    // The pre-converted screen_char_t buffer. Points to staticBuffer or malloc'd memory.
+    // The pre-converted screen_char_t buffer in malloc'd memory.
     screen_char_t * _Nullable buffer;
     int length;
-    screen_char_t staticBuffer[kStaticPreconvertedScreenCharsCount];
 
     // Flags from StringToScreenChars
     BOOL foundDwc;
