@@ -11,7 +11,6 @@
 #import "CPParser+Cache.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
-#import "iTermGrammarProcessor.h"
 #import "iTermParsedExpression+Tests.h"
 #import "iTermScriptFunctionCall+Private.h"
 #import "iTermScriptFunctionCall.h"

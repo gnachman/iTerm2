@@ -774,7 +774,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     iTermVariableReference *_jobPidRef;
     iTermCacheableImage *_customIcon;
     CGContextRef _metalContext;
-    CGContextRef _metalContextDoubleWidth;  // 2x size, created on demand for DECDWL/DECDHL
+    // For DECDWL and DECDHL glyphs. Created on first use and released along with _metalContext.
+    CGContextRef _metalContextDoubleWidth;
+    // The glyph size in pixels that _metalContext was made for.
+    CGSize _metalContextScaledGlyphSize;
     BOOL _errorCreatingMetalContext;
 
     id<iTermKeyMapper> _keyMapper;
@@ -921,6 +924,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     // colors and the minimal-theme appearance, which is expensive).
     NSColor *_browserBackgroundColor;
     iTermRateLimitedUpdate *_browserBackgroundColorRateLimit;
+    iTermRateLimitedUpdate *_wordAtCursorRateLimit;
 
     // Disables short-lived session warning so the user can read the error.
     BOOL _execDidFail;
@@ -1429,9 +1433,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_metalContext) {
         CGContextRelease(_metalContext);
     }
-    if (_metalContextDoubleWidth) {
-        CGContextRelease(_metalContextDoubleWidth);
-    }
+    [self releaseMetalContextDoubleWidth];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     [_backgroundImageRotator release];
@@ -1447,6 +1449,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_browserBackgroundColor release];
     [_browserBackgroundColorRateLimit invalidate];
     [_browserBackgroundColorRateLimit release];
+    [_wordAtCursorRateLimit invalidate];
+    [_wordAtCursorRateLimit release];
     [_textview release];  // I'm not sure it's ever nonnil here
     [_currentMarkOrNotePosition release];
     [_graphicSource release];
@@ -5358,6 +5362,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (_shortLivedSingleUse) {
         return;
     }
+    if (![self.naggingController sessionEndedWithExecFailure:_execDidFail]) {
+        // Suppressed, so there is nothing to keep the content out from under. Leave it in place.
+        DLog(@"Restart announcement not shown; not moving screen content");
+        return;
+    }
     // The announcement covers the top rows of the session. Move short output, such as a custom
     // command's, down so it isn't hidden behind it.
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
@@ -5365,7 +5374,6 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                              id<VT100ScreenDelegate> delegate) {
         [mutableState moveScreenContentToBottom];
     }];
-    [self.naggingController sessionEndedWithExecFailure:_execDidFail];
 }
 
 - (BOOL)isRestartable {
@@ -10161,7 +10169,33 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 }
 
 - (CGContextRef)metalGlueContextDoubleWidth {
+    if (_metalContextDoubleWidth || !_metalContext) {
+        return _metalContextDoubleWidth;
+    }
+    // Double-width glyphs use a larger radius for overflow room.
+    const int maxParts = iTermTextureMapMaxCharacterParts * 2 + 1;
+    const CGSize size = CGSizeMake(_metalContextScaledGlyphSize.width * maxParts,
+                                   _metalContextScaledGlyphSize.height * maxParts);
+    DLog(@"allocate double-width metal context of size %@", NSStringFromSize(size));
+    _metalContextDoubleWidth = CGBitmapContextCreate(NULL,
+                                                     size.width,
+                                                     size.height,
+                                                     8,
+                                                     size.width * 4,
+                                                     CGBitmapContextGetColorSpace(_metalContext),
+                                                     CGBitmapContextGetBitmapInfo(_metalContext));
+    if (_metalContextDoubleWidth) {
+        CGContextClearRect(_metalContextDoubleWidth, CGRectMake(0, 0, size.width, size.height));
+    }
     return _metalContextDoubleWidth;
+}
+
+// Frames that are still drawing keep their own reference, so this is safe while they run.
+- (void)releaseMetalContextDoubleWidth {
+    if (_metalContextDoubleWidth) {
+        CGContextRelease(_metalContextDoubleWidth);
+        _metalContextDoubleWidth = NULL;
+    }
 }
 
 + (CGColorSpaceRef)metalColorSpace {
@@ -10194,6 +10228,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
         DLog(@"No window");
         CGContextRelease(_metalContext);
         _metalContext = NULL;
+        [self releaseMetalContextDoubleWidth];
         return;
     }
 
@@ -10209,10 +10244,8 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
         CGContextRelease(_metalContext);
         _metalContext = NULL;
     }
-    if (_metalContextDoubleWidth) {
-        CGContextRelease(_metalContextDoubleWidth);
-        _metalContextDoubleWidth = NULL;
-    }
+    [self releaseMetalContextDoubleWidth];
+    _metalContextScaledGlyphSize = CGSizeMake(size.width * scale, size.height * scale);
     DLog(@"allocate new metal context of size %@", NSStringFromSize(scaledSize));
     const CGBitmapInfo bitmapInfo = CGBitmapInfoMake(kCGImageAlphaPremultipliedFirst,
                                                      kCGImageComponentInteger,
@@ -10226,20 +10259,6 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
                                           [PTYSession metalColorSpace],
                                           bitmapInfo);
     CGContextClearRect(_metalContext, CGRectMake(0, 0, scaledSize.width, scaledSize.height));
-
-    // Double-width context uses a larger radius for overflow room.
-    const int dwMaxParts = iTermTextureMapMaxCharacterParts * 2 + 1;
-    CGSize dwSize = CGSizeMake(size.width * scale * dwMaxParts,
-                               size.height * scale * dwMaxParts);
-    _metalContextDoubleWidth = CGBitmapContextCreate(NULL,
-                                                      dwSize.width,
-                                                      dwSize.height,
-                                                      8,
-                                                      dwSize.width * 4,
-                                                      [PTYSession metalColorSpace],
-                                                      bitmapInfo);
-    memset(CGBitmapContextGetData(_metalContextDoubleWidth), 0,
-           CGBitmapContextGetBytesPerRow(_metalContextDoubleWidth) * (size_t)dwSize.height);
 }
 
 - (BOOL)metalAllowed {
@@ -10461,6 +10480,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
             CGContextRelease(_metalContext);
             _metalContext = NULL;
         }
+        [self releaseMetalContextDoubleWidth];
     }
     [_textview requestDelegateRedraw];
     [_cadenceController changeCadenceIfNeeded];
@@ -15827,6 +15847,21 @@ static NSUInteger PTYSessionMinimumTurdLength(PTYSessionTurdType turdType) {
 }
 
 - (void)textViewDidRefresh {
+    if (_textview.window.firstResponder != _textview) {
+        return;
+    }
+    // This runs on every refresh, so don't extract the word more often than the touch bar shows it.
+    if (!_wordAtCursorRateLimit) {
+        _wordAtCursorRateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"Word at cursor"
+                                                              minimumInterval:0.5];
+    }
+    __weak __typeof(self) weakSelf = self;
+    [_wordAtCursorRateLimit performRateLimitedBlock:^{
+        [weakSelf updateWordAtCursor];
+    }];
+}
+
+- (void)updateWordAtCursor {
     if (_textview.window.firstResponder != _textview) {
         return;
     }

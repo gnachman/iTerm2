@@ -75,7 +75,8 @@ extern NSString *const iTermNaggingControllerReopenSessionAfterBrokenPipeIdentif
                        guid:(NSString *)guid;
 - (void)didRepairSavedArrangement;
 
-- (void)sessionEndedWithExecFailure:(BOOL)execDidFail;
+// Returns whether the announcement was shown (it is not if the user suppressed it).
+- (BOOL)sessionEndedWithExecFailure:(BOOL)execDidFail;
 
 - (void)didRestoreOrphan;
 - (void)willRecycleSession;

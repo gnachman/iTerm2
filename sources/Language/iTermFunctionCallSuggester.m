@@ -10,7 +10,6 @@
 #import "CPParser+Cache.h"
 #import "DebugLogging.h"
 #import "iTermExpressionParser+Private.h"
-#import "iTermGrammarProcessor.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermSwiftyStringParser.h"
 #import "iTermSwiftyStringRecognizer.h"

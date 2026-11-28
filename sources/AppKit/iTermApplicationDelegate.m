@@ -82,7 +82,6 @@
 #import "iTermGlobalSearchWindowController.h"
 #import "iTermHotKeyController.h"
 #import "iTermHotKeyProfileBindingController.h"
-#import "iTermIntegerNumberFormatter.h"
 #import "iTermLSOF.h"
 #import "iTermLaunchExperienceController.h"
 #import "iTermLaunchServices.h"

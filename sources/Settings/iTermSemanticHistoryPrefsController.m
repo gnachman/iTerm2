@@ -8,6 +8,7 @@
 
 #import "iTermSemanticHistoryPrefsController.h"
 #import "ITAddressBookMgr.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermSemanticHistoryController.h"
 #import "iTermTextPopoverViewController.h"
@@ -167,7 +168,7 @@ enum {
     return schemes[editor];
 }
 
-+ (NSArray *)editorsInPreferenceOrder {
++ (NSArray<NSString *> *)editorsInPreferenceOrder {
     // Editors from most to least preferred.
     return @[ kSublimeText4Identifier,
               kSublimeText3Identifier,
@@ -204,30 +205,7 @@ enum {
 }
 
 + (BOOL)bundleIdIsEditor:(NSString *)bundleId {
-    NSArray *editorBundleIds = @[ kSublimeText2Identifier,
-                                  kSublimeText3Identifier,
-                                  kSublimeText4Identifier,
-                                  kMacVimIdentifier,
-                                  kTextmateIdentifier,
-                                  kTextmate2Identifier,
-                                  kBBEditIdentifier,
-                                  kAtomIdentifier,
-                                  kVSCodeIdentifier,
-                                  kVSCodiumIdentifier1,
-                                  kVSCodiumIdentifier2,
-                                  kVSCodeInsidersIdentifier,
-                                  kEmacsAppIdentifier,
-                                  kIntelliJIDEAIdentifierCE,
-                                  kIntelliJIDEAIdentifierUE,
-                                  kWebStormIdentifier,
-                                  kRiderIdentifier,
-                                  kNovaAppIdentifier,
-                                  kXcodeAppIdentifier,
-                                  kCursorAppIdentifier,
-                                  kZedAppIdentifier,
-                                  kWindsurfIdentifier,
-                                  kBobIdentifier];
-    return [editorBundleIds containsObject:bundleId];
+    return [self editorIdentifierForBundleId:bundleId] != nil;
 }
 
 + (NSDictionary *)identifierToTagMap {

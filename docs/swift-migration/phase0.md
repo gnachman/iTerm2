@@ -293,7 +293,12 @@ with the reason. They fail the gate on:
   that passes `&x` to a pointer parameter is to be enforced by type-aware
   lints on the Swift AST, which knows whether `&x` becomes a pointer or an
   `inout`; until that unit is done it is a review item (owner queue Q20
-  item 6).
+  item 6). A pointer type in the signature of an `override` (its
+  parameter types, result or property type, and where clause) needs no
+  marker, because the overridden declaration already contains it, as in
+  `NSFormatter`'s `isPartialStringValid(_:newEditingString:errorDescription:)`.
+  A pointer in the body, an accessor or a default argument value still
+  needs one.
 - `!` force unwrap, `as!`, `try!`, `unowned`, `unowned(unsafe)`. An
   implicitly unwrapped type in a declaration (`var x: T!`) is not a force
   unwrap: [translation-rules.md §7](translation-rules.md) allows it on a

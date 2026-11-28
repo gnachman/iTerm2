@@ -9,7 +9,11 @@ change, and nothing else:
 
   - the .m's PBXFileReference becomes a PBXFileReference for the .swift, in
     the same position, with the same attributes except lastKnownFileType
-    (sourcecode.swift) and the file name in its comment, name and path;
+    (sourcecode.swift) and the file name in its comment, name and path.
+    indentWidth and tabWidth are left out: they are settings of Xcode's
+    editor, which the build does not read, and no Swift file reference in
+    the project has them. When the .m's reference has either, the tool
+    prints a note on standard error naming what it left out;
   - the .m's group child line becomes the .swift's, in the same group and
     position;
   - each PBXBuildFile of the .m (one per target) becomes a PBXBuildFile of
@@ -28,7 +32,10 @@ occur exactly as often as those lines account for, or the tool refuses and
 changes nothing. A .m in more than one target is refused unless
 --all-targets is given. A PBXBuildFile of the .m with settings (compiler
 flags) is refused: they would not apply to Swift. The new file reference's
-attribute set must already be used by some Swift file in the project.
+attribute set, after the editor settings are left out, must already be
+used by some Swift file in the project; any other attribute no Swift file
+has, such as lineEnding, a language override or an unusual fileEncoding,
+is refused.
 A PBXBuildFile of the .h is refused when it has settings (such as the
 Public or Private attribute, which make the header part of a framework's
 interface), when it is in a phase other than Headers or Sources, and when it
@@ -86,6 +93,11 @@ import re
 import sys
 
 ID = r'[0-9A-F]{24}'
+
+# File reference attributes that hold settings of Xcode's source editor (the
+# Indent Width and Tab Width of the File inspector's Text Settings). The build
+# does not read them, and no Swift file reference in the project has them.
+EDITOR_ONLY_KEYS = ('indentWidth', 'tabWidth')
 
 
 class Refusal(Exception):
@@ -234,9 +246,20 @@ def swap(text, m_path, h_path, swift_path, all_targets=False, rng=None, notes=No
     new_line = new_line.replace('lastKnownFileType = sourcecode.c.objc;', 'lastKnownFileType = sourcecode.swift;')
     new_line = re.sub(r'(\b(?:path|name) = "?(?:[^;"]*/)?)' + re.escape(m_name) + r'("?;)',
                       lambda mm: mm.group(1) + swift_name + mm.group(2), new_line)
+    derived_line = new_line
+    dropped = [key for key in EDITOR_ONLY_KEYS if re.search(r' %s = [^;]*;' % key, new_line)]
+    for key in dropped:
+        new_line = re.sub(r' %s = [^;]*;' % key, '', new_line, count=1)
     swift_shapes = {shape(l) for l in lines if 'isa = PBXFileReference;' in l and 'sourcecode.swift;' in l}
     if shape(new_line) not in swift_shapes:
-        raise Refusal('the new file reference has attributes no Swift file in the project has: %s' % new_line.strip())
+        # The message shows the reference as derived from the .m's, with any editor settings
+        # still in it, so that it matches the .m's line the reader will look up.
+        raise Refusal('the new file reference has attributes no Swift file in the project has: %s'
+                      % derived_line.strip())
+    if dropped and notes is not None:
+        notes.append('the file reference of %s had %s, which only Xcode\'s editor reads; the file reference '
+                     'of %s leaves %s out' % (m_name, ' and '.join(dropped), swift_name,
+                                              'it' if len(dropped) == 1 else 'them'))
     changes[mi] = new_line
     changes[gi] = '\t\t\t\t%s /* %s */,' % (new_ref, swift_name)
     for i, bf, pi, _ in phases:

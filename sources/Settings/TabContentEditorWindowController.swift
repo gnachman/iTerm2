@@ -142,15 +142,15 @@ final class TabContentEditorWindowController: NSWindowController {
         previewView.widthAnchor.constraint(equalToConstant: 240).isActive = true
 
         let cancel = cancelButton
-        cancel.title = String(localized: "TabContentEditor.Cancel",
+        cancel.title = String(localized: "General.Cancel",
                               defaultValue: "Cancel",
-                              comment: "Button that closes the tab content editor and undoes the changes made in it, which were showing in open windows")
+                              comment: "Cancel button")
         cancel.target = self
         cancel.action = #selector(cancel(_:))
         cancel.keyEquivalent = "\u{1b}"
-        let ok = NSButton(title: String(localized: "TabContentEditor.OK",
+        let ok = NSButton(title: String(localized: "General.OK",
                                         defaultValue: "OK",
-                                        comment: "Button that closes the tab content editor, keeping the changes made in it"),
+                                        comment: "OK button"),
                           target: self,
                           action: #selector(ok(_:)))
         ok.keyEquivalent = "\r"

@@ -1,14 +1,19 @@
-# Bugs found and preserved
+# The migration's ledger of bugs and notes
 
 Part of the Objective-C to Swift migration process. Read
 [README.md](README.md) first.
 
-Bugs found during the migration and deliberately left as they are, so that a
-port reproduces them and a fix happens in its own commit. Also existing
-problems that affect the gate. An entry is removed when the bug is fixed.
+The migration's own ledger: defects in its tools, flaky, slow and disabled
+tests, notes about the machine and the test hosts, unconfirmed suspicions,
+findings the owner chose to leave, and code with no users. Bugs in the app
+that still exist and are worth the owner's attention are not kept here: each
+has its own file in [bugs/](bugs/), under the rule in
+[README.md §7](README.md). An entry here whose bug moved to a file keeps its
+heading, so that references to it still resolve, and points to the file; an
+entry whose bug was fixed keeps its heading and one line saying so.
 
-Each entry has the file and method, a description, how to reproduce it, and
-what the migration does about it in the meantime.
+Each remaining entry has where it is, a description, how to reproduce it,
+and what the migration does about it in the meantime.
 
 ## Disabled flaky tests
 
@@ -467,67 +472,24 @@ Confirmed by observation, 2026-11-24 15:46 to 15:54, with the screen locked by t
 - **Found:** 2026-11-23, unit `suite-load-causes`.
 
 ## nil reaches non-optional Swift parameters from Objective-C (pending per site)
-- **Where:** switchToTmuxPoller(tmuxController:) (PTYSession.m:10884),
-  metalView(_:drawableSizeWillChange:) (SessionView.m:1471),
-  VT100SavedColorsSlot init (iTermColorMap.m:796-799), the titlebar accessory
-  nanny has(_:) (PseudoTerminal.m:7345); bridged-value cases listed in
-  nullability/classification.txt.
-- **What:** undefined behavior for class types; a silent empty value for String,
-  Array, Dictionary and Data.
-- **Meanwhile:** each Swift signature becomes optional with a guard, or the caller
-  is fixed, decided per site.
-- **2026-11-23 (units `nullability-baseline-annotate` and
-  `nullability-baseline-guards`):** `switchToTmuxPoller(tmuxController:)` now
-  takes `TmuxController?`; with nil it logs “Missing gateway” and returns, as
-  the message to the nil controller made it do before.
-- **2026-11-23 (unit `nullability-zero-colors`):**
-  `VT100SavedColorsSlot.init(text:background:selectionText:selectionBackground:indexedColorProvider:)`
-  (`VT100SavedColors.swift`, from `-[iTermColorMap savedColorsSlot]`) now
-  takes and returns optional colors. A real color map lacks one when a
-  profile's value for it is not a color dictionary. What happened with the
-  nil is kept exactly: popping the slot leaves that color as it is, and the
-  slot is written with CodableColor's fallback form holding an empty keyed
-  archive, which does not decode, so the slot (and an XTPUSHCOLORS stack
-  holding it) fails to decode. Whether to store it differently is
-  owner-queue.md Q28. `VT100ConductorParser.init(uniqueID:)` no longer gets
-  a nil (unit `nullability-zero-bugs`). Still open: the other sites above.
-- **2026-11-24:** the slot's missing color is fixed upstream by the owner's
-  commit “Keep a saved colors slot when one of its colors is missing”: an
-  absent color, or one whose archive holds no color, decodes as missing
-  with the rest of the slot intact, and the stored form is unchanged, so
-  older versions read new data as before. The migration's own fix for the
-  same thing (unit `saved-colors-missing-color`, which also changed the
-  stored form and what a pop restores) was written the same day and
-  dropped as redundant before it was pushed. Not done by either: popping a
-  slot that lacks a color still leaves that color as it is. Still open: the
-  sites above other than the saved colors slot,
-  `switchToTmuxPoller(tmuxController:)` and the conductor parser.
+
+- **Fixed, every named site** (checked 2026-11-27):
+  `switchToTmuxPoller(tmuxController:)` takes `TmuxController?`; the saved
+  colors slot takes and keeps optional colors (the owner's “Keep a saved
+  colors slot when one of its colors is missing”);
+  `metalView(_:drawableSizeWillChange:)` takes `iTermMetalView?`; the
+  titlebar accessory nanny's `has(viewController:)` takes an optional.
+- **Still open, unchecked:** the bridged-value cases listed in
+  `nullability/classification.txt` (a nil String, Array, Dictionary or Data
+  arriving as an empty value). Nobody has gone through them one by one.
+- **Left, arguably intended:** popping a saved colors slot that lacks a
+  color leaves that color as it is; the slot lacks it because the
+  profile's value was not a color, so there is nothing to restore.
 - **Found:** 2026-11-20, nullability collection.
 
 ## A color baseline outlives a change of the session's profile
 
-- **Where:** `sources/PTYSession/PTYSession.m`: `_preEscapeSequenceColors`
-  is filled by `-setEscapeSequenceProfileValues:baselineKeys:` (OSC 10, 11
-  and the like) and read by `-screenResetColorWithColorMapKey:profileKey:dark:`
-  (OSC 110 and the like). `-setProfile:` and `-storeProfile:` replace
-  `_profile` wholesale and never clear it; only writes of the same keys
-  through `-setSessionSpecificProfileValues:` and the reset itself remove
-  entries.
-- **What:** after the session changes to another profile, a reset, or a
-  pop of a slot lacking that color, writes the old profile's value for the
-  color over the new profile's. An improbable sequence; found by reading,
-  not observed.
-- **Reproduce:** a session with profile P1 whose foreground is a valid
-  color F1. OSC 10 sets the foreground to X (baseline F1 recorded). Change
-  the session to profile P2 (Edit Session's profile change, or anything
-  that calls `-setProfile:`). Then either OSC 110: the foreground becomes
-  F1, not P2's; or, if P2's foreground is not a color dictionary,
-  XTPUSHCOLORS then XTPOPCOLORS: the pop writes F1 over P2's value.
-- **Meanwhile:** unfixed; changing when baselines are cleared is a behavior
-  change of its own.
-- **Found:** 2026-11-24, by reading, in review of a saved colors change
-  that was later dropped. It concerns OSC 110 and the like as the code
-  stands.
+In the app and still present: [bugs/2-wrong-behavior-color-reset-restores-previous-profiles-color.md](bugs/2-wrong-behavior-color-reset-restores-previous-profiles-color.md) (checked 2026-11-27).
 
 ## `MarkCache.copy(with:)` is not `-copyWithZone:`
 
@@ -543,20 +505,7 @@ Confirmed by observation, 2026-11-24 15:46 to 15:54, with the screen locked by t
 
 ## `iTerm2.sdef` names properties that nothing implements
 
-- **Where:** `iTerm2.sdef`. Class window: `position`, `origin`, `size`,
-  `frame` (cocoa keys `scriptPosition`, `scriptOrigin`, `scriptSize`,
-  `scriptFrame`), added in 2a55712c1 (2015). Class session:
-  `use underline color` (cocoa key `useUnderlineColor`), added in f7772b24c.
-- **What:** no class implements any of these keys. Eleven more properties
-  are read-write in the dictionary but have no setter: application
-  `currentScriptingWindow`; window `scriptFrontmost`, `currentTab`,
-  `currentSession`, `isHotkeyWindow`, `hotkeyWindowProfile`; tab
-  `indexOfTab`, `title`; session `isProcessing`, `isAtShellPrompt`, `text`.
-- **Reproduce:** `tell application "iTerm2" to get position of window 1`
-  should fail with an unknown-key error (not run). Pinned by
-  `BindingTests.testScriptingDefinition` and its known-failures table.
-- **Meanwhile:** preserved. A port keeps exactly the accessors that exist.
-- **Found:** 2026-11-20, by the binding tests.
+In the app and still present: [bugs/2-wrong-behavior-applescript-dictionary-lists-unimplemented-properties.md](bugs/2-wrong-behavior-applescript-dictionary-lists-unimplemented-properties.md) (checked 2026-11-27).
 
 ## Dead outlet in `SearchableComboView.xib`
 
@@ -588,24 +537,12 @@ Confirmed by observation, 2026-11-24 15:46 to 15:54, with the screen locked by t
 - **Meanwhile:** preserved. A port keeps the assignment until a `fix`
   commit, test first, makes it a comparison.
 - **Found:** 2026-11-20, by the object-file cross-check.
+- **2026-11-27:** still so, and still no caller anywhere; listed under “Code
+  with no users, found while porting” below.
 
 ## Integer truncated into `BOOL` on Intel: the fn key state is always NO
 
-- **Where:** `sources/AppKit/iTermApplication.m:721`,
-  `_functionPressed = event.modifierFlags & NSEventModifierFlagFunction;`.
-- **What:** on x86_64 `BOOL` is `signed char`, and the flag is bit 23, so
-  the conversion keeps only the low byte and the result is always NO. On
-  arm64 `BOOL` is `bool` and the result is right. The generated code
-  confirms it (x86_64: `xorl %eax,%eax; retq`). So on Intel Macs
-  `it_functionModifierPreviouslyPressed`, which `iTermModernKeyMapper`
-  uses, is wrong for the fn key.
-- **Reproduce:** not run on Intel hardware. Compile
-  `BOOL f(unsigned long x){ return x & (1UL<<23); }` for
-  `x86_64-apple-macos13.0` and read the assembly, or run
-  `tools/swift_migration/warning_survey.py compare --mode strict`.
-- **Meanwhile:** preserved. A `fix` commit, test first, writes
-  `(flags & NSEventModifierFlagFunction) != 0`.
-- **Found:** 2026-11-20, by the warning survey.
+In the app and still present: [bugs/2-wrong-behavior-fn-key-state-always-off-on-intel.md](bugs/2-wrong-behavior-fn-key-state-always-off-on-intel.md) (checked 2026-11-27).
 
 ## Other integer or float values stored into `BOOL`
 
@@ -622,117 +559,20 @@ Confirmed by observation, 2026-11-24 15:46 to 15:54, with the screen locked by t
 - **Meanwhile:** preserved; each is fixed in Objective-C before its file is
   ported, since `-Wobjc-signed-char-bool` is in the strict set.
 - **Found:** 2026-11-20, by the warning survey.
+- **2026-11-27:** all three still so. `-terminationStatus` still has no caller;
+  it is listed under “Code with no users, found while porting” below.
 
 ## `iTermProfilePreferenceObserver.value(_:)` traps when its profile is missing
 
-- **Where:** `sources/Settings/iTermProfilePreferenceObserver.swift`, the five
-  `value(_:)` overloads (`[[AnyHashable: Any]]?`, `[String]?`, `String?`,
-  `Double`, `Bool`), through the private `observedProfile`.
-- **What:** each accessor reads `model.bookmark(withGuid: guid)`. When the
-  model has no profile with that GUID, the process crashes. Until unit N1 of
-  `nullability-triage.md` this was an implicit unwrap: the result of
-  `bookmark(withGuid:)` (implicitly unwrapped, since `ProfileModel.h` is not
-  annotated) went to the `profile` parameter of
-  `+[iTermProfilePreferences ...ForKey:inProfile:]`, which was nonnull. The
-  same class's `value(for:)`, used by the observation closures, tolerates a
-  missing profile with `?? [:]`, and the Objective-C methods tolerate a nil
-  profile (they read the defaults). So the crash is probably not intended. The
-  browser (`iTermBrowserManager`, `iTermBrowserViewController`,
-  `iTermBrowserExtensionManager`) reads these accessors for a session's
-  profile GUID in `ProfileModel.sharedInstance()` or `sessionsInstance()`.
-- **Reproduce:** not reproduced. It would need a browser session whose
-  profile GUID is gone from the model it observes when one of the accessors
-  runs.
-- **Meanwhile:** preserved, now as an explicit `it_fatalError` naming the
-  GUID. A `fix` commit, test first, can pass the optional through, so the
-  accessors read the defaults the way `value(for:)` does.
-- **Found:** 2026-11-20, unit `nullability-n1-profile-preferences`.
+In the app and still present: [bugs/1-crash-profile-preference-observer-traps-on-missing-profile.md](bugs/1-crash-profile-preference-observer-traps-on-missing-profile.md) (checked 2026-11-27).
 
 ## ICH, DCH, DECIC and DECDC with a huge count pass a size near 2^64 to memmove
 
-The most serious of the integer findings of 2026-11-20: memory corruption
-or a crash from program output.
-
-- **Where:** `sources/VT100/VT100Grid.m`,
-  `-insertChar:externalAttributes:at:times:` (line 2698,
-  `n + pos.x > self.rightMargin`; `charsToMove` at :2708; the `memmove` at
-  :2726) and `-deleteChars:startingAt:` (line 1945,
-  `n + startCoord.x > rightMargin`; line 1952, `startCoord.x + n <= rightMargin`;
-  the `memmove` at :1987). Reached by ICH (`CSI n @`,
-  `-terminalInsertEmptyCharsAtCursor:`), DCH (`CSI n P`,
-  `-terminalDeleteCharactersAtCursor:`), DECIC (`CSI n ' }`,
-  `-[VT100ScreenMutableState insertColumns:]`, once per row of the scroll
-  region) and DECDC (`CSI n ' ~`, `-deleteColumns:`, likewise); and by SL
-  and SR (`-[VT100Grid moveContentLeft:]`, `-moveContentRight:`), which
-  start at column 0 or the left margin, so only with a left margin at
-  column 9 or more.
-- **What:** the CSI parser stores counts up to 2147483639. With the cursor
-  at column 9 (x = 9) or later, `n + x` overflows `int` and wraps negative,
-  so the clamp to the margin does not happen and n keeps its huge value.
-  Then `charsToMove = rightMargin - x - n + 1` is about -2^31, and
-  `charsToMove * sizeof(screen_char_t)` converts it to `size_t`: memmove
-  gets a size near 2^64 (18446744047939748800 for x = 9), and a pointer
-  2^31 cells past the line. DCH also passes its second test
-  (`x + n <= rightMargin`, which wraps the same way) and does the same.
-  memmove with that size reads and writes far outside the buffer: a crash
-  at best, memory corruption at worst. On double-width lines ICH and DCH
-  first double n, which wraps to a small negative number for counts over
-  1073741823, so they do nothing there instead.
-- **Reproduce:** by reading and a C copy of the arithmetic; not run against
-  the real code. The copy (`ichdch.c`, the two functions' arithmetic with
-  memmove replaced by printing its arguments, written during the unit in
-  the lane's scratch directory) gives, at `-O0` and `-Os` on arm64:
-  x = 4 and x = 8 clamp correctly (n = 76 and 72, nothing moved); x = 9
-  gives n = 2147483639, `charsToMove` = -2147483568 and a memmove size of
-  18446744047939748800, for both functions. Under the integer sanitizer the
-  copy reports `signed integer overflow: 2147483639 + 9` at both sums. In a
-  terminal: `printf '\e[1;10H\e[2147483639@'` (do not run it in a session
-  you care about).
-- **Meanwhile:** being fixed by the unit `integer-findings-fixes-2`, test
-  first. Until that lands, `ModernTests/StressStreamReplayTests.swift`
-  sends huge ICH and DCH counts only at column 5 (x = 4) and sends no huge
-  DECIC or DECDC.
-- **Found:** 2026-11-20, review of unit `phase0-integer-discovery-2`.
+Fixed on 2026-11-20 by “Clamp CSI counts and positions that overflowed, and bound the tab loops” (`-insertChar:...` and `-deleteChars:startingAt:` now compare without adding); checked 2026-11-27. Left over, a test limit: `StressStreamReplayTests.testEditingWithHugeCounts` still sends huge counts only at column 5 and sends no huge DECIC or DECDC, as its comment asks, which the fix no longer requires; widening it is a test change nobody has made.
 
 ## Cursor movement by a huge count overflows `int` and lands at the wrong edge
 
-- **Where:** `sources/VT100/VT100Grid.m`, `-moveCursorDown:` (line 1203,
-  `cursor_.y + n`) and `-moveCursorRight:` (line 1179,
-  `cursor_.x + n * step`); `-moveCursorLeft:` (lines 1132 and 1169,
-  `cursor_.x - n * step`) on double-width lines only; and
-  `-[VT100ScreenMutableState eraseCharactersAfterCursor:]`
-  (`VT100ScreenMutableState.m`, `j *= 2` and `cursorX + j`, lines 2016 to
-  2037).
-- **What:** the CSI parser stores parameters up to 2147483639. The sums
-  overflow `int` and, in practice, wrap to a negative number. Then:
-  - **CUD** (`CSI n B`, also CNL `CSI n E`) with the cursor on row 9 or
-    lower and n = 2147483639: `MAX(0, MIN(height - 1, y + n))` gives 0, so
-    the cursor goes to the top row (above any scroll region's top margin)
-    instead of to the bottom margin. Seen in the integer sanitizer run
-    (`23 + 2147483639`, integer-findings.md section 7).
-  - **CUF** (`CSI n C`) with the cursor in column 9 or later, or any huge n
-    on a double-width line (`n * 2` overflows): the negative x is clamped by
-    `-setCursorX:` to 0, so the cursor goes to column 0 instead of the right
-    margin. By reading; the run did not reach it.
-  - **CUB** (`CSI n D`) on a double-width line: `n * 2` wraps, so the
-    "left" move computes an x to the right of the cursor; with a column
-    scroll region the cursor moves right, and without one the loop's `n`
-    grows instead of shrinking until it wraps. By reading; the effect was
-    not run.
-  - **ECH** (`CSI n X`) with the cursor in column 9 or later and a huge n,
-    or on a double-width line: the limit wraps negative and nothing is
-    erased instead of the rest of the line. By reading.
-  - **CUU** (`CSI n A`, `cursor_.y - n`) cannot overflow: y is at least 0
-    and n at most 2147483639. Not affected.
-- **Reproduce:** `printf '\e[24;1H\e[2147483639Bx'` prints the x on the top
-  row. `ModernTests/StressStreamReplayTests.testCursorMovementWithHugeCounts`
-  under `tools/swift_migration/sanitizer_tests.sh integer-sign` reports the
-  overflow at `VT100Grid.m:1203`.
-- **Meanwhile:** preserved. A `fix` commit, test first, computes each sum in
-  `NSInteger` (or clamps n to the grid size first). A port must not use the
-  asserting helpers on the unfixed code: they would fire on these inputs in
-  tests.
-- **Found:** 2026-11-20, unit `phase0-integer-discovery-2`.
+Fixed on 2026-11-20 by “Clamp CSI counts and positions that overflowed, and bound the tab loops” (each count is clamped to the grid before the sum, also in ECH); checked 2026-11-27.
 
 ## CHT and CBT: the huge-count freeze is fixed; a test limit remains
 
@@ -785,140 +625,41 @@ or a crash from program output.
 
 ## Execution permits health check wraps an unsigned difference and crashes Development builds
 
-- **Where:** `sources/VT100/ExecutionPermits.swift`, `checkHealth()` (line
-  715 to 720, `now &- last`), with `checkpointIsNeeded(_:)` (line 380) as the
-  writer; `Client.description(now:)` (line 96) has the same subtraction.
-- **What:** `checkHealth()` reads `now` under the mutex and then each
-  running holder's `lastHeardFrom`. `checkpointIsNeeded(_:)` stores
-  `lastHeardFrom` without the mutex, from the session's queue. If a holder
-  checkpoints between the two reads, `last` is later than `now`, and
-  `now &- last` wraps to nearly 2^64 nanoseconds. That exceeds
-  `silentHolderThreshold` (5 seconds), so the check reports a lost wakeup
-  and calls `crashInDebugBuilds`. That function crashes only under
-  `#if ITERM_DEBUG` (`ExecutionPermits.swift:267-271`), which Swift gets
-  only in iTerm2SharedARC's Development configuration: Development builds
-  and ModernTests crash with "woke a holder not heard from for
-  18446744073.7s"; Beta, Nightly and Deployment builds log an RLog message
-  and wake a holder that is already running. A holder that checkpoints
-  often (a long run of tokens, such as REP at its cap) makes the race more
-  likely.
-- **Reproduce:** seen once, on 2026-11-20, in
-  `StressStreamReplayTests.testRepeatPreviousCharacterAtItsCap` under
-  `tools/run_tests.expect`; the test passed on the next two runs. Not
-  reproducible on demand.
-- **Meanwhile:** preserved. A `fix` commit, test first (with the injected
-  `now` clock the initializer takes), treats `last > now` as just heard
-  from. Until then, any test that executes tokens can rarely crash this
-  way; this is the cause to look for when a test host dies with that
-  message.
-- **Found:** 2026-11-20, unit `phase0-integer-discovery-2`.
+Fixed on 2026-11-22 by “Don't report a just-heard-from execution permit holder as silent” (`checkHealth()` treats `last > now` as no silence); checked 2026-11-27. `Client.description(now:)` still subtracts with `&-`, which only affects a log line.
 
 ## Inline images in a session without a screen get an infinite size
 
-- **Where:** `sources/InlineImages/VT100InlineImageHelper.m`,
-  `-scaledSizeForDecodedImage:` (line 320, dividing by `_scaleFactor`) and
-  the conversions at :353 and :388 (`ceil(scaledSize / cellSize)` to
-  `int`); the scale factor comes from `config.backingScaleFactor`
-  (`VT100ScreenMutableState+TerminalDelegate.m:3313` for sixel; :3250 and
-  `VT100ScreenMutableState.m:7897` pass the same value to the other
-  helpers), which `-[PTYSession updateConfigurationFields]` copies from
-  `_view.window.screen.backingScaleFactor` (`PTYSession.m:20460`).
-- **What:** that value is 0 when the session's view has no window or the
-  window has no screen; a session in a tab that is not selected is the
-  likely case. The scaled image size is then infinite, and converting
-  `ceil(inf / cellSize)` to `int` is undefined: arm64 gives `INT_MAX`,
-  x86_64 gives `INT_MIN`. By reading the clamping that follows
-  (`:438` to `:461`): on arm64 the width becomes the grid width and the
-  height about the same number of rows as the width available, whatever
-  the image's shape; on x86_64 `MAX(1, ...)` makes it one cell by one
-  cell. Either way the image is sized wrongly; nothing hangs. Other code
-  already guards the same value (`PTYSession.m:23574`, `:10399` with
-  `?: 1`; `VT100ScreenMutableState.m:9269` with `MAX(1.0, ...)`).
-- **Reproduce:** app-reachable by reading; not verified in the app. In the
-  test host, `StressStreamReplayTests.testSixel` under
-  `tools/swift_migration/sanitizer_tests.sh integer-sign` reports
-  float-cast overflow at both lines, because the test harness's
-  configuration leaves the backing scale factor 0.
-- **Meanwhile:** preserved. A `fix` commit, test first, treats a zero or
-  non-finite scale factor as 1, as the other sites do. A port must not
-  convert with `it_floatToInteger` before that fix: it would assert in
-  `testSixel`.
-- **Found:** 2026-11-20, unit `phase0-integer-discovery-2` and its review.
+Fixed on 2026-11-21 by “Bound program-controlled sizes in the kitty and inline image protocols” (`VT100InlineImageHelper` treats a zero or non-finite scale factor as 1); checked 2026-11-27.
 
 ## Copying, dragging or opening an image without encoded data gives no usable image
 
 - **Where:** `sources/InlineImages/iTermImageInfo.m`,
-  `-pasteboard:item:provideDataForType:` and `-nameForNewSavedTempFile`
-  (the pasteboard's file URL, the file URL `PTYTextView+ARC.m` builds for
-  an image action, and opening the image from `PTYTextView+ARC.m` and
-  `iTermURLActionHelper.m`); `sources/TerminalView/PTYTextView.m`,
-  `-_dragImage:forEvent:`.
-- **What:** these use the image's encoded data, which a native image (the
-  `BrokenPipeDivider` drawn when a session ends) does not have, nor does an
-  inline image whose base64 payload decodes to no bytes.
-  - `-nameForNewSavedTempFile` gets its name from
-    `-[NSWorkspace temporaryFileNameWithPrefix:suffix:]`, which creates the
-    file with `mkstemps`, and then writes the data into it. With no data the
-    file stays empty, so every one of those gets a zero-byte file. This
-    was so before unit `nullability-n6-swift-parameters` too: empty data
-    also wrote nothing.
-  - Copying offered zero bytes of `public.image` while the bridge stored
-    empty data; since that unit it offers none (offering nil would raise in
-    `-setData:forType:`).
-  - Cmd-dragging the image began a drag whose drop gave a zero-byte file;
-    since that unit `-_dragImage:forEvent:` returns at its existing
-    `!imageData` test and no drag starts. The mouse handler has already set
-    `_committedToDrag`, which the next mouse-up or mouse-down clears, as on
-    the existing path for an image with no picture.
-  None of these gives the user the image. Saving it (`-saveToFile:`,
-  `-saveToItem:`) renders the image when there is no data, and works.
-- **Reproduce:** with the advanced setting for the session-end divider
-  character empty, end a session so the divider image is drawn, then copy,
-  Cmd-drag or open the image.
-- **Meanwhile:** left as it is. A `fix` commit could render the image for
-  these paths the way `-dataForSavingFilename:` does.
-- **Found:** 2026-11-20, unit `nullability-n6-swift-parameters`.
+  `-nameForNewSavedTempFile` and `-pasteboard:item:provideDataForType:`;
+  `sources/TerminalView/PTYTextView.m`, `-_dragImage:forEvent:`.
+- **What:** these use the image's encoded data. An image with none (the
+  session-ended divider, `BrokenPipeDivider`, the only native image; or an
+  inline image whose payload decodes to no bytes) opens as a zero-byte
+  temporary file, copies with no image data, and starts no drag. Saving
+  it works, because saving renders the image.
+- **Meanwhile:** left as it is. Kept out of [bugs/](bugs/): nobody copies
+  or drags the divider. A fix would render the image as
+  `-dataForSavingFilename:` does.
+- **Found:** 2026-11-20; still so on 2026-11-27.
 
 ## `-[iTermParsedExpression string]` and `-description` abort for an expression made from a nil string
 
-- **Where:** `sources/Language/iTermParsedExpression.m`, `-string`
-  (`assert([_object isKindOfClass:[NSString class]])`) and `-description`,
-  which calls `-string` for a string expression.
-- **What:** `-initWithString:` stores its argument in `_object` and sets the
-  type to string. The app passes nil there: `+[iTermExpressionParser
-  parsedExpressionWithInterpolatedString:...]` (`iTermExpressionParser.m`, the
-  all-literals return) builds the expression from
-  `[swifty it_stringByExpandingBackslashEscapedCharacters]`, which is nil
-  when the interpolated string is nil, as it is for semantic history's
-  script in a profile never edited there (`iTermSemanticHistoryController.m`).
-  For that expression `-string` and `-description` abort (asserts are on in
-  release builds), and `-object`, claimed nonnull, returns nil. Unit
-  `nullability-n7-expression-language` made the initializer's parameter
-  nullable, because the app passes nil; the getters' claims and the assert
-  still say a string expression always has a string.
-- **Reproduce:** not reproduced in the app. The evaluator reads `-object` for
-  a string expression and the parser's other uses of `-string` see only
-  non-nil parts, so no live path calls `-string` or `-description` on it.
-  The one log that would, `NSLog(@"Evaluate %@", _parsedExpression)` in
-  `-[iTermExpressionEvaluator reallyEvaluateWithTimeout:...]`, runs only when
-  the evaluator's `debug` property is set, and nothing in the tree sets it.
-  Printing the expression in the debugger aborts.
-- **Meanwhile:** left as it is. A `fix` commit could make the parser return
-  a Nil expression for a nil interpolated string, or make the getters
-  tolerate nil.
-- **Found:** 2026-11-20, review of unit `nullability-n7-expression-language`.
+In the app and still present: [bugs/3-latent-parsed-expression-string-aborts-for-nil-string.md](bugs/3-latent-parsed-expression-string-aborts-for-nil-string.md) (checked 2026-11-27).
 
 ## Kitty graphics: smaller problems left after the hardening
 
 - **Where:** `sources/InlineImages/KittyImageController.swift`.
 - **What:**
-  - When a chunked transmission is abandoned for exceeding the size cap, the
-    `ENOSPC` reply is sent for the final chunk's own command, which has
-    `i=0` and no `q`, so a client waiting for its image id never sees it and
-    a client that asked for silence gets a reply.
+  - The reply for a transmission abandoned for its size: [bugs/2-wrong-behavior-kitty-oversize-reply-has-wrong-id-and-ignores-quiet.md](bugs/2-wrong-behavior-kitty-oversize-reply-has-wrong-id-and-ignores-quiet.md) (checked 2026-11-27).
   - A FIFO under `/tmp` named like a `t=t` temporary file blocks the
     `open`, and the session's thread with it, until a writer appears. Only
-    a local program can arrange this. `O_NONBLOCK` would fix it.
+    a local program can arrange this. `O_NONBLOCK` would fix it. Still so on 2026-11-27 (the `open` in
+    `executeTransmitTemporaryFile` has no `O_NONBLOCK`); kept out of
+    [bugs/](bugs/) because only a local program can make the FIFO.
   - `t=f` reads any regular file the user can read except a denylist, by the
     protocol's design. The owner did not decide to restrict it further
     (owner-queue.md Q23 item 9). Its two defects, three denylist entries
@@ -941,10 +682,10 @@ or a crash from program output.
     of a given name exists. Their names are confined to temporary files
     and shared memory.
   - The `S=` and `O=` keys are parsed and ignored.
-  - An APC string is cut at 1 MiB by the parser and the rest of the payload
-    is then printed as text.
-- **Meanwhile:** left as they are. The reply for abandoned transmissions is
-  a small fix.
+  - A string cut at 1 MiB, the rest printed as text (OSC as well as APC): [bugs/2-wrong-behavior-osc-or-apc-over-1mib-prints-rest-as-text.md](bugs/2-wrong-behavior-osc-or-apc-over-1mib-prints-rest-as-text.md) (checked 2026-11-27).
+- **Meanwhile:** the items not linked to a file are left as they are: by
+  design, needing a local program (the FIFO, the `t=f` and `t=t` items),
+  or (the `S=` and `O=` keys) a part of the protocol not implemented.
 - **Found:** 2026-11-21, units `integer-findings-fixes-3` and `-4` and their
   reviews; the remaining `t=f`, `t=t` and `t=s` items on 2026-11-22, unit
   `kitty-file-denylist`.
@@ -1185,23 +926,7 @@ or a crash from program output.
 
 ## Clicking a notification posted without a window reveals a session in the first window
 
-- **Where:** `sources/Notifications/iTermNotificationController.m`,
-  `-notificationWasClicked:`.
-- **What:** a notification posted with a negative window index (a session
-  whose window is not registered, for which `-[PTYSession
-  screenWindowIndex]` gives -1, or the convenience method that passes -1)
-  gets an empty user info. On a click, the missing `win`, `tab` and `view`
-  read as 0, so the handler reveals the session with view id 0 in tab 0 of
-  window 0, if there is one, when it should do nothing. The handler checks
-  only the upper bound of `win` before `-[iTermController
-  terminalAtIndex:]`, relying on the posting side never to store a
-  negative index. The indexes are also those of the time of posting;
-  windows and tabs may have been reordered or closed since.
-- **Reproduce:** by reading; not run.
-- **Meanwhile:** left as it is.
-- **Found:** 2026-11-21, a question from the owner about
-  `screenWindowIndex`.
-
+In the app and still present: [bugs/2-wrong-behavior-notification-click-finds-session-by-stale-position.md](bugs/2-wrong-behavior-notification-click-finds-session-by-stale-position.md) (checked 2026-11-27).
 
 ## `AsyncFilterDeliveryQueueTests.testDeliveriesQueuedDuringCatchUp` is flaky
 
@@ -1223,21 +948,7 @@ or a crash from program output.
 
 ## `-[NSColor labColor]` swaps green and blue
 
-- **Where:** `sources/Categories/NSColor+iTerm.m`, `-labColor`.
-- **What:** it builds the sRGB triple as `.g = color.blueComponent` and
-  `.b = color.greenComponent` before converting to L\*a\*b\*, so the
-  lightness of a saturated color is wrong (green weighs most in
-  lightness). Neutral grays are unaffected. Callers include
-  `iTermColorSuggester` (the default background's lightness, which decides
-  how far the suggested background must be from it) and whatever else uses
-  `labColor`; not surveyed.
-- **Reproduce:** by reading, not yet run: pure green,
-  `NSColor(srgbRed: 0, green: 1, blue: 0, alpha: 1).labColor().l`, should
-  give the lightness of pure blue (about 32) instead of about 88.
-- **Meanwhile:** preserved; `iTermColorSuggesterTests` uses gray defaults
-  and reads result lightness without it.
-- **Found:** 2026-11-21, unit `iTermColorSuggester`.
-
+In the app and still present: [bugs/2-wrong-behavior-lab-color-swaps-green-and-blue.md](bugs/2-wrong-behavior-lab-color-swaps-green-and-blue.md) (checked 2026-11-27).
 
 ## `iTermColorSuggester` reseeds and draws from the process-wide `drand48` generator
 
@@ -1330,6 +1041,11 @@ or a crash from program output.
     manual says. iTerm2 does nothing when either is omitted.
 - **Meanwhile:** left as they are. The destination's offset by the margins
   in origin mode, fixed in `terminal-fixes`, matches xterm.
+- **2026-11-27:** the third item is not so: the CSI parser gives an
+  omitted destination row and column the default 1 for DECCRA
+  (`VT100CSIParser.m`, `iTermParserSetCSIParameterIfDefault` for
+  parameters 5 and 6, since 2021). The first two are differences from
+  xterm, left out of [bugs/](bugs/) as arguably intended.
 - **Found:** 2026-11-22, review of unit `terminal-fixes`.
 
 ## A Python environment with no version gives a path under `versions/bin`
@@ -1353,24 +1069,7 @@ or a crash from program output.
 
 ## Canceling the Internet-Free install during its dotfile step leaves the helper shell in a here-document
 
-- **Where:** `sources/ShellIntegrationInstaller/iTermShellIntegrationWindowController.m`:
-  the dotfile step sets the helper state to unknown when it types its `if`
-  line, and `-helpersIdleExpectation` returns nil for that state, so
-  `-exitHelperShellsWhenPossible` types nothing.
-- **What:** Cancel during the dotfile step stops the step but leaves the
-  helper `sh` inside the `if` and here-document, and no installer is then
-  awaiting helper exit. A new install does not wait; its discovery line
-  goes into the here-document and gets no answer, so the new panel stays
-  busy with no time limit. The same happens when a new install replaces a
-  hidden installer that is in that step (unit
-  `ptytextview-installer-lifetime` sends it the Cancel button's action).
-  The window is a few shell round trips long. Found by reading; not
-  reproduced.
-- **Reproduce:** start the Internet-Free install, click Cancel (or switch
-  tabs and choose Install Shell Integration again) while the dotfile step
-  is typing, then start the install again.
-- **Meanwhile:** left as it is.
-- **Found:** 2026-11-23, review of unit `ptytextview-installer-lifetime`.
+In the app and still present: [bugs/2-wrong-behavior-shell-integration-cancel-leaves-helper-in-here-document.md](bugs/2-wrong-behavior-shell-integration-cancel-leaves-helper-in-here-document.md) (checked 2026-11-27).
 
 ## A tab dragged in from another copy of iTerm2 reaches the tab bar's drop code with no source
 
@@ -1529,20 +1228,7 @@ or a crash from program output.
 
 ## A second notification subscription on one owner cancels the first
 
-- **Where:** `-[iTermBaseNotification internalSubscribe:withBlock:]` in
-  `sources/Notifications/iTermNotificationCenter.m`.
-- **What:** the object that removes the observer when the owner goes away
-  is stored on the owner as an associated object under one static key,
-  shared by every notification class. A second subscription by the same
-  owner, to another notification class or to the same one, replaces it;
-  the first one's remover is released, removes its observer, and the first
-  subscription silently stops. Every owner found in the tree subscribes
-  once, so nothing is known to be affected today; owners whose superclass
-  also subscribes were not checked.
-- **Fix, when wanted:** keep the removers in an array on the owner, or key
-  each by its own token.
-- **Meanwhile:** a test that subscribes twice uses a fresh owner each time.
-- **Found:** 2026-11-27, port of `iTermSetFindStringNotification`.
+In the app and still present: [bugs/3-latent-second-notification-subscription-cancels-first.md](bugs/3-latent-second-notification-subscription-cancels-first.md) (checked 2026-11-27).
 
 ## “Use Selection for Find” in the notes tool and the AI chat input posts a notification nobody receives
 
@@ -1555,14 +1241,80 @@ or a crash from program output.
   for example through the find pasteboard in `super`, was not checked.
 - **Found:** 2026-11-27, port of `iTermSetFindStringNotification`; the
   port keeps the posts as they are.
+- **2026-11-27, checked:** dead code rather than a bug, so it has no file in
+  [bugs/](bugs/). In the AI chat the input view hands the action to
+  `ChatViewController.performFindPanelAction(_:)`, which sets the find
+  pasteboard through `iTermFindPasteboard` and opens its find bar; the post
+  is only on the fallback path for an input view outside a chat. The notes
+  tool calls `super` after the post, and `NSTextView` handles “Use Selection
+  for Find” by writing the selection to the find pasteboard; iTerm2's find
+  fields read that pasteboard (`-[iTermFindPasteboard stringValue]`, when
+  the advanced setting `synchronizeQueryWithFindPasteboard` is on, its
+  default) and refresh when a window becomes key. Not run: whether
+  `NSTextView` does this for the notes view depends on its
+  `usesFindPanel`, which the notes view never sets, and Apple's header
+  states no default.
 
 ## `LocalizationHygieneTests.testNoStrayOKCancelButtonKeys` fails on the tree as it stands
 
-- **Where:** `xcstrings/Localizable.xcstrings` has `TabContentEditor.OK`
-  and `TabContentEditor.Cancel`, added upstream by “Translate new strings
-  into all languages”; the test wants `General.OK` and `General.Cancel`.
-- **What:** the test fails on origin/master with no migration commit, so a
-  whole suite fails by this one test until upstream fixes it. It is not a
-  unit's failure.
-- **Found:** 2026-11-27, the whole suite on the port of
-  `iTermSetFindStringNotification`. The owner was told.
+Fixed upstream on 2026-11-27 by “Use General.OK and General.Cancel in the tab content editor”.
+
+## `qualify_unit.py` does not count a file that uses only a unit's exported constants
+
+- **Where:** light condition 2 (three or fewer files outside the unit use
+  it), which counts sends and Swift imports from the code database.
+- **What:** `iTermTipData.m` uses the C string constants that `iTermTip.h`
+  exports 318 times and sends the class nothing the database attributes to
+  it, so it was not counted, and `iTermTip` printed light with four outside
+  users. A port must move those constants, which changes that file.
+- **Meanwhile:** an author greps the unit's exported constants and
+  functions as well; `iTermTip` goes to the full path.
+- **Found:** 2026-11-27, authoring `iTermTip`.
+
+## A “<” in a tip of the day is shown as “&lt;”
+
+In the app and still present: [bugs/3-latent-tip-of-the-day-double-escapes-less-than.md](bugs/3-latent-tip-of-the-day-double-escapes-less-than.md) (checked 2026-11-27).
+
+## Code with no users, found while porting
+
+- `iTermIntegerNumberFormatter` (in `iTermIntegerNumberFormatter.m`) is
+  used nowhere; the app delegate imports its header and does not use it.
+  `iTermSaneNumberFormatter`, in the same file, is used.
+- `RoundedRectView` draws nothing: it installs a clear layer, and
+  `ToastWindowController` creates one only to carry a content size; it is
+  never added to a view. Its port renamed it `iTermTransparentLayerView`.
+- `-[iTermWebSocketFrame closeFrameCode]` and `-closeFrameReason` have no
+  caller. Their bodies are also wrong: each “assertion” is an assignment,
+  `self.opcode = iTermWebSocketOpcodeConnectionClose`, so it never fires
+  and turns any frame it is asked about into a close frame. Whoever revives
+  them writes `==` (see the entry above).
+- `-[iTermFileDescriptorMultiClientChild terminationStatus]` has no reader.
+  Its getter is also wrong: it copies the `int` wait status into a
+  `__block BOOL`, so it returns 0 or 1 on Apple silicon and only the low
+  byte on Intel (an exit status of 1, wait status 256, reads as 0).
+  Whoever revives it makes the local an `int`.
+- `-[iTermDirectoryTree removePath:]` has no caller. Its body is also
+  wrong: `-[iTermDirectoryTreeNode removePathWithParts:]` recurses only
+  while more than one part remains, so the node for the last component is
+  never decremented and stays in its parent's children when the parent
+  survives (after adding `/a/b` and `/a/c` and removing `/a/b`, `b` is
+  still under `a` with a count of 1), and a one-component path is never
+  removed. Whoever revives it recurses for the last part as well.
+- **Found:** 2026-11-27. The owner was told of the first two; ports keep
+  them. The last three come from the entries above and from reading
+  `iTermDirectoryTree`, all checked on 2026-11-27.
+
+## The classifier's “stores nothing” condition checks only the unit itself
+
+- **Where:** `tools/swift_migration/qualify_unit.py`, light condition 7
+  (the unit stores nothing).
+- **What:** the condition looks only at the unit's own code for encoding,
+  archiving and user defaults. `iTermKeyLabels` passed it and printed light,
+  but its user `PTYSession` saves the objects' dictionary form in the
+  arrangement under “Key Labels Stack” and reads it back, so a change to
+  that form changes what saved arrangements hold.
+- **Meanwhile:** an author checks how a data object's dictionary or archive
+  form is used by its users (search the unit's dictionary and archive
+  methods' callers for arrangement, user defaults and archiver writes)
+  before accepting the light path.
+- **Found:** 2026-11-27, authoring `iTermKeyLabels`.

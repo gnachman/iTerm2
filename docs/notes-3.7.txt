@@ -146,8 +146,19 @@ Improvements:
   it later, use “Restore windows to same
   Spaces” in Settings > General > Startup.
   Issue 13240.
+- The Python API can read and change many more
+  settings, including AI, tmux, window
+  placement, and Quick Look settings, plus
+  about a hundred more profile settings such as
+  window type, hotkey window, logging, and HDR
+  options. Requires version 2.32 of the iterm2
+  Python module.
 
 Bug Fixes:
+- In the Python API, changing a profile setting
+  that takes a named value, such as the cursor
+  type, with an async_set method raised an
+  error. Fixed.
 - With tabs on the left or right, clicking a
   collapsed tab group at the end of the tab bar
   moved the window instead of expanding the
@@ -315,3 +326,27 @@ Bug Fixes:
   “Session Restarted” banner, could stay a
   brown block after the image became
   available.
+- The background helper that reports git status
+  could crash when several tabs checked git at
+  once, so the git information in the status
+  bar and tab titles stopped updating until it
+  restarted. Issue 13250.
+- When a session ends, its text and the Session
+  Ended line no longer jump to the bottom of the
+  window if you turned off the offer to restart
+  the session.
+- Cmd-clicking a file name with a line number
+  now opens Zed at that line when Zed is the
+  file’s default app. Before, Zed opened the
+  file at the top. Thanks to Neel (NeelChotai)
+  for the fix.
+- Full-screen programs such as Claude Code ran
+  slower, and iTerm2 could wrongly offer to turn
+  off triggers, when the profile had a trigger
+  that matches an event such as Job Started (the
+  Claude Code integration adds some). Issue
+  13245. Thanks to Rodrigo Gomes da Silva
+  (rodrigogs) for the fix.
+- The Help button in the offer to turn off slow
+  triggers closed the offer instead of opening
+  the help page.

@@ -202,8 +202,15 @@ Work out which stage the migration is in, in this order:
 3. **After the two pilot units** the owner allowed further units on
    2026-11-22 ([lifecycle.md §3](lifecycle.md)): one unit in the night of
    2026-11-23, then the ordinary usage rule.
-4. **Further units.** Resume anything in `claims.md` that is in progress
-   and not parked. Otherwise take the next eligible unit. When
+4. **Further units.** Bugs come first: fix the bugs in `bugs/`, one at a
+   time in file-name order, by [README.md §5](README.md), “Fixing a bug in
+   the app”, and take a unit only when `bugs/` is empty or every remaining
+   bug is waiting on the owner (the owner, 2026-11-27: “Do bugs first, then
+   ports”); by day too, unless the owner asks for something else (the
+   migration's reading, asked in [owner-queue.md](owner-queue.md)). A bug
+   whose fix would change a file under a reserved prefix waits on the
+   owner. Then
+   resume anything in `claims.md` that is in progress and not parked. Otherwise take the next eligible unit. When
    `tmp/classify.txt` lists eligible trivial units, prefer a
    batch of them (the owner, 2026-11-24: “Batch trivial units”), smallest
    body first (chosen by the migration and confirmed by the owner on
@@ -516,7 +523,8 @@ Give it:
 - The dossier (`units/<name>.md`), or for step 2, the instruction to write
   it within its cap ([lifecycle.md §4](lifecycle.md)); a trivial unit has
   none, and gets its `qualify_unit.py` output instead.
-- `traps.md` and `bugs.md`.
+- `traps.md` and `bugs.md`, and for a `fix` commit the bug's file in
+  `bugs/`.
 - The exact scope: which files and which methods, and what must not be
   touched.
 - If it builds or tests, its lane: the path `lane_clone.py acquire`
@@ -783,6 +791,6 @@ After the pilot:
 | A rule in these files seems wrong | Do not work around it. Queue it under "Rule changes proposed" with the evidence, park what depends on it, and continue elsewhere; a check that is merely defective is the row above |
 | A unit turns out to be a hot path | Add it to `hot-paths.md` with the reason, drop the claim, and move on |
 | The clone's commits, not taken into the owner's checkout, could not be rebased onto `origin/master` (a conflict, a merge commit, a submodule pointer change), or the upstream was force-pushed | The refresh refuses before the night starts (exit 9), leaves the clone as it was, keeps its old tip under `refs/nightly/pre-rebase/`, and says in the log which commit and which files; nothing runs. The owner rebases the clone by hand or sets its commits aside with `nightly_clone.sh reset`. When replaying the clone's commits conflicts and the owner's checkout holds them (its refs or reflogs reach the clone's tip), the refresh resets the clone to `origin/master` by itself instead (`taken-by-owner`); otherwise unpushed commits are kept or rebased as before; after a force-push, `nightly_clone.sh reset --accept-rewritten-upstream` |
-| A crash report is attributed to a port | Log it in `bugs.md`, stop porting that unit's dependents, and queue it for the owner with the attribution |
+| A crash report is attributed to a port | Record it as its own file in `bugs/` ([README.md §7](README.md), “Bugs in the app”), stop porting that unit's dependents, and queue it for the owner with the attribution |
 | A subagent does something outside its instructions (commits, pushes, edits the process files) | Undo what can be undone locally, record it in the report, and queue it for the owner |
 | Usage cannot be read | Stop. Do not guess |

@@ -130,7 +130,6 @@
 #import "iTermTheme.h"
 #import "iTermToolSnippets.h"
 #import "iTermToolbeltView.h"
-#import "iTermTouchBarButton.h"
 #import "iTermUserDefaults.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope+Session.h"

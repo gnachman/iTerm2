@@ -20,8 +20,9 @@ orchestrator's reading of the owner's words. A preferences view controller
 outside these prefixes is queued in owner-queue.md and not ported until
 the owner answers.
 
-A commit of the migration does not port or restructure a file under a
-reserved prefix. Touching one only as far as another unit's port forces,
+A commit of the migration does not port, restructure or fix a file under
+a reserved prefix; a bug in `bugs/` whose fix would change one waits on
+the owner ([README.md §5](README.md), “Fixing a bug in the app”). Touching one only as far as another unit's port forces,
 such as removing an import of a deleted header, is allowed, and that
 commit's message says so.
 

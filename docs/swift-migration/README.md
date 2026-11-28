@@ -10,7 +10,7 @@ task.
 A unit takes one of three paths ([lifecycle.md §3](lifecycle.md)), which
 `qualify_unit.py` prints: the trivial path for very small code (no
 dossier, one commit holding tests and port, one review), the light path (a
-short dossier, a `test` and a `port` commit, one review), or the full path
+short dossier, one commit holding tests and port, one review), or the full path
 of [lifecycle.md §1](lifecycle.md). Light and full units pass the whole
 suite before their code commits; the sanitizer suites (one combined run
 that is also one more plain whole suite, and the thread run), the `x86_64`
@@ -60,6 +60,7 @@ file it appears in.
 | [plan.md](plan.md) | The order of work, and what the pilot must validate | Choosing what to do next |
 | [baseline.md](baseline.md) | Measurements of the codebase taken when the process was written | Background |
 | `decisions.md` | The dated record of decisions and their reasons | Before proposing to change a rule |
+| `bugs/` | Bugs in the app that still exist, one file per bug, named by severity (section 7, “Bugs in the app”) | The orchestrator, before choosing work; anyone who finds a bug in the app |
 | [owner-queue.md](owner-queue.md) | Items that need the owner's attention | The orchestrator, at the start of each night; the owner, each morning |
 
 ## 2. Goals and scope
@@ -130,8 +131,8 @@ Intermediate measures, also from the inventory script and never stored:
 - Every remaining `SWIFT-MIGRATION-UNSAFE(hot)` marker names the measurement
   that justifies it ([translation-rules.md §8](translation-rules.md)).
 - No file is compiled without ARC.
-- `claims.md` and `units/` are empty, and `bugs.md` holds only entries the
-  owner has chosen to leave.
+- `claims.md` and `units/` are empty, and `bugs/` and `bugs.md` hold only
+  entries the owner has chosen to leave.
 
 ## 3. Decisions already made
 
@@ -157,8 +158,11 @@ the dated record with reasons; this section states the rules that follow.
   path, a short one on the light path, and on the full path one within a
   cap tied to its size ([lifecycle.md §3 and §4](lifecycle.md); the owner,
   2026-11-24).
-- Bugs found while building tools or porting are recorded in `bugs.md` and
-  not fixed, unless one blocks a port (changed 2026-11-21).
+- Bugs found while building tools or porting are recorded and not fixed in
+  the work that found them, unless one blocks a port (changed 2026-11-21):
+  a bug in the app in its own file in `bugs/`, anything else in `bugs.md`
+  (section 7). The bugs in `bugs/` are then fixed one at a time, before
+  any unit, by the procedure in section 5 (the owner, 2026-11-27).
 - Large files are ported a few methods at a time, not in one commit
   ([lifecycle.md §2](lifecycle.md)).
 - Hot paths are left until last. They need individual attention and must not
@@ -255,8 +259,8 @@ the dated record with reasons; this section states the rules that follow.
 
 **Translate or improve, never both.** A commit that moves code to Swift
 reproduces what the Objective-C did, including its bugs. A bug found while
-porting is written down (section 7) and fixed later, with the owner's word,
-in its own commit with a failing test first. Mixing the two makes a
+porting is written down (section 7) and fixed later, in its own `fix`
+commit with a failing test first (section 5, “Fixing a bug in the app”). Mixing the two makes a
 regression impossible to attribute. The one allowed addition, a thread
 assertion, is in [concurrency.md §9](concurrency.md).
 
@@ -329,7 +333,7 @@ unit and the kind, for example `Swift-Port: iTermFooController kind=port`.
 | `decxx` | Replaces C++ in an Objective-C++ file with C or Foundation and renames it to `.m` ([objcxx.md](objcxx.md)) | None |
 | `explicit` | Makes implicit conversions in Objective-C explicit and fixes strict-warning hits that do not change behavior ([warnings.md](warnings.md)) | None; generated code should be identical |
 | `port` | Adds Swift and deletes the Objective-C it replaces, in the same commit: a whole small file, or a few methods of a large one ([lifecycle.md §2](lifecycle.md)) | None |
-| `fix` | Fixes one logged bug, test first | Yes, the fix |
+| `fix` | Fixes one bug from `bugs/`, test first (below, “Fixing a bug in the app”) | Yes, the fix |
 | `improve` | Stage two change to already-ported Swift | Only as stated in the message |
 
 The gate runs on every commit:
@@ -341,7 +345,7 @@ The gate runs on every commit:
 3. The plain whole suite passes, run by
    `tools/swift_migration/whole_suite.sh` under the whole-suite lock (a
    stall is exit 124; [orchestration.md §3](orchestration.md)): on every
-   full-path commit but a `dossier` commit, on the light path's `port`
+   full-path commit but a `dossier` commit, on the light path's
    commit, and on `tool`, `fix` and `improve` commits that change app or
    test code (a commit that changes only scripts or documents is gated by
    its own tests: the migration's reading, 2026-11-24); never on the
@@ -396,6 +400,64 @@ classes' type encodings with `otool -ov`.
 
 Live harnesses named in `CLAUDE.md` (AI chat, attachments, Python runtime)
 still apply when a unit touches those areas.
+
+**Fixing a bug in the app.** The owner, 2026-11-27: “After that is built,
+I want you to also fix bugs. Pick them in order by number. The process:
+1. Write a failing test, verify it fails 2. Fix the bug 3. Verify test
+passes 4. Have a subagent review the fix for correctness 5. If there are
+nontrivial findings, go to step 1”; and “Normally bug fixing should be
+part of the nightly job. Do bugs first, then ports.” Around his five
+steps, the migration's existing rules add only this:
+
+- **Order.** The files of `bugs/` in file-name order, which is by
+  severity number and then name, one bug at a time. A session fixes the
+  bugs first and ports units only after them, unless `bugs/` is empty or
+  every remaining bug is waiting on the owner
+  ([orchestration.md §2](orchestration.md)). By day the same order holds
+  unless the owner asks for something else (the migration's reading; asked
+  in [owner-queue.md](owner-queue.md)). A bug whose fix would change a
+  file under a reserved prefix ([reserved.md](reserved.md)), or that was
+  parked ([workflow.md §2](workflow.md)), gets a
+  `**Waiting on the owner:**` line saying why, and the next bug is taken.
+- **One commit per bug**, kind `fix`, with the trailer
+  `Swift-Port: <the bug file's name without .md> kind=fix`. It holds the
+  test, the fix, the deletion of the bug's file, the `bugs.md` line that
+  pointed to the file changed to say it was fixed (if there is one), and a
+  release note when `docs/release-notes-guidelines.md` calls for one: a
+  bug a user could notice in a feature that already shipped; never a
+  latent bug, a Development-only crash, or a feature new in this release.
+  `CLAUDE.md` requires release notes after a bug fix and reading the
+  guidelines first; the Companion app's notes go in
+  `Companion/docs/notes.txt`.
+- **Steps 1 and 3.** The test is written first and seen failing, for the
+  bug's own reason, against the unfixed code, then seen passing after the
+  fix, unchanged. It follows the project's rules for tests: deterministic,
+  nothing that depends on timing or on the machine.
+- **Step 4.** The reviewer is a fresh `migration-reviewer`, never the
+  author, given the bug's file, the test, the diff and the logs of the
+  failing and then passing runs. It checks that the test fails for the
+  right reason, that the fix is correct and complete for every input the
+  bug's file describes and for neighbours of the same shape in the same
+  function, and that nothing else changed.
+- **Step 5.** A nontrivial finding sends the bug back to step 1, a failing
+  test for what was missed, with the same author and then a new reviewer.
+  Trivial findings (wording, a comment) are fixed without another round.
+  The round cap and parking of [workflow.md §2](workflow.md) apply.
+- **The gate** is the one every commit that changes app code has (above):
+  the build with no new warning, the bug's tests, and the plain whole
+  suite. The sanitizer suites and the Intel build stay with the session's
+  closing checks.
+- **A fix that changes behavior someone may rely on** (a default, an
+  escape sequence's documented behavior, a saved format) is put to the
+  owner first through [owner-queue.md](owner-queue.md) and not landed on
+  the orchestrator's judgment (`CLAUDE.md`: “Don't change defaults
+  silently”). The bug stays in `bugs/` with a line beginning
+  `**Waiting on the owner:**` that says what is asked, and the next bug is
+  taken.
+- **A bug that is not one**, or is already fixed, has its file deleted in
+  a commit that gives the reason in its message.
+- **Translate or improve, never both** (section 4): a fix is never mixed
+  into a port commit, and a port never fixes a bug it finds; it files it.
 
 A commit that cannot pass the gate is not committed. Do not disable a test,
 loosen a lint, or weaken an assertion to get through. Ask the owner,
@@ -479,8 +541,14 @@ No agent remembers what another did. The repository is the memory.
 - `traps.md`: the trap catalogue. One entry per pattern: what the Objective-C
   does, what a naive port does, what to write. [translation-rules.md](translation-rules.md) is its seed. Every
   unit that finds a new trap adds it before closing.
-- `bugs.md`: bugs found and deliberately preserved, each with file, method,
-  description, and how to reproduce. Removed when fixed.
+- `bugs.md`: the migration's own ledger: defects in its tools, flaky, slow
+  and disabled tests, notes about the machine and the test hosts,
+  unconfirmed suspicions, findings the owner chose to leave, and code with
+  no users, each with where, what, how to reproduce, and what is done
+  meanwhile. An entry whose bug is in the app and has a file in `bugs/`
+  keeps its heading and points to the file.
+- `bugs/`: one file per bug in the app that still exists, under the rule
+  below, “Bugs in the app”.
 - [orchestration.md](orchestration.md) §9: the Phase 0 checklist, since the
   state of Phase 0 cannot be derived from the tree.
 - `claims.md`: units in progress, with the date and a one-line state, kept by
@@ -497,8 +565,60 @@ No agent remembers what another did. The repository is the memory.
 - `reflective-sites.md`: the registry from [hidden-callers.md §2](hidden-callers.md).
 - `units/<name>.md`: the dossier for a unit in progress (none on the
   trivial path). Its changes ride
-  in the unit's commits; the closing commit deletes it (on the light path,
-  the port commit). The history keeps it.
+  in the unit's commits; the closing commit deletes it. The history keeps it. On the light path
+  the dossier is written for the reviewer and never committed: the unit's
+  one commit leaves it out.
+
+**Bugs in the app.** The owner, 2026-11-27, on being shown that
+`bugs.md` had grown to 1,600 lines of which about a dozen entries
+mattered: “I want you to make a folder for bugs, and in it create one file
+per bug. Don't include items that are not worth my attention. Keep it
+always up to date.” The rule:
+
+- **What goes in `bugs/`.** A real bug in the app that still exists in the
+  tree and is worth the owner's attention: a crash; a memory-safety
+  problem; wrong behavior a user can see; or a latent hazard that a small
+  future change would turn into one of those. The source is read to
+  confirm the bug before its file is written.
+- **What does not** (it goes to `bugs.md`, or nowhere): defects in the
+  migration's own tools; flaky, slow or disabled tests; notes about the
+  machine or the test hosts; suspicions nobody has shown to be real;
+  anything the owner has declined to change, as `decisions.md` and
+  `bugs.md` record (the app's waits with no deadline: “I wouldn't change
+  it”; thread parking while the screen is locked: “leave it”); dead code
+  and unused declarations; and differences from another terminal that are
+  arguably intended.
+- **The file.** Named `<severity>-<short-kebab-description>.md`, the
+  severity being `1-crash`, `2-wrong-behavior` or `3-latent`, so that the
+  folder sorts by severity; the names are the index, and the folder has no
+  README. At most about 40 lines of plain, complete sentences that a reader
+  who knows the app but not the migration can follow, with no process
+  terms and no commit hashes. A bug real only on Intel, or only in
+  Development builds, says so in its first lines. Sections, in this order:
+  a `#` title, one sentence saying what goes wrong; `**Where:**` (file and
+  function, line numbers only as “near line N”); `**What happens:**`;
+  `**Why:**`; `**How to see it:**` (or “Seen by reading the code; not
+  run.”); `**Suggested fix:**`; `**Found:**` (the date and how);
+  `**Checked against the tree:**` (the date and what was looked at). A bug
+  that waits on the owner (section 5, “Fixing a bug in the app”) has a
+  line beginning `**Waiting on the owner:**`, saying what is asked or why,
+  directly under the title.
+- **Who records it, and when.** Whoever finds it, in the same commit as
+  the work that found it: an author writes the file and stages it; a
+  reviewer names the bug in its report, and the orchestrator has the
+  author write the file into the same change.
+- **When it goes.** The file is deleted in the commit that fixes the bug
+  (section 5, “Fixing a bug in the app”), or by the orchestrator, in the
+  session's document commit, as soon as a fix is seen upstream; a
+  `bugs.md` entry that pointed to it then says, in one line, that the bug
+  was fixed.
+- **Kept current.** At the session's closing checks
+  ([lifecycle.md §5](lifecycle.md)) the orchestrator takes every file in
+  `bugs/` whose named source file changed since the file's “Checked
+  against the tree” date (`git log --since=<date> -- <source file>`),
+  reads the code again, and updates the file (its location, its
+  description, the date) or deletes it; the changes go in the session's
+  document commit.
 
 **The project skill** `.claude/skills/swift-migration-unit/SKILL.md`
 encodes the unit lifecycle so that each orchestrator follows the same

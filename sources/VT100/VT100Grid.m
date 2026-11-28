@@ -2711,6 +2711,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                 c = '>';
             }
             if (line[x].complexChar) c = 'U';
+            if (line[x].image) c = 'I';
             [dump appendFormat:@"%c", c];
         }
         if (y != size_.height - 1) {

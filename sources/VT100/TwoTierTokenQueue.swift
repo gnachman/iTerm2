@@ -113,7 +113,9 @@ class TwoTierTokenQueue {
                 break
             }
         }
-        if garbage.count >= 16 {
+        // Batch the cleanup while output is flowing, but don't let a session that goes quiet hold
+        // on to its last batch of tokens until it has more output.
+        if garbage.count >= 16 || (!garbage.isEmpty && isEmpty) {
             let arrays = garbage
             garbage = []
             TokenArray.destroyQueue.async {

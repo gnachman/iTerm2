@@ -153,6 +153,16 @@ of an as or is cast are reported too, even in a property's type: Swift does
 not allow an implicitly unwrapped type there, so such code does not compile.
 An implicitly unwrapped @IBOutlet is reported by iuo-outlet instead.
 
+The lint unsafe-pointer-unmarked does not report a pointer type in the
+signature of a declaration marked override (func, init, subscript or var):
+its parameter list without default argument values, its result or property
+type, and its where clause, up to the opening brace. The body, accessors and
+default argument values are linted as usual. Tokens do not say where the
+overridden member is declared, so an override of the app's own Swift or
+Objective-C member is exempt too; the pointer is already in that member's
+declaration. An @objc method that witnesses a protocol requirement is not
+exempt, because its conformance may be declared in another file.
+
 The lint file-scope-var (decisions.md, 2026-11-20) reports every var declared
 at file scope, stored or computed: a var keyword outside every bracket (no
 enclosing type body, function, closure, accessor, parenthesis or bracket; a
@@ -266,7 +276,8 @@ DECIDED_NOT_IMPLEMENTED = (
 LINTS = OrderedDict([
     ('unsafe-pointer-unmarked',
      'phase0.md section 6; translation-rules.md section 8: an unsafe pointer API needs '
-     '"// SWIFT-MIGRATION-UNSAFE(hot): <reason>" or "// SWIFT-MIGRATION-SHIM: <reason>" on the line above'),
+     '"// SWIFT-MIGRATION-UNSAFE(hot): <reason>" or "// SWIFT-MIGRATION-SHIM: <reason>" on the line above, '
+     'except a pointer type in the signature of an override'),
     ('force-unwrap', 'phase0.md section 6: no "!" force unwrap'),
     ('forced-cast', 'phase0.md section 6: no "as!"'),
     ('forced-try', 'phase0.md section 6: no "try!"'),
@@ -422,6 +433,10 @@ DECL_MODIFIERS = frozenset([
     'indirect', 'optional', 'prefix', 'postfix', 'infix', 'package'])
 NOT_A_TYPE_NAME_AFTER_CLASS = DECL_MODIFIERS | frozenset(['func', 'var', 'let', 'subscript', 'init', 'deinit',
                                                           'typealias'])
+# Words that begin a declaration and cannot appear in a type, so that one ends the signature of a declaration
+# without a body.
+SIGNATURE_ENDING_WORDS = NOT_A_TYPE_NAME_AFTER_CLASS | TYPE_DECL_KEYWORDS | frozenset([
+    'let', 'deinit', 'associatedtype', 'actor', 'case', 'import', 'operator', 'precedencegroup', 'macro'])
 CLOSURE_SIGNATURE_FOLLOWERS = frozenset(['in', '->', 'throws', 'rethrows', 'async'])
 # A word after one of these is a name being declared, not a keyword.
 DECLARING_WORDS = frozenset(['let', 'var', 'func', 'case'])
@@ -863,8 +878,123 @@ class _FileLinter(object):
 
     # -- single tokens -----------------------------------------------------
 
+    def override_signature_tokens(self):
+        """The indices of the tokens in the signature of each declaration marked override (func, init, subscript,
+        var): its parameter list without default argument values, its effects, its result or property type and
+        its where clause. The signature ends at the declaration's opening brace (or at "=", ";" or a closing
+        brace before one); the body, accessors and observers are not part of it.
+
+        An override restates its superclass member's signature, which the compiler requires to match. A pointer
+        type there was already in that member's declaration: an SDK declaration, Objective-C code, or Swift that
+        is linted where it is declared. This is read from tokens, and tokens do not say where the overridden
+        member is declared, so every override is treated the same way. An @objc method that witnesses a protocol
+        requirement is not exempt: whether it does depends on conformances that may be declared in other files."""
+        out = set()
+        toks = self.toks
+        for k, t in enumerate(toks):
+            if not self.is_ident(k, 'override') or self.lx.text[t.start] == '`' or \
+                    not self.can_start_declaration(k):
+                continue
+            j = k + 1
+            while j < len(toks):
+                if toks[j].kind == 'attr':
+                    j += 1
+                    if self.is_punct(j, '('):
+                        j = self.matching_close(j) + 1
+                elif toks[j].kind == 'ident' and toks[j].text in DECL_MODIFIERS:
+                    j += 1
+                    if self.is_punct(j, '(') and self.text(j + 1) == 'set' and self.is_punct(j + 2, ')'):
+                        j += 3
+                else:
+                    break
+            if not (self.is_ident(j, 'func') or self.is_ident(j, 'init') or self.is_ident(j, 'subscript') or
+                    self.is_ident(j, 'var')):
+                continue
+            # The name of a func or var is declared here, so it is not read as a word that starts a declaration.
+            j += 2 if toks[j].text in ('func', 'var') else 1
+            while j < len(toks):
+                tok = toks[j]
+                if tok.kind == 'punct' and tok.text in ('{', '}', ';') or tok.kind == 'op' and tok.text == '=':
+                    break
+                # A requirement in a protocol has no body; the next declaration ends its signature.
+                if tok.kind == 'ident' and tok.text in SIGNATURE_ENDING_WORDS:
+                    break
+                if tok.kind == 'punct' and tok.text == '(':
+                    close = self.matching_close(j)
+                    out.update(self.parameter_list_type_tokens(j, close))
+                    j = close + 1
+                    continue
+                if tok.kind == 'punct' and tok.text == '[':
+                    close = self.matching_close(j)
+                    out.update(range(j, close + 1))
+                    j = close + 1
+                    continue
+                out.add(j)
+                j += 1
+        return out
+
+    def can_start_declaration(self, k):
+        """Whether the token at k is where a declaration or one of its modifiers can be. It can be after "{", "}"
+        or ";", after an attribute or a modifier (with its arguments, as in @objc(name) or private(set)), or first
+        on its line. It cannot be after an operator (including "="), "(", "," or ".", which make it part of an
+        expression or a list even on a later line."""
+        if k == 0:
+            return True
+        prev = self.toks[k - 1]
+        if prev.kind == 'op' or prev.kind == 'punct' and prev.text in ('(', ',', '.'):
+            return False
+        if prev.kind == 'punct' and prev.text in ('{', '}', ';') or prev.kind == 'attr':
+            return True
+        if prev.kind == 'ident' and prev.text in DECL_MODIFIERS:
+            return True
+        if prev.kind == 'punct' and prev.text == ')':
+            opener = self.matching_open(k - 1)
+            if opener > 0 and (self.kind(opener - 1) == 'attr' or
+                               self.kind(opener - 1) == 'ident' and self.text(opener - 1) in DECL_MODIFIERS):
+                return True
+        return self.lines[k - 1] < self.lines[k]
+
+    def matching_open(self, k):
+        """Index of the token that opens the bracket closed at k (brackets balance: lint_source checked)."""
+        depth = 0
+        for j in range(k, -1, -1):
+            t = self.toks[j]
+            key = t.text if t.kind == 'punct' else t.kind
+            if key in (')', ']', '}', 'interp_close'):
+                depth += 1
+            elif key in ('(', '[', '{', 'interp_open'):
+                depth -= 1
+                if depth == 0:
+                    return j
+        it_never = 'brackets were checked by lint_source'
+        raise AssertionError(it_never)
+
+    def parameter_list_type_tokens(self, open_index, close_index):
+        """The tokens of the bracketed list from open_index to close_index except each default value: from an "="
+        at the list's own depth to the next "," at that depth or to the closing bracket."""
+        out = set()
+        j = open_index + 1
+        in_default = False
+        while j < close_index:
+            tok = self.toks[j]
+            if tok.kind == 'punct' and tok.text in ('(', '[', '{'):
+                close = self.matching_close(j)
+                if not in_default:
+                    out.update(range(j, close + 1))
+                j = close + 1
+                continue
+            if tok.kind == 'op' and tok.text == '=':
+                in_default = True
+            elif tok.kind == 'punct' and tok.text == ',':
+                in_default = False
+            elif not in_default:
+                out.add(j)
+            j += 1
+        return out
+
     def lint_tokens(self):
         toks = self.toks
+        override_signature = self.override_signature_tokens()
         for k, t in enumerate(toks):
             if t.kind == 'kw':
                 if t.text == 'as!':
@@ -882,6 +1012,8 @@ class _FileLinter(object):
             if w in UNSAFE_NAMES or w.startswith(UNSAFE_PREFIX) or (w in UNSAFE_MEMBERS and self.after_dot(k)):
                 line = self.lines[k]
                 form = self.unsafe_marker_lines.get(line - 1)
+                if form is None and k in override_signature:
+                    continue
                 if form is None:
                     self.add(t, 'unsafe-pointer-unmarked',
                              '%s without "// SWIFT-MIGRATION-UNSAFE(hot): <reason>" or '

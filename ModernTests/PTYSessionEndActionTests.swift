@@ -52,6 +52,13 @@ final class PTYSessionEndedMessageTests: XCTestCase {
     private let width: Int32 = 40
     private let height: Int32 = 10
 
+    override func setUp() {
+        super.setUp()
+        let saved = iTermAdvancedSettingsModel.suppressRestartAnnouncement()
+        iTermAdvancedSettingsModel.setSuppressRestartAnnouncement(false)
+        addTeardownBlock { iTermAdvancedSettingsModel.setSuppressRestartAnnouncement(saved) }
+    }
+
     private func makeSession() -> PTYSession {
         let session = PTYSession(synthetic: false)!
         let screen = session.screen
@@ -189,5 +196,23 @@ final class PTYSessionEndedMessageTests: XCTestCase {
         let expected = lines.map { $0 + String(repeating: ".", count: Int(width) - $0.count) }
         XCTAssertEqual(Array(dump.prefix(lines.count)), expected,
                        "Existing output is kept in order")
+    }
+
+    // Issue 13246: with the restart offer turned off, nothing covers the top rows, so the
+    // output and the message must stay where they were instead of jumping to the bottom.
+    func testContentStaysPutWhenTheAnnouncementIsSuppressed() {
+        iTermAdvancedSettingsModel.setSuppressRestartAnnouncement(true)
+        let session = makeSession()
+        append(["hello-there"], to: session)
+        endSession(session)
+
+        let lines = screenLines(session)
+        XCTAssertEqual(lines.count, Int(height))
+        XCTAssertTrue(lines[0].hasPrefix("hello-there"),
+                      "Output should stay on the first row: \(lines)")
+        XCTAssertTrue(lines[1].contains("Session Ended"),
+                      "Message should follow the output: \(lines)")
+        XCTAssertTrue(lines.suffix(from: 2).allSatisfy { $0.allSatisfy { $0 == "." } },
+                      "Rows below the message should be blank: \(lines)")
     }
 }

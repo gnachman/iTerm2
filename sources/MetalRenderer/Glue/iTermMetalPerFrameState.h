@@ -38,6 +38,10 @@ NS_ASSUME_NONNULL_BEGIN
                                         colorMap:(nullable iTermColorMap *)colorMap
                                       colorSpace:(NSColorSpace *)colorSpace
                                        fontTable:(nullable iTermFontTable *)fontTable;
+
+// A context large enough to rasterize DECDWL and DECDHL glyphs, created on first use and kept
+// until the cell size changes. Called on the main thread only for frames with a double-width row.
+- (CGContextRef _Nullable)metalPerFrameStateDoubleWidthContext;
 @end
 
 @interface iTermMetalPerFrameState : NSObject<
@@ -53,7 +57,6 @@ NS_ASSUME_NONNULL_BEGIN
                           screen:(VT100Screen *)screen
                             glue:(id<iTermMetalPerFrameStateDelegate>)glue
                          context:(CGContextRef)context
-              doubleWidthContext:(CGContextRef)doubleWidthContext
          attributedStringBuilder:(iTermAttributedStringBuilder *)attributedStringBuilder
                   rowOutputCache:(nullable iTermRowOutputCache *)rowOutputCache NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

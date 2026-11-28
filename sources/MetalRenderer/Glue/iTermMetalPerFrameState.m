@@ -167,6 +167,7 @@ typedef struct {
 
 @implementation iTermMetalPerFrameState {
     CGContextRef _metalContext;
+    // For DECDWL and DECDHL glyphs. NULL unless this frame has a double-width row.
     CGContextRef _metalContextDoubleWidth;
     // Nil unless the row-output cache is enabled. Persists across frames (owned by
     // the glue), so on a hit we can skip rebuilding an unchanged row.
@@ -182,7 +183,6 @@ typedef struct {
                           screen:(VT100Screen *)screen
                             glue:(id<iTermMetalPerFrameStateDelegate>)glue
                          context:(CGContextRef)context
-              doubleWidthContext:(CGContextRef)doubleWidthContext
          attributedStringBuilder:(iTermAttributedStringBuilder *)attributedStringBuilder
                   rowOutputCache:(nullable iTermRowOutputCache *)rowOutputCache {
     assert([NSThread isMainThread]);
@@ -195,15 +195,26 @@ typedef struct {
         _rows = [NSMutableArray array];
         _startTime = [NSDate timeIntervalSinceReferenceDate];
         _metalContext = CGContextRetain(context);
-        if (doubleWidthContext) {
-            _metalContextDoubleWidth = CGContextRetain(doubleWidthContext);
-        }
         _attributedStringBuilder = attributedStringBuilder;
         [textView performBlockWithFlickerFixerGrid:^{
             [self loadAllWithTextView:textView screen:screen glue:glue];
         }];
+        if ([self hasDoubleWidthRow]) {
+            // The glue keeps the context across frames. Retain it because the glue may replace it
+            // while this frame is still drawing.
+            _metalContextDoubleWidth = CGContextRetain([glue metalPerFrameStateDoubleWidthContext]);
+        }
     }
     return self;
+}
+
+- (BOOL)hasDoubleWidthRow {
+    for (iTermMetalPerFrameStateRow *row in _rows) {
+        if (iTermLineAttributeIsDoubleWidth(row->_screenCharLine.metadata.lineAttribute)) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (void)dealloc {
@@ -2494,10 +2505,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     [iTermCharacterSourceAttributes characterSourceAttributesWithThinStrokes:glyphKey->thinStrokes
                                                                         bold:bold
                                                                       italic:italic];
-    CGContextRef ctx = _metalContext;
-    if (isDoubleWidth && _metalContextDoubleWidth) {
-        ctx = _metalContextDoubleWidth;
-    }
+    CGContextRef ctx = (isDoubleWidth && _metalContextDoubleWidth) ? _metalContextDoubleWidth : _metalContext;
     iTermCharacterSource *characterSource =
     [[iTermCharacterSource alloc] initWithFontID:glyphKey->payload.decomposed.fontID
                                         fakeBold:glyphKey->payload.decomposed.fakeBold
@@ -2561,10 +2569,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
             string = [string stringByAppendingString:successorString];
         }
     }
-    CGContextRef ctx = _metalContext;
-    if (isDoubleWidth && _metalContextDoubleWidth) {
-        ctx = _metalContextDoubleWidth;
-    }
+    CGContextRef ctx = (isDoubleWidth && _metalContextDoubleWidth) ? _metalContextDoubleWidth : _metalContext;
     iTermCharacterSource *characterSource =
     [[iTermCharacterSource alloc] initWithCharacter:string
                                          descriptor:descriptor

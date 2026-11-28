@@ -11,8 +11,8 @@
 #import "iTermStatusBarContainerView.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
-#import "iTermStatusBarTightlyPackedLayoutAlgorithm.h"
 #import "iTermStatusBarStableLayoutAlgorithm.h"
+#import "iTerm2SharedARC-Swift.h"
 
 const CGFloat iTermStatusBarViewControllerMargin = 10;
 

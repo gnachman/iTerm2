@@ -262,6 +262,13 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
     }
 }
 
++ (BOOL)evaluatesTrigger:(Trigger *)trigger {
+    // Event triggers are fired by iTermEventTriggerEvaluator. Kept here, they would still be tried
+    // against every line of output, and their presence alone makes clearTriggerLine build the
+    // line's string.
+    return !trigger.isBrowserTrigger && !iTermTriggerMatchTypeIsEvent(trigger.matchType);
+}
+
 - (void)loadFromProfileArray:(NSArray *)array {
     DLog(@"%@", [NSThread callStackSymbols]);
     const BOOL mayNeedReset = !_triggers.count && !_expect.maybeHasExpectations;
@@ -287,7 +294,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
         table[dict] = [triggers arrayByRemovingFirstObject];
         return triggers[0];
     }] filteredArrayUsingBlock:^BOOL(Trigger *trigger) {
-        return !trigger.isBrowserTrigger;
+        return [PTYTriggerEvaluator evaluatesTrigger:trigger];
     }];
     if (mayNeedReset && _triggers.count > 0) {
         DLog(@"loadFromProfileArray: Reset triggerLineNumber");

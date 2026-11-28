@@ -383,14 +383,14 @@ static NSString *const iTermNaggingControllerRestoreIconAndWindowNameChoiceAlway
     }];
 }
 
-- (void)sessionEndedWithExecFailure:(BOOL)execDidFail {
+- (BOOL)sessionEndedWithExecFailure:(BOOL)execDidFail {
     NSString *message = execDidFail ? NSLocalizedStringWithDefaultValue(@"NaggingController.SessionFailedToStart", nil, [NSBundle mainBundle], @"Session failed to start.", @"Announcement that a session failed to start") : NSLocalizedStringWithDefaultValue(@"NaggingController.SessionEndedRestart", nil, [NSBundle mainBundle], @"Session ended (command exited). Restart it?", @"Prompt asking whether to restart a session whose command exited");
     // One choice covers both messages, so the panel always shows the restart prompt.
     iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:[iTermAdvancedSettingsModel suppressRestartAnnouncementUserDefaultsKey]
                                                                                                          title:NSLocalizedStringWithDefaultValue(@"NaggingController.SessionEndedRestart", nil, [NSBundle mainBundle], @"Session ended (command exited). Restart it?", @"Prompt asking whether to restart a session whose command exited")];
     if ([iTermAdvancedSettingsModel suppressRestartAnnouncement] &&
         [suppression shouldSuppressWithResponse:nil]) {
-        return;
+        return NO;
     }
     [self.delegate naggingControllerShowMessage:message
                                      isQuestion:!execDidFail
@@ -403,6 +403,7 @@ static NSString *const iTermNaggingControllerRestoreIconAndWindowNameChoiceAlway
             [suppression recordChoiceWithResponse:nil];
         }
     }];
+    return YES;
 }
 
 - (void)askAboutAbortingDownload {
@@ -826,7 +827,7 @@ static NSString *const iTermNaggingControllerRestoreIconAndWindowNameChoiceAlway
                 break;
             }
 
-            case 4: // Help
+            case 3: // Help
                 [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/slow_triggers"]
                                                    target:nil
                                                     style:iTermOpenStyleTab
