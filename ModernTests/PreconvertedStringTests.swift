@@ -563,8 +563,7 @@ final class PreconvertedStringTests: XCTestCase {
         let pre = strings[0].preconvertedStringData
         XCTAssertTrue(pre.pointee.valid.boolValue)
 
-        // 1 (space) + 40 * 2 (char + DWC_RIGHT) = 81, which exceeds
-        // kStaticPreconvertedScreenCharsCount (64), so a dynamic buffer must have been used.
+        // 1 (space) + 40 * 2 (char + DWC_RIGHT) = 81
         XCTAssertEqual(Int(pre.pointee.length), 81)
 
         // Verify the content is correct by spot-checking the last character
@@ -1527,15 +1526,6 @@ final class PreconvertedStringTests: XCTestCase {
 
         let prePtr = UnsafeMutablePointer<PreconvertedStringData>.allocate(capacity: 1)
         prePtr.initialize(to: tokenPre.pointee)
-        let tokenStaticBuf = UnsafeMutablePointer<screen_char_t>(
-            OpaquePointer(UnsafeMutableRawPointer(tokenPre).advanced(
-                by: MemoryLayout<PreconvertedStringData>.offset(of: \PreconvertedStringData.staticBuffer)!)))
-        if tokenPre.pointee.buffer == tokenStaticBuf {
-            let preStaticBuf = UnsafeMutablePointer<screen_char_t>(
-                OpaquePointer(UnsafeMutableRawPointer(prePtr).advanced(
-                    by: MemoryLayout<PreconvertedStringData>.offset(of: \PreconvertedStringData.staticBuffer)!)))
-            prePtr.pointee.buffer = preStaticBuf
-        }
         tokenPre.pointee.valid = ObjCBool(false)
         tokenPre.pointee.buffer = nil
 
@@ -1601,15 +1591,6 @@ final class PreconvertedStringTests: XCTestCase {
 
         let prePtr = UnsafeMutablePointer<PreconvertedStringData>.allocate(capacity: 1)
         prePtr.initialize(to: tokenPre.pointee)
-        let tokenStaticBuf = UnsafeMutablePointer<screen_char_t>(
-            OpaquePointer(UnsafeMutableRawPointer(tokenPre).advanced(
-                by: MemoryLayout<PreconvertedStringData>.offset(of: \PreconvertedStringData.staticBuffer)!)))
-        if tokenPre.pointee.buffer == tokenStaticBuf {
-            let preStaticBuf = UnsafeMutablePointer<screen_char_t>(
-                OpaquePointer(UnsafeMutableRawPointer(prePtr).advanced(
-                    by: MemoryLayout<PreconvertedStringData>.offset(of: \PreconvertedStringData.staticBuffer)!)))
-            prePtr.pointee.buffer = preStaticBuf
-        }
         tokenPre.pointee.valid = ObjCBool(false)
         tokenPre.pointee.buffer = nil
 
@@ -1688,20 +1669,9 @@ final class PreconvertedStringTests: XCTestCase {
         let tokenPre = strTokens[0].preconvertedStringData
         XCTAssertTrue(tokenPre.pointee.valid.boolValue, "Preconverted data should be valid")
 
-        // Deep-copy to a heap allocation we fully control.
+        // Move it to a heap allocation we fully control.
         let prePtr = UnsafeMutablePointer<PreconvertedStringData>.allocate(capacity: 1)
         prePtr.initialize(to: tokenPre.pointee)
-        // If the buffer points to the token's inline staticBuffer, fix up the self-referential
-        // pointer to point to OUR staticBuffer instead.
-        let tokenStaticBuf = UnsafeMutablePointer<screen_char_t>(
-            OpaquePointer(UnsafeMutableRawPointer(tokenPre).advanced(
-                by: MemoryLayout<PreconvertedStringData>.offset(of: \PreconvertedStringData.staticBuffer)!)))
-        if tokenPre.pointee.buffer == tokenStaticBuf {
-            let preStaticBuf = UnsafeMutablePointer<screen_char_t>(
-                OpaquePointer(UnsafeMutableRawPointer(prePtr).advanced(
-                    by: MemoryLayout<PreconvertedStringData>.offset(of: \PreconvertedStringData.staticBuffer)!)))
-            prePtr.pointee.buffer = preStaticBuf
-        }
         // Mark the token's copy invalid so its dealloc doesn't double-free the buffer.
         tokenPre.pointee.valid = ObjCBool(false)
         tokenPre.pointee.buffer = nil

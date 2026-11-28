@@ -48,9 +48,7 @@ void iTermAsciiDataFree(AsciiData *asciiData) {
 }
 
 void iTermPreconvertedStringDataFree(PreconvertedStringData *data) {
-    if (data->buffer && data->buffer != data->staticBuffer) {
-        free(data->buffer);
-    }
+    free(data->buffer);
     data->buffer = NULL;
     data->valid = NO;
 }
@@ -565,12 +563,7 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
     NSString *augmented = [@" " stringByAppendingString:normalized];
     const int capacity = (int)iTermStringToScreenCharsCapacity(augmented.length);
 
-    if (capacity <= kStaticPreconvertedScreenCharsCount) {
-        pre->buffer = pre->staticBuffer;
-        memset(pre->buffer, 0, capacity * sizeof(screen_char_t));
-    } else {
-        pre->buffer = (screen_char_t *)iTermCalloc(capacity, sizeof(screen_char_t));
-    }
+    pre->buffer = (screen_char_t *)iTermCalloc(capacity, sizeof(screen_char_t));
 
     int len = capacity;
     BOOL dwc = NO;
