@@ -1334,6 +1334,10 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
     if (_orientation == PSMTabBarHorizontalOrientation && self.sizeCellsToFit) {
         return YES;
     }
+    // A rename can change which end of every title the bar truncates.
+    if (self.smartTruncation && cell.truncationStyle != [self truncationStyle]) {
+        return YES;
+    }
     PSMProgressIndicator *indicator = [cell indicator];
     if (!indicator.isHidden && !_hideIndicators && indicator.superview != self) {
         // Only a complete update puts a spinner in the bar. It leaves out one that is scrolled away.

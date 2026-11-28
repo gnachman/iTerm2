@@ -57,6 +57,23 @@ final class PSMTabBarRedrawTests: XCTestCase {
         }
     }
 
+    func testRenameCanChangeSmartTruncationForOtherTabs() throws {
+        let bar = try tabBar()
+        let cells = try XCTUnwrap(bar.cells() as? [PSMTabBarCell])
+        bar.smartTruncation = true
+        cells[0].stringValue = "alpha first"
+        cells[1].stringValue = "bravo other"
+        cells[2].stringValue = "delta third"
+        bar.updateWithoutAnimation()
+        XCTAssertEqual(cells[0].truncationStyle, .byTruncatingTail)
+
+        cells[1].stringValue = "alpha other"
+        XCTAssertTrue(try layoutDependsOnContents(of: cells[1], in: bar))
+        bar.updateWithoutAnimation()
+        XCTAssertEqual(cells[0].truncationStyle, .byTruncatingHead)
+        XCTAssertFalse(try layoutDependsOnContents(of: cells[1], in: bar))
+    }
+
     // Only a complete update puts a spinner in the bar, and nothing but a change to the tab's title or
     // icon asks for one when a tab becomes busy.
     func testSpinnerThatIsNotInTheBarYetAffectsLayout() throws {
