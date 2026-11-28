@@ -320,3 +320,7 @@ Bug Fixes:
   once, so the git information in the status
   bar and tab titles stopped updating until it
   restarted. Issue 13250.
+- When a session ends, its text and the Session
+  Ended line no longer jump to the bottom of the
+  window if you turned off the offer to restart
+  the session.

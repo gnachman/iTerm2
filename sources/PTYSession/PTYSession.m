@@ -5358,6 +5358,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (_shortLivedSingleUse) {
         return;
     }
+    if (![self.naggingController sessionEndedWithExecFailure:_execDidFail]) {
+        // Suppressed, so there is nothing to keep the content out from under. Leave it in place.
+        DLog(@"Restart announcement not shown; not moving screen content");
+        return;
+    }
     // The announcement covers the top rows of the session. Move short output, such as a custom
     // command's, down so it isn't hidden behind it.
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
@@ -5365,7 +5370,6 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                              id<VT100ScreenDelegate> delegate) {
         [mutableState moveScreenContentToBottom];
     }];
-    [self.naggingController sessionEndedWithExecFailure:_execDidFail];
 }
 
 - (BOOL)isRestartable {
