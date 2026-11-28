@@ -155,6 +155,33 @@ final class PSMTahoeTallTabShapeTests: XCTestCase {
         }
         XCTAssertEqual(alpha(darkRep, x: cornerX, y: cornerY), 0)
     }
+    func testPartialRedrawPreservesLeadingDivider() throws {
+        guard #available(macOS 26, *) else {
+            throw XCTSkip("Tahoe styles need macOS 26")
+        }
+        let style = PSMTahoeTabStyle()
+        let bar = attach(style, richContent: false)
+        bar.style = style
+        bar.tabView = NSTabView()
+        for i in 0..<3 {
+            let cell = try XCTUnwrap(PSMTabBarCell(controlView: bar))
+            cell.frame = NSRect(x: i * 62, y: 0, width: 60, height: 60)
+            cell.state = .off
+            bar.cells().add(cell)
+        }
+        func paint(_ clip: NSRect) -> NSBitmapImageRep {
+            return render {
+                NSBezierPath(rect: clip).addClip()
+                style.drawTabBar(bar, in: bar.bounds, clipRect: clip, horizontal: true, withOverflow: false)
+            }
+        }
+        let full = paint(bar.bounds)
+        let partial = paint(NSRect(x: 60, y: 0, width: 2, height: 60))
+        let divider = try XCTUnwrap(full.colorAt(x: 60, y: 45))
+        XCTAssertNotEqual(divider, full.colorAt(x: 61, y: 45))
+        XCTAssertEqual(partial.colorAt(x: 60, y: 45), divider)
+    }
+
     // The measured edge of a standard-height selected tab ships as an image.
     func testSelectedTabEdgeImageIsBundled() throws {
         guard #available(macOS 26, *) else {

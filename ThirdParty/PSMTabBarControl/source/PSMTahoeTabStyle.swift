@@ -476,6 +476,10 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             return size
         }
         let size = counter.size()
+        // Font size overrides can change over the lifetime of the app.
+        if objectCountSizes.count >= 128 {
+            objectCountSizes.removeAll(keepingCapacity: true)
+        }
         objectCountSizes[key] = size
         return size
     }
@@ -998,7 +1002,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             // (its width is > 0 mid-slide; it lands at exactly 0 when fully
             // collapsed, at which point it's skipped again).
             let hiddenByCollapse = cell.isHiddenByCollapse
-            let reach = cell.state == .on ? dirtyFrame(for: cell) : cell.frame
+            // Horizontal dividers need both neighbors even when only the gap is dirty.
+            let reach = horizontal || cell.state == .on ? dirtyFrame(for: cell) : cell.frame
             return !cell.isInOverflowMenu && !hiddenByCollapse &&
                 NSIntersectsRect(reach, clipRect)
         }
