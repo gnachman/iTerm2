@@ -18,6 +18,22 @@
     return YES;
 }
 
+// This view draws only until the GPU renderer has a frame to show, but its layer would keep the
+// drawing (which AppKit records as a display list with many small allocations) for as long as the
+// session lives.
+- (void)setHidden:(BOOL)hidden {
+    const BOOL changed = (hidden != self.isHidden);
+    [super setHidden:hidden];
+    if (!changed) {
+        return;
+    }
+    if (hidden) {
+        self.layer.contents = nil;
+    } else {
+        [self setNeedsDisplay:YES];
+    }
+}
+
 - (void)setNeedsDisplay:(BOOL)needsDisplay {
     [super setNeedsDisplay:needsDisplay];
 }
