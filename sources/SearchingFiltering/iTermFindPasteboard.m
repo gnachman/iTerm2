@@ -15,6 +15,8 @@
 
 @implementation iTermFindPasteboard {
     NSString *_localValue;
+    // Non-nil only while notifying observers.
+    NSString *_valueForObservers;
 }
 
 + (instancetype)sharedInstance {
@@ -84,8 +86,13 @@
 }
 
 - (void)updateObservers:(id _Nullable)sender internallyGenerated:(BOOL)internallyGenerated {
+    // Every session observes this and getting the value communicates with the pasteboard server, so
+    // get it once for all of them.
+    NSString *saved = _valueForObservers;
+    _valueForObservers = self.stringValue;
     [[iTermSearchQueryDidChangeNotification notificationWithSender:sender
                                                internallyGenerated:internallyGenerated] post];
+    _valueForObservers = saved;
 }
 
 - (void)addObserver:(id)observer block:(void (^)(id sender, NSString *newValue, BOOL internallyGenerated))block {
@@ -95,7 +102,7 @@
         if (!strongSelf) {
             return;
         }
-        block(sender, strongSelf.stringValue, internallyGenerated);
+        block(sender, strongSelf->_valueForObservers ?: strongSelf.stringValue, internallyGenerated);
     }];
 }
 
