@@ -12,7 +12,7 @@
 #import "NSScreen+iTerm.h"
 #import "PTYSession.h"
 #import "PseudoTerminal.h"
-#import "RoundedRectView.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermController.h"
 
 static NSMutableArray *visibleToast;
@@ -78,13 +78,13 @@ static NSMutableArray *visibleToast;
     [textField setShadow:textShadow];
     [textField sizeToFit];
 
-    RoundedRectView *roundedRect = [[RoundedRectView alloc] init];
+    iTermTransparentLayerView *sizingView = [[iTermTransparentLayerView alloc] init];
     const int hPadding = 28;
     const int vPadding = 14;
-    [roundedRect setFrame:NSMakeRect(0,
-                                     0,
-                                     textField.frame.size.width + hPadding * 2,
-                                     textField.frame.size.height + vPadding * 2)];
+    [sizingView setFrame:NSMakeRect(0,
+                                    0,
+                                    textField.frame.size.width + hPadding * 2,
+                                    textField.frame.size.height + vPadding * 2)];
     [textField setFrame:NSMakeRect(textField.frame.origin.x + hPadding,
                                    textField.frame.origin.y + vPadding,
                                    textField.frame.size.width,
@@ -96,7 +96,7 @@ static NSMutableArray *visibleToast;
     }
 
     const CGFloat cornerRadius = 10.0;
-    NSSize contentSize = roundedRect.frame.size;
+    NSSize contentSize = sizingView.frame.size;
 
     // Make window larger to accommodate spring overshoot (20% extra on each side)
     const CGFloat overshootPadding = 0.2;
