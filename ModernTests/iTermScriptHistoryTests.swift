@@ -111,6 +111,32 @@ final class iTermScriptHistoryTests: XCTestCase {
         XCTAssertEqual(stopped.callEntries.count, 0)
     }
 
+    // Messages are kept serialized and described only when someone looks at them.
+    func testCallEntriesDescribeMessages() throws {
+        let entry = makeEntry(UUID().uuidString)
+        let request = ITMClientOriginatedMessage()
+        request.id_p = 1234
+        NotificationCenter.default.post(name: NSNotification.Name(iTermAPIServerDidReceiveMessage),
+                                        object: entry.identifier,
+                                        userInfo: ["request": request])
+        let response = ITMServerOriginatedMessage()
+        response.id_p = 5678
+        NotificationCenter.default.post(name: NSNotification.Name(iTermAPIServerWillSendMessage),
+                                        object: entry.identifier,
+                                        userInfo: ["message": response,
+                                                   "data": try XCTUnwrap(response.data())])
+
+        request.id_p = 42
+        response.id_p = 42
+        let calls = entry.callEntries
+        XCTAssertEqual(calls.count, 2)
+        XCTAssertTrue(calls[0].hasPrefix("Script → iTerm2 "))
+        XCTAssertTrue(calls[0].contains("id: 1234"), calls[0])
+        XCTAssertTrue(calls[1].hasPrefix("Script ← iTerm2 "))
+        XCTAssertTrue(calls[1].contains("id: 5678"), calls[1])
+        XCTAssertEqual(entry.callEntries, calls)
+    }
+
     // A connection that reuses a closed connection's key (it2 over SSH, or a
     // client reconnecting) resumes the old entry, which must log again.
     func testResumedEntryLogsAPITrafficAgain() {

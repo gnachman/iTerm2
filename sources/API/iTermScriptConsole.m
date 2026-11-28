@@ -7,6 +7,7 @@
 
 #import "iTermScriptConsole.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAPIServer.h"
 #import "iTermScriptHistory.h"
 #import "iTermScriptInspector.h"
@@ -339,13 +340,13 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
                 return;
             }
             if (note.userInfo) {
-                NSString *delta = note.userInfo[iTermScriptHistoryEntryDelta];
+                id delta = note.userInfo[iTermScriptHistoryEntryDelta];
                 NSString *property = note.userInfo[iTermScriptHistoryEntryFieldKey];
                 if ([property isEqualToString:iTermScriptHistoryEntryFieldLogsValue]) {
                     [strongSelf appendLogs:delta];
                     [strongSelf scrollLogsToBottomIfNeeded];
                 } else if ([property isEqualToString:iTermScriptHistoryEntryFieldRPCValue]) {
-                    [strongSelf appendCalls:delta];
+                    [strongSelf appendCalls:[(iTermScriptHistoryCall *)delta text]];
                     [strongSelf scrollCallsToBottomIfNeeded];
                 }
             } else {
