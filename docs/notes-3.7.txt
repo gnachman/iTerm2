@@ -315,3 +315,8 @@ Bug Fixes:
   “Session Restarted” banner, could stay a
   brown block after the image became
   available.
+- The background helper that reports git status
+  could crash when several tabs checked git at
+  once, so the git information in the status
+  bar and tab titles stopped updating until it
+  restarted. Issue 13250.

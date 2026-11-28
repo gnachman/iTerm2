@@ -983,20 +983,32 @@ static const char *GetPathToSelf(void) {
         // Allow 100% CPU utilization for the first x seconds.
         [governor setGracePeriodDuration:1.0];
         const NSInteger token = [governor incr];
-        NSFileHandle *fileHandle = [[NSFileHandle alloc] initWithFileDescriptor:pipe.fileHandleForReading.fileDescriptor
-                                                                 closeOnDealloc:YES];
+        // Read from the pipe's own handle. Wrapping its descriptor in a second NSFileHandle
+        // with closeOnDealloc:YES made two owners close it, and because this queue is
+        // concurrent the second close could hit a descriptor another block had just
+        // opened, making that block's read raise (issue 13250).
+        // Read to EOF before waiting so a child with more output than the pipe buffer
+        // can't block on write and never exit. EOF arrives when the child exits or its
+        // timeout watchdog SIGKILLs it, since it spawns no processes that inherit stdout.
+        NSError *error = nil;
+        NSData *data = [pipe.fileHandleForReading readDataToEndOfFileAndReturnError:&error];
         [task waitUntilExit];
         [governor decr:token];
         if (task.terminationReason == NSTaskTerminationReasonUncaughtSignal) {
             // The child was killed by SIGKILL from its own timeout watchdog (see
-            // PIDInfoGitState.m). Don't read output because it may be incomplete.
+            // PIDInfoGitState.m). Don't use its output because it may be incomplete.
             reply(nil, YES);
             completion();
             return;
         }
+        if (!data) {
+            syslog(LOG_ERR, "Error reading git state: %s", error.description.UTF8String);
+            reply(nil, NO);
+            completion();
+            return;
+        }
 
-        NSData *data = [fileHandle readDataToEndOfFile];
-        NSError *error = nil;
+        error = nil;
         NSKeyedUnarchiver *decoder = [[NSKeyedUnarchiver alloc] initForReadingFromData:data error:&error];
         if (!decoder) {
             reply(nil, NO);
