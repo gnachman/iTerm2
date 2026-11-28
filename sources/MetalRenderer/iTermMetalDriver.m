@@ -339,6 +339,13 @@ typedef struct {
     dispatch_async(dispatch_get_main_queue(), ^{
         CGContextRelease(context);
     });
+
+    // Destroying a command queue is slow, and deselecting a tab destroys its driver on the main thread.
+    __block id<MTLCommandQueue> commandQueue = _commandQueue;
+    _commandQueue = nil;
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+        commandQueue = nil;
+    });
 }
 
 - (iTermMetalDriverMainThreadState *)mainThreadState {
