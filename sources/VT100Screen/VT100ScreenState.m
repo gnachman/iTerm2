@@ -833,6 +833,11 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
 
 // `buffer` must be width+1 cells large. The extra one holds the continuation mark.
 - (const screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t *)buffer {
+    const int numLinesInLineBuffer = [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
+    if (theIndex >= numLinesInLineBuffer) {
+        // NSMutableData always copies, so don't make one when the line comes from the grid.
+        return [self.currentGrid immutableScreenCharsAtLineNumber:theIndex - numLinesInLineBuffer];
+    }
     return [self getLineAtIndex:theIndex
                     destination:[NSMutableData dataWithBytesNoCopy:buffer
                                                             length:(self.currentGrid.size.width + 1) * sizeof(screen_char_t)
