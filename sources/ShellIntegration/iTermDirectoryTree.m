@@ -7,7 +7,7 @@
 //
 
 #import "iTermDirectoryTree.h"
-#import "iTermDirectoryTreeNode.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "NSMutableAttributedString+iTerm.h"
 
 @implementation iTermDirectoryTree
@@ -28,7 +28,8 @@
 + (NSMutableArray *)attributedComponentsInPath:(NSAttributedString *)path {
     NSMutableArray *components = [[[path attributedComponentsSeparatedByString:@"/"] mutableCopy] autorelease];
     for (int i = components.count - 1; i >= 0; i--) {
-        if ([components[i] string].length == 0) {
+        NSAttributedString *component = components[i];
+        if (component.string.length == 0) {
             [components removeObjectAtIndex:i];
         }
     }
