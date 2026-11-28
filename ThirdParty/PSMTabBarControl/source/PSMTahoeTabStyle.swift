@@ -22,6 +22,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     private var _closeButtonOver: NSImage?
     private var _pinImage: NSImage?
     private var _orientation: PSMTabBarOrientation = .horizontalOrientation
+    // Non-nil only in drawTabBar.
+    private var anyTabHasColorWhileDrawing: Bool?
     
     // MARK: - PSMTabStyle Properties
     @objc weak var tabBar: PSMTabBarControl?
@@ -924,8 +926,14 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         if tabBar !== bar {
             tabBar = bar
         }
-        
-        
+
+        // Drawing one tab asks this several times and answering it examines every tab.
+        anyTabHasColorWhileDrawing = nil
+        anyTabHasColorWhileDrawing = anyTabHasColor()
+        defer {
+            anyTabHasColorWhileDrawing = nil
+        }
+
         let backgroundColor = Self.backgroundColor
         let backgroundRect = self.backgroundRect(forBar: bar, in: rect)
 
@@ -967,8 +975,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             // (its width is > 0 mid-slide; it lands at exactly 0 when fully
             // collapsed, at which point it's skipped again).
             let hiddenByCollapse = cell.isHiddenByCollapse
+            let reach = cell.state == .on ? dirtyFrame(for: cell) : cell.frame
             return !cell.isInOverflowMenu && !hiddenByCollapse &&
-                NSIntersectsRect(dirtyFrame(for: cell), clipRect)
+                NSIntersectsRect(reach, clipRect)
         }
 
         if drawableCells.count > 0 {
@@ -1656,6 +1665,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     }
     
     @objc func anyTabHasColor() -> Bool {
+        if let anyTabHasColorWhileDrawing {
+            return anyTabHasColorWhileDrawing
+        }
         guard let cells = tabBar?.cells() as? [PSMTabBarCell] else { return false }
         return cells.contains { $0.tabColor != nil }
     }
@@ -2584,13 +2596,25 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     
     struct ImageLO: LayoutableObject, Equatable {
         var name: String
-        var image: NSImage
         var priority: Int
         var gravity: Gravity
-        var preferredWidth: CGFloat?
-
-        var sizingMode: SizingMode { .fixed(preferredWidth ?? image.size.width) }
+        // Layout asks for this repeatedly and an image's size is slow to get, so get it once.
+        let sizingMode: SizingMode
         var draw: (ResolvedLayout) -> ()
+
+        init(name: String,
+             image: NSImage,
+             priority: Int,
+             gravity: Gravity,
+             preferredWidth: CGFloat? = nil,
+             draw: @escaping (ResolvedLayout) -> ()) {
+            self.name = name
+            self.priority = priority
+            self.gravity = gravity
+            sizingMode = .fixed(preferredWidth ?? image.size.width)
+            self.draw = draw
+        }
+
         static func == (lhs: ImageLO, rhs: ImageLO) -> Bool {
             lhs.name == rhs.name
         }
@@ -3000,7 +3024,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
 
 // MARK: - Debugging
 
-private func DLog(_ message: String) {
+// The message is an autoclosure so that drawing a tab doesn't pay to describe it.
+private func DLog(_ message: @autoclosure () -> String) {
     // Implementation depends on how gDebugLogging is set up in your project
     // For now, this is a no-op in Swift
 #if DEBUG
