@@ -384,6 +384,12 @@ call when it names no unsafe pointer API (`&x` passed to a pointer looks the
 same as `&x` passed to an `inout` parameter), so it does not enforce the
 marker there.
 
+A pointer type in the signature of an `override` (its parameter types,
+result or property type, and where clause) needs no marker, because the
+overridden declaration already contains it, as in `NSFormatter`'s
+`isPartialStringValid(_:newEditingString:errorDescription:)`. A pointer in
+the body, an accessor or a default argument value still needs one.
+
 The pointer-returning ivar accessors in [objc-state.md §2](objc-state.md) fall under this rule, as
 do `Unmanaged` conversions for C callback contexts.
 

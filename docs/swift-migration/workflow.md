@@ -442,7 +442,7 @@ usage cannot spend the week's quota.
   review rounds each took; findings that were rejected, with the evidence;
   anything parked; each closing check with its result, duration and run
   directory, and the units still *landed, closing checks pending*; new entries in `owner-queue.md`, `bugs.md` and
-  `traps.md`; the usage at the start and end; and why the run stopped. It is
+  `traps.md`; the files added to or deleted from `bugs/`, and the bugs fixed; the usage at the start and end; and why the run stopped. It is
   written to `tmp/` and is not committed, since everything in it that
   matters is also in the repository.
 - **If the owner rejects a commit in the morning**, it is reverted or

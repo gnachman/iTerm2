@@ -21,6 +21,12 @@ You are the orchestrator. This skill is the order of work; the rules are in
 
 ## 1. Pick and assign the path
 
+0. Bugs first: fix the bugs in `docs/swift-migration/bugs/`, one at a
+   time in file-name order, by `README.md` §5, “Fixing a bug in the app”,
+   before any unit, unless the folder is empty or every remaining bug is
+   waiting on the owner (`orchestration.md` §2, step 4). A bug whose fix
+   would change a file under a reserved prefix (`reserved.md`) waits on
+   the owner.
 1. Unit given: use it, unless it prints reserved (`reserved.md`): then
    it is not ported, unless the owner himself named it after the
    reservation, in which case ask him. None given: resume an unparked entry in `claims.md`,
@@ -73,8 +79,7 @@ Check the budget before each subagent and each gate run, on every path
    captures and observer or notification registrations with the
    Objective-C, and does not rebuild or rerun tests unless something looks
    wrong. Another round only for a blocking finding that stood.
-4. **Collect** as on the light path (step 3 below), without a `test`
-   patch, and, for a unit briefed while the database was behind, only
+4. **Collect** as on the light path (step 3 below), and, for a unit briefed while the database was behind, only
    after the database refresh has exited 0 and `qualify_unit.py UNIT`
    again prints trivial (follow `orchestration.md` §1, step 4:
    `refresh.sh --status` first). Collect nothing that touches a file the
@@ -93,18 +98,17 @@ Check the budget before each subagent and each gate run, on every path
 ## 3. Light path (`lifecycle.md` §3, "The light path")
 
 1. **Lane.** `lane_clone.py acquire --purpose "<unit> author"`.
-2. **Author** (agent `migration-author`). Give it: the unit, kinds `test`
-   then `port`; `README.md` in full; `lifecycle.md` §1 steps 3 and 5, and
+2. **Author** (agent `migration-author`). Give it: the unit, kind `port`
+   (one commit holding the tests and the port); `README.md` in full; `lifecycle.md` §1 steps 3 and 5, and
    §3; `translation-rules.md`; `assertions.md`; `nullability.md` §6;
    `concurrency.md` §9; `phase0.md` §6 and §9; `traps.md`; `bugs.md`; the
    qualifying output; the lane instructions from the header of
    `tools/swift_migration/lane_clone.py` with `LANE` filled in. It writes
    the short dossier, settling each MANUAL of the qualifying output in
-   it, and the tests, sees them pass against the Objective-C, saves the
-   `test` change as a patch, then ports, running `pbxproj_swap.py` in its
+   it, and the tests, sees them pass against the Objective-C (keeping the
+   log for the reviewer), then ports, running `pbxproj_swap.py` in its
    lane.
-3. **Collect**: `collect N`, read it, and copy the author's saved `test`
-   patch into your own `tmp/` before any release. If no other port landed
+3. **Collect**: `collect N` and read it. If no other port landed
    since the lane's base (compare the base in `LANES/state/lane-N.json`
    with HEAD), then `collect N --to-index --allow-project` after reading
    the project diff. If one did, do not take the lane's project file:
@@ -128,17 +132,17 @@ Check the budget before each subagent and each gate run, on every path
 6. **Gate.** You run it on the staged tree, in the full-suite lane
    (`acquire --full-suite` with `--apply-staged`): `README.md` §5,
    including the plain whole suite through `whole_suite.sh` before the
-   `port` commit (under the whole-suite lock, which serializes whole
+   commit (under the whole-suite lock, which serializes whole
    suites; a stall is exit 124).
 7. **Commit** by pathspec (`orchestration.md` §3 "Build lanes", and §6):
-   first the `test` commit (tests, bridging-header line, dossier added)
-   from the saved patch through a temporary index, then the `port` commit:
-   every remaining unit path, including the bridging header (the `test`
-   commit added its line, the port removes it) and the project file, with
-   the dossier deleted. Trailers
-   `Swift-Port: <unit> kind=test` and `kind=port`.
+   one commit holding the tests and the port: every unit path, including
+   the project file; no bridging-header line (the port removed the one the
+   tests needed in the lane) and no dossier (it is never committed).
+   Trailer `Swift-Port: <unit> kind=port`.
 8. **Release** every lane the unit held.
-9. **Close**: new traps into `traps.md` and bugs into `bugs.md`
+9. **Close**: new traps into `traps.md`; a bug in the app into its own
+   file in `bugs/`, anything else into `bugs.md` (`README.md` §7, “Bugs
+   in the app”)
    (`lifecycle.md` §1 step 8; `orchestration.md` §3 step 10); the claim
    becomes *landed, closing checks pending*.
 
@@ -160,7 +164,7 @@ pathspec, release. Give every author and reviewer `README.md` in full,
 | 4 `explicit` | `warnings.md` |
 | 4 `decxx` | `objcxx.md` |
 | 5 `port` | `lifecycle.md` §1 steps 5 and 6 (§2 for a large file); `translation-rules.md`; `assertions.md`; `concurrency.md`; as the dossier shows, `objc-state.md`, `lifetimes.md`, `stored-state.md`, `interop.md`, `performance.md` |
-| `fix` | `README.md` §4 and §5; the `bugs.md` entry |
+| `fix` | `README.md` §4 and §5 (“Fixing a bug in the app”); the bug's file in `bugs/` |
 
 Reviewers also get the tool outputs the kind requires (`orchestration.md`
 §5). VM checks need the owner to start vm1: queue that and work elsewhere.
@@ -192,7 +196,8 @@ nullability and integer), then `sanitizer_tests.sh thread` (never
 `--parallel`); the `x86_64` build; `tools/swift_migration/codedb/refresh.sh`
 (the capture, the update and the classification in one command, whose
 exit status you read before anything else: nonzero is a failed check),
-then the lints. Wait for one in the
+then the lints; after them, bring the files in `bugs/` up to date
+(`README.md` §7, “Bugs in the app”). Wait for one in the
 background only with `suite_guard.py wait --pid PID --seconds 540` in the
 foreground, never by ending the turn. Fix a failure by a new commit of the
 unit or `git revert`, never a reset. Units the checks passed over leave

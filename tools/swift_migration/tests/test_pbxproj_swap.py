@@ -243,6 +243,116 @@ class SwapTests(unittest.TestCase):
                               r'lastKnownFileType = sourcecode.swift; path = Foo.swift;')
 
 
+def with_editor_attributes(text=FIXTURE, extra=''):
+    """The fixture with Foo.m's file reference carrying the per-file indentation
+    settings Xcode's editor writes, in the position Xcode writes them, plus any
+    extra attributes given."""
+    text = text.replace('\t\t444444444444444444444444 /* Foo.m */ = {isa = PBXFileReference; '
+                        'lastKnownFileType = sourcecode.c.objc; path = Foo.m; sourceTree = "<group>"; };',
+                        '\t\t444444444444444444444444 /* Foo.m */ = {isa = PBXFileReference; %sindentWidth = 4; '
+                        'lastKnownFileType = sourcecode.c.objc; path = Foo.m; sourceTree = "<group>"; tabWidth = 4; };'
+                        % extra)
+    assert 'tabWidth = 4' in text
+    return text
+
+
+class EditorAttributeTests(unittest.TestCase):
+    """indentWidth and tabWidth on a file reference are settings of Xcode's editor
+    that the build does not read. No Swift file in the project has them, so the
+    swap leaves them off the new reference and says so."""
+
+    def swap(self, text, notes=None, **kw):
+        if notes is not None:
+            kw['notes'] = notes
+        return pbxproj_swap.swap(text, 'Things/Foo.m', 'Things/Foo.h', 'Things/Foo.swift',
+                                 rng=random.Random(1), **kw)
+
+    def swift_ref(self, new):
+        lines = [l for l in new.split('\n') if '/* Foo.swift */ = {isa = PBXFileReference;' in l]
+        self.assertEqual(len(lines), 1)
+        return lines[0]
+
+    def test_drops_indent_and_tab_width_and_says_so(self):
+        text = with_editor_attributes()
+        notes = []
+        new = self.swap(text, notes=notes)
+        ref = self.swift_ref(new)
+        self.assertNotIn('indentWidth', ref)
+        self.assertNotIn('tabWidth', ref)
+        self.assertRegex(ref, r'^\t\t[0-9A-F]{24} /\* Foo.swift \*/ = \{isa = PBXFileReference; '
+                              r'lastKnownFileType = sourcecode.swift; path = Foo.swift; sourceTree = "<group>"; \};$')
+        bar = [l for l in new.split('\n') if '/* Bar.swift */ = {isa = PBXFileReference;' in l][0]
+        self.assertEqual(pbxproj_swap.shape(ref), pbxproj_swap.shape(bar))
+        # Everything else is the same as the swap of a reference without the settings.
+        self.assertEqual(new, self.swap(FIXTURE))
+        self.assertEqual(len(notes), 1)
+        self.assertIn('Foo.m', notes[0])
+        self.assertIn('indentWidth', notes[0])
+        self.assertIn('tabWidth', notes[0])
+
+    def test_drops_them_in_every_target(self):
+        text = with_other_files(with_editor_attributes(), '\t\t\t\t123412341234123412341234 /* Foo.m in Sources */,')
+        text = with_build_file(text, '\t\t123412341234123412341234 /* Foo.m in Sources */ = {isa = PBXBuildFile; '
+                                     'fileRef = 444444444444444444444444 /* Foo.m */; };')
+        with self.assertRaises(pbxproj_swap.Refusal) as cm:
+            self.swap(text)
+        self.assertIn('2 targets', str(cm.exception))
+        notes = []
+        new = self.swap(text, notes=notes, all_targets=True)
+        self.assertNotIn('Foo.m', new)
+        self.assertNotIn('indentWidth', new)
+        self.assertNotIn('tabWidth', new)
+        self.assertEqual(len(re.findall(r'/\* Foo.swift in Sources \*/ = ', new)), 2)
+        self.assertEqual(len(notes), 1)
+        self.assertIn('indentWidth', notes[0])
+
+    def test_one_of_the_two_alone_is_dropped(self):
+        text = with_editor_attributes().replace(' tabWidth = 4;', '')
+        notes = []
+        ref = self.swift_ref(self.swap(text, notes=notes))
+        self.assertNotIn('indentWidth', ref)
+        self.assertIn('indentWidth', notes[0])
+        self.assertNotIn('tabWidth', notes[0])
+
+    def test_no_note_without_them(self):
+        notes = []
+        self.swap(FIXTURE, notes=notes)
+        self.assertEqual(notes, [])
+
+    def test_still_refuses_any_other_attribute_no_swift_file_has(self):
+        for extra in ('lineEnding = 0; ', 'xcLanguageSpecificationIdentifier = xcode.lang.objc; ',
+                      'explicitFileType = sourcecode.c.objc; ', 'fileEncoding = 30; ', 'usesTabs = 1; '):
+            text = with_editor_attributes(extra=extra)
+            for all_targets in (False, True):
+                notes = []
+                with self.assertRaises(pbxproj_swap.Refusal) as cm:
+                    self.swap(text, notes=notes, all_targets=all_targets)
+                message = str(cm.exception)
+                self.assertIn('attributes no Swift file in the project has', message, extra)
+                self.assertIn(extra.strip(), message)
+                # The message shows the reference as derived from the .m's, editor settings included.
+                self.assertIn('indentWidth = 4;', message)
+                self.assertIn('tabWidth = 4;', message)
+                self.assertEqual(notes, [], extra)
+
+    def test_drops_other_values_in_other_positions(self):
+        text = FIXTURE.replace('\t\t444444444444444444444444 /* Foo.m */ = {isa = PBXFileReference; '
+                               'lastKnownFileType = sourcecode.c.objc; path = Foo.m; sourceTree = "<group>"; };',
+                               '\t\t444444444444444444444444 /* Foo.m */ = {isa = PBXFileReference; tabWidth = 8; '
+                               'indentWidth = 2; lastKnownFileType = sourcecode.c.objc; path = Foo.m; '
+                               'sourceTree = "<group>"; };')
+        self.assertIn('indentWidth = 2;', text)
+        notes = []
+        new = self.swap(text, notes=notes)
+        ref = self.swift_ref(new)
+        self.assertNotIn('indentWidth', ref)
+        self.assertNotIn('tabWidth', ref)
+        self.assertEqual(new, self.swap(FIXTURE))
+        self.assertEqual(len(notes), 1)
+        self.assertIn('indentWidth', notes[0])
+        self.assertIn('tabWidth', notes[0])
+
+
 FOO_H_BUILD_FILE = ('\t\t111111111111111111111111 /* Foo.h in Headers */ = {isa = PBXBuildFile; '
                     'fileRef = 222222222222222222222222 /* Foo.h */; };')
 FOO_H_ENTRY = '\t\t\t\t111111111111111111111111 /* Foo.h in Headers */,'
@@ -611,6 +721,28 @@ class MainTests(unittest.TestCase):
             self.assertIn('App', err)
             with open(path) as f:
                 self.assertEqual(f.read(), text)
+
+    def test_reports_dropped_editor_attributes(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, 'project.pbxproj')
+            text = with_editor_attributes()
+            with open(path, 'w') as f:
+                f.write(text)
+            args = ['--project', path, '--m', 'Things/Foo.m', '--h', 'Things/Foo.h', '--swift', 'Things/Foo.swift']
+            status, out, err = self.run_main(args + ['--check'])
+            self.assertEqual(status, 0)
+            self.assertIn('-\t\t444444444444444444444444 /* Foo.m */', out)
+            self.assertIn('note: ', err)
+            self.assertIn('indentWidth', err)
+            self.assertIn('tabWidth', err)
+            with open(path) as f:
+                self.assertEqual(f.read(), text)
+            status, _, _ = self.run_main(args)
+            self.assertEqual(status, 0)
+            with open(path) as f:
+                written = f.read()
+            self.assertNotIn('Foo.m', written)
+            self.assertNotIn('indentWidth', written)
 
     def test_move_check_writes_nothing_and_apply_writes(self):
         with tempfile.TemporaryDirectory() as d:

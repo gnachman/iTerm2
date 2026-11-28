@@ -189,6 +189,34 @@ Things only the owner can do, noted on 2026-11-20 at his request.
 
 ## Needs a decision
 
+### Q33. Three questions from the bug folder (2026-11-27)
+
+- **Added:** 2026-11-27, by the orchestrator, with the change that made
+  `docs/swift-migration/bugs/`.
+- **What:**
+  1. **Bugs first by day too?** You said “Normally bug fixing should be
+     part of the nightly job. Do bugs first, then ports.” The rules now
+     say a day session takes the same order unless you ask for something
+     else; that part is the migration's reading. Is it right?
+  2. **DCH and ECH when a wrap is pending.** Right after a line is printed
+     to the last column, the cursor sits past the right margin waiting to
+     wrap. There `CSI P` (`-[VT100Grid deleteChars:startingAt:]`, which
+     requires the cursor within the margins) and `CSI X` (the early return
+     at the top of `-[VT100ScreenMutableState eraseCharactersAfterCursor:]`,
+     near line 2059 of `VT100ScreenMutableState.m`) do nothing. xterm is
+     believed, not verified, to act on the last column. Should iTerm2? No
+     bug file is written until you answer.
+  3. **May bug 1 be fixed although its file is reserved?**
+     `bugs/1-crash-profile-preference-observer-traps-on-missing-profile.md`
+     is a crash in `sources/Settings/iTermProfilePreferenceObserver.swift`,
+     which is under the reserved prefix `sources/Settings/` while another
+     agent reworks that directory. The fix is a few lines in the five
+     accessors.
+- **Blocked until answered:** bug 1 (it waits; the next bug is taken);
+  nothing else.
+- **Meanwhile:** day sessions fix bugs first, as at night; DCH and ECH stay
+  as they are.
+
 ### Q32. Choices the migration made in the lighter process (2026-11-24)
 
 - **ANSWERED 2026-11-24.** Item 3: “Bring it back for light and full”: the

@@ -535,6 +535,106 @@ class UnsafeTests(unittest.TestCase):
                          [(2, 1, 'unsafe-pointer-unmarked')])
 
 
+class OverrideSignatureTests(unittest.TestCase):
+    """A pointer type in the parameter list or result of an override needs no marker; its body is linted."""
+
+    FORMATTER = ('class F: NumberFormatter {\n'
+                 '    %sfunc isPartialStringValid(\n'
+                 '        _ partialString: String,\n'
+                 '        newEditingString s: AutoreleasingUnsafeMutablePointer<NSString?>?, '
+                 'errorDescription e: AutoreleasingUnsafeMutablePointer<NSString?>?\n'
+                 '    ) -> Bool {\n'
+                 '        return true\n'
+                 '    }\n'
+                 '}\n')
+
+    def test_override_func_parameters_need_no_marker(self):
+        self.assertEqual(lint(self.FORMATTER % 'override '), [])
+
+    def test_the_same_without_override_is_reported(self):
+        self.assertEqual(lint(self.FORMATTER % ''), [(4, 29, 'unsafe-pointer-unmarked'),
+                                                     (4, 96, 'unsafe-pointer-unmarked')])
+
+    def test_pointer_in_the_body_of_an_override_is_reported(self):
+        src = ('override func f(_ p: UnsafeMutablePointer<Int32>) -> UnsafeRawPointer? {\n'
+               '    let q = UnsafeMutablePointer<Int32>.allocate(capacity: 1)\n'
+               '    p.pointee = 1\n'
+               '    return nil\n'
+               '}\n')
+        self.assertEqual(lint(src), [(2, 13, 'unsafe-pointer-unmarked'), (3, 7, 'unsafe-pointer-unmarked')])
+
+    def test_marked_use_still_passes(self):
+        src = ('override func f(\n'
+               '    // SWIFT-MIGRATION-SHIM: kept\n'
+               '    _ p: UnsafeMutablePointer<Int32>) {\n'
+               '    // SWIFT-MIGRATION-UNSAFE(hot): 9% in perf run 3\n'
+               '    let q = Unmanaged.passUnretained(self)\n'
+               '}\n')
+        self.assertEqual(lint(src), [])
+        self.assertEqual([(m['line'], m['api']) for m in marked(src)],
+                         [(3, 'UnsafeMutablePointer'), (5, 'Unmanaged')])
+
+    def test_override_var_type_needs_no_marker(self):
+        src = ('class C: Base {\n'
+               '    override var p: UnsafeMutableRawPointer? {\n'
+               '        return UnsafeMutableRawPointer(bitPattern: 1)\n'
+               '    }\n'
+               '    override public var q: OpaquePointer? { get { nil } set { } }\n'
+               '    var r: OpaquePointer? { nil }\n'
+               '}\n')
+        self.assertEqual(lint(src), [(3, 16, 'unsafe-pointer-unmarked'), (6, 12, 'unsafe-pointer-unmarked')])
+
+    def test_override_init_and_subscript_and_modifiers(self):
+        src = ('class C: Base {\n'
+               '    required override init?(p: UnsafePointer<Int8>) throws { super.init() }\n'
+               '    @objc public override final class func f<T>(_ p: UnsafePointer<T>) -> UnsafeRawPointer '
+               'where T: AnyObject { nil }\n'
+               '    override subscript(i: Int) -> UnsafePointer<Int8> { fatalError() }\n'
+               '    override private(set) var v: Unmanaged<AnyObject>? { didSet { } }\n'
+               '}\n')
+        self.assertEqual([x for x in lint(src) if x[2] == 'unsafe-pointer-unmarked'], [])
+
+    def test_override_as_a_value_before_a_declaration_exempts_nothing(self):
+        # Each "override" here is the value of an expression, and the var on the next line is a new declaration.
+        src = ('func f() {\n'
+               '    let x = override\n'
+               '    var y: UnsafePointer<Int8>? = nil\n'
+               '    let z = a + override\n'
+               '    var w: UnsafePointer<Int8>? = nil\n'
+               '    g(a, override\n'
+               '      )\n'
+               '    var v: UnsafePointer<Int8>? = nil\n'
+               '}\n')
+        self.assertEqual([x for x in lint(src) if x[2] == 'unsafe-pointer-unmarked'],
+                         [(3, 12, 'unsafe-pointer-unmarked'), (5, 12, 'unsafe-pointer-unmarked'),
+                          (8, 12, 'unsafe-pointer-unmarked')])
+
+    def test_override_that_declares_nothing_exempts_nothing(self):
+        src = ('let override = 1\n'
+               'let p: UnsafePointer<Int8>? = nil\n'
+               'x.override(UnsafePointer<Int8>(bitPattern: 1))\n'
+               'let `override`: UnsafePointer<Int8>? = nil\n')
+        self.assertEqual(lint(src), [(2, 8, 'unsafe-pointer-unmarked'), (3, 12, 'unsafe-pointer-unmarked'),
+                                     (4, 17, 'unsafe-pointer-unmarked')])
+
+    def test_default_argument_and_nested_function_are_not_exempt(self):
+        # A default argument value is code that runs, not part of the overridden declaration's type, and a
+        # function declared inside the body is not an override.
+        src = ('override func f(_ p: UnsafeRawPointer? = UnsafeRawPointer(bitPattern: 1)) {\n'
+               '    func g(_ q: UnsafePointer<Int8>) {}\n'
+               '}\n')
+        self.assertEqual(lint(src), [(1, 42, 'unsafe-pointer-unmarked'), (2, 17, 'unsafe-pointer-unmarked')])
+
+    def test_override_without_a_body_ends_at_the_next_declaration(self):
+        src = ('protocol P: Q {\n'
+               '    override func f() -> Int\n'
+               '    func g(_ p: UnsafePointer<Int8>)\n'
+               '    override var v: UnsafePointer<Int8> { get }\n'
+               '    var w: UnsafePointer<Int8> { get }\n'
+               '}\n')
+        self.assertEqual(lint(src), [(3, 17, 'unsafe-pointer-unmarked'), (5, 12, 'unsafe-pointer-unmarked')])
+
+
 # ---------------------------------------------------------------------------
 # Modes, migration-file selection, exit status, output
 

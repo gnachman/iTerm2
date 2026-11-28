@@ -751,6 +751,24 @@ class NightlyStartTest(NightlyBase):
         self.assertIn('at most one author builds', prompt)
         self.assertIn('a unit for which it prints reserved (docs/swift-migration/reserved.md) is not ported at all', prompt)
 
+    def test_prompt_puts_bugs_first_and_keeps_the_bug_folder_current(self):
+        # The owner, 2026-11-27: "Normally bug fixing should be part of the
+        # nightly job. Do bugs first, then ports."; and of the bug folder,
+        # "Keep it always up to date."
+        proc = self.run_script()
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        prompt = self.session_args()[-1]
+        self.assertIn('Bugs come first, then ports', prompt)
+        self.assertIn('fix the bugs in docs/swift-migration/bugs/ one at a time in file-name order', prompt)
+        self.assertIn('README.md section 5, "Fixing a bug in the app"', prompt)
+        self.assertIn('take units only when the folder is empty or every remaining bug is waiting on the owner',
+                      prompt)
+        self.assertIn('a bug whose fix would change a file under a reserved prefix (docs/swift-migration/reserved.md)',
+                      prompt)
+        self.assertIn('waits on the owner and the next one is taken', prompt)
+        self.assertIn('gets its own file in docs/swift-migration/bugs/', prompt)
+        self.assertIn('the bug files whose source changed are checked again', prompt)
+
     NUDGE = ('It is the clean stop time. Stop now as docs/swift-migration/workflow.md section 4 says: '
              'start nothing new, stop or abandon background jobs that have not finished, commit what '
              "passed, write the night's report, release lanes, then stop.")
