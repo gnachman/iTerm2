@@ -41,9 +41,6 @@ NS_ASSUME_NONNULL_BEGIN
                                                                blending:[iTermMetalBlending atop]
                                                          piuElementSize:1
                                                     transientStateClass:[iTermBroadcastStripesRendererTransientState class]];
-        NSImage *image = [[NSBundle bundleForClass:self.class] imageForResource:@"BackgroundStripes"];
-        _imageWrapper = [iTermImageWrapper withImage:image];
-        _size = image.size;
         _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
     }
     return self;
@@ -62,9 +59,22 @@ NS_ASSUME_NONNULL_BEGIN
         return;
     }
     _colorSpace = colorSpace;
+    _texture = nil;
+}
+
+// Every session makes one of these each time its tab is selected, but few ever draw stripes.
+- (void)loadTextureIfNeeded {
+    if (_texture) {
+        return;
+    }
+    if (!_imageWrapper) {
+        NSImage *image = [[NSBundle bundleForClass:self.class] imageForResource:@"BackgroundStripes"];
+        _imageWrapper = [iTermImageWrapper withImage:image];
+        _size = image.size;
+    }
     _texture = [_metalRenderer textureFromImage:_imageWrapper
                                         context:nil
-                                     colorSpace:colorSpace];
+                                     colorSpace:_colorSpace];
 }
 
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
@@ -92,6 +102,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)initializeTransientState:(iTermBroadcastStripesRendererTransientState *)tState {
+    [self loadTextureIfNeeded];
     tState.texture = _texture;
     CGSize size = _size;
     size.width *= tState.configuration.scale;
