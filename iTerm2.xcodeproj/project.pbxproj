@@ -864,8 +864,7 @@
 		530AB8B020B201AB00D2AA08 /* iTermFunctionCallSuggester.m in Sources */ = {isa = PBXBuildFile; fileRef = 530AB8AE20B201AB00D2AA08 /* iTermFunctionCallSuggester.m */; };
 		530AB8B420B2098000D2AA08 /* iTermVariables.h in Headers */ = {isa = PBXBuildFile; fileRef = 530AB8B220B2098000D2AA08 /* iTermVariables.h */; };
 		530AB8B520B2098000D2AA08 /* iTermVariables.m in Sources */ = {isa = PBXBuildFile; fileRef = 530AB8B320B2098000D2AA08 /* iTermVariables.m */; };
-		530AB8B820B3627200D2AA08 /* iTermGrammarProcessor.h in Headers */ = {isa = PBXBuildFile; fileRef = 530AB8B620B3627200D2AA08 /* iTermGrammarProcessor.h */; };
-		530AB8B920B3627200D2AA08 /* iTermGrammarProcessor.m in Sources */ = {isa = PBXBuildFile; fileRef = 530AB8B720B3627200D2AA08 /* iTermGrammarProcessor.m */; };
+		C8C88F6A82889D8B261611C3 /* iTermGrammarProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED8618095ADA60273AC07B99 /* iTermGrammarProcessor.swift */; };
 		530AB8BC20B3D3D000D2AA08 /* iTermWindowHacks.h in Headers */ = {isa = PBXBuildFile; fileRef = 530AB8BA20B3D3D000D2AA08 /* iTermWindowHacks.h */; };
 		530AB8BD20B3D3D000D2AA08 /* iTermWindowHacks.m in Sources */ = {isa = PBXBuildFile; fileRef = 530AB8BB20B3D3D000D2AA08 /* iTermWindowHacks.m */; };
 		530AB8C020B4E1DE00D2AA08 /* iTermRPCTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 530AB8BE20B4E1DD00D2AA08 /* iTermRPCTrigger.h */; };
@@ -5925,8 +5924,7 @@
 		530AB8B120B206DF00D2AA08 /* iTermScriptFunctionCall+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermScriptFunctionCall+Private.h"; sourceTree = "<group>"; };
 		530AB8B220B2098000D2AA08 /* iTermVariables.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermVariables.h; sourceTree = "<group>"; };
 		530AB8B320B2098000D2AA08 /* iTermVariables.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermVariables.m; sourceTree = "<group>"; };
-		530AB8B620B3627200D2AA08 /* iTermGrammarProcessor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGrammarProcessor.h; sourceTree = "<group>"; };
-		530AB8B720B3627200D2AA08 /* iTermGrammarProcessor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGrammarProcessor.m; sourceTree = "<group>"; };
+		ED8618095ADA60273AC07B99 /* iTermGrammarProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermGrammarProcessor.swift; sourceTree = "<group>"; };
 		530AB8BA20B3D3D000D2AA08 /* iTermWindowHacks.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermWindowHacks.h; sourceTree = "<group>"; };
 		530AB8BB20B3D3D000D2AA08 /* iTermWindowHacks.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermWindowHacks.m; sourceTree = "<group>"; };
 		530AB8BE20B4E1DD00D2AA08 /* iTermRPCTrigger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermRPCTrigger.h; sourceTree = "<group>"; };
@@ -11417,8 +11415,7 @@
 				A63B92222F05A27E00591B9E /* iTermGenericEvaluator.m */,
 				A63493E623E945BA0047C31B /* iTermGlobalScopeController.h */,
 				A63493E723E945BA0047C31B /* iTermGlobalScopeController.m */,
-				530AB8B620B3627200D2AA08 /* iTermGrammarProcessor.h */,
-				530AB8B720B3627200D2AA08 /* iTermGrammarProcessor.m */,
+				ED8618095ADA60273AC07B99 /* iTermGrammarProcessor.swift */,
 				A6E9AA1E2F1710D500A04BAE /* iTermIndirectValue.swift */,
 				A6481656228FDB89008E7E0C /* iTermObject.h */,
 				A6481657228FE6B1008E7E0C /* iTermObject.m */,
@@ -16523,7 +16520,6 @@
 				A62A780B2F987BDB007CAA0B /* Interval+Additions.h in Headers */,
 				A6FCAF65250D4D6500B89EB0 /* iTermModifyOtherKeysMapper.h in Headers */,
 				A6758568245AA32400827C25 /* iTermGCDTimer.h in Headers */,
-				530AB8B820B3627200D2AA08 /* iTermGrammarProcessor.h in Headers */,
 				5308BF8922828268004BECAC /* iTermStatusBarBatteryComponent.h in Headers */,
 				A6A2D6D524331F0600A4DF5B /* iTermHamburgerButton.h in Headers */,
 				A6393599210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.h in Headers */,
@@ -19626,7 +19622,7 @@
 				A678C50B279B32C600C59927 /* ComplexCharRegistry.swift in Sources */,
 				A65105A229F24A4200657EB0 /* PromptStateMachine.swift in Sources */,
 				A6DCDD212560B410004EA8A1 /* NSAttributedString+PSM.m in Sources */,
-				530AB8B920B3627200D2AA08 /* iTermGrammarProcessor.m in Sources */,
+				C8C88F6A82889D8B261611C3 /* iTermGrammarProcessor.swift in Sources */,
 				A6C93DD5238A447900F21E0D /* iTermLogicalMovementHelper.m in Sources */,
 				A629F59E23AFF4F200C2F16B /* iTermShellIntegrationInstaller.h in Sources */,
 				A6A2D6DA243453BA00A4DF5B /* iTermComposerManager.m in Sources */,
