@@ -408,9 +408,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             return NSZeroRect
         }
         
-        var countWidth = retinaRoundUpCell(cell, value: attributedObjectCountValue(forTabCell: cell,
-                                                                                   fontSize: fontSize,
-                                                                                   textColor: .black).size().width)
+        let counter = attributedObjectCountValue(forTabCell: cell, fontSize: fontSize, textColor: .black)
+        var countWidth = retinaRoundUpCell(cell, value: objectCountSize(counter, fontSize: fontSize).width)
         countWidth += (2 * kPSMMetalObjectCounterRadius - 6.0)
         if countWidth < kPSMMetalCounterMinWidth {
             countWidth = kPSMMetalCounterMinWidth
@@ -462,6 +461,24 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                                                textColor: textColor(for: cell))
     }
     
+    private struct ObjectCountSizeKey: Hashable {
+        var string: String
+        var fontSize: CGFloat
+    }
+    private static var objectCountSizes = [ObjectCountSizeKey: NSSize]()
+
+    // Drawing a tab measures its counter several times, but there are only a few different counters
+    // and their sizes don't depend on color.
+    private static func objectCountSize(_ counter: NSAttributedString, fontSize: CGFloat) -> NSSize {
+        let key = ObjectCountSizeKey(string: counter.string, fontSize: fontSize)
+        if let size = objectCountSizes[key] {
+            return size
+        }
+        let size = counter.size()
+        objectCountSizes[key] = size
+        return size
+    }
+
     private static func attributedObjectCountValue(forTabCell cell: PSMTabBarCell,
                                                    fontSize: CGFloat,
                                                    textColor: NSColor) -> NSAttributedString {
@@ -2338,7 +2355,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         // text, when there's text to show.
         if rich {
             if cell.count > 0 {
-                let width = attributedObjectCountValue(forTabCell: cell).size().width
+                let width = Self.objectCountSize(attributedObjectCountValue(forTabCell: cell), fontSize: fontSize).width
                 if width > 0 {
                     resultWidth += 4 + width
                 }
@@ -2969,7 +2986,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         // Counter
         let counterString = attributedObjectCountValue(forTabCell: cell)
         if cell.count > 0 && !counterString.string.isEmpty {
-            let counterStringSize = counterString.size()
+            let counterStringSize = Self.objectCountSize(counterString, fontSize: fontSize)
             let fontSize = self.fontSize
             let gravity: Gravity = (richLines == nil && orientation == .horizontalOrientation) ? .center : .right
             objects.append(GroupLO(name: Name.objectCounter.rawValue, priority: Priority.objectCounter.rawValue, gravity: gravity, members: [
