@@ -18,7 +18,6 @@
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermDragHandleView.h"
-#import "iTermHamburgerButton.h"
 #import "iTermPreferences.h"
 #import "iTermSystemVersion.h"
 #import "iTermToolActions.h"

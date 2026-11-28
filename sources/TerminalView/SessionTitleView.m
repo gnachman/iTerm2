@@ -10,7 +10,6 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "PSMCachedTitle.h"
-#import "iTermHamburgerButton.h"
 #import "iTermPreferences.h"
 #import "iTermStatusBarViewController.h"
 #import "NSAppearance+iTerm.h"

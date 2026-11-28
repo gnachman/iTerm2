@@ -3121,8 +3121,7 @@
 		A6A269901900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2698D1900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.h */; };
 		A6A269971902FA6800437DA9 /* ProfilesKeysPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A269951902FA6800437DA9 /* ProfilesKeysPreferencesViewController.h */; };
 		A6A2699C190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2699A190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h */; };
-		A6A2D6D524331F0600A4DF5B /* iTermHamburgerButton.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2D6D324331F0600A4DF5B /* iTermHamburgerButton.h */; };
-		A6A2D6D624331F0600A4DF5B /* iTermHamburgerButton.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2D6D424331F0600A4DF5B /* iTermHamburgerButton.m */; };
+		04877055B5E5BC7E9607DA86 /* iTermHamburgerButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 967FFF06AD0A3D986A01BE1F /* iTermHamburgerButton.swift */; };
 		A6A2D6D9243453BA00A4DF5B /* iTermComposerManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2D6D7243453BA00A4DF5B /* iTermComposerManager.h */; };
 		A6A2D6DA243453BA00A4DF5B /* iTermComposerManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2D6D8243453BA00A4DF5B /* iTermComposerManager.m */; };
 		A6A30ECE2950D29D0050F01A /* iTermPleaseWaitWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A30ECD2950D29D0050F01A /* iTermPleaseWaitWindow.swift */; };
@@ -7815,8 +7814,7 @@
 		A6A269961902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesKeysPreferencesViewController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6A2699A190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesAdvancedPreferencesViewController.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A2699B190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesAdvancedPreferencesViewController.m; sourceTree = "<group>"; tabWidth = 4; };
-		A6A2D6D324331F0600A4DF5B /* iTermHamburgerButton.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermHamburgerButton.h; sourceTree = "<group>"; };
-		A6A2D6D424331F0600A4DF5B /* iTermHamburgerButton.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermHamburgerButton.m; sourceTree = "<group>"; };
+		967FFF06AD0A3D986A01BE1F /* iTermHamburgerButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermHamburgerButton.swift; sourceTree = "<group>"; };
 		A6A2D6D7243453BA00A4DF5B /* iTermComposerManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermComposerManager.h; sourceTree = "<group>"; };
 		A6A2D6D8243453BA00A4DF5B /* iTermComposerManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermComposerManager.m; sourceTree = "<group>"; };
 		A6A30ECD2950D29D0050F01A /* iTermPleaseWaitWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermPleaseWaitWindow.swift; sourceTree = "<group>"; };
@@ -11656,8 +11654,7 @@
 				A682DE9A1915DB1F00BE8758 /* iTermFlippedView.m */,
 				530AB8C220B5284A00D2AA08 /* iTermFocusReportingTextField.h */,
 				530AB8C320B5284A00D2AA08 /* iTermFocusReportingTextField.m */,
-				A6A2D6D324331F0600A4DF5B /* iTermHamburgerButton.h */,
-				A6A2D6D424331F0600A4DF5B /* iTermHamburgerButton.m */,
+				967FFF06AD0A3D986A01BE1F /* iTermHamburgerButton.swift */,
 				1D0318261A42563A00932107 /* iTermImageWell.h */,
 				1D0318271A42563A00932107 /* iTermImageWell.m */,
 				1D468BB71B0543E300226083 /* iTermKeyboardNavigatableTableView.h */,
@@ -16509,7 +16506,6 @@
 				A6FCAF65250D4D6500B89EB0 /* iTermModifyOtherKeysMapper.h in Headers */,
 				A6758568245AA32400827C25 /* iTermGCDTimer.h in Headers */,
 				5308BF8922828268004BECAC /* iTermStatusBarBatteryComponent.h in Headers */,
-				A6A2D6D524331F0600A4DF5B /* iTermHamburgerButton.h in Headers */,
 				A6393599210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.h in Headers */,
 				535EA4FC20D0EBD300FC81E0 /* iTermSwiftyStringRecognizer.h in Headers */,
 				A6435116233B195D00828AF6 /* iTermApplescriptPythonCommands.h in Headers */,
@@ -19754,7 +19750,7 @@
 				A6180D7A21B399AA0073F219 /* NSFileManager+iTerm.m in Sources */,
 				A6F14ED9217EDAD000047D2F /* iTermWindowOcclusionChangeMonitor.m in Sources */,
 				A6D5724127BCDAA1002E6E9F /* CharacterAttributes.swift in Sources */,
-				A6A2D6D624331F0600A4DF5B /* iTermHamburgerButton.m in Sources */,
+				04877055B5E5BC7E9607DA86 /* iTermHamburgerButton.swift in Sources */,
 				A691693F281345D000083F99 /* PortholeContainerView.swift in Sources */,
 				A69FF3DB2E14689B00AFF7A8 /* Conductor+FileCheckerDataSource.swift in Sources */,
 				A6BF035521E179380097DA86 /* iTermVariableHistory.m in Sources */,
