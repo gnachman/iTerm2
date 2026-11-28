@@ -78,6 +78,10 @@ extern NSString *const PTYSessionSlownessEventExecute;
 - (instancetype)initWithQueue:(dispatch_queue_t)queue NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
+// Whether this class evaluates `trigger`. It leaves browser triggers to the browser and event
+// triggers to iTermEventTriggerEvaluator.
++ (BOOL)evaluatesTrigger:(Trigger *)trigger;
+
 - (void)loadFromProfileArray:(nullable NSArray *)array;
 - (void)checkPartialLineTriggers;
 - (void)checkIdempotentTriggersIfAllowed;

@@ -340,3 +340,13 @@ Bug Fixes:
   file’s default app. Before, Zed opened the
   file at the top. Thanks to Neel (NeelChotai)
   for the fix.
+- Full-screen programs such as Claude Code ran
+  slower, and iTerm2 could wrongly offer to turn
+  off triggers, when the profile had a trigger
+  that matches an event such as Job Started (the
+  Claude Code integration adds some). Issue
+  13245. Thanks to Rodrigo Gomes da Silva
+  (rodrigogs) for the fix.
+- The Help button in the offer to turn off slow
+  triggers closed the offer instead of opening
+  the help page.
