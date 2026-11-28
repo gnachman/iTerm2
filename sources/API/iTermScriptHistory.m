@@ -8,6 +8,7 @@
 #import "iTermScriptHistory.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAPIServer.h"
 #import "iTermAPIHelper.h"
 #import "iTermUserDefaults.h"
@@ -28,7 +29,7 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
 
 @implementation iTermScriptHistoryEntry {
     NSMutableArray<NSString *> *_logLines;
-    NSMutableArray<NSString *> *_callEntries;
+    NSMutableArray<iTermScriptHistoryCall *> *_calls;
     // Open API connections using this entry's key. See -connectionDidOpenWithPIDs:.
     NSInteger _openConnections;
     // Set by -trackProcess: for a process iTerm2 launched, until it exits.
@@ -121,7 +122,7 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
         _isRunning = YES;
 
         _logLines = [NSMutableArray array];
-        _callEntries = [NSMutableArray array];
+        _calls = [NSMutableArray array];
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             gScriptHistoryDateFormatter = [[NSDateFormatter alloc] init];
@@ -204,33 +205,33 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
 
 - (void)apiServerDidReceiveMessage:(NSNotification *)notification {
     ITMClientOriginatedMessage *request = notification.userInfo[@"request"];
-    [self addClientOriginatedRPC:[request.description stringByAppendingString:@"\n"]];
+    [self addCall:[iTermScriptHistoryCall callWithClientOriginatedMessageData:request.data ?: [NSData data]
+                                                                         date:[gScriptHistoryDateFormatter stringFromDate:[NSDate date]]]];
 }
 
 - (void)apiServerWillSendMessage:(NSNotification *)notification {
-    ITMServerOriginatedMessage *message = notification.userInfo[@"message"];
-    [self addServerOriginatedRPC:[message.description stringByAppendingString:@"\n"]];
+    [self addCall:[iTermScriptHistoryCall callWithServerOriginatedMessageData:notification.userInfo[@"data"]
+                                                                         date:[gScriptHistoryDateFormatter stringFromDate:[NSDate date]]]];
 }
 
 - (void)addOutput:(NSString *)output completion:(void (^)(void))completion {
     [self appendLogs:output completion:completion];
 }
 
-- (void)addClientOriginatedRPC:(NSString *)rpc {
-    NSString *string = [NSString stringWithFormat:@"Script → iTerm2 %@:\n%@\n", [gScriptHistoryDateFormatter stringFromDate:[NSDate date]], rpc];
-    [self appendCalls:string];
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryEntryDidChangeNotification
-                                                        object:self
-                                                      userInfo:@{ iTermScriptHistoryEntryDelta: string,
-                                                                  iTermScriptHistoryEntryFieldKey: iTermScriptHistoryEntryFieldRPCValue }];
+- (NSArray<NSString *> *)callEntries {
+    return [_calls mapWithBlock:^NSString *(iTermScriptHistoryCall *call) {
+        return call.text;
+    }];
 }
 
-- (void)addServerOriginatedRPC:(NSString *)rpc {
-    NSString *string = [NSString stringWithFormat:@"Script ← iTerm2 %@:\n%@\n", [gScriptHistoryDateFormatter stringFromDate:[NSDate date]], rpc];
-    [self appendCalls:string];
+- (void)addCall:(iTermScriptHistoryCall *)call {
+    [_calls addObject:call];
+    while (_calls.count > 100) {
+        [_calls removeObjectAtIndex:0];
+    }
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryEntryDidChangeNotification
                                                         object:self
-                                                      userInfo:@{ iTermScriptHistoryEntryDelta: string,
+                                                      userInfo:@{ iTermScriptHistoryEntryDelta: call,
                                                                   iTermScriptHistoryEntryFieldKey: iTermScriptHistoryEntryFieldRPCValue }];
 }
 
@@ -417,13 +418,6 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
                                                       userInfo:@{ iTermScriptHistoryEntryDelta: delta,
                                                                   iTermScriptHistoryEntryFieldKey: iTermScriptHistoryEntryFieldLogsValue }];
     completion();
-}
-
-- (void)appendCalls:(NSString *)delta {
-    [_callEntries addObject:delta];
-    while (_callEntries.count > 100) {
-        [_callEntries removeObjectAtIndex:0];
-    }
 }
 
 @end

@@ -639,12 +639,14 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 // queue
 - (void)sendResponse:(ITMServerOriginatedMessage *)response onConnection:(id<iTermAPIServerConnection>)webSocketConnection {
     DLog(@"Sending response %@", response);
+    NSData *data = [response data];
     dispatch_async(dispatch_get_main_queue(), ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerWillSendMessage
                                                             object:webSocketConnection.key
-                                                          userInfo:@{ @"message": response }];
+                                                          userInfo:@{ @"message": response,
+                                                                      @"data": data ?: [NSData data] }];
     });
-    [webSocketConnection sendBinary:[response data] completion:nil];
+    [webSocketConnection sendBinary:data completion:nil];
 }
 
 #pragma mark - Transactions

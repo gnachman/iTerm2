@@ -10,7 +10,8 @@
 NS_ASSUME_NONNULL_BEGIN
 
 extern NSString *const iTermScriptHistoryEntryDidChangeNotification;
-extern NSString *const iTermScriptHistoryEntryDelta;  // User info key giving next log/call
+// User info key giving next log (NSString) or call (iTermScriptHistoryCall).
+extern NSString *const iTermScriptHistoryEntryDelta;
 extern NSString *const iTermScriptHistoryEntryFieldKey;  // User info key giving what changed
 extern NSString *const iTermScriptHistoryEntryFieldLogsValue;  // Logs changed
 extern NSString *const iTermScriptHistoryEntryFieldRPCValue;  // RPC changed
@@ -52,8 +53,6 @@ extern NSString *const iTermScriptHistoryEntryFieldRPCValue;  // RPC changed
 - (instancetype)init NS_UNAVAILABLE;
 
 - (void)addOutput:(NSString *)output completion:(void (^)(void))completion;
-- (void)addClientOriginatedRPC:(NSString *)rpc;
-- (void)addServerOriginatedRPC:(NSString *)rpc;
 - (void)stopRunning;
 // Connections can reuse a key after closing (it2 over SSH shares one key per
 // session; a client may reconnect with its old key), so a stopped entry can
