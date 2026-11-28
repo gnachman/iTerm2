@@ -2654,7 +2654,7 @@
 		A66DB83B1C9142C900233E88 /* iTermAltScreenMouseScrollInferrer.m in Sources */ = {isa = PBXBuildFile; fileRef = A66DB8391C9142C900233E88 /* iTermAltScreenMouseScrollInferrer.m */; };
 		A66DB8421CA24E8800233E88 /* iTermAutoMasterParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A66DB8401CA24E8800233E88 /* iTermAutoMasterParser.h */; };
 		A66E5E541E6268F700E8FE35 /* iTermServiceProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = 06E0C88D1DF9695400AA061B /* iTermServiceProvider.m */; };
-		A66E5E591E62691F00E8FE35 /* iTermTouchBarButton.m in Sources */ = {isa = PBXBuildFile; fileRef = A68E332A1DE6AFC6003F1D8E /* iTermTouchBarButton.m */; };
+		F7F3DDC0C11EEBE730A5FF61 /* iTermTouchBarButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F99543414657902CC9E0ECA /* iTermTouchBarButton.swift */; };
 		A66E5E5D1E63625600E8FE35 /* iTermURLActionFactory.h in Headers */ = {isa = PBXBuildFile; fileRef = A66E5E5B1E63625600E8FE35 /* iTermURLActionFactory.h */; };
 		A66E804B27544E61003ABDF9 /* SecureKeyboardEntry@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66E804927544E60003ABDF9 /* SecureKeyboardEntry@2x.png */; };
 		A66E804D27544E61003ABDF9 /* SecureKeyboardEntry@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66E804927544E60003ABDF9 /* SecureKeyboardEntry@2x.png */; };
@@ -2956,7 +2956,6 @@
 		A68CB8632E4006A8002531F5 /* HighlightBrowserTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68CB8622E4006A3002531F5 /* HighlightBrowserTrigger.swift */; };
 		A68CB8662E400A2E002531F5 /* trigger-highlight-text.js in Resources */ = {isa = PBXBuildFile; fileRef = A68CB8642E400A2A002531F5 /* trigger-highlight-text.js */; };
 		A68CB8672E400A2E002531F5 /* trigger-highlight-text.js in Resources */ = {isa = PBXBuildFile; fileRef = A68CB8642E400A2A002531F5 /* trigger-highlight-text.js */; };
-		A68E332B1DE6AFC6003F1D8E /* iTermTouchBarButton.h in Headers */ = {isa = PBXBuildFile; fileRef = A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */; };
 		A68E33331DE746F5003F1D8E /* Add Mark Touch Bar Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E332D1DE746F5003F1D8E /* Add Mark Touch Bar Icon.png */; };
 		A68E33341DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E332E1DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png */; };
 		A68E33351DE746F5003F1D8E /* Next Mark Touch Bar Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = A68E332F1DE746F5003F1D8E /* Next Mark Touch Bar Icon.png */; };
@@ -7659,8 +7658,7 @@
 		A68CB8582E3FC40A002531F5 /* ReaderModeBrowserTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderModeBrowserTrigger.swift; sourceTree = "<group>"; };
 		A68CB8622E4006A3002531F5 /* HighlightBrowserTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HighlightBrowserTrigger.swift; sourceTree = "<group>"; };
 		A68CB8642E400A2A002531F5 /* trigger-highlight-text.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "trigger-highlight-text.js"; sourceTree = "<group>"; };
-		A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTouchBarButton.h; sourceTree = "<group>"; };
-		A68E332A1DE6AFC6003F1D8E /* iTermTouchBarButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTouchBarButton.m; sourceTree = "<group>"; };
+		9F99543414657902CC9E0ECA /* iTermTouchBarButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = iTermTouchBarButton.swift; sourceTree = "<group>"; };
 		A68E332D1DE746F5003F1D8E /* Add Mark Touch Bar Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "Add Mark Touch Bar Icon.png"; path = "images/Add Mark Touch Bar Icon.png"; sourceTree = "<group>"; };
 		A68E332E1DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "Add Mark Touch Bar Icon@2x.png"; path = "images/Add Mark Touch Bar Icon@2x.png"; sourceTree = "<group>"; };
 		A68E332F1DE746F5003F1D8E /* Next Mark Touch Bar Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "Next Mark Touch Bar Icon.png"; path = "images/Next Mark Touch Bar Icon.png"; sourceTree = "<group>"; };
@@ -12711,8 +12709,7 @@
 				A685D9F91E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m */,
 				A673BFDC1E16C54500FA2386 /* iTermKeyLabels.h */,
 				A673BFDD1E16C54500FA2386 /* iTermKeyLabels.m */,
-				A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */,
-				A68E332A1DE6AFC6003F1D8E /* iTermTouchBarButton.m */,
+				9F99543414657902CC9E0ECA /* iTermTouchBarButton.swift */,
 			);
 			path = TouchBar;
 			sourceTree = "<group>";
@@ -16117,7 +16114,6 @@
 				1D9DCBFE142D7BA60016228A /* Trigger.h in Headers */,
 				1D9DCC04142D7E570016228A /* iTermUserNotificationTrigger.h in Headers */,
 				1D9DCC0A142D7F300016228A /* BounceTrigger.h in Headers */,
-				A68E332B1DE6AFC6003F1D8E /* iTermTouchBarButton.h in Headers */,
 				A647E39F18C351F400450FA1 /* VT100DCSParser.h in Headers */,
 				1D5655C919AD2B1A001C460B /* PTYTab+Scripting.h in Headers */,
 				A6E713BA18FCCDD1008D94DD /* iTermLaunchServices.h in Headers */,
@@ -20911,6 +20907,7 @@
 				1A2783CFAC2F4756D27C3CC4 /* iTermOpenQuicklyTableRowView.swift in Sources */,
 				D7250709AA72C4A047E1D857 /* iTermOpenQuicklyTableView.swift in Sources */,
 				5CD157BBED45C63D06496B86 /* iTermOpenQuicklyWindow.swift in Sources */,
+				F7F3DDC0C11EEBE730A5FF61 /* iTermTouchBarButton.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -21009,7 +21006,6 @@
 				A6DC814E285CF45C0050788C /* GPBWrappers.pbobjc.m in Sources */,
 				A6CEC10A1DCE8146009F4FD2 /* GPBDescriptor.m in Sources */,
 				A6DC8149285CF45C0050788C /* GPBStruct.pbobjc.m in Sources */,
-				A66E5E591E62691F00E8FE35 /* iTermTouchBarButton.m in Sources */,
 				A6C763881B45C52B00E3C992 /* ProfileListView.m in Sources */,
 				A6CEC10E1DCE8146009F4FD2 /* GPBMessage.m in Sources */,
 				A6C763E21B45C6DD00E3C992 /* PSMTabDragWindow.m in Sources */,
