@@ -80,7 +80,6 @@
 #import "iTermImageInfo.h"
 #import "iTermImageMark.h"
 #import "iTermIndicatorsHelper.h"
-#import "iTermIntegerNumberFormatter.h"
 #import "iTermKeyboardNavigatableTableView.h"
 #import "iTermKeyBindingAction.h"
 #import "iTermKeyMappings.h"
