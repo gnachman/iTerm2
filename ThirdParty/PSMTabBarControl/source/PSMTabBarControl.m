@@ -1324,6 +1324,33 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
     return ![cell isInOverflowMenu] && ![cell isCollapsedHidden];
 }
 
+// Whether changing the title or icon of a cell could move any cell or show somewhere other than in
+// the cell itself.
+- (BOOL)layoutDependsOnContentsOfCell:(PSMTabBarCell *)cell {
+    if (![self cellIsDrawnInBar:cell] || NSIsEmptyRect(cell.frame)) {
+        // It shows in the overflow menu or a collapsed group's chip, or isn't laid out yet.
+        return YES;
+    }
+    if (_orientation == PSMTabBarHorizontalOrientation && self.sizeCellsToFit) {
+        return YES;
+    }
+    // A rename can change which end of every title the bar truncates.
+    if (self.smartTruncation && cell.truncationStyle != [self truncationStyle]) {
+        return YES;
+    }
+    PSMProgressIndicator *indicator = [cell indicator];
+    if (!indicator.isHidden && !_hideIndicators && indicator.superview != self) {
+        // Only a complete update puts a spinner in the bar. It leaves out one that is scrolled away.
+        const NSRect frame = [cell indicatorRectForFrame:cell.frame];
+        if (!NSIsEmptyRect([self visiblePartOfAccessoryFrame:frame ofCell:cell])) {
+            return YES;
+        }
+    }
+    // The spinner's position depends on rich content.
+    id tab = [[cell representedObject] identifier];
+    return [tab respondsToSelector:@selector(psmTabRichLines)] && [[tab psmTabRichLines] count] > 0;
+}
+
 - (void)dragWillExitTabBar {
     const NSInteger count = self.tabView.tabViewItems.count;
     if (count <= 1) {

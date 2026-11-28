@@ -10,6 +10,7 @@
 #import "PSMTabBarControl.h"
 #import "PSMProgressIndicator.h"
 
+@class PSMTabBarCell;
 @class PSMTabBarControl;
 @protocol PSMTabStyle;
 
@@ -25,6 +26,7 @@
 - (NSTabView *)tabView;
 - (BOOL)supportsMultiLineLabels;
 - (BOOL)shouldShowActivityIndicators;
+- (BOOL)layoutDependsOnContentsOfCell:(PSMTabBarCell *)cell;
 @end
 
 @interface PSMTabBarCell : NSActionCell <NSCoding>

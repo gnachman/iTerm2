@@ -374,7 +374,12 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 }
 
 - (void)reallySetStringValue:(NSString *)aString {
+    // NSCell makes its control redraw completely when its value changes, but only this tab needs it.
+    NSView *controlView = self.controlView;
+    self.controlView = nil;
     [super setStringValue:aString];
+    self.controlView = controlView;
+    [controlView setNeedsDisplayInRect:self.frame];
 
     if (!_delayedStringValueTimer) {
         static const NSTimeInterval kStringValueSettingDelay = 0.1;
@@ -390,7 +395,18 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     _delayedStringValueTimer = nil;
     _stringSize = [[self cachedTitle] size];
     // need to redisplay now - binding observation was too quick.
-    [[self psmTabControlView] update:[[self psmTabControlView] automaticallyAnimates]];
+    [self contentsDidChange];
+}
+
+// Laying out and redrawing the whole bar is slow when there are many tabs, and programs that animate
+// their titles make it frequent. Don't do it for a change that shows only within this cell.
+- (void)contentsDidChange {
+    NSView<PSMTabBarControlProtocol> *control = [self psmTabControlView];
+    if ([control layoutDependsOnContentsOfCell:self]) {
+        [control update:[control automaticallyAnimates]];
+    } else {
+        [control setNeedsDisplayInRect:self.frame];
+    }
 }
 
 - (NSSize)stringSize {
@@ -491,7 +507,7 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 
 - (void)setHasIcon:(BOOL)value {
     _hasIcon = value;
-    [[self psmTabControlView] update:[[self psmTabControlView] automaticallyAnimates]]; // binding notice is too fast
+    [self contentsDidChange]; // binding notice is too fast
 }
 
 - (BOOL)hasIcon {
