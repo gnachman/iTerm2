@@ -22,6 +22,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     private var _closeButtonOver: NSImage?
     private var _pinImage: NSImage?
     private var _orientation: PSMTabBarOrientation = .horizontalOrientation
+    // These are non-nil only in drawTabBar.
+    private var anyTabHasColorWhileDrawing: Bool?
+    private var titleOptionsWhileDrawing: TitleOptions?
     
     // MARK: - PSMTabStyle Properties
     @objc weak var tabBar: PSMTabBarControl?
@@ -406,9 +409,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             return NSZeroRect
         }
         
-        var countWidth = retinaRoundUpCell(cell, value: attributedObjectCountValue(forTabCell: cell,
-                                                                                   fontSize: fontSize,
-                                                                                   textColor: .black).size().width)
+        let counter = attributedObjectCountValue(forTabCell: cell, fontSize: fontSize, textColor: .black)
+        var countWidth = retinaRoundUpCell(cell, value: objectCountSize(counter, fontSize: fontSize).width)
         countWidth += (2 * kPSMMetalObjectCounterRadius - 6.0)
         if countWidth < kPSMMetalCounterMinWidth {
             countWidth = kPSMMetalCounterMinWidth
@@ -460,6 +462,28 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                                                textColor: textColor(for: cell))
     }
     
+    private struct ObjectCountSizeKey: Hashable {
+        var string: String
+        var fontSize: CGFloat
+    }
+    private static var objectCountSizes = [ObjectCountSizeKey: NSSize]()
+
+    // Drawing a tab measures its counter several times, but there are only a few different counters
+    // and their sizes don't depend on color.
+    private static func objectCountSize(_ counter: NSAttributedString, fontSize: CGFloat) -> NSSize {
+        let key = ObjectCountSizeKey(string: counter.string, fontSize: fontSize)
+        if let size = objectCountSizes[key] {
+            return size
+        }
+        let size = counter.size()
+        // Font size overrides can change over the lifetime of the app.
+        if objectCountSizes.count >= 128 {
+            objectCountSizes.removeAll(keepingCapacity: true)
+        }
+        objectCountSizes[key] = size
+        return size
+    }
+
     private static func attributedObjectCountValue(forTabCell cell: PSMTabBarCell,
                                                    fontSize: CGFloat,
                                                    textColor: NSColor) -> NSAttributedString {
@@ -483,16 +507,25 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         return NSAttributedString(string: contents, attributes: attributes)
     }
     
-    @objc func cachedTitleInputs(forTabCell cell: PSMTabBarCell) -> PSMCachedTitleInputs {
-        let parseHTML: NSNumber
-        let puaFontProvider: PSMPUAFontProvider?
-        if let tabBar {
-            parseHTML = tabBar.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.htmlTabTitles) as? NSNumber ?? NSNumber(value: false)
-            puaFontProvider = tabBar.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.puaFontProvider) as? PSMPUAFontProvider
-        } else {
-            parseHTML = NSNumber(value: false)
-            puaFontProvider = nil
+    private struct TitleOptions {
+        var parseHTML = false
+        var puaFontProvider: PSMPUAFontProvider?
+    }
+
+    private var titleOptions: TitleOptions {
+        if let titleOptionsWhileDrawing {
+            return titleOptionsWhileDrawing
         }
+        guard let tabBar else {
+            return TitleOptions()
+        }
+        let parseHTML = tabBar.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.htmlTabTitles) as? NSNumber
+        let puaFontProvider = tabBar.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.puaFontProvider) as? PSMPUAFontProvider
+        return TitleOptions(parseHTML: parseHTML?.boolValue ?? false, puaFontProvider: puaFontProvider)
+    }
+
+    @objc func cachedTitleInputs(forTabCell cell: PSMTabBarCell) -> PSMCachedTitleInputs {
+        let options = titleOptions
 
         let tabViewItem = cell.representedObject as? NSTabViewItem
         let tab = tabViewItem?.identifier as? PSMTabBarControlRepresentedObjectIdentifierProtocol
@@ -505,8 +538,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             graphic: graphic,
             orientation: _orientation,
             fontSize: fontSize,
-            parseHTML: parseHTML.boolValue,
-            puaFontProvider: puaFontProvider
+            parseHTML: options.parseHTML,
+            puaFontProvider: options.puaFontProvider
         )
     }
     
@@ -515,15 +548,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             return nil
         }
 
-        let parseHTML: NSNumber
-        let puaFontProvider: PSMPUAFontProvider?
-        if let tabBar {
-            parseHTML = tabBar.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.htmlTabTitles) as? NSNumber ?? NSNumber(value: false)
-            puaFontProvider = tabBar.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.puaFontProvider) as? PSMPUAFontProvider
-        } else {
-            parseHTML = NSNumber(value: false)
-            puaFontProvider = nil
-        }
+        let options = titleOptions
         let color = textColor(for: cell)
 
         var subtitleColor: NSColor
@@ -541,8 +566,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             graphic: nil,
             orientation: _orientation,
             fontSize: subtitleFontSize,
-            parseHTML: parseHTML.boolValue,
-            puaFontProvider: puaFontProvider
+            parseHTML: options.parseHTML,
+            puaFontProvider: options.puaFontProvider
         )
     }
     
@@ -924,8 +949,18 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         if tabBar !== bar {
             tabBar = bar
         }
-        
-        
+
+        // Drawing one tab asks this several times and answering it examines every tab.
+        anyTabHasColorWhileDrawing = nil
+        anyTabHasColorWhileDrawing = anyTabHasColor()
+        // These are the same for every title and slow to look up.
+        titleOptionsWhileDrawing = nil
+        titleOptionsWhileDrawing = titleOptions
+        defer {
+            anyTabHasColorWhileDrawing = nil
+            titleOptionsWhileDrawing = nil
+        }
+
         let backgroundColor = Self.backgroundColor
         let backgroundRect = self.backgroundRect(forBar: bar, in: rect)
 
@@ -967,8 +1002,10 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             // (its width is > 0 mid-slide; it lands at exactly 0 when fully
             // collapsed, at which point it's skipped again).
             let hiddenByCollapse = cell.isHiddenByCollapse
+            // Horizontal dividers need both neighbors even when only the gap is dirty.
+            let reach = horizontal || cell.state == .on ? dirtyFrame(for: cell) : cell.frame
             return !cell.isInOverflowMenu && !hiddenByCollapse &&
-                NSIntersectsRect(dirtyFrame(for: cell), clipRect)
+                NSIntersectsRect(reach, clipRect)
         }
 
         if drawableCells.count > 0 {
@@ -1656,6 +1693,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     }
     
     @objc func anyTabHasColor() -> Bool {
+        if let anyTabHasColorWhileDrawing {
+            return anyTabHasColorWhileDrawing
+        }
         guard let cells = tabBar?.cells() as? [PSMTabBarCell] else { return false }
         return cells.contains { $0.tabColor != nil }
     }
@@ -2326,7 +2366,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         // text, when there's text to show.
         if rich {
             if cell.count > 0 {
-                let width = attributedObjectCountValue(forTabCell: cell).size().width
+                let width = Self.objectCountSize(attributedObjectCountValue(forTabCell: cell), fontSize: fontSize).width
                 if width > 0 {
                     resultWidth += 4 + width
                 }
@@ -2584,13 +2624,25 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     
     struct ImageLO: LayoutableObject, Equatable {
         var name: String
-        var image: NSImage
         var priority: Int
         var gravity: Gravity
-        var preferredWidth: CGFloat?
-
-        var sizingMode: SizingMode { .fixed(preferredWidth ?? image.size.width) }
+        // Layout asks for this repeatedly and an image's size is slow to get, so get it once.
+        let sizingMode: SizingMode
         var draw: (ResolvedLayout) -> ()
+
+        init(name: String,
+             image: NSImage,
+             priority: Int,
+             gravity: Gravity,
+             preferredWidth: CGFloat? = nil,
+             draw: @escaping (ResolvedLayout) -> ()) {
+            self.name = name
+            self.priority = priority
+            self.gravity = gravity
+            sizingMode = .fixed(preferredWidth ?? image.size.width)
+            self.draw = draw
+        }
+
         static func == (lhs: ImageLO, rhs: ImageLO) -> Bool {
             lhs.name == rhs.name
         }
@@ -2945,7 +2997,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         // Counter
         let counterString = attributedObjectCountValue(forTabCell: cell)
         if cell.count > 0 && !counterString.string.isEmpty {
-            let counterStringSize = counterString.size()
+            let counterStringSize = Self.objectCountSize(counterString, fontSize: fontSize)
             let fontSize = self.fontSize
             let gravity: Gravity = (richLines == nil && orientation == .horizontalOrientation) ? .center : .right
             objects.append(GroupLO(name: Name.objectCounter.rawValue, priority: Priority.objectCounter.rawValue, gravity: gravity, members: [
@@ -3000,7 +3052,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
 
 // MARK: - Debugging
 
-private func DLog(_ message: String) {
+// The message is an autoclosure so that drawing a tab doesn't pay to describe it.
+private func DLog(_ message: @autoclosure () -> String) {
     // Implementation depends on how gDebugLogging is set up in your project
     // For now, this is a no-op in Swift
 #if DEBUG

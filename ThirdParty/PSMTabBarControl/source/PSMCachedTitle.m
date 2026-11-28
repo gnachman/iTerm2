@@ -186,6 +186,9 @@ NSArray<NSFont *> *PSMResolvedPUAFonts(NSString *string, BOOL parseHTML, id<PSMP
     CGFloat _truncationWidth;
     NSSize _cachedSize;
     BOOL _haveCachedSize;
+    NSRect _boundingRect;
+    NSSize _boundingRectSize;
+    BOOL _haveBoundingRect;
 }
 
 - (instancetype)initWith:(PSMCachedTitleInputs *)inputs {
@@ -242,7 +245,12 @@ NSArray<NSFont *> *PSMResolvedPUAFonts(NSString *string, BOOL parseHTML, id<PSMP
 }
 
 - (NSRect)boundingRectWithSize:(NSSize)size {
-    return [self.attributedString boundingRectWithSize:size options:0];
+    if (!_haveBoundingRect || !NSEqualSizes(size, _boundingRectSize)) {
+        _boundingRect = [self.attributedString boundingRectWithSize:size options:0];
+        _boundingRectSize = size;
+        _haveBoundingRect = YES;
+    }
+    return _boundingRect;
 }
 
 - (BOOL)isEmpty {
