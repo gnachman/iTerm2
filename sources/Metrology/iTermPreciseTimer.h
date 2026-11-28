@@ -91,6 +91,9 @@ NSString *iTermPreciseTimerLogString(NSString *identifier,
 
 NSString *iTermPreciseTimerGetSavedLogs(void);
 void iTermPreciseTimerSaveLog(NSString *identifier, NSString *log);
+// The block makes the log, and runs each time the saved logs are gotten. Use this where the log would
+// be formatted often, since it is rarely read.
+void iTermPreciseTimerSaveLogBlock(NSString *identifier, NSString *(^block)(void));
 void iTermPreciseTimerClearLogs(void);
 
 #else
@@ -133,6 +136,7 @@ void iTermPreciseTimerLogOneEvent(NSString *identifier,
                                   NSArray *histograms) { }
 NSString *iTermPreciseTimerGetSavedLogs(void) { }
 void iTermPreciseTimerSaveLog(NSString *identifier, NSString *log) { }
+void iTermPreciseTimerSaveLogBlock(NSString *identifier, NSString *(^block)(void)) { }
 void iTermPreciseTimerClearLogs(void);
 
 #endif
