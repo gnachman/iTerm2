@@ -434,7 +434,9 @@ static NSInteger gNextFrameDataNumber;
         [self mergeHistogram:tState.poolContext.textureHistogram name:[NSString stringWithFormat:@"%@: texture sizes", NSStringFromClass(tState.class)]];
         [self mergeHistogram:tState.poolContext.wasteHistogram name:[NSString stringWithFormat:@"%@: wasted space", NSStringFromClass(tState.class)]];
     }];
-    iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: Histograms", owner], [self histogramsString]);
+    iTermPreciseTimerSaveLogBlock([NSString stringWithFormat:@"%@: Histograms", owner], ^{
+        return [iTermMetalFrameData histogramsString];
+    });
 
     [self addStatsTo:aggregateStats];
 
@@ -482,7 +484,7 @@ static NSInteger gNextFrameDataNumber;
 #endif
 }
 
-- (NSString *)histogramsString {
++ (NSString *)histogramsString {
 #if ENABLE_STATS
     NSMutableString *result = [NSMutableString string];
     @synchronized(sHistograms) {

@@ -325,22 +325,30 @@ void iTermPreciseTimerLogOneEvent(NSString *identifier,
 }
 
 void iTermPreciseTimerSaveLog(NSString *identifier, NSString *log) {
+    iTermPreciseTimerSaveLogBlock(identifier, ^{ return log; });
+}
+
+void iTermPreciseTimerSaveLogBlock(NSString *identifier, NSString *(^block)(void)) {
+    NSString *(^copy)(void) = [[block copy] autorelease];
     os_unfair_lock_lock(&gLogsLock);
     if (!sLogs) {
         sLogs = [[NSMutableDictionary alloc] init];
     }
-    sLogs[identifier] = log;
+    sLogs[identifier] = copy;
     os_unfair_lock_unlock(&gLogsLock);
 }
 
 NSString *iTermPreciseTimerGetSavedLogs(void) {
+    // Copy the blocks so they don't run with the lock held.
     os_unfair_lock_lock(&gLogsLock);
-    NSMutableString *result = [NSMutableString string];
-    [sLogs enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-        NSInteger numLines = [[obj componentsSeparatedByString:@"\n"] count];
-        [result appendFormat:@"Precise timers %@:%@%@\n", key, numLines > 1 ? @"\n" : @"", obj];
-    }];
+    NSDictionary<NSString *, NSString *(^)(void)> *logs = [[sLogs copy] autorelease];
     os_unfair_lock_unlock(&gLogsLock);
+    NSMutableString *result = [NSMutableString string];
+    [logs enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString *(^ _Nonnull block)(void), BOOL * _Nonnull stop) {
+        NSString *log = block();
+        NSInteger numLines = [[log componentsSeparatedByString:@"\n"] count];
+        [result appendFormat:@"Precise timers %@:%@%@\n", key, numLines > 1 ? @"\n" : @"", log];
+    }];
     return result;
 }
 

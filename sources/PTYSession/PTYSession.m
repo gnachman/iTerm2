@@ -8511,8 +8511,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     DLog(@"updateDisplayBecause:%@ %@", reason, _cadenceController);
     _updateCount++;
     if (_useMetal && _updateCount % 10 == 0) {
-        iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: updateDisplay interval", _view.driver.identifier],
-                                 _cadenceController.histogram.stringValue);
+        iTermHistogram *histogram = _cadenceController.histogram;
+        iTermPreciseTimerSaveLogBlock([NSString stringWithFormat:@"%@: updateDisplay interval", _view.driver.identifier], ^{
+            return histogram.stringValue;
+        });
     }
     _timerRunning = YES;
 
