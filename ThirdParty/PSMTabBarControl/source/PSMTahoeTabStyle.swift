@@ -22,8 +22,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     private var _closeButtonOver: NSImage?
     private var _pinImage: NSImage?
     private var _orientation: PSMTabBarOrientation = .horizontalOrientation
-    // Non-nil only in drawTabBar.
+    // These are non-nil only in drawTabBar.
     private var anyTabHasColorWhileDrawing: Bool?
+    private var titleOptionsWhileDrawing: TitleOptions?
     
     // MARK: - PSMTabStyle Properties
     @objc weak var tabBar: PSMTabBarControl?
@@ -502,16 +503,25 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         return NSAttributedString(string: contents, attributes: attributes)
     }
     
-    @objc func cachedTitleInputs(forTabCell cell: PSMTabBarCell) -> PSMCachedTitleInputs {
-        let parseHTML: NSNumber
-        let puaFontProvider: PSMPUAFontProvider?
-        if let tabBar {
-            parseHTML = tabBar.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.htmlTabTitles) as? NSNumber ?? NSNumber(value: false)
-            puaFontProvider = tabBar.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.puaFontProvider) as? PSMPUAFontProvider
-        } else {
-            parseHTML = NSNumber(value: false)
-            puaFontProvider = nil
+    private struct TitleOptions {
+        var parseHTML = false
+        var puaFontProvider: PSMPUAFontProvider?
+    }
+
+    private var titleOptions: TitleOptions {
+        if let titleOptionsWhileDrawing {
+            return titleOptionsWhileDrawing
         }
+        guard let tabBar else {
+            return TitleOptions()
+        }
+        let parseHTML = tabBar.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.htmlTabTitles) as? NSNumber
+        let puaFontProvider = tabBar.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.puaFontProvider) as? PSMPUAFontProvider
+        return TitleOptions(parseHTML: parseHTML?.boolValue ?? false, puaFontProvider: puaFontProvider)
+    }
+
+    @objc func cachedTitleInputs(forTabCell cell: PSMTabBarCell) -> PSMCachedTitleInputs {
+        let options = titleOptions
 
         let tabViewItem = cell.representedObject as? NSTabViewItem
         let tab = tabViewItem?.identifier as? PSMTabBarControlRepresentedObjectIdentifierProtocol
@@ -524,8 +534,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             graphic: graphic,
             orientation: _orientation,
             fontSize: fontSize,
-            parseHTML: parseHTML.boolValue,
-            puaFontProvider: puaFontProvider
+            parseHTML: options.parseHTML,
+            puaFontProvider: options.puaFontProvider
         )
     }
     
@@ -534,15 +544,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             return nil
         }
 
-        let parseHTML: NSNumber
-        let puaFontProvider: PSMPUAFontProvider?
-        if let tabBar {
-            parseHTML = tabBar.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.htmlTabTitles) as? NSNumber ?? NSNumber(value: false)
-            puaFontProvider = tabBar.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.puaFontProvider) as? PSMPUAFontProvider
-        } else {
-            parseHTML = NSNumber(value: false)
-            puaFontProvider = nil
-        }
+        let options = titleOptions
         let color = textColor(for: cell)
 
         var subtitleColor: NSColor
@@ -560,8 +562,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             graphic: nil,
             orientation: _orientation,
             fontSize: subtitleFontSize,
-            parseHTML: parseHTML.boolValue,
-            puaFontProvider: puaFontProvider
+            parseHTML: options.parseHTML,
+            puaFontProvider: options.puaFontProvider
         )
     }
     
@@ -947,8 +949,12 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         // Drawing one tab asks this several times and answering it examines every tab.
         anyTabHasColorWhileDrawing = nil
         anyTabHasColorWhileDrawing = anyTabHasColor()
+        // These are the same for every title and slow to look up.
+        titleOptionsWhileDrawing = nil
+        titleOptionsWhileDrawing = titleOptions
         defer {
             anyTabHasColorWhileDrawing = nil
+            titleOptionsWhileDrawing = nil
         }
 
         let backgroundColor = Self.backgroundColor
