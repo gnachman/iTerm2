@@ -4853,6 +4853,12 @@
 		DD4E77FB28CD2D48C6A13C66 /* TerminalHardRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECFD443A066A4370FCB20EFC /* TerminalHardRules.swift */; };
 		DD90A2E4670A4DAA580B2BA6 /* ChatManualStackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 099C8A86522346410F6224B1 /* ChatManualStackView.swift */; };
 		DDAB41BA333E55822DA523F3 /* Conductor+IT2.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B19743799E1009AC26E7F4 /* Conductor+IT2.swift */; };
+		91A0D111F4E24B898C01A011 /* Conductor+Audio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A0D101F4E24B898C01A001 /* Conductor+Audio.swift */; };
+		91A0D112F4E24B898C01A012 /* PulseAudioPStream.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A0D102F4E24B898C01A002 /* PulseAudioPStream.swift */; };
+		91A0D113F4E24B898C01A013 /* PulseAudioTagstruct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A0D103F4E24B898C01A003 /* PulseAudioTagstruct.swift */; };
+		91A0D114F4E24B898C01A014 /* PulseAudioSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A0D104F4E24B898C01A004 /* PulseAudioSession.swift */; };
+		91A0D115F4E24B898C01A015 /* SSHAudioEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A0D105F4E24B898C01A005 /* SSHAudioEngine.swift */; };
+		91A0D116F4E24B898C01A016 /* ConductorAudioDemux.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A0D106F4E24B898C01A006 /* ConductorAudioDemux.swift */; };
 		DDC6A04E4BD124950415EFEA /* iTermHDREngager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25F46F9F3BA829BDB185B38 /* iTermHDREngager.swift */; };
 		DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
 		DE3AD6D8904090E875D5EFF7 /* AIExplanationResponse+Mac.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F06ECF8A1AE910A311E3128 /* AIExplanationResponse+Mac.swift */; };
@@ -6329,6 +6335,12 @@
 		A073973F14C7694600786414 /* ColorsMenuItemView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ColorsMenuItemView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A0F7E9B034221DCA29222383 /* TerminalRenderer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TerminalRenderer.swift; sourceTree = "<group>"; };
 		A1B19743799E1009AC26E7F4 /* Conductor+IT2.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "Conductor+IT2.swift"; sourceTree = "<group>"; };
+		91A0D101F4E24B898C01A001 /* Conductor+Audio.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "Conductor+Audio.swift"; sourceTree = "<group>"; };
+		91A0D102F4E24B898C01A002 /* PulseAudioPStream.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PulseAudioPStream.swift; sourceTree = "<group>"; };
+		91A0D103F4E24B898C01A003 /* PulseAudioTagstruct.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PulseAudioTagstruct.swift; sourceTree = "<group>"; };
+		91A0D104F4E24B898C01A004 /* PulseAudioSession.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PulseAudioSession.swift; sourceTree = "<group>"; };
+		91A0D105F4E24B898C01A005 /* SSHAudioEngine.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SSHAudioEngine.swift; sourceTree = "<group>"; };
+		91A0D106F4E24B898C01A006 /* ConductorAudioDemux.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConductorAudioDemux.swift; sourceTree = "<group>"; };
 		A1BB418B558347D1B429286E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermMiniSearchFieldViewController.xib; sourceTree = "<group>"; };
 		A25EF27A7558A60A0553EDC9 /* WorkgroupChildSpawning.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupChildSpawning.swift; sourceTree = "<group>"; };
 		A289859EF5CE3EC1C14E85F4 /* OrchestratorDispatcher.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OrchestratorDispatcher.swift; sourceTree = "<group>"; };
@@ -12129,8 +12141,22 @@
 				BE5A7493F12FE6D368D9966F /* SSHHookArguments.swift */,
 				C777A561F57E34891729495A /* SSHRemoteZipReply.swift */,
 				17BC8A085C339016697133DC /* ConductorDownload.swift */,
+				91A0D101F4E24B898C01A001 /* Conductor+Audio.swift */,
+				91A0D100F4E24B898C01A000 /* Audio */,
 			);
 			path = SSH;
+			sourceTree = "<group>";
+		};
+		91A0D100F4E24B898C01A000 /* Audio */ = {
+			isa = PBXGroup;
+			children = (
+				91A0D102F4E24B898C01A002 /* PulseAudioPStream.swift */,
+				91A0D103F4E24B898C01A003 /* PulseAudioTagstruct.swift */,
+				91A0D104F4E24B898C01A004 /* PulseAudioSession.swift */,
+				91A0D105F4E24B898C01A005 /* SSHAudioEngine.swift */,
+				91A0D106F4E24B898C01A006 /* ConductorAudioDemux.swift */,
+			);
+			path = Audio;
 			sourceTree = "<group>";
 		};
 		A62A7A812F9889E5007CAA0B /* StateRestoration */ = {
@@ -20595,6 +20621,12 @@
 				5E817771008D304332DC6155 /* iTermInProcessIt2.m in Sources */,
 				456E510EFA3B6DCD0F3665E5 /* Data+BigEndian.swift in Sources */,
 				DDAB41BA333E55822DA523F3 /* Conductor+IT2.swift in Sources */,
+				91A0D111F4E24B898C01A011 /* Conductor+Audio.swift in Sources */,
+				91A0D112F4E24B898C01A012 /* PulseAudioPStream.swift in Sources */,
+				91A0D113F4E24B898C01A013 /* PulseAudioTagstruct.swift in Sources */,
+				91A0D114F4E24B898C01A014 /* PulseAudioSession.swift in Sources */,
+				91A0D115F4E24B898C01A015 /* SSHAudioEngine.swift in Sources */,
+				91A0D116F4E24B898C01A016 /* ConductorAudioDemux.swift in Sources */,
 				12BD6AC6F5D9C9E5FFA82CEC /* CompanionKeyInjection.swift in Sources */,
 				55C9E0DE76591DE74F41C987 /* iTermUpgradeSafeKeychain.swift in Sources */,
 				60B1143D21817F21D3451F6C /* iTermKeychainTestSupport.swift in Sources */,

@@ -4279,6 +4279,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         // Dismiss any pending it2 auth prompt while the delegate is still live; deinit
         // fulfills the seal but (being nonisolated) cannot dismiss the announcement.
         [_conductor resolveIT2AuthorizationFailClosed];
+        [_conductor resolveAudioAuthorizationFailClosed];
         [self removeChannelClientsForConductor:_conductor];
         _conductor.delegate = nil;
         [_conductor release];
@@ -7480,11 +7481,35 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self.tmuxForegroundJobMonitor updateOnce];
 }
 
+- (NSImage *)sshAudioTabSymbolImage {
+    if (_conductor.isCapturingRemoteAudio) {
+        return [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolMicFill)
+                         accessibilityDescription:NSLocalizedStringWithDefaultValue(@"PTYSession.RemoteMicrophoneActiveAccessibility",
+                                                                                    nil,
+                                                                                    [NSBundle mainBundle],
+                                                                                    @"Remote Microphone Active",
+                                                                                    @"Accessibility description for the tab icon shown while a remote SSH session is capturing microphone audio")];
+    }
+    if (_conductor.isPlayingRemoteAudio) {
+        SFSymbol symbol = _conductor.isRemoteAudioMuted ? SFSymbolSpeakerSlashFill : SFSymbolSpeakerWave2Fill;
+        return [NSImage imageWithSystemSymbolName:SFSymbolGetString(symbol)
+                         accessibilityDescription:NSLocalizedStringWithDefaultValue(@"PTYSession.RemoteAudioPlayingAccessibility",
+                                                                                    nil,
+                                                                                    [NSBundle mainBundle],
+                                                                                    @"Remote Audio Playing",
+                                                                                    @"Accessibility description for the tab icon shown while a remote SSH session is playing audio")];
+    }
+    return nil;
+}
+
 - (BOOL)shouldShowTabGraphic {
     return [self shouldShowTabGraphicForProfile:self.profile];
 }
 
 - (BOOL)shouldShowTabGraphicForProfile:(Profile *)profile {
+    if (_conductor.isCapturingRemoteAudio || _conductor.isPlayingRemoteAudio) {
+        return YES;
+    }
     const iTermProfileIcon icon = [iTermProfilePreferences unsignedIntegerForKey:KEY_ICON inProfile:profile];
     return icon != iTermProfileIconNone;
 }
@@ -7494,6 +7519,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (NSImage *)tabGraphicForProfile:(Profile *)profile {
+    NSImage *audioImage = [self sshAudioTabSymbolImage];
+    if (audioImage) {
+        return audioImage;
+    }
     const iTermProfileIcon icon = [iTermProfilePreferences unsignedIntegerForKey:KEY_ICON inProfile:profile];
     switch (icon) {
         case iTermProfileIconNone:
@@ -11672,6 +11701,49 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         return;
     }
     [_conductor setIT2AuthorizationFromMenu:!_conductor.it2AuthorizedByUser];
+}
+
+- (BOOL)textViewRemoteHostCanUseMicrophone:(out BOOL *)available {
+    const BOOL isAvailable = (_conductor != nil && _conductor.audioProxyActive);
+    if (available) {
+        *available = isAvailable;
+    }
+    return isAvailable && _conductor.audioMicAuthorizedByUser;
+}
+
+- (void)textViewToggleRemoteHostCanUseMicrophone {
+    if (!_conductor.audioProxyActive) {
+        return;
+    }
+    [_conductor setAudioMicAuthorizationFromMenu:!_conductor.audioMicAuthorizedByUser];
+}
+
+- (BOOL)textViewRemoteAudioIsMuted:(out BOOL *)available {
+    const BOOL isAvailable = (_conductor != nil && _conductor.audioProxyActive);
+    if (available) {
+        *available = isAvailable;
+    }
+    return isAvailable && _conductor.isRemoteAudioMuted;
+}
+
+- (void)textViewToggleMuteRemoteAudio {
+    if (!_conductor.audioProxyActive) {
+        return;
+    }
+    [_conductor setRemoteAudioMuted:!_conductor.isRemoteAudioMuted];
+}
+
+- (BOOL)textViewCanDisconnectRemoteAudio {
+    return (_conductor != nil &&
+            _conductor.audioProxyActive &&
+            (_conductor.isPlayingRemoteAudio || _conductor.isCapturingRemoteAudio));
+}
+
+- (void)textViewDisconnectRemoteAudio {
+    if (!_conductor.audioProxyActive) {
+        return;
+    }
+    [_conductor disconnectRemoteAudio];
 }
 
 
@@ -22299,6 +22371,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         // otherwise the announcement lingers pointing at a released conductor. Idempotent
         // and a no-op when no prompt is pending.
         [_conductor resolveIT2AuthorizationFailClosed];
+        [_conductor resolveAudioAuthorizationFailClosed];
         [self removeChannelClientsForConductor:_conductor];
         if (_conductor.dcsID.length) {
             // Its hook may still end later; that is not the end of its parent (F-787).
@@ -22363,6 +22436,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         return;
     }
     [_conductor handleIT2:string depth:depth];
+}
+
+- (void)screenHandlePulse:(NSString *)string depth:(int)depth {
+    if (!string) {
+        return;
+    }
+    [_conductor handlePulse:string depth:depth];
 }
 
 - (NSInteger)screenEndSSH:(NSString *)uniqueID {
@@ -22470,6 +22550,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     // persist:false, so this does not touch it2Authorized and is safe before adopt (which
     // carries any decided grant); an undecided prompt re-appears on the next command.
     [recovering resolveIT2AuthorizationFailClosed];
+    [recovering resolveAudioAuthorizationFailClosed];
     if (parentDepth < 0) {
         // How deep the connection was: its innermost framing conductor, or the depth a recovery
         // already under way is bringing it back to.
@@ -22496,6 +22577,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                  shouldInjectShellIntegration:NO
                                        parent:previousConductor];
     [_conductor adoptIT2RecoveryStateFrom:recovering];
+    [_conductor adoptAudioRecoveryStateFrom:recovering];
     [self updateVariablesFromConductor];
     _conductor.delegate = self;
     [_conductor startRecovery];
@@ -22515,6 +22597,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     // the seal but cannot dismiss the announcement). The recovery shim usually has no
     // prompt, but close the gap so a released conductor never leaves a live announcement.
     [_conductor resolveIT2AuthorizationFailClosed];
+    [_conductor resolveAudioAuthorizationFailClosed];
     _conductor.delegate = nil;
     [_conductor autorelease];
     _conductor = [[iTermConductor alloc] initWithRecovery:recovery];
@@ -28188,6 +28271,14 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     return IT2AuthorizationAnnouncementIdentifier(guid);
 }
 
+static NSString *AudioAuthorizationAnnouncementIdentifier(NSString *guid) {
+    return [NSString stringWithFormat:@"AudioAuthorization-%@", guid];
+}
+
++ (NSString *)audioAuthorizationAnnouncementIdentifierForGUID:(NSString *)guid {
+    return AudioAuthorizationAnnouncementIdentifier(guid);
+}
+
 #if DEBUG
 - (BOOL)debugAnswerIT2AuthorizationForConductorGUID:(NSString *)guid selection:(int)index {
     NSString *identifier = IT2AuthorizationAnnouncementIdentifier(guid);
@@ -28240,6 +28331,33 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 
 - (void)conductorDismissIT2AuthorizationPromptWithGUID:(NSString *)guid {
     [self dismissIT2AuthorizationAnnouncementWithIdentifier:IT2AuthorizationAnnouncementIdentifier(guid)];
+}
+
+- (void)conductorRequestAudioAuthorizationWithGUID:(NSString *)guid
+                                       displayName:(NSString *)displayName
+                                        completion:(void (^)(BOOL granted, BOOL remember, BOOL alwaysForHost))completion {
+    NSString *who = displayName.length ? displayName : NSLocalizedStringWithDefaultValue(@"PTYSession.ARemoteSession", nil, [NSBundle mainBundle], @"A remote session", @"Generic name for an unnamed remote session");
+    NSString *title =
+        [NSString stringWithFormat:
+         NSLocalizedStringWithDefaultValue(@"PTYSession.AudioAuthorizationPrompt", nil, [NSBundle mainBundle], @"%@ wants to record from your Mac’s microphone over SSH integration. Allow microphone access for this session?", @"Prompt asking whether to allow a remote session to capture microphone audio over SSH; placeholder is the session name"), who];
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:title
+                                                         style:kiTermAnnouncementViewStyleWarning
+                                                   withActions:@[ NSLocalizedStringWithDefaultValue(@"PTYSession.Allow", nil, [NSBundle mainBundle], @"Allow", @"Button that allows an action"),
+                                                                  NSLocalizedStringWithDefaultValue(@"PTYSession.AlwaysAllowThisHost", nil, [NSBundle mainBundle], @"Always Allow This Host", @"Button that allows a remote host on this and every future connection, not just this one"),
+                                                                  NSLocalizedStringWithDefaultValue(@"PTYSession.Deny", nil, [NSBundle mainBundle], @"Deny", @"Button that denies an action") ]
+                                                    completion:^(int selection) {
+            iTermAudioAuthorizationOutcome *outcome =
+                [[[iTermAudioAuthorizationOutcome alloc] initWithSelection:selection] autorelease];
+            completion(outcome.granted, outcome.remember, outcome.alwaysForHost);
+        }];
+    [self presentIT2AuthorizationAnnouncement:announcement
+                                   identifier:AudioAuthorizationAnnouncementIdentifier(guid)
+                               callerTmuxPane:nil];
+}
+
+- (void)conductorDismissAudioAuthorizationPromptWithGUID:(NSString *)guid {
+    [self dismissIT2AuthorizationAnnouncementWithIdentifier:AudioAuthorizationAnnouncementIdentifier(guid)];
 }
 
 - (iTermFramerFlowLedger *)conductorFlowLedger {
@@ -28343,6 +28461,7 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
         [terminal.parser cancelConductorRecoveryMode];
     }];
     [_conductor resolveIT2AuthorizationFailClosed];
+    [_conductor resolveAudioAuthorizationFailClosed];
     [self removeChannelClientsForConductor:_conductor];
     _conductor.delegate = nil;
     [_conductor release];
@@ -28408,6 +28527,9 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     DLog(@"conductorDidExfiltrateState");
     [self updateVariablesFromConductor];
     [self updateInferredTmuxHostOfPanes];
+    [self.delegate sessionDidChangeGraphic:self
+                                shouldShow:[self shouldShowTabGraphic]
+                                     image:self.tabGraphic];
 }
 
 // A tmux gateway's host or connection changed: its panes' inferred hosts follow (see

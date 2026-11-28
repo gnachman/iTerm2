@@ -55,6 +55,8 @@ TOP-LEVEL keys
   StatusPriorityEntries .................. JSON Data: status "pattern"
   NoSyncIT2HostGrants .................... JSON Data: "host" (user@host of each
                                            remote host always allowed to use it2)
+  NoSyncAudioHostGrants .................. JSON Data: "host" (user@host of each
+                                           remote host always allowed to use mic)
   Coprocess MRU, NoSyncCoprocessCommandsToIgnoreErrorOutput,
     FileDropCoprocess, UrlHandlerCommand   user shell commands
   NoSyncKnownHosts ....................... user@host:port list
@@ -408,6 +410,7 @@ CONTENT_KEYS = {
     "CodeReviewSavedPrompts": JSON_V,
     "StatusPriorityEntries": JSON_V,
     "NoSyncIT2HostGrants": JSON_V,
+    "NoSyncAudioHostGrants": JSON_V,
 }
 
 # Lower-sensitivity labels, only redacted with --aggressive.

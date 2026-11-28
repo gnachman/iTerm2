@@ -6684,6 +6684,7 @@ lengthExcludingInBandSignaling:0
     iTermFramerFlowLedger *ledger = self.flowLedger;
     const int count = CVectorCount(vector);
     NSMutableArray<VT100Token *> *paneTokens = nil;
+    NSMutableArray<VT100Token *> *pulseTokens = nil;
     for (int i = 0; i < count; i++) {
         VT100Token *token = CVectorGetObject(vector, i);
         // Each depth's frames are counted for that depth's framer (nested SSH Integration).
@@ -6705,11 +6706,40 @@ lengthExcludingInBandSignaling:0
                 [paneTokens addObject:token];
             }
         } else if (token.type == SSH_IT2 && [ledger isActiveForDepth:depth]) {
-            [self recordArrivalOfIT2Data:token.string
-                                  ledger:ledger
-                                   depth:depth
-                     carrierMilliseconds:token.sshCarrierSendMilliseconds];
+            [self recordArrivalOfFramedSocketData:token.string
+                                             flow:iTermFramerFlowLedger.it2Flow
+                                           ledger:ledger
+                                            depth:depth
+                              carrierMilliseconds:token.sshCarrierSendMilliseconds];
+        } else if (token.type == SSH_PULSE) {
+            if ([ledger isActiveForDepth:depth]) {
+                [self recordArrivalOfFramedSocketData:token.string
+                                                 flow:iTermFramerFlowLedger.pulseFlow
+                                               ledger:ledger
+                                                depth:depth
+                                  carrierMilliseconds:token.sshCarrierSendMilliseconds];
+            }
+            if (token.string) {
+                if (!pulseTokens) {
+                    pulseTokens = [NSMutableArray array];
+                }
+                [pulseTokens addObject:token];
+            }
         }
+    }
+    if (pulseTokens) {
+        NSMutableArray<NSArray *> *frames = [NSMutableArray arrayWithCapacity:pulseTokens.count];
+        for (VT100Token *token in pulseTokens) {
+            [frames addObject:@[ token.string,
+                                 @(token.sshInfo.valid ? token.sshInfo.depth : 0) ]];
+            token.type = VT100_SKIP;
+        }
+        [self addUrgentSideEffect:^(id<VT100ScreenDelegate> delegate) {
+            for (NSArray *frame in frames) {
+                [delegate screenHandlePulse:frame[0]
+                                      depth:[frame[1] intValue]];
+            }
+        } name:@"handle pulse on arrival"];
     }
     if (!paneTokens) {
         return;
@@ -6733,12 +6763,13 @@ lengthExcludingInBandSignaling:0
     } name:@"read pane output"];
 }
 
-// "<connid> data <base64> <send-ms> <flags>": it2 data under flow control (version 2). Credit
-// counts the decoded bytes.
-- (void)recordArrivalOfIT2Data:(NSString *)payload
-                        ledger:(iTermFramerFlowLedger *)ledger
-                         depth:(int)depth
-           carrierMilliseconds:(int64_t)carrierMilliseconds {
+// "<connid> data <base64> <send-ms> <flags>": it2 or pulse data under flow control (version 2).
+// Credit counts the decoded bytes.
+- (void)recordArrivalOfFramedSocketData:(NSString *)payload
+                                   flow:(int32_t)flow
+                                 ledger:(iTermFramerFlowLedger *)ledger
+                                  depth:(int)depth
+                    carrierMilliseconds:(int64_t)carrierMilliseconds {
     NSArray<NSString *> *parts = [payload componentsSeparatedByString:@" "];
     if (parts.count != 5 || ![parts[1] isEqualToString:@"data"]) {
         return;
@@ -6757,7 +6788,7 @@ lengthExcludingInBandSignaling:0
     [ledger frameDidArriveWithLength:length
                     sendMilliseconds:parts[3].longLongValue
                                flags:parts[4].intValue
-                                flow:iTermFramerFlowLedger.it2Flow
+                                flow:flow
                                depth:depth
                  carrierMilliseconds:carrierMilliseconds];
 }

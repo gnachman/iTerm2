@@ -29,6 +29,7 @@ public class ConductorRecovery: NSObject {
     // local trust decision and must never be re-derivable from remote-controlled state, so
     // the whole value travels via this in-process handoff. See Conductor.init(recovery:).
     let it2Proxy: IT2ProxyState
+    let audioProxy: SSHAudioProxyState
 
     init(pid: pid_t,
          dcsID: String,
@@ -40,7 +41,8 @@ public class ConductorRecovery: NSObject {
          flow: String?,
          panes: [Int32] = [],
          parent: Conductor?,
-         it2Proxy: IT2ProxyState) {
+         it2Proxy: IT2ProxyState,
+         audioProxy: SSHAudioProxyState = SSHAudioProxyState()) {
         self.pid = pid
         self.dcsID = dcsID
         self.tree = tree
@@ -52,5 +54,6 @@ public class ConductorRecovery: NSObject {
         self.panes = panes
         self.parent = parent
         self.it2Proxy = it2Proxy
+        self.audioProxy = audioProxy
     }
 }

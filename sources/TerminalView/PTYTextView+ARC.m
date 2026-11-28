@@ -174,6 +174,19 @@ iTermCommandInfoViewControllerDelegate>
         item.state = [self.delegate textViewRemoteHostCanControlIterm2:&available] ? NSControlStateValueOn : NSControlStateValueOff;
         return available;
     }
+    if (item.action == @selector(toggleRemoteHostCanUseMicrophone:)) {
+        BOOL available = NO;
+        item.state = [self.delegate textViewRemoteHostCanUseMicrophone:&available] ? NSControlStateValueOn : NSControlStateValueOff;
+        return available;
+    }
+    if (item.action == @selector(toggleMuteRemoteAudio:)) {
+        BOOL available = NO;
+        item.state = [self.delegate textViewRemoteAudioIsMuted:&available] ? NSControlStateValueOn : NSControlStateValueOff;
+        return available;
+    }
+    if (item.action == @selector(disconnectRemoteAudio:)) {
+        return [self.delegate textViewCanDisconnectRemoteAudio];
+    }
     if (item.action == @selector(performNaturalLanguageQuery:)) {
         return [iTermAdvancedSettingsModel generativeAIAllowed];
     }
@@ -251,6 +264,18 @@ iTermCommandInfoViewControllerDelegate>
 
 - (IBAction)toggleRemoteHostCanControlIterm2:(id)sender {
     [self.delegate textViewToggleRemoteHostCanControlIterm2];
+}
+
+- (IBAction)toggleRemoteHostCanUseMicrophone:(id)sender {
+    [self.delegate textViewToggleRemoteHostCanUseMicrophone];
+}
+
+- (IBAction)toggleMuteRemoteAudio:(id)sender {
+    [self.delegate textViewToggleMuteRemoteAudio];
+}
+
+- (IBAction)disconnectRemoteAudio:(id)sender {
+    [self.delegate textViewDisconnectRemoteAudio];
 }
 
 - (IBAction)performNaturalLanguageQuery:(id)sender {

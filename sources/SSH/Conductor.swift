@@ -36,6 +36,11 @@ protocol ConductorDelegate: Any {
     // connection was resolved/torn down before the user answered). No-op if none.
     @objc(conductorDismissIT2AuthorizationPromptWithGUID:)
     func conductorDismissIT2AuthorizationPrompt(guid: String)
+    @objc(conductorRequestAudioAuthorizationWithGUID:displayName:completion:)
+    optional func conductorRequestAudioAuthorization(guid: String, displayName: String,
+                                                     completion: @escaping (_ granted: Bool, _ remember: Bool, _ alwaysForHost: Bool) -> Void)
+    @objc(conductorDismissAudioAuthorizationPromptWithGUID:)
+    optional func conductorDismissAudioAuthorizationPrompt(guid: String)
     var guid: String { get }
     // Where the session records the flow-controlled frames it parses and executes.
     @objc optional func conductorFlowLedger() -> FramerFlowLedger?
@@ -103,6 +108,7 @@ class Conductor: NSObject, SSHIdentityProvider {
         // authorization grant/denial is persisted so the user is not re-prompted after a
         // relaunch (absent -> undecided -> prompt).
         var it2Proxy = IT2ProxyState()
+        var audioProxy = SSHAudioProxyState()
         // The framer may have flow control on: `flow on` was sent and not refused. It has no
         // way to turn it off, so after a restart it needs a controller whatever the setting.
         var flowMayBeOn = false
@@ -130,7 +136,8 @@ class Conductor: NSObject, SSHIdentityProvider {
              uname: String?,
              _terminalConfiguration: CodableNSDictionary?,
              discoveredHostname: String?,
-             it2Proxy: IT2ProxyState = IT2ProxyState()) {
+             it2Proxy: IT2ProxyState = IT2ProxyState(),
+             audioProxy: SSHAudioProxyState = SSHAudioProxyState()) {
             self.sshargs = sshargs
             self.varsToSend = varsToSend
             self.clientVars = clientVars
@@ -154,6 +161,7 @@ class Conductor: NSObject, SSHIdentityProvider {
             self._terminalConfiguration = _terminalConfiguration
             self.discoveredHostname = discoveredHostname
             self.it2Proxy = it2Proxy
+            self.audioProxy = audioProxy
         }
 
         private enum CodingKeys: CodingKey {
@@ -162,7 +170,7 @@ class Conductor: NSObject, SSHIdentityProvider {
                framedPID, remoteInfo, state, queue, boolArgs, dcsID, clientUniqueID,
                modifiedVars, modifiedCommandArgs, clientVars, shouldInjectShellIntegration,
                homeDirectory, shell, pythonversion, uname, terminalConfiguration,
-               discoveredHostname, it2Proxy, flowMayBeOn, framerVersion,
+               discoveredHostname, it2Proxy, audioProxy, flowMayBeOn, framerVersion,
                // Legacy, decode-only: the committed HEAD schema persisted the it2 proxy as
                // these two separate scalar keys before they were folded into it2Proxy. Kept
                // so init(from:) can migrate an old blob; encode() never writes them.
@@ -209,6 +217,7 @@ class Conductor: NSObject, SSHIdentityProvider {
                     let socketPath = (try? container.decode(String?.self, forKey: .it2SocketPath)) ?? nil
                     it2Proxy = IT2ProxyState(nonce: nonce, socketPath: socketPath, authorized: nil)
                 }
+                audioProxy = (try? container.decode(SSHAudioProxyState.self, forKey: .audioProxy)) ?? SSHAudioProxyState()
             } catch {
                 DLogMain("Failed to restore conductor: \(error)")
                 throw error
@@ -240,6 +249,7 @@ class Conductor: NSObject, SSHIdentityProvider {
             try container.encode(_terminalConfiguration, forKey: .terminalConfiguration)
             try container.encode(discoveredHostname, forKey: .discoveredHostname)
             try container.encode(it2Proxy, forKey: .it2Proxy)
+            try container.encode(audioProxy, forKey: .audioProxy)
             try container.encode(flowMayBeOn, forKey: .flowMayBeOn)
             try container.encode(framerVersion, forKey: .framerVersion)
         }
@@ -525,6 +535,27 @@ class Conductor: NSObject, SSHIdentityProvider {
         get { restorableState.it2Proxy.socketPath }
         set { restorableState.it2Proxy.socketPath = newValue }
     }
+    var audioDemux: ConductorAudioDemux?
+    var audioEngine: SSHAudioEngine?
+    var audioTestBackend: PulseAudioBackend?
+    var audioAuthPromise: iTermPromise<NSNumber>?
+    var audioAuthSeal: iTermPromiseSeal?
+    var audioProxy: SSHAudioProxyState {
+        get { restorableState.audioProxy }
+        set { restorableState.audioProxy = newValue }
+    }
+    var pulseListenSucceeded: Bool {
+        get { restorableState.audioProxy.listenSucceeded }
+        set { restorableState.audioProxy.listenSucceeded = newValue }
+    }
+    var audioMicAuthorized: Bool? {
+        get { restorableState.audioProxy.micAuthorized }
+        set { restorableState.audioProxy.micAuthorized = newValue }
+    }
+    var pulseSocketPath: String? {
+        get { restorableState.audioProxy.socketPath }
+        set { restorableState.audioProxy.socketPath = newValue }
+    }
     // Jumps that children must do.
     var subsequentJumps: [SSHReconnectionInfo] = []
     // If non-nil, a jump that I haven't done yet.
@@ -692,7 +723,8 @@ class Conductor: NSObject, SSHIdentityProvider {
             uname: nil,
             _terminalConfiguration: nil,
             discoveredHostname: nil,
-            it2Proxy: recovery.it2Proxy),
+            it2Proxy: recovery.it2Proxy,
+            audioProxy: recovery.audioProxy),
                   restored: true)
         _parent = recovery.parent
         framerVersion = .init(rawValue: recovery.version)
@@ -711,6 +743,8 @@ class Conductor: NSObject, SSHIdentityProvider {
         // seal directly rather than the main-actor resolveIT2Authorization method.
         it2AuthSeal?.fulfill(NSNumber(value: false))
         it2AuthSeal = nil
+        audioAuthSeal?.fulfill(NSNumber(value: false))
+        audioAuthSeal = nil
         let uniqueID = guid
         let sshid = restorableState.parsedSSHArguments.identity
         // Stop any it2 command still looping on a background queue. cancelAll() mutates the
@@ -721,8 +755,12 @@ class Conductor: NSObject, SSHIdentityProvider {
         // actor. The normal teardown is the on-main unhook path (which already drains the
         // demux); this covers an off-main last-release of a conductor with a live stream.
         let demux = it2Demux
+        let aDemux = audioDemux
+        let aEngine = audioEngine
         Task { @MainActor in
             demux?.cancelAll()
+            aDemux?.closeAll()
+            aEngine?.shutdownAll()
             ConductorRegistry.instance.remove(conductorGUID: uniqueID, sshIdentity: sshid)
         }
     }
@@ -1121,6 +1159,12 @@ extension Conductor {
         case framerIT2Send(connid: String, data: Data)
         case framerIT2Close(connid: String)
 
+        // PulseAudio native protocol proxy over SSH: bind PULSE_SERVER unix socket,
+        // relay downstream server replies / capture audio, and close client sockets.
+        case framerPulseListen(path: String)
+        case framerPulseSend(connid: String, data: Data)
+        case framerPulseClose(connid: String)
+
         // A workgroup peer's program on its own pty (framer.py handle_pane), and its size.
         case framerPane(rows: Int, cols: Int, cwd: String, command: String, environment: [String: String])
         case framerPaneSize(pid: Int32, rows: Int, cols: Int)
@@ -1172,7 +1216,9 @@ extension Conductor {
             case .framerRun, .framerLogin, .framerSend, .framerKill, .framerQuit, .framerRegister(_),
                     .framerDeregister(_), .framerPoll, .framerReset1, .framerReset2, .framerAutopoll, .framerSave(_),
                     .framerFile(_), .framerEval, .framerGetenv, .framerExecPythonStatements,
-                    .framerIT2Listen, .framerIT2Send, .framerIT2Close, .framerPane, .framerPaneSize,
+                    .framerIT2Listen, .framerIT2Send, .framerIT2Close,
+                    .framerPulseListen, .framerPulseSend, .framerPulseClose,
+                    .framerPane, .framerPaneSize,
                     .framerFlowOn, .framerFlowOnVersion1, .framerDrain, .framerPing, .framerPanes:
                 return true
             }
@@ -1242,6 +1288,12 @@ extension Conductor {
                 return ["it2send", connid, data.base64EncodedString()].joined(separator: "\n")
             case .framerIT2Close(connid: let connid):
                 return ["it2close", connid].joined(separator: "\n")
+            case .framerPulseListen(path: let path):
+                return ["pulselisten", path].joined(separator: "\n")
+            case .framerPulseSend(connid: let connid, data: let data):
+                return ["pulsesend", connid, data.base64EncodedString()].joined(separator: "\n")
+            case .framerPulseClose(connid: let connid):
+                return ["pulseclose", connid].joined(separator: "\n")
             case .framerPane(rows: let rows, cols: let cols, cwd: let cwd, command: let command,
                              environment: let environment):
                 return (["pane", String(rows), String(cols), cwd, command] +
@@ -1323,6 +1375,12 @@ extension Conductor {
                 return "it2send \(connid) \(data.semiVerboseDescription)"
             case .framerIT2Close(connid: let connid):
                 return "it2close \(connid)"
+            case .framerPulseListen(path: let path):
+                return "pulselisten \(path)"
+            case .framerPulseSend(connid: let connid, data: let data):
+                return "pulsesend \(connid) \(data.semiVerboseDescription)"
+            case .framerPulseClose(connid: let connid):
+                return "pulseclose \(connid)"
             case .framerPane(rows: let rows, cols: let cols, cwd: let cwd, command: let command, environment: _):
                 return "pane \(rows)x\(cols) cwd=\(cwd) “\(command)”"
             case .framerPaneSize(pid: let pid, rows: let rows, cols: let cols):
@@ -1414,6 +1472,8 @@ extension Conductor {
                     return "fireAndForget"
                 case .it2Listen:
                     return "it2Listen"
+                case .pulseListen:
+                    return "pulseListen"
                 case .handleFramerLogin(let output):
                     return "handleFramerLogin(\(output.string))"
                 case .handleJump:
@@ -1451,6 +1511,7 @@ extension Conductor {
             case handleCheckForPython(StringArray)
             case fireAndForget  // don't care what the result is
             case it2Listen  // like fireAndForget but logs a non-zero framer bind status
+            case pulseListen  // like it2Listen, tracks whether pulselisten bound the audio socket
             case handleFramerLogin(StringArray)
             case handleJump(StringArray)
             case writeOnSuccess(String)  // see runPython
@@ -1498,6 +1559,7 @@ extension Conductor {
                 case handleEphemeralCompletion
                 case handleResetMarker
                 case handleProbedReset
+                case pulseListen
             }
 
             private var rawValue: Int {
@@ -1510,6 +1572,8 @@ extension Conductor {
                     return RawValues.fireAndForget.rawValue
                 case .it2Listen:
                     return RawValues.it2Listen.rawValue
+                case .pulseListen:
+                    return RawValues.pulseListen.rawValue
                 case .handleFramerLogin:
                     return RawValues.handleFramerLogin.rawValue
                 case .handleJump:
@@ -1547,7 +1611,7 @@ extension Conductor {
                 var container = encoder.container(keyedBy: Key.self)
                 try container.encode(rawValue, forKey: .rawValue)
                 switch self {
-                case .failIfNonzeroStatus, .fireAndForget, .it2Listen, .handleFramerLogin(_), .handlePoll(_, _),
+                case .failIfNonzeroStatus, .fireAndForget, .it2Listen, .pulseListen, .handleFramerLogin(_), .handlePoll(_, _),
                         .handleJump, .handleNonFramerLogin, .handleGetenv, .handleReset,
                         .handleResetMarker, .handleProbedReset,
                         .handleGetHostname, .handleEphemeralCompletion:
@@ -1582,6 +1646,8 @@ extension Conductor {
                     self = .fireAndForget
                 case .it2Listen:
                     self = .it2Listen
+                case .pulseListen:
+                    self = .pulseListen
                 case .handleFramerLogin:
                     self = .handleFramerLogin(try container.decode(StringArray.self, forKey: .stringArray))
                 case .handleJump:
@@ -1641,13 +1707,22 @@ extension Conductor {
         // It's particularly important for keystrokes to reduce latency when typing quickly.
         var supportsPipelining: Bool {
             switch self.command {
-            case .framerSend, .framerIT2Send:
+            case .framerSend, .framerIT2Send, .framerPulseSend:
                 return true
             case .framerFile(let sub):
                 switch sub {
                 case .fetch: return true
                 default: return false
                 }
+            default:
+                return false
+            }
+        }
+
+        var isStreamingSocketSend: Bool {
+            switch self.command {
+            case .framerIT2Send, .framerPulseSend:
+                return true
             default:
                 return false
             }
@@ -1665,10 +1740,10 @@ extension Conductor {
                 // (do NOT fold this into the raw-count estimate below -- that quietly shrinks
                 // the hot-path window ~25%).
                 return command.stringValue.count * 4 / 3
-            case .framerIT2Send(connid: _, data: let data):
-                // it2 carries large API responses. Approximate from the raw payload (base64
-                // inflates ~4/3) rather than base64-encoding the whole thing here just to
-                // measure it and then again in stringValue/encode() to send it.
+            case .framerIT2Send(connid: _, data: let data),
+                 .framerPulseSend(connid: _, data: let data):
+                // it2 and pulse carry large streaming payloads. Approximate from the raw payload
+                // (base64 inflates ~4/3) rather than base64-encoding the whole thing twice.
                 return data.count * 4 / 3
             case .framerFile(let sub):
                 switch sub {
@@ -2116,6 +2191,9 @@ extension Conductor {
         if let path = it2SocketPath, it2Nonce != nil {
             it2Listen(path: path)
         }
+        if let path = pulseSocketPath {
+            pulseListen(path: path)
+        }
         exfiltrateUsefulFramerInfo()
         flowRecoveryDidFinish()
         restartFlowControlAfterResynchronizing()
@@ -2278,6 +2356,9 @@ extension Conductor {
         } else {
             RLog("Framing without an it2 socket, so it2 on this host cannot reach iTerm2")
         }
+        if let path = pulseSocketPath {
+            pulseListen(path: path)
+        }
         runRemoteCommand(iTermAdvancedSettingsModel.unameCommand()) { [weak self] data, status in
             if status == 0 {
                 self?.uname = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -2392,6 +2473,32 @@ extension Conductor {
 
     func it2Close(connid: String) {
         send(.framerIT2Close(connid: connid), .fireAndForget)
+    }
+
+    func pulseListen(path: String) {
+        flowPulseDidStart()
+        send(.framerPulseListen(path: path), .pulseListen)
+    }
+
+    func pulseSend(connid: String, data: Data) {
+        let hpEnd = queue.firstIndex { $0.isHighPriority != true } ?? queue.count
+        if !pipelineTransitionInProgress,
+           hpEnd > 0,
+           !queue[hpEnd - 1].canceled,
+           case let .framerPulseSend(connid: existingConn, data: existingData) = queue[hpEnd - 1].command,
+           existingConn == connid,
+           existingData.count + data.count <= 16_384 {
+            var merged = ExecutionContext(command: .framerPulseSend(connid: connid, data: existingData + data),
+                                          handler: queue[hpEnd - 1].handler)
+            merged.isHighPriority = queue[hpEnd - 1].isHighPriority
+            queue[hpEnd - 1] = merged
+            return
+        }
+        send(.framerPulseSend(connid: connid, data: data), highPriority: true, .fireAndForget)
+    }
+
+    func pulseClose(connid: String) {
+        send(.framerPulseClose(connid: connid), .fireAndForget)
     }
 
     private func framerKill(pid: Int) {
@@ -2696,6 +2803,7 @@ extension Conductor {
         pendingIT2Home = nil
         var vars = [String: String]()
         activateIT2Proxy(home: home, env: &vars)
+        activateAudioProxy(home: home, env: &vars)
         if putIT2OnShellPath {
             // A flag, not a PATH: see activateIT2Proxy for why PATH can't go by setenv. The
             // framer takes the flag out of its own environment when it starts, so nothing it
@@ -2854,6 +2962,21 @@ extension Conductor {
                 }
             case .abort, .canceled:
                 it2ListenSucceeded = false
+            case .line(_), .sideChannelLine(line: _, channel: _, pid: _):
+                break
+            }
+            return
+        case .pulseListen:
+            switch result {
+            case .end(let status):
+                pulseListenSucceeded = (status == 0)
+                if status != 0 {
+                    DLog("pulseListen: framer failed to bind the PulseAudio socket (status \(status)); SSH audio will not work for this session")
+                }
+                delegate?.conductorStateDidChange()
+            case .abort, .canceled:
+                pulseListenSucceeded = false
+                delegate?.conductorStateDidChange()
             case .line(_), .sideChannelLine(line: _, channel: _, pid: _):
                 break
             }
@@ -3197,6 +3320,9 @@ extension Conductor {
         // in-process API connection after the conductor is gone.
         it2Demux?.cancelAll()
         resolveIT2Authorization(false, persist: false)
+        audioDemux?.closeAll()
+        audioEngine?.shutdownAll()
+        resolveAudioAuthorization(false, persist: false)
         state = .unhooked
         ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
     }
@@ -3350,6 +3476,23 @@ extension Conductor {
             return
         }
         it2DemuxForHandling().handle(string)
+    }
+
+    @objc(handlePulse:depth:)
+    func handlePulse(_ string: String, depth: Int32) {
+        if depth != self.depth {
+            DLog("Pass pulse frame with depth \(depth) to parent \(String(describing: parent)) because my depth is \(self.depth)")
+            parent?.handlePulse(string, depth: depth)
+            return
+        }
+        DLog("handlePulse \(string.semiVerboseDescription) depth=\(depth)")
+        let parts = string.split(separator: " ", omittingEmptySubsequences: false)
+        if parts.count == 5, parts[1] == "data" {
+            let decodedBytes = audioDemuxForHandling().handle(parts[0...2].joined(separator: " "))
+            flowPulseDidConsume(bytes: decodedBytes)
+            return
+        }
+        audioDemuxForHandling().handle(string)
     }
 
     @objc(handleSideChannelOutput:pid:channel:depth:)
@@ -3516,7 +3659,8 @@ extension Conductor {
                                                  flow: finished.flow,
                                                  panes: finished.panes,
                                                  parent: parent,
-                                                 it2Proxy: it2Proxy)
+                                                 it2Proxy: it2Proxy,
+                                                 audioProxy: audioProxy)
                         recovery.unclaimedPanes = unclaimedPanes
                         return recovery
                     }
@@ -3797,12 +3941,15 @@ extension Conductor {
         }
         var size = existing.map(\.size).reduce(0, +)
         var result = existing
-        let maxSize = 1024
+        var maxSize = existing.contains(where: \.isStreamingSocketSend) ? 65_536 : 1024
         log("Initial size is \(size)")
         while size < maxSize, let context = takeNextContext(onlyIfSupportsPipelining: !result.isEmpty,
                                                             dropped: &dropped) {
             log("taking \(context.debugDescription)")
             result.append(context)
+            if context.isStreamingSocketSend {
+                maxSize = 65_536
+            }
             if !context.supportsPipelining {
                 log("stopping because it does not support pipelining")
                 break

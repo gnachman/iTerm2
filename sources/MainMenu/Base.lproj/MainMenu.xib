@@ -514,6 +514,27 @@ DQ
                                                 <action selector="toggleRemoteHostCanControlIterm2:" target="-1" id="it2-au-th1"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Remote host can use microphone" identifier="ssh.Remote host can use microphone" id="ssh-au-mc0">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <accessibility identifier="Remote host can use microphone"/>
+                                            <connections>
+                                                <action selector="toggleRemoteHostCanUseMicrophone:" target="-1" id="ssh-au-mc1"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Mute Remote Audio" identifier="ssh.Mute Remote Audio" id="ssh-au-mt0">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <accessibility identifier="Mute Remote Audio"/>
+                                            <connections>
+                                                <action selector="toggleMuteRemoteAudio:" target="-1" id="ssh-au-mt1"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Disconnect Remote Audio" identifier="ssh.Disconnect Remote Audio" id="ssh-au-dc0">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <accessibility identifier="Disconnect Remote Audio"/>
+                                            <connections>
+                                                <action selector="disconnectRemoteAudio:" target="-1" id="ssh-au-dc1"/>
+                                            </connections>
+                                        </menuItem>
                                     </items>
                                 </menu>
                             </menuItem>

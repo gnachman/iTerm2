@@ -203,6 +203,9 @@ extension Conductor {
         if version >= 2 {
             // The framer gives only the leader initial credit; the others are granted theirs.
             controller.flowDidStart(.it2, now: now)
+            if pulseSocketPath != nil {
+                controller.flowDidStart(.pulse, now: now)
+            }
             for pid in knownPanePIDs.union(panes.keys).sorted() {
                 controller.flowDidStart(.pane(pid), now: now)
             }
@@ -267,6 +270,25 @@ extension Conductor {
         }
     }
 
+    /// PulseAudio socket listening started on this conductor's framer.
+    func flowPulseDidStart() {
+        paneFlowController?.flowDidStart(.pulse, now: flowClock())
+    }
+
+    /// PulseAudio data reached the demultiplexer.
+    func flowPulseDidConsume(bytes: Int) {
+        guard let controller = paneFlowController else {
+            return
+        }
+        feedFlowController()
+        let now = flowClock()
+        controller.flowDidConsume(.pulse, bytes: bytes, now: now)
+        controller.replenish(.pulse, now: now)
+        if flowTimer == nil {
+            scheduleFlowTick()
+        }
+    }
+
     /// Records made before the controller exists wait in the ledger until it does. A recovered
     /// conductor has no delegate yet when flow control resumes, so this is tried again on
     /// each tick.
@@ -301,6 +323,8 @@ extension Conductor {
                 let flow: FramerFlowController.Flow
                 if code == FramerFlowLedger.it2Flow {
                     flow = .it2
+                } else if code == FramerFlowLedger.pulseFlow {
+                    flow = .pulse
                 } else if code > 0 && flowVersion >= 2 {
                     flow = .pane(code)
                 } else {
@@ -358,6 +382,8 @@ extension Conductor {
                 arguments = ["grant", "leader", String(bytes)]
             case (true, .it2):
                 arguments = ["grant", "it2", String(bytes)]
+            case (true, .pulse):
+                arguments = ["grant", "pulse", String(bytes)]
             case (true, .pane(let pid)):
                 arguments = ["grant", String(pid), String(bytes)]
             }

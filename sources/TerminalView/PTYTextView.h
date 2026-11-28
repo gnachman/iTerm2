@@ -354,6 +354,12 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 // session). *available is always written.
 - (BOOL)textViewRemoteHostCanControlIterm2:(out BOOL *)available;
 - (void)textViewToggleRemoteHostCanControlIterm2;
+- (BOOL)textViewRemoteHostCanUseMicrophone:(out BOOL *)available;
+- (void)textViewToggleRemoteHostCanUseMicrophone;
+- (BOOL)textViewRemoteAudioIsMuted:(out BOOL *)available;
+- (void)textViewToggleMuteRemoteAudio;
+- (BOOL)textViewCanDisconnectRemoteAudio;
+- (void)textViewDisconnectRemoteAudio;
 - (void)textViewShowFindIndicator:(VT100GridWindowedRange)range;
 - (void)textViewOpen:(NSString *)string
     workingDirectory:(NSString *)folder

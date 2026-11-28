@@ -370,6 +370,21 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
         return .canReadAgain
     }
 
+    private func parseFramerPulse(_ string: String, into token: VT100Token) -> VT100DCSParserHookResult {
+        // "%pulse <connid> <event> [<base64>] [<send-ms> <flags>]". Delivered whole
+        // without re-parsing, matching %it2.
+        let payload = String(string.removing(prefix: "%pulse "))
+        guard !payload.isEmpty else {
+            DLog("Malformed %pulse (empty payload)")
+            return .canReadAgain
+        }
+        DLog("%pulse \(payload.semiVerboseDescription)")
+        token.type = SSH_PULSE
+        token.string = payload
+        token.sshCarrierSendMilliseconds = carrierSendMilliseconds
+        return .canReadAgain
+    }
+
     private func parseFramerPayload(_ string: String, into token: VT100Token) -> VT100DCSParserHookResult {
         let wasInRecoveryMode = recoveryMode
         recoveryMode = false
@@ -384,6 +399,9 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
         }
         if string.hasPrefix("%it2 ") {
             return parseFramerIT2(string, into: token)
+        }
+        if string.hasPrefix("%pulse ") {
+            return parseFramerPulse(string, into: token)
         }
         if string.hasPrefix("%") {
             DLog("Ignore unrecognized notification \(string)")

@@ -291,6 +291,7 @@ typedef enum {
     SSH_RECOVERY_BOUNDARY,
     SSH_SIDE_CHANNEL,  // Synthetic - produced internally in VT100Terminal
     SSH_IT2,  // %it2 - remote it2 CLI RPC frame, delivered whole (no re-parse)
+    SSH_PULSE,  // %pulse - remote PulseAudio native protocol frame, delivered whole (no re-parse)
 
     VT100_LITERAL,
     VT100_GANG
@@ -315,18 +316,19 @@ static inline BOOL VT100TokenTypeIsSSHMeta(VT100TerminalTokenType type) {
         case SSH_RECOVERY_BOUNDARY:
         case SSH_SIDE_CHANNEL:
         case SSH_IT2:
+        case SSH_PULSE:
             return YES;
         default:
             return NO;
     }
 }
 
-// The SSH async multiplexed streams: %output and %it2 frames arrive interleaved with terminal
-// tokens on independent async channels, so they must never abort an in-progress inline
+// The SSH async multiplexed streams: %output, %it2, and %pulse frames arrive interleaved with
+// terminal tokens on independent async channels, so they must never abort an in-progress inline
 // operation (file receipt, copy mode) the way an unexpected terminal token would. A new such
 // async stream token is added here once instead of at every abort site.
 static inline BOOL VT100TokenTypeIsSSHAsyncStream(VT100TerminalTokenType type) {
-    return type == SSH_OUTPUT || type == SSH_IT2;
+    return type == SSH_OUTPUT || type == SSH_IT2 || type == SSH_PULSE;
 }
 
 // A preinitialized array of screen_char_t for ASCII data.

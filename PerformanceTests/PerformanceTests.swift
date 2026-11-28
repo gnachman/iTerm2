@@ -205,6 +205,10 @@ class FakeSession: NSObject {
 
     }
 
+    func screenHandlePulse(_ string: String?, depth: Int32) {
+
+    }
+
     func screenWillBeginSSHIntegration() {
 
     }
