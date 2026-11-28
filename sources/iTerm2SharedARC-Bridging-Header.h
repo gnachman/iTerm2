@@ -176,6 +176,7 @@
 #import "iTermSocket.h"
 #import "iTermSocketAddress.h"
 #import "iTermStandardKeyMapper.h"
+#import "iTermStatusBarBaseLayoutAlgorithm.h"
 #import "iTermStatusBarContainerView.h"
 #import "iTermStatusBarTextComponent.h"
 #import "iTermStatusBarUnreadCountController.h"
