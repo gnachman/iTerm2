@@ -126,12 +126,15 @@ final class iTermScriptHistoryTests: XCTestCase {
                                         userInfo: ["message": response,
                                                    "data": try XCTUnwrap(response.data())])
 
+        request.id_p = 42
+        response.id_p = 42
         let calls = entry.callEntries
         XCTAssertEqual(calls.count, 2)
         XCTAssertTrue(calls[0].hasPrefix("Script → iTerm2 "))
         XCTAssertTrue(calls[0].contains("id: 1234"), calls[0])
         XCTAssertTrue(calls[1].hasPrefix("Script ← iTerm2 "))
         XCTAssertTrue(calls[1].contains("id: 5678"), calls[1])
+        XCTAssertEqual(entry.callEntries, calls)
     }
 
     // A connection that reuses a closed connection's key (it2 over SSH, or a

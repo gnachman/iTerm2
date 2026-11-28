@@ -18,7 +18,7 @@ class ScriptHistoryCall: NSObject {
     }
     private let origin: Origin
     private let date: String
-    private let data: Data
+    private var data: Data
 
     private init(origin: Origin, data: Data, date: String) {
         self.origin = origin
@@ -36,7 +36,10 @@ class ScriptHistoryCall: NSObject {
         return ScriptHistoryCall(origin: .server, data: data, date: date)
     }
 
-    @objc var text: String {
+    // Filtering rereads the whole history. Keep the text and release both
+    // the serialized message and the temporary protobuf objects after each call.
+    @objc private(set) lazy var text: String = autoreleasepool {
+        defer { data = Data() }
         switch origin {
         case .client:
             let message = try? ITMClientOriginatedMessage.parse(from: data)
