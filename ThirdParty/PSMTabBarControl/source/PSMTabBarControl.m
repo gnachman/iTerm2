@@ -1334,6 +1334,14 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
     if (_orientation == PSMTabBarHorizontalOrientation && self.sizeCellsToFit) {
         return YES;
     }
+    PSMProgressIndicator *indicator = [cell indicator];
+    if (!indicator.isHidden && !_hideIndicators && indicator.superview != self) {
+        // Only a complete update puts a spinner in the bar. It leaves out one that is scrolled away.
+        const NSRect frame = [cell indicatorRectForFrame:cell.frame];
+        if (!NSIsEmptyRect([self visiblePartOfAccessoryFrame:frame ofCell:cell])) {
+            return YES;
+        }
+    }
     // The spinner's position depends on rich content.
     id tab = [[cell representedObject] identifier];
     return [tab respondsToSelector:@selector(psmTabRichLines)] && [[tab psmTabRichLines] count] > 0;

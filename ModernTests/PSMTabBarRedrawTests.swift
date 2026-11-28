@@ -57,6 +57,23 @@ final class PSMTabBarRedrawTests: XCTestCase {
         }
     }
 
+    // Only a complete update puts a spinner in the bar, and nothing but a change to the tab's title or
+    // icon asks for one when a tab becomes busy.
+    func testSpinnerThatIsNotInTheBarYetAffectsLayout() throws {
+        let bar = try tabBar()
+        let cell = try XCTUnwrap((bar.cells() as? [PSMTabBarCell])?.first)
+        let indicator = try XCTUnwrap(cell.indicator)
+        indicator.removeFromSuperview()
+        indicator.isHidden = true
+        XCTAssertFalse(try layoutDependsOnContents(of: cell, in: bar))
+
+        indicator.isHidden = false
+        XCTAssertTrue(try layoutDependsOnContents(of: cell, in: bar))
+
+        bar.addSubview(indicator)
+        XCTAssertFalse(try layoutDependsOnContents(of: cell, in: bar))
+    }
+
     func testContentsOfATabShownElsewhereAffectLayout() throws {
         let bar = try tabBar()
         let cell = try XCTUnwrap((bar.cells() as? [PSMTabBarCell])?.last)
