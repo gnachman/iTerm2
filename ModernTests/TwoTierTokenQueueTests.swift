@@ -45,6 +45,24 @@ final class TwoTierTokenQueueTests: XCTestCase {
         XCTAssertEqual(priorities, [0])
     }
 
+    // Consumed arrays are cleaned up in batches on another queue. A queue that drains must not hold
+    // a partial batch, or every idle session retains the tokens it executed last.
+    func testConsumedTokensAreReleasedWhenTheQueueDrains() {
+        let queue = TwoTierTokenQueue()
+        weak var token: VT100Token?
+        autoreleasepool {
+            let tokenArray = makeTokenArray()
+            token = tokenArray.peek
+            queue.addTokens(tokenArray, highPriority: false)
+            queue.enumerateTokenArrayGroups { group, _ in
+                group.arrays.forEach { $0.skipToEnd() }
+                return true
+            }
+        }
+        TokenArray.destroyQueue.sync {}
+        XCTAssertNil(token)
+    }
+
     func testTokensAddedDuringFirstAccessAreNotLost() {
         // Each iteration races the first read against the first append on a fresh
         // queue. A correct queue never loses the token, however the race goes.
