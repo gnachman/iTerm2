@@ -921,6 +921,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     // colors and the minimal-theme appearance, which is expensive).
     NSColor *_browserBackgroundColor;
     iTermRateLimitedUpdate *_browserBackgroundColorRateLimit;
+    iTermRateLimitedUpdate *_wordAtCursorRateLimit;
 
     // Disables short-lived session warning so the user can read the error.
     BOOL _execDidFail;
@@ -1447,6 +1448,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_browserBackgroundColor release];
     [_browserBackgroundColorRateLimit invalidate];
     [_browserBackgroundColorRateLimit release];
+    [_wordAtCursorRateLimit invalidate];
+    [_wordAtCursorRateLimit release];
     [_textview release];  // I'm not sure it's ever nonnil here
     [_currentMarkOrNotePosition release];
     [_graphicSource release];
@@ -15827,6 +15830,21 @@ static NSUInteger PTYSessionMinimumTurdLength(PTYSessionTurdType turdType) {
 }
 
 - (void)textViewDidRefresh {
+    if (_textview.window.firstResponder != _textview) {
+        return;
+    }
+    // This runs on every refresh, so don't extract the word more often than the touch bar shows it.
+    if (!_wordAtCursorRateLimit) {
+        _wordAtCursorRateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"Word at cursor"
+                                                              minimumInterval:0.5];
+    }
+    __weak __typeof(self) weakSelf = self;
+    [_wordAtCursorRateLimit performRateLimitedBlock:^{
+        [weakSelf updateWordAtCursor];
+    }];
+}
+
+- (void)updateWordAtCursor {
     if (_textview.window.firstResponder != _textview) {
         return;
     }
