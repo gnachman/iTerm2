@@ -146,8 +146,19 @@ Improvements:
   it later, use “Restore windows to same
   Spaces” in Settings > General > Startup.
   Issue 13240.
+- The Python API can read and change many more
+  settings, including AI, tmux, window
+  placement, and Quick Look settings, plus
+  about a hundred more profile settings such as
+  window type, hotkey window, logging, and HDR
+  options. Requires version 2.32 of the iterm2
+  Python module.
 
 Bug Fixes:
+- In the Python API, changing a profile setting
+  that takes a named value, such as the cursor
+  type, with an async_set method raised an
+  error. Fixed.
 - With tabs on the left or right, clicking a
   collapsed tab group at the end of the tab bar
   moved the window instead of expanding the

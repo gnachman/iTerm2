@@ -17,6 +17,9 @@ class WriteOnlyProfile:
         """
         :param value: a json type
         """
+        if hasattr(value, "toJSON"):
+            # Enums can't be passed to json.dumps directly.
+            value = json.loads(value.toJSON())
         await async_set_profile_property(
             self.connection,
             self.session_id,
